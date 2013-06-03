@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Socket Servers &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -98,7 +100,7 @@ can be <tt class="docutils literal"><span class="pre">bytes</span></tt> or a <tt
 <p>The <tt class="docutils literal"><span class="pre">decode</span></tt> method must return a <strong>two elements tuple</strong> of the form:</p>
 <blockquote>
 <div><ul class="simple">
-<li><tt class="xref docutils literal"><span class="pre">None</span></tt>, <tt class="docutils literal"><span class="pre">bytesarray</span></tt>: when more data is needed to form a message.</li>
+<li><tt class="docutils literal"><span class="pre">None</span></tt>, <tt class="docutils literal"><span class="pre">bytesarray</span></tt>: when more data is needed to form a message.</li>
 <li><tt class="docutils literal"><span class="pre">message</span></tt>, <tt class="docutils literal"><span class="pre">bytesarray</span></tt>: where <em>message</em> is a correctly parsed message
 and <em>bytesarray</em> contains data for the next message.</li>
 </ul>
@@ -172,7 +174,7 @@ requests. The request handler is constructued from the
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.protocol_consumer">
-<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the callable application handler which is stored in
 <tt class="xref py py-attr docutils literal"><span class="pre">Worker.app_handler</span></tt>, used by <tt class="xref py py-class docutils literal"><span class="pre">Worker</span></tt> to carry out its task.
 By default it returns the <tt class="xref py py-attr docutils literal"><span class="pre">Application.callable</span></tt>.</p>
@@ -180,7 +182,7 @@ By default it returns the <tt class="xref py py-attr docutils literal"><span cla
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.create_server">
-<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the Server Protocol which will listen for requests. It
 uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler()</span></tt> as its response protocol.</p>
 </dd></dl>
@@ -234,7 +236,7 @@ uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler(
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -251,7 +253,7 @@ uses the <tt class="xref py py-meth docutils literal"><span class="pre">handler(
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

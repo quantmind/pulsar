@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Asynchronous Test Suite &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -142,6 +144,12 @@ just after all tests functions are run.</p>
 <p>Loading test cases is accomplished via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">loader.TestLoader</span></tt></a> class. In
 this context we refer to an <tt class="docutils literal"><span class="pre">object</span></tt> as a <tt class="docutils literal"><span class="pre">module</span></tt> (including a
 directory module) or a <tt class="docutils literal"><span class="pre">class</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Test modules are specified when initialising a <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>, by
+passing the <tt class="docutils literal"><span class="pre">modules</span></tt> tuple/list of python dotted paths. If not defined
+the default is to load test cases from the <tt class="docutils literal"><span class="pre">tests</span></tt> module.</p>
+</div>
 <p>These are the rules for loading tests:</p>
 <ul class="simple">
 <li>Directories that aren&#8217;t packages are not inspected. This means that if a directory
@@ -150,7 +158,7 @@ does not have a <tt class="docutils literal"><span class="pre">__init__.py</span
 <li>If an object starts with <tt class="docutils literal"><span class="pre">_</span></tt> or <tt class="docutils literal"><span class="pre">.</span></tt> it won&#8217;t be collected,
 nor will any objects it contains.</li>
 <li>If an object defines a <tt class="docutils literal"><span class="pre">__test__</span></tt> attribute that does not evaluate to
-<tt class="xref docutils literal"><span class="pre">True</span></tt>, that object will not be collected, nor will any objects it contains.</li>
+<tt class="docutils literal"><span class="pre">True</span></tt>, that object will not be collected, nor will any objects it contains.</li>
 </ul>
 <p>The paths which will be inspected are defined by the <strong>modules</strong> initialisation
 parameter for the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> class.
@@ -276,7 +284,7 @@ is a group of tests specified in a test class.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>modules</strong> &#8211; <p>An iterable over modules where to look for tests.
 Alternatively it can be a callable returning the iterable over modules.
 For example:</p>
@@ -329,7 +337,7 @@ you give a <em>root</em> directory and a list of submodules where to look for te
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>root</strong> &#8211; root path passed by the <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt>.</li>
 <li><strong>modules</strong> &#8211; list (or tuple) of entries where to look for tests.
 Check <a class="reference internal" href="#apps-test-loading"><em>loading test documentation</em></a> for
@@ -342,7 +350,7 @@ more information.</li>
 <dl class="method">
 <dt id="pulsar.apps.test.loader.TestLoader.checktag">
 <tt class="descname">checktag</tt><big>(</big><em>tag</em>, <em>import_tags</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/loader.html#TestLoader.checktag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.loader.TestLoader.checktag" title="Permalink to this definition">¶</a></dt>
-<dd><p>return <tt class="xref docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">tag</span></tt> is in <tt class="docutils literal"><span class="pre">import_tags</span></tt>.</p>
+<dd><p>return <tt class="docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">tag</span></tt> is in <tt class="docutils literal"><span class="pre">import_tags</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -360,7 +368,7 @@ tag,module pairs.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>path</strong> &#8211; directory path where to search. Files starting with <tt class="docutils literal"><span class="pre">_</span></tt>
 or <tt class="docutils literal"><span class="pre">.</span></tt> are excluded from the search, as well as non-python files.</li>
 <li><strong>dotted_path</strong> &#8211; the dotted python path equivalent of <tt class="docutils literal"><span class="pre">path</span></tt>.</li>
@@ -391,15 +399,15 @@ and <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pul
 a <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> and therefore <strong>before any test class is loaded</strong>.
 This is a chance to configure the <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> or global variables
 which may affect the way tests are run.
-If it returns something other than <tt class="xref docutils literal"><span class="pre">None</span></tt> (for example an abort message)
+If it returns something other than <tt class="docutils literal"><span class="pre">None</span></tt> (for example an abort message)
 it will stop the configuration of all subsequent plugins and quit the test.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> &#8211; a <a class="reference internal" href="../api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a>.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> &#8211; a <a class="reference internal" href="../api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a>.</td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><tt class="xref docutils literal"><span class="pre">None</span></tt> unless the tests runner must be stopped.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">None</span></tt> unless the tests runner must be stopped.</td>
 </tr>
 </tbody>
 </table>
@@ -448,7 +456,7 @@ behaviour in the process domain where the test run.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.after_test_function_run">
-<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em>, <em>result</em>, <em>async</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em>, <em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a test-function instance return a, possibly, modified test
 instance. This function can be used by plugins to modify the behaviour of test
 cases. By default it returns <em>test</em>.</p>
@@ -477,7 +485,7 @@ cases. By default it returns <em>test</em>.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.after_test_function_run">
-<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>result</em>, <em>async</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.after_test_function_run" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.after_test_function_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called before the test starts.</p>
 </dd></dl>
 
@@ -489,14 +497,14 @@ cases. By default it returns <em>test</em>.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>test</strong> &#8211; test instance or class</li>
 <li><strong>func</strong> &#8211; test function belonging to <em>test</em></li>
 <li><strong>timeout</strong> &#8211; An optional timeout for asynchronous tests.</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an asynchronous result</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an asynchronous result</p>
 </td>
 </tr>
 </tbody>
@@ -516,7 +524,7 @@ cases. By default it returns <em>test</em>.</p>
 can be specified as class attributes and collected into the
 <a class="reference internal" href="#pulsar.apps.test.TestPlugin.config" title="pulsar.apps.test.TestPlugin.config"><tt class="xref py py-attr docutils literal"><span class="pre">config</span></tt></a> attribute.</p>
 <p>If the class attribute <a class="reference internal" href="#pulsar.apps.test.TestPlugin.name" title="pulsar.apps.test.TestPlugin.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a> is not specified or its value validate as
-<tt class="xref docutils literal"><span class="pre">True</span></tt>, an additional <a class="reference internal" href="../settings.html#settings"><em>setting</em></a> is added to the configuration.
+<tt class="docutils literal"><span class="pre">True</span></tt>, an additional <a class="reference internal" href="../settings.html#settings"><em>setting</em></a> is added to the configuration.
 In addition, a <a class="reference internal" href="#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a> can specify several additional
 <a class="reference internal" href="../settings.html#settings"><em>settings</em></a> as class attributes. For example, the
 <a class="reference internal" href="#bench-plugin"><em>benchmark plugin</em></a> has an additional setting
@@ -535,7 +543,7 @@ for controlling the number of repetitions:</p>
 <dd><p>Class attribute used for adding the default plugin <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>
 to the configuration container of the test suite application.
 If the attribute is not set, the class name in lower case is used.
-If set and validate as not <tt class="xref docutils literal"><span class="pre">True</span></tt>, no new <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>
+If set and validate as not <tt class="docutils literal"><span class="pre">True</span></tt>, no new <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>
 is added to the test suite configuration parameters. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyPlugin</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
@@ -619,7 +627,7 @@ as class attributes.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -636,7 +644,7 @@ as class attributes.</p>
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

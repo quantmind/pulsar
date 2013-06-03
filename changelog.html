@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Changelog &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.5.1-beta.1',
+        URL_ROOT:    './',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -65,14 +67,24 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-5-1-development">
-<h2>Ver. 0.5.1 - Development<a class="headerlink" href="#ver-0-5-1-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-5-2-development">
+<h2>Ver. 0.5.2 - Development<a class="headerlink" href="#ver-0-5-2-development" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ver-0-5-1-2013-june-03">
+<h2>Ver. 0.5.1 - 2013-June-03<a class="headerlink" href="#ver-0-5-1-2013-june-03" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Several bug fixes and more docs.</li>
+<li>Fixed <tt class="docutils literal"><span class="pre">ThreadPool</span></tt> for for python 2.6.</li>
+<li>Added the <a class="reference internal" href="api/async.html#pulsar.safe_async" title="pulsar.safe_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.safe_async()</span></tt></a> function for safely executing synchronous
+and asynchronous callables.</li>
+<li>The <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config.get" title="pulsar.utils.config.Config.get"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.utils.config.Config.get()</span></tt></a> method never fails. It return the
+<tt class="docutils literal"><span class="pre">default</span></tt> value if the setting key is not available.</li>
 <li>Improved <tt class="docutils literal"><span class="pre">setup.py</span></tt> so that it does not log a python 2 module syntax error
 when installing for python 3.</li>
 <li><a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>Wsgi Router</em></a> makes sure that the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> key in the
 <tt class="docutils literal"><span class="pre">environ</span></tt> does not contain asynchronous data before invoking the callable
 serving the request.</li>
+<li><strong>443 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-5-0-2013-may-22">
@@ -329,7 +341,8 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-5-1-development">Ver. 0.5.1 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-5-2-development">Ver. 0.5.2 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>
 <li><a class="reference internal" href="#ver-0-5-0-2013-may-22">Ver. 0.5.0 - 2013-May-22</a></li>
 <li><a class="reference internal" href="#ver-0-4-6-2013-feb-8">Ver. 0.4.6 - 2013-Feb-8</a></li>
 <li><a class="reference internal" href="#ver-0-4-5-2013-jan-27">Ver. 0.4.5 - 2013-Jan-27</a></li>
@@ -360,7 +373,7 @@ asynchronous test suite and asynchronous shell.</li>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -377,7 +390,7 @@ asynchronous test suite and asynchronous shell.</li>
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

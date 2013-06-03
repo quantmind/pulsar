@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.tasks.rpc &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.rpc &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -64,7 +66,12 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">The :ref:`task queue application &lt;app-taskqueue-app&gt;` does not expose</span>
 <span class="sd">an external API to run new tasks or retrieve task information.</span>
-<span class="sd">The :class:`TaskQueueRpcMixin` class can be used to achieve just that.</span>
+<span class="sd">The :class:`TaskQueueRpcMixin` class can be used to achieve just that. It is</span>
+<span class="sd">a :class:`pulsar.apps.rpc.JSONRPC` handler which exposes six functions</span>
+<span class="sd">for executing tasks and retrieving task information.</span>
+
+<span class="sd">The :ref:`task-queue example &lt;tutorials-taskqueue&gt;` shows how to use this class</span>
+<span class="sd">in the context of a WSGI server running along side the task-queue application.</span>
 
 <span class="sd">TaskQueue Rpc Mixin</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~</span>
@@ -79,8 +86,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
 
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">TaskNotAvailable</span>
-<span class="kn">from</span> <span class="nn">.task</span> <span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span> <span class="nn">.backends</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">TaskNotAvailable</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;TaskQueueRpcMixin&#39;</span><span class="p">]</span>
@@ -111,44 +117,8 @@
 <span class="sd">    :class:`pulsar.apps.tasks.TaskQueue` which exposes the remote procedure</span>
 <span class="sd">    calls.</span>
 <span class="sd">    </span>
-
-<span class="sd">**Remote Procedure Calls**</span>
-
-<span class="sd">.. method:: job_list([jobnames=None])</span>
-
-<span class="sd">    Return the list of :class:`Job` registered with task queue with meta</span>
-<span class="sd">    information. If a list of jobnames is given, it returns only jobs</span>
-<span class="sd">    included in the list.</span>
-<span class="sd">    </span>
-<span class="sd">    :rtype: A list of dictionaries</span>
-<span class="sd">    </span>
-<span class="sd">    </span>
-<span class="sd">.. method:: run_new_task(jobname, [**kwargs])</span>
-<span class="sd">    </span>
-<span class="sd">    Run a new :class:`Task` in the task queue. The task can be of any type</span>
-<span class="sd">    as long as it is registered in the :class:`Job` registry.</span>
-
-<span class="sd">    :parameter jobname: the name of the :class:`Job` to run.</span>
-<span class="sd">    :parameter kwargs: optional key-valued job parameters.</span>
-<span class="sd">    :rtype: a dictionary containing information about the</span>
-<span class="sd">        :class:`Task` submitted</span>
-<span class="sd">    </span>
-<span class="sd">    </span>
-<span class="sd">.. method:: get_task(id=task_id)</span>
-
-<span class="sd">    Retrieve a task from its ``id``.</span>
-<span class="sd">    Returns ``None`` if the task is not available.</span>
-<span class="sd">    </span>
-<span class="sd">    </span>
-<span class="sd">.. method:: get_tasks(**filters)</span>
-
-<span class="sd">    Retrieve a list of tasks which satisfy *filters*.</span>
-<span class="sd">    </span>
-<span class="sd">    </span>
-<span class="sd">.. method:: wait_for_task(id=task_id)</span>
-
-<span class="sd">    Wait for a task to have finished.</span>
 <span class="sd">&#39;&#39;&#39;</span>
+    <span class="n">_task_backend</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">taskqueue</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">taskqueue</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">taskqueue</span> <span class="o">=</span> <span class="n">taskqueue</span><span class="o">.</span><span class="n">name</span>
@@ -158,42 +128,65 @@
     <span class="c">############################################################################</span>
     <span class="c">##    REMOTES</span>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_job_list"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_job_list">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_job_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;job_list&#39;</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;Return the list of Jobs registered with task queue with meta</span>
+<span class="sd">information. If a list of jobnames is given, it returns only jobs</span>
+<span class="sd">included in the list.&#39;&#39;&#39;</span>
+        <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">job_list</span><span class="p">(</span><span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
     </div>
     <span class="k">def</span> <span class="nf">rpc_next_scheduled_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;next_scheduled&#39;</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
         
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_run_new_task"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_run_new_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_run_new_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Run a new task in the task queue. The task can be of any type</span>
+<span class="sd">as long as it is registered in the task queue registry. To check the</span>
+<span class="sd">available tasks call the &quot;job_list&quot; function. It returns the task id.&#39;&#39;&#39;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_new_task</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_get_task"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retrieve a task from its id&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;get_task&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+            <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="TaskQueueRpcMixin.rpc_get_tasks"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;get_tasks&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<div class="viewcode-block" id="TaskQueueRpcMixin.rpc_get_tasks"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">**</span><span class="n">filters</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Retrieve a list of tasks which satisfy key-valued filters&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="o">**</span><span class="n">filters</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="TaskQueueRpcMixin.rpc_wait_for_task"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_wait_for_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Wait for a task to have finished.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;wait_for_task&#39;</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+            <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">wait_for_task</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">task_to_json</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="TaskQueueRpcMixin.rpc_num_tasks"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_num_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_num_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return the approximate number of tasks in the task queue.&#39;&#39;&#39;</span>
+        <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">num_tasks</span><span class="p">()</span>
     
     <span class="c">############################################################################</span>
     <span class="c">##    INTERNALS</span></div>
-<div class="viewcode-block" id="TaskQueueRpcMixin.run_new_task"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.run_new_task">[docs]</a>    <span class="k">def</span> <span class="nf">run_new_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                     <span class="n">ack</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">meta_data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">task_backend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span><span class="p">:</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">taskqueue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">backend</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_backend</span>
+        
+    <span class="k">def</span> <span class="nf">run_new_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">meta_data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">jobname</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">rpc</span><span class="o">.</span><span class="n">InvalidParams</span><span class="p">(</span><span class="s">&#39;&quot;jobname&quot; is not specified!&#39;</span><span class="p">)</span>
-        <span class="n">funcname</span> <span class="o">=</span> <span class="s">&#39;addtask&#39;</span> <span class="k">if</span> <span class="n">ack</span> <span class="k">else</span> <span class="s">&#39;addtask_noack&#39;</span>
         <span class="n">meta_data</span> <span class="o">=</span> <span class="n">meta_data</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">meta_data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_request_parameters</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rq</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">funcname</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">meta_data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-    </div>
+        <span class="n">task_backend</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_backend</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">task_backend</span><span class="o">.</span><span class="n">run_job</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="o">**</span><span class="n">meta_data</span><span class="p">)</span>
+    
 <div class="viewcode-block" id="TaskQueueRpcMixin.task_request_parameters"><a class="viewcode-back" href="../../../../apps/tasks/rpc.html#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.task_request_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">task_request_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;**Internal function** which returns a dictionary of parameters</span>
 <span class="sd">to be passed to the :class:`Task` class constructor.</span>
@@ -219,7 +212,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -236,7 +229,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

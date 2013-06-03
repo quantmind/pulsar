@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.tasks.models &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.tasks.models &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -125,14 +127,6 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
-<span class="sd">Job metaclass</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: JobMetaClass</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
-
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
@@ -140,12 +134,12 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_modules</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JobMetaClass&#39;</span><span class="p">,</span><span class="s">&#39;Job&#39;</span><span class="p">,</span><span class="s">&#39;PeriodicJob&#39;</span><span class="p">,</span>
-           <span class="s">&#39;anchorDate&#39;</span><span class="p">,</span><span class="s">&#39;JobRegistry&#39;</span><span class="p">,</span><span class="s">&#39;registry&#39;</span><span class="p">,</span>
-           <span class="s">&#39;create_task_id&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JobMetaClass&#39;</span><span class="p">,</span> <span class="s">&#39;Job&#39;</span><span class="p">,</span> <span class="s">&#39;PeriodicJob&#39;</span><span class="p">,</span>
+           <span class="s">&#39;anchorDate&#39;</span><span class="p">,</span> <span class="s">&#39;JobRegistry&#39;</span><span class="p">,</span> <span class="s">&#39;create_task_id&#39;</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">create_task_id</span><span class="p">():</span>
@@ -170,63 +164,39 @@
 <span class="sd">        instance.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">job</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">job</span><span class="p">)</span> <span class="ow">and</span> <span class="n">job</span><span class="p">()</span> <span class="ow">or</span> <span class="n">job</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">name</span>
-        <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">JobMetaClass</span><span class="p">)</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">can_register</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">name</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="JobRegistry.filter_types"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry.filter_types">[docs]</a>    <span class="k">def</span> <span class="nf">filter_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a generator of all tasks of a specific type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">((</span><span class="n">job_name</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">job_name</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
                             <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="nb">type</span><span class="p">)</span>
-
-</div></div>
-<span class="n">registry</span> <span class="o">=</span> <span class="n">JobRegistry</span><span class="p">()</span>
-
-
-
-<div class="viewcode-block" id="JobMetaClass"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobMetaClass">[docs]</a><span class="k">class</span> <span class="nc">JobMetaClass</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Metaclass for :class:`Job`. It performs a this little amount of magic</span>
-<span class="sd">when a new :class:`Job` class is created:</span>
-
-<span class="sd">* Automatic registration of :class:`Job` instances to the</span>
-<span class="sd">  global :class:`JobRegistry`, unless</span>
-<span class="sd">  the :attr:`Job.abstract` attribute is set to ``True``.</span>
-<span class="sd">* If no :attr:`Job.name` attribute is provided,</span>
-<span class="sd">  it is automatically set to the :attr:`Job` class name in lower case.</span>
-<span class="sd">* Add the :attr:`Job.logger` attribute with name given by :attr:`Job.name`</span>
-<span class="sd">  attribute.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
-        <span class="n">super_new</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span>
-        <span class="n">job_module</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;__module__&quot;</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
-
-        <span class="c"># Abstract class, remove the abstract attribute so</span>
-        <span class="c"># any class inheriting from this won&#39;t be abstract by default.</span>
-        <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;abstract&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;autoregister&quot;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>\
-                                       <span class="ow">or</span> <span class="ow">not</span> <span class="n">job_module</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">super_new</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
-        <span class="c"># Automatically generate missing name.</span>
-        <span class="n">job_name</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">log_prefix</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;log_prefix&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&quot;pulsar&quot;</span>
-        <span class="c"># Because of the way import happens (recursively)</span>
-        <span class="c"># we may or may not be the first time the Job tries to register</span>
-        <span class="c"># with the framework. There should only be one class for each Job</span>
-        <span class="c"># name, so we always return the registered version.</span>
-        <span class="k">if</span> <span class="n">job_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">:</span>
-            <span class="n">attrs</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_name</span>
-            <span class="n">logname</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.job.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">log_prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;logger&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">logname</span><span class="p">)</span>
-            <span class="n">job_cls</span> <span class="o">=</span> <span class="n">super_new</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
-            <span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">job_cls</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">registry</span><span class="p">[</span><span class="n">job_name</span><span class="p">]</span><span class="o">.</span><span class="n">__class__</span>
+        </div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+        <span class="bp">self</span> <span class="o">=</span> <span class="n">cls</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">import_modules</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">mod</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 </div>
-<span class="n">JobBase</span> <span class="o">=</span> <span class="n">JobMetaClass</span><span class="p">(</span><span class="s">&#39;JobBase&#39;</span><span class="p">,(</span><span class="nb">object</span><span class="p">,),{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span><span class="bp">True</span><span class="p">})</span>
+<span class="k">class</span> <span class="nc">JobMetaClass</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;can_register&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;abstract&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">job_name</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">log_prefix</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;log_prefix&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&quot;pulsar&quot;</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_name</span>
+        <span class="n">logname</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.job.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">log_prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;logger&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">logname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">JobBase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">(</span><span class="s">&#39;JobBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
     <span class="sd">&#39;&#39;&#39;The Job class which is used in a distributed task queue.</span>
 
 <span class="sd">.. attribute:: name</span>
@@ -238,11 +208,6 @@
 
 <span class="sd">    If set to ``True`` (default is ``False``), the Job won&#39;t be registered</span>
 <span class="sd">    with the :class:`JobRegistry`.</span>
-
-<span class="sd">.. attribute:: autoregister</span>
-
-<span class="sd">    If ``False`` (default is ``True``), the Job need to be registered</span>
-<span class="sd">    manually with the Job registry.</span>
 
 <span class="sd">.. attribute:: type</span>
 
@@ -269,32 +234,37 @@
 
 <span class="sd">    Default: ``markdown``</span>
 
-<span class="sd">.. attribute:: loglevel</span>
-
-<span class="sd">    Level of task logging</span>
-
-<span class="sd">    Default: ``None``</span>
-
 <span class="sd">.. attribute:: logger</span>
 
-<span class="sd">    an instance of a logger.</span>
+<span class="sd">    an instance of a logger. Created at runtime.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">abstract</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">autoregister</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;regular&quot;</span>
     <span class="n">timeout</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">expires</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">loglevel</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">logformatter</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">doc_syntax</span> <span class="o">=</span> <span class="s">&#39;markdown&#39;</span>
     <span class="n">can_overlap</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">_ack</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The Jobs&#39; task executed by the consumer. This function needs to be</span>
 <span class="sd">implemented by subclasses.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Jobs must define the run method.&quot;</span><span class="p">)</span>
 
+<div class="viewcode-block" id="Job.run_job"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.run_job">[docs]</a>    <span class="k">def</span> <span class="nf">run_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Send a new task request to the task queue from within another</span>
+<span class="sd">:class:`Task`. This allows tasks to act as tasks factories.</span>
+
+<span class="sd">:parameter consumer: The :class:`TaskConsumer` handling the :class:`Task`.</span>
+<span class="sd">:parameter jobname: The name of the :class:`Job` to run.</span>
+<span class="sd">:parameter args: positional argument for the :ref:`job callable &lt;job-callable&gt;`.</span>
+<span class="sd">:parameter kwargs: key-valued parameters for the</span>
+<span class="sd">    :ref:`job callable &lt;job-callable&gt;`.</span>
+<span class="sd">:rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the</span>
+<span class="sd">    key-valued parameters, otherwise nothing.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;from_task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">task_id</span>
+        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">run_job</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+</div>
 <div class="viewcode-block" id="Job.make_task_id"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.make_task_id">[docs]</a>    <span class="k">def</span> <span class="nf">make_task_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the task unique identifier.</span>
 <span class="sd">This can be overridden by Job implementation.</span>
@@ -320,41 +290,7 @@
                             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)))</span>
             <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">sha1</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
-</div>
-<div class="viewcode-block" id="Job.on_same_id"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.on_same_id">[docs]</a>    <span class="k">def</span> <span class="nf">on_same_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback invocked when a task has an id equal to a task already</span>
-<span class="sd">submitted to the task queue. By default return None and the</span>
-<span class="sd">task is aborted.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">None</span>
-</div>
-<div class="viewcode-block" id="Job.ack"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.ack">[docs]</a>    <span class="k">def</span> <span class="nf">ack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return ``True`` if a Job task will acknowledge the task queue</span>
-<span class="sd"> once the result is ready or an error has occured.</span>
-<span class="sd"> By default it returns ``True`` but it can be overridden so that its</span>
-<span class="sd"> behaviour can change at runtime.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ack</span>
-</div>
-<div class="viewcode-block" id="Job.send_to_queue"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.send_to_queue">[docs]</a>    <span class="k">def</span> <span class="nf">send_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Send a new task request to the :class:`TaskQueue`</span>
-<span class="sd">from within another :class:`Task`.</span>
-<span class="sd">This allows tasks to act as tasks factories.</span>
-
-<span class="sd">:parameter consumer: The :class:`TaskConsumer` handling the :class:`Task`.</span>
-<span class="sd">:parameter jobname: The name of the :class:`Job` to run.</span>
-<span class="sd">:parameter args: positional argument for the :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd">:parameter kwargs: key-valued parameters for the</span>
-<span class="sd">    :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd">:rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the</span>
-<span class="sd">    key-valued parameters, otherwise nothing.</span>
-<span class="sd">&#39;&#39;&#39;</span>
-        <span class="n">worker</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">worker</span>
-        <span class="n">ack</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="n">oper</span> <span class="o">=</span> <span class="s">&quot;addtask&quot;</span> <span class="k">if</span> <span class="n">ack</span> <span class="k">else</span> <span class="s">&quot;addtask_noack&quot;</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="n">oper</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span>
-                          <span class="p">{</span><span class="s">&#39;from_task&#39;</span><span class="p">:</span> <span class="n">consumer</span><span class="o">.</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">},</span>
-                           <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">res</span> <span class="k">if</span> <span class="n">ack</span> <span class="k">else</span> <span class="bp">None</span>
-
+        
 </div></div>
 <div class="viewcode-block" id="PeriodicJob"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.PeriodicJob">[docs]</a><span class="k">class</span> <span class="nc">PeriodicJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A periodic :class:`Job` implementation.&#39;&#39;&#39;</span>
@@ -406,7 +342,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -423,7 +359,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.tasks &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.tasks &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -61,178 +63,69 @@
             
   <h1>Source code for pulsar.apps.tasks</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;\</span>
-<span class="sd">An asynchronous task-queue built on top :class:`pulsar.Application` framework.</span>
-<span class="sd">By creating :class:`Job` classes in a similar way you can do for celery_,</span>
+<span class="sd">Pulsar ships with an asynchronous :class:`TaskQueue` built on top</span>
+<span class="sd">:ref:`pulsar application framework &lt;apps-framework&gt;`. Task queues are used</span>
+<span class="sd">as a mechanism to distribute work across threads/processes or machines.</span>
+<span class="sd">Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading</span>
+<span class="sd">or multiprocessing (default) mode and can share :class:`backends.Task` across</span>
+<span class="sd">several machines.</span>
+<span class="sd">By creating :class:`models.Job` classes in a similar way you do for celery_,</span>
 <span class="sd">this application gives you all you need for running them with very</span>
 <span class="sd">little setup effort::</span>
 
 <span class="sd">    from pulsar.apps import tasks</span>
 
-<span class="sd">    tq = tasks.TaskQueue(tasks_path=&#39;path.to.tasks.*&#39;)</span>
+<span class="sd">    tq = tasks.TaskQueue(tasks_path=[&#39;path.to.tasks.*&#39;])</span>
 <span class="sd">    tq.start()</span>
-
-<span class="sd">.. _tasks-actions:</span>
-
-<span class="sd">Tutorial</span>
-<span class="sd">==============</span>
-
-<span class="sd">Actions</span>
-<span class="sd">~~~~~~~~~~~~~~~</span>
-
-<span class="sd">The :class:`Taskqueue` application adds the following</span>
-<span class="sd">:ref:`remote actions &lt;api-remote_commands&gt;` to its workers:</span>
-
-<span class="sd">* **addtask** to add a new task to the task queue::</span>
-
-<span class="sd">    send(taskqueue, &#39;addtask&#39;, jobname, task_extra, *args, **kwargs)</span>
-
-<span class="sd"> * *jobname*: the name of the :class:`Job` to run.</span>
-<span class="sd"> * *task_extra*: dictionary of extra parameters to pass to the :class:`Task`</span>
-<span class="sd">   constructor. Usually a empty dictionary.</span>
-<span class="sd"> * *args*: positional arguments for the :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd"> * *kwargs*: key-valued arguments for the :ref:`job callable &lt;job-callable&gt;`.</span>
-
-<span class="sd">* **addtask_noack** same as **addtask** but without acknowleding the sender::</span>
-
-<span class="sd">    send(taskqueue, &#39;addtask_noack&#39;, jobname, task_extra, *args, **kwargs)</span>
 <span class="sd">    </span>
-<span class="sd">* **get_task** retrieve task information. This can be already executed or not.</span>
-<span class="sd">  The implementation is left to the :meth:`Task.get_task` method::</span>
+<span class="sd">To get started, follow the these points:</span>
+
+<span class="sd">* Create the script which runs your application, in the</span>
+<span class="sd">  :ref:`taskqueue tutorial &lt;tutorials-taskqueue&gt;` the script is called</span>
+<span class="sd">  ``manage.py``.</span>
+<span class="sd">* Create the modules where :ref:`jobs &lt;app-taskqueue-job&gt;` are implemented. It</span>
+<span class="sd">  can be a directory containing several submodules as explained in the</span>
+<span class="sd">  :ref:`task paths parameter &lt;app-tasks_path&gt;`.</span>
 <span class="sd">  </span>
-<span class="sd">    send(taskqueue, &#39;get_task&#39;, id)</span>
-<span class="sd">    </span>
-<span class="sd">* **get_tasks** retrieve information for tasks which satisfy the filtering.</span>
-<span class="sd">  The implementation is left to the :meth:`Task.get_tasks` method::</span>
-<span class="sd">  </span>
-<span class="sd">    send(taskqueue, &#39;get_tasks&#39;, **filters)</span>
-<span class="sd">  </span>
-<span class="sd">    </span>
-<span class="sd">Jobs</span>
+
+<span class="sd">.. _app-taskqueue-job:</span>
+
+<span class="sd">Configuration</span>
 <span class="sd">~~~~~~~~~~~~~~~~</span>
+<span class="sd">A :class:`TaskQueue` accepts several configuration parameters on top of the</span>
+<span class="sd">standard :ref:`application settings &lt;settings&gt;`:</span>
 
-<span class="sd">An application implements several :class:`Job`</span>
-<span class="sd">classes which specify the way each :class:`Task` is run.</span>
-<span class="sd">Each job class is a task-factory, therefore, a task is always associated</span>
-<span class="sd">with one job, which can be of two types:</span>
+<span class="sd">.. _app-tasks_path:</span>
 
-<span class="sd">* standard (:class:`Job`)</span>
-<span class="sd">* periodic (:class:`PeriodicJob`)</span>
-
-<span class="sd">.. _job-callable:</span>
-
-<span class="sd">To define a job is simple, subclass from :class:`Job` and implement the</span>
-<span class="sd">**job callable method**::</span>
-
-<span class="sd">    from pulsar.apps import tasks</span>
-
-<span class="sd">    class Addition(tasks.Job):</span>
-
-<span class="sd">        def __call__(self, consumer, a, b):</span>
-<span class="sd">            &quot;Add two numbers&quot;</span>
-<span class="sd">            return a+b</span>
-<span class="sd">            </span>
-<span class="sd">    class Sampler(tasks.Job):</span>
-
-<span class="sd">        def __call__(self, consumer, sample, size=10):</span>
-<span class="sd">            ...</span>
-
-<span class="sd">The *consumer*, instance of :class:`TaskConsumer`, is passed by the</span>
-<span class="sd">:class:`TaskQueue` and should always be the first positional argument in the</span>
-<span class="sd">callable function.</span>
-<span class="sd">The remaining positional arguments and/or key-valued parameters are needed by</span>
-<span class="sd">your job implementation.</span>
-
-<span class="sd">Task Class</span>
-<span class="sd">~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">By default, tasks are constructed using an in-memory implementation of</span>
-<span class="sd">:class:`Task`. To use a different implementation, for example one that</span>
-<span class="sd">saves tasks on a database, subclass :class:`Task` and pass the new class</span>
-<span class="sd">to the :class:`TaskQueue` constructor::</span>
-
-<span class="sd">    from pulsar.apps import tasks</span>
-
-<span class="sd">    class TaskDatabase(tasks.Task):</span>
-
-<span class="sd">        def on_created(self):</span>
-<span class="sd">            return save2db(self)</span>
-
-<span class="sd">        def on_received(self):</span>
-<span class="sd">            return save2db(self)</span>
-
-<span class="sd">        def on_start(self):</span>
-<span class="sd">            return save2db(self)</span>
-
-<span class="sd">        def on_finish(self):</span>
-<span class="sd">            return save2db(self)</span>
-
-<span class="sd">        @classmethod</span>
-<span class="sd">        def get_task(cls, id, remove = False):</span>
-<span class="sd">            return taskfromdb(id)</span>
+<span class="sd">* The :ref:`task_paths &lt;setting-task_paths&gt;` parameter specify</span>
+<span class="sd">  a list of python paths where to collect :class:`models.Job` classes::</span>
+<span class="sd">  </span>
+<span class="sd">      task_paths = [&#39;myjobs&#39;,&#39;another.moduledir.*&#39;]</span>
+<span class="sd">      </span>
+<span class="sd">  The ``*`` at the end of the second module indicates to collect</span>
+<span class="sd">  :class:`models.Job` from all submodules of ``another.moduledir``.</span>
+<span class="sd">  </span>
+<span class="sd">* The :ref:`schedule_periodic &lt;setting-schedule_periodic&gt;` flag indicates</span>
+<span class="sd">  if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,</span>
+<span class="sd">  only one running :class:`TaskQueue` application is responsible for</span>
+<span class="sd">  scheduling tasks while all the other, simply consume tasks.</span>
+<span class="sd">  This parameter can also be specified in the command line via the</span>
+<span class="sd">  ``--schedule-periodic`` flag. Default: ``False``.</span>
+<span class="sd">  </span>
+<span class="sd">* The :ref:`task_backend &lt;setting-task_backend&gt;` parameter is a url</span>
+<span class="sd">  type string which specifies the :class:`backends.TaskBackend`</span>
+<span class="sd">  to use.</span>
 
 
-<span class="sd">    tq = tasks.TaskQueue(task_class=TaskDatabase, tasks_path=&#39;path.to.tasks.*&#39;)</span>
-<span class="sd">    tq.start()</span>
+<span class="sd">.. _app-taskqueue-app:</span>
 
+<span class="sd">Task queue application</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
-<span class="sd">.. _tasks-callbacks:</span>
-
-<span class="sd">Task callbacks</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">When creating your own :class:`Task` class all you need to override are the four</span>
-<span class="sd">task callbacks:</span>
-
-<span class="sd">* :meth:`Task.on_created` called by the taskqueue when it creates a new task</span>
-<span class="sd">  instance.</span>
-<span class="sd">* :meth:`Task.on_received` called by a worker when it receives the task.</span>
-<span class="sd">* :meth:`Task.on_start` called by a worker when it starts the task.</span>
-<span class="sd">* :meth:`Task.on_finish` called by a worker when it ends the task.</span>
-
-
-<span class="sd">and :meth:`Task.get_task` classmethod for retrieving tasks instances.</span>
-
-<span class="sd">.. _task-state:</span>
-
-<span class="sd">Task states</span>
-<span class="sd">~~~~~~~~~~~~~</span>
-
-<span class="sd">A :class:`Task` can have one of the following :attr:`Task.status` string:</span>
-
-<span class="sd">* ``PENDING`` A task waiting for execution and unknown.</span>
-<span class="sd">* ``RETRY`` A task is retrying calculation.</span>
-<span class="sd">* ``RECEIVED`` when the task is received by the task queue.</span>
-<span class="sd">* ``STARTED`` task execution has started.</span>
-<span class="sd">* ``REVOKED`` the task execution has been revoked. One possible reason could be</span>
-<span class="sd">  the task has timed out.</span>
-<span class="sd">* ``UNKNOWN`` task execution is unknown.</span>
-<span class="sd">* ``FAILURE`` task execution has finished with failure.</span>
-<span class="sd">* ``SUCCESS`` task execution has finished with success.</span>
-
-
-<span class="sd">.. attribute:: FULL_RUN_STATES</span>
-
-<span class="sd">    The set of states for which a :class:`Task` has run:</span>
-<span class="sd">    ``FAILURE`` and ``SUCCESS``</span>
-
-<span class="sd">.. attribute:: READY_STATES</span>
-
-<span class="sd">    The set of states for which a :class:`Task` has finished:</span>
-<span class="sd">    ``REVOKED``, ``FAILURE`` and ``SUCCESS``</span>
-
-
-<span class="sd">Queue</span>
-<span class="sd">~~~~~~~~~~~~~~</span>
-
-<span class="sd">By default the queue is implemented using the multiprocessing.Queue</span>
-<span class="sd">from the standard python library. To specify a different queue you can</span>
-<span class="sd">use the ``task-queue`` flag from the command line::</span>
-
-<span class="sd">    python myserverscript.py --task-queue dotted.path.to.callable</span>
-
-<span class="sd">or by setting the ``task_queue_factory`` parameter in the config file</span>
-<span class="sd">or in the :class:`TaskQueue` constructor.</span>
-
+<span class="sd">.. autoclass:: TaskQueue</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
 
 <span class="sd">.. _celery: http://celeryproject.org/</span>
 <span class="sd">&#39;&#39;&#39;</span>
@@ -240,190 +133,142 @@
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">safe_async</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_modules</span><span class="p">,</span> <span class="n">module_attribute</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">command</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">local_property</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span>
 
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.task</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.scheduler</span> <span class="kn">import</span> <span class="n">Scheduler</span>
 <span class="kn">from</span> <span class="nn">.states</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.backends</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.rpc</span> <span class="kn">import</span> <span class="o">*</span>
 
 
-<span class="k">class</span> <span class="nc">TaskQueueFactory</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;cpubound&#39;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;task_queue_factory&quot;</span>
-    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Task Consumer&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;-q&quot;</span><span class="p">,</span> <span class="s">&quot;--task-queue&quot;</span><span class="p">]</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="s">&quot;pulsar.Queue&quot;</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;The task queue factory to use.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">module_attribute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Task Consumer&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
+<span class="s">This section covers configuration parameters used by CPU bound type applications</span>
+<span class="s">such as the :ref:`distributed task queue &lt;apps-taskqueue&gt;` and the</span>
+<span class="s">:ref:`test suite &lt;apps-test&gt;`.&#39;&#39;&#39;</span>
 
 
 <span class="k">class</span> <span class="nc">TaskSetting</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
-
-
-<span class="k">class</span> <span class="nc">TaskPath</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;tasks_path&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Task Consumer&quot;</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="s">&quot;STRING&quot;</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
-    <span class="n">cli</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--tasks-path&quot;</span><span class="p">]</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pulsar.apps.tasks.testing&#39;</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">ConcurrentTasks</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;concurrent_tasks&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--concurrent-tasks&quot;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        List of python dotted paths where tasks are located.</span>
+<span class="s">        The maximum number of concurrent tasks for a worker.</span>
+<span class="s">        </span>
+<span class="s">        When a task worker reach this number it stops polling for more tasks</span>
+<span class="s">        until one or more task finish. It should only affect task queues under</span>
+<span class="s">        significant load.</span>
+<span class="s">        Must be a positive integer. Generally set in the range of 5-10.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
+<span class="k">class</span> <span class="nc">TaskBackendConnection</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;task_backend&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--task-backend&quot;</span><span class="p">]</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="s">&quot;local://&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">        Task backend.</span>
 
-<span class="k">class</span> <span class="nc">CPUboundServer</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A CPU-bound application server.&#39;&#39;&#39;</span>
-    <span class="n">_app_name</span> <span class="o">=</span> <span class="s">&#39;cpubound&#39;</span>
+<span class="s">        A task backend is string which connect to the backend storing Tasks)</span>
+<span class="s">        which accepts one parameter only and returns an instance of a</span>
+<span class="s">        distributed queue which has the same API as</span>
+<span class="s">        :class:`pulsar.MessageQueue`. The only parameter passed to the</span>
+<span class="s">        task queue factory is a :class:`pulsar.utils.config.Config` instance.</span>
+<span class="s">        This parameters is used by :class:`pulsar.apps.tasks.TaskQueue`</span>
+<span class="s">        application.&#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">get_ioqueue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return the distributed task queue which produces tasks to</span>
-<span class="sd">be consumed by the workers.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_queue_factory</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">request_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">request</span>
-
-    <span class="k">def</span> <span class="nf">on_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">request_instance</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">current_requests</span>
-            <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">current_requests</span> <span class="o">=</span> <span class="n">c</span>
-            <span class="n">c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="n">safe_async</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">worker</span><span class="p">,))</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">c</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="k">pass</span>
-
-<span class="c">#################################################    TASKQUEUE COMMANDS</span>
-<span class="n">taskqueue_cmnds</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">internal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">addtask</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_addtask</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span>
-                              <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">internal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ack</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">addtask_noack</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">_addtask</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span>
-                              <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">internal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">save_task</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
-    <span class="c">#import time</span>
-    <span class="c">#time.sleep(0.1)</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">save_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">internal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">delete_tasks</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">delete_tasks</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="o">**</span><span class="n">parameters</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">job_list</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">job_list</span><span class="p">(</span><span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">))</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">next_scheduled</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">next_scheduled</span><span class="p">(</span><span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
-
-<span class="nd">@pulsar.command</span><span class="p">(</span><span class="n">commands_set</span><span class="o">=</span><span class="n">taskqueue_cmnds</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">wait_for_task</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">):</span>
-    <span class="c"># wait for a task to finish for at most timeout seconds</span>
-    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">scheduler</span>
-    <span class="k">return</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">task_class</span><span class="o">.</span><span class="n">wait_for_task</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+    
+<span class="k">class</span> <span class="nc">TaskPaths</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;task_paths&quot;</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        List of python dotted paths where tasks are located.</span>
+<span class="s">        </span>
+<span class="s">        This parameter can only be specified during initialization or in a</span>
+<span class="s">        :ref:`config file &lt;setting-config&gt;`.</span>
+<span class="s">        &quot;&quot;&quot;</span>
+        
+        
+<span class="k">class</span> <span class="nc">SchedulePeriodic</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;schedule_periodic&#39;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--schedule-periodic&quot;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s">&quot;store_true&quot;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">        Enable scheduling of periodic tasks.</span>
+<span class="s">        </span>
+<span class="s">        If enabled, :class:`pulsar.apps.tasks.PeriodicJob` will produce</span>
+<span class="s">        tasks according to their schedule.</span>
+<span class="s">        &#39;&#39;&#39;</span>
 
 
-<div class="viewcode-block" id="TaskQueue"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue">[docs]</a><span class="k">class</span> <span class="nc">TaskQueue</span><span class="p">(</span><span class="n">CPUboundServer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.CPUboundServer` for consuming</span>
-<span class="sd">tasks and managing scheduling of tasks.</span>
+<div class="viewcode-block" id="TaskQueue"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue">[docs]</a><span class="k">class</span> <span class="nc">TaskQueue</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.Application` for consuming</span>
+<span class="sd">task.Tasks and managing scheduling of tasks via a</span>
+<span class="sd">:class:`scheduler.Scheduler`.&#39;&#39;&#39;</span>
+    <span class="n">backend</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
 
-<span class="sd">.. attribute:: registry</span>
-
-<span class="sd">    Instance of a :class:`JobRegistry` containing all</span>
-<span class="sd">    registered :class:`Job` instances.</span>
-<span class="sd">&#39;&#39;&#39;</span>
-    <span class="n">_app_name</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
-    <span class="n">cfg_apps</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;cpubound&#39;</span><span class="p">,)</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timeout&#39;</span><span class="p">:</span> <span class="s">&#39;3600&#39;</span><span class="p">,</span> <span class="s">&#39;backlog&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-    <span class="n">commands_set</span> <span class="o">=</span> <span class="n">taskqueue_cmnds</span>
-    <span class="n">task_class</span> <span class="o">=</span> <span class="n">TaskInMemory</span>
-    <span class="sd">&#39;&#39;&#39;The :class:`Task` class for storing information about task execution.</span>
-
-<span class="sd">Default: :class:`TaskInMemory`</span>
-<span class="sd">&#39;&#39;&#39;</span>
-    <span class="n">scheduler_class</span> <span class="o">=</span> <span class="n">Scheduler</span>
-    <span class="sd">&#39;&#39;&#39;The scheduler class. Default: :class:`Scheduler`.&#39;&#39;&#39;</span>
-
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="TaskQueue.scheduler"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.scheduler">[docs]</a>    <span class="k">def</span> <span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A :class:`Scheduler` which send task to the task queue and</span>
-<span class="sd">produces of periodic tasks according to their schedule of execution.</span>
-
-<span class="sd">At every event loop, the :class:`pulsar.ApplicationMonitor` running</span>
-<span class="sd">the :class:`TaskQueue` application, invokes the :meth:`Scheduler.tick`</span>
-<span class="sd">which check for tasks to be scheduled.</span>
-
-<span class="sd">Check the :meth:`TaskQueue.monitor_task` callback</span>
-<span class="sd">for implementation.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">scheduler</span>
-</div>
-    <span class="k">def</span> <span class="nf">request_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">request_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-
-<div class="viewcode-block" id="TaskQueue.monitor_task"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override the :meth:`pulsar.Application.monitor_task` callback</span>
-<span class="sd">to check if the scheduler needs to perform a new run.&#39;&#39;&#39;</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span>
-        <span class="k">if</span> <span class="n">s</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">next_run</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>
-                <span class="n">s</span><span class="o">.</span><span class="n">tick</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
-</div>
-    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c"># Load the application callable, the task consumer</span>
+    
+<div class="viewcode-block" id="TaskQueue.monitor_start"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;When the monitor starts create the :class:`backends.TaskBackend`.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">()</span>
-        <span class="n">import_modules</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">tasks_path</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="k">def</span> <span class="nf">monitor_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">job_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">job_list</span><span class="p">(</span><span class="n">jobnames</span><span class="o">=</span><span class="n">jobnames</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="TaskQueue.registry"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.registry">[docs]</a>    <span class="k">def</span> <span class="nf">registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">global</span> <span class="n">registry</span>
-        <span class="k">return</span> <span class="n">registry</span>
-
-    <span class="c"># Internals</span></div>
-    <span class="k">def</span> <span class="nf">_addtask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">task_extra</span><span class="p">,</span> <span class="n">ack</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">monitor</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span>
-                                         <span class="o">**</span><span class="n">task_extra</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ack</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">task</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">TaskBackend</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_backend</span><span class="p">,</span>
+                                <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                <span class="n">task_paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">task_paths</span><span class="p">,</span>
+                                <span class="n">schedule_periodic</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">schedule_periodic</span><span class="p">,</span>
+                                <span class="n">max_tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">max_requests</span><span class="p">,</span>
+                                <span class="n">backlog</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="TaskQueue.monitor_task"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Override the :meth:`pulsar.apps.Application.monitor_task` callback</span>
+<span class="sd">to check if the :attr:`scheduler` needs to perform a new run.&#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TaskQueue</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">and</span> <span class="n">monitor</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">next_run</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">tick</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="c"># Make sure we invoke super function so that we get the distributed</span>
+        <span class="c"># task queue</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TaskQueue</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">actorparams</span><span class="p">(</span><span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="c"># workers do not schedule periodic tasks</span>
+        <span class="n">params</span><span class="p">[</span><span class="s">&#39;app&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;schedule_periodic&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span>
+    
+    <span class="k">def</span> <span class="nf">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">be</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;concurrent&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">be</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="p">),</span>
+                 <span class="s">&#39;processed&#39;</span><span class="p">:</span> <span class="n">be</span><span class="o">.</span><span class="n">processed</span><span class="p">}</span>
+        <span class="n">data</span><span class="p">[</span><span class="s">&#39;tasks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tasks</span>
+        <span class="k">return</span> <span class="n">data</span>
+     
+    </div>
+<span class="nd">@command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">next_scheduled</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">jobnames</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">actor</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">actor</span>
+    <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">next_scheduled</span><span class="p">(</span><span class="n">jobnames</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -438,7 +283,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -455,7 +300,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

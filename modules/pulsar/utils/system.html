@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.system &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.utils.system &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -67,7 +69,7 @@
 
 <span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>    <span class="c">#pragma nocover</span>
+<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;posix&#39;</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">.posixsystem</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="k">elif</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&#39;win&#39;</span><span class="p">:</span>    <span class="c">#pragma nocover</span>
     <span class="kn">from</span> <span class="nn">.windowssystem</span> <span class="kn">import</span> <span class="o">*</span>
@@ -92,7 +94,7 @@
             <span class="k">return</span> <span class="s">&#39;</span><span class="si">%.1f%s</span><span class="s">B&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
     <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">B&quot;</span> <span class="o">%</span> <span class="n">b</span>
     
-<div class="viewcode-block" id="system_info"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.system.system_info">[docs]</a><span class="k">def</span> <span class="nf">system_info</span><span class="p">(</span><span class="n">pid</span><span class="p">):</span>
+<div class="viewcode-block" id="system_info"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.system.system_info">[docs]</a><span class="k">def</span> <span class="nf">system_info</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Returns a dictionary of system information for the process with id *pid*.</span>
 <span class="sd">It uses the psutil_ module for the purpose. If psutil_ is not available</span>
 <span class="sd">it returns an empty dictionary.</span>
@@ -101,12 +103,13 @@
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="c">#pragma    nocover</span>
         <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
     <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get_memory_info</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
             <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
             <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_cpu_percent</span><span class="p">(),</span>
-            <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">nice</span><span class="p">,</span>
+            <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_nice</span><span class="p">(),</span>
             <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_num_threads</span><span class="p">()}</span>
     
     </div>
@@ -124,7 +127,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -141,7 +144,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

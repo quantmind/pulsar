@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.route &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -62,29 +64,66 @@
             
   <h1>Source code for pulsar.apps.wsgi.route</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;Routing classes for managing urls.</span>
-<span class="sd">Several classes were originally taken in november 2011</span>
-<span class="sd">from the routing module in werkzeug_.</span>
 
-<span class="sd">Original License</span>
+<span class="sd">.. note::</span>
 
-<span class="sd">:copyright: (c) 2011 by the Werkzeug Team, see AUTHORS for more details.</span>
-<span class="sd">:license: BSD</span>
+<span class="sd">    The :mod:`pulsar.apps.wsgi.route` module was originally from the routing</span>
+<span class="sd">    module in werkzeug_. Original License:</span>
+
+<span class="sd">    copyright (c) 2011 by the Werkzeug Team. License BSD</span>
+
+<span class="sd">.. _werkzeug: https://github.com/mitsuhiko/werkzeug</span>
+
+<span class="sd">A :class:`Route` is a class for relative url paths::</span>
+
+<span class="sd">    r1 = Route(&#39;bla&#39;)</span>
+<span class="sd">    r2 = Route(&#39;bla/foo&#39;)</span>
+
+<span class="sd">Integers::</span>
+
+<span class="sd">    # accept any integer</span>
+<span class="sd">    Route(&#39;&lt;int:size&gt;&#39;)</span>
+<span class="sd">    # accept an integer between 1 and 200 only</span>
+<span class="sd">    Route(&#39;&lt;int(min=1,max=200):size&gt;&#39;)</span>
+<span class="sd">    </span>
+
+<span class="sd">Paths::</span>
+
+<span class="sd">    # accept any path (including slashes)</span>
+<span class="sd">    Route(&#39;&lt;path:pages&gt;&#39;)</span>
+<span class="sd">    # accept an integer between 1 and 200 only</span>
+<span class="sd">    Route(&#39;&lt;path:pages&gt;/edit&#39;)</span>
+<span class="sd">    </span>
+
+
+<span class="sd">.. _apps-wsgi-route-decorator:</span>
+
+<span class="sd">Route decorator</span>
+<span class="sd">==================</span>
+
+<span class="sd">.. autoclass:: route</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">.. _apps-wsgi-route:</span>
+
+<span class="sd">Route</span>
+<span class="sd">================</span>
 
 <span class="sd">.. autoclass:: Route</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 <span class="sd">   </span>
-<span class="sd">   </span>
-<span class="sd">.. _werkzeug: https://github.com/mitsuhiko/werkzeug</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">HttpException</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span> <span class="n">remove_double_slash</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Route&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;route&#39;</span><span class="p">,</span> <span class="s">&#39;Route&#39;</span><span class="p">]</span>
 
 
 <span class="n">_rule_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;&#39;&#39;</span>
@@ -144,6 +183,63 @@
     <span class="k">return</span> <span class="n">converter</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;variable&#39;</span><span class="p">]</span>
 
 
+<div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for creating a (:class:`Route`, ``HTTPmethod``, ``parameters``)</span>
+<span class="sd">tuple and assign it to the ``rule_method`` attribute of the ``callable`` which</span>
+<span class="sd">is decorated. Check the :ref:`HttpBin example &lt;tutorials-httpbin&gt;`</span>
+<span class="sd">for a sample usage.</span>
+
+<span class="sd">:param rule: Optional string for the relative url served by the method which</span>
+<span class="sd">    is decorated. If not supplied, the method name is used.</span>
+<span class="sd">:param method: Optional HTTP method name. Default is `get`.</span>
+<span class="sd">:param defaults: Optional dictionary of default parameters used when</span>
+<span class="sd">    initialising the :class:`Route` instance.</span>
+<span class="sd">:param parameters: Additional parameters used when initialising</span>
+<span class="sd">    the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.</span>
+<span class="sd">    The ``async=True`` parameter will treat the ``callable`` as an asynchronous</span>
+<span class="sd">    component.</span>
+<span class="sd">    </span>
+<span class="sd">The ``callable`` could be an unbound method of a</span>
+<span class="sd">:ref:`Router &lt;wsgi-router&gt;` class or a standard python function::</span>
+
+<span class="sd">    from pulsar.apps import wsgi</span>
+<span class="sd">    </span>
+<span class="sd">    class View(wsgi.Router):</span>
+<span class="sd">    </span>
+<span class="sd">        wsgi.route(&#39;/foo&#39;)</span>
+<span class="sd">        def handle_view(request):</span>
+<span class="sd">            ...</span>
+<span class="sd">            </span>
+<span class="sd">        wsgi.route(&#39;/bla&#39;, async=True)</span>
+<span class="sd">        def asynchronous_handle(request):</span>
+<span class="sd">            result = yield async_function(...)</span>
+<span class="sd">            yield ...</span>
+<span class="sd">            </span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">defaults</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+        
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="nb">callable</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">ENCODE_BODY_METHODS</span><span class="p">:</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="n">m</span>
+                <span class="n">bits</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;get&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="ow">or</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">),</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="nb">callable</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">callable</span>
+        
+    </div>
 <div class="viewcode-block" id="Route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route">[docs]</a><span class="k">class</span> <span class="nc">Route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A Route is a class with a relative :attr:`path`.</span>
 <span class="sd">    </span>
@@ -258,13 +354,13 @@
                 <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">[</span><span class="n">val</span><span class="p">]</span><span class="o">.</span><span class="n">to_url</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">val</span><span class="p">])</span>
             <span class="k">yield</span> <span class="n">val</span>
             
-<div class="viewcode-block" id="Route.url"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">values</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Build a *url* from key valued pairs of variable values.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Route.url"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">urlargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Build a *url* from *urlargs* dictionary.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
             <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">d</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_url_generator</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">urlargs</span><span class="p">)</span>
+            <span class="n">urlargs</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_url_generator</span><span class="p">(</span><span class="n">urlargs</span><span class="p">))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;/&#39;</span>
         <span class="k">else</span><span class="p">:</span>
@@ -527,7 +623,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -544,7 +640,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

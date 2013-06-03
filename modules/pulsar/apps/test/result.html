@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.result &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.test.result &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -62,12 +64,23 @@
             
   <h1>Source code for pulsar.apps.test.result</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">.. autoclass:: TestRunner</span>
+<span class="sd">Plugin</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: Plugin</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 <span class="sd">   </span>
+
+<span class="sd">Test Runner</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: TestRunner</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+<span class="sd">   </span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
 <span class="kn">import</span> <span class="nn">unittest</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -94,17 +107,19 @@
 <div class="viewcode-block" id="Plugin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin">[docs]</a><span class="k">class</span> <span class="nc">Plugin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Interface for all classes which are part of of the :class:`TestRunner`,</span>
 <span class="sd">including :class:`TestRunner` itself, :class:`TestResult`</span>
-<span class="sd">and :class:`Plugin`.&#39;&#39;&#39;</span>
+<span class="sd">and :class:`pulsar.apps.test.TestPlugin`.&#39;&#39;&#39;</span>
     <span class="n">descriptions</span> <span class="o">=</span> <span class="bp">None</span>
 
 <div class="viewcode-block" id="Plugin.configure"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Configure the *instance*. This method is called once just after</span>
-<span class="sd">construction of a :class:`TestRunner` and can be used to configure the</span>
-<span class="sd">plugin. If it returns something other than ``None``</span>
-<span class="sd">(for example an abort message)</span>
+        <span class="sd">&#39;&#39;&#39;Called once just after construction of</span>
+<span class="sd">a :class:`TestRunner` and therefore **before any test class is loaded**.</span>
+<span class="sd">This is a chance to configure the :class:`Plugin` or global variables</span>
+<span class="sd">which may affect the way tests are run.</span>
+<span class="sd">If it returns something other than ``None`` (for example an abort message)</span>
 <span class="sd">it will stop the configuration of all subsequent plugins and quit the test.</span>
 
-<span class="sd">:parameter cfg: instance of :class:`pulsar.Config`.</span>
+<span class="sd">:parameter cfg: a :class:`pulsar.utils.config.Config`.</span>
+<span class="sd">:return: ``None`` unless the tests runner must be stopped.</span>
 <span class="sd">&#39;&#39;&#39;</span>
         <span class="k">pass</span>
     </div>
@@ -112,25 +127,28 @@
     <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Plugin.loadTestsFromTestCase"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.loadTestsFromTestCase">[docs]</a>    <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
-        <span class="k">pass</span>
-</div>
 <div class="viewcode-block" id="Plugin.on_start"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` just before it starts running tests.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` after all tests are loaded but</span>
+<span class="sd">but before it starts running them.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Plugin.on_end"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` just before it stops.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
+<div class="viewcode-block" id="Plugin.loadTestsFromTestCase"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.loadTestsFromTestCase">[docs]</a>    <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_class</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called just before a ``test_class`` executes all its test</span>
+<span class="sd">methods. This is run just before ``setUpClass`` method.&#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+    </div>
 <div class="viewcode-block" id="Plugin.startTest"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.startTest">[docs]</a>    <span class="k">def</span> <span class="nf">startTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called just before a *test* is executed. This is run</span>
-<span class="sd">just before _pre_setup function.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Called just before a ``test`` function is executed. This is run</span>
+<span class="sd">just before ``_pre_setup`` method.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Plugin.stopTest"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.stopTest">[docs]</a>    <span class="k">def</span> <span class="nf">stopTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called just after a *test* has finished. This is run just after</span>
-<span class="sd">the _post_teardown function.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Called just after a ``test`` function has finished. This is run just</span>
+<span class="sd">after the ``_post_teardown`` method.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
     </div>
 <div class="viewcode-block" id="Plugin.before_test_function_run"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.before_test_function_run">[docs]</a>    <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
@@ -206,7 +224,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dots</span> <span class="o">=</span> <span class="n">verbosity</span> <span class="o">==</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">elf</span><span class="o">.</span><span class="n">stream</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">startTest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">showAll</span><span class="p">:</span>
@@ -318,7 +336,7 @@
 
 
 <span class="k">class</span> <span class="nc">TestResult</span><span class="p">(</span><span class="n">Plugin</span><span class="p">):</span>
-
+    <span class="sd">&#39;&#39;&#39;A result of a test run.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">descriptions</span> <span class="o">=</span> <span class="n">descriptions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">testsRun</span> <span class="o">=</span> <span class="mi">0</span>
@@ -460,11 +478,11 @@
     <span class="n">printErrors</span> <span class="o">=</span> <span class="n">testsafe</span><span class="p">(</span><span class="s">&#39;printErrors&#39;</span><span class="p">)</span>
     <span class="n">printSummary</span> <span class="o">=</span> <span class="n">testsafe</span><span class="p">(</span><span class="s">&#39;printSummary&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TestRunner.loadTestsFromTestCase"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.TestRunner.loadTestsFromTestCase">[docs]</a>    <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
+<div class="viewcode-block" id="TestRunner.loadTestsFromTestCase"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.TestRunner.loadTestsFromTestCase">[docs]</a>    <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_cls</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Load all *test* functions for the test class *cls*.&#39;&#39;&#39;</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">testsafe</span><span class="p">(</span><span class="s">&#39;loadTestsFromTestCase&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">)(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">testsafe</span><span class="p">(</span><span class="s">&#39;loadTestsFromTestCase&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">)(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_cls</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">test_cls</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">c</span>
 </div>
@@ -523,7 +541,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -540,7 +558,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

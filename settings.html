@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Settings &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.5.1-beta.1',
+        URL_ROOT:    './',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
     <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -91,13 +93,13 @@ paramaters can be specified.</p>
 <div class="section" id="http-py-parser">
 <span id="setting-http-py-parser"></span><h3>http_py_parser<a class="headerlink" href="#http-py-parser" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--http-py-parser</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Set the python parser as default HTTP parser.</p>
 </div>
 <div class="section" id="debug">
 <span id="setting-debug"></span><h3>debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--debug</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Turn on debugging in the server.</p>
 <p>This limits the number of worker processes to 1 and changes some error
 handling that&#8217;s sent to clients.</p>
@@ -105,7 +107,7 @@ handling that&#8217;s sent to clients.</p>
 <div class="section" id="daemon">
 <span id="setting-daemon"></span><h3>daemon<a class="headerlink" href="#daemon" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-D</span></tt>, <tt class="docutils literal"><span class="pre">--daemon</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Daemonize the Pulsar process (posix only).</p>
 <p>Detaches the server from the controlling terminal and enters the
 background.</p>
@@ -113,20 +115,20 @@ background.</p>
 <div class="section" id="pidfile">
 <span id="setting-pidfile"></span><h3>pidfile<a class="headerlink" href="#pidfile" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-p</span></tt>, <tt class="docutils literal"><span class="pre">--pid</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>A filename to use for the PID file.</p>
 <p>If not set, no PID file will be written.</p>
 </div>
 <div class="section" id="password">
 <span id="setting-password"></span><h3>password<a class="headerlink" href="#password" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--password</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>Set a password for the server</p>
 </div>
 <div class="section" id="user">
 <span id="setting-user"></span><h3>user<a class="headerlink" href="#user" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-u</span></tt>, <tt class="docutils literal"><span class="pre">--user</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>Switch worker processes to run as this user.</p>
 <p>A valid user id (as an integer) or the name of a user that can be
 retrieved with a call to pwd.getpwnam(value) or None to not change
@@ -135,7 +137,7 @@ the worker process user.</p>
 <div class="section" id="group">
 <span id="setting-group"></span><h3>group<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-g</span></tt>, <tt class="docutils literal"><span class="pre">--group</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>Switch worker process to run as this group.</p>
 <p>A valid group id (as an integer) or the name of a user that can be
 retrieved with a call to pwd.getgrnam(value) or None to not change
@@ -174,7 +176,7 @@ the worker processes group.</p>
 <div class="section" id="process-name">
 <span id="setting-process-name"></span><h3>process_name<a class="headerlink" href="#process-name" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-n</span></tt>, <tt class="docutils literal"><span class="pre">--name</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>A base to use with setproctitle for process naming.</p>
 <p>This affects things like <tt class="docutils literal"><span class="pre">ps</span></tt> and <tt class="docutils literal"><span class="pre">top</span></tt>. If you&#8217;re going to be
 running more than one instance of Pulsar you&#8217;ll probably want to set a
@@ -350,7 +352,7 @@ application.</p>
 <span id="setting-schedule-periodic"></span><h3>schedule_periodic<a class="headerlink" href="#schedule-periodic" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Enable scheduling of periodic tasks.</p>
 <p>If enabled, <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.PeriodicJob</span></tt> will produce
 tasks according to their schedule.</p>
@@ -376,7 +378,7 @@ and failed.</p>
 <div class="section" id="labels">
 <span id="setting-labels"></span><h3>labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">None</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>Optional test labels to run. If not provided all tests are run.</p>
 <p>To see available labels use the -l option.</p>
 </div>
@@ -391,14 +393,14 @@ and failed.</p>
 <span id="setting-list-labels"></span><h3>list_labels<a class="headerlink" href="#list-labels" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-l</span></tt>, <tt class="docutils literal"><span class="pre">--list-labels</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>List all test labels without performing tests.</p>
 </div>
 <div class="section" id="sequential">
 <span id="setting-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--sequential</span></tt></p>
-<p><em>Default</em>: <tt class="xref docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Run test functions sequentially. Don&#8217;t run them asynchronously.</p>
 </div>
 </div>
@@ -406,7 +408,7 @@ and failed.</p>
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.utils.config.pass_through">
-<tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">pass_through</tt><big>(</big><em>arg</em><big>)</big><a class="headerlink" href="#pulsar.utils.config.pass_through" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">pass_through</tt><big>(</big><em>arg</em><big>)</big><a class="reference internal" href="modules/pulsar/utils/config.html#pass_through"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.pass_through" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dummy function accepting on parameter only. It does nothing. It is
 used as default by <a class="reference internal" href="#setting-section-application-hooks"><em>Application Hooks</em></a>.</p>
 </dd></dl>
@@ -501,7 +503,7 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -518,7 +520,7 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

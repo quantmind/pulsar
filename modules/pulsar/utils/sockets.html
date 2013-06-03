@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.sockets &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.utils.sockets &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -83,7 +85,7 @@
         
 <span class="kn">from</span> <span class="nn">.system</span> <span class="kn">import</span> <span class="n">platform</span>
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">native_str</span>
-<span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span> 
+<span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlencode</span>
 
 
 <span class="n">WRITE_BUFFER_MAX_SIZE</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="mi">1024</span>  <span class="c"># 128 kb</span>
@@ -337,8 +339,25 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
     
 <div class="viewcode-block" id="parse_connection_string"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.sockets.parse_connection_string">[docs]</a><span class="k">def</span> <span class="nf">parse_connection_string</span><span class="p">(</span><span class="n">netloc</span><span class="p">,</span> <span class="n">default_port</span><span class="o">=</span><span class="mi">8000</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Converts the &quot;netloc&quot; into the database connection parameters.</span>
-<span class="sd">It returns a (scheme, host, params) tuple.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Converts the ``netloc`` into a three elements tuple</span>
+<span class="sd">``(scheme, host, params)`` where ``scheme`` is a string, ``host`` could</span>
+<span class="sd">be a string or a two elements tuple (for a tcp address) and ``params`` a</span>
+<span class="sd">dictionary of parameters. For example::</span>
+
+<span class="sd">    parse_connection_string(&#39;http://127.0.0.1:9080&#39;)</span>
+<span class="sd">    </span>
+<span class="sd">returns::</span>
+
+<span class="sd">    (&#39;http&#39;, (&#39;127.0.0.1&#39;, 9080), {})</span>
+<span class="sd">    </span>
+<span class="sd">and this example::</span>
+
+<span class="sd">    parse_connection_string(&#39;redis://127.0.0.1:6379?db=3&amp;password=bla&#39;)</span>
+<span class="sd">    </span>
+<span class="sd">returns::</span>
+
+<span class="sd">    (&#39;redis&#39;, (&#39;127.0.0.1&#39;, 6379), {&#39;db&#39;: &#39;3&#39;, &#39;password&#39;: &#39;bla&#39;})</span>
+<span class="sd">&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="s">&#39;://&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">netloc</span><span class="p">:</span>
         <span class="n">netloc</span> <span class="o">=</span> <span class="s">&#39;dummy://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">netloc</span>
     <span class="n">scheme</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">fragment</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">netloc</span><span class="p">)</span>
@@ -360,7 +379,13 @@
     <span class="k">if</span> <span class="n">scheme</span> <span class="o">==</span> <span class="s">&#39;dummy&#39;</span><span class="p">:</span>
         <span class="n">scheme</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
     <span class="k">return</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">parse_address</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">default_port</span><span class="p">),</span> <span class="n">params</span>
-    </div>
+</div>
+<span class="k">def</span> <span class="nf">get_connection_string</span><span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="s">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">address</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
+        <span class="n">address</span> <span class="o">+=</span> <span class="s">&#39;?&#39;</span> <span class="o">+</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scheme</span> <span class="o">+</span> <span class="s">&#39;://&#39;</span> <span class="o">+</span> <span class="n">address</span>
+    
 <span class="k">def</span> <span class="nf">create_socket</span><span class="p">(</span><span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sock</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bindto</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">backlog</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">Socket</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">sock</span>
@@ -448,7 +473,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -465,7 +490,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

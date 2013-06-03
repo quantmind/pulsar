@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>JSON-RPC &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>JSON-RPC &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="Asynchronous Shell" href="shell.html" /> 
   </head>
@@ -43,7 +45,7 @@
         <li class="right" >
           <a href="shell.html" title="Asynchronous Shell"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -78,20 +80,20 @@ quickly with a working example.</p>
 <em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">RpcHandler</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
 <dt id="pulsar.apps.rpc.RpcHandler.serve_as">
-<tt class="descname">serve_as</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.serve_as" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">serve_as</tt><em class="property"> = 'rpc'</em><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.serve_as" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prefix for class methods providing remote services. Default: <tt class="docutils literal"><span class="pre">rpc</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.RpcHandler.separator">
-<tt class="descname">separator</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.separator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">separator</tt><em class="property"> = '.'</em><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.separator" title="Permalink to this definition">¶</a></dt>
 <dd><p>HTTP method allowed by this handler.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.rpc.RpcHandler.parent">
 <tt class="descname">parent</tt><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.parent" title="Permalink to this definition">¶</a></dt>
-<dd><p>The parent <a class="reference internal" href="#pulsar.apps.rpc.RpcHandler" title="pulsar.apps.rpc.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> or <tt class="xref docutils literal"><span class="pre">None</span></tt> if this
+<dd><p>The parent <a class="reference internal" href="#pulsar.apps.rpc.RpcHandler" title="pulsar.apps.rpc.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> or <tt class="docutils literal"><span class="pre">None</span></tt> if this
 is the root handler.</p>
 </dd></dl>
 
@@ -105,7 +107,7 @@ is the root handler.</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.RpcHandler.isroot">
 <tt class="descname">isroot</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.RpcHandler.isroot" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if this is the root handler.</p>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this is the root handler.</p>
 </dd></dl>
 
 <dl class="method">
@@ -116,7 +118,7 @@ is the root handler.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>prefix</strong> &#8211; a string defining the prefix of the subhandler</li>
 <li><strong>handler</strong> &#8211; the sub-handler.</li>
 </ul>
@@ -155,11 +157,11 @@ Design to comply with the <a class="reference external" href="http://www.jsonrpc
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>url</strong> &#8211; server location</li>
 <li><strong>version</strong> &#8211; JSONRPC server version. Default <tt class="docutils literal"><span class="pre">2.0</span></tt></li>
-<li><strong>id</strong> &#8211; optional request id, generated if not provided. Default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</li>
-<li><strong>data</strong> &#8211; Extra data to include in all requests. Default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>id</strong> &#8211; optional request id, generated if not provided. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>data</strong> &#8211; Extra data to include in all requests. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li><strong>full_response</strong> &#8211; return the full Http response rather than
 just the content.</li>
 <li><strong>http</strong> &#8211; <p>optional http opener. If provided it must have the <tt class="docutils literal"><span class="pre">request</span></tt>
@@ -167,7 +169,7 @@ method available which must be of the form:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">body</span><span class="o">=...</span><span class="p">,</span> <span class="n">method</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Default <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+<p>Default <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </li>
 </ul>
 </td>
@@ -223,7 +225,7 @@ call is not possible.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>func</strong> &#8211; The function to expose.</li>
 <li><strong>doc</strong> &#8211; Optional doc string. If not provided the doc string of
 <tt class="docutils literal"><span class="pre">func</span></tt> will be used.</li>
@@ -337,7 +339,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -354,7 +356,7 @@ It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServer
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

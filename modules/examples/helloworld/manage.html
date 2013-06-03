@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.helloworld.manage &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>examples.helloworld.manage &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -59,7 +61,7 @@
             
   <h1>Source code for examples.helloworld.manage</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;This example is a simple WSGI_ script which displays</span>
-<span class="sd">the &quot;Hello World!&quot; message. To run the script simply type::</span>
+<span class="sd">the &quot;Hello World!&quot; message. To run the script type::</span>
 
 <span class="sd">    python manage.py</span>
 <span class="sd">    </span>
@@ -80,8 +82,8 @@
 
 
 <div class="viewcode-block" id="hello"><a class="viewcode-back" href="../../../tutorials/hello.html#examples.helloworld.manage.hello">[docs]</a><span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The WSGI_ application handler which returns the an</span>
-<span class="sd">iterable over the &quot;Hello World!&quot; message.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The WSGI_ application handler which returns an iterable</span>
+<span class="sd">over the &quot;Hello World!&quot; message.&#39;&#39;&#39;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;200 OK&#39;</span>
     <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
@@ -115,7 +117,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -132,7 +134,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

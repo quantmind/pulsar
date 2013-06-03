@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Actors API &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Actors API &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Protocols API" href="protocols.html" />
     <link rel="prev" title="Asynchonous API" href="async.html" /> 
@@ -44,7 +46,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchonous API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -94,7 +96,7 @@ the <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt 
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body">an <a class="reference internal" href="#pulsar.ActorProxyDeferred" title="pulsar.ActorProxyDeferred"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyDeferred</span></tt></a>.</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">an <a class="reference internal" href="#pulsar.ActorProxyDeferred" title="pulsar.ActorProxyDeferred"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyDeferred</span></tt></a>.</td>
 </tr>
 </tbody>
 </table>
@@ -123,7 +125,7 @@ a given <em>action</em>.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>target</strong> &#8211; the <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> id or an <a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> or name of
 the target actor which will receive the message.</li>
 <li><strong>action</strong> &#8211; the name of the <a class="reference internal" href="#api-remote-commands"><em>remote command</em></a>
@@ -135,7 +137,7 @@ to perform in the <em>target</em> <a class="reference internal" href="#pulsar.Ac
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> if the action acknowledge the caller or <cite>None</cite>.</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> if the action acknowledge the caller or <cite>None</cite>.</p>
 </td>
 </tr>
 </tbody>
@@ -165,7 +167,7 @@ to perform in the <em>target</em> <a class="reference internal" href="#pulsar.Ac
 <dt id="pulsar.arbiter">
 <tt class="descclassname">pulsar.</tt><tt class="descname">arbiter</tt><big>(</big><em>commands_set=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.arbiter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Obtain the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> instance if we are on the arbiter
-context domain, otherwise it returns <tt class="xref docutils literal"><span class="pre">None</span></tt>.</p>
+context domain, otherwise it returns <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 </div>
@@ -257,7 +259,7 @@ of the actor which can be shared across different processes
 <dt id="pulsar.Actor.thread_pool">
 <tt class="descname">thread_pool</tt><a class="headerlink" href="#pulsar.Actor.thread_pool" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a> associated with this <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>. This attribute
-is <tt class="xref docutils literal"><span class="pre">None</span></tt> unless one is created via the <a class="reference internal" href="#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-meth docutils literal"><span class="pre">create_thread_pool()</span></tt></a>
+is <tt class="docutils literal"><span class="pre">None</span></tt> unless one is created via the <a class="reference internal" href="#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-meth docutils literal"><span class="pre">create_thread_pool()</span></tt></a>
 method.</p>
 </dd></dl>
 
@@ -310,7 +312,7 @@ properly this actor will go out of scope.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>exc</strong> &#8211; optional exception.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>exc</strong> &#8211; optional exception.</td>
 </tr>
 </tbody>
 </table>
@@ -325,7 +327,7 @@ if not already present.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>workers</strong> &#8211; number of threads to use in the <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a></td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>workers</strong> &#8211; number of threads to use in the <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a></td>
 </tr>
 </tbody>
 </table>
@@ -340,21 +342,21 @@ if not already present.</p>
 <dl class="method">
 <dt id="pulsar.Actor.running">
 <tt class="descname">running</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.running" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if actor is running, that is when the <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if actor is running, that is when the <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a>
 is equal to <a class="reference internal" href="#actor-states"><em>ACTOR_STATES.RUN</em></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.Actor.active">
 <tt class="descname">active</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.active" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if actor is active by being both running and having
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if actor is active by being both running and having
 the <a class="reference internal" href="#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a> running.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.Actor.started">
 <tt class="descname">started</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.started" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if actor has started. It does not necessarily
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if actor has started. It does not necessarily
 mean it is running. Its state is greater or equal
 <a class="reference internal" href="#actor-states"><em>ACTOR_STATES.RUN</em></a>.</p>
 </dd></dl>
@@ -362,27 +364,27 @@ mean it is running. Its state is greater or equal
 <dl class="method">
 <dt id="pulsar.Actor.closed">
 <tt class="descname">closed</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.closed" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if actor has exited in an clean fashion. It <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if actor has exited in an clean fashion. It <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a>
 is equal to <a class="reference internal" href="#actor-states"><em>ACTOR_STATES.CLOSE</em></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.Actor.stopped">
 <tt class="descname">stopped</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.stopped" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref docutils literal"><span class="pre">True</span></tt> if actor has exited so that it <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a> is greater
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if actor has exited so that it <a class="reference internal" href="#pulsar.Actor.state" title="pulsar.Actor.state"><tt class="xref py py-attr docutils literal"><span class="pre">state</span></tt></a> is greater
 or equal to <a class="reference internal" href="#actor-states"><em>ACTOR_STATES.CLOSE</em></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.Actor.is_arbiter">
 <tt class="descname">is_arbiter</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.is_arbiter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return <tt class="xref docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">self</span></tt> is the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>.</p>
+<dd><p>Return <tt class="docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">self</span></tt> is the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.Actor.is_monitor">
 <tt class="descname">is_monitor</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.is_monitor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return <tt class="xref docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">self</span></tt> is a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
+<dd><p>Return <tt class="docutils literal"><span class="pre">True</span></tt> if <tt class="docutils literal"><span class="pre">self</span></tt> is a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -431,6 +433,7 @@ pool.</p>
 during its life time.</p>
 <blockquote>
 <div>Default: <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></div></blockquote>
+<p>alias of <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -456,7 +459,7 @@ spawn method when creating new actors.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stop</strong> &#8211; if <tt class="xref docutils literal"><span class="pre">True</span></tt> stops all alive actor.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stop</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> stops all alive actor.</td>
 </tr>
 </tbody>
 </table>
@@ -572,14 +575,14 @@ and the <a class="reference external" href="http://www.tornadoweb.org/">tornado<
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>monitor_class</strong> &#8211; a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a> class.</li>
 <li><strong>monitor_name</strong> &#8211; a unique name for the monitor.</li>
 <li><strong>kwargs</strong> &#8211; dictionary of key-valued parameters for the monitor.</li>
 </ul>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">an instance of a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>.</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">an instance of a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a>.</p>
 </td>
 </tr>
 </tbody>
@@ -715,7 +718,7 @@ and are shared between the <a class="reference internal" href="#pulsar.Actor" ti
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>concurrency</strong> &#8211; string indicating the concurrency implementation.
 Valid choices are <tt class="docutils literal"><span class="pre">monitor</span></tt>, <tt class="docutils literal"><span class="pre">process</span></tt>, <tt class="docutils literal"><span class="pre">thread</span></tt>.</li>
 <li><strong>actor_class</strong> &#8211; <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> or one of its subclasses.</li>
@@ -739,12 +742,6 @@ constructor.</li>
 <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> when it needs CPUbound workers to consume tasks
 on a task queue. An actor can create a new <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a> via
 the <a class="reference internal" href="#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.create_thread_pool()</span></tt></a> method.</p>
-<dl class="attribute">
-<dt id="pulsar.ThreadPool.Process">
-<tt class="descname">Process</tt><a class="headerlink" href="#pulsar.ThreadPool.Process" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">Thread</span></tt></p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -777,8 +774,8 @@ is available in the design documentation.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ack</strong> &#8211; <tt class="xref docutils literal"><span class="pre">True</span></tt> if the command acknowledge the sender with a
-response. Usually is set to <tt class="xref docutils literal"><span class="pre">True</span></tt> (which is also the default value).</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ack</strong> &#8211; <tt class="docutils literal"><span class="pre">True</span></tt> if the command acknowledge the sender with a
+response. Usually is set to <tt class="docutils literal"><span class="pre">True</span></tt> (which is also the default value).</td>
 </tr>
 </tbody>
 </table>
@@ -874,7 +871,7 @@ which don&#8217;t respond to the stop command.</li>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -891,7 +888,7 @@ which don&#8217;t respond to the stop command.</li>
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.rpc &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.apps.rpc &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -60,50 +62,56 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.rpc</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;Asynchronous WSGI Remote Procedure Calls middleware. It implements a</span>
-<span class="sd">JSON-RPC_ server and client.</span>
+<span class="sd">&#39;&#39;&#39;Asynchronous WSGI_ Remote Procedure Calls middleware. It implements a</span>
+<span class="sd">JSON-RPC_ server and client. Check out the</span>
+<span class="sd">:ref:`json-rpc tutorial &lt;tutorials-calculator&gt;` if you want to get started</span>
+<span class="sd">quickly with a working example.</span>
 
-<span class="sd">RPC server</span>
-<span class="sd">=====================</span>
-<span class="sd">To create a server first you create your rpc handler and</span>
-<span class="sd">(optional) subhandlers::</span>
+<span class="sd">API</span>
+<span class="sd">===========</span>
 
-<span class="sd">    from pulsar.apps import rpc, wsgi</span>
-<span class="sd">    </span>
-<span class="sd">    class Root(rpc.PulsarServerCommands):</span>
-<span class="sd">        pass</span>
-<span class="sd">        </span>
-<span class="sd">    class Calculator(rpc.JSONRPC):</span>
-<span class="sd">        </span>
-<span class="sd">        def rpc_add(self, request, a, b):</span>
-<span class="sd">            return float(a) + float(b)</span>
-<span class="sd">        </span>
-<span class="sd">        def rpc_subtract(self, request, a, b):</span>
-<span class="sd">            return float(a) - float(b)</span>
-<span class="sd">        </span>
-<span class="sd">        def rpc_multiply(self, request, a, b):</span>
-<span class="sd">            return float(a) * float(b)</span>
-<span class="sd">        </span>
-<span class="sd">        def rpc_divide(self, request, a, b):</span>
-<span class="sd">            return float(a) / float(b)</span>
-<span class="sd">    </span>
+<span class="sd">RpcHandler</span>
+<span class="sd">~~~~~~~~~~~~~~</span>
 
-<span class="sd">Then you create the WSGI_ middleware::</span>
+<span class="sd">.. autoclass:: RpcHandler</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">JSON RPC</span>
+<span class="sd">~~~~~~~~~~~~~~~~</span>
 
-<span class="sd">    def server():</span>
-<span class="sd">        root = Root().putSubHandler(&#39;calc&#39;,Calculator())</span>
-<span class="sd">        return wsgi.WSGIServer(callable=rpc.RpcMiddleware(root))</span>
-<span class="sd">    </span>
-<span class="sd">    if __name__ == &#39;__main__&#39;:</span>
-<span class="sd">        server().start()</span>
-<span class="sd">    </span>
+<span class="sd">.. autoclass:: JSONRPC</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">JsonProxy</span>
+<span class="sd">~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: JsonProxy</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">rpc method decorator</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: rpc_method</span>
+
+
+<span class="sd">Server Commands</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: PulsarServerCommands</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource  </span>
+<span class="sd">   </span>
 <span class="sd">.. _JSON-RPC: http://www.jsonrpc.org/specification</span>
 <span class="sd">.. _WSGI: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.jsonrpc</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.decorators</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.mixins</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>
 
@@ -119,7 +127,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -136,7 +144,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

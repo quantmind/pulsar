@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.taskqueue.manage &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>examples.taskqueue.manage &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -60,7 +62,7 @@
   <h1>Source code for examples.taskqueue.manage</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;This example creates two :ref:`pulsar applications &lt;apps-framework&gt;`</span>
 <span class="sd">performing different duties. The first application is a distributed</span>
-<span class="sd">a :ref:`task queue &lt;apps-tasks&gt;` for processing tasks implemented</span>
+<span class="sd">a :ref:`task queue &lt;apps-taskqueue&gt;` for processing tasks implemented</span>
 <span class="sd">in the :mod:`examples.taskqueue.simpletasks` module.</span>
 <span class="sd">The second application is a :ref:`WSGI server &lt;apps-wsgi&gt;` which</span>
 <span class="sd">exposes the task queue functionalities via a :ref:`JSON-RPC api &lt;apps-rpc&gt;`.</span>
@@ -84,6 +86,10 @@
 
 <span class="sd">.. autoclass:: RpcRoot</span>
 <span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+<span class="sd">   </span>
+<span class="sd">.. autoclass:: server</span>
+<span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource    </span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="k">try</span><span class="p">:</span>
@@ -92,7 +98,11 @@
     <span class="kn">import</span> <span class="nn">sys</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.path</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">wsgi</span>
+
+<span class="n">Path</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">add2python</span><span class="p">(</span><span class="s">&#39;stdnet&#39;</span><span class="p">,</span> <span class="n">up</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;python-stdnet&#39;</span><span class="p">],</span>
+                                 <span class="n">must_exist</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
 <span class="n">TASK_PATHS</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sampletasks.*&#39;</span><span class="p">]</span>
 
@@ -111,21 +121,27 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tqname</span> <span class="o">=</span> <span class="n">tqname</span>
         
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">RpcRoot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tqname</span><span class="p">))</span>
+        <span class="c"># only post allowed by the JSON RPC handler</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="p">[</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">RpcRoot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tqname</span><span class="p">))]</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="p">[</span><span class="n">wsgi</span><span class="o">.</span><span class="n">GZipMiddleware</span><span class="p">(</span><span class="mi">200</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">(</span><span class="n">middleware</span><span class="o">=</span><span class="n">request</span><span class="p">,</span>
+                                <span class="n">response_middleware</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
     
     
 <div class="viewcode-block" id="server"><a class="viewcode-back" href="../../../tutorials/taskqueue.html#examples.taskqueue.manage.server">[docs]</a><span class="k">class</span> <span class="nc">server</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">MultiApp</span><span class="p">):</span>
-    
+    <span class="sd">&#39;&#39;&#39;Build a multi-app consisting on a taskqueue and a JSON-RPC server.</span>
+<span class="sd">This class shows how to</span>
+<span class="sd">use :class:`pulsar.apps.MultiApp` utility for starting several</span>
+<span class="sd">:ref:`pulsar applications &lt;apps-framework&gt;` at once.&#39;&#39;&#39;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="s">&#39;Taskqueue with JSON-RPC API example&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">tasks_path</span><span class="o">=</span><span class="n">TASK_PATHS</span><span class="p">,</span>
-                                 <span class="n">script</span><span class="o">=</span><span class="n">__file__</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">Rpc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_rpc&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">,</span> <span class="n">task_paths</span><span class="o">=</span><span class="n">TASK_PATHS</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_app</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;rpc&#39;</span><span class="p">,</span>
+                           <span class="nb">callable</span><span class="o">=</span><span class="n">Rpc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
     
 </div>
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">server</span><span class="p">(</span><span class="s">&#39;taskqueue&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 
           </div>
@@ -140,7 +156,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -157,7 +173,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

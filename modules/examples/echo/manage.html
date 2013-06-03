@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.echo.manage &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>examples.echo.manage &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -85,6 +87,12 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
+<span class="sd">Echo Client</span>
+<span class="sd">==================</span>
+
+<span class="sd">.. autoclass:: Echo</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
 
 <span class="sd">Run The example</span>
 <span class="sd">====================</span>
@@ -96,8 +104,15 @@
 <span class="sd">Open a new shell, in this directory, launch python and type::</span>
 
 <span class="sd">    &gt;&gt;&gt; from manage import Echo</span>
-<span class="sd">    &gt;&gt;&gt; p = Echo(&#39;localhost:8060&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; response = p.request(&#39;Hello&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; p = Echo(&#39;localhost:8060&#39;, force_sync=True)</span>
+<span class="sd">    </span>
+<span class="sd">The `force_sync` set to ``True``, force the client to wait for results rather</span>
+<span class="sd">than returning a :class:`pulsar.Deferred`.</span>
+<span class="sd">Check the :ref:`creating synchronous clients &lt;tutorials-synchronous&gt;` tutorial</span>
+<span class="sd">for further information.</span>
+
+<span class="sd">    &gt;&gt;&gt; p.request(&#39;Hello&#39;)</span>
+<span class="sd">    &#39;Hello&#39;</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
@@ -110,51 +125,71 @@
 
 
 <div class="viewcode-block" id="EchoProtocol"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Echo protocol consumer for client and servers.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A symmetric echo protocol consumer for client and servers.</span>
+<span class="sd">The only difference between client and server is the implementation of the</span>
+<span class="sd">:meth:`response` method.&#39;&#39;&#39;</span>
     <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span>
     <span class="sd">&#39;&#39;&#39;A separator for messages.&#39;&#39;&#39;</span>
     
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>        
+    
 <div class="viewcode-block" id="EchoProtocol.data_received"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Implements the :meth:`pulsar.Protocol.data_received` method.</span>
-<span class="sd">It simple search for the :attr:`separator` and if found it invokes the</span>
+<span class="sd">It simply search for the :attr:`separator` and, if found, it invokes the</span>
 <span class="sd">:meth:`response` method with the value of the message.&#39;&#39;&#39;</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">idx</span><span class="p">:</span> <span class="c"># we have a full message</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># we have a full message</span>
             <span class="n">idx</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
             <span class="n">data</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">rest</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+=</span> <span class="n">data</span>
     </div>
     <span class="k">def</span> <span class="nf">start_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_request</span><span class="o">.</span><span class="n">message</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_request</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
         
 <div class="viewcode-block" id="EchoProtocol.response"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Clients store the message in the **result** attribute, while servers</span>
-<span class="sd">sends the message back to the client.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
+        <span class="sd">&#39;&#39;&#39;Clients return the message so that the</span>
+<span class="sd">:attr:`pulsar.ProtocolConsumer.on_finished` deferred is called back with the</span>
+<span class="sd">message value, while servers sends the message back to the client.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
         
 </div></div>
 <span class="k">class</span> <span class="nc">EchoServerProtocol</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">):</span>
     
     <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="c"># write it back</span>
+        <span class="c"># write it back.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="c"># If we get a QUIT message, close the transport. Used by the test suite.</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;QUIT&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     
     
 <div class="viewcode-block" id="Echo"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo">[docs]</a><span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Echo client&#39;&#39;&#39;</span>
     <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">full_response</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Echo</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">full_response</span> <span class="o">=</span> <span class="n">full_response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
 
 <div class="viewcode-block" id="Echo.request"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Build the client request and return a :class:`pulsar.Deferred`</span>
+<span class="sd">which will be called once the server has sent back its response.&#39;&#39;&#39;</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
         <span class="n">request</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_response</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">result_or_self</span><span class="p">()</span>
         
-
 </div></div>
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="s">&#39;Echo Server&#39;</span>
@@ -179,7 +214,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -196,7 +231,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -58,8 +60,9 @@
           <div class="body">
             
   <h1>Source code for pulsar</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -</span>
 <span class="sd">&#39;&#39;&#39;Event driven concurrent framework for Python&#39;&#39;&#39;</span>
-<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.utils.version</span> <span class="kn">import</span> <span class="n">get_version</span>
 
@@ -91,21 +94,30 @@
                 <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: WSGI :: Server&#39;</span><span class="p">,</span>
                 <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: Dynamic Content&#39;</span><span class="p">]</span>
 
-<span class="kn">from</span> <span class="nn">.utils.log</span> <span class="kn">import</span> <span class="o">*</span>
 
 <span class="n">DEFAULT_PORT</span> <span class="o">=</span> <span class="mi">8060</span>
 <span class="n">ASYNC_TIMEOUT</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="n">SERVER_NAME</span> <span class="o">=</span> <span class="s">&#39;Pulsar&#39;</span>
+<span class="n">JAPANESE</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc</span><span class="s">&#39;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+<span class="n">CHINESE</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f</span><span class="s">&#39;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
 <span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s">&quot;python-{0}/{1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SERVER_NAME</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.utils.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.utils.sock</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">.utils.httpurl</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_bytes</span>
+<span class="kn">from</span> <span class="nn">.utils.sockets</span> <span class="kn">import</span> <span class="n">create_socket</span><span class="p">,</span> <span class="n">parse_address</span>
+<span class="kn">from</span> <span class="nn">.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_bytes</span>
 <span class="n">platform</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">platform</span>
 
 <span class="kn">from</span> <span class="nn">.utils.config</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.async</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.apps</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="c">#</span>
+<span class="c"># Import pubsub local backend for commands</span>
+<span class="kn">from</span> <span class="nn">.apps.pubsub</span> <span class="kn">import</span> <span class="n">local</span>
+<span class="k">del</span> <span class="n">local</span>
+<span class="c"># Import tasks local backend for commands</span>
+<span class="kn">from</span> <span class="nn">.apps.tasks.backends</span> <span class="kn">import</span> <span class="n">local</span>
+<span class="k">del</span> <span class="n">local</span>
 </pre></div>
 
           </div>
@@ -120,7 +132,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -137,7 +149,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

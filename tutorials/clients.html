@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Writing Clients &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>Writing Clients &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Http Bin" href="httpbin.html" />
     <link rel="prev" title="WSGI" href="wsgi.html" /> 
@@ -44,7 +46,7 @@
         <li class="right" >
           <a href="wsgi.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -97,7 +99,7 @@ The only difference between client and server is the implementation of the
 <a class="reference internal" href="#examples.echo.manage.EchoProtocol.response" title="examples.echo.manage.EchoProtocol.response"><tt class="xref py py-meth docutils literal"><span class="pre">response()</span></tt></a> method.</p>
 <dl class="attribute">
 <dt id="examples.echo.manage.EchoProtocol.separator">
-<tt class="descname">separator</tt><a class="headerlink" href="#examples.echo.manage.EchoProtocol.separator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">separator</tt><em class="property"> = b'\r\n\r\n'</em><a class="headerlink" href="#examples.echo.manage.EchoProtocol.separator" title="Permalink to this definition">¶</a></dt>
 <dd><p>A separator for messages.</p>
 </dd></dl>
 
@@ -152,7 +154,7 @@ which will be called once the server has sent back its response.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Echo</span><span class="p">(</span><span class="s">&#39;localhost:8060&#39;</span><span class="p">,</span> <span class="n">force_sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The <cite>force_sync</cite> set to <tt class="xref docutils literal"><span class="pre">True</span></tt>, force the client to wait for results rather
+<p>The <cite>force_sync</cite> set to <tt class="docutils literal"><span class="pre">True</span></tt>, force the client to wait for results rather
 than returning a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>.
 Check the <a class="reference internal" href="sync.html#tutorials-synchronous"><em>creating synchronous clients</em></a> tutorial
 for further information.</p>
@@ -197,7 +199,7 @@ for further information.</p>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -214,7 +216,7 @@ for further information.</p>
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 

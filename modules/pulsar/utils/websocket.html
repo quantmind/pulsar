@@ -1,18 +1,20 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.websocket &mdash; pulsar v0.5.1-beta.1 documentation</title>
+    <title>pulsar.utils.websocket &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.1-beta.1',
+        VERSION:     '0.5.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar v0.5.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -36,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar v0.5.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -67,6 +69,7 @@
 <span class="kn">import</span> <span class="nn">array</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">struct</span> <span class="kn">import</span> <span class="n">pack</span><span class="p">,</span> <span class="n">unpack</span>
+<span class="kn">from</span> <span class="nn">array</span> <span class="kn">import</span> <span class="n">array</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="nb">range</span><span class="p">,</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">is_string</span>
@@ -74,6 +77,8 @@
 
 <span class="n">DEFAULT_VERSION</span> <span class="o">=</span> <span class="mi">13</span>
 <span class="n">SUPPORTED_VERSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="n">DEFAULT_VERSION</span><span class="p">,)</span>
+<span class="n">WS_EXTENSIONS</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">WS_PROTOCOLS</span> <span class="o">=</span> <span class="p">{}</span>
 
 <span class="k">if</span> <span class="n">ispy3k</span><span class="p">:</span>
     <span class="n">i2b</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span> <span class="p">:</span> <span class="nb">bytes</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>
@@ -91,10 +96,22 @@
     <span class="k">return</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">i2b</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ints</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">get_version</span><span class="p">(</span><span class="n">version</span><span class="p">):</span>
-    <span class="n">version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">version</span> <span class="ow">or</span> <span class="n">DEFAULT_VERSION</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">version</span> <span class="ow">or</span> <span class="n">DEFAULT_VERSION</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
     <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SUPPORTED_VERSIONS</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;Version </span><span class="si">%s</span><span class="s"> not supported.&#39;</span> <span class="o">%</span> <span class="n">version</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">version</span>
+
+    
+<span class="k">class</span> <span class="nc">Extension</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">data</span>
+        
+    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">data</span>
     
     
 <div class="viewcode-block" id="Frame"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame">[docs]</a><span class="k">class</span> <span class="nc">Frame</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -107,6 +124,14 @@
 <span class="sd">    &gt;&gt;&gt; f.parser.send(bytes[1])</span>
 <span class="sd">    &gt;&gt;&gt; f.parser.send(bytes[2])</span>
 <span class="sd">    &gt;&gt;&gt; f.parser.send(bytes[2:])</span>
+
+<span class="sd">.. attribute:: version</span>
+
+<span class="sd">    The version of the frame protocol.</span>
+<span class="sd">        </span>
+<span class="sd">.. attribute:: masking_key</span>
+
+<span class="sd">    The frame masking key used for encoding and decoding data.</span>
 <span class="sd">&quot;&quot;&quot;</span>
     <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;fin&#39;</span><span class="p">,</span> <span class="s">&#39;opcode&#39;</span><span class="p">,</span> <span class="s">&#39;masking_key&#39;</span><span class="p">,</span> <span class="s">&#39;rsv1&#39;</span><span class="p">,</span> <span class="s">&#39;rsv2&#39;</span><span class="p">,</span> <span class="s">&#39;rsv3&#39;</span><span class="p">,</span>
                  <span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="s">&#39;payload_length&#39;</span><span class="p">,</span> <span class="s">&#39;body&#39;</span><span class="p">)</span>
@@ -153,10 +178,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x8</span>
-    
-    <span class="k">def</span> <span class="nf">on_received</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x9</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pong</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="nf">_build_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="c">#Builds a frame from the instance&#39;s attributes</span>
@@ -212,21 +233,22 @@
             <span class="n">header</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masking_key</span><span class="p">)</span>
             <span class="n">header</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">header</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-                
+       
 <div class="viewcode-block" id="Frame.mask"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.mask">[docs]</a>    <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Performs the masking or unmasking operation on data</span>
-<span class="sd">using the simple masking algorithm::</span>
-
+        <span class="sd">&#39;&#39;&#39;Performs the masking or un-masking operation on data using the</span>
+<span class="sd">simple masking algorithm::</span>
+<span class="sd">    </span>
 <span class="sd">    j = i MOD 4</span>
 <span class="sd">    transformed-octet-i = original-octet-i XOR masking-key-octet-j</span>
-<span class="sd">&quot;&quot;&quot;</span>
-        <span class="n">masked</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">masking_key</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ispy3k</span><span class="p">:</span>  <span class="c">#pragma    nocover</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+<span class="sd">    </span>
+<span class="sd">This method is invoked when encoding/decoding frames with a :attr:`masking_key`</span>
+<span class="sd">attribute set.&#39;&#39;&#39;</span>
+        <span class="n">mask_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masking_key</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">masking_key</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span>
-            <span class="n">masked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">masked</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="o">%</span><span class="mi">4</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">masked</span></div>
+            <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^=</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">mask_size</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span> <span class="k">if</span> <span class="n">ispy3k</span> <span class="k">else</span> <span class="n">data</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span></div>
     <span class="n">unmask</span> <span class="o">=</span> <span class="n">mask</span>
 
     </div>
@@ -243,20 +265,51 @@
 <span class="sd">      in the server)</span>
 <span class="sd">    * 1 for parsing server frames and sending client frames (to be used</span>
 <span class="sd">      by the client)</span>
+<span class="sd">    * 2 Assumes always unmasked data</span>
 <span class="sd">&#39;&#39;&#39;</span>    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">extensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">protocols</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ext_middleware</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions</span> <span class="o">=</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">ws_middleware</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="n">WS_EXTENSIONS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pro_middleware</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocols</span> <span class="o">=</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">ws_middleware</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="n">WS_PROTOCOLS</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_frame</span> <span class="o">=</span> <span class="bp">None</span>  <span class="c">#current frame</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span> <span class="o">=</span> <span class="n">kind</span>
+
+    <span class="k">def</span> <span class="nf">ws_middleware</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="n">mw</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                    <span class="n">av</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">mw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="n">name</span><span class="p">]())</span>
+        <span class="k">return</span> <span class="n">mw</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">av</span><span class="p">)</span>
     
     <span class="nd">@property</span>
 <div class="viewcode-block" id="FrameParser.kind"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.kind">[docs]</a>    <span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kind</span>
     </div>
-<div class="viewcode-block" id="FrameParser.decode"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.decode">[docs]</a>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">extensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">protocols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_protocols</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">masked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="mi">1</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">expect_masked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">False</span>
+    
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">bytearray</span><span class="p">()</span>
-    </div>
+    
 <div class="viewcode-block" id="FrameParser.encode"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">masking_key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Encode data into a :class:`Frame`.</span>
 <span class="sd">        </span>
@@ -264,30 +317,37 @@
 <span class="sd">:parameter masking_key: Optional making key used only if :attr:`kind` is 1 </span>
 <span class="sd">    (Client frames).</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">masked</span><span class="p">:</span>
             <span class="n">masking_key</span> <span class="o">=</span> <span class="n">masking_key</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Frame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">masking_key</span><span class="o">=</span><span class="n">masking_key</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Frame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="FrameParser.ping"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.ping">[docs]</a>    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="FrameParser.ping"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.ping">[docs]</a>    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;return a `ping` :class:`Frame`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0x9</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0x9</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="FrameParser.pong"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.pong">[docs]</a>    <span class="k">def</span> <span class="nf">pong</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="FrameParser.pong"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.pong">[docs]</a>    <span class="k">def</span> <span class="nf">pong</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;return a `pong` :class:`Frame`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0xA</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0xA</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="FrameParser.close"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="FrameParser.close"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;return a `close` :class:`Frame`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0x8</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0x8</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="FrameParser.continuation"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.continuation">[docs]</a>    <span class="k">def</span> <span class="nf">continuation</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="FrameParser.continuation"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.continuation">[docs]</a>    <span class="k">def</span> <span class="nf">continuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;return a `continuation` :class:`Frame`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span>
     </div>
-    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="c"># end of body can be passed manually by putting a length of 0</span>
+<div class="viewcode-block" id="FrameParser.replay_to"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.replay_to">[docs]</a>    <span class="k">def</span> <span class="nf">replay_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Build a :class:`Frame` as a reply to *frame*.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x9</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pong</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="FrameParser.decode"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.FrameParser.decode">[docs]</a>    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Decode bytes data into a :class:`Frame`. If :attr:`kind` is 0</span>
+<span class="sd">it decodes into a client frame (masked frame) while if is 1 or 2 it decodes</span>
+<span class="sd">into a server frame (unmasked).&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">+</span> <span class="n">data</span>
@@ -295,6 +355,7 @@
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span> 
             <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">masked_frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expect_masked</span>
         <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame</span>
         <span class="c"># No opcode yet</span>
         <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -307,12 +368,12 @@
             <span class="n">rsv3</span> <span class="o">=</span> <span class="p">(</span><span class="n">first_byte</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span>
             <span class="n">opcode</span> <span class="o">=</span> <span class="n">first_byte</span> <span class="o">&amp;</span> <span class="mh">0xf</span>
             <span class="k">if</span> <span class="n">fin</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;WEBSOCKET fin must be 0 or 1&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">second_byte</span> <span class="o">&amp;</span> <span class="mh">0x80</span><span class="p">):</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">WebSocketProtocolError</span><span class="p">(</span><span class="s">&#39;FIN must be 0 or 1&#39;</span><span class="p">)</span>
+            <span class="n">is_masked</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">second_byte</span> <span class="o">&amp;</span> <span class="mh">0x80</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">masked_frame</span> <span class="o">!=</span> <span class="n">is_masked</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">masked_frame</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;WEBSOCKET unmasked client frame.&#39;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span>
+                <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;WEBSOCKET masked server frame.&#39;</span><span class="p">)</span>
             <span class="n">payload_length</span> <span class="o">=</span> <span class="n">second_byte</span> <span class="o">&amp;</span> <span class="mh">0x7f</span>
             <span class="c"># All control frames MUST have a payload length of 125 bytes or less</span>
@@ -326,13 +387,13 @@
         <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">masking_key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c"># All control frames MUST have a payload length of 125 bytes or less</span>
             <span class="n">d</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="n">mask_length</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="k">else</span> <span class="mi">0</span>
-            <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span> <span class="o">==</span> <span class="mi">126</span><span class="p">:</span>
+            <span class="n">mask_length</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="n">masked_frame</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span> <span class="o">==</span> <span class="mh">0x7e</span><span class="p">:</span> <span class="c">#126</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">mask_length</span><span class="p">:</span> <span class="c"># 2 + 4 for mask</span>
                      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_buf</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
                 <span class="n">d</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
                 <span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="s">&quot;!H&quot;</span><span class="p">,</span> <span class="n">d</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span> <span class="o">==</span> <span class="mi">127</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span> <span class="o">==</span> <span class="mh">0x7f</span><span class="p">:</span> <span class="c">#127</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">mask_length</span><span class="p">:</span>  <span class="c"># 8 + 4 for mask</span>
                      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_buf</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
                 <span class="n">d</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span> <span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">8</span><span class="p">:]</span>
@@ -351,16 +412,18 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">save_buf</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="c"># We have a frame</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span><span class="p">]</span>
-            <span class="n">frame</span><span class="o">.</span><span class="n">msg</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span><span class="p">]</span> <span class="c"># payload data</span>
+            <span class="n">frame</span><span class="o">.</span><span class="n">msg</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save_buf</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">frame</span><span class="o">.</span><span class="n">payload_length</span><span class="p">:])</span>
+            <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">masking_key</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">unmask</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">unmask</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x1</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s">&quot;replace&quot;</span><span class="p">)</span>
             <span class="n">frame</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">data</span>
             <span class="k">return</span> <span class="n">frame</span>
-            
+            </div>
     <span class="k">def</span> <span class="nf">save_buf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_frame</span> <span class="o">=</span> <span class="n">frame</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="n">data</span>
@@ -379,7 +442,7 @@
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
-      <input type="text" name="q" size="18" />
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
@@ -396,7 +459,7 @@
 
     <div class="footer">
         &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
     </div>
 <script type="text/javascript">
 
