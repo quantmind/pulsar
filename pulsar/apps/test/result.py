@@ -34,7 +34,7 @@ __all__ = ['Plugin',
            'LOGGER']
 
 
-LOGGER = logging.getLogger('TestRunner')
+LOGGER = logging.getLogger('pulsar.test')
 STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 
@@ -141,7 +141,7 @@ class TestResultProxy(Plugin):
 
 
 class TestStream(TestResultProxy):
-    '''handle the writing of test results'''
+    '''Handle the writing of test results'''
     separator1 = '=' * 70
     separator2 = '-' * 70
 

@@ -11,7 +11,7 @@ class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
     def info(self):
         info = yield self.proxy.server_info()
         # get the task queue
-        return info['monitors'][self.name()]
+        yield info['monitors'][self.name()]
         
     def test_kill_task_workers(self):
         tq = yield self.info()

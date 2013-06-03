@@ -641,7 +641,7 @@ CPU-bound thread.'''
                 if task.expiry and time_ended > task.expiry:
                     raise TaskTimeout
                 else:
-                    LOGGER.debug('starting task %s', task)
+                    LOGGER.info('starting task %s', task)
                     yield self.save_task(task_id, status=states.STARTED,
                                          time_started=time_ended)
                     pubsub.publish(self.channel('task_start'), task_id)

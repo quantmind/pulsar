@@ -1,7 +1,8 @@
 import sys
-import copy
+from copy import deepcopy, copy
 from time import time
 import logging
+from threading import Lock
 from multiprocessing import current_process
 
 if sys.version_info < (2,7):    #pragma    nocover
@@ -25,6 +26,7 @@ __all__ = ['dictConfig',
            'Synchronized',
            'local_method',
            'local_property',
+           'threadsafe',
            'LocalMixin']
 
 
@@ -92,27 +94,7 @@ def update_config(config, c):
     for name in ('handlers', 'formatters', 'filters', 'loggers', 'root'):
         if name in c:
             config[name].update(c[name])
-
-
-class LocalMixin(object):
-    '''The :class:`LocalMixin` defines "local" attributes which are
-removed when pickling the object'''
-    @property
-    def local(self):
-        if not hasattr(self, '_local'):
-            self._local = AttributeDictionary()
-        return self._local
     
-    def clear_local(self):
-        self.__dict__.pop('_local', None)
-        
-    def __getstate__(self):
-        '''Remove the local dictionary.'''
-        d = self.__dict__.copy()
-        d.pop('_local', None)
-        return d
-    
-
 def local_method(f):
     name = f.__name__
     def _(self):
@@ -126,6 +108,39 @@ def local_method(f):
 def local_property(f):
     return property(local_method(f), doc=f.__doc__)
 
+def threadsafe(f):
+    def _(self, *args, **kwargs):
+        with self.lock:
+            return f(self, *args, **kwargs)
+    _.__doc__ = f.__doc__
+    _.__name__ = f.__name__
+    return _
+    
+    
+class LocalMixin(object):
+    '''The :class:`LocalMixin` defines "local" attributes which are
+removed when pickling the object'''
+    @property
+    def local(self):
+        if not hasattr(self, '_local'):
+            self._local = AttributeDictionary()
+        return self._local
+    
+    @local_property
+    def lock(self):
+        '''A local threading.Lock.'''
+        return Lock()
+    
+    def clear_local(self):
+        self.__dict__.pop('_local', None)
+        
+    def __getstate__(self):
+        '''Remove the local dictionary.'''
+        d = self.__dict__.copy()
+        d.pop('_local', None)
+        return d
+    
+    
 def lazymethod(f):
     name = '_lazy_%s' % f.__name__
     def _(self):
@@ -175,13 +190,13 @@ process domain).'''
         logconfig = original = process_global('_config_logging')
         # if the logger was not configured, do so.
         if not logconfig:
-            logconfig = copy.deepcopy(LOGGING_CONFIG)
+            logconfig = deepcopy(LOGGING_CONFIG)
             if config:
                 update_config(logconfig, config)
             original = logconfig
             process_global('_config_logging', logconfig, True)
         else:
-            logconfig = copy.deepcopy(logconfig)
+            logconfig = deepcopy(logconfig)
             logconfig['disable_existing_loggers'] = False
             logconfig.pop('loggers', None)
             logconfig.pop('root', None)

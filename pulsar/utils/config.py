@@ -163,13 +163,17 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             self.import_from_module(config)
 
     def __getattr__(self, name):
-        return self.get(name)
+        try:
+            return self._get(name)
+        except KeyError:
+            raise AttributeError("'%s' object has no attribute '%s'." %
+                                 (self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
-
+    
     def update(self, data):
         '''Update this :attr:`Config` with ``data`` which is either an
 instance of Mapping or :class:`Config`.'''
@@ -185,9 +189,10 @@ following this algorithm:
 * returns the ``name`` value in the :attr:`params` dictionary if available.
 * returns the ``default`` value.
 '''
-        if name not in self.settings:
-            return self.params.get(name, default)
-        return self.settings[name].get()
+        try:
+            return self._get(name, default)
+        except KeyError:
+            return default
 
     def set(self, name, value, default=False):
         '''Set the configuration :class:`Setting` at *name* with a new
@@ -329,6 +334,15 @@ is given, it prefixes all non
                 if setting.app and setting.app not in self.apps:
                     continue    # the setting is for an app not in the apps set
             self.settings[setting.name] = setting
+            
+    def _get(self, name, default=None):
+        if name not in self.settings:
+            if name in KNOWN_SETTINGS:
+                return default
+            if name in self.params:
+                return self.params[name]
+            raise KeyError("'%s'" % name)
+        return self.settings[name].get()
     
             
 

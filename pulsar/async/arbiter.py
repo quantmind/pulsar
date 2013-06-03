@@ -217,10 +217,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
                         self._remove_actor(m)
                 else:
                     m.start()
-            try:
-                self.cfg.arbiter_task(self)
-            except Exception:
-                pass
         self.event_loop.call_soon(self.periodic_task)
 
     def _stop(self):

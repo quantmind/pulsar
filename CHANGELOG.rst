@@ -1,5 +1,6 @@
 Ver. 0.5.1 - Development
 ==============================
+* Fixed ``ThreadPool`` for for python 2.6.
 * Added the :func:`pulsar.safe_async` function for safely executing synchronous
   and asynchronous callables.
 * The :meth:`pulsar.utils.config.Config.get` method never fails. It return the
@@ -9,6 +10,7 @@ Ver. 0.5.1 - Development
 * :ref:`Wsgi Router <wsgi-router>` makes sure that the ``pulsar.cache`` key in the
   ``environ`` does not contain asynchronous data before invoking the callable
   serving the request.
+* **445 regression tests**, **87% coverage**.
 
 Ver. 0.5.0 - 2013-May-22
 ==============================

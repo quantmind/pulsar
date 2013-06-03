@@ -1,5 +1,6 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import pickle
+import sys
 from datetime import datetime, timedelta
 
 import pulsar
@@ -102,6 +103,7 @@ class TestWsgiMiddleware(unittest.TestCase):
         try:
             raise ValueError('just a test')
         except ValueError:
-            response = wsgi.handle_wsgi_error(environ)
+            failure = pulsar.maybe_failure(sys.exc_info())
+            response = wsgi.handle_wsgi_error(environ, failure)
         self.assertEqual(response.status_code, 500)
             

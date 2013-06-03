@@ -4,6 +4,7 @@ from threading import Thread, current_thread
 
 from pulsar import system, platform
 from pulsar.utils.security import gen_unique_id
+from pulsar.utils.pep import pickle
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, get_actor_from_id
@@ -69,6 +70,8 @@ and are shared between the :class:`Actor` and its
     def get_actor(self):
         self.daemon = True
         self.params['monitor'] = get_proxy(self.params['monitor'])
+        # make sure these parameters are pickable
+        #pickle.dumps(self.params)
         return ActorProxyMonitor(self)
 
 

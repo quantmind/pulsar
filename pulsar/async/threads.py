@@ -267,23 +267,8 @@ class ThreadPool(pool.ThreadPool):
 :class:`Actor` when it needs CPUbound workers to consume tasks
 on a task queue. An actor can create a new :class:`ThreadPool` via
 the :meth:`Actor.create_thread_pool` method.'''
-    Process = Thread
-    created = 0
-    
-    def _repopulate_pool(self):
-        """Bring the number of pool processes up to the specified number,
-        for use after reaping workers which have exited.
-        """
-        for i in range(self._processes - len(self._pool)):
-            self.created = self.created + 1
-            w = self.Process(target=PoolWorker,
-                             args=(self._inqueue, self._outqueue,
-                                   self._initializer,
-                                   self._initargs, self._maxtasksperchild),
-                             name='PoolThread%s' % self.created)
-            self._pool.append(w)
-            w.daemon = True
-            w.start()
+    def Process(self, target=None, **kwargs):
+        return Thread(target=PoolWorker, **kwargs)
     
     def apply(self, *args, **kwargs):
         raise NotImplementedError('Use apply_async')

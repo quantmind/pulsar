@@ -238,6 +238,7 @@ API
 
 .. module:: pulsar.apps.test
 
+
 Test Plugin
 ~~~~~~~~~~~~~~~~~~~
 
@@ -386,10 +387,11 @@ is a group of tests specified in a test class.
                         plugins=(),
                         logconfig={
                                    'loggers': {
-                                LOGGER.name: {'handlers': ['console_message'],
-                                              'level': logging.INFO}
-                                               }
-                                   })
+                                   'pulsar.test': {
+                                        'handlers': ['console_message'],
+                                        'level': logging.WARNING}
+                                    }
+                        })
     @local_property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
@@ -403,7 +405,8 @@ configuration and plugins.'''
             raise ExitTest(str(abort_message))
         return runner
 
-    def on_config(self):
+    @local_property
+    def loader(self):
         #When config is available load the tests and check what type of
         #action is required.
         modules = self.cfg.get('modules')
@@ -413,8 +416,10 @@ configuration and plugins.'''
             modules = ['tests']
         if hasattr(modules, '__call__'):
             modules = modules(self)
-        loader = TestLoader(self.root_dir, modules, runner, logger=self.logger)
-        # Listing labels
+        return TestLoader(self.root_dir, modules, runner, logger=self.logger)
+    
+    def on_config(self):
+        loader = self.loader
         if self.cfg.list_labels:
             tags = self.cfg.labels
             if tags:
@@ -433,8 +438,7 @@ configuration and plugins.'''
                 print(tag)
             print('\n')
             return False
-        self.local.loader = loader
-
+    
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         super(TestSuite, self).monitor_start(monitor)
@@ -458,8 +462,8 @@ configuration and plugins.'''
             print(str(e))
             monitor.arbiter.stop()
         except Exception:
-            LOGGER.critical('Error occurred before starting tests',
-                            exc_info=True)
+            self.logger.critical('Error occurred before starting tests',
+                                 exc_info=True)
             monitor.arbiter.stop()
 
     @classmethod

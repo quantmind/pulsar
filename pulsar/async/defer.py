@@ -230,22 +230,23 @@ This syntax will always return a :class:`Deferred`::
 
     def __call__(self, func):
         def _(*args, **kwargs):
-            try:
-                result = func(*args, **kwargs)
-            except Exception:
-                result = sys.exc_info()
-            return maybe_async(result, **self.params)
+            return self.call(func, *args, **kwargs)
         _.__name__ = func.__name__
         _.__doc__ = func.__doc__
         _.async = True
         return _
-
-
-_safe_async = async(get_result=False)
-def safe_async(callable, *args, **kwargs):
-    '''Safely execute a ``callable`` and always return a :class:`Deferred`,
+    
+    def call(self, callable, *args, **kwargs):
+        '''Safely execute a ``callable`` and always return a :class:`Deferred`,
 even if the ``callable`` is not asynchronous. Never throws.'''
-    return _safe_async(callable)(*args, **kwargs)
+        try:
+            result = callable(*args, **kwargs)
+        except Exception:
+            result = sys.exc_info()
+        return maybe_async(result, **self.params)
+
+
+safe_async = async(get_result=False).call
 
         
 ############################################################### FAILURE

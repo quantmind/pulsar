@@ -9,7 +9,12 @@ from pulsar.apps.test import unittest
 
 class TestEventLoop(unittest.TestCase):
     
-    def testIOloop(self):
+    def test_request_loop(self):
+        request_loop = pulsar.get_request_loop()
+        event_loop = get_event_loop()
+        self.assertNotEqual(event_loop, request_loop)
+        
+    def test_io_loop(self):
         ioloop = get_event_loop()
         self.assertTrue(ioloop)
         self.assertNotEqual(ioloop.tid, current_thread().ident)
