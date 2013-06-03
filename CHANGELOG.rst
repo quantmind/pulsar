@@ -1,3 +1,7 @@
+Ver. 0.5.2 - Development
+==============================
+
+
 Ver. 0.5.1 - 2013-June-03
 ==============================
 * Several bug fixes and more docs.
