@@ -131,9 +131,11 @@ def default_maybe_failure(value, msg=None):
 def default_maybe_async(val, get_result=True, **kwargs):
     if isgenerator(val):
         val = Task(val, **kwargs)
-        return val.result_or_self() if get_result else val
-    elif is_async(val):
-        return val.result_or_self() if get_result else val
+    if isinstance(val, Deferred):
+        if get_result and val.done():
+            return val.result
+        else:
+            return val
     elif get_result:
         return maybe_failure(val)
     else:
@@ -545,16 +547,6 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         self._state = state or _FINISHED
         self._run_callbacks()
         return self.result
-
-    def result_or_self(self):
-        '''It returns the :attr:`result` only if available and all
-callbacks have been consumed, otherwise it returns this :class:`Deferred`.
-Users should use this method to obtain the result, rather than accessing
-directly the :attr:`result` attribute.'''
-        if self.done() and not self._callbacks:
-            return self.result
-        else:
-            return self
         
     def raise_all(self):
         '''raise an exception only if :meth:`done` is ``True`` and

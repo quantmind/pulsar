@@ -437,7 +437,7 @@ raise TimeoutError (but don't cancel the future).'''
                 handler.cancel()
             else:
                 raise TimeoutError
-        result = future.result_or_self()
+        result = future.result
         if is_failure(result):
             result.raise_all()
         else:

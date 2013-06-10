@@ -125,8 +125,11 @@ which will be called once the server has sent back its response.'''
         response = self.response(request)
         if self.full_response:
             return response
+        elif response.on_finished.done():
+            return response.on_finished.result
         else:
-            return response.on_finished.result_or_self()
+            return response.on_finished
+            
         
 
 def server(description=None, **kwargs):
