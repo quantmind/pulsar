@@ -38,6 +38,7 @@ Wsgi Response
 .. _WSGI: http://www.wsgi.org
 '''
 import json
+import re
 from functools import reduce
 
 from pulsar.utils.multipart import parse_form_data, parse_options_header
@@ -45,7 +46,7 @@ from pulsar.utils.structures import MultiValueDict, AttributeDictionary
 from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
                                  has_empty_content, string_type, ispy3k,\
                                  ENCODE_URL_METHODS, JSON_CONTENT_TYPES,\
-                                 urlencode
+                                 urlencode, remove_double_slash, iri_to_uri
 
 from .middleware import is_streamed
 from .content import HtmlDocument
@@ -58,6 +59,7 @@ __all__ = ['EnvironMixin', 'Accept', 'WsgiResponse',
            'WsgiRequest', 'cached_property']
 
 MAX_BUFFER_SIZE = 2**16
+absolute_http_url_re = re.compile(r"^https?://", re.I)
 
 def cached_property(f):
     name = f.__name__
@@ -449,23 +451,35 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
         return host
         
     def full_path(self, *args, **query):
+        '''Return a full path'''
+        path = None
         if args:
             if len(args) > 1:
                 raise TypeError("full_url() takes exactly 1 argument "
                                 "(%s given)" % len(args))
             path = args[0]
+        if path is None:
+            path = self.path
+            if not query:
+                query = self.environ.get('QUERY_STRING', '')
+        elif not path.startswith('/'):
+            path = remove_double_slash('%s/%s' % (self.path, path))
+        return iri_to_uri(path, **query)
+        
+    def absolute_uri(self, location=None, scheme=None):
+        '''Builds an absolute URI from the ``location`` and the variables
+available in this request. If no location is specified, the relative URI
+is built from :meth:`full_path`.'''
+        if not location or not absolute_http_url_re.match(location):
+            location = self.full_path(location)
+            if not scheme:
+                scheme = self.is_secure and 'https' or 'http'
+            base = '%s://%s' % (scheme, self.get_host())
+            return '%s%s' % (base, location)
+        elif not scheme:
+            return iri_to_uri(location)
         else:
-            path = self.environ['PATH_INFO']
-        if query:
-            params = sql.url_data
-            params.update(query)
-            query = urlencode(params)
-        else:
-            query = self.environ.get('QUERY_STRING', '')
-        if query:
-            return '%s?%s' % (path, query)
-        else:
-            return path
+            raise ValueError('Absolute location with scheme not valid')
     
 
 set_wsgi_request_class(WsgiRequest)

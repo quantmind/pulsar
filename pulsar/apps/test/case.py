@@ -143,14 +143,11 @@ Run a *test* function using the following algorithm
 Return `True` if *failure* is a failure, otherwise return `False`.'''
         failure = maybe_failure(failure)
         if is_failure(failure):
-            for trace in failure:
-                e = trace[1]
-                try:
-                    raise e
-                except test.failureException:
-                    runner.addFailure(test, trace)
-                except Exception:
-                    runner.addError(test, trace)
-                return True
+            if failure.isinstance(test.failureException):
+                runner.addFailure(test, failure.trace)
+            else:
+                runner.addError(test, failure.trace)
+            return True
         else:
             return False
+        

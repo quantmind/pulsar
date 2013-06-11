@@ -45,7 +45,7 @@ class Site(wsgi.LazyWsgi):
         data = data % request.environ
         request.response.content_type = 'text/html'
         request.response.content = data
-        return request.response.start()
+        return request.response
 
 
 def server(**kwargs):

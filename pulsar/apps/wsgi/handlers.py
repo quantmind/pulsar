@@ -451,7 +451,8 @@ returns ``utf-8``.'''
 class MediaMixin(Router):
     accept_content_types = ('application/octet-stream', 'text/css')
     cache_control = CacheControl(maxage=86400)
-    
+    _file_path = ''
+        
     def serve_file(self, request, fullpath):
         # Respect the If-Modified-Since header.
         statobj = os.stat(fullpath)
@@ -539,16 +540,20 @@ directory.
         self._show_indexes = show_indexes
         self._file_path = path
         
+    def filesystem_path(self, request):
+        bits = request.urlargs['path'].split('/')
+        '''Retrieve the filesystem path for this request.'''
+        if len(bits) == 1 and bits[0] == '':
+            bits.pop(0)
+        return os.path.join(self._file_path, *bits)
+    
     def get(self, request):
-        paths = request.urlargs['path'].split('/')
-        if len(paths) == 1 and paths[0] == '':
-            paths.pop(0)
-        fullpath = os.path.join(self._file_path, *paths)
+        fullpath = self.filesystem_path(request)
         if os.path.isdir(fullpath):
             if self._show_indexes:
                 return self.directory_index(request, fullpath)
             else:
-                raise PermissionDenied()
+                raise PermissionDenied
         elif os.path.exists(fullpath):
             return self.serve_file(request, fullpath)
         else:
@@ -556,11 +561,18 @@ directory.
 
 
 class FileRouter(MediaMixin):
-    
+    '''A Router for a single file.'''
     def __init__(self, route, file_path):
         super(FileRouter, self).__init__(route)
         self._file_path = file_path
         
+    def filesystem_path(self, request):
+        return self._file_path
+        
     def get(self, request):
-        return self.serve_file(request, self._file_path)
+        fullpath = self.filesystem_path(request)
+        if os.path.isfile(fullpath):
+            return self.serve_file(request, fullpath)
+        else:
+            raise Http404
     

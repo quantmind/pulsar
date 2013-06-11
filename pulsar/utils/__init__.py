@@ -81,4 +81,5 @@ HTML & Text
 ==================
 
 .. automodule:: pulsar.utils.html
+   :members:
 '''

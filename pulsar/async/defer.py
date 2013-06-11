@@ -761,12 +761,17 @@ function when a generator is passed as argument.'''
         
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
-    '''A :class:`Deferred` for managing a stream if independent objects
-which may be :class:`Deferred`.
+    '''A :class:`Deferred` for managing a ``collection`` of independent
+asynchronous objects. The ``collection`` can be either a ``list`` or
+a ``dict``.
+The :class:`MultiDeferred` is recursive on values which are ``generators``,
+``dic``, ``lists`` and ``sets``. It is not recursive on immutable
+containers such as tuple, and frozenset.
 
-.. attribute:: lock
+.. attribute:: locked
 
-    If ``True`` items can no longer be added to this :class:`MultiDeferred`.
+    When ``True``, the :meth:`update` or :meth:`append` methods can no longer
+    be used.
     
 .. attribute:: type
 
@@ -776,11 +781,10 @@ which may be :class:`Deferred`.
 
     When ``True`` and at least one value of the result collections is a
     :class:`Failure`, the callback will receive the failure rather than
-    the collection of results. Default ``True``.
+    the collection of results.
     
-The :class:`MultiDeferred` is recursive on values which are generators,
-dictionaries, lists and sets. It is not recursive on immutable
-containers such as tuple, and frozenset.
+    Default ``True``.
+
 '''
     _locked = False
     _time_locked = None
@@ -827,7 +831,7 @@ containers such as tuple, and frozenset.
 
     def lock(self):
         '''Lock the :class:`MultiDeferred` so that no new items can be added.
-If it was alread :attr:`locked` a runtime exception is raised.'''
+If it was alread :attr:`locked` a runtime exception occurs.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\
                         ' cannot be locked twice.')
@@ -839,20 +843,23 @@ If it was alread :attr:`locked` a runtime exception is raised.'''
 
     def update(self, stream):
         '''Update the :class:`MultiDeferred` with new data. It works for
-both ``list`` and ``dict`` types.'''
+both ``list`` and ``dict`` :attr:`type`.'''
         add = self._add
         for key, value in iterdata(stream, len(self._stream)):
             add(key, value)
         return self
 
     def append(self, value):
-        '''Append only works for a list type multideferred'''
+        '''Append a new ``value`` to this asynchronous container. Works for a
+list :attr:`type` only.'''
         if self.type == 'list':
             self._add(len(self._stream), value)
         else:
             raise RuntimeError('Cannot append a value to a "dict" type '
                                'multideferred')
 
+    ###    INTERNALS
+    
     def _add(self, key, value):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\

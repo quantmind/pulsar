@@ -1,16 +1,4 @@
 '''Utilities for HTML and text manipulation.
-
-.. autofunction:: escape
-
-.. autofunction:: mark_safe
-
-.. autofunction:: slugify
-
-.. autofunction:: capfirst
-
-.. autofunction:: nicename
-
-.. autofunction:: tag_attributes
 '''
 import re
 import json
@@ -20,6 +8,7 @@ from collections import namedtuple
 from .pep import ispy3k, native_str, to_string, iteritems, is_string, string_type
 
 NOTHING = ('', b'', None)
+'''Tuple of elements considered as null.'''
 INLINE_TAGS = set(('input', 'meta', 'hr'))
 DEFAULT_HTML_ATTRIBUTES = ('id', 'title')
 HTML_ATTRIBUTES = {}
@@ -61,6 +50,22 @@ HTML_CHILDREN_TAG['ul'] = 'li'
 HTML_CHILDREN_TAG['ol'] = 'li'
 HTML_CHILDREN_TAG['select'] = 'option'
 
+## COMMON HTML ENTITIES
+## Check http://www.w3schools.com/tags/ref_symbols.asp for more
+################################################################################
+HTML_NON_BREACKING_SPACE = '&nbsp;'
+'''HTML non breaking space symbol.'''
+HTML_LESS_THEN = '&lt;'
+'''HTML < symbol.'''
+HTML_GREATER_THEN = '&gt;'
+'''HTML > symbol.'''
+HTML_AMPERSAND = '&amp;'
+'''HTML & symbol.'''
+HTML_ENDASH = '&ndash;'
+'''HTML - symbol.'''
+HTML_EMDASH = '&mdash;'
+'''HTML -- symbol.'''
+
 csslink = namedtuple('cssentry', 'link condition')
 
 def tag_attributes(tag, type=None):
@@ -74,6 +79,7 @@ dictionary, the ``DEFAULT_HTML_ATTRIBUTES`` set is returned.'''
     return HTML_ATTRIBUTES.get(tag, DEFAULT_HTML_ATTRIBUTES)
     
 def child_tag(tag):
+    '''The default children ``tag`` for a given ``tag``.'''
     return HTML_CHILDREN_TAG.get(tag)
 
 def slugify(value, rtx='_'):
@@ -96,8 +102,12 @@ quotes and angle brackets encoded."""
     if html in NOTHING:
         return ''
     else:
-        return to_string(html).replace('&', '&amp;').replace('<', '&lt;')\
-            .replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
+        return to_string(html)\
+                .replace('&', '&amp;')\
+                .replace('<', '&lt;')\
+                .replace('>', '&gt;')\
+                .replace("'", '&#39;')\
+                .replace('"', '&quot;')
             
 def attr_iter(attrs):
     for k, v in iteritems(attrs):

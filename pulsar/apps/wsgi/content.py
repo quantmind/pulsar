@@ -555,14 +555,16 @@ or scripts.
 
 .. attribute:: media_path
 
-    The path to the local media files, for example "/media/". Must
+    The base url path to the local media files, for example ``/media/``. Must
     include both slashes.
     
 .. attribute:: minified
 
-    Optional flag indicating if local media files should be modified to
-    end with ``.min.js`` or ``.min.css` rather than ``.js`` or ``.css``
+    Optional flag indicating if relative media files should be modified to
+    end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
     rispectively.
+    
+    Default: ``False``
     
 .. attribute:: known_libraries
 
@@ -570,6 +572,8 @@ or scripts.
     valid absolute or local url. For example::
     
         known_libraries = {'jquery': '//code.jquery.com/jquery-1.9.1.min.js'}
+        
+    Default: ``None``
 '''
     mediatype = ('js', 'css')
     
@@ -585,7 +589,8 @@ or scripts.
         raise NotImplementedError
         
     def is_relative(self, path):
-        '''Check if ``path`` is a local relative path.'''
+        '''Check if ``path`` is a local relative path. A path is local relative
+when it does not start with a slash ``/`` nor ``http://`` nor ``https://``.'''
         if path.startswith('http://') or path.startswith('https://')\
                 or path.startswith('/'):
             return False
@@ -593,7 +598,15 @@ or scripts.
             return True
     
     def absolute_path(self, path):
-        '''Return a suitable url for ``path``.'''
+        '''Return a suitable absolute url for ``path``. The url is calculated
+in the following way:
+
+* Check if ``path`` is an entry in the :attr:`known_libraries` dictionary. In
+  this case replace ``path`` with ``known_libraries[path]``.
+* If ``path`` :meth:`is_relative` build a sutable url by prepending the 
+  :attr:`media_path` attribute.
+  
+:return: A url path to insert in a HTML ``link`` or ``script``.'''
         if path in self.known_libraries:
             path = self.known_libraries[path]
         if self.is_relative(path):
@@ -606,7 +619,7 @@ or scripts.
             return remove_double_slash('/%s/%s' % (self.media_path, path))
         else:
             return path
-
+        
     def _minify(self, path, postfix):
         new_postfix = '.min%s' % postfix
         if not path.endswith(new_postfix):
