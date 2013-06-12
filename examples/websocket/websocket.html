@@ -10,7 +10,7 @@
     $(document).ready(function() {
         var data = {};
         var ws = new WebSocket("ws://%(HTTP_HOST)s/data");
-        ws.onmessage = function(e) {
+        ws.onmessage = function (e) {
           //alert('got ' + e.data);
           try {
 	          var data = $.parseJSON(e.data);

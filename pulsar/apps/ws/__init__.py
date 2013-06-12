@@ -82,24 +82,28 @@ from . import extensions
 WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 
-class GeneralWebSocket(wsgi.Router):
-    '''A websocket middleware.
-    
+class WebSocket(wsgi.Router):
+    """A specialised :ref:`Router <wsgi-router>` middleware for
+handling the websocket handshake at a given route.
+Once the handshake is succesful, the protocol consumer
+is upgraded to :class:`WebSocketProtocol` and messages are handled by
+the :attr:`handle` attribute, an instance of :class:`WS`.
+
+See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
+http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
+
 .. attribute:: frame_parser
 
     A factory of websocket frame parsers
-'''
-    namespace = ''
+    """
     frame_parser = FrameParser
     
-    def __init__(self, route, handle, frame_parser=None, start_response=False,
-                 **kwargs):
-        super(GeneralWebSocket, self).__init__(route, **kwargs)
+    def __init__(self, route, handle, frame_parser=None, **kwargs):
+        super(WebSocket, self).__init__(route, **kwargs)
         self.handle = handle
-        self.start_response = start_response
         if frame_parser:
             self.frame_parser = frame_parser
-        
+            
     def get(self, request):
         headers_parser = self.handle_handshake(request.environ)
         if not headers_parser:
@@ -113,22 +117,6 @@ class GeneralWebSocket(wsgi.Router):
                         request, parser))
         return request.response
     
-    def handle_handshake(self, environ):
-        '''handle the websocket handshake. Must return a list of HTTP
-headers to send back to the client.'''
-        raise NotImplementedError
-        
-    
-class WebSocket(GeneralWebSocket):
-    """A specialised :ref:`Router <wsgi-router>` middleware for
-handling the websocket handshake at a given route.
-Once the handshake is succesful, the protocol consumer
-is upgraded to :class:`WebSocketProtocol` and messages are handled by
-the :attr:`handle` attribute, an instance of :class:`WS`.
-
-See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
-http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
-    """        
     def handle_handshake(self, environ):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
                                     .replace(' ','').split(',')
@@ -181,22 +169,20 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
         return native_str(base64.b64encode(sha1.digest()))
-    
-    def get_parser(self):
-        return FrameParser()
 
 
 class WS(object):
-    '''A web socket handler. It maintains
-an open socket with a remote web-socket and exchange messages in
-an asynchronous fashion. The communication is started by the
+    '''A web socket handler for both servers and clients. It implements
+the asynchronous message passing for a :class:`WebSocketProtocol`.
+On the server, the communication is started by the
 :class:`WebSocket` middleware after a successful handshake.
  
-Override :meth:`on_message` to handle incoming messages.
+Override :meth:`on_message` to handle incoming string messages,
+:meth:`on_bytes` to handle incoming ``bytes`` messages
 You can also override :meth:`on_open` and :meth:`on_close` to handle opened
 and closed connections.
 These methods accept as first parameter the
-:class:`pulsar.apps.wsgi.wrappers.WsgiRequest` created during the handshake.
+:class:`WebSocketProtocol` created during the handshake.
 '''
     def on_open(self, request):
         """Invoked when a new WebSocket is opened."""
@@ -204,9 +190,20 @@ These methods accept as first parameter the
 
     def on_message(self, request, message):
         '''Handles incoming messages on the WebSocket.
-This method must be overloaded. Whatever is returned by this method
-is handled by :class:`WebSocketProtocol.write` method.'''
-        raise NotImplementedError
+This method must be overloaded.'''
+        pass
+    
+    def on_bytes(self, request, body):
+        '''Handles incoming bytes'''
+        pass
+    
+    def on_ping(self, request, body):
+        '''Handle incoming ping ``Frame``.'''
+        self.write(request, self.pong(request))
+        
+    def on_pong(self, request, body):
+        '''Handle incoming pong ``Frame``.'''
+        pass
 
     def on_close(self, request):
         """Invoked when the WebSocket is closed."""
@@ -216,11 +213,19 @@ is handled by :class:`WebSocketProtocol.write` method.'''
         '''An utility method for writing a message to the client.
 It uses the :class:`WebSocketProtocol` which is accessible from the *request*
 parameter. It is a proxy for the :class:`WebSocketProtocol.write` method.'''
-        return request.cache['websocket'].write(message)
+        return request.cache.websocket.write(message)
+    
+    def pong(self, request, body=None):
+        '''Return a ``pong`` frame.'''
+        return request.cache.websocket.parser.pong(body)
+    
+    def ping(self, request, body=None):
+        '''Return a ``ping`` frame.'''
+        return request.cache.websocket.parser.ping(body)
         
         
 class WebSocketProtocol(pulsar.ProtocolConsumer):
-    '''Websocket protocol for servers and clients.'''
+    '''WebSocket protocol for servers and clients.'''
     request = None
     started = False
     closed = False
@@ -228,25 +233,40 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
     def data_received(self, data):
         frame = self.parser.decode(data)
         while frame:
-            self.write(self.parser.replay_to(frame))
             if frame.is_close:
-                return self.close()
-            if not self.started:
-                self.started = True
-                self.write(self.handler.on_open(self.request))
-            if frame.is_data:
-                self.write(self.handler.on_message(self.request, frame.body))
+                self.close()
+            else:
+                self._handle_frame(frame)
             frame = self.parser.decode()
     
-    def write(self, value):
-        '''Write a new *frame* into the wire, frame can be:
+    @async()
+    def _handle_frame(self, frame):
+        if not self.started:
+            self.started = True
+            yield self.handler.on_open(self.request)
+        if frame.is_message:
+            yield self.handler.on_message(self.request, frame.body)
+        elif frame.is_bytes:
+            yield self.handler.on_bytes(self.request, frame.body)
+        elif frame.is_ping:
+            yield self.handler.on_ping(self.request, frame.body)
+        elif frame.is_pong:
+            yield self.handler.on_pong(self.request, frame.body)
+            
+    def write(self, frame):
+        '''Write a new ``frame`` into the wire,
+``frame`` can be:
 
 * ``None`` does nothing
-* bytes - converted to a byte Frame
-* string - converted to a string Frame
+* ``bytes`` - converted to a byte Frame
+* ``string`` - converted to a string Frame
 * a :class:`pulsar.utils.websocket.Frame`
  '''
-        self._async_write(value).add_errback(self.close)
+        if not isinstance(frame, Frame):
+            frame = self.parser.encode(frame)
+        self.transport.write(frame.msg)
+        if frame.is_close:
+            self.close()
             
     def close(self, error=None):
         if not self.closed:
@@ -254,25 +274,11 @@ class WebSocketProtocol(pulsar.ProtocolConsumer):
             self.closed = True
             self.handler.on_close(self.request)
             self.transport.close()
-    
-    # INTERNAL 
-    @async(get_result=False)
-    def _async_write(self, value):
-        frame = yield value
-        if frame is None:
-            return
-        elif not isinstance(frame, Frame):
-            frame = self.parser.encode(frame)
-            self.transport.write(frame.msg)
-        else:
-            self.transport.write(frame.msg)
-        if frame.is_close:
-            self.close()
+
     
 class WebSocketServerProtocol(WebSocketProtocol):
-    '''Created after a successful websocket handshake. Tjis is a
-:class:`pulsar.ProtocolConsumer` which manages the communication with the
-websocket client.'''
+    '''The :class:`WebSocketProtocol` for servers, created after a successful
+:class:`WebSocket` handshake.'''
     def __init__(self, handler, request, parser, connection):
         super(WebSocketServerProtocol, self).__init__(connection)
         connection.set_timeout(0)

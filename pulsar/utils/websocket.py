@@ -102,18 +102,37 @@ specification supporting protocol version 13::
         
     @property
     def final(self):
+        '''Flag indicating if this is a final frame or not.'''
         return bool(self.fin)
     
     @property
     def masked(self):
+        '''Indicate if the frame is masked.'''
         return bool(self.masking_key)
     
     @property
+    def is_message(self):
+        '''Indicate if the frame is a ``string`` message.'''
+        return self.opcode == 0x1
+    
+    @property
+    def is_bytes(self):
+        '''Indicate if the frame is a ``string`` message.'''
+        return self.opcode == 0x2
+    
+    @property
     def is_data(self):
+        '''Indicate if the frame is a ``string`` or ``bytes``.'''
         return self.opcode in (0x1, 0x2)
     
     @property
+    def is_ping(self):
+        '''A :class:`Frame` representing a ping.'''
+        return self.opcode == 0x9
+    
+    @property
     def is_close(self):
+        '''A :class:`Frame` representing a close request.'''
         return self.opcode == 0x8
     
     def _build_frame(self, message):
