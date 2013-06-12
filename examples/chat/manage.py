@@ -71,13 +71,13 @@ application.
     def __init__(self, pubsub):
         self.pubsub = pubsub
         
-    def on_open(self, request):
+    def on_open(self, websocket):
         '''When a new websocket connection is established it creates a
 :ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
 of clients of the :attr:`pubsub` handler.'''
-        self.pubsub.add_client(PubSubClient(request.cache['websocket']))
+        self.pubsub.add_client(PubSubClient(websocket))
         
-    def on_message(self, request, msg):
+    def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
         if msg:
             lines = []

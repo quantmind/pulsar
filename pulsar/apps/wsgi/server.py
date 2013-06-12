@@ -254,9 +254,8 @@ when the ``wsgi_iter`` yields bytes only.'''
         return response
         
     def catastrofic_failure(self, environ, failure):
-        response = WsgiResponse(500)
-        self.start_response(response.status, response.get_headers(), exc_info)
-        return response
+        self.keep_alive = False
+        self.finish_wsgi()
         
     def finish_wsgi(self):
         if not self.keep_alive:

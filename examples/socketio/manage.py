@@ -29,12 +29,12 @@ class Graph(ws.WS):
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
-        return wsgi.WsgiHandler([wsgi.Router('/', get=self.home),
-                                 ws.WebSocket('/data', Graph())])
+        return wsgi.WsgiHandler([wsgi.Router('', get=self.home),
+                                 ws.SocketIO('data', Graph())])
     
     def home(self, request):
         data = open(os.path.join(os.path.dirname(__file__), 
-                     'websocket.html')).read()
+                     'socketio.html')).read()
         data = data % request.environ
         request.response.content_type = 'text/html'
         request.response.content = data

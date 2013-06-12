@@ -5,6 +5,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse
 
+from pulsar import is_failure
 from pulsar.apps import wsgi, ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import lazyproperty
@@ -35,12 +36,12 @@ application.'''
         p.subscribe('webchat')
         return p
             
-    def on_open(self, request):
+    def on_open(self, websocket):
         '''When a new websocket connection is established it add connection
 to the set of clients listening for messages.'''
-        self.pubsub.add_client(Client(request.cache['websocket']))
+        self.pubsub.add_client(Client(websocket))
         
-    def on_message(self, request, msg):
+    def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.'''
         if msg:
             lines = []
@@ -50,7 +51,7 @@ to the set of clients listening for messages.'''
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                user = request.get('django.cache').user
+                user = websocket.environ['django.cache'].user
                 if user.is_authenticated():
                     user = user.username
                 else:
@@ -62,8 +63,7 @@ to the set of clients listening for messages.'''
 class middleware(object):
     '''Middleware for serving the Chat websocket'''
     def __init__(self):
-        self._web_socket = ws.WebSocket('/message', Chat(),
-                                        start_response=False)
+        self._web_socket = ws.WebSocket('/message', Chat())
         
     def process_request(self, request):
         data = AttributeDictionary(request.__dict__)
@@ -72,6 +72,8 @@ class middleware(object):
         response = self._web_socket(environ, None)
         if response is not None:
             # Convert to django response
+            if is_failure(response):
+                response.raise_all()
             resp = HttpResponse(status=response.status_code,
                                 content_type=response.content_type)
             for header, value in response.headers:

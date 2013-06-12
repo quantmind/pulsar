@@ -1,6 +1,6 @@
 Ver. 0.5.2 - Development
 ==============================
-
+* WebSocket handlers accept the WebSocket protocol as first argument.
 
 Ver. 0.5.1 - 2013-June-03
 ==============================

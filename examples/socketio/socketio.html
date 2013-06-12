@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>SocketIO example in pulsar</title>
+<script src="//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.5/require.min.js"></script>
+<script>
+requirejs.config({
+    paths: {
+        jquery: "//code.jquery.com/jquery-1.9.1.min",
+        flot: "//cdnjs.cloudflare.com/ajax/libs/flot/0.8/jquery.flot.min",
+        socketio: "//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.10/socket.io.min"
+    },
+    shim: {
+        flot: {
+            deps: ['jquery']
+        }
+    }
+});
+require(['jquery', 'socketio', 'flot'], function () {
+    var $ = jQuery;
+    $(document).ready(function() {
+        var data = {};
+        var ws = io.connect("http://%(HTTP_HOST)s", {resource: "data"});
+        ws.onmessage = function (e) {
+          //alert('got ' + e.data);
+          try {
+	          var data = $.parseJSON(e.data);
+	          $.plot('#holder', [data],
+	                  {
+	                    series: {
+	                      lines: { show: true, fill: true },
+	                    },
+	                    yaxis: { min: 0 },
+	                  } );
+          } catch(e){}
+          ws.send('more data');
+        };
+        ws.onopen = function() {
+            ws.send('hi there');
+        };
+    });
+});
+</script>
+</head>
+<body>
+<h3>SocketIO Plot</h3>
+<div id="holder" style="width:600px;height:300px"></div>
+</body>
+</html>
