@@ -82,4 +82,10 @@ HTML & Text
 
 .. automodule:: pulsar.utils.html
    :members:
+   
+Path
+==================
+
+.. automodule:: pulsar.utils.html
+   :members:
 '''

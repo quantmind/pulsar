@@ -10,7 +10,7 @@ __all__ = ['Path']
 
 
 class Path(string_type):
-
+    '''A lightweight utility for the filesystem and python modules.'''
     def __new__(cls, path=None):
         path = path or ''
         abspath = os.path.abspath(path)
@@ -65,6 +65,7 @@ class Path(string_type):
         return p
         
     def ispymodule(self):
+        '''Check if this :class:`Path` is a python module.'''
         if self.isdir():
             return os.path.isfile(os.path.join(self, '__init__.py'))
         elif self.isfile():
