@@ -64,7 +64,7 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
                                     .replace(' ','').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
            'upgrade' not in connections:
-            return
+            raise HttpException(status=400)
         if environ['REQUEST_METHOD'].upper() != 'GET':
             raise HttpException(msg='Method is not GET', status=400)
         key = environ.get('HTTP_SEC_WEBSOCKET_KEY')

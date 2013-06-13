@@ -22,23 +22,19 @@ require(['jquery', 'socketio', 'flot'], function () {
     $(document).ready(function() {
         var data = {};
         var ws = io.connect("http://%(HTTP_HOST)s", {resource: "data"});
-        ws.onmessage = function (e) {
-          //alert('got ' + e.data);
-          try {
-	          var data = $.parseJSON(e.data);
-	          $.plot('#holder', [data],
-	                  {
-	                    series: {
-	                      lines: { show: true, fill: true },
-	                    },
-	                    yaxis: { min: 0 },
-	                  } );
-          } catch(e){}
-          ws.send('more data');
-        };
-        ws.onopen = function() {
+        ws.on('connect', function(){
+            ws.on('message', function(message, data) {
+				var data = $.parseJSON(e.data);
+				$.plot('#holder', [data],
+				        {
+				          series: {
+				            lines: { show: true, fill: true },
+				          },
+				          yaxis: { min: 0 },
+				        });
+			});
             ws.send('hi there');
-        };
+        });
     });
 });
 </script>
