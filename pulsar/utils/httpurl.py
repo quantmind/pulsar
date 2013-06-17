@@ -80,7 +80,7 @@ def http_parser(**kwargs):
     return _Http_Parser(**kwargs)
 
 from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, ispy26
+from .pep import ispy3k, ispy26, iteritems, itervalues
 
 create_connection = socket.create_connection
 LOGGER = logging.getLogger('httpurl')
@@ -119,8 +119,6 @@ if ispy3k: # Python 3
     map = map
     range = range
     chr = chr
-    iteritems = lambda d : d.items()
-    itervalues = lambda d : d.values()
     is_string = lambda s: isinstance(s, str)
 
     def to_bytes(s, encoding=None, errors=None):
@@ -171,8 +169,6 @@ else:   # pragma : no cover
     ascii_letters = string.letters
     range = xrange
     chr = unichr
-    iteritems = lambda d : d.iteritems()
-    itervalues = lambda d : d.itervalues()
     is_string = lambda s: isinstance(s, unicode)
 
     if sys.version_info < (2, 7):
