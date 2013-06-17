@@ -343,6 +343,7 @@ event loop is the place where most asynchronous operations are carried out.
         self._scheduled = []
         self._name = None
         self.num_loops = 0
+        self._default_executor = None
         self._waker = self.install_waker()
     
     def __repr__(self):
@@ -501,6 +502,26 @@ to transfer control from other threads to the EventLoop's thread.'''
         timeout = self.call_soon(callback, *args)
         self.wake()
         return timeout
+    
+    def run_in_executor(self, executor, callback, *args):
+        '''Arrange to call ``callback(*args)`` in an executor.
+NOT YET SUPPORTED.'''
+        executor = executor or self._default_executor
+        if executor is None:
+            from pulsar import ThreadPool
+            executor = ThreadPool(_MAX_WORKERS)
+            self._default_executor = executor
+        return wrap_future(executor.submit(callback, *args), loop=self)
+        
+    def set_default_executor(self, executor):
+        self._default_executor = executor
+        
+    def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
+        return self.run_in_executor(None, socket.getaddrinfo,
+                                    host, port, family, type, proto, flags)
+
+    def getnameinfo(self, sockaddr, flags=0):
+        return self.run_in_executor(None, socket.getnameinfo, sockaddr, flags)
         
     def add_reader(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""

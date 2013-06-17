@@ -72,29 +72,29 @@ def mail_client(cfg, timeout=10):
 class WsMail(ws.WS):
     ''':ref:`Websocket handler <websocket-handler>` for fetching and
 sending mail via the twisted IMAP4 library.'''
-    def on_open(self, request):
+    def on_open(self, websocket):
         '''When the websocket starts, it create a new mail client.'''
+        request = websocket.request
         client = yield mail_client(request.cache.cfg)
         #add the mail client to the environ cache
         request.cache.mailclient = client
         # retrieve the list of mailboxes and them to the client
-        yield self._send_mailboxes(request)
+        yield self._send_mailboxes(websocket)
         
-    def on_message(self, request, msg):
-        client = request.cache.get('mailclient')
+    def on_message(self, websocket, msg):
+        request = websocket.request
+        client = request.cache.mailclient
         if msg and client:
             msg = json.loads(msg)
             if 'mailbox' in msg:
-                mailbox = msg['mailbox']
-                future = client.examine(mailbox)
-                yield future
-                result = future.result
-                self.write(request, json.dumps({'mailbox': result}))
+                mailbox = yield client.examine(msg['mailbox'])
+                self.write(request, json.dumps({'mailbox': mailbox}))
 
-    def _send_mailboxes(self, request):
+    def _send_mailboxes(self, websocket):
+        request = websocket.request
         result = yield request.cache.mailclient.list("","*")
         result = sorted([e[2] for e in result])
-        self.write(request, json.dumps({'list': result}))
+        websocket.write(json.dumps({'list': result}))
 
 
 class WebMail(wsgi.LazyWsgi):

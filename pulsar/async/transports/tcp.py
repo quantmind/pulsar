@@ -81,7 +81,9 @@ class TCP(SocketTransport):
                         LOGGER.info('Could not accept new connection')
                         break
                     raise
-                self._protocol.data_received(sock, address)
+                self._handle_accept(sock, address)
         except Exception:
             LOGGER.exception('Could not accept new connection')
         
+    def _handle_accept(self, sock, address):
+        self._protocol.data_received(sock, address)

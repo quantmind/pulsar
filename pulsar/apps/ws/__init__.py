@@ -12,13 +12,13 @@ back to the client::
     
     class EchoWS(ws.WS):
     
-        def on_open(self, request):
+        def on_open(self, websocket):
             pass
     
-        def on_message(self, request, message):
-            return message
+        def on_message(self, websocket, message):
+            websocket.write(message)
     
-        def on_close(self, request):
+        def on_close(self, websocket):
             pass
             
 To create a valid :class:`WebSocket` middleware initialise as follow::
