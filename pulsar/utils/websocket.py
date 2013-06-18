@@ -374,10 +374,10 @@ into a server frame (unmasked).'''
             for extension in self.extensions:
                 data = extension.receive(frame, data)
             if frame.masking_key:
-                data = frame.unmask(data)
+                payload = frame.unmask(payload)
             if frame.opcode == 0x1:
-                data = data.decode("utf-8", "replace")
-            frame.body = data
+                payload = payload.decode("utf-8", "replace")
+            frame.body = payload
             return frame
             
     def save_buf(self, frame, data):

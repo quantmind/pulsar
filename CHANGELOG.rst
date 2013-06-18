@@ -1,5 +1,6 @@
 Ver. 0.5.2 - Development
 ==============================
+* Critical bug fix in WebSocket frame parser.
 * WebSocket handlers accept the WebSocket protocol as first argument.
 
 Ver. 0.5.1 - 2013-June-03
