@@ -339,6 +339,17 @@ the best match.'''
         if router_args:
             router, args = router_args
             return router.response(environ, start_response, args)
+        else:
+            if self.route.is_leaf:
+                if path.endswith('/'):
+                    router_args = self.resolve(path[:-1])
+                    if router_args is not None:
+                        raise HttpRedirect('/%s' % path[:-1])
+            else:
+                if not path.endswith('/'):
+                    router_args = self.route.match('%s/' % path)
+                    if router_args is not None:
+                        raise HttpRedirect('/%s/' % path)
         
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -346,16 +357,6 @@ the best match.'''
         urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
-            if self.route.is_leaf:
-                if path.endswith('/'):
-                    match = self.route.match(path[:-1])
-                    if match is not None and not match:
-                        return Redirect(path[:-1]), None
-            else:
-                if not path.endswith('/'):
-                    match = self.route.match('%s/' % path)
-                    if match is not None:
-                        return Redirect('%s/' % path), None
             return
         if '__remaining__' in match:
             remaining_path = match['__remaining__']
