@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -620,14 +620,16 @@
 
 <span class="sd">.. attribute:: media_path</span>
 
-<span class="sd">    The path to the local media files, for example &quot;/media/&quot;. Must</span>
+<span class="sd">    The base url path to the local media files, for example ``/media/``. Must</span>
 <span class="sd">    include both slashes.</span>
 <span class="sd">    </span>
 <span class="sd">.. attribute:: minified</span>
 
-<span class="sd">    Optional flag indicating if local media files should be modified to</span>
-<span class="sd">    end with ``.min.js`` or ``.min.css` rather than ``.js`` or ``.css``</span>
+<span class="sd">    Optional flag indicating if relative media files should be modified to</span>
+<span class="sd">    end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``</span>
 <span class="sd">    rispectively.</span>
+<span class="sd">    </span>
+<span class="sd">    Default: ``False``</span>
 <span class="sd">    </span>
 <span class="sd">.. attribute:: known_libraries</span>
 
@@ -635,6 +637,8 @@
 <span class="sd">    valid absolute or local url. For example::</span>
 <span class="sd">    </span>
 <span class="sd">        known_libraries = {&#39;jquery&#39;: &#39;//code.jquery.com/jquery-1.9.1.min.js&#39;}</span>
+<span class="sd">        </span>
+<span class="sd">    Default: ``None``</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">mediatype</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;js&#39;</span><span class="p">,</span> <span class="s">&#39;css&#39;</span><span class="p">)</span>
     
@@ -650,7 +654,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         </div>
 <div class="viewcode-block" id="Media.is_relative"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.is_relative">[docs]</a>    <span class="k">def</span> <span class="nf">is_relative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Check if ``path`` is a local relative path.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Check if ``path`` is a local relative path. A path is local relative</span>
+<span class="sd">when it does not start with a slash ``/`` nor ``http://`` nor ``https://``.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;https://&#39;</span><span class="p">)</span>\
                 <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">False</span>
@@ -658,7 +663,15 @@
             <span class="k">return</span> <span class="bp">True</span>
     </div>
 <div class="viewcode-block" id="Media.absolute_path"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.absolute_path">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return a suitable url for ``path``.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Return a suitable absolute url for ``path``. The url is calculated</span>
+<span class="sd">in the following way:</span>
+
+<span class="sd">* Check if ``path`` is an entry in the :attr:`known_libraries` dictionary. In</span>
+<span class="sd">  this case replace ``path`` with ``known_libraries[path]``.</span>
+<span class="sd">* If ``path`` :meth:`is_relative` build a sutable url by prepending the </span>
+<span class="sd">  :attr:`media_path` attribute.</span>
+<span class="sd">  </span>
+<span class="sd">:return: A url path to insert in a HTML ``link`` or ``script``.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">:</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span><span class="p">[</span><span class="n">path</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_relative</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
@@ -671,7 +684,7 @@
             <span class="k">return</span> <span class="n">remove_double_slash</span><span class="p">(</span><span class="s">&#39;/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">media_path</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">path</span>
-</div>
+        </div>
     <span class="k">def</span> <span class="nf">_minify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">postfix</span><span class="p">):</span>
         <span class="n">new_postfix</span> <span class="o">=</span> <span class="s">&#39;.min</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">postfix</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">new_postfix</span><span class="p">):</span>

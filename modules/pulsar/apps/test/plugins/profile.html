@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>pulsar.apps.test.plugins.profile &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../../test.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -194,7 +194,7 @@
             <span class="n">local</span><span class="o">.</span><span class="n">tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mktemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">profile_temp_path</span><span class="p">)</span>
             <span class="n">local</span><span class="o">.</span><span class="n">prof</span><span class="o">.</span><span class="n">enable</span><span class="p">()</span>
         
-    <span class="k">def</span> <span class="nf">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">async</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">profile</span><span class="p">:</span>
             <span class="n">local</span><span class="o">.</span><span class="n">prof</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
             <span class="n">local</span><span class="o">.</span><span class="n">prof</span><span class="o">.</span><span class="n">dump_stats</span><span class="p">(</span><span class="n">local</span><span class="o">.</span><span class="n">tmp</span><span class="p">)</span>

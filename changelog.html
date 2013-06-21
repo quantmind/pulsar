@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>Changelog &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -69,6 +69,10 @@
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="ver-0-5-2-development">
 <h2>Ver. 0.5.2 - Development<a class="headerlink" href="#ver-0-5-2-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Critical bug fix in WebSocket frame parser.</li>
+<li>WebSocket handlers accept the WebSocket protocol as first argument.</li>
+</ul>
 </div>
 <div class="section" id="ver-0-5-1-2013-june-03">
 <h2>Ver. 0.5.1 - 2013-June-03<a class="headerlink" href="#ver-0-5-1-2013-june-03" title="Permalink to this headline">¶</a></h2>
@@ -188,7 +192,7 @@ protocol implementation.</li>
 <li>Modified <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Actor.exit()</span></tt> so that it shuts down <a class="reference internal" href="api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.mailbox</span></tt></a>
 after closing the <tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.requestloop</span></tt>.</li>
 <li>Fixed bug which prevented <a class="reference internal" href="settings.html#setting-daemon"><em>daemonisation</em></a> in posix systems.</li>
-<li>Changed the <a class="reference internal" href="api/async.html#pulsar.Deferred.result_or_self" title="pulsar.Deferred.result_or_self"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.result_or_self()</span></tt></a> method to return the
+<li>Changed the <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.result_or_self()</span></tt> method to return the
 <em>result</em> when the it is called and no callbacks are available.
 It avoids several unnecessary calls on deeply nested <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
 (which sometimes caused maximum recursion depth exceeded).</li>

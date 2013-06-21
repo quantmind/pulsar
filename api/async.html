@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchonous API &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -234,6 +234,13 @@ Note that this is the <em>only</em> method in <a class="reference internal" href
 makes this guarantee. all other interaction with the <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>
 must be done from that <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>&#8216;s thread. It may be used
 to transfer control from other threads to the EventLoop&#8217;s thread.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.EventLoop.run_in_executor">
+<tt class="descname">run_in_executor</tt><big>(</big><em>executor</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run_in_executor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arrange to call <tt class="docutils literal"><span class="pre">callback(*args)</span></tt> in an executor.
+NOT YET SUPPORTED.</p>
 </dd></dl>
 
 <dl class="method">
@@ -654,15 +661,6 @@ this point, <a class="reference internal" href="#pulsar.Deferred.add_callback" t
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.result_or_self">
-<tt class="descname">result_or_self</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.result_or_self" title="Permalink to this definition">¶</a></dt>
-<dd><p>It returns the <a class="reference internal" href="#pulsar.Deferred.result" title="pulsar.Deferred.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> only if available and all
-callbacks have been consumed, otherwise it returns this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.
-Users should use this method to obtain the result, rather than accessing
-directly the <a class="reference internal" href="#pulsar.Deferred.result" title="pulsar.Deferred.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> attribute.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.Deferred.raise_all">
 <tt class="descname">raise_all</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.raise_all" title="Permalink to this definition">¶</a></dt>
 <dd><p>raise an exception only if <a class="reference internal" href="#pulsar.Deferred.done" title="pulsar.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a> is <tt class="docutils literal"><span class="pre">True</span></tt> and
@@ -677,12 +675,17 @@ the result is a <a class="reference internal" href="#pulsar.Failure" title="puls
 <dl class="class">
 <dt id="pulsar.MultiDeferred">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">MultiDeferred</tt><big>(</big><em>data=None</em>, <em>type=None</em>, <em>raise_on_error=True</em>, <em>handle_value=None</em>, <em>log_failure=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> for managing a stream if independent objects
-which may be <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> for managing a <tt class="docutils literal"><span class="pre">collection</span></tt> of independent
+asynchronous objects. The <tt class="docutils literal"><span class="pre">collection</span></tt> can be either a <tt class="docutils literal"><span class="pre">list</span></tt> or
+a <tt class="docutils literal"><span class="pre">dict</span></tt>.
+The <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> is recursive on values which are <tt class="docutils literal"><span class="pre">generators</span></tt>,
+<tt class="docutils literal"><span class="pre">dic</span></tt>, <tt class="docutils literal"><span class="pre">lists</span></tt> and <tt class="docutils literal"><span class="pre">sets</span></tt>. It is not recursive on immutable
+containers such as tuple, and frozenset.</p>
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.lock">
-<tt class="descname">lock</tt><a class="headerlink" href="#pulsar.MultiDeferred.lock" title="Permalink to this definition">¶</a></dt>
-<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt> items can no longer be added to this <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a>.</p>
+<dt id="pulsar.MultiDeferred.locked">
+<tt class="descname">locked</tt><a class="headerlink" href="#pulsar.MultiDeferred.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>When <tt class="docutils literal"><span class="pre">True</span></tt>, the <a class="reference internal" href="#pulsar.MultiDeferred.update" title="pulsar.MultiDeferred.update"><tt class="xref py py-meth docutils literal"><span class="pre">update()</span></tt></a> or <a class="reference internal" href="#pulsar.MultiDeferred.append" title="pulsar.MultiDeferred.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> methods can no longer
+be used.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -696,30 +699,29 @@ which may be <a class="reference internal" href="#pulsar.Deferred" title="pulsar
 <tt class="descname">raise_on_error</tt><a class="headerlink" href="#pulsar.MultiDeferred.raise_on_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>When <tt class="docutils literal"><span class="pre">True</span></tt> and at least one value of the result collections is a
 <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>, the callback will receive the failure rather than
-the collection of results. Default <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+the collection of results.</p>
+<p>Default <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
 </dd></dl>
 
-<p>The <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> is recursive on values which are generators,
-dictionaries, lists and sets. It is not recursive on immutable
-containers such as tuple, and frozenset.</p>
 <dl class="method">
-<dt>
-<tt class="descname">lock</tt><big>(</big><big>)</big></dt>
+<dt id="pulsar.MultiDeferred.lock">
+<tt class="descname">lock</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.lock" title="Permalink to this definition">¶</a></dt>
 <dd><p>Lock the <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> so that no new items can be added.
-If it was alread <tt class="xref py py-attr docutils literal"><span class="pre">locked</span></tt> a runtime exception is raised.</p>
+If it was alread <a class="reference internal" href="#pulsar.MultiDeferred.locked" title="pulsar.MultiDeferred.locked"><tt class="xref py py-attr docutils literal"><span class="pre">locked</span></tt></a> a runtime exception occurs.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.MultiDeferred.update">
 <tt class="descname">update</tt><big>(</big><em>stream</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update the <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> with new data. It works for
-both <tt class="docutils literal"><span class="pre">list</span></tt> and <tt class="docutils literal"><span class="pre">dict</span></tt> types.</p>
+both <tt class="docutils literal"><span class="pre">list</span></tt> and <tt class="docutils literal"><span class="pre">dict</span></tt> <a class="reference internal" href="#pulsar.MultiDeferred.type" title="pulsar.MultiDeferred.type"><tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.MultiDeferred.append">
 <tt class="descname">append</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.append" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append only works for a list type multideferred</p>
+<dd><p>Append a new <tt class="docutils literal"><span class="pre">value</span></tt> to this asynchronous container. Works for a
+list <a class="reference internal" href="#pulsar.MultiDeferred.type" title="pulsar.MultiDeferred.type"><tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt></a> only.</p>
 </dd></dl>
 
 </dd></dl>
@@ -827,7 +829,7 @@ a callable which accept one argument only.</p>
 
 <dl class="method">
 <dt id="pulsar.EventHandler.fire_event">
-<tt class="descname">fire_event</tt><big>(</big><em>event</em>, <em>event_data=&lt;object object at 0x2ac9ba33b170&gt;</em>, <em>sender=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">fire_event</tt><big>(</big><em>event</em>, <em>event_data=&lt;object object at 0x10b9e0170&gt;</em>, <em>sender=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatches <em>event_data</em> to the <em>event</em> listeners.
 * If <em>event</em> is a one-time event, it makes sure that it was not fired before.</p>
 <table class="docutils field-list" frame="void" rules="none">

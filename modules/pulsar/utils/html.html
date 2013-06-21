@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.html &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>pulsar.utils.html &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -62,18 +62,6 @@
             
   <h1>Source code for pulsar.utils.html</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;Utilities for HTML and text manipulation.</span>
-
-<span class="sd">.. autofunction:: escape</span>
-
-<span class="sd">.. autofunction:: mark_safe</span>
-
-<span class="sd">.. autofunction:: slugify</span>
-
-<span class="sd">.. autofunction:: capfirst</span>
-
-<span class="sd">.. autofunction:: nicename</span>
-
-<span class="sd">.. autofunction:: tag_attributes</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">json</span>
@@ -83,6 +71,7 @@
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">string_type</span>
 
 <span class="n">NOTHING</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+<span class="sd">&#39;&#39;&#39;Tuple of elements considered as null.&#39;&#39;&#39;</span>
 <span class="n">INLINE_TAGS</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s">&#39;input&#39;</span><span class="p">,</span> <span class="s">&#39;meta&#39;</span><span class="p">,</span> <span class="s">&#39;hr&#39;</span><span class="p">))</span>
 <span class="n">DEFAULT_HTML_ATTRIBUTES</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;title&#39;</span><span class="p">)</span>
 <span class="n">HTML_ATTRIBUTES</span> <span class="o">=</span> <span class="p">{}</span>
@@ -124,6 +113,22 @@
 <span class="n">HTML_CHILDREN_TAG</span><span class="p">[</span><span class="s">&#39;ol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;li&#39;</span>
 <span class="n">HTML_CHILDREN_TAG</span><span class="p">[</span><span class="s">&#39;select&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;option&#39;</span>
 
+<span class="c">## COMMON HTML ENTITIES</span>
+<span class="c">## Check http://www.w3schools.com/tags/ref_symbols.asp for more</span>
+<span class="c">################################################################################</span>
+<span class="n">HTML_NON_BREACKING_SPACE</span> <span class="o">=</span> <span class="s">&#39;&amp;nbsp;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML non breaking space symbol.&#39;&#39;&#39;</span>
+<span class="n">HTML_LESS_THEN</span> <span class="o">=</span> <span class="s">&#39;&amp;lt;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML &lt; symbol.&#39;&#39;&#39;</span>
+<span class="n">HTML_GREATER_THEN</span> <span class="o">=</span> <span class="s">&#39;&amp;gt;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML &gt; symbol.&#39;&#39;&#39;</span>
+<span class="n">HTML_AMPERSAND</span> <span class="o">=</span> <span class="s">&#39;&amp;amp;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML &amp; symbol.&#39;&#39;&#39;</span>
+<span class="n">HTML_ENDASH</span> <span class="o">=</span> <span class="s">&#39;&amp;ndash;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML - symbol.&#39;&#39;&#39;</span>
+<span class="n">HTML_EMDASH</span> <span class="o">=</span> <span class="s">&#39;&amp;mdash;&#39;</span>
+<span class="sd">&#39;&#39;&#39;HTML -- symbol.&#39;&#39;&#39;</span>
+
 <span class="n">csslink</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;cssentry&#39;</span><span class="p">,</span> <span class="s">&#39;link condition&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="tag_attributes"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.tag_attributes">[docs]</a><span class="k">def</span> <span class="nf">tag_attributes</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -136,9 +141,10 @@
             <span class="k">return</span> <span class="n">HTML_ATTRIBUTES</span><span class="p">[</span><span class="n">ntag</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">HTML_ATTRIBUTES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">DEFAULT_HTML_ATTRIBUTES</span><span class="p">)</span>
     </div>
-<span class="k">def</span> <span class="nf">child_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+<div class="viewcode-block" id="child_tag"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.child_tag">[docs]</a><span class="k">def</span> <span class="nf">child_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The default children ``tag`` for a given ``tag``.&#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">HTML_CHILDREN_TAG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
-
+</div>
 <div class="viewcode-block" id="slugify"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.slugify">[docs]</a><span class="k">def</span> <span class="nf">slugify</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">rtx</span><span class="o">=</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Normalizes string, removes non-alpha characters,</span>
 <span class="sd">and converts spaces to ``rtx`` character (hyphens or underscore).&#39;&#39;&#39;</span>
@@ -159,8 +165,12 @@
     <span class="k">if</span> <span class="n">html</span> <span class="ow">in</span> <span class="n">NOTHING</span><span class="p">:</span>
         <span class="k">return</span> <span class="s">&#39;&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">html</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;amp;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span>\
-            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&#39;&amp;#39;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&amp;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;amp;&#39;</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;lt;&#39;</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;gt;&#39;</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s">&#39;&amp;#39;&#39;</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s">&#39;&amp;quot;&#39;</span><span class="p">)</span>
             </div>
 <span class="k">def</span> <span class="nf">attr_iter</span><span class="p">(</span><span class="n">attrs</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">attrs</span><span class="p">):</span>

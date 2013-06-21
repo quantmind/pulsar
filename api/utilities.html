@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>Tools &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Changelog" href="../changelog.html" />
     <link rel="prev" title="Applications API" href="application.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="application.html" title="Applications API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -318,6 +318,48 @@ specification supporting protocol version 13:</p>
 <dt id="pulsar.utils.websocket.Frame.masking_key">
 <tt class="descname">masking_key</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.masking_key" title="Permalink to this definition">¶</a></dt>
 <dd><p>The frame masking key used for encoding and decoding data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.final">
+<tt class="descname">final</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.final"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.final" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag indicating if this is a final frame or not.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.masked">
+<tt class="descname">masked</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.masked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.masked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate if the frame is masked.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.is_message">
+<tt class="descname">is_message</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.is_bytes">
+<tt class="descname">is_bytes</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> message.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.is_data">
+<tt class="descname">is_data</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> or <tt class="docutils literal"><span class="pre">bytes</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.is_ping">
+<tt class="descname">is_ping</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_ping" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> representing a ping.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.websocket.Frame.is_close">
+<tt class="descname">is_close</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_close" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> representing a close request.</p>
 </dd></dl>
 
 <dl class="method">
@@ -832,6 +874,66 @@ where value is the last item in the list associated with the key.</p>
 <div class="section" id="module-pulsar.utils.html">
 <span id="html-text"></span><h2>HTML &amp; Text<a class="headerlink" href="#module-pulsar.utils.html" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for HTML and text manipulation.</p>
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_AMPERSAND">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_AMPERSAND</tt><em class="property"> = '&amp;amp;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_AMPERSAND" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML &amp; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_EMDASH">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_EMDASH</tt><em class="property"> = '&amp;mdash;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_EMDASH" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML &#8211; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_ENDASH">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_ENDASH</tt><em class="property"> = '&amp;ndash;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_ENDASH" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML - symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_GREATER_THEN">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_GREATER_THEN</tt><em class="property"> = '&amp;gt;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_GREATER_THEN" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML &gt; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_LESS_THEN">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_LESS_THEN</tt><em class="property"> = '&amp;lt;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_LESS_THEN" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML &lt; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.HTML_NON_BREACKING_SPACE">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_NON_BREACKING_SPACE</tt><em class="property"> = '&amp;nbsp;'</em><a class="headerlink" href="#pulsar.utils.html.HTML_NON_BREACKING_SPACE" title="Permalink to this definition">¶</a></dt>
+<dd><p>HTML non breaking space symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="pulsar.utils.html.NOTHING">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">NOTHING</tt><em class="property"> = ('', b'', None)</em><a class="headerlink" href="#pulsar.utils.html.NOTHING" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuple of elements considered as null.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.capfirst">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">capfirst</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#capfirst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.capfirst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capitalise the first letter of <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.html.child_tag">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">child_tag</tt><big>(</big><em>tag</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#child_tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.child_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default children <tt class="docutils literal"><span class="pre">tag</span></tt> for a given <tt class="docutils literal"><span class="pre">tag</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.utils.html.csslink">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">csslink</tt><a class="headerlink" href="#pulsar.utils.html.csslink" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">cssentry</span></tt></p>
+</dd></dl>
+
 <dl class="function">
 <dt id="pulsar.utils.html.escape">
 <tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">escape</tt><big>(</big><em>html</em>, <em>force=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#escape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.escape" title="Permalink to this definition">¶</a></dt>
@@ -847,6 +949,12 @@ quotes and angle brackets encoded.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="pulsar.utils.html.nicename">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.nicename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make <tt class="docutils literal"><span class="pre">name</span></tt> a more user friendly string.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pulsar.utils.html.slugify">
 <tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>rtx='_'</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#slugify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.slugify" title="Permalink to this definition">¶</a></dt>
 <dd><p>Normalizes string, removes non-alpha characters,
@@ -854,20 +962,107 @@ and converts spaces to <tt class="docutils literal"><span class="pre">rtx</span>
 </dd></dl>
 
 <dl class="function">
-<dt id="pulsar.utils.html.capfirst">
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">capfirst</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#capfirst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.capfirst" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.html.tag_attributes">
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">tag_attributes</tt><big>(</big><em>tag</em>, <em>type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#tag_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.tag_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a tuple of valid attributes for the HTML <tt class="docutils literal"><span class="pre">tag</span></tt> and optional
+<tt class="docutils literal"><span class="pre">type</span></tt>. If the <tt class="docutils literal"><span class="pre">tag</span></tt> is not found in the global <tt class="docutils literal"><span class="pre">HTML_ATTRIBUTES</span></tt>
+dictionary, the <tt class="docutils literal"><span class="pre">DEFAULT_HTML_ATTRIBUTES</span></tt> set is returned.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pulsar.utils.html">
+<span id="path"></span><h2>Path<a class="headerlink" href="#module-pulsar.utils.html" title="Permalink to this headline">¶</a></h2>
+<p>Utilities for HTML and text manipulation.</p>
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_AMPERSAND</tt><em class="property"> = '&amp;amp;'</em></dt>
+<dd><p>HTML &amp; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_EMDASH</tt><em class="property"> = '&amp;mdash;'</em></dt>
+<dd><p>HTML &#8211; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_ENDASH</tt><em class="property"> = '&amp;ndash;'</em></dt>
+<dd><p>HTML - symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_GREATER_THEN</tt><em class="property"> = '&amp;gt;'</em></dt>
+<dd><p>HTML &gt; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_LESS_THEN</tt><em class="property"> = '&amp;lt;'</em></dt>
+<dd><p>HTML &lt; symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_NON_BREACKING_SPACE</tt><em class="property"> = '&amp;nbsp;'</em></dt>
+<dd><p>HTML non breaking space symbol.</p>
+</dd></dl>
+
+<dl class="data">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">NOTHING</tt><em class="property"> = ('', b'', None)</em></dt>
+<dd><p>Tuple of elements considered as null.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">capfirst</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#capfirst"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Capitalise the first letter of <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pulsar.utils.html.nicename">
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.nicename" title="Permalink to this definition">¶</a></dt>
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">child_tag</tt><big>(</big><em>tag</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#child_tag"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>The default children <tt class="docutils literal"><span class="pre">tag</span></tt> for a given <tt class="docutils literal"><span class="pre">tag</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">csslink</tt></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">cssentry</span></tt></p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">escape</tt><big>(</big><em>html</em>, <em>force=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#escape"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns the given HTML with ampersands,
+quotes and angle brackets encoded.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">mark_safe</tt><big>(</big><em>v</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#mark_safe"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Mar a string <tt class="docutils literal"><span class="pre">v</span></tt> as safe. A safe string won&#8217;t be escaped by the
+<a class="reference internal" href="#pulsar.utils.html.escape" title="pulsar.utils.html.escape"><tt class="xref py py-func docutils literal"><span class="pre">escape()</span></tt></a> function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Make <tt class="docutils literal"><span class="pre">name</span></tt> a more user friendly string.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pulsar.utils.html.tag_attributes">
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">tag_attributes</tt><big>(</big><em>tag</em>, <em>type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#tag_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.html.tag_attributes" title="Permalink to this definition">¶</a></dt>
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>rtx='_'</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#slugify"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Normalizes string, removes non-alpha characters,
+and converts spaces to <tt class="docutils literal"><span class="pre">rtx</span></tt> character (hyphens or underscore).</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">tag_attributes</tt><big>(</big><em>tag</em>, <em>type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#tag_attributes"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Return a tuple of valid attributes for the HTML <tt class="docutils literal"><span class="pre">tag</span></tt> and optional
 <tt class="docutils literal"><span class="pre">type</span></tt>. If the <tt class="docutils literal"><span class="pre">tag</span></tt> is not found in the global <tt class="docutils literal"><span class="pre">HTML_ATTRIBUTES</span></tt>
 dictionary, the <tt class="docutils literal"><span class="pre">DEFAULT_HTML_ATTRIBUTES</span></tt> set is returned.</p>
@@ -922,6 +1117,7 @@ dictionary, the <tt class="docutils literal"><span class="pre">DEFAULT_HTML_ATTR
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.html">HTML &amp; Text</a></li>
+<li><a class="reference internal" href="#module-pulsar.utils.html">Path</a></li>
 </ul>
 </li>
 </ul>

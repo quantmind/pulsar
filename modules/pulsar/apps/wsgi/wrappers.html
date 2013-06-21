@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -103,6 +103,7 @@
 <span class="sd">.. _WSGI: http://www.wsgi.org</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.multipart</span> <span class="kn">import</span> <span class="n">parse_form_data</span><span class="p">,</span> <span class="n">parse_options_header</span>
@@ -110,7 +111,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">SimpleCookie</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span>\
                                  <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">string_type</span><span class="p">,</span> <span class="n">ispy3k</span><span class="p">,</span>\
                                  <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">,</span>\
-                                 <span class="n">urlencode</span>
+                                 <span class="n">urlencode</span><span class="p">,</span> <span class="n">remove_double_slash</span><span class="p">,</span> <span class="n">iri_to_uri</span>
 
 <span class="kn">from</span> <span class="nn">.middleware</span> <span class="kn">import</span> <span class="n">is_streamed</span>
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">HtmlDocument</span>
@@ -123,6 +124,7 @@
            <span class="s">&#39;WsgiRequest&#39;</span><span class="p">,</span> <span class="s">&#39;cached_property&#39;</span><span class="p">]</span>
 
 <span class="n">MAX_BUFFER_SIZE</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span>
+<span class="n">absolute_http_url_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&quot;^https?://&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">cached_property</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">__name__</span>
@@ -513,26 +515,38 @@
                 <span class="n">host</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">server_port</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">host</span>
         </div>
-    <span class="k">def</span> <span class="nf">full_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.full_path"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path">[docs]</a>    <span class="k">def</span> <span class="nf">full_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a full path&#39;&#39;&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;full_url() takes exactly 1 argument &quot;</span>
                                 <span class="s">&quot;(</span><span class="si">%s</span><span class="s"> given)&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;QUERY_STRING&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">remove_double_slash</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="WsgiRequest.absolute_uri"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Builds an absolute URI from the ``location`` and the variables</span>
+<span class="sd">available in this request. If no location is specified, the relative URI</span>
+<span class="sd">is built from :meth:`full_path`.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">location</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">absolute_http_url_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">location</span><span class="p">):</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">scheme</span><span class="p">:</span>
+                <span class="n">scheme</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span> <span class="ow">and</span> <span class="s">&#39;https&#39;</span> <span class="ow">or</span> <span class="s">&#39;http&#39;</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">://</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_host</span><span class="p">())</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">scheme</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
-            <span class="n">params</span> <span class="o">=</span> <span class="n">sql</span><span class="o">.</span><span class="n">url_data</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;QUERY_STRING&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">query</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">path</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Absolute location with scheme not valid&#39;</span><span class="p">)</span>
     
-</div>
+</div></div>
 <span class="n">set_wsgi_request_class</span><span class="p">(</span><span class="n">WsgiRequest</span><span class="p">)</span>
 </pre></div>
 

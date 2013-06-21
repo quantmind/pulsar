@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Wrappers &mdash; pulsar 0.5.2-beta.1 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar 0.5.2-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.2-beta.1',
+        VERSION:     '0.5.2-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Content" href="content.html" />
     <link rel="prev" title="WSGI application handlers" href="handlers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="handlers.html" title="WSGI application handlers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.5.2-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -180,6 +180,20 @@ data from the <cite>QUERY_STRING</cite> in <tt class="xref py py-attr docutils l
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.get_host">
 <tt class="descname">get_host</tt><big>(</big><em>use_x_forwarded=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.get_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.get_host" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the HTTP host using the environment or request headers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path">
+<tt class="descname">full_path</tt><big>(</big><em>*args</em>, <em>**query</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.full_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a full path</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">
+<tt class="descname">absolute_uri</tt><big>(</big><em>location=None</em>, <em>scheme=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.absolute_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds an absolute URI from the <tt class="docutils literal"><span class="pre">location</span></tt> and the variables
+available in this request. If no location is specified, the relative URI
+is built from <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path"><tt class="xref py py-meth docutils literal"><span class="pre">full_path()</span></tt></a>.</p>
 </dd></dl>
 
 </dd></dl>
