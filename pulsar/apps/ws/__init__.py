@@ -5,21 +5,16 @@ and server. Pulsar implementation uses the WSGI middleware
 :class:`WebSocket` for the handshake_ and a class derived from
 :class:`WS` handler for the communication part.
 
-Here is an example Web Socket handler that echos back all received messages
+This is a Web Socket handler which echos all received messages
 back to the client::
 
     from pulsar.apps import wsgi, ws
     
     class EchoWS(ws.WS):
     
-        def on_open(self, websocket):
-            pass
-    
         def on_message(self, websocket, message):
             websocket.write(message)
-    
-        def on_close(self, websocket):
-            pass
+            
             
 To create a valid :class:`WebSocket` middleware initialise as follow::
 
