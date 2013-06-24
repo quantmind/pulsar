@@ -313,6 +313,12 @@ request, the ``get(self, request)`` method must be implemented.
     def parent(self):
         return self._parent
     
+    def path(self, **urlargs):
+        route = self.route
+        if self._parent:
+            route = self._parent.route + route
+        return route.url(**urlargs)
+    
     def parent_property(self, name):
         value = getattr(self, name, None)
         if value is None and self._parent:
