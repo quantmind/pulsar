@@ -659,11 +659,14 @@ class Css(Media):
 class Scripts(Media):
         
     def append(self, child):
-        if child and is_string(child):
-            path = self.absolute_path(child)
-            script = Html('script', src=path, type='text/javascript')
-            self._children[script] = script
-            return script
+        if child:
+            if is_string(child):
+                path = self.absolute_path(child)
+                script = Html('script', src=path, type='text/javascript')
+                self._children[script] = script
+                return script
+            elif isinstance(child, Html) and child.tag == 'script':
+                self._children[child] = child
     
     def do_stream(self, request):
         for child in self._children.values():
