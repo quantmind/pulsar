@@ -662,7 +662,7 @@ class Scripts(Media):
         if child:
             if is_string(child):
                 path = self.absolute_path(child)
-                script = Html('script', src=path, type='text/javascript')
+                script = Html('script', src=path, type='application/javascript')
                 self._children[script] = script
                 return script
             elif isinstance(child, Html) and child.tag == 'script':
