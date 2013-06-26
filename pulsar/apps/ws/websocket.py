@@ -35,14 +35,18 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
     A factory of websocket frame parsers
     """
     parser_factory = FrameParser
-    name = 'websocket'
+    _name = 'websocket'
     
     def __init__(self, route, handle, parser_factory=None, **kwargs):
         super(WebSocket, self).__init__(route, **kwargs)
         self.handle = handle
         if parser_factory:
             self.parser_factory = parser_factory
-            
+    
+    @property
+    def name(self):
+        return self._name
+    
     def get(self, request):
         headers_parser = self.handle_handshake(request.environ)
         if not headers_parser:

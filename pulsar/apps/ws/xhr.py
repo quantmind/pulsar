@@ -49,6 +49,6 @@ class XhrParser(object):
     
 @register_transport
 class XhrPolling(WebSocket):
-    name = 'xhr-polling'
+    _name = 'xhr-polling'
     protocol_parser = XhrParser
     

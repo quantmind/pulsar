@@ -208,8 +208,17 @@ class RouterType(type):
     
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
+        parameters = {}
+        for name, value in list(attrs.items()):
+            if not name.startswith('_') and not hasattr(value, '__call__') and\
+                    not isinstance(value, property):
+                parameters[name] = attrs.pop(name)
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
-        for base in bases[::-1]:
+        for base in reversed(bases):
+            if hasattr(base, 'parameters'):
+                params = base.parameters.copy()
+                params.update(parameters)
+                parameters = params
             if hasattr(base, 'rule_methods'):
                 items = base.rule_methods.items()
             else:
@@ -219,6 +228,7 @@ class RouterType(type):
             rule_methods = base_rules + rule_methods
         #                
         attrs['rule_methods'] = OrderedDict(rule_methods)
+        attrs['parameters'] = parameters
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
     
 
@@ -258,22 +268,26 @@ request, the ``get(self, request)`` method must be implemented.
     
 .. attribute:: parameters
 
-    A :class:`pulsar.utils.structures.AttributeDictionary` of parameters.
+    A :class:`pulsar.utils.structures.AttributeDictionary` of parameters for
+    this :class:`Router`. Parameters are created at initialisation from
+    the ``parameters`` class attribute and the key-valued parameters
+    passed to the ``__init__`` method for which the value is not callable.
 '''
-    creation_count = 0
-    accept_content_types = None
+    _creation_count = 0
     _parent = None
     
+    accept_content_types = None
+    
     def __init__(self, rule, *routes, **parameters):
-        self.__class__.creation_count += 1
-        self.creation_count = self.__class__.creation_count
+        Router._creation_count += 1
+        self._creation_count = Router._creation_count
         if not isinstance(rule, Route):
             rule = Route(rule)
         self.route = rule
         self.routes = []
         for router in routes:
             self.add_child(router)
-        self.parameters = AttributeDictionary()
+        self.parameters = AttributeDictionary(self.parameters)
         for name, rule_method in self.rule_methods.items():
             rule, method, params, count = rule_method
             rparameters = params.copy()
@@ -283,16 +297,11 @@ request, the ``get(self, request)`` method must be implemented.
                 handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
-        self.setup(**parameters)
-        
-    def setup(self, content_type=None, **parameters):
         for name, value in parameters.items():
             if hasattr(value, '__call__'):
                 setattr(self, name, value)
             else:
                 self.parameters[name] = value
-        if not self.parameters.accept_content_types and self.accept_content_types:
-            self.parameters['accept_content_types'] = self.accept_content_types
     
     @property
     def root(self):
@@ -312,22 +321,28 @@ request, the ``get(self, request)`` method must be implemented.
             route = self._parent.route + route
         return route.url(**urlargs)
     
-    def get_parameter(self, name):
+    def __getattr__(self, name):
         '''Check the value of a :attr:`parameters` ``name``. If the parameter is
         not available, retrieve the parameter from the :attr:`parent`
         :class:`Router` if it exists.'''
-        value = self.parameters.get(name)
-        if value is None and self._parent:
-            return self._parent.get_parameter(name)
-        else:
-            return value
+        if not name.startswith('_'):
+            value = self.parameters.get(name)
+            if value is None:
+                if self._parent:
+                    return getattr(self._parent, name)
+                elif name in self.parameters:
+                    return value
+            else:
+                return value
+        raise AttributeError("'%s' object has no attribute '%s'" %
+                             (self.__class__.__name__, name))
         
     def content_type(self, request):
         '''Evaluate the content type for the response to the client ``request``.
 The method uses the :attr:`accept_content_types` tuple of accepted content
 types and the content types accepted by the client and figure out
 the best match.'''
-        accept = self.get_parameter('accept_content_types')
+        accept = self.accept_content_types
         if accept:
             return request.content_types.best_match(accept)
        

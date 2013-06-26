@@ -83,6 +83,14 @@ class TestMultiValueDict(unittest.TestCase):
         self.assertRaises(KeyError, m.pop, 'foo')
         self.assertEqual(m.pop('bla'), [5, 89])
         self.assertFalse(m)
+        
+    def test_to_dict(self):
+        m = MultiValueDict((('id', 1), ('id', 2)))
+        self.assertEqual(len(m), 1)
+        self.assertEqual(m['id'], [1,2])
+        d = dict(m)
+        self.assertEqual(d, {'id': [1,2]})
+        
 
 
 class TestAttributeDictionary(unittest.TestCase):

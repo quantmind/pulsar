@@ -180,9 +180,9 @@ def _gen_query(query_string, encoding):
 
 def query_dict(query_string, encoding='utf-8'):
     if query_string:
-        return MultiValueDict(_gen_query(query_string, encoding))
+        return dict(MultiValueDict(_gen_query(query_string, encoding)).items())
     else:
-        return MultiValueDict()
+        return {}
     
     
 error_messages = {
