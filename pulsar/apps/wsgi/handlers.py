@@ -255,13 +255,6 @@ request, the ``get(self, request)`` method must be implemented.
 .. attribute:: parent
 
     The parent :class:`Router` of this :class:`Router`.
-        
-.. attribute:: accept_content_types
-
-    Tuple of content type accepted by this :class:`Router`. It can be specified
-    as class attribute or during initialisation. This is an important parameter.
-    It is used to set the content type of the response instance.
-    Default ``None``.
     
 .. attribute:: parameters
 
@@ -290,16 +283,16 @@ request, the ``get(self, request)`` method must be implemented.
                 handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
-        if 'accept_content_types' in parameters:
-            self.accept_content_types = parameters.pop('accept_content_types')
         self.setup(**parameters)
         
     def setup(self, content_type=None, **parameters):
         for name, value in parameters.items():
-            if not hasattr(self, name) and hasattr(value, '__call__'):
+            if hasattr(value, '__call__'):
                 setattr(self, name, value)
             else:
                 self.parameters[name] = value
+        if not self.parameters.accept_content_types and self.accept_content_types:
+            self.parameters['accept_content_types'] = self.accept_content_types
     
     @property
     def root(self):
@@ -319,10 +312,13 @@ request, the ``get(self, request)`` method must be implemented.
             route = self._parent.route + route
         return route.url(**urlargs)
     
-    def parent_property(self, name):
-        value = getattr(self, name, None)
+    def get_parameter(self, name):
+        '''Check the value of a :attr:`parameters` ``name``. If the parameter is
+        not available, retrieve the parameter from the :attr:`parent`
+        :class:`Router` if it exists.'''
+        value = self.parameters.get(name)
         if value is None and self._parent:
-            return self._parent.parent_property(name)
+            return self._parent.get_parameter(name)
         else:
             return value
         
@@ -331,7 +327,7 @@ request, the ``get(self, request)`` method must be implemented.
 The method uses the :attr:`accept_content_types` tuple of accepted content
 types and the content types accepted by the client and figure out
 the best match.'''
-        accept = self.parent_property('accept_content_types')
+        accept = self.get_parameter('accept_content_types')
         if accept:
             return request.content_types.best_match(accept)
        
