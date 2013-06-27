@@ -115,7 +115,8 @@ from .content import Html
 from .wrappers import WsgiResponse
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
-           'MediaRouter', 'FileRouter', 'MediaMixin']
+           'MediaRouter', 'FileRouter', 'MediaMixin',
+           'RouterParam']
 
 
 class WsgiHandler(object):
@@ -203,16 +204,21 @@ def get_roule_methods(attrs):
             rule_methods.append((code, rule_method))
     return sorted(rule_methods, key=lambda x: x[1][3])
     
+
+class RouterParam(object):
     
+    def __init__(self, value):
+        self.value = value
+        
+        
 class RouterType(type):
     
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
         parameters = {}
         for name, value in list(attrs.items()):
-            if not name.startswith('_') and not hasattr(value, '__call__') and\
-                    not isinstance(value, property):
-                parameters[name] = attrs.pop(name)
+            if isinstance(value, RouterParam):
+                parameters[name] = attrs.pop(name).value
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
         for base in reversed(bases):
             if hasattr(base, 'parameters'):
@@ -276,7 +282,7 @@ request, the ``get(self, request)`` method must be implemented.
     _creation_count = 0
     _parent = None
     
-    accept_content_types = None
+    accept_content_types = RouterParam(None)
     
     def __init__(self, rule, *routes, **parameters):
         Router._creation_count += 1
