@@ -96,6 +96,7 @@ files such ass ``css``, ``javascript``, images and so forth.
    
 .. _WSGI: http://www.wsgi.org
 '''
+import sys
 import os
 import re
 import stat
@@ -107,10 +108,10 @@ from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect,\
-                    async, is_async, multi_async
+                    async, is_async, multi_async, maybe_async
 
 from .route import Route
-from .utils import wsgi_request
+from .utils import wsgi_request, handle_wsgi_error
 from .content import Html
 from .wrappers import WsgiResponse
 
@@ -148,25 +149,26 @@ class WsgiHandler(object):
 
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
-        response = None
-        for middleware in self.middleware:
-            response = middleware(environ, start_response)
-            if response is not None:
-                break
-        if response is None:
-            raise Http404(environ.get('PATH_INFO','/'))
-        if is_async(response):
-            return response.add_callback(
-                        partial(self.finish, environ, start_response))
-        else:
-            return self.finish(environ, start_response, response)
+        return maybe_async(self._call(environ, start_response))
     
-    def finish(self, environ, start_response, response):
-        if isinstance(response, WsgiResponse):
+    def _call(self, environ, start_response):
+        resp = None
+        for middleware in self.middleware:
+            try:
+                resp = middleware(environ, start_response)
+            except Exception:
+                resp = handle_wsgi_error(environ, maybe_async(sys.exc_info()))
+            if resp is not None:
+                break
+        if resp is None:
+            raise Http404
+        if is_async(resp):
+            resp = yield resp.add_errback(partial(handle_wsgi_error, environ))
+        if isinstance(resp, WsgiResponse):
             for middleware in self.response_middleware:
-                response = middleware(environ, response)
-            start_response(response.status, response.get_headers())
-        return response
+                resp = yield middleware(environ, resp)
+            start_response(resp.status, resp.get_headers())
+        yield resp
     
 
 class LazyWsgi(LocalMixin):
@@ -281,6 +283,7 @@ request, the ``get(self, request)`` method must be implemented.
 '''
     _creation_count = 0
     _parent = None
+    _name = None
     
     accept_content_types = RouterParam(None)
     
@@ -290,6 +293,7 @@ request, the ``get(self, request)`` method must be implemented.
         if not isinstance(rule, Route):
             rule = Route(rule)
         self.route = rule
+        self._name = parameters.pop('name', rule.rule)
         self.routes = []
         for router in routes:
             self.add_child(router)
@@ -308,6 +312,12 @@ request, the ``get(self, request)`` method must be implemented.
                 setattr(self, name, value)
             else:
                 self.parameters[name] = value
+    
+    @property
+    def name(self):
+        '''The name of this :class:`Router`. This attribute can be specified
+during initialisation.'''
+        return self._name
     
     @property
     def root(self):
@@ -332,14 +342,22 @@ request, the ``get(self, request)`` method must be implemented.
         not available, retrieve the parameter from the :attr:`parent`
         :class:`Router` if it exists.'''
         if not name.startswith('_'):
-            value = self.parameters.get(name)
-            if value is None:
-                if self._parent:
-                    return getattr(self._parent, name)
-                elif name in self.parameters:
-                    return value
-            else:
+            return self.get_parameter(name, False)
+        self.no_param(name)
+        
+    def get_parameter(self, name, safe=True):
+        value = self.parameters.get(name)
+        if value is None:
+            if self._parent:
+                return self._parent.get_parameter(name, safe)
+            elif name in self.parameters:
                 return value
+            elif not safe:
+                self.no_param(name)
+        else:
+            return value
+        
+    def no_param(self, name):
         raise AttributeError("'%s' object has no attribute '%s'" %
                              (self.__class__.__name__, name))
         
@@ -367,12 +385,14 @@ the best match.'''
                 if path.endswith('/'):
                     router_args = self.resolve(path[:-1])
                     if router_args is not None:
-                        raise HttpRedirect('/%s' % path[:-1])
+                        return self.redirect(environ, start_response,
+                                             '/%s' % path[:-1])
             else:
                 if not path.endswith('/'):
                     router_args = self.route.match('%s/' % path)
                     if router_args is not None:
-                        raise HttpRedirect('/%s/' % path)
+                        return self.redirect(environ, start_response,
+                                             '/%s/' % path)
         
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
@@ -410,6 +430,12 @@ to actually produce the WSGI response.'''
         environ['pulsar.cache'] = yield multi_async(request.cache)
         yield callable(request)
     
+    @async()
+    def redirect(self, environ, start_response, path):
+        request = wsgi_request(environ, self)
+        environ['pulsar.cache'] = yield multi_async(request.cache)
+        raise HttpRedirect(path)
+        
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list. If this
 :class:`Router` is a leaf route, add a slash to the url.'''
@@ -433,6 +459,12 @@ to actually produce the WSGI response.'''
              self.routes.remove(router)
              router._parent = None
         
+    def get_route(self, name):
+        '''Get a child :class:`Router` by its :attr:`name`.'''
+        for route in self.routes:
+            if route.name == name:
+                return route
+            
     def link(self, *args, **urlargs):
         '''Return an anchor :class:`Html` element with the `href` attribute
 set to the url of this :class:`Router`.'''

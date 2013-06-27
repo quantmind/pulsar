@@ -220,8 +220,6 @@ def handle_wsgi_error(environ, failure):
 '''
     request = wsgi_request(environ)
     response = request.response
-    content_type = response.content_type
-    content = None
     error = failure.error
     if isinstance(error, HTTPError):
         response.status_code = error.code or 500
@@ -232,15 +230,15 @@ def handle_wsgi_error(environ, failure):
     e = dump_environ(environ)
     exc_info = failure.exc_info
     failure.clear()
-    if response.status_code == 500:
+    status = response.status_code
+    if status == 500:
         LOGGER.critical('Unhandled exception during WSGI response %s.%s',
                         path, e, exc_info=exc_info)
     else:
-        LOGGER.warning('WSGI %s status code %s.', response.status_code, path)
+        LOGGER.warning('WSGI %s status code %s.', status, path)
         LOGGER.debug('%s', e, exc_info=exc_info)
-    if has_empty_content(response.status_code) or\
-            response.status_code in REDIRECT_CODES:
-        response.content_type = None
+    if has_empty_content(status, request.method) or status in REDIRECT_CODES:
+        content = None
     else:
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
@@ -252,7 +250,7 @@ def handle_wsgi_error(environ, failure):
         except Exception:
             LOGGER.critical('Error while rendering error', exc_info=True)
             content = None
-    response.content = content or ()
+    response.content = content
     return response
            
 def render_error(request, exc_info): 

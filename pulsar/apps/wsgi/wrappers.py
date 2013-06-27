@@ -233,11 +233,15 @@ This is usually `True` if a generator is passed to the response object."""
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)
             headers.pop('content-length', None)
+            self._content = ()
         else:
             if not self.is_streamed:
                 cl = 0
                 for c in self.content:
                     cl += len(c)
+                if cl == 0 and self.content_type in JSON_CONTENT_TYPES:
+                    self._content = (b'{}',)
+                    cl = len(self._content[0])
                 headers['Content-Length'] = str(cl)
             if not self.content_type:
                 headers['Content-Type'] = 'text/plain'

@@ -225,7 +225,7 @@ method as required by the WSGI specification.
             else:
                 result = wsgi_iter
         result = maybe_async(result, get_result=False)
-        err_handler = self.catastrofic_failure if failure else self.generate
+        err_handler = self.generate if failure is None else self.catastrofic
         result.add_errback(partial(err_handler, environ))
         
     def async_wsgi(self, wsgi_iter):
@@ -253,7 +253,7 @@ when the ``wsgi_iter`` yields bytes only.'''
         self.start_response(response.status, response.get_headers(), exc_info)
         return response
         
-    def catastrofic_failure(self, environ, failure):
+    def catastrofic(self, environ, failure):
         self.keep_alive = False
         self.finish_wsgi()
         

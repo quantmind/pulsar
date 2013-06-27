@@ -171,22 +171,25 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
 
     def available(self, environ, response):
         # It's not worth compressing non-OK or really short responses
-        if response.status_code == 200 and not response.is_streamed:
-            if response.length() < self.min_length:
-                return False
-            headers = response.headers
-            # Avoid gzipping if we've already got a content-encoding.
-            if 'Content-Encoding' in headers:
-                return False
-            # MSIE have issues with gzipped response of various content types.
-            if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
-                ctype = headers.get('Content-Type', '').lower()
-                if not ctype.startswith("text/") or "javascript" in ctype:
+        try:
+            if response.status_code == 200 and not response.is_streamed:
+                if response.length() < self.min_length:
                     return False
-            ae = environ.get('HTTP_ACCEPT_ENCODING', '')
-            if not re_accepts_gzip.search(ae):
-                return False
-            return True
+                headers = response.headers
+                # Avoid gzipping if we've already got a content-encoding.
+                if 'Content-Encoding' in headers:
+                    return False
+                # MSIE have issues with gzipped response of various content types.
+                if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
+                    ctype = headers.get('Content-Type', '').lower()
+                    if not ctype.startswith("text/") or "javascript" in ctype:
+                        return False
+                ae = environ.get('HTTP_ACCEPT_ENCODING', '')
+                if not re_accepts_gzip.search(ae):
+                    return False
+                return True
+        except Exception:
+            raise
 
     def execute(self, environ, response):
         headers = response.headers

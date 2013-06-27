@@ -9,8 +9,11 @@ WSGI
 We assume you are familiar with python Web Standard Gateway Interface (WSGI),
 if not you should read pep-3333_ first.
 
+Server
+=============
+
 Setting Up
-================
+~~~~~~~~~~~~~~
 
 All pulsar needs to setup a WSGI server is the wsgi callable of your
 application. We start by creating a script, called ``managed.py``
@@ -39,7 +42,7 @@ consume your application may not be.
 .. _multi-wsgi:
 
 Multiple Process
-======================
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 When serving lots of requests, an asynchronous single-process server may not be
 enough. To add power, you can run the server using 2 or more process (workers)::
@@ -53,7 +56,7 @@ Multi-process servers are only available for:
 
 
 Serving More than one application
-====================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can serve as many applications, on different addresses, as you like.
 For example, our ``manage.py`` script could be::
@@ -74,4 +77,13 @@ For example, our ``manage.py`` script could be::
         arbiter().start()
         
         
+Application Handlers
+==========================
+
+.. _tutorial-router:
+
+Router
+~~~~~~~~~~~~~~
+
+
 .. _pep-3333: http://www.python.org/dev/peps/pep-3333/ 

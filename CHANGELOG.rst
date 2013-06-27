@@ -1,5 +1,9 @@
 Ver. 0.5.2 - Development
 ==============================
+* Introduced the :ref:`Router parameter <tutorial-router>` for propagating
+  attributes to children routes. router can also have a ``name`` so that
+  they can easily be retrieved via the ``get_route`` method.
+* Critical bug fix in Wsgi server when a failure without a stack trace occurs.
 * Critical bug fix in WebSocket frame parser.
 * WebSocket handlers accept the WebSocket protocol as first argument.
 
