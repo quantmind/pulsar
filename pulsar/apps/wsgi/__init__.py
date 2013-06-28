@@ -49,6 +49,7 @@ from functools import partial
 import pulsar
 from pulsar.apps.socket import SocketServer
 
+from .html import *
 from .content import *
 from .utils import *
 from .middleware import *

@@ -1,8 +1,53 @@
 '''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes
-handling asynchronous content on a WSGI server. The main class of this module
-is the :class:`AsyncString`. Web framework are smart ways of concatenating 
-bytes which need to be displayed on a web page or returned as a response to
-and HTTP client.
+handling asynchronous content on a WSGI server.
+
+A web framework is set of tools working together to concatenate
+``strings`` to return as a response to and HTTP client.
+A string can be Html, Json, plain text, XML or any other valid HTTP
+content type.
+
+The main class of this module is the :class:`AsyncString`, which can be
+considered as the atomic component of an asynchronous web framework.
+It is a smart way for concatenating asynchronous strings::
+
+    >>> string = AsyncString('Hello')
+    >>> string.render()
+    'Hello'
+    >>> string.render()
+    ...  
+    RuntimeError: AsyncString already streamed
+    
+An :class:`AsyncString` can only be rendered once, and it accepts
+:ref:`asynchronous components  <tutorials-coroutine>`::
+
+    >>> a = Deferred()
+    >>> string = AsyncString('Hello ', a)
+    >>> value = string.render()
+    >>> value
+    StreamRenderer
+    >>> value.done()
+    False
+    >>> 
+
+The :class:`StreamRenderer` is a specialised :class:`pulsar.Deferred` which
+results in a string.
+
+    >>> a.callback('World!')
+    'World!'
+    >>> value.done()
+    True
+    >>> value.result
+    'Hello World!'
+
+.. note::
+
+    The :meth:`AsyncString.do_stream` method is responsible for the streaming
+    of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
+    It can be overwritten by subclasses to customise the way an
+    :class:`AsyncString` streams its :attr:`AsyncString.children`.
+    
+    The :meth:`AsyncString.to_string` method is responsible for the
+    concatenation of ``strings``. it can be customised by subclasses.
 
 Asynchronous String
 =====================
@@ -81,8 +126,7 @@ from copy import copy
 
 from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
-from pulsar.utils.structures import AttributeDictionary, recursive_update,\
-                                    OrderedDict
+from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
 from pulsar.utils.httpurl import remove_double_slash, urljoin
@@ -167,15 +211,36 @@ be other :class:`AsyncString` or string or bytes, depending on implementation.
         return copy(self._children)
     
     def __repr__(self):
-        return self.__class__.__name__()
+        return self.__class__.__name__
     
     def __str__(self):
         return self.__repr__()
     
     def append(self, child):
-        '''Append ``child`` to the list of :attr:`children` of this
-:class:`AsyncString`.
+        '''Append ``child`` to the list of :attr:`children`.
 
+:param child: String, bytes or another :class:`AsyncString`. If it is an
+    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
+    If ``child`` is ``None``, this method does nothing.
+    
+'''
+        self.insert(None, child)
+        
+    def prepend(self, child):
+        '''Prepend ``child`` to the list of :attr:`children`.
+        
+This is a shortcut for the :meth:`insert` method at index 0.
+
+:param child: String, bytes or another :class:`AsyncString`. If it is an
+    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
+    If ``child`` is ``None``, this method does nothing.
+    '''
+        self.insert(0, child)
+    
+    def insert(self, index, child):
+        '''Insert ``child`` into the list of :attr:`children` at ``index``.
+
+:param index: The index (positive integer) where to insert ``child``.
 :param child: String, bytes or another :class:`AsyncString`. If it is an
     :class:`AsyncString`, this instance will be set as its :attr:`parent`.
     If ``child`` is ``None``, this method does nothing.
@@ -193,10 +258,13 @@ be other :class:`AsyncString` or string or bytes, depending on implementation.
                     # remove child from the child parent
                     child_parent.remove(child)
                 child._parent = self
-            self._children.append(child)
-        
+            if index is None:
+                self._children.append(child)
+            else:
+                self._children.insert(index, child)
+             
     def remove(self, child):
-        '''Remove a ``child`` from the list of :attr:``children``.'''
+        '''Remove a ``child`` from the list of :attr:`children`.'''
         try:
             self._children.remove(child)
             if isinstance(child, AsyncString):
@@ -218,6 +286,7 @@ be other :class:`AsyncString` or string or bytes, depending on implementation.
     
     def content(self, request=None):
         '''Return the :class:`StreamRenderer` for this instance.
+        
 This method can be called once only since it invokes the :meth:`stream`
 method.'''
         res = self.stream(request)
@@ -227,25 +296,38 @@ method.'''
             return StreamRenderer(res, self.to_string)
     
     def stream(self, request):
-        '''This is the most important method of an :class:`AsyncString`.
+        '''An iterable over strings or asynchronous elements.
+        
+This is the most important method of an :class:`AsyncString`.
 It is called by :meth:`content` or by the :attr:`parent` of this
-:class:`AsyncString`. It returns an iterable (list, tuple, generator) over
-strings, that means ``unicode/str`` for python 2, and ``str`` for python 3 or
-:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
-This method can be called once only, otherwise a
-:class:`RuntimeError` occurs.'''
+:class:`AsyncString`. It returns an iterable (list, tuple or a generator) over
+strings (``unicode/str`` for python 2, ``str`` only for python 3) or
+:ref:`asynchronous elements <tutorials-coroutine>` which result in
+strings. This method can be called **once only**, otherwise a
+:class:`RuntimeError` occurs.
+
+This method should not be overwritten, instead one should use the
+:meth:`do_stream` to customise behaviour.'''
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
-        if request:
-            self.stream_started(request)
         self._streamed = True
         return self.do_stream(request)
     
-    def stream_started(self, request):
-        '''Hook called if ``request`` is available, just before the
-:meth:`do_stream` is executed.'''
-        pass
-    
+    def do_stream(self, request):
+        '''Perform the actual streaming.
+        
+It must return an iterable over ``strings`` or
+:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
+
+This method can be re-implemented by subclasses and should not be invoked
+directly. Use the :meth:`stream` method instead.'''
+        for child in self._children:
+            if isinstance(child, AsyncString):
+                for bit in child.stream(request):
+                    yield bit
+            else:
+                yield child
+                
     @async()
     def http_response(self, request):
         '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
@@ -256,16 +338,6 @@ starts the wsgi response.'''
         body = yield self.content(request)
         response.content = body
         yield response
-        
-    def do_stream(self, request):
-        '''Perform the actual streaming of this :class:`AsyncString`.
-This method can be re-implemented by subclasses.'''
-        for child in self._children:
-            if isinstance(child, AsyncString):
-                for bit in child.stream(request):
-                    yield bit
-            else:
-                yield child
                 
     def to_string(self, stream):
         '''Once the :class:`StreamRenderer`, returned by :meth:`content`
@@ -286,10 +358,7 @@ This is useful during testing. It is the synchronous equivalent of
         value = maybe_async(self.content(request))
         if is_failure(value):
             value.raise_all()
-        elif is_async(value):
-            raise ValueError('Could not render. Asynchronous value')
-        else:
-            return value
+        return value
             
 
 class Json(AsyncString):
@@ -334,7 +403,8 @@ dictionary of ``defaults`` parameters. For example::
     
     
 class Html(AsyncString):
-    '''An :class:`AsyncString` for html elements.
+    '''An :class:`AsyncString` for html strings.
+    
 The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
 
 :param tag: Set the :attr:`tag` attribute. Must be given and can be ``None``.
@@ -447,13 +517,17 @@ with key ``name`` and value ``value`` and return ``self``.'''
     
     def data(self, *args):
         '''Add or retrieve data values for this :class:`Html`.'''
+        data = self._data
         if not args:
-            return self._data
+            return data
         result, adding = self._attrdata(self._data, *args)
         if adding:
-            recursive_update(self._data, result)
-            result = self
-        return result
+            add = self._visitor.add_data
+            for key, value in iteritems(result):
+                add(self, key, value)
+            return self
+        else:
+            return result
     
     def addClass(self, cn):
         '''Add the specific class names to the class set and return ``self``.'''
