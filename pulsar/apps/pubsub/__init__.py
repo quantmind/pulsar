@@ -6,7 +6,7 @@ handler for the Publish/Subscribe pattern.
     In software architecture, publish/subscribe is a messaging pattern where
     senders of messages, called publishers, do not program the messages to
     be sent directly to specific receivers, called subscribers.
-    Instead, published messages are characterized into classes, without
+    Instead, published messages are characterised into classes, without
     knowledge of what, if any, subscribers there may be. Similarly, subscribers
     express interest in one or more classes, and only receive messages that are
     of interest, without knowledge of what, if any, publishers there are.
@@ -18,9 +18,9 @@ When using this middleware, one starts by creating a :class:`PubSub` handler::
 
     from pulsar.apps.pubsub import PubSub
     
-    pubsub = PubSub(connection_string=None, ...)
+    pubsub = PubSub(backend=None, ...)
     
-The ``connection_string`` parameter is needed in order to select the backend
+The ``backend`` parameter is needed in order to select the backend
 to use. If not supplied, the default ``local://`` backend is used.
 
 

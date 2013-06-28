@@ -188,11 +188,11 @@ pulsar WSGI servers.
     '''Content type for this :class:`AsyncString`'''
     encoding = None
     '''Charset encoding for this :class:`AsyncString`'''
+    _streamed = False
+    _children = None
+    _parent = None
     
     def __init__(self, *children):
-        self._streamed = False
-        self._children = []
-        self._parent = None
         for child in children:
             self.append(child)
     
@@ -208,7 +208,9 @@ pulsar WSGI servers.
 be other :class:`AsyncString` or string or bytes, depending on implementation.
 :attr:`children` are added and removed via the :meth:`append` and
 :meth:`remove` methods.'''
-        return copy(self._children)
+        if self._children is None:
+            self._children = []
+        return self._children
     
     def __repr__(self):
         return self.__class__.__name__
@@ -259,14 +261,14 @@ This is a shortcut for the :meth:`insert` method at index 0.
                     child_parent.remove(child)
                 child._parent = self
             if index is None:
-                self._children.append(child)
+                self.children.append(child)
             else:
-                self._children.insert(index, child)
+                self.children.insert(index, child)
              
     def remove(self, child):
         '''Remove a ``child`` from the list of :attr:`children`.'''
         try:
-            self._children.remove(child)
+            self.children.remove(child)
             if isinstance(child, AsyncString):
                 child._parent = None
         except ValueError:
@@ -274,10 +276,11 @@ This is a shortcut for the :meth:`insert` method at index 0.
     
     def remove_all(self):
         '''Remove all :attr:`children`.'''
-        for child in self._children:
-            if isinstance(child, AsyncString):
-                child._parent = None
-        self._children = []
+        if self._children:
+            for child in self._children:
+                if isinstance(child, AsyncString):
+                    child._parent = None
+            self._children = []
         
     def append_to(self, parent):
         '''Append itself to ``parent``. Return ``self``.'''
@@ -321,12 +324,13 @@ It must return an iterable over ``strings`` or
 
 This method can be re-implemented by subclasses and should not be invoked
 directly. Use the :meth:`stream` method instead.'''
-        for child in self._children:
-            if isinstance(child, AsyncString):
-                for bit in child.stream(request):
-                    yield bit
-            else:
-                yield child
+        if self._children:
+            for child in self._children:
+                if isinstance(child, AsyncString):
+                    for bit in child.stream(request):
+                        yield bit
+                else:
+                    yield child
                 
     @async()
     def http_response(self, request):
@@ -366,8 +370,9 @@ class Json(AsyncString):
 The :attr:`AsyncString.content_type` attribute is set to
 ``application/json``.'''
     def __init__(self, *children, **params):
-        super(Json, self).__init__(*children)
         self.parameters = AttributeDictionary(params)
+        for child in children:
+            self.append(child)
         
     @property
     def json(self):
@@ -400,7 +405,7 @@ dictionary of ``defaults`` parameters. For example::
         p.update(params)
         return Html(tag, *children, **p)
     return html_input
-    
+        
     
 class Html(AsyncString):
     '''An :class:`AsyncString` for html strings.
@@ -430,17 +435,13 @@ Any other keyed-value parameter will be added as attribute, if in the set of
         self._attr = {}
         self._css = {}
         self._setup(**params)
-        super(Html, self).__init__(*children)
+        for child in children:
+            self.append(child)
         
     @property
     def content_type(self):
         return 'text/html'
-    
-    @property
-    def classes(self):
-        '''Set of classes for this :class:`Html` element.'''
-        return self._classes
-    
+        
     @property
     def tag(self):
         '''The tag for this HTML element, ``div``, ``a``, ``table`` and so
@@ -520,7 +521,7 @@ with key ``name`` and value ``value`` and return ``self``.'''
         data = self._data
         if not args:
             return data
-        result, adding = self._attrdata(self._data, *args)
+        result, adding = self._attrdata(data, *args)
         if adding:
             add = self._visitor.add_data
             for key, value in iteritems(result):
@@ -532,7 +533,7 @@ with key ``name`` and value ``value`` and return ``self``.'''
     def addClass(self, cn):
         '''Add the specific class names to the class set and return ``self``.'''
         if cn:
-            if isinstance(cn,(tuple,list,set,frozenset)):
+            if isinstance(cn, (tuple, list, set, frozenset)):
                 add = self.addClass
                 for c in cn:
                     add(c)
@@ -599,12 +600,13 @@ with key ``name`` and value ``value`` and return ``self``.'''
         else:
             if self._tag:
                 yield '<%s%s>' % (self._tag, self.flatatt())
-            for child in self._children:
-                if isinstance(child, AsyncString):
-                    for bit in child.stream(request):
-                        yield bit
-                else:
-                    yield child
+            if self._children:
+                for child in self._children:
+                    if isinstance(child, AsyncString):
+                        for bit in child.stream(request):
+                            yield bit
+                    else:
+                        yield child
             if self._tag:
                 yield '</%s>' % self._tag
     
@@ -656,7 +658,12 @@ or scripts.
         self.media_path = media_path
         self.minified = minified
         self.known_libraries = known_libraries or {}
-        self._children = OrderedDict()
+    
+    @property
+    def children(self):
+        if self._children is None:
+            self._children = OrderedDict()
+        return self._children
     
     def append(self, value):
         '''Append new media to the container.'''
@@ -708,7 +715,7 @@ class Css(Media):
             if isinstance(value, str):
                 value = {'all': [value]}
             for media, values in value.items():
-                m = self._children.get(media, [])
+                m = self.children.get(media, [])
                 for value in values:
                     if not isinstance(value, (tuple, list)):
                         value = (value, None)
@@ -716,11 +723,12 @@ class Css(Media):
                     value = csslink(self.absolute_path(path), condition)
                     if value not in m:
                         m.append(value)
-                self._children[media] = m
+                self.children[media] = m
 
     def do_stream(self, request):
-        for medium in sorted(self._children):
-            paths = self._children[medium]
+        children = self.children
+        for medium in sorted(children):
+            paths = children[medium]
             medium = '' if medium == 'all' else " media='%s'" % medium
             for path in paths:
                 link = "<link href='%s' type='text/css'%s rel='stylesheet'/>\n"\
@@ -737,13 +745,13 @@ class Scripts(Media):
             if is_string(child):
                 path = self.absolute_path(child)
                 script = Html('script', src=path, type='application/javascript')
-                self._children[script] = script
+                self.children[script] = script
                 return script
             elif isinstance(child, Html) and child.tag == 'script':
-                self._children[child] = child
+                self.children[child] = child
     
     def do_stream(self, request):
-        for child in self._children.values():
+        for child in self.children.values():
             for bit in child.stream(request):
                 yield bit
             yield '\n'
