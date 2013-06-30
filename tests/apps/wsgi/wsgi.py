@@ -99,11 +99,13 @@ class TestWsgiMiddleware(unittest.TestCase):
             self.assertEqual(url, '/bla/foo?page=1')
             
     def test_handle_wsgi_error(self):
-        environ = {'wsgi_error_handler': lambda : 'bla'}
+        environ = wsgi.test_wsgi_environ(extra=
+                            {'error.handler': lambda request, failure: 'bla'})
         try:
             raise ValueError('just a test')
         except ValueError:
             failure = pulsar.maybe_failure(sys.exc_info())
             response = wsgi.handle_wsgi_error(environ, failure)
         self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content, (b'bla',))
             

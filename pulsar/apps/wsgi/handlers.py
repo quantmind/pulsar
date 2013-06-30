@@ -331,6 +331,11 @@ during initialisation.'''
     def parent(self):
         return self._parent
     
+    @property
+    def creation_count(self):
+        '''Integer for sorting :class:`Router` by creation.'''
+        return self._creation_count
+        
     def path(self, **urlargs):
         route = self.route
         if self._parent:
@@ -389,7 +394,7 @@ the best match.'''
                                              '/%s' % path[:-1])
             else:
                 if not path.endswith('/'):
-                    router_args = self.route.match('%s/' % path)
+                    router_args = self.resolve('%s/' % path)
                     if router_args is not None:
                         return self.redirect(environ, start_response,
                                              '/%s/' % path)

@@ -26,11 +26,92 @@ from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
 from .wrappers import WsgiResponse
 
 
-__all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE']
+__all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
 MAX_CHUNK_SIZE = 65536
 
 
+def test_wsgi_environ(url='/', method='GET', headers=None, extra=None):
+    parser = http_parser(kind=0)
+    data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
+    data = data.encode('utf-8')
+    parser.execute(data, len(data))
+    request_headers = headers or []
+    headers = Headers()
+    return wsgi_environ(parser, ('127.0.0.1', 8060), '777.777.777.777:8080',
+                        request_headers, headers, extra)
+    
+    
+def wsgi_environ(parser, address, client_address, request_headers,
+                 headers, extra=None):
+    protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
+    environ = {
+            "wsgi.input": BytesIO(parser.recv_body()),
+            "wsgi.errors": sys.stderr,
+            "wsgi.version": (1, 0),
+            "wsgi.run_once": False,
+            'wsgi.multithread': False,
+            'wsgi.multiprocess': False,
+            "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
+            "REQUEST_METHOD": native_str(parser.get_method()),
+            "QUERY_STRING": parser.get_query_string(),
+            "RAW_URI": parser.get_url(),
+            "SERVER_PROTOCOL": protocol,
+            'CONTENT_TYPE': ''
+        }
+    url_scheme = "http"
+    forward = client_address
+    server = '%s:%s' % address
+    script_name = os.environ.get("SCRIPT_NAME", "")
+    for header, value in request_headers:
+        header = header.lower()
+        if header in HOP_HEADERS:
+            headers[header] = value
+        if header == 'x-forwarded-for':
+            forward = value
+        elif header == "x-forwarded-protocol" and value == "ssl":
+            url_scheme = "https"
+        elif header == "x-forwarded-ssl" and value == "on":
+            url_scheme = "https"
+        elif header == "host":
+            server = value
+        elif header == "script_name":
+            script_name = value
+        elif header == "content-type":
+            environ['CONTENT_TYPE'] = value
+            continue
+        elif header == "content-length":
+            environ['CONTENT_LENGTH'] = value
+            continue
+        key = 'HTTP_' + header.upper().replace('-', '_')
+        environ[key] = value
+    environ['wsgi.url_scheme'] = url_scheme
+    if is_string(forward):
+        # we only took the last one
+        # http://en.wikipedia.org/wiki/X-Forwarded-For
+        if forward.find(",") >= 0:
+            forward = forward.rsplit(",", 1)[1].strip()
+        remote = forward.split(":")
+        if len(remote) < 2:
+            remote.append('80')
+    else:
+        remote = forward
+    environ['REMOTE_ADDR'] = remote[0]
+    environ['REMOTE_PORT'] = str(remote[1])
+    server =  host_and_port_default(url_scheme, server)
+    environ['SERVER_NAME'] = socket.getfqdn(server[0])
+    environ['SERVER_PORT'] = server[1]
+    path_info = parser.get_path()
+    if path_info is not None:
+        if script_name:
+            path_info = path_info.split(script_name, 1)[1]
+        environ['PATH_INFO'] = unquote(path_info)
+    environ['SCRIPT_NAME'] = script_name
+    if extra:
+        environ.update(extra)
+    return environ
+    
+    
 def chunk_encoding(chunk):
     '''Write a chunk::
 
@@ -297,74 +378,12 @@ is an HTTP upgrade (websockets)'''
 
     def wsgi_environ(self):
         #return a the WSGI environ dictionary
-        p = self.parser
-        input = BytesIO(p.recv_body())
-        protocol = "HTTP/%s" % ".".join(('%s' % v for v in p.get_version()))
-        environ = {
-            "wsgi.input": input,
-            "wsgi.errors": sys.stderr,
-            "wsgi.version": (1, 0),
-            "wsgi.run_once": False,
-            'wsgi.multithread': False,
-            'wsgi.multiprocess': False,
-            "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
-            "REQUEST_METHOD": native_str(p.get_method()),
-            "QUERY_STRING": p.get_query_string(),
-            "RAW_URI": p.get_url(),
-            "SERVER_PROTOCOL": protocol,
-            'CONTENT_TYPE': '',
-            'pulsar.connection': self.connection,
-            'pulsar.cfg': self.cfg
-        }
-        url_scheme = "http"
-        forward = self.address
-        server = '%s:%s' % self.transport.address
-        script_name = os.environ.get("SCRIPT_NAME", "")
-        for header, value in self._request_headers:
-            header = header.lower()
-            if header in HOP_HEADERS:
-                self.headers[header] = value
-            if header == 'x-forwarded-for':
-                forward = value
-            elif header == "x-forwarded-protocol" and value == "ssl":
-                url_scheme = "https"
-            elif header == "x-forwarded-ssl" and value == "on":
-                url_scheme = "https"
-            elif header == "host":
-                server = value
-            elif header == "script_name":
-                script_name = value
-            elif header == "content-type":
-                environ['CONTENT_TYPE'] = value
-                continue
-            elif header == "content-length":
-                environ['CONTENT_LENGTH'] = value
-                continue
-            key = 'HTTP_' + header.upper().replace('-', '_')
-            environ[key] = value
-        environ['wsgi.url_scheme'] = url_scheme
-        if is_string(forward):
-            # we only took the last one
-            # http://en.wikipedia.org/wiki/X-Forwarded-For
-            if forward.find(",") >= 0:
-                forward = forward.rsplit(",", 1)[1].strip()
-            remote = forward.split(":")
-            if len(remote) < 2:
-                remote.append('80')
-        else:
-            remote = forward
-        environ['REMOTE_ADDR'] = remote[0]
-        environ['REMOTE_PORT'] = str(remote[1])
-        server =  host_and_port_default(url_scheme, server)
-        environ['SERVER_NAME'] = socket.getfqdn(server[0])
-        environ['SERVER_PORT'] = server[1]
-        path_info = p.get_path()
-        if path_info is not None:
-            if script_name:
-                path_info = path_info.split(script_name, 1)[1]
-            environ['PATH_INFO'] = unquote(path_info)
-        environ['SCRIPT_NAME'] = script_name
-        self.keep_alive = keep_alive(self.headers, p.get_version())
+        parser = self.parser
+        environ = wsgi_environ(parser, self.transport.address, self.address,
+                               self._request_headers, self.headers,
+                               {'pulsar.connection': self.connection,
+                                'pulsar.cfg': self.cfg})
+        self.keep_alive = keep_alive(self.headers, parser.get_version())
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ

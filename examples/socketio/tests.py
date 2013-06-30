@@ -7,7 +7,8 @@ from pulsar.apps.test import unittest, dont_run_with_thread
 from .manage import server
 
 
-class TestWebSocketThread(unittest.TestCase):
+class a:
+#class TestWebSocketThread(unittest.TestCase):
     app = None
     concurrency = 'thread'
     
@@ -59,7 +60,7 @@ class TestWebSocketThread(unittest.TestCase):
         ws.write('Hi there!')
         
 
-@dont_run_with_thread
-class TestWebSocketProcess(TestWebSocketThread):
-    concurrency = 'process'
+#@dont_run_with_thread
+#class TestWebSocketProcess(TestWebSocketThread):
+#    concurrency = 'process'
     

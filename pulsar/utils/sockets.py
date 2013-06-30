@@ -115,6 +115,9 @@ class Socket(SocketType('SocketBase', (), {})):
         if self._sock:
             try:
                 self._sock.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
+            try:
                 self._sock.close()
             except Exception:
                 pass

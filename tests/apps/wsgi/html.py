@@ -16,7 +16,14 @@ class TestHtmlFactory(unittest.TestCase):
         
         
 class TestAttributes(unittest.TestCase):
-
+    
+    def testEmpty(self):
+        c = wsgi.Html('div')
+        self.assertEqual(c._attr, None)
+        self.assertEqual(c._classes, None)
+        self.assertEqual(c._data, None)
+        self.assertEqual(c._css, None)
+        
     def testHtmlRepr(self):
         c = wsgi.Html('div', cn='bla')
         self.assertEqual(c.content_type, 'text/html')
@@ -37,19 +44,20 @@ class TestAttributes(unittest.TestCase):
         
     def testClassList(self):
         c = wsgi.Html('div', cn=['ciao', 'pippo', 'ciao'])
-        self.assertEqual(len(c.classes), 2)
-        self.assertTrue('ciao' in c.classes)
-        self.assertTrue('pippo' in c.classes)
+        self.assertEqual(len(c._classes), 2)
+        self.assertTrue('ciao' in c._classes)
+        self.assertTrue('pippo' in c._classes)
+        self.assertTrue(c.hasClass('pippo'))
         
     def testRemoveClass(self):
         c = wsgi.Html('div', cn=['ciao', 'pippo', 'ciao', 'foo'])
-        self.assertEqual(len(c.classes), 3)
+        self.assertEqual(len(c._classes), 3)
         c.removeClass('sdjkcbhjsd smdhcbjscbsdcsd')
-        self.assertEqual(len(c.classes), 3)
+        self.assertEqual(len(c._classes), 3)
         c.removeClass('ciao sdjkbsjc')
-        self.assertEqual(len(c.classes), 2)
+        self.assertEqual(len(c._classes), 2)
         c.removeClass('pippo foo')
-        self.assertEqual(len(c.classes), 0)
+        self.assertEqual(len(c._classes), 0)
         
     def testData(self):
         c = wsgi.Html('div')

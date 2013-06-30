@@ -50,8 +50,7 @@ class TestWebSocketThread(unittest.TestCase):
     def testUpgrade(self):
         c = HttpClient()
         response = c.get(self.ws_echo)
-        yield response.on_finished
-        ws = response.on_finished.result
+        ws = yield response.on_finished
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')

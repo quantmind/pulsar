@@ -67,9 +67,14 @@ class TestHttpClientBase:
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     
+    def test_home_page(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(str(response), '200 OK')
+        
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
-was passedby the client.'''
+was passed by the client.'''
         http = self.client(version='HTTP/1.0')
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.0')
@@ -174,7 +179,7 @@ was passed by the client.'''
         self._check_pool(http, response)
         self.assertEqual(response.response, 'OK')
         result = response.content_json()
-        self.assertEqual(result['args'], {'bla':['foo']})
+        self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
                 self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
         

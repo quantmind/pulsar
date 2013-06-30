@@ -387,7 +387,7 @@ class WsgiRequest(Accept):
     @property
     def method(self):
         '''The request method (uppercase).'''
-        return self.environ['REQUEST_METHOD']      
+        return self.environ['REQUEST_METHOD']
 
     @cached_property
     def encoding(self):

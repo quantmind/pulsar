@@ -24,13 +24,20 @@ class Graph(ws.WS):
     
     def on_message(self, websocket, msg):
         websocket.write(json.dumps([(i,random()) for i in range(100)]))
+        
+
+class Echo(ws.WS):
+    
+    def on_message(self, websocket, msg):
+        websocket.write(msg)
 
 
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home),
-                                 ws.WebSocket('/data', Graph())])
+                                 ws.WebSocket('/data', Graph()),
+                                 ws.WebSocket('/echo', Echo())])
     
     def home(self, request):
         data = open(os.path.join(os.path.dirname(__file__), 

@@ -1,3 +1,5 @@
+from collections import Mapping
+
 from pulsar.utils.structures import recursive_update
 
 HTML_VISITORS = {}

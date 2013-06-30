@@ -430,10 +430,7 @@ Any other keyed-value parameter will be added as attribute, if in the set of
 '''
     def __init__(self, tag, *children, **params):
         self._tag = tag
-        self._classes = set()
-        self._data = {}
-        self._attr = {}
-        self._css = {}
+        self._extra = {}
         self._setup(**params)
         for child in children:
             self.append(child)
@@ -449,9 +446,34 @@ forth. It can be ``None``.'''
         return self._tag
     
     @property
+    def _classes(self):
+        if 'classes' in self._extra:
+            return self._extra['classes']
+        
+    @property
+    def _data(self):
+        if 'data' in self._extra:
+            return self._extra['data']
+        
+    @property
+    def _attr(self):
+        if 'attr' in self._extra:
+            return self._extra['attr']
+    
+    @property
+    def _css(self):
+        if 'css' in self._extra:
+            return self._extra['css']
+        
+    @property
+    def type(self):
+        if 'attr' in self._extra:
+            return self._extra['attr'].get('type')
+    
+    @property
     def available_attributes(self):
         '''The list of valid HTML attributes for this :attr:`tag`.'''
-        return tag_attributes(self._tag, self._attr.get('type'))
+        return tag_attributes(self._tag, self.type)
     
     def get_form_value(self):
         '''Return the value of this :class:`Html` element when it is contained
@@ -502,15 +524,18 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
     def attr(self, *args):
         '''Add the specific attribute to the attribute dictionary
 with key ``name`` and value ``value`` and return ``self``.'''
+        attr = self._attr
         if not args:
-            return self._attr
-        result, adding = self._attrdata(self._attr, *args)
+            return attr or {}
+        result, adding = self._attrdata('attr', *args)
         if adding:
+            if attr is None:
+                self._extra['attr'] = attr = {}
             available_attributes = self.available_attributes
             for name, value in iteritems(result):
                 if value is not None:
                     if name in available_attributes:
-                        self._attr[name] = value
+                        attr[name] = value
                     elif name is 'value':
                         self.append(value)
             result = self
@@ -520,9 +545,11 @@ with key ``name`` and value ``value`` and return ``self``.'''
         '''Add or retrieve data values for this :class:`Html`.'''
         data = self._data
         if not args:
-            return data
-        result, adding = self._attrdata(data, *args)
+            return data or {}
+        result, adding = self._attrdata('data', *args)
         if adding:
+            if data is None:
+                self._extra['data'] = {}
             add = self._visitor.add_data
             for key, value in iteritems(result):
                 add(self, key, value)
@@ -538,60 +565,76 @@ with key ``name`` and value ``value`` and return ``self``.'''
                 for c in cn:
                     add(c)
             else:
-                add = self._classes.add
+                classes = self._classes
+                if classes is None:
+                    self._extra['classes'] = classes = set()
+                add = classes.add
                 for cn in cn.split():
                     add(slugify(cn, rtx='-'))
         return self
 
     def hasClass(self, cn):
         '''``True`` if ``cn`` is a class of self.'''
-        return cn in self._classes
+        classes = self._classes
+        return classes and cn in classes
     
     def removeClass(self, cn):
         '''Remove classes'''
         if cn:
             ks = self._classes
-            for cn in cn.split():
-                if cn in ks:
-                    ks.remove(cn)
+            if ks:
+                for cn in cn.split():
+                    if cn in ks:
+                        ks.remove(cn)
         return self
     
     def flatatt(self, **attr):
         '''Return a string with atributes to add to the tag'''
         cs = ''
-        attr = self._attr.copy()
-        if self._classes:
-            cs = ' '.join(self._classes)
+        attr = self._attr
+        classes = self._classes
+        data = self._data
+        css = self._css
+        attr = attr.copy() if attr else {}
+        if classes:
+            cs = ' '.join(classes)
             attr['class'] = cs
-        if self._css:
+        if css:
             attr['style'] = ' '.join(('%s:%s;' % (k,v)\
-                                       for k,v in self._css.items()))
-        for k, v in self._data.items():
-            attr['data-%s' % k] = dump_data_value(v)
+                                       for k,v in css.items()))
+        if data:
+            for k, v in data.items():
+                attr['data-%s' % k] = dump_data_value(v)
         if attr:
             return ''.join(attr_iter(attr))
         else:
             return ''
 
     def css(self, mapping=None):
-        '''Update the css dictionary if *mapping* is a dictionary, otherwise
- return the css value at *mapping*.'''
+        '''Update the css dictionary if ``mapping`` is a dictionary, otherwise
+ return the css value at ``mapping``. If ``mapping`` is not given, return the
+ whole ``css`` dictionary if available.'''
+        css = self._css
         if mapping is None:
-            return self._css
+            return css
         elif isinstance(mapping, Mapping):
-            self._css.update(mapping)
+            if css is None:
+                self._extra['css'] = css = {}
+            css.update(mapping)
             return self
         else:
-            return self._css.get(mapping)
+            return css.get(mapping) if css else None
     
     def hide(self):
         '''Same as jQuery hide method.'''
-        self._css.update({'display': 'none'})
+        self.css({'display': 'none'})
         return self
     
     def show(self):
         '''Same as jQuery show method.'''
-        self._css.pop('display', None)
+        css = self._css
+        if css:
+            css.pop('display', None)
         return self
     
     def do_stream(self, request):
@@ -611,6 +654,8 @@ with key ``name`` and value ``value`` and return ``self``.'''
                 yield '</%s>' % self._tag
     
     def _attrdata(self, cont, name, *val):
+        if not name:
+            return None, False
         if isinstance(name, Mapping):
             if val:
                 raise TypeError('Cannot set a value to %s' % name)
@@ -622,7 +667,8 @@ with key ``name`` and value ``value`` and return ``self``.'''
                 else:
                     raise TypeError('Too may arguments')
             else:
-                return cont.get(name), False
+                cont = self._extra.get(cont)
+                return cont.get(name) if cont else None, False
             
 
 class Media(AsyncString):
