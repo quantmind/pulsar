@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>Changelog &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Tools" href="api/utilities.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,11 +67,20 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-5-2-development">
-<h2>Ver. 0.5.2 - Development<a class="headerlink" href="#ver-0-5-2-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-5-3-development">
+<h2>Ver. 0.5.3 - Development<a class="headerlink" href="#ver-0-5-3-development" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ver-0-5-2-2013-june-30">
+<h2>Ver. 0.5.2 - 2013-June-30<a class="headerlink" href="#ver-0-5-2-2013-june-30" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Introduced the <a class="reference internal" href="tutorials/wsgi.html#tutorial-router"><em>Router parameter</em></a> for propagating
+attributes to children routes. router can also have a <tt class="docutils literal"><span class="pre">name</span></tt> so that
+they can easily be retrieved via the <tt class="docutils literal"><span class="pre">get_route</span></tt> method.</li>
+<li>Bug fix in Asynchronous Wsgi String <tt class="docutils literal"><span class="pre">__repr__</span></tt> method.</li>
+<li>Critical bug fix in Wsgi server when a failure without a stack trace occurs.</li>
 <li>Critical bug fix in WebSocket frame parser.</li>
 <li>WebSocket handlers accept the WebSocket protocol as first argument.</li>
+<li><strong>448 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-5-1-2013-june-03">
@@ -345,7 +354,8 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-5-2-development">Ver. 0.5.2 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-5-3-development">Ver. 0.5.3 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>
 <li><a class="reference internal" href="#ver-0-5-0-2013-may-22">Ver. 0.5.0 - 2013-May-22</a></li>
 <li><a class="reference internal" href="#ver-0-4-6-2013-feb-8">Ver. 0.4.6 - 2013-Feb-8</a></li>

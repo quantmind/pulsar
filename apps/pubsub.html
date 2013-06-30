@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Publish/Subscribe &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>Publish/Subscribe &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Twisted Integration" href="twisted.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -73,7 +73,7 @@ handler for the Publish/Subscribe pattern.</p>
 <div><p>In software architecture, publish/subscribe is a messaging pattern where
 senders of messages, called publishers, do not program the messages to
 be sent directly to specific receivers, called subscribers.
-Instead, published messages are characterized into classes, without
+Instead, published messages are characterised into classes, without
 knowledge of what, if any, subscribers there may be. Similarly, subscribers
 express interest in one or more classes, and only receive messages that are
 of interest, without knowledge of what, if any, publishers there are.</p>
@@ -82,10 +82,10 @@ of interest, without knowledge of what, if any, publishers there are.</p>
 <p>When using this middleware, one starts by creating a <a class="reference internal" href="#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.pubsub</span> <span class="kn">import</span> <span class="n">PubSub</span>
 
-<span class="n">pubsub</span> <span class="o">=</span> <span class="n">PubSub</span><span class="p">(</span><span class="n">connection_string</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="n">pubsub</span> <span class="o">=</span> <span class="n">PubSub</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">connection_string</span></tt> parameter is needed in order to select the backend
+<p>The <tt class="docutils literal"><span class="pre">backend</span></tt> parameter is needed in order to select the backend
 to use. If not supplied, the default <tt class="docutils literal"><span class="pre">local://</span></tt> backend is used.</p>
 <div class="section" id="pubsub-handler">
 <h2>PubSub handler<a class="headerlink" href="#pubsub-handler" title="Permalink to this headline">¶</a></h2>

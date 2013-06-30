@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Protocols API &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>Protocols API &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Actors API" href="actor.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="actor.html" title="Actors API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -331,7 +331,7 @@ response).</p>
 
 <dl class="method">
 <dt id="pulsar.Connection.finished">
-<tt class="descname">finished</tt><big>(</big><em>consumer</em>, <em>result=&lt;object object at 0x10b9e0170&gt;</em><big>)</big><a class="headerlink" href="#pulsar.Connection.finished" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">finished</tt><big>(</big><em>consumer</em>, <em>result=&lt;object object at 0x101129170&gt;</em><big>)</big><a class="headerlink" href="#pulsar.Connection.finished" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call this method to finish with the the current <em>consumer</em>.
 the <em>consumer</em> must be the same as the <a class="reference internal" href="#pulsar.Connection.current_consumer" title="pulsar.Connection.current_consumer"><tt class="xref py py-attr docutils literal"><span class="pre">current_consumer</span></tt></a> attribute.</p>
 </dd></dl>
@@ -454,7 +454,7 @@ by client consumers only.</p>
 
 <dl class="method">
 <dt id="pulsar.ProtocolConsumer.finished">
-<tt class="descname">finished</tt><big>(</big><em>result=&lt;object object at 0x10b9e0170&gt;</em><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.finished" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">finished</tt><big>(</big><em>result=&lt;object object at 0x101129170&gt;</em><big>)</big><a class="headerlink" href="#pulsar.ProtocolConsumer.finished" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call this method when done with this <a class="reference internal" href="#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.
 By default it calls the <a class="reference internal" href="#pulsar.Connection.finished" title="pulsar.Connection.finished"><tt class="xref py py-meth docutils literal"><span class="pre">Connection.finished()</span></tt></a> method of the
 <a class="reference internal" href="#pulsar.ProtocolConsumer.connection" title="pulsar.ProtocolConsumer.connection"><tt class="xref py py-attr docutils literal"><span class="pre">connection</span></tt></a> attribute.</p>

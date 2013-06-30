@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.websocket &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>pulsar.utils.websocket &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -165,18 +165,37 @@
         
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Frame.final"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.final">[docs]</a>    <span class="k">def</span> <span class="nf">final</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Flag indicating if this is a final frame or not.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fin</span><span class="p">)</span>
     </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Frame.masked"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.masked">[docs]</a>    <span class="k">def</span> <span class="nf">masked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Indicate if the frame is masked.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masking_key</span><span class="p">)</span>
     </div>
     <span class="nd">@property</span>
+<div class="viewcode-block" id="Frame.is_message"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.is_message">[docs]</a>    <span class="k">def</span> <span class="nf">is_message</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Indicate if the frame is a ``string`` message.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x1</span>
+    </div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Frame.is_bytes"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.is_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">is_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Indicate if the frame is a ``string`` message.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x2</span>
+    </div>
+    <span class="nd">@property</span>
 <div class="viewcode-block" id="Frame.is_data"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.is_data">[docs]</a>    <span class="k">def</span> <span class="nf">is_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Indicate if the frame is a ``string`` or ``bytes``.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="ow">in</span> <span class="p">(</span><span class="mh">0x1</span><span class="p">,</span> <span class="mh">0x2</span><span class="p">)</span>
     </div>
     <span class="nd">@property</span>
+<div class="viewcode-block" id="Frame.is_ping"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.is_ping">[docs]</a>    <span class="k">def</span> <span class="nf">is_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;A :class:`Frame` representing a ping.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x9</span>
+    </div>
+    <span class="nd">@property</span>
 <div class="viewcode-block" id="Frame.is_close"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.websocket.Frame.is_close">[docs]</a>    <span class="k">def</span> <span class="nf">is_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;A :class:`Frame` representing a close request.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x8</span>
     </div>
     <span class="k">def</span> <span class="nf">_build_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
@@ -418,10 +437,10 @@
             <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">extensions</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">masking_key</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">unmask</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">unmask</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">opcode</span> <span class="o">==</span> <span class="mh">0x1</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s">&quot;replace&quot;</span><span class="p">)</span>
-            <span class="n">frame</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">,</span> <span class="s">&quot;replace&quot;</span><span class="p">)</span>
+            <span class="n">frame</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">payload</span>
             <span class="k">return</span> <span class="n">frame</span>
             </div>
     <span class="k">def</span> <span class="nf">save_buf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -143,7 +143,7 @@
     <span class="k">return</span> <span class="n">_Http_Parser</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span><span class="p">,</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">ispy26</span>
+<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">ispy26</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span>
 
 <span class="n">create_connection</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">create_connection</span>
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;httpurl&#39;</span><span class="p">)</span>
@@ -182,8 +182,6 @@
     <span class="nb">map</span> <span class="o">=</span> <span class="nb">map</span>
     <span class="nb">range</span> <span class="o">=</span> <span class="nb">range</span>
     <span class="nb">chr</span> <span class="o">=</span> <span class="nb">chr</span>
-    <span class="n">iteritems</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-    <span class="n">itervalues</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
     <span class="n">is_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">to_bytes</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -234,8 +232,6 @@
     <span class="n">ascii_letters</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">letters</span>
     <span class="nb">range</span> <span class="o">=</span> <span class="nb">xrange</span>
     <span class="nb">chr</span> <span class="o">=</span> <span class="nb">unichr</span>
-    <span class="n">iteritems</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
-    <span class="n">itervalues</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">itervalues</span><span class="p">()</span>
     <span class="n">is_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>

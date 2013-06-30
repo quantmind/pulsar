@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>pulsar.apps.wsgi.content &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -64,10 +64,55 @@
             
   <h1>Source code for pulsar.apps.wsgi.content</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;The :mod:`pulsar.apps.wsgi.content` introduces several utility classes</span>
-<span class="sd">handling asynchronous content on a WSGI server. The main class of this module</span>
-<span class="sd">is the :class:`AsyncString`. Web framework are smart ways of concatenating </span>
-<span class="sd">bytes which need to be displayed on a web page or returned as a response to</span>
-<span class="sd">and HTTP client.</span>
+<span class="sd">handling asynchronous content on a WSGI server.</span>
+
+<span class="sd">A web framework is set of tools working together to concatenate</span>
+<span class="sd">``strings`` to return as a response to and HTTP client.</span>
+<span class="sd">A string can be Html, Json, plain text, XML or any other valid HTTP</span>
+<span class="sd">content type.</span>
+
+<span class="sd">The main class of this module is the :class:`AsyncString`, which can be</span>
+<span class="sd">considered as the atomic component of an asynchronous web framework.</span>
+<span class="sd">It is a smart way for concatenating asynchronous strings::</span>
+
+<span class="sd">    &gt;&gt;&gt; string = AsyncString(&#39;Hello&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; string.render()</span>
+<span class="sd">    &#39;Hello&#39;</span>
+<span class="sd">    &gt;&gt;&gt; string.render()</span>
+<span class="sd">    ...  </span>
+<span class="sd">    RuntimeError: AsyncString already streamed</span>
+<span class="sd">    </span>
+<span class="sd">An :class:`AsyncString` can only be rendered once, and it accepts</span>
+<span class="sd">:ref:`asynchronous components  &lt;tutorials-coroutine&gt;`::</span>
+
+<span class="sd">    &gt;&gt;&gt; a = Deferred()</span>
+<span class="sd">    &gt;&gt;&gt; string = AsyncString(&#39;Hello &#39;, a)</span>
+<span class="sd">    &gt;&gt;&gt; value = string.render()</span>
+<span class="sd">    &gt;&gt;&gt; value</span>
+<span class="sd">    StreamRenderer</span>
+<span class="sd">    &gt;&gt;&gt; value.done()</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; </span>
+
+<span class="sd">The :class:`StreamRenderer` is a specialised :class:`pulsar.Deferred` which</span>
+<span class="sd">results in a string.</span>
+
+<span class="sd">    &gt;&gt;&gt; a.callback(&#39;World!&#39;)</span>
+<span class="sd">    &#39;World!&#39;</span>
+<span class="sd">    &gt;&gt;&gt; value.done()</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; value.result</span>
+<span class="sd">    &#39;Hello World!&#39;</span>
+
+<span class="sd">.. note::</span>
+
+<span class="sd">    The :meth:`AsyncString.do_stream` method is responsible for the streaming</span>
+<span class="sd">    of ``strings`` or :ref:`asynchronous components  &lt;tutorials-coroutine&gt;`.</span>
+<span class="sd">    It can be overwritten by subclasses to customise the way an</span>
+<span class="sd">    :class:`AsyncString` streams its :attr:`AsyncString.children`.</span>
+<span class="sd">    </span>
+<span class="sd">    The :meth:`AsyncString.to_string` method is responsible for the</span>
+<span class="sd">    concatenation of ``strings``. it can be customised by subclasses.</span>
 
 <span class="sd">Asynchronous String</span>
 <span class="sd">=====================</span>
@@ -146,8 +191,7 @@
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">is_async</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">is_failure</span><span class="p">,</span> <span class="n">async</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">ispy3k</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span><span class="p">,</span> <span class="n">recursive_update</span><span class="p">,</span>\
-                                    <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span><span class="p">,</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="n">slugify</span><span class="p">,</span> <span class="n">INLINE_TAGS</span><span class="p">,</span> <span class="n">tag_attributes</span><span class="p">,</span> <span class="n">attr_iter</span><span class="p">,</span>\
                                 <span class="n">csslink</span><span class="p">,</span> <span class="n">dump_data_value</span><span class="p">,</span> <span class="n">child_tag</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">remove_double_slash</span><span class="p">,</span> <span class="n">urljoin</span>
@@ -209,11 +253,11 @@
     <span class="sd">&#39;&#39;&#39;Content type for this :class:`AsyncString`&#39;&#39;&#39;</span>
     <span class="n">encoding</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Charset encoding for this :class:`AsyncString`&#39;&#39;&#39;</span>
+    <span class="n">_streamed</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">_children</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">children</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_streamed</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
     
@@ -229,18 +273,41 @@
 <span class="sd">be other :class:`AsyncString` or string or bytes, depending on implementation.</span>
 <span class="sd">:attr:`children` are added and removed via the :meth:`append` and</span>
 <span class="sd">:meth:`remove` methods.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
     </div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
     
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
     
 <div class="viewcode-block" id="AsyncString.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Append ``child`` to the list of :attr:`children` of this</span>
-<span class="sd">:class:`AsyncString`.</span>
+        <span class="sd">&#39;&#39;&#39;Append ``child`` to the list of :attr:`children`.</span>
 
+<span class="sd">:param child: String, bytes or another :class:`AsyncString`. If it is an</span>
+<span class="sd">    :class:`AsyncString`, this instance will be set as its :attr:`parent`.</span>
+<span class="sd">    If ``child`` is ``None``, this method does nothing.</span>
+<span class="sd">    </span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="AsyncString.prepend"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.prepend">[docs]</a>    <span class="k">def</span> <span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Prepend ``child`` to the list of :attr:`children`.</span>
+<span class="sd">        </span>
+<span class="sd">This is a shortcut for the :meth:`insert` method at index 0.</span>
+
+<span class="sd">:param child: String, bytes or another :class:`AsyncString`. If it is an</span>
+<span class="sd">    :class:`AsyncString`, this instance will be set as its :attr:`parent`.</span>
+<span class="sd">    If ``child`` is ``None``, this method does nothing.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="AsyncString.insert"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Insert ``child`` into the list of :attr:`children` at ``index``.</span>
+
+<span class="sd">:param index: The index (positive integer) where to insert ``child``.</span>
 <span class="sd">:param child: String, bytes or another :class:`AsyncString`. If it is an</span>
 <span class="sd">    :class:`AsyncString`, this instance will be set as its :attr:`parent`.</span>
 <span class="sd">    If ``child`` is ``None``, this method does nothing.</span>
@@ -258,12 +325,15 @@
                     <span class="c"># remove child from the child parent</span>
                     <span class="n">child_parent</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
                 <span class="n">child</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
-        </div>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
+             </div>
 <div class="viewcode-block" id="AsyncString.remove"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Remove a ``child`` from the list of :attr:``children``.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Remove a ``child`` from the list of :attr:`children`.&#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
                 <span class="n">child</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
@@ -271,10 +341,11 @@
     </div>
 <div class="viewcode-block" id="AsyncString.remove_all"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.remove_all">[docs]</a>    <span class="k">def</span> <span class="nf">remove_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove all :attr:`children`.&#39;&#39;&#39;</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
-                <span class="n">child</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
+                    <span class="n">child</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="p">[]</span>
         </div>
 <div class="viewcode-block" id="AsyncString.append_to"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.append_to">[docs]</a>    <span class="k">def</span> <span class="nf">append_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Append itself to ``parent``. Return ``self``.&#39;&#39;&#39;</span>
@@ -283,6 +354,7 @@
     </div>
 <div class="viewcode-block" id="AsyncString.content"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.content">[docs]</a>    <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return the :class:`StreamRenderer` for this instance.</span>
+<span class="sd">        </span>
 <span class="sd">This method can be called once only since it invokes the :meth:`stream`</span>
 <span class="sd">method.&#39;&#39;&#39;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -292,25 +364,39 @@
             <span class="k">return</span> <span class="n">StreamRenderer</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">)</span>
     </div>
 <div class="viewcode-block" id="AsyncString.stream"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.stream">[docs]</a>    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;This is the most important method of an :class:`AsyncString`.</span>
+        <span class="sd">&#39;&#39;&#39;An iterable over strings or asynchronous elements.</span>
+<span class="sd">        </span>
+<span class="sd">This is the most important method of an :class:`AsyncString`.</span>
 <span class="sd">It is called by :meth:`content` or by the :attr:`parent` of this</span>
-<span class="sd">:class:`AsyncString`. It returns an iterable (list, tuple, generator) over</span>
-<span class="sd">strings, that means ``unicode/str`` for python 2, and ``str`` for python 3 or</span>
-<span class="sd">:ref:`asynchronous elements &lt;tutorials-coroutine&gt;` which result in strings.</span>
-<span class="sd">This method can be called once only, otherwise a</span>
-<span class="sd">:class:`RuntimeError` occurs.&#39;&#39;&#39;</span>
+<span class="sd">:class:`AsyncString`. It returns an iterable (list, tuple or a generator) over</span>
+<span class="sd">strings (``unicode/str`` for python 2, ``str`` only for python 3) or</span>
+<span class="sd">:ref:`asynchronous elements &lt;tutorials-coroutine&gt;` which result in</span>
+<span class="sd">strings. This method can be called **once only**, otherwise a</span>
+<span class="sd">:class:`RuntimeError` occurs.</span>
+
+<span class="sd">This method should not be overwritten, instead one should use the</span>
+<span class="sd">:meth:`do_stream` to customise behaviour.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streamed</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> already streamed&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stream_started</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_streamed</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_stream</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
     </div>
-<div class="viewcode-block" id="AsyncString.stream_started"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.stream_started">[docs]</a>    <span class="k">def</span> <span class="nf">stream_started</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Hook called if ``request`` is available, just before the</span>
-<span class="sd">:meth:`do_stream` is executed.&#39;&#39;&#39;</span>
-        <span class="k">pass</span>
-    </div>
+<div class="viewcode-block" id="AsyncString.do_stream"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.do_stream">[docs]</a>    <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Perform the actual streaming.</span>
+<span class="sd">        </span>
+<span class="sd">It must return an iterable over ``strings`` or</span>
+<span class="sd">:ref:`asynchronous elements &lt;tutorials-coroutine&gt;` which result in strings.</span>
+
+<span class="sd">This method can be re-implemented by subclasses and should not be invoked</span>
+<span class="sd">directly. Use the :meth:`stream` method instead.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="n">bit</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">child</span>
+                </div>
     <span class="nd">@async</span><span class="p">()</span>
 <div class="viewcode-block" id="AsyncString.http_response"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.http_response">[docs]</a>    <span class="k">def</span> <span class="nf">http_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a, possibly, :ref:`asynchronous WSGI iterable &lt;wsgi-async&gt;`.</span>
@@ -321,16 +407,6 @@
         <span class="n">body</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">body</span>
         <span class="k">yield</span> <span class="n">response</span>
-        </div>
-<div class="viewcode-block" id="AsyncString.do_stream"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.do_stream">[docs]</a>    <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Perform the actual streaming of this :class:`AsyncString`.</span>
-<span class="sd">This method can be re-implemented by subclasses.&#39;&#39;&#39;</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-                    <span class="k">yield</span> <span class="n">bit</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">child</span>
                 </div>
 <div class="viewcode-block" id="AsyncString.to_string"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.to_string">[docs]</a>    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Once the :class:`StreamRenderer`, returned by :meth:`content`</span>
@@ -351,10 +427,7 @@
         <span class="n">value</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">is_failure</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">value</span><span class="o">.</span><span class="n">raise_all</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">is_async</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Could not render. Asynchronous value&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">value</span>
             
 </div></div>
 <div class="viewcode-block" id="Json"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Json">[docs]</a><span class="k">class</span> <span class="nc">Json</span><span class="p">(</span><span class="n">AsyncString</span><span class="p">):</span>
@@ -362,8 +435,9 @@
 <span class="sd">The :attr:`AsyncString.content_type` attribute is set to</span>
 <span class="sd">``application/json``.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">children</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Json</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">children</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
         
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Json.json"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Json.json">[docs]</a>    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -396,10 +470,11 @@
         <span class="n">p</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Html</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="o">*</span><span class="n">children</span><span class="p">,</span> <span class="o">**</span><span class="n">p</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">html_input</span>
-    
+        
     </div>
 <div class="viewcode-block" id="Html"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html">[docs]</a><span class="k">class</span> <span class="nc">Html</span><span class="p">(</span><span class="n">AsyncString</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An :class:`AsyncString` for html elements.</span>
+    <span class="sd">&#39;&#39;&#39;An :class:`AsyncString` for html strings.</span>
+<span class="sd">    </span>
 <span class="sd">The :attr:`AsyncString.content_type` attribute is set to ``text/html``.</span>
 
 <span class="sd">:param tag: Set the :attr:`tag` attribute. Must be given and can be ``None``.</span>
@@ -420,22 +495,15 @@
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="o">*</span><span class="n">children</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span> <span class="o">=</span> <span class="n">tag</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_css</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Html</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;text/html&#39;</span>
-    
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Html.classes"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.classes">[docs]</a>    <span class="k">def</span> <span class="nf">classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Set of classes for this :class:`Html` element.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
-    </div>
+        
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Html.tag"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.tag">[docs]</a>    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The tag for this HTML element, ``div``, ``a``, ``table`` and so</span>
@@ -443,9 +511,34 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
     </div>
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;classes&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;classes&#39;</span><span class="p">]</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;data&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;attr&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;attr&#39;</span><span class="p">]</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_css</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;css&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;css&#39;</span><span class="p">]</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;attr&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;attr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
 <div class="viewcode-block" id="Html.available_attributes"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.available_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">available_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The list of valid HTML attributes for this :attr:`tag`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">tag_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">tag_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
     </div>
 <div class="viewcode-block" id="Html.get_form_value"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.get_form_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_form_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return the value of this :class:`Html` element when it is contained</span>
@@ -496,15 +589,18 @@
 <div class="viewcode-block" id="Html.attr"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.attr">[docs]</a>    <span class="k">def</span> <span class="nf">attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add the specific attribute to the attribute dictionary</span>
 <span class="sd">with key ``name`` and value ``value`` and return ``self``.&#39;&#39;&#39;</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span>
-        <span class="n">result</span><span class="p">,</span> <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrdata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">attr</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrdata</span><span class="p">(</span><span class="s">&#39;attr&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;attr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">available_attributes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_attributes</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">available_attributes</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                        <span class="n">attr</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                     <span class="k">elif</span> <span class="n">name</span> <span class="ow">is</span> <span class="s">&#39;value&#39;</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span>
@@ -512,76 +608,98 @@
     </div>
 <div class="viewcode-block" id="Html.data"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.data">[docs]</a>    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add or retrieve data values for this :class:`Html`.&#39;&#39;&#39;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
-        <span class="n">result</span><span class="p">,</span> <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrdata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrdata</span><span class="p">(</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="n">recursive_update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="k">return</span> <span class="n">result</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">add</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visitor</span><span class="o">.</span><span class="n">add_data</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+                <span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
     </div>
 <div class="viewcode-block" id="Html.addClass"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.addClass">[docs]</a>    <span class="k">def</span> <span class="nf">addClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add the specific class names to the class set and return ``self``.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">cn</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cn</span><span class="p">,(</span><span class="nb">tuple</span><span class="p">,</span><span class="nb">list</span><span class="p">,</span><span class="nb">set</span><span class="p">,</span><span class="nb">frozenset</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">)):</span>
                 <span class="n">add</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">addClass</span>
                 <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cn</span><span class="p">:</span>
                     <span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">add</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">add</span>
+                <span class="n">classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
+                <span class="k">if</span> <span class="n">classes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;classes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">classes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">add</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">add</span>
                 <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">cn</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
                     <span class="n">add</span><span class="p">(</span><span class="n">slugify</span><span class="p">(</span><span class="n">cn</span><span class="p">,</span> <span class="n">rtx</span><span class="o">=</span><span class="s">&#39;-&#39;</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="Html.hasClass"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.hasClass">[docs]</a>    <span class="k">def</span> <span class="nf">hasClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if ``cn`` is a class of self.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">cn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
+        <span class="k">return</span> <span class="n">classes</span> <span class="ow">and</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">classes</span>
     </div>
 <div class="viewcode-block" id="Html.removeClass"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.removeClass">[docs]</a>    <span class="k">def</span> <span class="nf">removeClass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cn</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove classes&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">cn</span><span class="p">:</span>
             <span class="n">ks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
-            <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">cn</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
-                    <span class="n">ks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ks</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">cn</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">cn</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
+                        <span class="n">ks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">cn</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
     </div>
 <div class="viewcode-block" id="Html.flatatt"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.flatatt">[docs]</a>    <span class="k">def</span> <span class="nf">flatatt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">attr</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a string with atributes to add to the tag&#39;&#39;&#39;</span>
         <span class="n">cs</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-        <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span><span class="p">:</span>
-            <span class="n">cs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_classes</span><span class="p">)</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+        <span class="n">css</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">attr</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">classes</span><span class="p">:</span>
+            <span class="n">cs</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
             <span class="n">attr</span><span class="p">[</span><span class="s">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cs</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">css</span><span class="p">:</span>
             <span class="n">attr</span><span class="p">[</span><span class="s">&#39;style&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span>\
-                                       <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">attr</span><span class="p">[</span><span class="s">&#39;data-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">dump_data_value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                                       <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">css</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">attr</span><span class="p">[</span><span class="s">&#39;data-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">dump_data_value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">attr</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attr_iter</span><span class="p">(</span><span class="n">attr</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;&#39;</span>
 </div>
 <div class="viewcode-block" id="Html.css"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.css">[docs]</a>    <span class="k">def</span> <span class="nf">css</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Update the css dictionary if *mapping* is a dictionary, otherwise</span>
-<span class="sd"> return the css value at *mapping*.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Update the css dictionary if ``mapping`` is a dictionary, otherwise</span>
+<span class="sd"> return the css value at ``mapping``. If ``mapping`` is not given, return the</span>
+<span class="sd"> whole ``css`` dictionary if available.&#39;&#39;&#39;</span>
+        <span class="n">css</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span>
         <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span>
+            <span class="k">return</span> <span class="n">css</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">css</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="p">[</span><span class="s">&#39;css&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">css</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">css</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">css</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span> <span class="k">if</span> <span class="n">css</span> <span class="k">else</span> <span class="bp">None</span>
     </div>
 <div class="viewcode-block" id="Html.hide"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.hide">[docs]</a>    <span class="k">def</span> <span class="nf">hide</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Same as jQuery hide method.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;display&#39;</span><span class="p">:</span> <span class="s">&#39;none&#39;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">({</span><span class="s">&#39;display&#39;</span><span class="p">:</span> <span class="s">&#39;none&#39;</span><span class="p">})</span>
         <span class="k">return</span> <span class="bp">self</span>
     </div>
 <div class="viewcode-block" id="Html.show"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Html.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Same as jQuery show method.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_css</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;display&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">css</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_css</span>
+        <span class="k">if</span> <span class="n">css</span><span class="p">:</span>
+            <span class="n">css</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;display&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
     </div>
     <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
@@ -590,16 +708,19 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="s">&#39;&lt;</span><span class="si">%s%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatatt</span><span class="p">())</span>
-            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-                        <span class="k">yield</span> <span class="n">bit</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">yield</span> <span class="n">child</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+                            <span class="k">yield</span> <span class="n">bit</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">child</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="s">&#39;&lt;/</span><span class="si">%s</span><span class="s">&gt;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span>
     
     <span class="k">def</span> <span class="nf">_attrdata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cont</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">val</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot set a value to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
@@ -611,7 +732,8 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Too may arguments&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cont</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">False</span>
+                <span class="n">cont</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cont</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">cont</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">cont</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span>
             
 </div>
 <div class="viewcode-block" id="Media"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media">[docs]</a><span class="k">class</span> <span class="nc">Media</span><span class="p">(</span><span class="n">AsyncString</span><span class="p">):</span>
@@ -647,7 +769,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">media_path</span> <span class="o">=</span> <span class="n">media_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">minified</span> <span class="o">=</span> <span class="n">minified</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">known_libraries</span> <span class="o">=</span> <span class="n">known_libraries</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span>
     
 <div class="viewcode-block" id="Media.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Media.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Append new media to the container.&#39;&#39;&#39;</span>
@@ -699,7 +826,7 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;all&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">value</span><span class="p">]}</span>
             <span class="k">for</span> <span class="n">media</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">media</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">media</span><span class="p">,</span> <span class="p">[])</span>
                 <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
                         <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -707,11 +834,12 @@
                     <span class="n">value</span> <span class="o">=</span> <span class="n">csslink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">condition</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">m</span><span class="p">:</span>
                         <span class="n">m</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">media</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">media</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
 
     <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">medium</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">):</span>
-            <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">medium</span><span class="p">]</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span>
+        <span class="k">for</span> <span class="n">medium</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">children</span><span class="p">):</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="n">children</span><span class="p">[</span><span class="n">medium</span><span class="p">]</span>
             <span class="n">medium</span> <span class="o">=</span> <span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="n">medium</span> <span class="o">==</span> <span class="s">&#39;all&#39;</span> <span class="k">else</span> <span class="s">&quot; media=&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">medium</span>
             <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
                 <span class="n">link</span> <span class="o">=</span> <span class="s">&quot;&lt;link href=&#39;</span><span class="si">%s</span><span class="s">&#39; type=&#39;text/css&#39;</span><span class="si">%s</span><span class="s"> rel=&#39;stylesheet&#39;/&gt;</span><span class="se">\n</span><span class="s">&quot;</span>\
@@ -724,14 +852,17 @@
 <span class="k">class</span> <span class="nc">Scripts</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
         
     <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">child</span> <span class="ow">and</span> <span class="n">is_string</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
-            <span class="n">script</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;script&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;text/javascript&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="p">[</span><span class="n">script</span><span class="p">]</span> <span class="o">=</span> <span class="n">script</span>
-            <span class="k">return</span> <span class="n">script</span>
+        <span class="k">if</span> <span class="n">child</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+                <span class="n">script</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;script&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;application/javascript&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">script</span><span class="p">]</span> <span class="o">=</span> <span class="n">script</span>
+                <span class="k">return</span> <span class="n">script</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Html</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;script&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="n">child</span>
     
     <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_children</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">bit</span>
             <span class="k">yield</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>

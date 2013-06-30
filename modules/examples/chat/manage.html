@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.chat.manage &mdash; pulsar 0.5.2-beta.2 documentation</title>
+    <title>examples.chat.manage &mdash; pulsar 0.5.3-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.2-beta.2',
+        VERSION:     '0.5.3-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.2-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.5.2-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -133,13 +133,13 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pubsub</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">pubsub</span>
         
-<div class="viewcode-block" id="Chat.on_open"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.on_open"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When a new websocket connection is established it creates a</span>
 <span class="sd">:ref:`publish/subscribe &lt;apps-pubsub&gt;` client and adds it to the set</span>
 <span class="sd">of clients of the :attr:`pubsub` handler.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">PubSubClient</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="s">&#39;websocket&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">PubSubClient</span><span class="p">(</span><span class="n">websocket</span><span class="p">))</span>
         </div>
-<div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+<div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When a new message arrives, it publishes to all listening clients.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
