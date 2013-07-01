@@ -87,14 +87,13 @@ after the ``_post_teardown`` method.'''
         pass
     
     def before_test_function_run(self, test, local):
-        '''This function can be used by plugins to manipulate the *test*
+        '''This function can be used by plugins to manipulate the ``test``
 behaviour in the process domain where the test run.'''
         return test
     
     def after_test_function_run(self, test, local, result):
-        '''Given a test-function instance return a, possibly, modified test
-instance. This function can be used by plugins to modify the behaviour of test
-cases. By default it returns *test*.'''
+        '''Executed in the ``test`` process domain, after the ``test`` has
+finished.'''
         pass
 
     def addSuccess(self, test):
@@ -368,7 +367,7 @@ def testsafe(name, return_val=None):
         for p in self.plugins:
             try:
                 c = getattr(p, name)(*args)
-                if c:
+                if c is not None:
                     return return_val(c)
             except Exception:
                 LOGGER.critical('Unhadled error in %s.%s' % (p, name),
@@ -445,7 +444,7 @@ class TestRunner(TestResultProxy):
         return result
             
     def run_test_function(self, test, func, timeout=None):
-        '''Run function *func* which belong to *test*.
+        '''Run function ``func`` which belong to ``test``.
     
 :parameter test: test instance or class
 :parameter func: test function belonging to *test*

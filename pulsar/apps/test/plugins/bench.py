@@ -10,6 +10,8 @@ if sys.platform == "win32": #pragma    nocover
 else:
     default_timer = time.time
     
+from unittest import TestSuite
+    
 import pulsar
 from pulsar.utils.httpurl import range
 
@@ -67,8 +69,13 @@ class BenchMark(test.TestPlugin):
                             desc='Default number of repetition '\
                                  'when benchmarking.''')
         
+    def loadTestsFromTestCase(self, test_cls):
+        bench = getattr(test_cls, '__benchmark__', False)
+        if self.config.benchmark != bench: # skip the loading
+            return TestSuite()
+        
     def before_test_function_run(self, test, local):
-        if self.config.benchmark: 
+        if self.config.benchmark:
             method_name = getattr(test, '_testMethodName', None)
             if method_name:
                 method = getattr(test, method_name, None)
