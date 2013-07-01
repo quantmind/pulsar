@@ -1,3 +1,7 @@
+Ver. 0.5.3 - Development
+==============================
+
+
 Ver. 0.5.2 - 2013-June-30
 ==============================
 * Introduced the :ref:`Router parameter <tutorial-router>` for propagating
