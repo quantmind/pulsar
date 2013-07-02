@@ -44,9 +44,18 @@ try:
 except ImportError: #pragma nocover
     sys.path.append('../../')
     import pulsar
+from pulsar.utils.path import Path
 from pulsar.apps import ws, wsgi, rpc, pubsub
 
 CHAT_DIR = os.path.dirname(__file__)
+
+stdnet = Path(__file__).add2python('stdnet', 3, down=['python-stdnet'],
+                                   must_exist=False)
+if stdnet:
+    # Add option to use redis pubsub instead of local pubsub
+    # If we are testsing don't do anything, the setting is already available
+    import pulsar.utils.settings.backend
+
 
 class PubSubClient(pubsub.Client):
     
@@ -111,7 +120,8 @@ web-chat example.'''
 handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
 section. It creates a :ref:`publish/subscribe handler <apps-pubsub>`
 and subscribe it to the ``webchat`` channel.'''
-        self.pubsub = pubsub.PubSub(encoder=self.encode_message)
+        backend = pulsar.get_application('wsgi').cfg.get('backend_server')
+        self.pubsub = pubsub.PubSub(backend, encoder=self.encode_message)
         self.pubsub.subscribe('webchat')
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
                                  ws.WebSocket('/message', Chat(self.pubsub)),

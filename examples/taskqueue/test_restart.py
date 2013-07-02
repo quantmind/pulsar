@@ -5,7 +5,6 @@ from pulsar.apps.test import unittest
 from .test_local import TaskQueueBase
 
 
-
 class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
     
     def info(self):

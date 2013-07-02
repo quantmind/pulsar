@@ -50,7 +50,7 @@ headers = (
 
 def absolute_file(val):
     dir = os.getcwd()
-    return os.path.join(dir,val)
+    return os.path.join(dir, val)
 
 def make_stat_table(data):
     yield "<thead>\n<tr>\n"

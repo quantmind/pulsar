@@ -277,8 +277,8 @@ during :class:`Deferred` callbacks.
         return '\n\n'.join(self.format_all())
     __str__ = __repr__
     
-    #def __del__(self):
-    #    self.log('Deferred Failure never retrieved')
+    def __del__(self):
+        self.log('Deferred Failure never retrieved')
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
@@ -601,6 +601,7 @@ the result is a :class:`Failure`'''
     def _cancel(self, msg):
         return self.callback(CancelledError(msg))
     
+
     
 class EventHandler(object):
     '''A Mixin for handling one time events and events that occur several

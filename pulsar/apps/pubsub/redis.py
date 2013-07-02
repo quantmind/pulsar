@@ -1,5 +1,6 @@
 from stdnet import getdb
 
+from pulsar import async
 from pulsar.apps import pubsub
 from pulsar.utils.log import local_property
 
@@ -12,7 +13,9 @@ class PubSubBackend(pubsub.PubSubBackend):
         redis.bind_event('on_message', self.on_message)
         return redis
     
+    @async()
     def publish(self, channel, message):
+        # make it asynchronous so that errors are logged
         return self.redis.publish(channel, message)
        
     def subscribe(self, *channels):

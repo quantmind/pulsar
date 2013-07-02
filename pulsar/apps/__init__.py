@@ -90,21 +90,18 @@ __all__ = ['Application',
     
     
 def get_application(name):
-    '''Fetch the :class:`Application` associated with *name* if available. This
-function returns a :ref:`coroutine <coroutine>` and therefore it
-must be used as an asynchronous component::
-
-    ...
-    app = yield pulsar.get_application('taskqueue')
-    ...
-
+    '''Fetch the :class:`Application` associated with ``name`` if available.
+    
+This function may return an :ref:`asynchronous component <coroutine>`.
+The application name is set during initialisation. Check the
+:attr:`Configurator.name` attribute for more information.
 '''
     actor = get_actor()
     if actor:
         if actor.is_arbiter():
-            yield _get_app(actor, name)
+            return _get_app(actor, name)
         else:
-            yield actor.send('arbiter', 'run', _get_app, name)
+            return actor.send('arbiter', 'run', _get_app, name)
         
 def _get_app(arbiter, name):
     monitor = arbiter.get_actor(name)

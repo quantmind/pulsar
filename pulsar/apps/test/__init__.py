@@ -228,13 +228,27 @@ Profile
 API
 =========
 
+.. _test-suite:
+
+Test Suite
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: TestSuite
    :members:
    :member-order: bysource
 
+
+Test Loader
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. automodule:: pulsar.apps.test.loader
 
+
+Plugins
+~~~~~~~~~~~~~~~~~~~~~~~
+
 .. automodule:: pulsar.apps.test.result
+
 
 .. module:: pulsar.apps.test
 
@@ -384,14 +398,7 @@ is a group of tests specified in a test class.
     cfg = pulsar.Config(apps=('tasks', 'test'),
                         loglevel='none',
                         task_paths=['pulsar.apps.test.case'],
-                        plugins=(),
-                        logconfig={
-                                   'loggers': {
-                                   'pulsar.test': {
-                                        'handlers': ['console_message'],
-                                        'level': logging.WARNING}
-                                    }
-                        })
+                        plugins=())
     @local_property
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
@@ -445,11 +452,15 @@ configuration and plugins.'''
         loader = self.local.loader
         tags = self.cfg.labels
         try:
-            self.local.tests = tests = list(loader.testclasses(tags))
+            self.local.tests = tests = []
+            self.runner.on_start()
+            for tag, testcls in loader.testclasses(tags):
+                suite = self.runner.loadTestsFromTestCase(testcls)
+                if suite and suite._tests:
+                    tests.append((tag, testcls))
             self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
-                self.runner.on_start()
                 events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = time.time()
@@ -480,6 +491,7 @@ configuration and plugins.'''
         runner=  self.runner
         tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
         if len(tests) == len(self.local.tests):
+            self.logger.info('All tests have finished.')
             time_taken = time.time() - self._time_start
             for task in tests:
                 runner.add(task.result)

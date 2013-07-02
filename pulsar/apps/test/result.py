@@ -1,4 +1,7 @@
 '''
+:class:`Plugin` is the interface used by the test suite to add functionalities.
+Some plugins, such as the :class:`TestRunner` are used by default.
+
 Plugin
 ~~~~~~~~~~~~~~~~~~~
 
@@ -63,12 +66,14 @@ it will stop the configuration of all subsequent plugins and quit the test.
         return self.__class__.__name__.lower()
 
     def on_start(self):
-        '''Called once by :class:`TestSuite` after all tests are loaded but
-but before it starts running them.'''
+        '''Called by :ref:`TestSuite <test-suite>` once only at startup.
+        
+This callback is invoked once all tests are loaded but but before the test
+suite starts running them.'''
         pass
 
     def on_end(self):
-        '''Called once by :class:`TestSuite` just before it stops.'''
+        '''Called by :ref:`TestSuite <test-suite>` just before it stops.'''
         pass
 
     def loadTestsFromTestCase(self, test_class):
