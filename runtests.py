@@ -10,11 +10,9 @@ import sys
 from pulsar.utils.path import Path
 from pulsar.apps.test import TestSuite, TestOption
 from pulsar.apps.test.plugins import bench, profile, cov
+import pulsar.utils.settings.backend
 
-path = Path()
-if path.add2python('stdnet', 1, down=['python-stdnet'], must_exist=False):
-    import pulsar.utils.settings.backend
-
+Path().add2python('stdnet', 1, down=['python-stdnet'], must_exist=False)
 
 if __name__ == '__main__':
     print(sys.version)
