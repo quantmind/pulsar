@@ -4,6 +4,8 @@
    :members:
    :member-order: bysource
    
+   
+.. autofunction:: test_wsgi_environ
 '''
 import sys
 import time
@@ -32,6 +34,14 @@ MAX_CHUNK_SIZE = 65536
 
 
 def test_wsgi_environ(url='/', method='GET', headers=None, extra=None):
+    '''Create a WSGI environment dictionary for testing purposes.
+    
+:param url: the resource in the ``PATH_INFO``.
+:param method: the ``REQUEST_METHOD``.
+:param headers: optional request headers
+:param extra: optional dictionary of additional key-valued parameters to add.
+:return: a valid WSGI environ dictionary.
+'''
     parser = http_parser(kind=0)
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
     data = data.encode('utf-8')

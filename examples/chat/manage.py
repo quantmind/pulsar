@@ -115,12 +115,15 @@ class Rpc(rpc.PulsarServerCommands):
 class WebChat(wsgi.LazyWsgi):
     '''This is the :ref:`wsgi application <wsgi-handlers>` for this
 web-chat example.'''
+    def __init__(self, server_name):
+        self.name = server_name
+        
     def setup(self):
         '''This method is called once only to setup the WSGI application
 handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
 section. It creates a :ref:`publish/subscribe handler <apps-pubsub>`
 and subscribe it to the ``webchat`` channel.'''
-        backend = pulsar.get_application('wsgi').cfg.get('backend_server')
+        backend = self.cfg.get('backend_server')
         self.pubsub = pubsub.PubSub(backend, encoder=self.encode_message)
         self.pubsub.subscribe('webchat')
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
@@ -139,9 +142,18 @@ and subscribe it to the ``webchat`` channel.'''
         message['time'] = time.time()
         return json.dumps(message)
 
+    @property
+    def cfg(self):
+        '''Get the ``config`` object from the actor serving the webchat.'''
+        actor = pulsar.get_actor()
+        if actor.is_arbiter():
+            actor = actor.get_actor(self.name)
+        return actor.cfg
 
-def server(callable=None, **kwargs):
-    return wsgi.WSGIServer(callable=WebChat(), **kwargs)
+
+def server(callable=None, name=None, **kwargs):
+    name = name or 'wsgi'
+    return wsgi.WSGIServer(callable=WebChat(name), name=name, **kwargs)
 
 
 if __name__ == '__main__':  #pragma nocover
