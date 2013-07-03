@@ -13,7 +13,7 @@ from pulsar.apps.test.plugins import bench, profile, cov
 
 path = Path()
 if path.add2python('stdnet', 1, down=['python-stdnet'], must_exist=False):
-    import pulsar.apps.test.backend
+    import pulsar.utils.settings.backend
 
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ class pubsubTest(local.pubsubTest):
     @classmethod
     def backend(cls, tag):
         if tag:
-            scheme, address, params = parse_connection_string(cls.cfg.redis_server)
+            scheme, address, params = parse_connection_string(cls.cfg.backend_server)
             params['tag'] = tag
             return get_connection_string(scheme, address, params)
         else:
