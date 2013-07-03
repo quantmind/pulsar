@@ -21,7 +21,7 @@ class pubsubTest(local.pubsubTest):
             params['tag'] = tag
             return get_connection_string(scheme, address, params)
         else:
-            return cls.cfg.redis_server
+            return cls.cfg.backend_server
         
     def test_internal_subscribe(self):
         p = self.pubsub()

@@ -278,7 +278,7 @@ during :class:`Deferred` callbacks.
     __str__ = __repr__
     
     def __del__(self):
-        self.log('Deferred Failure never retrieved')
+        self.log(msg='Deferred Failure never retrieved')
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
