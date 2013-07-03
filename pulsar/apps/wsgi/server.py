@@ -33,7 +33,7 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 MAX_CHUNK_SIZE = 65536
 
 
-def test_wsgi_environ(url='/', method='GET', headers=None, extra=None):
+def test_wsgi_environ(url='/', method=None, headers=None, extra=None):
     '''Create a WSGI environment dictionary for testing purposes.
     
 :param url: the resource in the ``PATH_INFO``.
@@ -43,6 +43,7 @@ def test_wsgi_environ(url='/', method='GET', headers=None, extra=None):
 :return: a valid WSGI environ dictionary.
 '''
     parser = http_parser(kind=0)
+    method = (method or 'GET').upper()
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
     data = data.encode('utf-8')
     parser.execute(data, len(data))
