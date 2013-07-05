@@ -6,7 +6,7 @@ import pulsar
 class BackendServer(pulsar.Setting):
     name = 'backend_server'
     flags = ['-s', '--backend-server']
-    default = 'local://'
+    default = ''
     validator = pulsar.validate_string
     desc = 'Connection string to a backend server'
     

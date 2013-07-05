@@ -14,7 +14,7 @@ class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
     
     @classmethod
     def task_backend(cls):
-        return cls.cfg.backend_server
+        return cls.cfg.backend_server or 'redis://127.0.0.1:6379'
 
 
 #unittest.skipUnless(stdnet, 'Requires python-stdnet')
