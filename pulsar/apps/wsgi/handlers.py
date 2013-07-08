@@ -108,7 +108,7 @@ from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect,\
-                    async, is_async, multi_async, maybe_async
+                    async, is_async, multi_async, maybe_async, is_failure
 
 from .route import Route
 from .utils import wsgi_request, handle_wsgi_error
@@ -218,9 +218,9 @@ class RouterType(type):
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
         parameters = {}
-        for name, value in list(attrs.items()):
+        for key, value in list(attrs.items()):
             if isinstance(value, RouterParam):
-                parameters[name] = attrs.pop(name).value
+                parameters[key] = attrs.pop(key).value
         no_rule = set(attrs) - set((x[0] for x in rule_methods))
         for base in reversed(bases):
             if hasattr(base, 'parameters'):
@@ -230,7 +230,7 @@ class RouterType(type):
             if hasattr(base, 'rule_methods'):
                 items = base.rule_methods.items()
             else:
-                g = ((name, getattr(base, name)) for name in dir(base))
+                g = ((key, getattr(base, key)) for key in dir(base))
                 items = get_roule_methods(g)
             base_rules = [pair for pair in items if pair[0] not in no_rule]
             rule_methods = base_rules + rule_methods
@@ -316,7 +316,8 @@ request, the ``get(self, request)`` method must be implemented.
     @property
     def name(self):
         '''The name of this :class:`Router`. This attribute can be specified
-during initialisation.'''
+during initialisation. If available, it can be used to retrieve a child router
+by name via the :meth:`get_route` method.'''
         return self._name
     
     @property
@@ -337,6 +338,8 @@ during initialisation.'''
         return self._creation_count
         
     def path(self, **urlargs):
+        '''The full path of this :class:`Router`. It includes the
+:attr:`parent` portion of url if a parent router is available.'''
         route = self.route
         if self._parent:
             route = self._parent.route + route
@@ -368,7 +371,7 @@ during initialisation.'''
         
     def content_type(self, request):
         '''Evaluate the content type for the response to the client ``request``.
-The method uses the :attr:`accept_content_types` tuple of accepted content
+The method uses the :attr:`accept_content_types` parameter of accepted content
 types and the content types accepted by the client and figure out
 the best match.'''
         accept = self.accept_content_types
@@ -432,8 +435,17 @@ to actually produce the WSGI response.'''
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
         # make sure cache does not contain asynchronous data
-        environ['pulsar.cache'] = yield multi_async(request.cache)
-        yield callable(request)
+        async_cache = multi_async(request.cache, raise_on_error=False)
+        cache = yield async_cache
+        if async_cache.num_failures:
+            for key, value in list(cache.items()):
+                if is_failure(value):
+                    cache.pop(key)
+            environ['pulsar.cache'] = cache
+            yield async_cache.failures
+        else:
+            environ['pulsar.cache'] = cache
+            yield callable(request)
     
     @async()
     def redirect(self, environ, start_response, path):

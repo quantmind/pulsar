@@ -766,7 +766,7 @@ class MultiDeferred(Deferred):
 asynchronous objects. The ``collection`` can be either a ``list`` or
 a ``dict``.
 The :class:`MultiDeferred` is recursive on values which are ``generators``,
-``dic``, ``lists`` and ``sets``. It is not recursive on immutable
+``Mapping``, ``lists`` and ``sets``. It is not recursive on immutable
 containers such as tuple, and frozenset.
 
 .. attribute:: locked
@@ -776,7 +776,7 @@ containers such as tuple, and frozenset.
     
 .. attribute:: type
 
-    The type of multi-deferred. Either a ``list`` or a ``dict``.
+    The type of multi-deferred. Either a ``list`` or a ``Mapping``.
     
 .. attribute:: raise_on_error
 
@@ -829,6 +829,10 @@ containers such as tuple, and frozenset.
     @property
     def num_failures(self):
         return len(self._failures)
+    
+    @property
+    def failures(self):
+        return self._failures
 
     def lock(self):
         '''Lock the :class:`MultiDeferred` so that no new items can be added.
@@ -881,16 +885,13 @@ list :attr:`type` only.'''
         self._setitem(key, value)
         # add callback if an asynchronous value
         if is_async(value):
-            self._add_deferred(key, value)
+            self._deferred[key] = value
+            value.add_both(lambda result: self._deferred_done(key, result))
 
     def _make(self, value):
         md = self.__class__(value, raise_on_error=self.raise_on_error,
                             handle_value=self.handle_value)
         return maybe_async(md.lock())
-
-    def _add_deferred(self, key, value):
-        self._deferred[key] = value
-        value.add_both(lambda result: self._deferred_done(key, result))
 
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)

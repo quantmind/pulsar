@@ -33,12 +33,13 @@ class HtmlVisitor(HtmlType('HtmlVisitorBase', (object,), {'abstract': True})):
         html.attr('value', value)
 
     def add_data(self, html, key, value):
-        data = html._data
-        if key in data and isinstance(value, Mapping):
-            target = data[key]
-            if isinstance(target, Mapping):
-                return recursive_update(target, value)
-        data[key] = value
+        if value is not None:
+            data = html._data
+            if key in data and isinstance(value, Mapping):
+                target = data[key]
+                if isinstance(target, Mapping):
+                    return recursive_update(target, value)
+            data[key] = value
         
 
 base = HtmlVisitor()

@@ -1,5 +1,6 @@
 Ver. 0.5.3 - Development
 ==============================
+* Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
 * **469 regression tests**, **88% coverage**.
 
 Ver. 0.5.2 - 2013-June-30
