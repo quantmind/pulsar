@@ -368,8 +368,18 @@ This is useful during testing. It is the synchronous equivalent of
 class Json(AsyncString):
     '''An :class:`AsyncString` which renders into a json string.
 The :attr:`AsyncString.content_type` attribute is set to
-``application/json``.'''
+``application/json``.
+
+.. attribute:: as_list
+    
+    If ``True``, the content is always a list of objects. Default ``False``.
+    
+.. attribute:: parameters
+
+    Additional dictionary of parameters passed during initialisation.
+'''
     def __init__(self, *children, **params):
+        self.as_list = params.pop('as_list', False)
         self.parameters = AttributeDictionary(params)
         for child in children:
             self.append(child)
@@ -386,7 +396,7 @@ is used.'''
         return 'application/json'
         
     def to_string(self, stream):
-        if len(stream) == 1:
+        if len(stream) == 1 and not self.as_list:
             return self.json.dumps(stream[0])
         else:
             return self.json.dumps(stream)
