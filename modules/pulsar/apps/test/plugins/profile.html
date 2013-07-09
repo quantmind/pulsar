@@ -115,7 +115,7 @@
 
 <span class="k">def</span> <span class="nf">absolute_file</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="nb">dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">make_stat_table</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
     <span class="k">yield</span> <span class="s">&quot;&lt;thead&gt;</span><span class="se">\n</span><span class="s">&lt;tr&gt;</span><span class="se">\n</span><span class="s">&quot;</span>

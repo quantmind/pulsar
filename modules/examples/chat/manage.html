@@ -106,9 +106,18 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma nocover</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.path</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span><span class="p">,</span> <span class="n">wsgi</span><span class="p">,</span> <span class="n">rpc</span><span class="p">,</span> <span class="n">pubsub</span>
 
 <span class="n">CHAT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">)</span>
+
+<span class="n">stdnet</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">add2python</span><span class="p">(</span><span class="s">&#39;stdnet&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;python-stdnet&#39;</span><span class="p">],</span>
+                                   <span class="n">must_exist</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">stdnet</span><span class="p">:</span>
+    <span class="c"># Add option to use redis pubsub instead of local pubsub</span>
+    <span class="c"># If we are testsing don&#39;t do anything, the setting is already available</span>
+    <span class="kn">import</span> <span class="nn">pulsar.utils.settings.backend</span>
+
 
 <span class="k">class</span> <span class="nc">PubSubClient</span><span class="p">(</span><span class="n">pubsub</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
     
@@ -168,12 +177,16 @@
 <div class="viewcode-block" id="WebChat"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat">[docs]</a><span class="k">class</span> <span class="nc">WebChat</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;This is the :ref:`wsgi application &lt;wsgi-handlers&gt;` for this</span>
 <span class="sd">web-chat example.&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">server_name</span>
+        
 <div class="viewcode-block" id="WebChat.setup"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;This method is called once only to setup the WSGI application</span>
 <span class="sd">handler as described in :ref:`lazy wsgi handler &lt;wsgi-lazy-handler&gt;`</span>
 <span class="sd">section. It creates a :ref:`publish/subscribe handler &lt;apps-pubsub&gt;`</span>
 <span class="sd">and subscribe it to the ``webchat`` channel.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">pubsub</span><span class="o">.</span><span class="n">PubSub</span><span class="p">(</span><span class="n">encoder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encode_message</span><span class="p">)</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;backend_server&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span> <span class="o">=</span> <span class="n">pubsub</span><span class="o">.</span><span class="n">PubSub</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encode_message</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s">&#39;webchat&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">home_page</span><span class="p">),</span>
                                  <span class="n">ws</span><span class="o">.</span><span class="n">WebSocket</span><span class="p">(</span><span class="s">&#39;/message&#39;</span><span class="p">,</span> <span class="n">Chat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">)),</span>
@@ -191,9 +204,18 @@
         <span class="n">message</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-</div>
-<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">WebChat</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="WebChat.cfg"><a class="viewcode-back" href="../../../tutorials/chat.html#examples.chat.manage.WebChat.cfg">[docs]</a>    <span class="k">def</span> <span class="nf">cfg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the ``config`` object from the actor serving the webchat.&#39;&#39;&#39;</span>
+        <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
+            <span class="n">actor</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span>
+
+</div></div>
+<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;wsgi&#39;</span>
+    <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">WebChat</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c">#pragma nocover</span>

@@ -132,7 +132,7 @@ of clients of the <a class="reference internal" href="#examples.chat.manage.Chat
 
 <dl class="class">
 <dt id="examples.chat.manage.WebChat">
-<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">WebChat</tt><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">WebChat</tt><big>(</big><em>server_name</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is the <a class="reference internal" href="../apps/wsgi/handlers.html#wsgi-handlers"><em>wsgi application</em></a> for this
 web-chat example.</p>
 <dl class="method">
@@ -142,6 +142,12 @@ web-chat example.</p>
 handler as described in <a class="reference internal" href="../apps/wsgi/handlers.html#wsgi-lazy-handler"><em>lazy wsgi handler</em></a>
 section. It creates a <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe handler</em></a>
 and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</span></tt> channel.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="examples.chat.manage.WebChat.cfg">
+<tt class="descname">cfg</tt><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat.cfg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat.cfg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the <tt class="docutils literal"><span class="pre">config</span></tt> object from the actor serving the webchat.</p>
 </dd></dl>
 
 </dd></dl>

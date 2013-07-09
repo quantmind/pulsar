@@ -292,13 +292,27 @@
 <span class="sd">API</span>
 <span class="sd">=========</span>
 
+<span class="sd">.. _test-suite:</span>
+
+<span class="sd">Test Suite</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~</span>
+
 <span class="sd">.. autoclass:: TestSuite</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
+
+<span class="sd">Test Loader</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~</span>
+
 <span class="sd">.. automodule:: pulsar.apps.test.loader</span>
 
+
+<span class="sd">Plugins</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~</span>
+
 <span class="sd">.. automodule:: pulsar.apps.test.result</span>
+
 
 <span class="sd">.. module:: pulsar.apps.test</span>
 
@@ -448,14 +462,7 @@
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,</span> <span class="s">&#39;test&#39;</span><span class="p">),</span>
                         <span class="n">loglevel</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span>
                         <span class="n">task_paths</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;pulsar.apps.test.case&#39;</span><span class="p">],</span>
-                        <span class="n">plugins</span><span class="o">=</span><span class="p">(),</span>
-                        <span class="n">logconfig</span><span class="o">=</span><span class="p">{</span>
-                                   <span class="s">&#39;loggers&#39;</span><span class="p">:</span> <span class="p">{</span>
-                                   <span class="s">&#39;pulsar.test&#39;</span><span class="p">:</span> <span class="p">{</span>
-                                        <span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;console_message&#39;</span><span class="p">],</span>
-                                        <span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">}</span>
-                                    <span class="p">}</span>
-                        <span class="p">})</span>
+                        <span class="n">plugins</span><span class="o">=</span><span class="p">())</span>
     <span class="nd">@local_property</span>
 <div class="viewcode-block" id="TestSuite.runner"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.runner">[docs]</a>    <span class="k">def</span> <span class="nf">runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Instance of :class:`TestRunner` driving the test case</span>
@@ -509,11 +516,15 @@
         <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">loader</span>
         <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span> <span class="o">=</span> <span class="n">tests</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">testclasses</span><span class="p">(</span><span class="n">tags</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span> <span class="o">=</span> <span class="n">tests</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">testclasses</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span>
+                <span class="n">suite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">loadTestsFromTestCase</span><span class="p">(</span><span class="n">testcls</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">suite</span> <span class="ow">and</span> <span class="n">suite</span><span class="o">.</span><span class="n">_tests</span><span class="p">:</span>
+                    <span class="n">tests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">tests</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;loaded </span><span class="si">%s</span><span class="s"> test classes&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
                 <span class="n">events</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="n">tests</span><span class="p">)</span>
                 <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">)))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -544,6 +555,7 @@
         <span class="n">runner</span><span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
         <span class="n">tests</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">tasks</span><span class="o">.</span><span class="n">READY_STATES</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;All tests have finished.&#39;</span><span class="p">)</span>
             <span class="n">time_taken</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span>
             <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
                 <span class="n">runner</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>

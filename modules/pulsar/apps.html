@@ -153,21 +153,18 @@
     
     
 <div class="viewcode-block" id="get_application"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.get_application">[docs]</a><span class="k">def</span> <span class="nf">get_application</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Fetch the :class:`Application` associated with *name* if available. This</span>
-<span class="sd">function returns a :ref:`coroutine &lt;coroutine&gt;` and therefore it</span>
-<span class="sd">must be used as an asynchronous component::</span>
-
-<span class="sd">    ...</span>
-<span class="sd">    app = yield pulsar.get_application(&#39;taskqueue&#39;)</span>
-<span class="sd">    ...</span>
-
+    <span class="sd">&#39;&#39;&#39;Fetch the :class:`Application` associated with ``name`` if available.</span>
+<span class="sd">    </span>
+<span class="sd">This function may return an :ref:`asynchronous component &lt;coroutine&gt;`.</span>
+<span class="sd">The application name is set during initialisation. Check the</span>
+<span class="sd">:attr:`Configurator.name` attribute for more information.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
-            <span class="k">yield</span> <span class="n">_get_app</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">_get_app</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">_get_app</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">_get_app</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         </div>
 <span class="k">def</span> <span class="nf">_get_app</span><span class="p">(</span><span class="n">arbiter</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
     <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>

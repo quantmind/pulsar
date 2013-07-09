@@ -69,6 +69,8 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 <span class="sd">   </span>
+<span class="sd">   </span>
+<span class="sd">.. autofunction:: test_wsgi_environ</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -96,8 +98,17 @@
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
 
-<span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;GET&#39;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create a WSGI environment dictionary for testing purposes.</span>
+<span class="sd">    </span>
+<span class="sd">:param url: the resource in the ``PATH_INFO``.</span>
+<span class="sd">:param method: the ``REQUEST_METHOD``.</span>
+<span class="sd">:param headers: optional request headers</span>
+<span class="sd">:param extra: optional dictionary of additional key-valued parameters to add.</span>
+<span class="sd">:return: a valid WSGI environ dictionary.</span>
+<span class="sd">&#39;&#39;&#39;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;GET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
@@ -106,7 +117,7 @@
     <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;777.777.777.777:8080&#39;</span><span class="p">,</span>
                         <span class="n">request_headers</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
     
-    
+    </div>
 <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">client_address</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span>
                  <span class="n">headers</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">protocol</span> <span class="o">=</span> <span class="s">&quot;HTTP/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()))</span>

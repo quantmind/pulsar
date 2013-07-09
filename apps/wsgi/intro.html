@@ -218,6 +218,29 @@ is an HTTP upgrade (websockets)</p>
 
 </dd></dl>
 
+<dl class="function">
+<dt id="pulsar.apps.wsgi.server.test_wsgi_environ">
+<tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">test_wsgi_environ</tt><big>(</big><em>url='/'</em>, <em>method=None</em>, <em>headers=None</em>, <em>extra=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#test_wsgi_environ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.test_wsgi_environ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a WSGI environment dictionary for testing purposes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> &#8211; the resource in the <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt>.</li>
+<li><strong>method</strong> &#8211; the <tt class="docutils literal"><span class="pre">REQUEST_METHOD</span></tt>.</li>
+<li><strong>headers</strong> &#8211; optional request headers</li>
+<li><strong>extra</strong> &#8211; optional dictionary of additional key-valued parameters to add.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a valid WSGI environ dictionary.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 

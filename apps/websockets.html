@@ -93,10 +93,28 @@ back to the client:</p>
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="websocket-middleware">
 <span id="id1"></span><h3>WebSocket<a class="headerlink" href="#websocket-middleware" title="Permalink to this headline">¶</a></h3>
-<dl class="attribute">
+<dl class="class">
 <dt id="pulsar.apps.ws.WebSocket">
-<tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">__module__</span></tt></p>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>route</em>, <em>handle</em>, <em>parser_factory=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
+<dd><p>A specialised <a class="reference internal" href="wsgi/handlers.html#wsgi-router"><em>Router</em></a> middleware for
+handling the websocket handshake at a given route.
+Once the handshake is succesful, the protocol consumer
+is upgraded to <a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a> and messages are handled by
+the <tt class="xref py py-attr docutils literal"><span class="pre">handle</span></tt> attribute, an instance of <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>.</p>
+<p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol and
+<a class="reference external" href="http://www.w3.org/TR/websockets/">http://www.w3.org/TR/websockets/</a> for details on the JavaScript interface.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.ws.WebSocket.parser_factory">
+<tt class="descname">parser_factory</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocket.parser_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>A factory of websocket frame parsers</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">parser_factory</tt></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></p>
+</dd></dl>
+
 </dd></dl>
 
 </div>

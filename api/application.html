@@ -403,14 +403,10 @@ an instance of <em>App</em>.</li>
 <dl class="function">
 <dt id="pulsar.apps.get_application">
 <tt class="descclassname">pulsar.apps.</tt><tt class="descname">get_application</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#get_application"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.get_application" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> associated with <em>name</em> if available. This
-function returns a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> and therefore it
-must be used as an asynchronous component:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="o">...</span>
-<span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_application</span><span class="p">(</span><span class="s">&#39;taskqueue&#39;</span><span class="p">)</span>
-<span class="o">...</span>
-</pre></div>
-</div>
+<dd><p>Fetch the <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> associated with <tt class="docutils literal"><span class="pre">name</span></tt> if available.</p>
+<p>This function may return an <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>asynchronous component</em></a>.
+The application name is set during initialisation. Check the
+<a class="reference internal" href="#pulsar.apps.Configurator.name" title="pulsar.apps.Configurator.name"><tt class="xref py py-attr docutils literal"><span class="pre">Configurator.name</span></tt></a> attribute for more information.</p>
 </dd></dl>
 
 </div>

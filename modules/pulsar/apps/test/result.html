@@ -64,6 +64,9 @@
             
   <h1>Source code for pulsar.apps.test.result</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">:class:`Plugin` is the interface used by the test suite to add functionalities.</span>
+<span class="sd">Some plugins, such as the :class:`TestRunner` are used by default.</span>
+
 <span class="sd">Plugin</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~</span>
 
@@ -128,12 +131,14 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Plugin.on_start"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` after all tests are loaded but</span>
-<span class="sd">but before it starts running them.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Called by :ref:`TestSuite &lt;test-suite&gt;` once only at startup.</span>
+<span class="sd">        </span>
+<span class="sd">This callback is invoked once all tests are loaded but but before the test</span>
+<span class="sd">suite starts running them.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Plugin.on_end"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.on_end">[docs]</a>    <span class="k">def</span> <span class="nf">on_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called once by :class:`TestSuite` just before it stops.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Called by :ref:`TestSuite &lt;test-suite&gt;` just before it stops.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Plugin.loadTestsFromTestCase"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.loadTestsFromTestCase">[docs]</a>    <span class="k">def</span> <span class="nf">loadTestsFromTestCase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_class</span><span class="p">):</span>
@@ -152,14 +157,13 @@
         <span class="k">pass</span>
     </div>
 <div class="viewcode-block" id="Plugin.before_test_function_run"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.before_test_function_run">[docs]</a>    <span class="k">def</span> <span class="nf">before_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;This function can be used by plugins to manipulate the *test*</span>
+        <span class="sd">&#39;&#39;&#39;This function can be used by plugins to manipulate the ``test``</span>
 <span class="sd">behaviour in the process domain where the test run.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">test</span>
     </div>
 <div class="viewcode-block" id="Plugin.after_test_function_run"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.Plugin.after_test_function_run">[docs]</a>    <span class="k">def</span> <span class="nf">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Given a test-function instance return a, possibly, modified test</span>
-<span class="sd">instance. This function can be used by plugins to modify the behaviour of test</span>
-<span class="sd">cases. By default it returns *test*.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Executed in the ``test`` process domain, after the ``test`` has</span>
+<span class="sd">finished.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
     <span class="k">def</span> <span class="nf">addSuccess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
@@ -433,7 +437,7 @@
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plugins</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">c</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">return_val</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Unhadled error in </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
@@ -510,7 +514,7 @@
         <span class="k">return</span> <span class="n">result</span>
             </div>
 <div class="viewcode-block" id="TestRunner.run_test_function"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.result.TestRunner.run_test_function">[docs]</a>    <span class="k">def</span> <span class="nf">run_test_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Run function *func* which belong to *test*.</span>
+        <span class="sd">&#39;&#39;&#39;Run function ``func`` which belong to ``test``.</span>
 <span class="sd">    </span>
 <span class="sd">:parameter test: test instance or class</span>
 <span class="sd">:parameter func: test function belonging to *test*</span>

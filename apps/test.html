@@ -275,6 +275,8 @@ the <tt class="docutils literal"><span class="pre">cProfiler</span></tt> from th
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="test-suite">
+<span id="id1"></span><h3>Test Suite<a class="headerlink" href="#test-suite" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestSuite">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.</tt><tt class="descname">TestSuite</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite" title="Permalink to this definition">¶</a></dt>
@@ -325,8 +327,9 @@ configuration and plugins.</p>
 
 </dd></dl>
 
-<span class="target" id="module-pulsar.apps.test.loader"></span><div class="section" id="test-loader">
-<h3>Test Loader<a class="headerlink" href="#test-loader" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-pulsar.apps.test.loader">
+<span id="test-loader"></span><h3>Test Loader<a class="headerlink" href="#module-pulsar.apps.test.loader" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.loader.TestLoader">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.loader.</tt><tt class="descname">TestLoader</tt><big>(</big><em>root</em>, <em>modules</em>, <em>runner</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/loader.html#TestLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.loader.TestLoader" title="Permalink to this definition">¶</a></dt>
@@ -384,8 +387,12 @@ is passed by this function recursively.</li>
 </dd></dl>
 
 </div>
-<span class="target" id="module-pulsar.apps.test.result"></span><div class="section" id="plugin">
-<h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h3>Plugins<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-pulsar.apps.test.result"></span><p><a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> is the interface used by the test suite to add functionalities.
+Some plugins, such as the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> are used by default.</p>
+<div class="section" id="plugin">
+<h4>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h4>
 <dl class="class">
 <dt id="pulsar.apps.test.result.Plugin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">Plugin</tt><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin" title="Permalink to this definition">¶</a></dt>
@@ -416,14 +423,15 @@ it will stop the configuration of all subsequent plugins and quit the test.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.on_start">
 <tt class="descname">on_start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.on_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> after all tests are loaded but
-but before it starts running them.</p>
+<dd><p>Called by <a class="reference internal" href="#test-suite"><em>TestSuite</em></a> once only at startup.</p>
+<p>This callback is invoked once all tests are loaded but but before the test
+suite starts running them.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.on_end">
 <tt class="descname">on_end</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.on_end"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.on_end" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called once by <tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt> just before it stops.</p>
+<dd><p>Called by <a class="reference internal" href="#test-suite"><em>TestSuite</em></a> just before it stops.</p>
 </dd></dl>
 
 <dl class="method">
@@ -450,23 +458,22 @@ after the <tt class="docutils literal"><span class="pre">_post_teardown</span></
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.before_test_function_run">
 <tt class="descname">before_test_function_run</tt><big>(</big><em>test</em>, <em>local</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.before_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.before_test_function_run" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function can be used by plugins to manipulate the <em>test</em>
+<dd><p>This function can be used by plugins to manipulate the <tt class="docutils literal"><span class="pre">test</span></tt>
 behaviour in the process domain where the test run.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.after_test_function_run">
 <tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em>, <em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a test-function instance return a, possibly, modified test
-instance. This function can be used by plugins to modify the behaviour of test
-cases. By default it returns <em>test</em>.</p>
+<dd><p>Executed in the <tt class="docutils literal"><span class="pre">test</span></tt> process domain, after the <tt class="docutils literal"><span class="pre">test</span></tt> has
+finished.</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
 <div class="section" id="test-runner">
-<h3>Test Runner<a class="headerlink" href="#test-runner" title="Permalink to this headline">¶</a></h3>
+<h4>Test Runner<a class="headerlink" href="#test-runner" title="Permalink to this headline">¶</a></h4>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestRunner">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">TestRunner</tt><big>(</big><em>plugins</em>, <em>stream</em>, <em>writercls=None</em>, <em>descriptions=True</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner" title="Permalink to this definition">¶</a></dt>
@@ -492,7 +499,7 @@ cases. By default it returns <em>test</em>.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.run_test_function">
 <tt class="descname">run_test_function</tt><big>(</big><em>test</em>, <em>func</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.run_test_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.run_test_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run function <em>func</em> which belong to <em>test</em>.</p>
+<dd><p>Run function <tt class="docutils literal"><span class="pre">func</span></tt> which belong to <tt class="docutils literal"><span class="pre">test</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -514,7 +521,8 @@ cases. By default it returns <em>test</em>.</p>
 </dd></dl>
 
 </div>
-<span class="target" id="module-pulsar.apps.test"></span><div class="section" id="test-plugin">
+<span class="target" id="module-pulsar.apps.test"></span></div>
+<div class="section" id="test-plugin">
 <h3>Test Plugin<a class="headerlink" href="#test-plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.test.TestPlugin">
@@ -603,9 +611,13 @@ as class attributes.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#api">API</a><ul>
-<li><a class="reference internal" href="#test-loader">Test Loader</a></li>
+<li><a class="reference internal" href="#test-suite">Test Suite</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.test.loader">Test Loader</a></li>
+<li><a class="reference internal" href="#id2">Plugins</a><ul>
 <li><a class="reference internal" href="#plugin">Plugin</a></li>
 <li><a class="reference internal" href="#test-runner">Test Runner</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#test-plugin">Test Plugin</a></li>
 </ul>
 </li>
