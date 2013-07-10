@@ -1003,7 +1003,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._method = bits[0].upper()
         # URI
         self._url = bits[1]
-        parts = urlsplit(bits[1])
+        parts = urlsplit('http://dummy.com%s' % bits[1])
         self._path = parts.path or ""
         self._query_string = parts.query or ""
         self._fragment = parts.fragment or ""

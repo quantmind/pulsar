@@ -78,7 +78,7 @@ def is_streamed(content):
 def clean_path_middleware(environ, start_response):
     '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']
-    if '//' in path:
+    if path and '//' in path:
         url = re.sub("/+" , '/', path)
         if not url.startswith('/'):
             url = '/%s' % url
