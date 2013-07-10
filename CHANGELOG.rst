@@ -1,8 +1,10 @@
 Ver. 0.5.3 - Development
 ==============================
-* Bug fix in python Http parser (commit 4bd8a54).
+* Critical bug fix in python Http parser (4bd8a54_).
 * Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
 * **469 regression tests**, **88% coverage**.
+
+.. _4bd8a54: https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc
 
 Ver. 0.5.2 - 2013-June-30
 ==============================
