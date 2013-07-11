@@ -336,6 +336,15 @@ by name via the :meth:`get_route` method.'''
     def creation_count(self):
         '''Integer for sorting :class:`Router` by creation.'''
         return self._creation_count
+    
+    @property
+    def rule(self):
+        '''The full ``rule`` string for this :class:`Router`. It includes the
+:attr:`parent` portion of rule if a parent router is available.'''
+        route = self.route
+        if self._parent:
+            route = self._parent.route + route
+        return route.rule
         
     def path(self, **urlargs):
         '''The full path of this :class:`Router`. It includes the
