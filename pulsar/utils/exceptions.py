@@ -1,11 +1,13 @@
-
+'''
+A list of all Exception specific to pulsar library.
+'''
 class PulsarException(Exception):
-    '''Base class of all Pulsar Exception'''
+    '''Base class of all Pulsar exceptions.'''
 
 
 class ImproperlyConfigured(PulsarException):
-    '''A :class:`PulsarException` raised when pulsar has inconsistent
-configuration.'''
+    '''A :class:`PulsarException` raised when an inconsistent configuration
+has occured.'''
     pass
 
 
@@ -60,7 +62,21 @@ class NotRegisteredWithServer(PulsarException):
 
 
 ##################################################################### HTTP
-class HttpException(Exception):
+class HttpException(PulsarException):
+    '''The base class of all ``Http`` exceptions
+    
+Introduces the following attributes:
+
+.. attribute:: status
+
+    The numeric status code for the exception (ex 500 for server error).
+    
+    Default: ``500``.
+    
+.. attribute:: headers
+
+    Additional headers to add to the client response.
+'''
     status = 500
     def __init__(self, msg='', status=None, handler=None, strict=False,
                  headers=None, content_type=None):
@@ -78,6 +94,10 @@ class HttpException(Exception):
 
 
 class HttpRedirect(HttpException):
+    '''An :class:`HttpException` for redirects.
+    
+The :attr:`HttpException.status` is set to ``302`` by default.
+'''    
     status = 302
     def __init__(self, location, status=None, headers=None, **kw):
         headers = [] if headers is None else headers
@@ -85,15 +105,25 @@ class HttpRedirect(HttpException):
         super(HttpRedirect, self).__init__(status=status or self.status,
                                            headers=headers, **kw)
 
+    @property
+    def location(self):
+        '''The value in the ``Location`` header entry.
+        
+It is a proxy for ``self.headers['location'].'''
+        return self.headers['location']
+    
 
 class PermissionDenied(HttpException):
+    '''An :class:`HttpException` with default ``403`` status code.'''
     status = 403
 
 
 class Http404(HttpException):
+    '''An :class:`HttpException` with default ``404`` status code.'''
     status = 404
 
     
 class MethodNotAllowed(HttpException):
+    '''An :class:`HttpException` with default ``405`` status code.'''
     status = 405
     

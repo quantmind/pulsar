@@ -52,6 +52,7 @@ Contents
    protocols
    application
    utilities
+   exceptions
    
 
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

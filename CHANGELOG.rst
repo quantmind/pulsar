@@ -1,6 +1,7 @@
 Ver. 0.5.3 - Development
 ==============================
-* Added ``rule`` attribute to wsgi Router.
+* Added :mod:`pulsar.utils.exceptions` documentation.
+* Added ``full_route`` and ``rule`` attributes to wsgi Router.
 * Critical bug fix in python Http parser (4bd8a54_).
 * Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
 * **469 regression tests**, **88% coverage**.

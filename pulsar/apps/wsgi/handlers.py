@@ -338,13 +338,19 @@ by name via the :meth:`get_route` method.'''
         return self._creation_count
     
     @property
-    def rule(self):
-        '''The full ``rule`` string for this :class:`Router`. It includes the
-:attr:`parent` portion of rule if a parent router is available.'''
+    def full_route(self):
+        '''The full :attr:`route`` for this :class:`Router`. It includes the
+:attr:`parent` portion of the route if a parent router is available.'''
         route = self.route
         if self._parent:
             route = self._parent.route + route
-        return route.rule
+        return route
+        
+    @property
+    def rule(self):
+        '''The full ``rule`` string for this :class:`Router`. It includes the
+:attr:`parent` portion of rule if a parent router is available.'''
+        return self.full_route.rule
         
     def path(self, **urlargs):
         '''The full path of this :class:`Router`. It includes the
