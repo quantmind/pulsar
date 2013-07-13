@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI application handlers &mdash; pulsar 0.5.3-beta.1 documentation</title>
+    <title>WSGI application handlers &mdash; pulsar 0.5.3-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.3-beta.1',
+        VERSION:     '0.5.3-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchronous WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -248,6 +248,20 @@ by name via the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.R
 <dt id="pulsar.apps.wsgi.handlers.Router.creation_count">
 <tt class="descname">creation_count</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#Router.creation_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.creation_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Integer for sorting <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> by creation.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.handlers.Router.full_route">
+<tt class="descname">full_route</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#Router.full_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.full_route" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full <tt class="xref py py-attr docutils literal"><span class="pre">route`</span></tt> for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. It includes the
+<a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.parent" title="pulsar.apps.wsgi.handlers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of the route if a parent router is available.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.handlers.Router.rule">
+<tt class="descname">rule</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#Router.rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.Router.rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full <tt class="docutils literal"><span class="pre">rule</span></tt> string for this <a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router" title="pulsar.apps.wsgi.handlers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. It includes the
+<a class="reference internal" href="#pulsar.apps.wsgi.handlers.Router.parent" title="pulsar.apps.wsgi.handlers.Router.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a> portion of rule if a parent router is available.</p>
 </dd></dl>
 
 <dl class="method">

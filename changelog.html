@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.5.3-beta.1 documentation</title>
+    <title>Changelog &mdash; pulsar 0.5.3-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.3-beta.1',
+        VERSION:     '0.5.3-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
-    <link rel="prev" title="Tools" href="api/utilities.html" /> 
+    <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
   <body>
 
@@ -43,9 +43,9 @@
           <a href="settings.html" title="Settings"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="api/utilities.html" title="Tools"
+          <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -70,6 +70,9 @@
 <div class="section" id="ver-0-5-3-development">
 <h2>Ver. 0.5.3 - Development<a class="headerlink" href="#ver-0-5-3-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Added <a class="reference internal" href="api/exceptions.html#module-pulsar.utils.exceptions" title="pulsar.utils.exceptions"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.exceptions</span></tt></a> documentation.</li>
+<li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
+<li>Critical bug fix in python Http parser (<a class="reference external" href="https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc">4bd8a54</a>).</li>
 <li>Bug fix in <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.Router</span></tt> metaclass.</li>
 <li><strong>469 regression tests</strong>, <strong>88% coverage</strong>.</li>
 </ul>
@@ -378,8 +381,8 @@ asynchronous test suite and asynchronous shell.</li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="api/utilities.html"
-                        title="previous chapter">Tools</a></p>
+  <p class="topless"><a href="api/exceptions.html"
+                        title="previous chapter">Exceptions</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="settings.html"
                         title="next chapter">Settings</a></p>

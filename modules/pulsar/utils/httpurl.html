@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.httpurl &mdash; pulsar 0.5.3-beta.1 documentation</title>
+    <title>pulsar.utils.httpurl &mdash; pulsar 0.5.3-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.5.3-beta.1',
+        VERSION:     '0.5.3-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -1066,7 +1066,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_method</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="c"># URI</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="s">&#39;http://dummy.com</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">path</span> <span class="ow">or</span> <span class="s">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_query_string</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">query</span> <span class="ow">or</span> <span class="s">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fragment</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">fragment</span> <span class="ow">or</span> <span class="s">&quot;&quot;</span>

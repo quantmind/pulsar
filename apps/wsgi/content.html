@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Content &mdash; pulsar 0.5.3-beta.1 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.5.3-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.5.3-beta.1',
+        VERSION:     '0.5.3-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Middleware" href="middleware.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.5.3-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -303,6 +303,18 @@ This is useful during testing. It is the synchronous equivalent of
 <dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> which renders into a json string.
 The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content_type" title="pulsar.apps.wsgi.content.AsyncString.content_type"><tt class="xref py py-attr docutils literal"><span class="pre">AsyncString.content_type</span></tt></a> attribute is set to
 <tt class="docutils literal"><span class="pre">application/json</span></tt>.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.content.Json.as_list">
+<tt class="descname">as_list</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Json.as_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt>, the content is always a list of objects. Default <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.content.Json.parameters">
+<tt class="descname">parameters</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Json.parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Additional dictionary of parameters passed during initialisation.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Json.json">
 <tt class="descname">json</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Json.json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Json.json" title="Permalink to this definition">¶</a></dt>
