@@ -394,7 +394,7 @@ which will be put off until later. It conforms with the
 :param description: optional description which set the :attr:`description`
     attribute.
 :param timeout: optional timeout. If greater than zero the deferred will be
-    cancelled after *timeout* seconds if no result is available.
+    cancelled after ``timeout`` seconds if no result is available.
 :param event_loop: If supplied, it is the :class:`EventLoop` associated
     with this :class:`Deferred`. If not supplied, the default event loop
     is used. The event loop associated with this :class:`Deferred` is accessed
@@ -421,12 +421,14 @@ which will be put off until later. It conforms with the
     _state = _PENDING
     _runningCallbacks = False
     _timeout = None
+    _callbacks = None
 
     def __init__(self, description=None, timeout=None, event_loop=None):
         self._description = description
-        self._callbacks = deque()
         self._event_loop = event_loop
-        self.set_timeout(timeout)
+        # Avoid to call timeout if timeout is not set (30% better performance)
+        if timeout:
+            self.set_timeout(timeout)
 
     def __repr__(self):
         v = self._description or self.__class__.__name__
@@ -512,6 +514,8 @@ The function takes at most one argument, the result passed to the
 be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
         if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
+            if self._callbacks is None:
+                self._callbacks = deque()
             self._callbacks.append(call_back(callback, errback, continuation))
             self._run_callbacks()
         else:
@@ -558,7 +562,7 @@ the result is a :class:`Failure`'''
         '''Add another :class:`Deferred` to this :class:`Deferred` callbacks.
 
 If ``deferred`` is not given a new :class:`Deferred` is created.
-This method adds callbacks to this :class:`Deferred` to call deferred's
+This method adds callbacks to this :class:`Deferred` to call ``deferred``'s
 callback or errback, as appropriate. It is a shorthand way
 of performing the following::
 
@@ -572,14 +576,14 @@ When you add deferred ``d2`` to another deferred ``d1`` with::
 
     d2 = d1.chain()
     
-you are making ``d2`` participate in the callback chain of ``d1`` with
-the following properties:
+you are making ``d2`` receive the callback when ``d1`` has received the
+callback, with the following properties:
 
 * Any event that fires ``d1`` will also fire ``d2``.
 * The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
 * The callbacks of ``d2`` won't affect ``d1`` result.
 
-:return: the chained ``deferred``.'''
+:return: the ``deferred``.'''
         if deferred is None:
             deferred = Deferred()
         def cbk(result):

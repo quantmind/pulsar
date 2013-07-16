@@ -1,5 +1,6 @@
 Ver. 0.5.3 - Development
 ==============================
+* 50% Faster :class:`pulsar.Deferred` initialisation.
 * Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
   deferred's callbacks without affecting the result.
 * Added :mod:`pulsar.utils.exceptions` documentation.

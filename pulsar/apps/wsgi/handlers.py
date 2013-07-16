@@ -339,7 +339,7 @@ by name via the :meth:`get_route` method.'''
     
     @property
     def full_route(self):
-        '''The full :attr:`route`` for this :class:`Router`. It includes the
+        '''The full :attr:`route` for this :class:`Router`. It includes the
 :attr:`parent` portion of the route if a parent router is available.'''
         route = self.route
         if self._parent:
