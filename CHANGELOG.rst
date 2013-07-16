@@ -1,5 +1,7 @@
 Ver. 0.5.3 - Development
 ==============================
+* Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
+  deferred's callbacks without affecting the result.
 * Added :mod:`pulsar.utils.exceptions` documentation.
 * Added ``full_route`` and ``rule`` attributes to wsgi Router.
 * Critical bug fix in python Http parser (4bd8a54_).

@@ -553,6 +553,40 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 the result is a :class:`Failure`'''
         if self.done() and is_failure(self.result):
             self.result.raise_all()
+            
+    def then(self, deferred=None):
+        '''Add another :class:`Deferred` to this :class:`Deferred` callbacks.
+
+If ``deferred`` is not given a new :class:`Deferred` is created.
+This method adds callbacks to this :class:`Deferred` to call deferred's
+callback or errback, as appropriate. It is a shorthand way
+of performing the following::
+
+    def cbk(result):
+        deferred.callback(result)
+        return result
+        
+    self.add_both(cbk)
+   
+When you add deferred ``d2`` to another deferred ``d1`` with::
+
+    d2 = d1.chain()
+    
+you are making ``d2`` participate in the callback chain of ``d1`` with
+the following properties:
+
+* Any event that fires ``d1`` will also fire ``d2``.
+* The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
+* The callbacks of ``d2`` won't affect ``d1`` result.
+
+:return: the chained ``deferred``.'''
+        if deferred is None:
+            deferred = Deferred()
+        def cbk(result):
+            deferred.callback(result)
+            return result
+        self.add_both(cbk)
+        return deferred
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):

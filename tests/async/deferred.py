@@ -172,6 +172,14 @@ class TestDeferred(unittest.TestCase):
         failure = d.result[0]
         self.assertEqual(failure.trace[0], CancelledError)
         
+    def test_chain(self):
+        d1 = Deferred()
+        d2 = d1.then()
+        self.assertNotEqual(d1, d2)
+        d2.add_callback(lambda res: res+1)
+        d1.callback(1)
+        self.assertEqual(d1.result, 1)
+        self.assertEqual(d2.result, 2)
         
 class TestMultiDeferred(unittest.TestCase):
     
