@@ -8,7 +8,7 @@ eventually reach the recipient, provided that the recipient exists.
 
 The implementation details are outlined below:
 
-* Messages are sent via the :func:`send` function, which is a proxy for
+* Messages are sent via the :func:`pulsar.send` function, which is a proxy for
   the :class:`pulsar.Actor.send` method. Here is how you ping actor ``abc``::
       
       from pulsar import send

@@ -45,8 +45,9 @@ Actors
 
 Actors are the atoms of pulsar's concurrent computation, they do not share
 state between them, communication is achieved via asynchronous
-inter-process message passing, implemented using the standard
-python socket library. An :class:`Actor` can be **thread-based** or
+:ref:`inter-process message passing <tutorials-messages>`,
+implemented using the standard python socket library. An :class:`Actor` can be
+**thread-based** or
 **process-based** (default) and control at least one running :class:`EventLoop`.
 To obtain the actor in the current thread::
 
@@ -57,6 +58,28 @@ the following will spawn a thread-based actor::
 
     ap = spawn(concurrency='thread')
     
+.. _concurrency:
+
+Concurrency
+~~~~~~~~~~~~~~~~~~
+As mentioned above, an actor can be processed based (default) or thread based.
+When a new processed-based actor is created, a new process is started and the
+actor takes control of the main thread of that new process. Thread-based
+actors always exist in the master process (the same process as the arbiter)
+and control threads other than the main thread.
+
+An actor can control more than one thread if it needs to, via the
+:attr:`Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
+paragraph.
+The actor :ref:`event loop <eventloop>` is installed in all threads controlled
+by the actor itself so that when the `get_event_loop` method is invoked on
+these threads it returns the event loop of the controlling actor.
+
+.. note::
+
+    Regardless of the type of concurrency, an actor always control at least
+    one thread, in the case of process-based actors the thread is the main
+    thread of the actor process.
     
 .. _eventloop:
 
@@ -64,7 +87,7 @@ Event loop
 ~~~~~~~~~~~~~~~
 Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
-The :attr:`Actor.event_loop` is initiated just after forking (or after the
+The :attr:`Actor.event_loop` is created just after forking (or after the
 actor's thread starts for thread-based actors).
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 
@@ -83,26 +106,19 @@ connections can be served simultaneously.
 
 CPU-bound
 ~~~~~~~~~~~~~~~
-Another way for an actor to function is to use its of :attr:`Actor.thread_pool`
+Another way for an actor to function is to use its :attr:`Actor.thread_pool`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
-CPU-bound :class:`Actors` have the following properties:
+CPU-bound :class:`Actor` have the following properties:
 
 * Their :attr:`Actor.event_loop` listen for requests on file descriptors
   as usual.
-* The threads in the :attr:`Actor.thread_pool` use a specialised :class:`EventLoop`
+* The threads in the :attr:`Actor.thread_pool` install an additional :class:`EventLoop`
   which listen for events on a message queue.
+  Pulsar refers to this specialised event loop as the **request loop**.
 
-
-.. _design-mailbox:
-
-Mailbox
-~~~~~~~~~~~~~~
-Each :class:`Actor`, with the only exception of :class:`Monitor`, have its own
-:attr:`Actor.mailbox`, an asynchronous client of the :class:`Arbiter`
-mailbox server. Check the :ref:`message passing documentation <tutorials-messages>`
-for more information.
-
+The :attr:`Actor.thread_pool` needs to be initialised via the
+:attr:`Actor.create_thread_pool` method before it can be used.
 
 .. _design-spawning:
 

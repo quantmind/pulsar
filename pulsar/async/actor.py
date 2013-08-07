@@ -27,8 +27,9 @@ def is_actor(obj):
     return isinstance(obj, Actor)
 
 def send(target, action, *args, **params):
-    '''Send a :ref:`message <api-remote_commands>` to *target* to perform
-a given *action*.
+    '''Send a :ref:`message <api-remote_commands>` to ``target`` to perform
+a given ``action``. The actor sending the message is obtained via the
+:func:`get_actor` function.
 
 :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
     the target actor which will receive the message.
