@@ -407,9 +407,15 @@ class WsgiRequest(Accept):
 :class:`pulsar.utils.structures.MultiValueDict` containing data from the
 request body, and data from uploaded files.'''
         if self.method not in ENCODE_URL_METHODS:
-            return parse_form_data(self.environ)
+            content_type, options = self.content_type_options
+            charset = options.get('charset', 'utf-8')
+            if content_type in JSON_CONTENT_TYPES:
+                data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
+                return json.loads(data.decode(charset))
+            else:
+                return parse_form_data(self.environ, charset)
         else:
-            return MultiValueDict(), None
+            return {}, None
         
     @property
     def body_data(self):

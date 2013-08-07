@@ -71,12 +71,12 @@ class Select(HtmlVisitor):
     def set_form_value(self, html, value):
         if html.attr('multiple') == 'multiple':
             for child in html.children:
-                if child.attr('value' == value):
+                if child.attr('value') == value:
                     child.attr('selected', 'selected')
                     break
         else:
             for child in html.children:
-                if child.attr('value' == value):
+                if child.attr('value') == value:
                     child.attr('selected', 'selected')
                 else:
                     child._attr.pop('selected', None)
