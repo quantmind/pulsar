@@ -1,4 +1,4 @@
-'''Routing classes for managing urls.
+'''Routing classes for matching and parsing urls.
 
 .. note::
 

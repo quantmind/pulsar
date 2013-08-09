@@ -1,9 +1,5 @@
 .. _wsgi-handlers:
 
-===============================
-WSGI application handlers
-===============================
-
 .. automodule:: pulsar.apps.wsgi.handlers
 
 

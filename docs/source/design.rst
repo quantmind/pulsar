@@ -6,24 +6,56 @@
 Design
 =====================
 
-Pulsar implements a double layer of components for building a vast array
-of parallel and asynchronous applications.
+Pulsar implements three layers of components for building a vast array
+of parallel and asynchronous applications. Each layer depends on the
+previous ones but it is independent on the layers above it. The three layers
+are:
 
-* The first layer is based on the building blocks of pulsar library:
-  the :class:`Actor` class for parallel execution and the the :class:`Deferred`
-  class for handling asynchronous events via an actor's :class:`EventLoop`.
-* The second layer, built on top of the first one, is based on the
+* :ref:`The asynchronous layer <async-layer>` forms the building blocks
+  of asynchronous execution. The main classes here are the :class:`Deferred`
+  and the :class:`EventLoop`.
+* :ref:`The actor layer <design-actor>` provides parallel execution in
+  processes and threads and uses the :ref:`the asynchronous layer <async-layer>`
+  as building block.
+* The last layer, built on top of the first two, is based on the higher level
   :class:`apps.Application` class.
    
+.. _async-layer:
 
-Server State
-==================
+Asynchronous Components
+===============================
 
 Pulsar can be used as a stand-alone asynchronous library, without using
-:ref:`actors <design-actor>` to provide parallel execution. However,
-when using :ref:`pulsar application framework <design-application>`,
-you need to use pulsar in **server state**, that is to say, there
-will be a centralised :class:`Arbiter` controlling the main
+:ref:`actors <design-actor>` to provide parallel execution.
+
+.. _eventloop:
+
+Event Loop
+~~~~~~~~~~~~~~~
+The pulsating hart of the asynchronous framework.
+Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
+
+Deferred
+~~~~~~~~~~~~
+Designed along the lines of twisted deferred, this class is a callback which
+will be put off until later.
+
+    
+
+.. _design-actor:
+
+Actors
+=================
+
+Actors are the atoms of pulsar's concurrent computation, they do not share
+state between them, communication is achieved via asynchronous
+:ref:`inter-process message passing <tutorials-messages>`,
+implemented using the standard python socket library.
+
+The Arbiter
+~~~~~~~~~~~~~~~~~
+When using pulsar actor layer, you need to use pulsar in **server state**,
+that is to say, there will be a centralised :class:`Arbiter` controlling the main
 :class:`EventLoop` in the **main thread** of the **master process**.
 The arbiter is a specialised :class:`Actor`
 which control the life all :class:`Actor` and :class:`Monitor`.
@@ -37,32 +69,16 @@ To access the :class:`Arbiter`, from the main process, one can use the
     >>> arbiter.running()
     False
     
-
-.. _design-actor:
-
-Actors
-=================
-
-Actors are the atoms of pulsar's concurrent computation, they do not share
-state between them, communication is achieved via asynchronous
-:ref:`inter-process message passing <tutorials-messages>`,
-implemented using the standard python socket library. An :class:`Actor` can be
-**thread-based** or
-**process-based** (default) and control at least one running :class:`EventLoop`.
-To obtain the actor in the current thread::
-
-    actor = pulsar.get_actor()
-    
-Spawning a new actor can be achieved by the :func:`spawn` function, for example
-the following will spawn a thread-based actor::
-
-    ap = spawn(concurrency='thread')
-    
 .. _concurrency:
 
 Concurrency
 ~~~~~~~~~~~~~~~~~~
-As mentioned above, an actor can be processed based (default) or thread based.
+An actor can be **processed based** (default) or **thread based** and control
+at least one running :class:`EventLoop`.
+To obtain the actor in the current thread::
+
+    actor = pulsar.get_actor()
+    
 When a new processed-based actor is created, a new process is started and the
 actor takes control of the main thread of that new process. Thread-based
 actors always exist in the master process (the same process as the arbiter)
@@ -77,19 +93,14 @@ these threads it returns the event loop of the controlling actor.
 
 .. note::
 
-    Regardless of the type of concurrency, an actor always control at least
+    Regardless of the type of concurrency, an actor always controls at least
     one thread, in the case of process-based actors the thread is the main
     thread of the actor process.
     
-.. _eventloop:
-
-Event loop
-~~~~~~~~~~~~~~~
 Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
 The :attr:`Actor.event_loop` is created just after forking (or after the
 actor's thread starts for thread-based actors).
-Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 
 .. _iobound:
 
@@ -228,9 +239,6 @@ Tell the remote actor ``abc`` to gracefully shutdown::
     send('abc', 'stop')
     
     
-Asynchronous Components
-===============================
-
 Exceptions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

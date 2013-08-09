@@ -1,4 +1,9 @@
-'''Pulsar is shipped with four WSGI application handlers which facilitate the
+'''
+===============================
+WSGI application handlers
+===============================
+
+Pulsar is shipped with four WSGI application handlers which facilitate the
 development of server-side python web applications.
 
 .. note::
@@ -34,10 +39,12 @@ Lazy Wsgi Handler
    
 .. _wsgi-middleware:
 
+=====================
 WSGI Middleware
 =====================
 
-Middleware are function or callable objects similar to :ref:`wsgi-handlers`
+Middleware are function or callable objects similar to
+:ref:`WSGI application handlers <wsgi-handlers>`
 with the only difference that they can return ``None``. Middleware can be used
 in conjunction with :class:`WsgiHandler` or any other handler which iterate
 through middleware in a similar way (for example django wsgi handler).
@@ -49,18 +56,18 @@ the environment before a client response is returned.
 .. _wsgi-router:
 
 Router
-~~~~~~~~~~~~~~~~~~
+=====================
 
-Next up is routing. Routing is the process of match and
-parse the URL to something we can use. Pulsar provides a flexible integrated
+Routing is the process of matching and parsing a URL to something we can use.
+Pulsar provides a flexible integrated
 routing system you can use for that. It works by creating a
 :class:`Router` instance with its own ``rule`` and, optionally, additional
 sub-routers for handling additional urls::
 
     class Page(Router):
-        accept_content_types = ('text/html',
-                                'text/plain',
-                                'application/json')
+        response_content_types = RouterParam(('text/html',
+                                              'text/plain',
+                                              'application/json'))
         
         def get(self, request):
             "This method handle request with get-method" 
@@ -73,7 +80,7 @@ sub-routers for handling additional urls::
     middleware = Page('/bla')
     
 The ``middleware`` constructed can be used to serve ``get`` and ``post`` methods
-at ``/bla``.
+at ``/bla`` url.
 The :class:`Router` introduces a new element into pulsar WSGI handlers, the
 :ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
 WSGI environ.
@@ -84,15 +91,22 @@ WSGI environ.
 
 
 Media Router
-~~~~~~~~~~~~~~~~~~~~~~~~
+=====================
 
-The :class:`MediaRouter` is a spcialised :class:`Router` for serving static
+The :class:`MediaRouter` is a specialised :class:`Router` for serving static
 files such ass ``css``, ``javascript``, images and so forth.
 
 .. autoclass:: MediaRouter
    :members:
    :member-order: bysource
    
+   
+RouterParam
+=================
+
+.. autoclass:: RouterParam
+   :members:
+   :member-order: bysource
    
 .. _WSGI: http://www.wsgi.org
 '''
@@ -208,13 +222,25 @@ def get_roule_methods(attrs):
     
 
 class RouterParam(object):
-    
+    '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
+so that children can retrieve the value if they don't define their own.
+
+A :class:`RouterParam` is always defined as a class attribute and it
+is processed by the :class:`Router` metaclass and stored in a dictionary
+available as ``parameter`` class attribute.
+
+.. attribute:: value
+
+    The value associated with this :class:`RouterParam`. THis is the value
+    stored in the :class:`Router.parameters` dictionary at key given by
+    the class attribute specified in the class definition.
+'''
     def __init__(self, value):
         self.value = value
         
         
 class RouterType(type):
-    
+    ''':class:`Router` metaclass.'''
     def __new__(cls, name, bases, attrs):
         rule_methods = get_roule_methods(attrs.items())
         parameters = {}
@@ -260,7 +286,8 @@ request, the ``get(self, request)`` method must be implemented.
 :param routes: Optionals :class:`Router` instances which are added to the
     children :attr:`routes` of this router.
 :param parameters: Optional parameters for this router. They are stored in the
-    :attr:`parameters` attribute.
+    :attr:`parameters` attribute. If a ``response_content_types`` value is
+    passed, it overrides the :attr:`response_content_types` attribute.
     
 .. attribute:: route
 
@@ -274,6 +301,13 @@ request, the ``get(self, request)`` method must be implemented.
 
     The parent :class:`Router` of this :class:`Router`.
     
+.. attribute:: response_content_types
+
+    a list/tuple of possible content type of a response to a client request.
+    The client request must accept
+    at least one of the response content types, otherwise an HTTP
+    exception occurs.
+    
 .. attribute:: parameters
 
     A :class:`pulsar.utils.structures.AttributeDictionary` of parameters for
@@ -285,7 +319,7 @@ request, the ``get(self, request)`` method must be implemented.
     _parent = None
     _name = None
     
-    accept_content_types = RouterParam(None)
+    response_content_types = RouterParam(None)
     
     def __init__(self, rule, *routes, **parameters):
         Router._creation_count += 1
@@ -331,6 +365,13 @@ by name via the :meth:`get_route` method.'''
     @property
     def parent(self):
         return self._parent
+    
+    @property
+    def default_content_type(self):
+        '''The default content type for responses. This is the first element
+in the :attr:`response_content_types` list.'''
+        ct = self.response_content_types
+        return ct[0] if ct else None
     
     @property
     def creation_count(self):
@@ -386,12 +427,12 @@ by name via the :meth:`get_route` method.'''
         
     def content_type(self, request):
         '''Evaluate the content type for the response to the client ``request``.
-The method uses the :attr:`accept_content_types` parameter of accepted content
+The method uses the :attr:`response_content_types` parameter of accepted content
 types and the content types accepted by the client and figure out
 the best match.'''
-        accept = self.accept_content_types
-        if accept:
-            return request.content_types.best_match(accept)
+        response_content_types = self.response_content_types
+        if response_content_types:
+            return request.content_types.best_match(response_content_types)
        
     def __repr__(self):
         return self.route.__repr__()
@@ -537,7 +578,8 @@ returns ``utf-8``.'''
     
 
 class MediaMixin(Router):
-    accept_content_types = ('application/octet-stream', 'text/css')
+    response_content_types = RouterParam(('application/octet-stream',
+                                          'text/css'))
     cache_control = CacheControl(maxage=86400)
     _file_path = ''
         
