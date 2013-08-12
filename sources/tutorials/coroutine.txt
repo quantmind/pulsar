@@ -15,7 +15,7 @@ pulsar:
       
       o = pulsar.Deferred()
       
-* A a :ref:`coroutine <coroutine>`, alis of a generator which consume values.
+* A :ref:`coroutine <coroutine>`, a generator which consumes values.
   For example, given the following generator function::
   
       def my_async_generator(...):
