@@ -119,8 +119,9 @@ the <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt 
 <dl class="function">
 <dt id="pulsar.send">
 <tt class="descclassname">pulsar.</tt><tt class="descname">send</tt><big>(</big><em>target</em>, <em>action</em>, <em>*args</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.send" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send a <a class="reference internal" href="#api-remote-commands"><em>message</em></a> to <em>target</em> to perform
-a given <em>action</em>.</p>
+<dd><p>Send a <a class="reference internal" href="#api-remote-commands"><em>message</em></a> to <tt class="docutils literal"><span class="pre">target</span></tt> to perform
+a given <tt class="docutils literal"><span class="pre">action</span></tt>. The actor sending the message is obtained via the
+<a class="reference internal" href="#pulsar.get_actor" title="pulsar.get_actor"><tt class="xref py py-func docutils literal"><span class="pre">get_actor()</span></tt></a> function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

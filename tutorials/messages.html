@@ -77,7 +77,7 @@ and <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="p
 eventually reach the recipient, provided that the recipient exists.</p>
 <p>The implementation details are outlined below:</p>
 <ul>
-<li><p class="first">Messages are sent via the <tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt> function, which is a proxy for
+<li><p class="first">Messages are sent via the <a class="reference internal" href="../api/actor.html#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.send()</span></tt></a> function, which is a proxy for
 the <a class="reference internal" href="../api/actor.html#pulsar.Actor.send" title="pulsar.Actor.send"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.send</span></tt></a> method. Here is how you ping actor <tt class="docutils literal"><span class="pre">abc</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">send</span>
 
