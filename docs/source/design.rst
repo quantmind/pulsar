@@ -26,7 +26,9 @@ Asynchronous Components
 ===============================
 
 Pulsar can be used as a stand-alone asynchronous library, without using
-:ref:`actors <design-actor>` to provide parallel execution.
+:ref:`actors <design-actor>` to provide parallel execution and more information
+can be found in the :ref:`asynchronous components <tutorials-coroutine>`
+tutorial. 
 
 .. _eventloop:
 
@@ -38,10 +40,14 @@ Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 Deferred
 ~~~~~~~~~~~~
 Designed along the lines of twisted deferred, this class is a callback which
-will be put off until later.
+will be put off until later. Pulsar has three types of deferred:
+
+* A vanilla :class:`Deferred`, similar to twisted deferred.
+* A :class:`Task`, a specialised deferred which consume a :ref:`coroutine <coroutine>`.
+* A :class:`MultiDeferred` for managing collections of independent asynchronous
+  components.
 
     
-
 .. _design-actor:
 
 Actors

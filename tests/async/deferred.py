@@ -150,7 +150,20 @@ class TestDeferred(unittest.TestCase):
         d = Deferred()
         d.cancel('timeout')
         self.assertTrue(d.done())
+        self.assertTrue(d.cancelled())
         self.assertTrue(is_failure(d.result))
+        
+    def testCancelTask(self):
+        d = Deferred()
+        def gen():
+            yield d
+        task = maybe_async(gen())
+        self.assertNotEqual(task, d)
+        task.cancel('timeout')
+        self.assertTrue(task.done())
+        self.assertTrue(task.cancelled())
+        self.assertTrue(is_failure(task.result))
+        self.assertFalse(d.done())
         
     def testTimeout(self):
         d = Deferred(timeout=1).add_errback(lambda f : [f])
@@ -180,6 +193,7 @@ class TestDeferred(unittest.TestCase):
         d1.callback(1)
         self.assertEqual(d1.result, 1)
         self.assertEqual(d2.result, 2)
+        
         
 class TestMultiDeferred(unittest.TestCase):
     

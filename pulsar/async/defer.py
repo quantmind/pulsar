@@ -107,13 +107,11 @@ def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
     return isinstance(obj, Deferred)
 
-def is_failure(obj, classes=None):
+def is_failure(obj, *classes):
     '''Check if ``obj`` is a :class:`Failure`. If optional ``classes``
 are given, it checks if the error is an instance of those classes.'''
     if isinstance(obj, Failure):
-        if classes:
-            return obj.isinstance(classes)
-        return True
+        return obj.isinstance(classes) if classes else True
     return False
 
 def default_maybe_failure(value, msg=None):
@@ -548,7 +546,10 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         elif self.done():
             raise InvalidStateError('Deferred %s already done' % self)
         self.result = maybe_failure(result)
-        self._state = state or _FINISHED
+        if not state:
+            state = _CANCELLED if is_failure(self.result, CancelledError) else\
+                        _FINISHED
+        self._state = state
         self._run_callbacks()
         return self.result
         
@@ -775,11 +776,14 @@ function when a generator is passed as argument.'''
                 result = sys.exc_info()
             result = maybe_async(result, event_loop=self.event_loop)
             if is_async(result):
+                # asynchronous result add callback/erroback and transfer control
+                # to the event loop
                 return result.add_both(self._restart)
             elif result == NOT_DONE:
+                # transfer control to the event loop
                 return self.event_loop.call_soon(self._consume, None)
         if not self.done():
-            return self._conclude(result)
+            self._conclude(result)
 
     def _restart(self, result):
         #restart the coroutine in the same event loop it was started
