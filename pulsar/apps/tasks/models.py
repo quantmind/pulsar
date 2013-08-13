@@ -24,8 +24,8 @@ To define a job is simple, subclass from :class:`Job` and implement the
             "Add two numbers"
             return a+b
 
-The *consumer*, instance of :class:`pulsar.apps.tasks.task.TaskConsumer`,
-is passed by the :ref:`Scheduler <apps-taskqueue-scheduler>` and should
+The ``consumer``, instance of :class:`pulsar.apps.tasks.task.TaskConsumer`,
+is passed by the :ref:`Task backend <apps-taskqueue-backend>` and should
 always be the first positional argument in the callable function.
 The remaining positional arguments and/or key-valued parameters are needed by
 your job implementation.

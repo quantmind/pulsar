@@ -137,7 +137,7 @@ for controlling the number of repetitions::
 
     A :class:`pulsar.utils.config.Config` container created by th
     :class:`TestPlugin` metaclass. It collects the default setting, if
-    available, and any additional :ref:`settings <setting>` specified
+    available, and any additional :ref:`settings <settings>` specified
     as class attributes.
 '''
     virtual = True

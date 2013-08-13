@@ -25,11 +25,20 @@ Pulsar Reactor
 
 .. _twisted: http://twistedmatrix.com/
 '''
-import twisted
-from twisted.internet.main import installReactor
-from twisted.internet.posixbase import PosixReactorBase
-from twisted.internet.defer import Deferred
-from twisted.python.failure import Failure
+try:
+    import twisted
+    from twisted.internet.main import installReactor
+    from twisted.internet.posixbase import PosixReactorBase
+    from twisted.internet.defer import Deferred
+    from twisted.python.failure import Failure
+except ImportError: #pragma    nocover
+    # This is for when we build documentation with sphinx in python 3
+    import os
+    if os.environ['BUILDING-PULSAR-DOCS'] == 'yes':
+        PosixReactorBase = object
+        installReactor = None
+    else:
+        raise
 
 import pulsar
 from pulsar.async.defer import default_maybe_async, default_maybe_failure, set_async
@@ -56,7 +65,8 @@ set_async(_maybe_async, _maybe_failure)
 
 
 class PulsarReactor(PosixReactorBase):
-    '''A twisted reactor which acts as a proxy to pulsar eventloop.'''
+    '''A twisted reactor which acts as a proxy to pulsar eventloop. The
+event loop is obtained via the ``get_event_loop`` function.'''
     def callLater(self, _seconds, f, *args, **kw):
         return get_event_loop().call_later(_seconds, lambda : f(*args, **kw))
     
@@ -103,7 +113,7 @@ class PulsarReactor(PosixReactorBase):
     def _handleSignals(self):
         pass
         
-    
-_reactor = PulsarReactor()
-installReactor(_reactor)
-_reactor.run()
+if installReactor:
+    _reactor = PulsarReactor()
+    installReactor(_reactor)
+    _reactor.run()

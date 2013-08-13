@@ -15,8 +15,8 @@ pulsar:
       
       o = pulsar.Deferred()
       
-* A a :ref:`coroutine <coroutine>`, alis of a generator which consume values.
-  For example, given the following generator function::
+* A :ref:`coroutine <coroutine>`, a generator which consumes values.
+  For example::
   
       def my_async_generator(...):
           yield something_but_dont_care_what_it_returns()
@@ -55,7 +55,7 @@ pulsar:
 Deferred
 ===================
 A :class:`Deferred` is a callback which will be put off until later. its
-implementation is similar to the twisted.defer.Deferred class with few
+implementation is similar to the `twisted deferred`_ class with few
 important differences. A deferred is the product of an asynchronous operation.
 
 .. _deferred-event-loop:
@@ -72,8 +72,9 @@ initialisation::
 If not set, it is obtained using the ``get_event_loop`` function.
 
 A vanilla :class:`Deferred` needs the event loop only when invoking
-the :meth:`Deferred.set_timeout` method. A :class:`Task` (a :class:`Deferred` which
-consumes a :ref:`coroutine <coroutine>`) requires it during initialisation.
+the :meth:`Deferred.set_timeout` method. On the other hand, A :class:`Task`
+(a :class:`Deferred` which consumes a :ref:`coroutine <coroutine>`) requires
+it during initialisation.
 
 .. _deferred-cancel:
 
@@ -81,13 +82,13 @@ Cancelling a deferred
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Deferreds can be cancelled, for example when an operation is taking too long to
 finish. To cancel a deferred one invokes the :meth:`Deferred.cancel`
-method. Calling ``cancel`` on a called or cancelled deferred
+method. Calling ``cancel`` on an already called or cancelled deferred
 has no effect, therefore the :meth:`Deferred.cancel` will always
 succeed.
 
 A useful application of deferred cancellation, is setting a ``timeout`` to an
 asynchronous operation. To set a timeout, one used the
-:class:`Deferred.set_timeout` method.:
+:class:`Deferred.set_timeout` method::
 
     >>> d = Deferred()
     >>> d.set_timeout(5)
@@ -163,3 +164,6 @@ a list, tuple, set or even a dictionary (values only, keys must be synchronous
 python types), one can use the :func:`multi_async` function to create
 an asynchronous component which will be ready once all the components
 are ready.
+
+
+.. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
