@@ -9,7 +9,7 @@ the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 
 An example of a web server written with :mod:`pulsar.apps.wsgi` which responds
-with "Hello World!" for every request::
+with ``Hello World!`` for every request::
 
     from pulsar.apps import wsgi
 
@@ -21,7 +21,7 @@ with "Hello World!" for every request::
         return [data]
 
     if __name__ == '__main__':
-        wsgi.WSGIServer(callable=hello).start()
+        wsgi.WSGIServer(hello).start()
 
 
 For more information regarding WSGI check the pep3333_ specification.
@@ -67,6 +67,8 @@ class WsgiFactory(object):
 
 
 class WSGIServer(SocketServer):
+    '''A specialised :class:`pulsar.apps.socket.SocketServer` for the HTTP
+protocol and WSGI compatible applications.'''
     name = 'wsgi'
     cfg = pulsar.Config(apps=['socket', 'wsgi'])
 

@@ -379,16 +379,17 @@ on :mod:`pulsar` concurrent framework.
 Applications can be of any sorts or forms and the library is shipped with
 several battery included examples in the :mod:`pulsar.apps` framework module.
 
-These are the most important facts about a pulsar :class:`Application`
+These are the most important facts about a pulsar :class:`Application`:
 
 * It derives from :class:`Configurator` so that it has all the functionalities
   to parse command line arguments and setup the :attr:`Configurator.cfg`.
 * Instances must be pickable. If non-pickable data needs to be add on an
   :class:`Application` instance, it must be stored on the
   :attr:`Application.local` dictionary.
-* When a new :class:`Application` is initialized,
+* Instances of an :class:`Application` are callable objects.
+* When an :class:`Application` is called for the first time,
   a new :class:`ApplicationMonitor` instance is added to the
-  :class:`Arbiter`, ready to perform its duties.
+  :class:`pulsar.Arbiter`, ready to perform its duties.
 
 :parameter callable: Initialise the :attr:`Application.callable` attribute.
 :parameter load_config: If ``False`` the :meth:`Configurator.load_config`
@@ -476,20 +477,18 @@ the event loop chooses the most suitable IO poller.'''
     
     # WORKERS CALLBACKS
     def worker_start(self, worker):
-        '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_start`
-:ref:`callback <actor-callbacks>` method.'''
+        '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
     def worker_info(self, worker, data):
         return data
     
     def worker_stopping(self, worker):
-        '''Invoked when the *worker* fires the *stopping* event.'''
+        '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
         pass
     
     def worker_stop(self, worker):
-        '''Called by the :class:`Worker` :meth:`pulsar.Actor.on_stop`
-:ref:`callback <actor-callbacks>` method.'''
+        '''Added to the ``stop`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
     # MONITOR CALLBACKS
@@ -516,7 +515,9 @@ The application is now in the arbiter but has not yet started.'''
         pass
     
     def start(self):
-        '''Start the application if it wasn't already started.'''
+        '''Start the :class:`pulsar.Arbiter` if it wasn't already started.
+Calling this method when the :class:`pulsar.Arbiter` is already running has
+no effect.'''
         arbiter = pulsar.arbiter()
         if arbiter and self.name in arbiter.registered:
             arbiter.start()

@@ -15,22 +15,36 @@ There are two methods which needs implementing:
 
 In this example we implement a very simple Echo server/client pair. Because
 this example has symmetric client and server protocols, the
-:class:`EchoProtocol` will also be used for the server.
+:class:`EchoProtocol` will also be used as based class for
+:class:`EchoServerProtocol`.
 
 
-Echo Protocol
-==================
+Echo Client Protocol
+======================
 
 .. autoclass:: EchoProtocol
    :members:
    :member-order: bysource
 
+Echo Server Protocol
+======================
+
+.. autoclass:: EchoServerProtocol
+   :members:
+   :member-order: bysource
+   
 Echo Client
 ==================
 
 .. autoclass:: Echo
    :members:
    :member-order: bysource
+   
+Echo Server
+==================
+
+.. autofunction:: server
+
 
 Run The example
 ====================
@@ -49,8 +63,8 @@ than returning a :class:`pulsar.Deferred`.
 Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial
 for further information.
 
-    >>> p.request('Hello')
-    'Hello'
+    >>> p.request(b'Hello')
+    b'Hello'
 '''
 try:
     import pulsar
@@ -99,9 +113,11 @@ message value, while servers sends the message back to the client.'''
         
 
 class EchoServerProtocol(EchoProtocol):
+    '''The :class:`pulsar.ProtocolConsumer` used by the echo :func:`server`.'''
     
     def response(self, data):
-        # write it back.
+        '''Override :meth:`EchoProtocol.response` method by writing the
+``data`` received back to the client.'''
         self.transport.write(data)
         # If we get a QUIT message, close the transport. Used by the test suite.
         if data[:-len(self.separator)] == b'QUIT':
@@ -131,12 +147,11 @@ which will be called once the server has sent back its response.'''
             return response.on_finished
             
         
-
 def server(description=None, **kwargs):
+    '''Create the :class:`pulsar.apps.socket.SocketServer` instance with
+:class:`EchoServerProtocol` as protocol factory.'''
     description = description or 'Echo Server'
-    return SocketServer(callable=EchoServerProtocol,
-                        description=description,
-                        **kwargs)
+    return SocketServer(EchoServerProtocol, description=description, **kwargs)
     
 
 if __name__ == '__main__':  #pragma nocover

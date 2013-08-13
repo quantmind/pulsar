@@ -17,8 +17,8 @@ Most of the material presented in the these tutorials is based on the
    :maxdepth: 1
    
    hello
-   wsgi
    clients
+   wsgi
    httpbin
    proxy
    webmail

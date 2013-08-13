@@ -69,10 +69,12 @@ the following:
 * WSGI server.
 * JSON-RPC WSGI middleware.
 * Web Sockets WSGI middleware.
+* Publish/Subscribe middleware.
 * Distributed task queue.
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
 * Application to run a Django_ site with pulsar.
+* Twisted_ integration.
 
 .. _examples:
 
@@ -89,6 +91,7 @@ pulsar alone. It includes:
 * Websocket graph.
 * Websocket Web Chat.
 * Django_ web site with a websocket middleware to handle a web chat.
+* A web mail application which uses Twisted_ IMAP4 API.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 
@@ -119,6 +122,8 @@ uses them to add additional functionalities.
   the running application.  
 * psutil_: if installed, a ``system`` key is available in the dictionary returned by
   Actor info method.
+* Twisted_: required by the :mod:`pulsar.apps.tx` application when using pulsar
+  with twisted protocols.
 
 Running Tests
 ==================
@@ -142,7 +147,7 @@ For full coverage run tests with the following flags::
 Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
-and has been developed using ideas from nodejs_ (api design), twisted_
+and has been developed using ideas from nodejs_ (api design), Twisted_
 (the deferred implementation), tornado_ web server (the initial event-loop
 implementation), celery_ (the task queue application) and
 many other open-source efforts.
@@ -175,7 +180,7 @@ file in the top distribution directory for the full license text.
 .. _gunicorn: http://gunicorn.org/
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _nodejs: http://nodejs.org/
-.. _twisted: http://twistedmatrix.com/trac/
+.. _Twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 .. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html

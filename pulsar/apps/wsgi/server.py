@@ -1,10 +1,15 @@
 '''
+HTTP Protocol Consumer
+==============================
 
 .. autoclass:: HttpServerResponse
    :members:
    :member-order: bysource
    
    
+Testing WSGI Environ
+=========================
+
 .. autofunction:: test_wsgi_environ
 '''
 import sys
@@ -34,7 +39,8 @@ MAX_CHUNK_SIZE = 65536
 
 
 def test_wsgi_environ(url='/', method=None, headers=None, extra=None):
-    '''Create a WSGI environment dictionary for testing purposes.
+    '''An utility function for creating a WSGI environment dictionary
+for testing purposes.
     
 :param url: the resource in the ``PATH_INFO``.
 :param method: the ``REQUEST_METHOD``.
@@ -229,11 +235,12 @@ the following algorithm:
         '''WSGI compliant ``start_response`` callable, see pep3333_.
 The application may call start_response more than once, if and only
 if the ``exc_info`` argument is provided.
-More precisely, it is a fatal error to call start_response without the exc_info
-argument if start_response has already been called within the current
-invocation of the application.
+More precisely, it is a fatal error to call ``start_response`` without the
+``exc_info`` argument if start_response has already been called within
+the current invocation of the application.
 
-:parameter status: an HTTP "status" string like "200 OK" or "404 Not Found".
+:parameter status: an HTTP ``status`` string like ``200 OK`` or
+    ``404 Not Found``.
 :parameter response_headers: a list of ``(header_name, header_value)`` tuples.
     It must be a Python list. Each header_name must be a valid HTTP header
     field-name (as defined by RFC 2616_, Section 4.2), without a trailing
@@ -241,10 +248,9 @@ invocation of the application.
 :parameter exc_info: optional python ``sys.exc_info()`` tuple. This argument
     should be supplied by the application only if start_response is being
     called by an error handler.
+:return: The :meth:`write` method.
 
-:rtype: The :meth:`HttpResponse.write` callable.
-
-The ``HOP_HEADERS`` are not considered but no error is raised.
+``HOP_HEADERS`` are not considered but no error is raised.
 
 .. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _2616: http://www.faqs.org/rfcs/rfc2616.html

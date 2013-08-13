@@ -1,5 +1,5 @@
 '''Tests actor and actor proxies.'''
-from time import sleep
+from functools import partial
 from multiprocessing.queues import Queue
 
 import pulsar
@@ -8,34 +8,19 @@ from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
                                  dont_run_with_thread
 
+from examples.echo.manage import Echo, EchoServerProtocol
 
-def sleepfunc():
-    sleep(2)
-    
-def on_event(fd, request):
-    pass
-        
 def check_actor(actor, name):
     # put something on a queue, just for coverage.
     actor.put(None)
     assert(actor.name==name)
     
 
-class DodgyActor(pulsar.Actor):
-    
-    def on_stop(self):
-        raise ValueError()
-    
-    
-def halt_actor(halt=0):
-    actor = get_actor()
-    if halt==2:
-        actor.requestloop.stop()
-    elif halt:
-        actor.requestloop.call_soon(halt_actor, 2)
-        raise ValueError()
-    else:   # called at the beginning
-        actor.requestloop.call_soon(halt_actor, 1)
+def create_echo_server(address, actor):
+    sock = pulsar.create_socket(address, bindto=True)
+    actor.servers['echo'] = actor.event_loop.create_server(
+                                sock=sock,
+                                consumer_factory=EchoServerProtocol)
     
     
 class TestProxy(unittest.TestCase):
@@ -68,6 +53,7 @@ class TestProxy(unittest.TestCase):
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
+    echo_port = 9898
     
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
@@ -107,39 +93,16 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         proxy_monitor.join(0.5)
         self.assertFalse(proxy_monitor.is_alive())
         
-class a:
-    @run_on_arbiter
-    def testDodgyActor(self):
-        queue = Queue()
-        yield self.spawn(actor_class=DodgyActor, max_requests=1,
-                         ioqueue=queue, on_event=on_event)
-        proxy = pulsar.get_actor().get_actor(self.a.aid)
-        self.assertEqual(proxy.name, 'dodgyactor')
-        queue.put(('request', 'Hello'))
-        c = 0
-        while c < 20:
-            if not proxy.is_alive():
-                break
-            else:
-                c += 1
-                yield pulsar.NOT_DONE
-        self.assertFalse(proxy.is_alive())
-        
-    @run_on_arbiter
-    def testHaltServer(self):
-        yield self.spawn(name='halting_actor', on_start=halt_actor)
-        proxy = pulsar.get_actor().get_actor(self.a.aid)
-        c = 0
-        while c < 20:
-            if not proxy.is_alive():
-                break
-            else:
-                c += 1
-                yield pulsar.NOT_DONE
-        self.assertFalse(proxy.is_alive())
-        
+    def test_start_hook(self):
+        address = ('localhost', self.echo_port)
+        proxy = yield self.spawn(start=partial(create_echo_server, address))
+        client = Echo(address)
+        result = yield client.request(b'Hello')
+        self.assertEqual(result, b'Hello')
+        yield self.stop_actors(proxy)
 
 @dont_run_with_thread
 class TestActorProcess(TestActorThread):
-    concurrency = 'process'        
+    concurrency = 'process'
+    echo_port = 9899        
 

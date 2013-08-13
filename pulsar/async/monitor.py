@@ -249,9 +249,8 @@ By default it does nothing. Override if you need to.'''
         pass
 
     def periodic_task(self):
-        '''Overrides the :meth:`Actor.on_task`
-:ref:`actor callback <actor-callbacks>` to perform
-the monitor :class:`EventLoop` tasks, which are:
+        '''Overrides the :meth:`Actor.periodic_task` to perform
+the monitor tasks, which are:
 
 * To maintain a responsive set of actors ready to perform their duty.
 * To perform its own tasks.

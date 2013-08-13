@@ -1,47 +1,20 @@
 '''Asynchronous application for serving requests
 on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
-
-A simple echo server ``script.py`` can be implemented as follow::
+All is needed by a :class:`SocketServer` is a callable which build a
+:class:`pulsar.ProtocolConsumer` for each new client request received.
+This is an example of a script for an Echo server::
 
     import pulsar
     from pulsar.apps.socket import SocketServer
     
-    class EchoProtocol:
-        "The simplest protocol possible."
-        def decode(self, data):
-            return bytes(data), bytearray()
-        
-        def encode(self, data):
-            return data
-    
-    def echoserver(actor, socket, **kwargs):
-        kwargs['protocol_factory'] = EchoProtocol
-        return pulsar.AsyncSocketServer(actor, socket, **kwargs)
+    class EchoServerProtocol(pulsar.ProtocolConsumer):
+        ...
         
     if __name__ == '__main__':
-        SocketServer(socket_server_factory=echoserver).start()
-    
-    
-The main parameter for :class:`SocketServer` is the ``socket_server_factory``
-callable which build a :class:`pulsar.AsyncSocketServer` for each
-:class:`pulsar.Worker` serving the application.
-
-.. _socket-protocol:
-
-Protocol
-==============
-
-The protocol class needs to implement two methods, the ``decode`` for servers
-and the ``encode`` for clients. Both methods accept as input one parameter which
-can be ``bytes`` or a ``bytesarray``.
-
-The ``decode`` method must return a **two elements tuple** of the form:
-
- * ``None``, ``bytesarray``: when more data is needed to form a message.
- * ``message``, ``bytesarray``: where *message* is a correctly parsed message
-   and *bytesarray* contains data for the next message. 
-
-The ``encode`` method must return ``bytes`` which will be sent to the server.
+        SocketServer(EchoServerProtocol).start()
+        
+Check the :ref:`echo server example <tutorials-writing-clients>` for detailed
+implementation of the ``EchoServerProtocol`` class.
 
 .. _socket-server-settings:
 
@@ -70,15 +43,16 @@ will serve a maximum of 1000 clients per :class:`pulsar.Worker` concurrently.
 
 keep_alive
 ---------------
-To control how long a :class:`pulsar.AsyncConnection` is kept alive after the
+To control how long a server :class:`pulsar.Connection` is kept alive after the
 last read from the remote client, one can use the
-:ref:`keepalive <setting-keep_alive>` setting.
+:ref:`keepalive <setting-keep_alive>` setting::
 
     python script.py --keep-alive 10
     
-will close a client connection which has been idle for 10 seconds.
+will close client connections which have been idle for 10 seconds.
  
 
+.. _socket-server-concurrency:
 
 Concurrency
 ==================
@@ -87,16 +61,19 @@ When running a :class:`SocketServer` in threading mode::
 
     python script.py --concurrency thread
  
-the number of :class:`pulsar.Worker` serving the application is set to 0 so
-that the application is actually served by the :class:`Arbiter`
-eventloop (we refer this to a single process server).
-This configuration is used when debugging, testing, benchmarking or small
+the number of :class:`pulsar.apps.Worker` serving the application is set to ``0``
+so that the application is actually served by the :class:`pulsar.Arbiter`
+event-loop (we refer this to a single process server).
+This configuration is used when debugging, testing, benchmarking or on small
 load servers.
 
 In addition, a :class:`SocketServer` in multi-process mode is only available for:
     
- * Posix systems
- * Windows running python 3.2 or above.
+* Posix systems.
+* Windows running python 3.2 or above (python 2 on windows does not support
+  the creation of sockets from file descriptors).
+  
+Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import pulsar
 
@@ -131,9 +108,9 @@ class KeepAlive(pulsar.Setting):
 
 
 class SocketServer(pulsar.Application):
-    '''This application bind a socket to a given address and listen for
-requests. The request handler is constructued from the
-:attr:`handler` parameter/attribute.
+    '''A :class:`pulsar.apps.Application` which bind a socket to a given address
+and listen for requests. The request handler is constructed from the
+callable passed during initialisation.
     
 .. attribute:: address
 
@@ -144,14 +121,14 @@ requests. The request handler is constructued from the
     cfg = pulsar.Config(apps=['socket'])
     
     def protocol_consumer(self):
-        '''Returns the callable application handler which is stored in
-:attr:`Worker.app_handler`, used by :class:`Worker` to carry out its task.
-By default it returns the :attr:`Application.callable`.'''
+        '''Returns the factory of :class:`pulsar.ProtocolConsumer` used by
+the server. By default it returns the :attr:`pulsar.apps.Application.callable`
+attribute.'''
         return self.callable
     
     def monitor_start(self, monitor):
-        # if the platform does not support multiprocessing sockets set
-        # the number of workers to 0.
+        '''Create the socket listening to the ``bind`` address. if the platform
+does not support multiprocessing sockets set the number of workers to 0.'''
         cfg = self.cfg
         if not pulsar.platform.has_multiProcessSocket\
             or cfg.concurrency == 'thread':
@@ -169,7 +146,7 @@ By default it returns the :attr:`Application.callable`.'''
         self.address = sock.address
     
     def worker_start(self, worker):
-        # Start the worker by starting the socket server
+        '''Start the worker by invoking the :meth:`create_server` method.'''
         worker.servers[self.name] = self.create_server(worker)
     
     def on_info(self, worker, data):
@@ -182,7 +159,7 @@ By default it returns the :attr:`Application.callable`.'''
 
     def create_server(self, worker):
         '''Create the Server Protocol which will listen for requests. It
-uses the :meth:`handler` as its response protocol.'''
+uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
         cfg = self.cfg
         server = worker.event_loop.create_server(
                                       sock=worker.params.sock,

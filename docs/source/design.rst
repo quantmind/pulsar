@@ -54,10 +54,11 @@ will be put off until later. Pulsar has three types of deferred:
 Actors
 =================
 
-Actors are the atoms of pulsar's concurrent computation, they do not share
-state between them, communication is achieved via asynchronous
+An :class:`Actor` is the atom of pulsar's concurrent computation,
+they do not share state between them, communication is achieved via asynchronous
 :ref:`inter-process message passing <tutorials-messages>`,
-implemented using the standard python socket library.
+implemented using the standard python socket library. They can be process based
+as well as thread based and can perform one or many activities.
 
 The Arbiter
 ~~~~~~~~~~~~~~~~~
@@ -82,20 +83,20 @@ Concurrency
 ~~~~~~~~~~~~~~~~~~
 An actor can be **processed based** (default) or **thread based** and control
 at least one running :class:`EventLoop`.
-To obtain the actor in the current thread::
+To obtain the actor controlling the current thread::
 
     actor = pulsar.get_actor()
     
 When a new processed-based actor is created, a new process is started and the
-actor takes control of the main thread of that new process. Thread-based
-actors always exist in the master process (the same process as the arbiter)
-and control threads other than the main thread.
+actor takes control of the main thread of that new process. On the other hand,
+thread-based actors always exist in the master process (the same process
+as the arbiter) and control threads other than the main thread.
 
 An actor can control more than one thread if it needs to, via the
 :attr:`Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
 The actor :ref:`event loop <eventloop>` is installed in all threads controlled
-by the actor itself so that when the ``get_event_loop`` function is invoked on
+by the actor so that when the ``get_event_loop`` function is invoked on
 these threads it returns the event loop of the controlling actor.
 
 .. _actor-io-thread:
@@ -159,11 +160,16 @@ Spawning a new actor is achieved via the :func:`spawn` function::
     
     from pulsar import spawn
     
-    def periodic_task():
-        # do something useful here
-        ...
+    class PeriodicTask:
+    
+        def __call__(self, actor):
+            actor.event_loop.call_repeatedly(2, self.task)
+            
+        def task(self):
+            # do something useful here
+            ...
         
-    ap = spawn(on_start=lambda: get_event_loop().call_repeatedly(2, periodic_task))
+    ap = spawn(start=PeriodicTask())
     
 The valued returned by :func:`spawn` is an :class:`ActorProxyDeferred` instance,
 a specialised :class:`Deferred`, which has the spawned actor id ``aid`` and
@@ -179,31 +185,51 @@ the workflow of the :func:`spawn` function is as follow:
 * The arbiter spawn the actor and wait for the actor's **hand shake**. Once the
   hand shake is done, it sends the response (the :class:`ActorProxy` of the
   spawned actor) to the original actor.
-        
-The actor **hand shake** is the mechanism with which a :class:`Actor` register
+
+.. _handshake:
+
+The actor **hand-shake** is the mechanism with which a :class:`Actor` register
 its :ref:`mailbox address <tutorials-messages>` with the :class:`Arbiter` so that
 the arbiter can monitor its behavior. If the hand-shake fails, the spawned
 actor will eventually stop.
 
 
-.. _actor-callbacks:
+.. _actor-hooks:
 
 Hooks
 ~~~~~~~~~~~~~~~~~~~
 
 An :class:`Actor` exposes three :ref:`one time events <one-time-event>`
-which can be used to customise its behaviour. These functions do nothing in the
-standard :class:`Actor` implementation. 
+which can be used to customise its behaviour. Hooks are passed as key-valued
+parameters to the :func:`spawn` function.
 
 **start**
 
-Fired just before the actor starts its :ref:`event loop <eventloop>`.
-This function can be used to setup
+Fired just after the actor has received the
+:ref:`hand-shake from its monitor <handshake>`. This hook can be used to setup
 the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
 its file descriptor with the :attr:`Actor.event_loop`.
 
- 
+This snippet spawn a new actor which starts an
+:ref:`Echo server <tutorials-writing-clients>`::
+
+    from functools import partial
+    
+    from pulsar import spawn
+    
+    def create_echo_server(address, actor):
+        sock = pulsar.create_socket(address, bindto=True)
+        actor.servers['echo'] = actor.event_loop.create_server(
+                                    sock=sock,
+                                    consumer_factory=EchoServerProtocol)
+        
+    proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
+    
+.. note::
+
+    Hooks are function receiving as only argument the actor which invokes them.
+    
 **stopping**
 
 Fired when the :class:`Actor` starts stopping.
@@ -258,9 +284,10 @@ Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
     
-    
+.. _exception-design:
+
 Exceptions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 There are two categories of exceptions in Python: those that derive from the
 :class:`Exception` class and those that derive from :class:`BaseException`.
@@ -280,7 +307,7 @@ Application Framework
 =============================
 
 To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the :class:`Application` class.
+framework, the library ships with the :class:`pulsar.apps.Application` class.
 
 
 

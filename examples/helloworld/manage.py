@@ -1,5 +1,5 @@
 '''This example is a simple WSGI_ script which displays
-the "Hello World!" message. To run the script type::
+the ``Hello World!`` message. To run the script type::
 
     python manage.py
     
@@ -8,6 +8,8 @@ To see all options available type::
     python manage.py -h
 
 .. autofunction:: hello
+
+.. autofunction:: server
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/ 
 '''
@@ -33,10 +35,9 @@ over the "Hello World!" message.'''
 
 
 def server(description=None, **kwargs):
+    '''Create the :class:`pulsar.apps.wsgi.WSGIServer` running :func:`hello`.'''
     description = description or 'Pulsar Hello World Application'
-    return wsgi.WSGIServer(callable=hello,
-                           description=description,
-                           **kwargs)
+    return wsgi.WSGIServer(hello, description=description, **kwargs)
     
 
 if __name__ == '__main__':  #pragma nocover

@@ -244,9 +244,10 @@ By default it calls the :meth:`Connection.finished` method of the
         
         
 class Connection(Protocol, TransportProxy):
-    '''A client or server connection with an end-point. This is not
-connected until :meth:`Protocol.connection_made` is called by the
-:class:`Transport`. This class is the bridge between the :class:`Transport`
+    '''A :class:`Protocol` which represents a client or server connection
+with an end-point. This is not connected until :meth:`Protocol.connection_made`
+is called by the :class:`Transport`.
+This is the bridge between the :class:`Transport`
 and the :class:`ProtocolConsumer`. It has a :class:`Protocol`
 interface and it routes data arriving from the :attr:`transport` to
 the :attr:`current_consumer`, an instance of :class:`ProtocolConsumer`.
