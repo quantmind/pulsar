@@ -39,7 +39,7 @@ Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 
 Deferred
 ~~~~~~~~~~~~
-Designed along the lines of twisted deferred, this class is a callback which
+Designed along the lines of `twisted deferred`_, this class is a callback which
 will be put off until later. Pulsar has three types of deferred:
 
 * A vanilla :class:`Deferred`, similar to twisted deferred.
@@ -47,6 +47,7 @@ will be put off until later. Pulsar has three types of deferred:
 * A :class:`MultiDeferred` for managing collections of independent asynchronous
   components.
 
+.. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
     
 .. _design-actor:
 
@@ -94,14 +95,16 @@ An actor can control more than one thread if it needs to, via the
 :attr:`Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
 The actor :ref:`event loop <eventloop>` is installed in all threads controlled
-by the actor itself so that when the `get_event_loop` method is invoked on
+by the actor itself so that when the ``get_event_loop`` function is invoked on
 these threads it returns the event loop of the controlling actor.
+
+.. _actor-io-thread:
 
 .. note::
 
     Regardless of the type of concurrency, an actor always controls at least
-    one thread, in the case of process-based actors the thread is the main
-    thread of the actor process.
+    one thread, the **actor io thread**. In the case of process-based actors
+    this thread is the main thread of the actor process.
     
 Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
@@ -114,7 +117,7 @@ IO-bound
 ~~~~~~~~~~~~~~~
 The most common usage for an :class:`Actor` is to handle Input/Output
 events on file descriptors. An :attr:`Actor.event_loop` tells
-the operating system (through `epoll` or `select`) that it should be notified
+the operating system (through ``epoll`` or ``select``) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
 connections can be served simultaneously. 
@@ -128,11 +131,22 @@ to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
 CPU-bound :class:`Actor` have the following properties:
 
+.. _request-loop:
+
 * Their :attr:`Actor.event_loop` listen for requests on file descriptors
+  as usual and it is running (and installed) in the :ref:`actor io thread <actor-io-thread>`
   as usual.
 * The threads in the :attr:`Actor.thread_pool` install an additional :class:`EventLoop`
   which listen for events on a message queue.
   Pulsar refers to this specialised event loop as the **request loop**.
+  
+.. note::
+
+    A CPU-bound actor controls more than one thread, the :ref:`IO thread <actor-io-thread>`
+    which runs the actor main event loop for listening to events on file descriptors and
+    one or more threads for performing CPU-intensive calculations. These CPU-threads
+    have installed two events loops: the event loop running on the
+    :ref:`IO thread <actor-io-thread>` and the :ref:`request-loop <request-loop>`.
 
 The :attr:`Actor.thread_pool` needs to be initialised via the
 :attr:`Actor.create_thread_pool` method before it can be used.

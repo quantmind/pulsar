@@ -55,7 +55,7 @@ pulsar:
 Deferred
 ===================
 A :class:`Deferred` is a callback which will be put off until later. its
-implementation is similar to the twisted.defer.Deferred class with few
+implementation is similar to the `twisted deferred`_ class with few
 important differences. A deferred is the product of an asynchronous operation.
 
 .. _deferred-event-loop:
@@ -164,3 +164,6 @@ a list, tuple, set or even a dictionary (values only, keys must be synchronous
 python types), one can use the :func:`multi_async` function to create
 an asynchronous component which will be ready once all the components
 are ready.
+
+
+.. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html

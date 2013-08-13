@@ -94,7 +94,7 @@ Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" titl
 </div>
 <div class="section" id="deferred">
 <h3>Deferred<a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h3>
-<p>Designed along the lines of twisted deferred, this class is a callback which
+<p>Designed along the lines of <a class="reference external" href="http://twistedmatrix.com/documents/current/core/howto/defer.html">twisted deferred</a>, this class is a callback which
 will be put off until later. Pulsar has three types of deferred:</p>
 <ul class="simple">
 <li>A vanilla <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, similar to twisted deferred.</li>
@@ -141,13 +141,13 @@ and control threads other than the main thread.</p>
 <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> as explained in the <a class="reference internal" href="#cpubound"><em>CPU bound</em></a>
 paragraph.
 The actor <a class="reference internal" href="#eventloop"><em>event loop</em></a> is installed in all threads controlled
-by the actor itself so that when the <cite>get_event_loop</cite> method is invoked on
+by the actor itself so that when the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function is invoked on
 these threads it returns the event loop of the controlling actor.</p>
-<div class="admonition note">
+<div class="admonition note" id="actor-io-thread">
 <p class="first admonition-title">Note</p>
 <p class="last">Regardless of the type of concurrency, an actor always controls at least
-one thread, in the case of process-based actors the thread is the main
-thread of the actor process.</p>
+one thread, the <strong>actor io thread</strong>. In the case of process-based actors
+this thread is the main thread of the actor process.</p>
 </div>
 <p>Each actor has its own <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a>, an instance of <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>,
 which can be used to register handlers on file descriptors.
@@ -158,7 +158,7 @@ actor&#8217;s thread starts for thread-based actors).</p>
 <span id="iobound"></span><h3>IO-bound<a class="headerlink" href="#io-bound" title="Permalink to this headline">¶</a></h3>
 <p>The most common usage for an <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is to handle Input/Output
 events on file descriptors. An <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a> tells
-the operating system (through <cite>epoll</cite> or <cite>select</cite>) that it should be notified
+the operating system (through <tt class="docutils literal"><span class="pre">epoll</span></tt> or <tt class="docutils literal"><span class="pre">select</span></tt>) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
 connections can be served simultaneously.</p>
@@ -169,13 +169,22 @@ connections can be served simultaneously.</p>
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
 CPU-bound <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> have the following properties:</p>
-<ul class="simple">
+<ul class="simple" id="request-loop">
 <li>Their <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a> listen for requests on file descriptors
+as usual and it is running (and installed) in the <a class="reference internal" href="#actor-io-thread"><em>actor io thread</em></a>
 as usual.</li>
 <li>The threads in the <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> install an additional <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>
 which listen for events on a message queue.
 Pulsar refers to this specialised event loop as the <strong>request loop</strong>.</li>
 </ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A CPU-bound actor controls more than one thread, the <a class="reference internal" href="#actor-io-thread"><em>IO thread</em></a>
+which runs the actor main event loop for listening to events on file descriptors and
+one or more threads for performing CPU-intensive calculations. These CPU-threads
+have installed two events loops: the event loop running on the
+<a class="reference internal" href="#actor-io-thread"><em>IO thread</em></a> and the <a class="reference internal" href="#request-loop"><em>request-loop</em></a>.</p>
+</div>
 <p>The <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> needs to be initialised via the
 <a class="reference internal" href="api/actor.html#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.create_thread_pool</span></tt></a> method before it can be used.</p>
 </div>

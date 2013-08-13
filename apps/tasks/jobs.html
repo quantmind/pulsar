@@ -91,8 +91,8 @@ with one <a class="reference internal" href="#pulsar.apps.tasks.models.Job" titl
         <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
 </pre></div>
 </div>
-<p>The <em>consumer</em>, instance of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.task.TaskConsumer</span></tt>,
-is passed by the <em class="xref std std-ref">Scheduler</em> and should
+<p>The <tt class="docutils literal"><span class="pre">consumer</span></tt>, instance of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.task.TaskConsumer</span></tt>,
+is passed by the <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>Task backend</em></a> and should
 always be the first positional argument in the callable function.
 The remaining positional arguments and/or key-valued parameters are needed by
 your job implementation.</p>
