@@ -65,8 +65,32 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="twisted-integration">
-<span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#twisted-integration" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-pulsar.apps.tx">
+<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-pulsar.apps.tx" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
+event driven network engine for python. Twisted has implementation
+for several protocols which can be used in pulsar by importing the
+<a class="reference internal" href="#module-pulsar.apps.tx" title="pulsar.apps.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt></a> module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
+</pre></div>
+</div>
+<p>The implementation replaces the twisted reactor with a proxy for
+<a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.
+Twisted Deferred and Failures are made compatible with pulsar
+by installing two different discovery functions via the <a class="reference internal" href="../api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a>
+function.</p>
+<p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
+twisted implementation is switched off.</p>
+<div class="section" id="pulsar-reactor">
+<h2>Pulsar Reactor<a class="headerlink" href="#pulsar-reactor" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.tx.PulsarReactor">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/apps/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A twisted reactor which acts as a proxy to pulsar eventloop. The
+event loop is obtained via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function.</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -79,6 +103,14 @@
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Twisted Integration</a><ul>
+<li><a class="reference internal" href="#pulsar-reactor">Pulsar Reactor</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="pubsub.html"
                         title="previous chapter">Publish/Subscribe</a></p>

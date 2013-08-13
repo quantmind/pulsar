@@ -16,7 +16,7 @@ pulsar:
       o = pulsar.Deferred()
       
 * A :ref:`coroutine <coroutine>`, a generator which consumes values.
-  For example, given the following generator function::
+  For example::
   
       def my_async_generator(...):
           yield something_but_dont_care_what_it_returns()
@@ -72,8 +72,9 @@ initialisation::
 If not set, it is obtained using the ``get_event_loop`` function.
 
 A vanilla :class:`Deferred` needs the event loop only when invoking
-the :meth:`Deferred.set_timeout` method. A :class:`Task` (a :class:`Deferred` which
-consumes a :ref:`coroutine <coroutine>`) requires it during initialisation.
+the :meth:`Deferred.set_timeout` method. On the other hand, A :class:`Task`
+(a :class:`Deferred` which consumes a :ref:`coroutine <coroutine>`) requires
+it during initialisation.
 
 .. _deferred-cancel:
 
@@ -81,13 +82,13 @@ Cancelling a deferred
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Deferreds can be cancelled, for example when an operation is taking too long to
 finish. To cancel a deferred one invokes the :meth:`Deferred.cancel`
-method. Calling ``cancel`` on a called or cancelled deferred
+method. Calling ``cancel`` on an already called or cancelled deferred
 has no effect, therefore the :meth:`Deferred.cancel` will always
 succeed.
 
 A useful application of deferred cancellation, is setting a ``timeout`` to an
 asynchronous operation. To set a timeout, one used the
-:class:`Deferred.set_timeout` method.:
+:class:`Deferred.set_timeout` method::
 
     >>> d = Deferred()
     >>> d.set_timeout(5)

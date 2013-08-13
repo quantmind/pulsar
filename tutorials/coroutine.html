@@ -80,7 +80,7 @@ pulsar:</p>
 </div>
 </li>
 <li><p class="first">A <a class="reference internal" href="#coroutine"><em>coroutine</em></a>, a generator which consumes values.
-For example, given the following generator function:</p>
+For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
     <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
@@ -130,19 +130,20 @@ initialisation:</p>
 </div>
 <p>If not set, it is obtained using the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function.</p>
 <p>A vanilla <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> needs the event loop only when invoking
-the <a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.set_timeout()</span></tt></a> method. A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> (a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which
-consumes a <a class="reference internal" href="#coroutine"><em>coroutine</em></a>) requires it during initialisation.</p>
+the <a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.set_timeout()</span></tt></a> method. On the other hand, A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>
+(a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which consumes a <a class="reference internal" href="#coroutine"><em>coroutine</em></a>) requires
+it during initialisation.</p>
 </div>
 <div class="section" id="cancelling-a-deferred">
 <span id="deferred-cancel"></span><h3>Cancelling a deferred<a class="headerlink" href="#cancelling-a-deferred" title="Permalink to this headline">¶</a></h3>
 <p>Deferreds can be cancelled, for example when an operation is taking too long to
 finish. To cancel a deferred one invokes the <a class="reference internal" href="../api/async.html#pulsar.Deferred.cancel" title="pulsar.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.cancel()</span></tt></a>
-method. Calling <tt class="docutils literal"><span class="pre">cancel</span></tt> on a called or cancelled deferred
+method. Calling <tt class="docutils literal"><span class="pre">cancel</span></tt> on an already called or cancelled deferred
 has no effect, therefore the <a class="reference internal" href="../api/async.html#pulsar.Deferred.cancel" title="pulsar.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.cancel()</span></tt></a> will always
 succeed.</p>
 <p>A useful application of deferred cancellation, is setting a <tt class="docutils literal"><span class="pre">timeout</span></tt> to an
 asynchronous operation. To set a timeout, one used the
-<a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-class docutils literal"><span class="pre">Deferred.set_timeout</span></tt></a> method.:</p>
+<a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-class docutils literal"><span class="pre">Deferred.set_timeout</span></tt></a> method:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
