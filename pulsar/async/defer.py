@@ -560,9 +560,13 @@ the result is a :class:`Failure`'''
             self.result.raise_all()
             
     def then(self, deferred=None):
-        '''Add another :class:`Deferred` to this :class:`Deferred` callbacks.
+        '''Add another ``deferred`` to this :class:`Deferred` callbacks.
 
-If ``deferred`` is not given a new :class:`Deferred` is created.
+:parameter deferred: Optional :class:`Deferred` to call back when this
+    :class:`Deferred` receives the result or the exception. If not supplied
+    a new :class:`Deferred` is created.
+:return: The ``deferred`` passed as parameter or the new deferred created.
+
 This method adds callbacks to this :class:`Deferred` to call ``deferred``'s
 callback or errback, as appropriate. It is a shorthand way
 of performing the following::
@@ -573,18 +577,23 @@ of performing the following::
         
     self.add_both(cbk)
    
-When you add deferred ``d2`` to another deferred ``d1`` with::
+When you use ``then`` on deferred ``d1``::
 
-    d2 = d1.chain()
+    d2 = d1.then()
     
-you are making ``d2`` receive the callback when ``d1`` has received the
-callback, with the following properties:
+you obtains a new deferred ``d2`` which receives the callback when ``d1``
+has received the callback, with the following properties:
 
 * Any event that fires ``d1`` will also fire ``d2``.
-* The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
+* The converse is not true; if ``d2`` is fired ``d1`` will not be affected. Infact
+  ``d2`` should only received the callback from ``d1``.
 * The callbacks of ``d2`` won't affect ``d1`` result.
 
-:return: the ``deferred``.'''
+This method can be used instead of :meth:`add_callback` if a bright new
+deferred is required::
+
+    d2 = d1.then().add_callback(...)
+'''
         if deferred is None:
             deferred = Deferred()
         def cbk(result):

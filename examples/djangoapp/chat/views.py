@@ -1,10 +1,6 @@
 import json
 import time
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.http import HttpResponse
-
 from pulsar import is_failure
 from pulsar.apps import wsgi, ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
@@ -12,6 +8,8 @@ from pulsar.utils.log import lazyproperty
 
 
 def home(request):
+    from django.shortcuts import render_to_response
+    from django.template import RequestContext
     return render_to_response('home.html', {
         'HOST': request.get_host()
         }, RequestContext(request))
@@ -66,6 +64,7 @@ class middleware(object):
         self._web_socket = ws.WebSocket('/message', Chat())
         
     def process_request(self, request):
+        from django.http import HttpResponse
         data = AttributeDictionary(request.__dict__)
         environ = data.pop('environ')
         environ['django.cache'] = data

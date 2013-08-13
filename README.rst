@@ -3,6 +3,7 @@ it requires python 2.6, 2.7, 3.2, 3.3 or pypy_.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
+:PyPI: |pypi_version| |pypi_downloads|
 :Master CI: |master-build|_ 
 :Dev CI: |dev-build|_ 
 :Documentation: http://packages.python.org/pulsar/
@@ -16,6 +17,13 @@ activities in different threads and/or processes.
 .. _master-build: http://travis-ci.org/quantmind/pulsar
 .. |dev-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=dev
 .. _dev-build: http://travis-ci.org/quantmind/pulsar
+.. |pypi_version| image:: https://pypip.in/v/pulsar/badge.png
+    :target: https://crate.io/packages/pulsar/
+    :alt: Latest PyPI version
+.. |pypi_downloads| image:: https://pypip.in/d/pulsar/badge.png
+    :target: https://crate.io/packages/pulsar/
+    :alt: Number of PyPI downloads
+
 
 An example of a web server written with ``pulsar`` application
 framework which responds with "Hello World!" for every request::
