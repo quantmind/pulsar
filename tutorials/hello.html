@@ -26,7 +26,7 @@
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="WSGI" href="wsgi.html" />
+    <link rel="next" title="Echo Server and Client" href="clients.html" />
     <link rel="prev" title="Tutorials &amp; Topics" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="wsgi.html" title="WSGI"
+          <a href="clients.html" title="Echo Server and Client"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Tutorials &amp; Topics"
@@ -72,7 +72,7 @@
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.helloworld.manage" title="examples.helloworld.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.helloworld.manage</span></tt></a>
 module.</p>
 <span class="target" id="module-examples.helloworld.manage"></span><p>This example is a simple <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> script which displays
-the &#8220;Hello World!&#8221; message. To run the script type:</p>
+the <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">World!</span></tt> message. To run the script type:</p>
 <div class="highlight-python"><pre>python manage.py</pre>
 </div>
 <p>To see all options available type:</p>
@@ -83,6 +83,12 @@ the &#8220;Hello World!&#8221; message. To run the script type:</p>
 <tt class="descclassname">examples.helloworld.manage.</tt><tt class="descname">hello</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../modules/examples/helloworld/manage.html#hello"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.helloworld.manage.hello" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI</a> application handler which returns an iterable
 over the &#8220;Hello World!&#8221; message.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="examples.helloworld.manage.server">
+<tt class="descclassname">examples.helloworld.manage.</tt><tt class="descname">server</tt><big>(</big><em>description=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/helloworld/manage.html#server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.helloworld.manage.server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the <a class="reference internal" href="../apps/wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.WSGIServer</span></tt></a> running <a class="reference internal" href="#examples.helloworld.manage.hello" title="examples.helloworld.manage.hello"><tt class="xref py py-func docutils literal"><span class="pre">hello()</span></tt></a>.</p>
 </dd></dl>
 
 </div>
@@ -101,8 +107,8 @@ over the &#8220;Hello World!&#8221; message.</p>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Tutorials &amp; Topics</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="wsgi.html"
-                        title="next chapter">WSGI</a></p>
+  <p class="topless"><a href="clients.html"
+                        title="next chapter">Echo Server and Client</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/hello.txt"

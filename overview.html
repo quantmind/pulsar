@@ -75,17 +75,19 @@ activities in different threads and/or processes.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=master" /></a></td>
+<tr class="field-odd field"><th class="field-name">PyPI:</th><td class="field-body"><a class="reference external" href="https://crate.io/packages/pulsar/"><img alt="Latest PyPI version" src="https://pypip.in/v/pulsar/badge.png" /></a> <a class="reference external" href="https://crate.io/packages/pulsar/"><img alt="Number of PyPI downloads" src="https://pypip.in/d/pulsar/badge.png" /></a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=dev" /></a></td>
+<tr class="field-even field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=master" /></a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://packages.python.org/pulsar/">http://packages.python.org/pulsar/</a></td>
+<tr class="field-odd field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=dev" /></a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Dowloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
+<tr class="field-even field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://packages.python.org/pulsar/">http://packages.python.org/pulsar/</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
+<tr class="field-odd field"><th class="field-name">Dowloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
+<tr class="field-even field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
 task queue, wsgi, websocket, json-rpc</td>
 </tr>
 </tbody>
@@ -135,10 +137,12 @@ the following:</p>
 <li>WSGI server.</li>
 <li>JSON-RPC WSGI middleware.</li>
 <li>Web Sockets WSGI middleware.</li>
+<li>Publish/Subscribe middleware.</li>
 <li>Distributed task queue.</li>
 <li>Shell for asynchronous scripting.</li>
 <li>Asynchronous test suite.</li>
 <li>Application to run a <a class="reference external" href="https://www.djangoproject.com/">Django</a> site with pulsar.</li>
+<li><a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a> integration.</li>
 </ul>
 </div>
 <div class="section" id="examples">
@@ -154,6 +158,7 @@ pulsar alone. It includes:</p>
 <li>Websocket graph.</li>
 <li>Websocket Web Chat.</li>
 <li><a class="reference external" href="https://www.djangoproject.com/">Django</a> web site with a websocket middleware to handle a web chat.</li>
+<li>A web mail application which uses <a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a> IMAP4 API.</li>
 <li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
 <li>Asynchronous shell.</li>
 </ul>
@@ -181,6 +186,8 @@ uses them to add additional functionalities.</p>
 the running application.</li>
 <li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary returned by
 Actor info method.</li>
+<li><a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a>: required by the <a class="reference internal" href="apps/twisted.html#module-pulsar.apps.tx" title="pulsar.apps.tx"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt></a> application when using pulsar
+with twisted protocols.</li>
 </ul>
 </div>
 <div class="section" id="running-tests">
@@ -200,7 +207,7 @@ library is also needed. To run tests:</p>
 <div class="section" id="kudos">
 <span id="id2"></span><h2>Kudos<a class="headerlink" href="#kudos" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar project started as a fork of <a class="reference external" href="http://gunicorn.org/">gunicorn</a> (from where the arbiter idea)
-and has been developed using ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>
+and has been developed using ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a>
 (the deferred implementation), <a class="reference external" href="http://www.tornadoweb.org/">tornado</a> web server (the initial event-loop
 implementation), <a class="reference external" href="http://celeryproject.org/">celery</a> (the task queue application) and
 many other open-source efforts.

@@ -395,6 +395,13 @@ or equal to <a class="reference internal" href="#actor-states"><em>ACTOR_STATES.
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.Actor.periodic_task">
+<tt class="descname">periodic_task</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Actor.periodic_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal method called periodically bt the <a class="reference internal" href="#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a> to
+ping the actor monitor.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.Actor.get_actor">
 <tt class="descname">get_actor</tt><big>(</big><em>aid</em><big>)</big><a class="headerlink" href="#pulsar.Actor.get_actor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an actor unique id return the actor proxy.</p>
@@ -528,9 +535,8 @@ By default it does nothing. Override if you need to.</p>
 <dl class="method">
 <dt id="pulsar.Monitor.periodic_task">
 <tt class="descname">periodic_task</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Monitor.periodic_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Overrides the <tt class="xref py py-meth docutils literal"><span class="pre">Actor.on_task()</span></tt>
-<a class="reference internal" href="../design.html#actor-callbacks"><em>actor callback</em></a> to perform
-the monitor <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> tasks, which are:</p>
+<dd><p>Overrides the <a class="reference internal" href="#pulsar.Actor.periodic_task" title="pulsar.Actor.periodic_task"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.periodic_task()</span></tt></a> to perform
+the monitor tasks, which are:</p>
 <ul class="simple">
 <li>To maintain a responsive set of actors ready to perform their duty.</li>
 <li>To perform its own tasks.</li>

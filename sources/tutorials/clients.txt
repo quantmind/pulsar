@@ -1,9 +1,9 @@
 
 .. _tutorials-writing-clients:
 
-=====================
-Writing Clients
-=====================
+==========================
+Echo Server and Client
+==========================
 
 The code for this example is located in the :mod:`examples.echo.manage`
 module.

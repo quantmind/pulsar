@@ -213,7 +213,7 @@
 <span class="sd">By default it returns the :attr:`Application.callable`.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span>
     </div>
-    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+<div class="viewcode-block" id="SocketServer.monitor_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="c"># if the platform does not support multiprocessing sockets set</span>
         <span class="c"># the number of workers to 0.</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
@@ -231,11 +231,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Listening on </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">sock</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">address</span>
-    
-    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+    </div>
+<div class="viewcode-block" id="SocketServer.worker_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="c"># Start the worker by starting the socket server</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
-    
+    </div>
     <span class="k">def</span> <span class="nf">on_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="n">server</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">socket_server</span>
         <span class="n">data</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;listen_on&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>

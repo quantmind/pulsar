@@ -160,16 +160,16 @@
         <span class="k">return</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
         
 </div></div>
-<span class="k">class</span> <span class="nc">EchoServerProtocol</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">):</span>
+<div class="viewcode-block" id="EchoServerProtocol"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoServerProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoServerProtocol</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">):</span>
     
-    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<div class="viewcode-block" id="EchoServerProtocol.response"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoServerProtocol.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c"># write it back.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="c"># If we get a QUIT message, close the transport. Used by the test suite.</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;QUIT&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
     
-    
+    </div></div>
 <div class="viewcode-block" id="Echo"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo">[docs]</a><span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Echo client&#39;&#39;&#39;</span>
     <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
@@ -194,13 +194,13 @@
             
         
 </div></div>
-<span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="server"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.server">[docs]</a><span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="s">&#39;Echo Server&#39;</span>
     <span class="k">return</span> <span class="n">SocketServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">,</span>
                         <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
                         <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     
-
+</div>
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c">#pragma nocover</span>
     <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>

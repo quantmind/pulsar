@@ -79,7 +79,7 @@ as well as <a class="reference internal" href="handlers.html#wsgi-handlers"><em>
 the <a class="reference internal" href="../rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
 the <a class="reference internal" href="../websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
 <p>An example of a web server written with <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> which responds
-with &#8220;Hello World!&#8221; for every request:</p>
+with <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">World!</span></tt> for every request:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
@@ -90,7 +90,7 @@ with &#8220;Hello World!&#8221; for every request:</p>
     <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
 
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="nb">callable</span><span class="o">=</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">hello</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>For more information regarding WSGI check the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a> specification.
@@ -105,7 +105,9 @@ To run the application:</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.WSGIServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>A specialised <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a> for the HTTP
+protocol and WSGI compatible applications.</p>
+<dl class="method">
 <dt id="pulsar.apps.wsgi.WSGIServer.protocol_consumer">
 <tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build the <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> factory for this
@@ -117,8 +119,8 @@ initialisation.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pulsar.apps.wsgi.server">
-<span id="http-protocol-consumer"></span><h2>HTTP Protocol Consumer<a class="headerlink" href="#module-pulsar.apps.wsgi.server" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-pulsar.apps.wsgi.server"></span><div class="section" id="http-protocol-consumer">
+<h2>HTTP Protocol Consumer<a class="headerlink" href="#http-protocol-consumer" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>cfg</em>, <em>connection</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
@@ -149,15 +151,16 @@ the request body for the corresponding request.</li>
 <dd><p>WSGI compliant <tt class="docutils literal"><span class="pre">start_response</span></tt> callable, see <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">pep3333</a>.
 The application may call start_response more than once, if and only
 if the <tt class="docutils literal"><span class="pre">exc_info</span></tt> argument is provided.
-More precisely, it is a fatal error to call start_response without the exc_info
-argument if start_response has already been called within the current
-invocation of the application.</p>
+More precisely, it is a fatal error to call <tt class="docutils literal"><span class="pre">start_response</span></tt> without the
+<tt class="docutils literal"><span class="pre">exc_info</span></tt> argument if start_response has already been called within
+the current invocation of the application.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>status</strong> &#8211; an HTTP &#8220;status&#8221; string like &#8220;200 OK&#8221; or &#8220;404 Not Found&#8221;.</li>
+<li><strong>status</strong> &#8211; an HTTP <tt class="docutils literal"><span class="pre">status</span></tt> string like <tt class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></tt> or
+<tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt>.</li>
 <li><strong>response_headers</strong> &#8211; a list of <tt class="docutils literal"><span class="pre">(header_name,</span> <span class="pre">header_value)</span></tt> tuples.
 It must be a Python list. Each header_name must be a valid HTTP header
 field-name (as defined by RFC <a class="reference external" href="http://www.faqs.org/rfcs/rfc2616.html">2616</a>, Section 4.2), without a trailing
@@ -168,12 +171,12 @@ called by an error handler.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">The <tt class="xref py py-meth docutils literal"><span class="pre">HttpResponse.write()</span></tt> callable.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse.write" title="pulsar.apps.wsgi.server.HttpServerResponse.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> method.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>The <tt class="docutils literal"><span class="pre">HOP_HEADERS</span></tt> are not considered but no error is raised.</p>
+<p><tt class="docutils literal"><span class="pre">HOP_HEADERS</span></tt> are not considered but no error is raised.</p>
 </dd></dl>
 
 <dl class="method">
@@ -218,10 +221,14 @@ is an HTTP upgrade (websockets)</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="testing-wsgi-environ">
+<h2>Testing WSGI Environ<a class="headerlink" href="#testing-wsgi-environ" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.server.test_wsgi_environ">
 <tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">test_wsgi_environ</tt><big>(</big><em>url='/'</em>, <em>method=None</em>, <em>headers=None</em>, <em>extra=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#test_wsgi_environ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.test_wsgi_environ" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a WSGI environment dictionary for testing purposes.</p>
+<dd><p>An utility function for creating a WSGI environment dictionary
+for testing purposes.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -258,7 +265,8 @@ is an HTTP upgrade (websockets)</p>
   <ul>
 <li><a class="reference internal" href="#">WSGI Server</a><ul>
 <li><a class="reference internal" href="#id2">WSGI Server</a></li>
-<li><a class="reference internal" href="#module-pulsar.apps.wsgi.server">HTTP Protocol Consumer</a></li>
+<li><a class="reference internal" href="#http-protocol-consumer">HTTP Protocol Consumer</a></li>
+<li><a class="reference internal" href="#testing-wsgi-environ">Testing WSGI Environ</a></li>
 </ul>
 </li>
 </ul>

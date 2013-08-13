@@ -106,10 +106,11 @@ components.</li>
 </div>
 <div class="section" id="actors">
 <span id="design-actor"></span><h2>Actors<a class="headerlink" href="#actors" title="Permalink to this headline">¶</a></h2>
-<p>Actors are the atoms of pulsar&#8217;s concurrent computation, they do not share
-state between them, communication is achieved via asynchronous
+<p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is the atom of pulsar&#8217;s concurrent computation,
+they do not share state between them, communication is achieved via asynchronous
 <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>inter-process message passing</em></a>,
-implemented using the standard python socket library.</p>
+implemented using the standard python socket library. They can be process based
+as well as thread based and can perform one or many activities.</p>
 <div class="section" id="the-arbiter">
 <h3>The Arbiter<a class="headerlink" href="#the-arbiter" title="Permalink to this headline">¶</a></h3>
 <p>When using pulsar actor layer, you need to use pulsar in <strong>server state</strong>,
@@ -129,19 +130,19 @@ which control the life all <a class="reference internal" href="api/actor.html#pu
 <span id="id2"></span><h3>Concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
 <p>An actor can be <strong>processed based</strong> (default) or <strong>thread based</strong> and control
 at least one running <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.
-To obtain the actor in the current thread:</p>
+To obtain the actor controlling the current thread:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>When a new processed-based actor is created, a new process is started and the
-actor takes control of the main thread of that new process. Thread-based
-actors always exist in the master process (the same process as the arbiter)
-and control threads other than the main thread.</p>
+actor takes control of the main thread of that new process. On the other hand,
+thread-based actors always exist in the master process (the same process
+as the arbiter) and control threads other than the main thread.</p>
 <p>An actor can control more than one thread if it needs to, via the
 <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> as explained in the <a class="reference internal" href="#cpubound"><em>CPU bound</em></a>
 paragraph.
 The actor <a class="reference internal" href="#eventloop"><em>event loop</em></a> is installed in all threads controlled
-by the actor itself so that when the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function is invoked on
+by the actor so that when the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function is invoked on
 these threads it returns the event loop of the controlling actor.</p>
 <div class="admonition note" id="actor-io-thread">
 <p class="first admonition-title">Note</p>
@@ -193,11 +194,16 @@ have installed two events loops: the event loop running on the
 <p>Spawning a new actor is achieved via the <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">spawn</span>
 
-<span class="k">def</span> <span class="nf">periodic_task</span><span class="p">():</span>
-    <span class="c"># do something useful here</span>
-    <span class="o">...</span>
+<span class="k">class</span> <span class="nc">PeriodicTask</span><span class="p">:</span>
 
-<span class="n">ap</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">on_start</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">periodic_task</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
+        <span class="n">actor</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># do something useful here</span>
+        <span class="o">...</span>
+
+<span class="n">ap</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">PeriodicTask</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>The valued returned by <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> is an <a class="reference internal" href="api/actor.html#pulsar.ActorProxyDeferred" title="pulsar.ActorProxyDeferred"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyDeferred</span></tt></a> instance,
@@ -214,22 +220,41 @@ a new actor.</li>
 hand shake is done, it sends the response (the <a class="reference internal" href="api/actor.html#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> of the
 spawned actor) to the original actor.</li>
 </ul>
-<p>The actor <strong>hand shake</strong> is the mechanism with which a <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> register
+<p id="handshake">The actor <strong>hand-shake</strong> is the mechanism with which a <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> register
 its <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>mailbox address</em></a> with the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> so that
 the arbiter can monitor its behavior. If the hand-shake fails, the spawned
 actor will eventually stop.</p>
 </div>
 <div class="section" id="hooks">
-<span id="actor-callbacks"></span><h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
+<span id="actor-hooks"></span><h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
 <p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> exposes three <a class="reference internal" href="tutorials/events.html#one-time-event"><em>one time events</em></a>
-which can be used to customise its behaviour. These functions do nothing in the
-standard <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> implementation.</p>
+which can be used to customise its behaviour. Hooks are passed as key-valued
+parameters to the <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function.</p>
 <p><strong>start</strong></p>
-<p>Fired just before the actor starts its <a class="reference internal" href="#eventloop"><em>event loop</em></a>.
-This function can be used to setup
+<p>Fired just after the actor has received the
+<a class="reference internal" href="#handshake"><em>hand-shake from its monitor</em></a>. This hook can be used to setup
 the application and register event handlers. For example, the
 <a class="reference internal" href="apps/socket.html#apps-socket"><em>socket server application</em></a> creates the server and register
 its file descriptor with the <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.event_loop</span></tt></a>.</p>
+<p>This snippet spawn a new actor which starts an
+<a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><em>Echo server</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">spawn</span>
+
+<span class="k">def</span> <span class="nf">create_echo_server</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
+    <span class="n">sock</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">create_socket</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">bindto</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">actor</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="s">&#39;echo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span>
+                                <span class="n">sock</span><span class="o">=</span><span class="n">sock</span><span class="p">,</span>
+                                <span class="n">consumer_factory</span><span class="o">=</span><span class="n">EchoServerProtocol</span><span class="p">)</span>
+
+<span class="n">proxy</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">create_echo_server</span><span class="p">,</span> <span class="s">&#39;localhost:9898&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Hooks are function receiving as only argument the actor which invokes them.</p>
+</div>
 <p><strong>stopping</strong></p>
 <p>Fired when the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> starts stopping.</p>
 <p><strong>stop</strong></p>
@@ -266,8 +291,9 @@ commands via the <a class="reference internal" href="api/actor.html#pulsar.comma
 </pre></div>
 </div>
 </div>
+</div>
 <div class="section" id="exceptions">
-<h3>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h3>
+<span id="exception-design"></span><h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
 <p>There are two categories of exceptions in Python: those that derive from the
 <tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt> class and those that derive from <tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt>.
 Exceptions deriving from Exception will generally be caught and handled
@@ -278,11 +304,10 @@ and will usually cause the program to terminate with a traceback.
 (Examples of this category include KeyboardInterrupt and SystemExit;
 it is usually unwise to treat these the same as most other exceptions.)</p>
 </div>
-</div>
 <div class="section" id="application-framework">
 <span id="design-application"></span><h2>Application Framework<a class="headerlink" href="#application-framework" title="Permalink to this headline">¶</a></h2>
 <p>To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the <tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt> class.</p>
+framework, the library ships with the <a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> class.</p>
 </div>
 </div>
 
@@ -312,9 +337,9 @@ framework, the library ships with the <tt class="xref py py-class docutils liter
 <li><a class="reference internal" href="#spawning">Spawning</a></li>
 <li><a class="reference internal" href="#hooks">Hooks</a></li>
 <li><a class="reference internal" href="#commands">Commands</a></li>
-<li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 <li><a class="reference internal" href="#application-framework">Application Framework</a></li>
 </ul>
 </li>
