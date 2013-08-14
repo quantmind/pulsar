@@ -57,8 +57,40 @@ Actors
 An :class:`Actor` is the atom of pulsar's concurrent computation,
 they do not share state between them, communication is achieved via asynchronous
 :ref:`inter-process message passing <tutorials-messages>`,
-implemented using the standard python socket library. They can be process based
-as well as thread based and can perform one or many activities.
+implemented using the standard python socket library. A pulsar actor can be
+process based as well as thread based and can perform one or many activities.
+
+The Theory
+~~~~~~~~~~~~~~~~~
+The actor model is the cornerstone of the Erlang programming language.
+Python has very few implementation and all of them seems quite limited in scope.
+
+.. epigraph::
+
+    The Actor model in computer science is a mathematical model of concurrent
+    computation that treats "actors" as the universal primitives of concurrent
+    digital computation: in response to a message that it receives, an actor
+    can make local decisions, create more actors, send more messages, and
+    determine how to respond to the next message received.
+    
+    -- Wikipedia
+
+**Actor's properties**
+
+* Each actor has its own ``process`` (not intended as an OS process) and they
+  don't shares state between them.
+* Actors can change their own states.
+* Actors can create other actors and when they do that they receive back the new actor address.
+* Actors exchange messages in an asynchronous fashion.
+
+**Why would one want to use an actor-based system?**
+
+* No shared memory and therefore locking is not required.
+* Race conditions greatly reduced.
+* It greatly simplify the control flow of a program, each actor has its own process (flow of control).
+* Easy to distribute, across cores, across program boundaries, across machines.
+* It simplifies error handling code.
+* It makes it easier to build fault-tolerant systems.
 
 The Arbiter
 ~~~~~~~~~~~~~~~~~
@@ -79,7 +111,7 @@ To access the :class:`Arbiter`, from the main process, one can use the
     
 .. _concurrency:
 
-Concurrency
+Implementation
 ~~~~~~~~~~~~~~~~~~
 An actor can be **processed based** (default) or **thread based** and control
 at least one running :class:`EventLoop`.

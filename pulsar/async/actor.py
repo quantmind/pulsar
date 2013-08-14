@@ -359,7 +359,7 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
         return r
     
     def periodic_task(self):
-        '''Internal method called periodically bt the :attr:`event_loop` to
+        '''Internal method called periodically by the :attr:`event_loop` to
 ping the actor monitor.'''
         if self.can_continue():
             if self.running():

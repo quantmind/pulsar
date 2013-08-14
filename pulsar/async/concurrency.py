@@ -99,6 +99,9 @@ the **start** method.'''
     def run(self):
         actor = self.actor_class(self)
         actor.start()
+        
+    def run_actor(self, actor):
+        actor.event_loop.run()
 
 
 class ActorProcess(ActorConcurrency, Process):
@@ -117,3 +120,17 @@ class ActorThread(ActorConcurrency, KillableThread):
                 me.event_loop.call_later(1, self.terminate, True)
             else:
                 KillableThread.terminate(self)
+
+
+class ActorLet(ActorConcurrency):
+    '''Actor sharing the :class:`Arbiter` event loop.'''
+    def start(self):
+        self.run()
+        
+    def get_event_loop(self, actor):
+        '''This actor shares the arbiter event loop.'''
+        return get_actor().event_loop
+    
+    def run_actor(self, actor):
+        actor.state = ACTOR_STATES.RUN
+    
