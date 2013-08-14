@@ -75,9 +75,10 @@ following algorithm:
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
         skip_tests = getattr(testcls, "__unittest_skip__", False)
         test_cls = test_method(testcls, 'setUpClass')
-        ok = yield self._run(runner, testcls, 'setUpClass', timeout, False)
+        error = yield self._run(runner, testcls, 'setUpClass', timeout,
+                                add_err=False)
         # run the tests
-        if ok:
+        if not error:
             if sequential:
                 # Loop over all test cases in class
                 for test in all_tests:
@@ -86,10 +87,12 @@ following algorithm:
                 all = (self.run_test(test, runner, cfg) for test in all_tests)
                 yield multi_async(all)
         else:
-            error = SetupError()
             for test in all_tests:
-                self.add_failure(test, runner, error)
-        yield self._run(runner, testcls, 'tearDownClass', timeout, False)
+                runner.startTest(test)
+                self.add_failure(test, runner, error[0], error[1])
+                runner.stopTest(test)
+        yield self._run(runner, testcls, 'tearDownClass', timeout,
+                        add_err=False)
         yield runner.result
        
     def run_test(self, test, runner, cfg):
@@ -101,7 +104,7 @@ following algorithm:
 * Run :meth:`tearDown` method in :attr:`testcls`.
 * Run :meth:`_post_teardown` method if available in :attr:`testcls`.'''
         timeout = cfg.test_timeout
-        ok = True
+        err = None
         try:
             runner.startTest(test)
             testMethod = getattr(test, test._testMethodName)
@@ -113,44 +116,46 @@ following algorithm:
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
             else:
-                ok = yield self._run(runner, test, '_pre_setup', timeout)
-                if ok:
-                    ok = yield self._run(runner, test, 'setUp', timeout)
-                    if ok:
-                        ok = yield self._run(runner, test, test._testMethodName,
-                                             timeout)
-                    ok = yield self._run(runner, test, 'tearDown',
-                                         timeout, ok)
-                ok = yield self._run(runner, test, '_post_teardown',
-                                     timeout, ok)
+                err = yield self._run(runner, test, '_pre_setup', timeout)
+                if not err:
+                    err = yield self._run(runner, test, 'setUp', timeout)
+                    if not err:
+                        err = yield self._run(runner, test,
+                                              test._testMethodName, timeout)
+                    err = yield self._run(runner, test, 'tearDown',
+                                          timeout, err)
+                err = yield self._run(runner, test, '_post_teardown',
+                                      timeout, err)
                 runner.stopTest(test)
-        except Exception as e:
-            ok = self.add_failure(test, runner, e, ok)
+        except Exception as error:
+            self.add_failure(test, runner, error, err)
         else:
-            if ok:
+            if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, timeout, ok=True):
+    def _run(self, runner, test, method, timeout, previous=None, add_err=True):
         method = getattr(test, method, None)
         if method:
             try:
                 yield runner.run_test_function(test, method, timeout)
-                yield True
-            except Exception as e:
-                yield self.add_failure(test, runner, e, ok)
+                yield previous
+            except Exception as error:
+                add_err = False if previous else add_err
+                yield self.add_failure(test, runner, error, add_err=add_err)
         else:
-            yield True
+            yield previous
         
-    def add_failure(self, test, runner, error, ok=True):
+    def add_failure(self, test, runner, error, trace=None, add_err=True):
         '''Add *failure* to the list of errors if *failure* is indeed a failure.
 Return `True` if *failure* is a failure, otherwise return `False`.'''
-        if ok:
+        if not trace:
             trace = sys.exc_info()
+        if add_err:
             if isinstance(error, test.failureException):
                 runner.addFailure(test, trace)
             elif isinstance(error, ExpectedFailure):
                 runner.addExpectedFailure(test, trace)
             else:
                 runner.addError(test, trace)
-        return False
+        return (error, trace)
         

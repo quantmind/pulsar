@@ -114,13 +114,7 @@ are given, it checks if the error is an instance of those classes.'''
     return False
 
 def default_maybe_failure(value, msg=None):
-    if isinstance(value, BaseException):
-        exc_info = sys.exc_info()
-        if value == exc_info[1]:
-            return Failure(exc_info, msg)
-        else:
-            return Failure((value.__class__, value, None), msg)
-    elif is_exc_info_error(value):
+    if isinstance(value, BaseException) or is_exc_info_error(value):
         return Failure(value, msg)
     else:
         return value
@@ -416,7 +410,6 @@ which will be put off until later. It conforms with the
     def __init__(self, canceller=None, timeout=None, event_loop=None):
         self._canceller = canceller
         self._event_loop = event_loop
-        # Avoid to call timeout if timeout is not set (30% better performance)
         if timeout:
             self.set_timeout(timeout)
 
@@ -751,10 +744,12 @@ The callback will occur once the coroutine has stopped
 has occurred. Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, event_loop=None, **kwargs):
+    def __init__(self, gen, canceller=None, event_loop=None, timeout=None):
         self._gen = gen
-        event_loop = event_loop or get_request_loop()
-        super(Task, self).__init__(event_loop=event_loop, **kwargs)
+        self._canceller = canceller
+        self._event_loop = event_loop or get_request_loop()
+        if timeout:
+            self.set_timeout(timeout)
         self._consume(None)
     
     def _consume(self, result):
@@ -815,7 +810,7 @@ asynchronous objects. The ``collection`` can be either a ``list`` or
 a ``dict``.
 The :class:`MultiDeferred` is recursive on values which are ``generators``,
 ``Mapping``, ``lists`` and ``sets``. It is not recursive on immutable
-containers such as tuple, and frozenset.
+containers such as tuple and frozenset.
 
 .. attribute:: locked
 
@@ -840,7 +835,7 @@ containers such as tuple, and frozenset.
     _time_finished = None
 
     def __init__(self, data=None, type=None, raise_on_error=True,
-                  handle_value=None, log_failure=False, **kwargs):
+                 handle_value=None, log_failure=False, **kwargs):
         self._deferred = {}
         self._failures = Failure()
         self.log_failure = log_failure

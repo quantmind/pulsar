@@ -42,7 +42,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertEqual(arbiter, pulsar.arbiter())
         self.assertTrue(arbiter.is_arbiter())
-        self.assertEqual(arbiter.impl.kind, 'monitor')
+        self.assertEqual(arbiter.impl.kind, 'arbiter')
         self.assertTrue(arbiter.monitors)
         self.assertEqual(arbiter.exit_code, None)
         info = arbiter.info()

@@ -330,8 +330,9 @@ mailbox server.'''
             active.add_both(partial(self._exit_arbiter, actor))
     
     
-class ActorProcess(Concurrency, Process):
-    '''Actor on a process'''
+class ActorProcess(ProcessMixin, Concurrency, Process):
+    '''Actor on a Operative system process. Created using the
+python multiprocessing module.'''
     def run(self):
         actor = self.actor_class(self)
         actor.start()

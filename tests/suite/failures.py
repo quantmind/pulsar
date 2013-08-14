@@ -12,7 +12,7 @@ class TestFailures(unittest.TestCase):
     @unittest.expectedFailure
     def test_fail(self):
         self.assertEqual(1, 0, "broken")
-        
+
 
 class TestSetupFailure(unittest.TestCase):
     
@@ -28,9 +28,6 @@ class TestSetupFailure(unittest.TestCase):
 class TestTearDownFailure(unittest.TestCase):
     processed = 0
     
-    def tearDown(self):
-        pass
-    
     @unittest.expectedFailure
     def test_fail(self):
         self.__class__.processed += 1
@@ -42,7 +39,7 @@ class TestTearDownFailure(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         assert cls.processed == 2, "Should have processed 2"
-        
+   
         
 class TestSetupClassnFailure(unittest.TestCase):
     
