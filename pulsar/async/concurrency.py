@@ -122,7 +122,7 @@ class ActorThread(ActorConcurrency, KillableThread):
                 KillableThread.terminate(self)
 
 
-class ActorLet(ActorConcurrency):
+class ActorCoroutine(ActorConcurrency):
     '''Actor sharing the :class:`Arbiter` event loop.'''
     def start(self):
         self.run()
