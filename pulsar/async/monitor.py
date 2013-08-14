@@ -1,16 +1,13 @@
-import os
 import sys
 from time import time
 
 import pulsar
-from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
-from .actor import Actor, send
+from .actor import Actor
 from .defer import async, NOT_DONE
 from .concurrency import concurrency
-from .mailbox import MonitorMailbox
 from .consts import *
 
 
@@ -34,9 +31,10 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
         params = monitor.actorparams()
         name = params.pop('name', name)
         aid = params.pop('aid', aid)
-    else:
+    else: # monitor not available, this is the arbiter
         if kind != 'monitor':
             raise TypeError('class %s not a valid monitor' % cls)
+        kind = 'arbiter'
         params = {}
     for key, value in iteritems(kw):
         if key in cfg.settings:
@@ -90,15 +88,6 @@ during its life time.
         self.terminated_actors = []
         self.actor_class = self.params.pop('actor_class') or self.actor_class
 
-    def hand_shake(self, *args):
-        #Monitors don't do hand shakes
-        try:
-            self.state = ACTOR_STATES.RUN
-            self.fire_event('start')
-            self.periodic_task()
-        except Exception:
-            self.stop(sys.exc_info())
-    
     def get_actor(self, aid):
         aid = getattr(aid, 'aid', aid)
         if aid == self.aid:
@@ -227,18 +216,9 @@ adding a new monitor to the arbiter follows the pattern::
 
     m = pulsar.arbiter().add_monitor(pulsar.Monitor, 'mymonitor')
 '''
-    socket = None
-
-    @property
-    def cpubound(self):
-        return False
-    
     @property
     def arbiter(self):
         return self.monitor
-
-    def is_process(self):
-        return False
 
     def is_monitor(self):
         return True
@@ -247,39 +227,6 @@ adding a new monitor to the arbiter follows the pattern::
         '''Monitor specific task called by the :meth:`Monitor.periodic_task`.
 By default it does nothing. Override if you need to.'''
         pass
-
-    def periodic_task(self):
-        '''Overrides the :meth:`Actor.periodic_task` to perform
-the monitor tasks, which are:
-
-* To maintain a responsive set of actors ready to perform their duty.
-* To perform its own tasks.
-
-The implementation goes as following:
-
-* It calls :meth:`PoolMixin.manage_actors` which removes from the live
-  actors dictionary all actors which are not alive.
-* Spawn new actors if required by calling :meth:`PoolMixin.spawn_actors`
-  and :meth:`PoolMixin.stop_actors`.
-* Call :meth:`Monitor.monitor_task` which performs the monitor specific
-  task.
-
-Users shouldn't need to override this method, but use
-:meth:`Monitor.monitor_task` instead.'''
-        if self.running():
-            self.manage_actors()
-            self.spawn_actors()
-            self.stop_actors()
-            self.monitor_task()
-        self.event_loop.call_soon(self.periodic_task)
-
-    # HOOKS
-    @async(max_errors=None)
-    def _stop(self):
-        yield self.close_actors()
-        if not self.terminated_actors:
-            self.monitor._remove_actor(self)
-        self.fire_event('stop')
 
     @property
     def multithread(self):
@@ -314,13 +261,3 @@ Users shouldn't need to override this method, but use
         if a is None:
             a = self.monitor.get_actor(aid)
         return a
-
-    # OVERRIDES INTERNALS        
-    def _setup_event_loop(self):
-        self.mailbox = self._mailbox()
-        
-    def _run(self):
-        pass
-    
-    def _mailbox(self):
-        return MonitorMailbox(self)

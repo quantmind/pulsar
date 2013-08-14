@@ -1,26 +1,19 @@
-import sys
-import os
-import atexit
-import logging
 from time import time
-import random
-from functools import partial
 
-from pulsar import AlreadyRegistered, HaltServer, CommandError,\
-                   ActorAlreadyStarted, system, Config, platform
-from pulsar.utils.pep import pickle, set_event_loop_policy, itervalues
+from pulsar import HaltServer, CommandError, system
+from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
-from .eventloop import EventLoop, setid, signal
-from .defer import Deferred, EventHandler, log_failure
-from .threads import Empty, ThreadQueue, ThreadPool
-from .proxy import ActorProxy, get_proxy, ActorProxyMonitor, ActorIdentity
-from .mailbox import MailboxClient, command_in_context
-from .access import set_actor, is_mainthread, get_actor, remove_actor
+from .eventloop import setid
+from .defer import EventHandler, log_failure
+from .threads import ThreadPool
+from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
+from .mailbox import command_in_context
+from .access import get_actor
 from .consts import *
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'ThreadQueue']
+__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
 
 
 def is_actor(obj):
@@ -49,14 +42,6 @@ Typical example::
     'pong'
 '''
     return get_actor().send(target, action, *args, **params)
-
-def stop_on_error(f):
-    def _(self, *args, **kwargs):
-        try:
-            return f(self, *args, **kwargs)
-        except Exception as e:
-            self.stop(e)
-    return _
 
 
 class Pulsar(LogginMixin):
@@ -229,9 +214,10 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
 :attr:`Actor.event_loop` is initialised and started. Calling this method
 more than once does nothing.'''
         if self.state == ACTOR_STATES.INITIAL:
+            self.__impl.before_start(self)
             self._started = time() 
             self.configure_logging()
-            self._setup_event_loop()
+            self.__impl.setup_event_loop(self)
             self.state = ACTOR_STATES.STARTING
             self._run()
 
@@ -257,12 +243,6 @@ parameters *params*.'''
             raise CommandError('Cannot execute "%s" in %s. Unknown actor '
                                '%s.' % (action, self, target))
     
-    def io_poller(self):
-        '''Return a IO poller instance which sets the :class:`EventLoop.io`
-handler. By default it return nothing so that the best handler for the
-system is chosen.'''
-        return None
-    
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
@@ -273,20 +253,7 @@ properly this actor will go out of scope.
 
 :param exc: optional exception.
 '''
-        log_failure(exc)
-        if self.state <= ACTOR_STATES.RUN:
-            # The actor has not started the stopping process. Starts it now.
-            self.exit_code = getattr(exc, 'exit_code', 1) if exc else 0
-            self.state = ACTOR_STATES.STOPPING
-            self.fire_event('stopping')
-            self.close_thread_pool()
-            self._stop()
-        elif self.stopped():
-            # The actor has finished the stopping process.
-            #Remove itself from the actors dictionary
-            remove_actor(self)
-            self.fire_event('stop')
-        return self.event('stop')
+        self.__impl.stop(self, exc)
     
     def create_thread_pool(self, workers=1):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
@@ -331,7 +298,7 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
 
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
-        return False
+        return self.__impl.is_process()
 
     def is_monitor(self):
         '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
@@ -339,7 +306,7 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
 
     def is_process(self):
         '''boolean indicating if this is an actor on a child process.'''
-        return self.impl.kind == 'process'
+        return self.__impl.is_process()
 
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
@@ -347,54 +314,7 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
     
     ############################################################################
     #    INTERNALS
-    ############################################################################
-    def _stop(self):
-        '''Exit from the :class:`Actor` domain.'''
-        self.bind_event('stop', self._bye)
-        self.state = ACTOR_STATES.CLOSE
-        self.mailbox.close()
-    
-    def _bye(self, r):
-        self.logger.debug('Bye from "%s"', self)
-        return r
-    
-    def periodic_task(self):
-        '''Internal method called periodically by the :attr:`event_loop` to
-ping the actor monitor.'''
-        if self.can_continue():
-            if self.running():
-                self.logger.debug('%s notifying the monitor', self)
-                # if an error occurs, shut down the actor
-                try:
-                    r = self.send('monitor', 'notify', self.info())\
-                            .add_errback(self.stop)
-                except Exception as e:
-                    self.stop(e)
-                else:
-                    secs = max(ACTOR_TIMEOUT_TOLE*self.cfg.timeout, MIN_NOTIFY)
-                    next = min(secs, MAX_NOTIFY)
-                    self.event_loop.call_later(next, self.periodic_task)
-                    return r
-            else:
-                self.event_loop.call_soon_threadsafe(self.periodic_task)
-        
-    @stop_on_error
-    def _got_notified(self, result):
-        self.logger.info('%s started', self)
-        self.fire_event('start')
-        
-    @stop_on_error
-    def hand_shake(self):
-        a = get_actor()
-        if a is not self:
-            set_actor(self)
-        self.state = ACTOR_STATES.RUN
-        r = self.periodic_task()
-        if r:
-            r.add_callback(self._got_notified)
-        else:
-            self.stop()
-    
+    ############################################################################   
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
@@ -422,52 +342,10 @@ status and performance.'''
         if isp:
             data['system'] = system.system_info(self.pid)
         return data
-
-    def _setup_event_loop(self):
-        # Internal function called at the start of the actor. It builds the
-        # event loop which will consume events on file descriptors
-        # Build the mailbox first so that when the mailbox closes, it shut
-        # down the eventloop.
-        event_loop = EventLoop(io=self.io_poller(), logger=self.logger,
-                               poll_timeout=self.params.poll_timeout)
-        self.mailbox = self._mailbox(event_loop)
-        # Inject self as the actor of this thread
-        set_actor(self)
-        if self.is_process():
-            random.seed()
-            proc_name = "%s-%s" % (self.cfg.proc_name, self)
-            if system.set_proctitle(proc_name):
-                self.logger.debug('Set process title to %s', proc_name)
-            #system.set_owner_process(cfg.uid, cfg.gid)
-            if is_mainthread() and signal and not platform.is_windows:
-                self.logger.debug('Installing signals')
-                self.signal_queue = ThreadQueue()
-                for name in system.ALL_SIGNALS:
-                    sig = getattr(signal, 'SIG%s' % name)
-                    try:
-                        handler = partial(self.signal_queue.put, sig)
-                        self.event_loop.add_signal_handler(sig, handler)
-                    except ValueError:
-                        break
         
-    def can_continue(self):
-        if self.signal_queue is not None:
-            while True:
-                try:
-                    sig = self.signal_queue.get(timeout=0.01)
-                except (Empty, IOError):
-                    break
-                if sig not in system.SIG_NAMES:
-                    self.logger.info("Ignoring unknown signal: %s", sig)
-                else:
-                    signame = system.SIG_NAMES.get(sig)
-                    if sig in system.EXIT_SIGNALS:
-                        self.logger.warning("Got signal %s. Stopping.", signame)
-                        self.stop()
-                        return False
-                    else:
-                        self.logger.debug('No handler for signal %s.', signame)
-        return True
+    def _bye(self, r):
+        self.logger.debug('Bye from "%s"', self)
+        return r
     
     def _run(self, initial=True):
         if initial:
@@ -475,9 +353,8 @@ status and performance.'''
                 self.cfg.when_ready(self)
             except Exception:
                 pass
-        exc = None
         try:
-            self.event_loop.run()
+            exc = self.__impl.run_actor(self)
         except Exception as e:
             exc = e
         except HaltServer as e:
@@ -489,7 +366,3 @@ status and performance.'''
         finally:
             self.stop(exc)
         
-    def _mailbox(self, event_loop):
-        client = MailboxClient(self.monitor.address, self, event_loop)
-        client.event_loop.call_soon_threadsafe(self.hand_shake)
-        return client

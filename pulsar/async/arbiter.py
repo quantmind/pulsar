@@ -1,21 +1,17 @@
-from time import time
 import os
 import sys
-import signal
 from multiprocessing import current_process
 
 import pulsar
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import itervalues, iteritems
-from pulsar.utils.log import process_global
-from pulsar import HaltServer, system
+from pulsar.utils.pep import itervalues
+from pulsar import HaltServer
 
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, _spawn_actor
-from .defer import multi_async, log_failure
+from .defer import multi_async
 from .access import get_actor, set_actor
-from .mailbox import MailboxConsumer
 from . import proxy
 
 
@@ -130,9 +126,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     ############################################################################
     # ARBITER HIGH LEVEL API
     ############################################################################
-    def is_arbiter(self):
-        return True
-
     def add_monitor(self, monitor_class, monitor_name, **params):
         '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
@@ -148,9 +141,6 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         self.registered[m.name] = m
         self.monitors[m.aid] = m
         return m
-
-    def is_process(self):
-        return True
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
@@ -206,45 +196,4 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         self.registered.pop(actor.name, None)
         self.monitors.pop(actor.aid, None)
         
-    def periodic_task(self):
-        # Arbiter periodic task
-        if self.can_continue() and self.running():
-            # managed actors job
-            self.manage_actors()
-            for m in list(itervalues(self.monitors)):
-                if m.started():
-                    if not m.running():
-                        self._remove_actor(m)
-                else:
-                    m.start()
-        self.event_loop.call_soon(self.periodic_task)
-
-    def _stop(self):
-        '''Stop the pools the message queue and remaining actors.'''
-        self.event_loop.call_soon_threadsafe(self._exit)
-        self._run(False)
-        
-    def _exit(self, res=None):
-        if res:
-            self.state = ACTOR_STATES.CLOSE
-            self.mailbox.close()
-        else:
-            active = multi_async((self.close_monitors(), self.close_actors()),
-                                 log_failure=True)
-            active.add_both(self._exit)
-                
-    def start(self):
-        if self.state == ACTOR_STATES.INITIAL:
-            if self.cfg.daemon: #pragma    nocover
-                system.daemonize()
-            return Actor.start(self)
-        
-    def _mailbox(self, event_loop):
-        address = ('127.0.0.1', 0)
-        mailbox = event_loop.create_server(address=address,
-                                           name='Mailbox for %s' % self,
-                                           consumer_factory=MailboxConsumer,
-                                           timeout=0,
-                                           close_event_loop=True)
-        event_loop.call_soon_threadsafe(self.hand_shake)
-        return mailbox
+    

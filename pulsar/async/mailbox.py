@@ -68,14 +68,14 @@ def command_in_context(command, caller, actor, args, kwargs):
     return cmnd(request, args, kwargs)
     
     
-class MonitorMailbox(object):
-    '''A :class:`Mailbox` for a :class:`Monitor`. This is a proxy for the
-arbiter mailbox.'''
+class ProxyMailbox(object):
+    '''A proxy for the arbiter :class:`Mailbox`.'''
     active_connections = 0
     def __init__(self, actor):
-        self.mailbox = actor.monitor.mailbox
-        # make sure the monitor get the hand shake!
-        self.mailbox.event_loop.call_soon_threadsafe(actor.hand_shake)
+        mailbox = actor.monitor.mailbox
+        if isinstance(mailbox, ProxyMailbox):
+            mailbox = mailbox.mailbox
+        self.mailbox = mailbox
 
     def __repr__(self):
         return self.mailbox.__repr__()
@@ -163,12 +163,12 @@ protocol.'''
     
     ############################################################################
     ##    INTERNALS
-    @async(max_errors=None)
+    @async()
     def _responde(self, message):
         actor = get_actor()
         command = message.get('command')
-        #LOGGER.debug('%s handling message "%s"', actor, command)
-        if command == 'callback':   #this is a callback
+        if command == 'callback':
+            # this is a callback
             self._callback(message.get('ack'), message.get('result'))
         else:
             try:

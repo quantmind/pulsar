@@ -143,11 +143,6 @@ class Worker(Actor):
         '''The :class:`Application` served by this :class:`Worker`.'''
         return self.params.app
     
-    def io_poller(self):
-        '''Delegates the :meth:`pulsar.Actor.io_poller` method to the
-:meth:`Application.io_poller` method of the :attr:`app` attribute.'''
-        return self.app.io_poller(self)
-    
     def info(self):
         data = super(Worker, self).info()
         return self.app.worker_info(self, data)
@@ -465,12 +460,6 @@ and the :class:`Application` have the same interface.'''
         
     def event(self, name):
         return self.local.events.event(name)
-
-    def io_poller(self, worker):
-        '''Called by :meth:`Worker.io_poller` method during the initialization
-of the :class:`Worker` event loop. By default it does nothing so that
-the event loop chooses the most suitable IO poller.'''
-        return None
 
     def add_timeout(self, deadline, callback):
         self.arbiter.event_loop.add_timeout(deadline, callback)

@@ -621,7 +621,7 @@ CPU-bound thread.'''
                 break
         worker.event_loop.call_later(next_time, self.may_pool_task, worker)
             
-    @async(max_errors=None)
+    @async()
     def _execute_task(self, worker, task):
         #Asynchronous execution of a Task. This method is called
         #on a separate thread of execution from the worker event loop thread.

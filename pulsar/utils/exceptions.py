@@ -38,10 +38,6 @@ class ConnectionError(Exception):
     pass
 
 
-class ActorAlreadyStarted(PulsarException):
-    '''A :class:`PulsarException` raised when trying to start an actor already started'''
-
-
 class HaltServer(BaseException):
 
     def __init__(self, reason='Halt', signal=None, exit_code=1):
@@ -53,9 +49,6 @@ class HaltServer(BaseException):
 class CannotCallBackError(PulsarException):
     pass
 
-
-class AlreadyRegistered(PulsarException):
-    pass
 
 class NotRegisteredWithServer(PulsarException):
     pass

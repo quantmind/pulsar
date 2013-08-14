@@ -1,9 +1,11 @@
 '''Deferred and asynchronous tools.'''
 import sys
+import time
 from functools import reduce
 
 from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
-                     is_failure, MultiDeferred, maybe_async, CancelledError
+                     is_failure, MultiDeferred, maybe_async, CancelledError,\
+                        async_sleep
 from pulsar.async.defer import is_exc_info_error
 from pulsar.apps.test import unittest
 
@@ -43,7 +45,7 @@ class TestDeferred(unittest.TestCase):
         d = Deferred()
         self.assertFalse(d.done())
         self.assertFalse(d.running())
-        self.assertEqual(str(d), 'Deferred')
+        self.assertEqual(str(d), 'Deferred (pending)')
         d.callback('ciao')
         self.assertTrue(d.done())
         self.assertTrue(' (done)' in str(d))
@@ -163,27 +165,38 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(task.done())
         self.assertTrue(task.cancelled())
         self.assertTrue(is_failure(task.result))
-        self.assertFalse(d.done())
+        self.assertTrue(d.cancelled())
+        self.assertEqual(str(d), 'Deferred (cancelled)')
         
     def testTimeout(self):
-        d = Deferred(timeout=1).add_errback(lambda f : [f])
-        yield d
-        failure = d.result[0]
-        self.assertEqual(failure.trace[0], CancelledError)
-        
+        try:
+            yield Deferred(timeout=1)
+        except Exception as e:
+            self.assertIsInstance(e, CancelledError)
+
+    def test_last_yeild(self):
+        def gen():
+            try:
+                yield Deferred(timeout=1)
+            except CancelledError:
+                yield 'OK'
+        result = yield gen()
+        self.assertEqual(result, 'OK')
+            
     def test_embedded_timeout(self):
         '''Embed an never ending coroutine into a deferred with timeout'''
         def gen(r):
             # A never ending coroutine.
             while True:
                 yield NOT_DONE
-        d = Deferred(timeout=1).add_callback(gen).add_errback(lambda f: [f])
+        d = Deferred(timeout=1).add_callback(gen)
         res = d.callback(True)
         self.assertTrue(is_async(res))
         self.assertEqual(d.result, res)
-        yield res
-        failure = d.result[0]
-        self.assertEqual(failure.trace[0], CancelledError)
+        try:
+            yield res
+        except Exception as e:
+            self.assertIsInstance(e, CancelledError)
         
     def test_chain(self):
         d1 = Deferred()
@@ -275,3 +288,9 @@ class TestFunctions(unittest.TestCase):
             raise ValueError
         except:
             self.assertTrue(is_exc_info_error(sys.exc_info()))
+            
+    def test_async_sleep(self):
+        start = time.time()
+        result = yield async_sleep(1)
+        self.assertEqual(result, 1)
+        self.assertTrue(time.time() - start > 1)

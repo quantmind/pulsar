@@ -7,10 +7,11 @@
 import os
 import re
 import sys
-import unittest
 import logging
 
 from pulsar.utils.importer import import_module
+
+from .case import unittest
 
 LOGGER = logging.getLogger('pulsar.apps.test')
 

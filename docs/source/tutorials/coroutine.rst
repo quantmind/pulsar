@@ -94,7 +94,7 @@ asynchronous operation. To set a timeout, one used the
     >>> d.set_timeout(5)
     
 When a :class:`Task` is cancelled, the deferred on which the task is blocked is
-not affected. For example::
+cancelled too. For example::
 
     >>> from pulsar import Deferred, maybe_async  
     >>> d = Deferred()
@@ -105,9 +105,9 @@ not affected. For example::
     >>> task.cancelled()
     True
     >>> d.cancelled()
-    False
+    True
     >>> d.done()
-    False
+    True
 
 .. _coroutine:
   

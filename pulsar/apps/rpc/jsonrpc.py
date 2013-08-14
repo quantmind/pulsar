@@ -55,7 +55,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     def __call__(self, request):
         return Json(self._call(request), json=self._json).http_response(request)
     
-    @async(max_errors=1)
+    @async()
     def _call(self, request):
         response = request.response
         data = {}

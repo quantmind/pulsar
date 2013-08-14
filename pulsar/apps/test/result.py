@@ -20,13 +20,13 @@ Test Runner
    
 '''
 import traceback
-import unittest
 import logging
 from inspect import istraceback
 from copy import deepcopy
 
 from pulsar.utils.structures import AttributeDictionary
 
+from .case import unittest
 from .utils import TestFunction
 
 __all__ = ['Plugin',
@@ -108,6 +108,9 @@ finished.'''
         pass
 
     def addError(self, test, err):
+        pass
+    
+    def addExpectedFailure(self, test, err):
         pass
 
     def addSkip(self, test, reason):
@@ -408,6 +411,7 @@ class TestRunner(TestResultProxy):
     stopTest = testsafe('stopTest')
     addSuccess = testsafe('addSuccess')
     addFailure = testsafe('addFailure')
+    addExpectedFailure = testsafe('addExpectedFailure')
     addError = testsafe('addError')
     addSkip = testsafe('addSkip')
     printErrors = testsafe('printErrors')

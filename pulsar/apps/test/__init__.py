@@ -269,30 +269,10 @@ import time
 import pulsar
 from pulsar.apps import tasks
 from pulsar.utils import events
-from pulsar.utils.pep import ispy26, ispy33
 from pulsar.utils.log import local_property
 
-if ispy26: # pragma nocover
-    try:
-        import unittest2 as unittest
-    except ImportError:
-        print('To run tests in python 2.6 you need to install\
- the unittest2 package')
-        exit(0)
-else:
-    import unittest
-    
-if ispy33: 
-    from unittest import mock
-else: # pragma nocover
-    try:
-        import mock
-    except ImportError:
-        print('To run tests you need to install the mock package')
-        exit(0)
-
-from .result import *
 from .case import *
+from .result import *
 from .plugins.base import *
 from .loader import *
 from .utils import *
