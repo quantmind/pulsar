@@ -25,9 +25,6 @@ else: # pragma nocover
         mock = None
 
 
-class SetupError(Exception):
-    pass
-
 __all__ = ['sequential', 'unittest', 'mock']
 
 
@@ -37,15 +34,9 @@ sequentially rather than in an asynchronous fashion.'''
     cls._sequential_execution = True
     return cls
 
-def test_method(cls, method):
-    try:
-        return cls(method)
-    except ValueError:
-        return None
-
     
 class Test(tasks.Job):
-    
+    '''A :ref:`Job <job-callable>` for running tests on a task queue.'''
     def __call__(self, consumer, testcls, tag):
         suite = consumer.worker.app
         suite.local.pop('runner')
@@ -67,16 +58,18 @@ class Test(tasks.Job):
         '''Run all test functions from the :attr:`testcls` using the
 following algorithm:
 
-* Run the class method ``setUpClass`` of :attr:`testcls` if defined.
+* Run the class method ``setUpClass`` of :attr:`testcls` if defined, unless
+  the test class should be skipped.
 * Call :meth:`run_test` for each test functions in :attr:`testcls`
-* Run the class method ``tearDownClass`` of :attr:`testcls` if defined.
-'''
+* Run the class method ``tearDownClass`` of :attr:`testcls` if defined, unless
+  the test class should be skipped.'''
+        error = None
         timeout = cfg.test_timeout
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
-        skip_tests = getattr(testcls, "__unittest_skip__", False)
-        test_cls = test_method(testcls, 'setUpClass')
-        error = yield self._run(runner, testcls, 'setUpClass', timeout,
-                                add_err=False)
+        skip_tests = getattr(testcls, '__unittest_skip__', False)
+        if not skip_tests:
+            error = yield self._run(runner, testcls, 'setUpClass', timeout,
+                                    add_err=False)
         # run the tests
         if not error:
             if sequential:
@@ -91,8 +84,9 @@ following algorithm:
                 runner.startTest(test)
                 self.add_failure(test, runner, error[0], error[1])
                 runner.stopTest(test)
-        yield self._run(runner, testcls, 'tearDownClass', timeout,
-                        add_err=False)
+        if not skip_tests:
+            yield self._run(runner, testcls, 'tearDownClass', timeout,
+                            add_err=False)
         yield runner.result
        
     def run_test(self, test, runner, cfg):
@@ -108,13 +102,14 @@ following algorithm:
         try:
             runner.startTest(test)
             testMethod = getattr(test, test._testMethodName)
-            if (getattr(test.__class__, "__unittest_skip__", False) or
-                getattr(testMethod, "__unittest_skip__", False)):
+            if (getattr(test.__class__, '__unittest_skip__', False) or
+                getattr(testMethod, '__unittest_skip__', False)):
                 reason = (getattr(test.__class__,
                                   '__unittest_skip_why__', '') or
                           getattr(testMethod,
                                   '__unittest_skip_why__', ''))
                 runner.addSkip(test, reason)
+                err = True
             else:
                 err = yield self._run(runner, test, '_pre_setup', timeout)
                 if not err:

@@ -52,7 +52,7 @@ class InvalidStateError(Error):
 _PENDING = 'PENDING'
 _CANCELLED = 'CANCELLED'
 _FINISHED = 'FINISHED'
-    
+EMPTY_EXC_INFO = (None, None, None)
 LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
@@ -294,10 +294,16 @@ during :class:`Deferred` callbacks.
 :class:`Failure`, an :class:`Exception` or a system exception info tuple
 obtained from ``sys.exc_info()``.'''
         if failure:
-            if is_failure(failure):
+            if isinstance(failure, Failure):
                 self.traces.extend(failure.traces)
             elif isinstance(failure, Exception):
-                self.traces.append(sys.exc_info())
+                exc_info = sys.exc_info()
+                if exc_info == EMPTY_EXC_INFO:
+                    try:
+                        raise failure
+                    except Exception:
+                        exc_info = sys.exc_info()
+                self.traces.append(exc_info)
             elif is_exc_info_error(failure):
                 self.traces.append(failure)
         return self

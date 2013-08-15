@@ -92,6 +92,8 @@ Python has very few implementation and all of them seems quite limited in scope.
 * It simplifies error handling code.
 * It makes it easier to build fault-tolerant systems.
 
+.. _arbiter:
+
 The Arbiter
 ~~~~~~~~~~~~~~~~~
 When using pulsar actor layer, you need to use pulsar in **server state**,
@@ -315,6 +317,12 @@ Run a function on a remote actor. The function must accept actor as its initial 
 Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
+    
+.. _monitor:
+
+Monitors
+~~~~~~~~~~~~~~
+
     
 .. _exception-design:
 

@@ -298,7 +298,7 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
 
     def is_arbiter(self):
         '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
-        return self.__impl.is_process()
+        return self.__impl.is_arbiter()
 
     def is_monitor(self):
         '''Return ``True`` if ``self`` is a :class:`Monitor`.'''

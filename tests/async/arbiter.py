@@ -32,7 +32,6 @@ class BogusActor(pulsar.Actor):
             return super(BogusActor, self).stop(exc)
             
     
-    
 class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
     
@@ -173,6 +172,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         
     def test_no_arbiter_in_worker_domain(self):
         worker = pulsar.get_actor()
+        self.assertFalse(worker.is_arbiter())
         self.assertEqual(pulsar.arbiter(), None)
         self.assertTrue(worker.monitor)
         self.assertNotEqual(worker.monitor.name, 'arbiter')
