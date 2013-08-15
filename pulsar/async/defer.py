@@ -119,9 +119,11 @@ def default_maybe_failure(value):
     else:
         return value
 
-def default_maybe_async(val, get_result=True, **kwargs):
+def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
     if isgenerator(val):
-        val = Task(val, **kwargs)
+        event_loop = event_loop or get_request_loop()
+        task_factory = getattr(event_loop, 'task_factory', Task)
+        val = task_factory(val, event_loop, **kwargs)
     if isinstance(val, Deferred):
         if get_result and val.done():
             return val.result
@@ -311,9 +313,9 @@ Without ``gen``, this method is used when interacting with libraries
 supporting both synchronous and asynchronous flow controls.'''
         if gen:
             if self.is_remote:
-                gen.throw(self.exc_info[0], self.exc_info[1])
+                return gen.throw(self.exc_info[0], self.exc_info[1])
             else:
-                gen.throw(*self.exc_info)
+                return gen.throw(*self.exc_info)
         else:
             if self.is_remote:
                 raise self.exc_info[1]
@@ -725,47 +727,55 @@ The callback will occur once the coroutine has stopped
 has occurred. Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, canceller=None, event_loop=None, timeout=None):
+    _waiting = None
+    
+    def __init__(self, gen, event_loop, canceller=None, timeout=None):
         self._gen = gen
+        self._event_loop = event_loop
         self._canceller = canceller
-        self._event_loop = event_loop or get_request_loop()
         if timeout:
             self.set_timeout(timeout)
         self._consume(None)
     
     def _consume(self, result):
-        self._waiting = None
-        gen = self._gen
-        while not self.done():
-            try:
-                if isinstance(result, Failure):
-                    failure, result = result, None
-                    try:
-                        result = failure.throw(gen)
-                    except StopIteration:
-                        failure.logged = True
-                        raise
-                    else:
-                        failure.logged = True
+        step = self._step
+        switch = False
+        while self._state == _PENDING and not switch:
+            result, switch = step(result, self._gen)            
+            
+    def _step(self, result, gen):
+        try:
+            if isinstance(result, Failure):
+                failure, result = result, None
+                try:
+                    result = failure.throw(gen)
+                except StopIteration:
+                    failure.logged = True
+                    raise
                 else:
-                    result = gen.send(result)
-            except StopIteration:
-                break
-            except Exception as e:
-                return self._conclude(Failure(e))
+                    failure.logged = True
             else:
-                result = maybe_async(result, event_loop=self.event_loop)
-                if isinstance(result, Deferred):
-                    # async result add callback/errorback and transfer control
-                    # to the event loop
-                    self._waiting = result.add_both(self._restart)
-                    return
-                elif result == NOT_DONE:
-                    # transfer control to the event loop
-                    return self.event_loop.call_soon(self._consume, None)
-        self._conclude(result)
+                result = gen.send(result)
+        except StopIteration:
+            self._conclude(result)
+        except Exception as e:
+            result = Failure(e)
+            self._conclude(result)
+        else:
+            result = maybe_async(result, event_loop=self.event_loop)
+            if isinstance(result, Deferred):
+                # async result add callback/errorback and transfer control
+                # to the event loop
+                self._waiting = result.add_both(self._restart)
+                return None, True 
+            elif result == NOT_DONE:
+                # transfer control to the event loop
+                self.event_loop.call_soon(self._consume, None)
+                return None, True
+        return result, False
     
     def _restart(self, result):
+        self._waiting = None
         #restart the coroutine in the same event loop it was started
         self.event_loop.call_now_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
