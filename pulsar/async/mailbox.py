@@ -51,7 +51,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor
-from .defer import async, maybe_failure, log_failure, Deferred
+from .defer import async, Failure, log_failure, Deferred
 from .transports import ProtocolConsumer, SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 
@@ -176,29 +176,27 @@ protocol.'''
                 if target is None:
                     raise CommandError('Cannot execute "%s" in %s. Unknown '
                             'actor %s' % (command, actor, message['target']))
-                caller = get_proxy(actor.get_actor(message['sender']), safe=True)
+                # Get the caller proxy without throwing
+                caller = get_proxy(actor.get_actor(message['sender']),
+                                   safe=True)
                 if isinstance(target, ActorProxy):
                     # route the message to the actor proxy
                     if caller is None:
-                        raise CommandError("'%s' got message from unknown '%s'" %
-                                           (actor, message['sender']))
+                        raise CommandError("'%s' got message from unknown '%s'"
+                                           % (actor, message['sender']))
                     result = yield actor.send(target, command, *message['args'],
                                               **message['kwargs'])
                 else:
                     actor = target
                     command = get_command(command)
                     req = CommandRequest(target, caller, self.connection)
-                    result = yield command(req, message['args'], message['kwargs'])
+                    result = yield command(req, message['args'],
+                                           message['kwargs'])
             except Exception as e:
-                result = maybe_failure(e)
-            yield self._response(message, result)
-        
-    def _response(self, data, result):
-        if data.get('ack'):
-            req = Message.callback(result, data['ack'])
-            self.new_request(req)
-        #Return the result so a failure can be logged
-        return result
+                result = Failure(e)
+            if message.get('ack'):
+                req = Message.callback(result, message['ack'])
+                self.new_request(req)
 
     def _callback(self, ack, result):
         if not ack:

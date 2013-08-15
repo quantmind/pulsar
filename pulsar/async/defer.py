@@ -113,9 +113,9 @@ are given, it checks if the error is an instance of those classes.'''
         return obj.isinstance(classes) if classes else True
     return False
 
-def default_maybe_failure(value, msg=None):
-    if isinstance(value, BaseException) or is_exc_info_error(value):
-        return Failure(value, msg)
+def default_maybe_failure(value):
+    if isinstance(value, Exception) or is_exc_info_error(value):
+        return Failure(value)
     else:
         return value
 
@@ -154,7 +154,7 @@ it checks if it done. In this case it returns the *result*.
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
                         timeout=timeout, get_result=get_result)
     
-def maybe_failure(value, msg=None):
+def maybe_failure(value):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
 exception, otherwise returns *value*.
 
@@ -164,7 +164,7 @@ exception, otherwise returns *value*.
 :return: a :class:`Failure` or the original *value*.
 '''
     global _maybe_failure
-    return _maybe_failure(value, msg=msg)
+    return _maybe_failure(value)
 
 _maybe_async = default_maybe_async
 _maybe_failure = default_maybe_failure
@@ -235,28 +235,46 @@ safe_async = async(get_result=False).call
         
 ############################################################### FAILURE
 class Failure(object):
-    '''The asynchronous equivalent of python Exception. It accumulate errors
-during :class:`Deferred` callbacks.
+    '''The asynchronous equivalent of python Exception. It has several useful
+methods and features which facilitates logging, pickling and throwing
+errors.
 
-.. attribute:: traces
+.. attribute:: exc_info
 
-    List of (``errorType``, ``errvalue``, ``traceback``) occured during
-    the execution of a :class:`Deferred`. Usually, this list contains
-    one element only.
+    The exception as a three elements tuple
+    (``errorType``, ``errvalue``, ``traceback``) occured during
+    the execution of a :class:`Deferred`.
 
 .. attribute:: logged
 
-    Check if the :attr:`error` was logged. It can be a way of switching off
-    logging for certain errors.
+    Check if the :attr:`error` was logged. It can be used for switching off
+    logging for certain errors by setting::
+    
+        failure.logged = True
     
 '''
-    def __init__(self, err=None, msg=None):
-        self.msg = msg or ''
-        self.traces = []
-        self.append(err)
-
+    _msg = 'Pulsar asynchronous failure'
+    
+    def __init__(self, error):
+        if isinstance(error, Failure):
+            exc_info = error.exc_info
+        elif isinstance(error, Exception):
+            exc_info = sys.exc_info()
+            if exc_info == EMPTY_EXC_INFO:
+                try:
+                    raise error
+                except Exception:
+                    exc_info = sys.exc_info()
+        else:
+            exc_info = error
+        self.exc_info = exc_info
+        
     def __repr__(self):
-        return '\n\n'.join(self.format_all())
+        if self.is_remote:
+            tb = self.exc_info[2]
+        else:
+            tb = traceback.format_exception(*self.exc_info)
+        return ''.join(tb)
     __str__ = __repr__
     
     def __del__(self):
@@ -271,106 +289,63 @@ during :class:`Deferred` callbacks.
     logged = property(_get_logged, _set_logged)
     
     @property
-    def trace(self):
-        if self.traces:
-            return self.traces[-1]
-        else:
-            return (None, None, None)
-    
-    @property
-    def exc_info(self):
-        if self.traces:
-            return self.traces[-1]
-        else:
-            return (None, None, None)
-    
-    @property
     def error(self):
-        '''Last python :class:`Exception` instance if available.'''
-        return self.trace[1]
+        '''The python :class:`Exception` instance.'''
+        return self.exc_info[1]
     
-    def append(self, failure):
-        '''Append new ``failure`` to self. The input ``failure`` can be another
-:class:`Failure`, an :class:`Exception` or a system exception info tuple
-obtained from ``sys.exc_info()``.'''
-        if failure:
-            if isinstance(failure, Failure):
-                self.traces.extend(failure.traces)
-            elif isinstance(failure, Exception):
-                exc_info = sys.exc_info()
-                if exc_info == EMPTY_EXC_INFO:
-                    try:
-                        raise failure
-                    except Exception:
-                        exc_info = sys.exc_info()
-                self.traces.append(exc_info)
-            elif is_exc_info_error(failure):
-                self.traces.append(failure)
-        return self
-    
-    def clear(self):
-        '''Clear this :class:`Failure`'''
-        self.traces = []
+    @property
+    def is_remote(self):
+        return isinstance(self.exc_info, remote_stacktrace)
 
-    def format_all(self):
-        for exctype, value, tb in self:
-            if istraceback(tb):
-                tb = traceback.format_exception(exctype, value, tb)
-            if tb:
-                yield '\n'.join(tb)
-            else:
-                yield str(value)
-    
     def isinstance(self, classes):
         '''Check if :attr:`error` is an instance of exception ``classes``.'''
         return isinstance(self.error, classes)
-            
-    def __getstate__(self):
-        self.log()
-        traces = []
-        for exctype, value, tb in self:
-            if istraceback(tb):
-                tb = traceback.format_exception(exctype, value, tb)
-            traces.append(remote_stacktrace(exctype, value, tb))
-        state = self.__dict__.copy()
-        state['traces'] = traces
-        return state
 
-    def __getitem__(self, index):
-        return self.traces[index]
-
-    def __len__(self):
-        return len(self.traces)
-
-    def __iter__(self):
-        return iter(self.traces)
-
-    def raise_all(self, first=True):
-        pos = 0 if first else -1
-        if self.traces and isinstance(self.traces[pos][1], Exception):
-            eclass, error, trace = self.traces.pop()
-            self.log()
-            raise_error_trace(error, trace)
+    def throw(self, gen=None):
+        '''Raises the exception from the :attr:`exc_info`.
+        
+:parameter gen: Optional generator. If provided the exception is throw into
+    the generator via the ``gen.throw`` method.
+    
+Without ``gen``, this method is used when interacting with libraries
+supporting both synchronous and asynchronous flow controls.'''
+        if gen:
+            if self.is_remote:
+                gen.throw(self.exc_info[0], self.exc_info[1])
+            else:
+                gen.throw(*self.exc_info)
         else:
-            self.log()
-            N = len(self.traces)
-            if N == 1:
-                raise DeferredFailure(
-                    'There was one failure during callbacks.')
-            elif N > 1:
-                raise DeferredFailure(
-                    'There were {0} failures during callbacks.'.format(N))
+            if self.is_remote:
+                raise self.exc_info[1]
+            else:
+                _, error, trace = self.exc_info
+                self.log()
+                raise_error_trace(error, trace)
 
     def log(self, log=None, msg=None, level=None):
-        if self.traces and not self.logged:
+        '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
+The logging can append once only.'''
+        if not self.logged:
             log = log or LOGGER
-            msg = msg or self.msg
+            if self.is_remote:
+                msg = msg or str(self)
+                exc_info = None
+            else:
+                msg = msg or self._msg
+                exc_info=self.exc_info
             if level:
                 getattr(log, level)(msg)
             else:
-                log.error(msg, exc_info=self.trace)
+                log.error(msg, exc_info=exc_info)
         self.logged = True
 
+    def __getstate__(self):
+        self.log()
+        exctype, value, tb = self.exc_info
+        tb = traceback.format_exception(exctype, value, tb)
+        state = self.__dict__.copy()
+        state['exc_info'] = remote_stacktrace(exctype, value, tb)
+        return state
 
 ############################################################### Deferred
 class Deferred(object):
@@ -766,7 +741,7 @@ function when a generator is passed as argument.'''
                 if isinstance(result, Failure):
                     failure, result = result, None
                     try:
-                        result = gen.throw(*failure.exc_info)
+                        result = failure.throw(gen)
                     except StopIteration:
                         failure.logged = True
                         raise
@@ -843,7 +818,7 @@ containers such as tuple and frozenset.
     def __init__(self, data=None, type=None, raise_on_error=True,
                  handle_value=None, log_failure=False, **kwargs):
         self._deferred = {}
-        self._failures = Failure()
+        self._failures = []
         self.log_failure = log_failure
         self.raise_on_error = raise_on_error
         self.handle_value = handle_value
@@ -959,7 +934,7 @@ list :attr:`type` only.'''
                                'dependents %r' % self._deferred)
         self._time_finished = default_timer()
         if self.raise_on_error and self._failures:
-            self.callback(self._failures)
+            self.callback(self._failures[0])
         else:
             self.callback(self._stream)
 
@@ -969,7 +944,7 @@ list :attr:`type` only.'''
             stream.append(value)
         else:
             stream[key] = value
-        if is_failure(value):
+        if isinstance(value, Failure):
             if self.log_failure:
-                log_failure(value)
+                value.log()
             self._failures.append(value)

@@ -46,7 +46,7 @@ class TestTestLoader(unittest.TestCase):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
-        self.assertEqual(len(modules), 6)
+        self.assertEqual(len(modules), 7)
                 
     def __test_load_tags2(self):
         #TODO: Fix this test

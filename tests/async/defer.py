@@ -5,8 +5,9 @@ from functools import reduce
 
 from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError,\
-                        async_sleep
+                        async_sleep, Failure
 from pulsar.async.defer import is_exc_info_error
+from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest
 
 
@@ -78,7 +79,7 @@ class TestDeferred(unittest.TestCase):
             d.callback(e)
         self.assertTrue(d.done())
         self.assertTrue(cbk.done())
-        self.assertEqual(cbk.result[-1],trace)
+        self.assertEqual(cbk.result.exc_info, trace)
         
     def testDeferredCallback(self):
         d = Deferred()
@@ -206,6 +207,26 @@ class TestDeferred(unittest.TestCase):
         d1.callback(1)
         self.assertEqual(d1.result, 1)
         self.assertEqual(d2.result, 2)
+        
+
+class TestFailure(unittest.TestCase):
+    
+    def testRepr(self):
+        failure = Failure(Exception('test'))
+        val = str(failure)
+        self.assertEqual(repr(failure), val)
+        self.assertTrue('Exception: test' in val)
+        
+    def testRemote(self):
+        failure = Failure(Exception('test'))
+        s1 = str(failure)
+        self.assertFalse(failure.is_remote)
+        failure.logged = True
+        remote = pickle.loads(pickle.dumps(failure))
+        self.assertTrue(remote.is_remote)
+        s2 = str(remote)
+        self.assertEqual(s1, s2)
+        self.assertTrue(remote.logged)
         
         
 class TestMultiDeferred(unittest.TestCase):

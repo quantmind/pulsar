@@ -53,7 +53,6 @@ class TestTestWorker(unittest.TestCase):
         monitor = arbiter.registered['test']
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
-        self.assertFalse(monitor.cpubound)
         
     def test_mailbox(self):
         worker = pulsar.get_actor()
