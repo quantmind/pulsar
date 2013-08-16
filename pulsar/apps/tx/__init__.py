@@ -15,6 +15,9 @@ function.
 Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.
 
+The Coverage report is switched off because twisted is not available
+in python 3.
+
 Pulsar Reactor
 ====================
 
@@ -25,7 +28,7 @@ Pulsar Reactor
 
 .. _twisted: http://twistedmatrix.com/
 '''
-try:
+try:    #pragma    nocover
     import twisted
     from twisted.internet.main import installReactor
     from twisted.internet.posixbase import PosixReactorBase
@@ -45,7 +48,7 @@ from pulsar.async.defer import default_maybe_async, default_maybe_failure, set_a
 from pulsar.utils.pep import get_event_loop
 
     
-def _maybe_async(obj, **params):
+def _maybe_async(obj, **params):    #pragma    nocover
     if isinstance(obj, Deferred):
         d = pulsar.Deferred()
         d._twisted_deferred = obj
@@ -53,7 +56,7 @@ def _maybe_async(obj, **params):
         obj = d
     return default_maybe_async(obj, **params)
 
-def _maybe_failure(e):
+def _maybe_failure(e):  #pragma    nocover
     if isinstance(e, Failure):
         return pulsar.Failure((e.type, e.value, e.tb))
     else:
@@ -64,7 +67,7 @@ def _maybe_failure(e):
 set_async(_maybe_async, _maybe_failure)
 
 
-class PulsarReactor(PosixReactorBase):
+class PulsarReactor(PosixReactorBase):  #pragma    nocover
     '''A twisted reactor which acts as a proxy to pulsar eventloop. The
 event loop is obtained via the ``get_event_loop`` function.'''
     def callLater(self, _seconds, f, *args, **kw):
@@ -113,7 +116,7 @@ event loop is obtained via the ``get_event_loop`` function.'''
     def _handleSignals(self):
         pass
         
-if installReactor:
+if installReactor:  #pragma    nocover
     _reactor = PulsarReactor()
     installReactor(_reactor)
     _reactor.run()
