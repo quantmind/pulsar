@@ -5,7 +5,7 @@ from functools import reduce
 
 from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError,\
-                        async_sleep, Failure
+                        async_sleep, Failure, safe_async
 from pulsar.async.defer import is_exc_info_error
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest
@@ -315,3 +315,13 @@ class TestFunctions(unittest.TestCase):
         result = yield async_sleep(1)
         self.assertEqual(result, 1)
         self.assertTrue(time.time() - start > 1)
+        
+    def test_safe_async(self):
+        def f():
+            raise ValueError
+        result = safe_async(f)
+        self.assertIsInstance(result, Deferred)
+        self.assertTrue(result.done())
+        result = result.result
+        self.assertIsInstance(result, Failure)
+        self.assertIsInstance(result.error, ValueError)

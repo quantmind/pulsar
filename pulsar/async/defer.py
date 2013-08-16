@@ -311,9 +311,9 @@ Without ``gen``, this method is used when interacting with libraries
 supporting both synchronous and asynchronous flow controls.'''
         if gen:
             if self.is_remote:
-                gen.throw(self.exc_info[0], self.exc_info[1])
+                return gen.throw(self.exc_info[0], self.exc_info[1])
             else:
-                gen.throw(*self.exc_info)
+                return gen.throw(*self.exc_info)
         else:
             if self.is_remote:
                 raise self.exc_info[1]
@@ -529,11 +529,11 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         self._run_callbacks()
         return self.result
         
-    def raise_all(self):
+    def throw(self):
         '''raise an exception only if :meth:`done` is ``True`` and
 the result is a :class:`Failure`'''
-        if self.done() and is_failure(self.result):
-            self.result.raise_all()
+        if self.done() and isinstance(self.result, Failure):
+            self.result.throw()
             
     def then(self, deferred=None):
         '''Add another ``deferred`` to this :class:`Deferred` callbacks.

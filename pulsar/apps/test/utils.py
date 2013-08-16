@@ -129,7 +129,7 @@ class AsyncAssert(object):
         #        return False
         def _():
             if is_failure(value):
-                value.raise_all()
+                value.throw()
         test.assertRaises(exc_type, _)
         
 

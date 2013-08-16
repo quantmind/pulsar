@@ -361,7 +361,7 @@ This is useful during testing. It is the synchronous equivalent of
 :meth:`content`.'''
         value = maybe_async(self.content(request))
         if is_failure(value):
-            value.raise_all()
+            value.throw()
         return value
             
 
