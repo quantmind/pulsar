@@ -22,11 +22,14 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
 from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
-from .transports import create_server
+from .defer import log_failure, is_failure, Deferred, TimeoutError,\
+                    multi_async, maybe_async
+from .transports import start_serving
+from .transports.tcp import TRY_WRITE_AGAIN
 
 __all__ = ['EventLoop', 'TimedCall']
 
+DEFAULT_CONNECT_TIMEOUT = 5
 LOGGER = logging.getLogger('pulsar.eventloop')
 
 
@@ -323,7 +326,11 @@ event loop is the place where most asynchronous operations are carried out.
 
     The thread id where the eventloop is running
 
+.. attribute:: socket_factory
+
+    Class attribute to create raw sockets
 """
+    socket_factory = socket.socket
     # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
     tid = None
@@ -602,7 +609,88 @@ default signal handler ``signal.SIG_DFL``.'''
         '''Wake up the eventloop.'''
         if self.running and self._waker:
             self._waker.wake()
+    
+    def create_connection(self, protocol_factory, host=None, port=None,
+                          ssl=None, family=None, proto=0, sock=None,
+                          bind_address=None, timeout=None):
+        '''Coroutine for creating a stream connection to a given ``host``
+and ``port``. This is a task that is typically called from the client side of
+the connection.
+
+:parameter host: endpoint host.
+:parameter host: endpoint port.
+:return: the ``(transport, protocol)`` pair. If a failure prevents the creation
+    of a successful connection, an appropriate exception will be raised.'''
+        if host is not None or port is not None:
+            if sock is not None:
+                raise ValueError(
+                    'host/port and sock can not be specified at the same time')
+            if bind_address:
+                bind = yield self.getaddrinfo(*bind_address, family=family,
+                                              type=socket.SOCK_STREAM,
+                                              proto=proto)
+                bind_address = bind[-1]
+            #
+            info = yield self.getaddrinfo(host, port, family=family,
+                                          type=socket.SOCK_STREAM,
+                                          proto=proto)
             
+            sock = self.socket_factory(family=family, type=type, proto=proto)
+            if bind_address:
+                try:
+                    sock.bind(bind_address)
+                except socket.error as exc:
+                    raise socket.error(
+                        exc.errno, 'error while '
+                        'attempting to bind on address '
+                        '{!r}: {}'.format(
+                            bind_address, exc.strerror.lower()))
+            sock.setblocking(False)
+            yield self.sock_connect(sock, address, timeout)
+        elif sock is None:
+            raise ValueError(
+                'host and port was not specified and no sock specified')
+        sock.setblocking(False)
+        protocol = protocol_factory()
+        if ssl:
+            sslcontext = None if isinstance(ssl, bool) else ssl
+            transport = self._make_ssl_transport(
+                sock, protocol, sslcontext, server_side=False)
+        else:
+            transport = self._make_socket_transport(sock, protocol)
+        yield transport, protocol
+        
+    def sock_connect(self, sock, address, timeout=None):
+        return self._sock_connect(sock, address, timeout)
+        try:
+            self.sock.connect(address)
+        except socket.error as e:
+            if e.args[0] in TRY_WRITE_AGAIN:
+                return False
+            else:
+                raise
+        else:
+            return True #    A synchronous connection
+    
+    def start_serving(self, protocol_factory, host=None, port=None,
+                      family=socket.AF_UNSPEC,
+                      flags=socket.AI_PASSIVE,
+                      sock=None,
+                      backlog=100,
+                      ssl=None,
+                      reuse_address=None):
+        '''Enters a serving loop that accepts connections. This is a Task
+that completes once the serving loop is set up to serve.
+
+:return: a list of one or more sockets in listening mode (multiple sockets may
+    be returned if the specified address allows both IPv4 and IPv6
+    connections). '''
+        result = start_serving(self, protocol_factory, host, port,
+                               family=family, flags=flags, sock=sock,
+                               backlog=backlog, ssl=ssl,
+                               reuse_address=reuse_address)
+        return maybe_async(result, event_loop=event_loop)
+        
     ############################################################ NON PEP METHODS
     def call_repeatedly(self, interval, callback, *args):
         """Call a ``callback`` every ``interval`` seconds. It handles
@@ -738,3 +826,34 @@ if we are calling from the same thread of execution as this
                 eno = args[0]
         if eno not in SOCKET_INTERRUPT_ERRORS and self.running:
             return True
+        
+    def _sock_connect(self, sock, address, timeout, connector=None):
+        fd = sock.fileno()
+        if connector is None:
+            try:
+                sock.connect(address)
+            except socket.error as e:
+                def cancel(d):
+                    self.remove_writer(fd)
+                #
+                connector = Deferred(canceller=cancel, event_loop=self)
+                if e.args[0] in TRY_WRITE_AGAIN:
+                    connector.set_timeout(timeout or DEFAULT_CONNECT_TIMEOUT)
+                    self.add_writer(fd, self._sock_connect, sock, address,
+                                    timeout, connector)
+                else:
+                    connector.callback(e)
+        else:
+            self.remove_writer(fd)
+            try:
+                err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                if err != 0:
+                    raise socket.error(err, 'Connect call failed')
+            except socket.error as e:
+                connector.callback(e)
+        
+    def _make_socket_transport(self, sock, protocol):
+        return TCP(event_loop, sock, protocol)
+        
+    def _make_ssl_transport(self, sock, protocol, sslcontext, server_side=True):
+        raise NotImplementedError

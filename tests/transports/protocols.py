@@ -24,6 +24,16 @@ class SafeCallback(pulsar.Deferred):
         raise NotImplementedError()
     
 
+class TestErrors(unittest.TestCase):
+    
+    def test_no_connection(self):
+        client = Echo(('localhost', 9999))
+        try:
+            yield client.request(b'Hello')
+        except Exception:
+            raise
+        
+
 class TestPulsarStreams(unittest.TestCase):
     concurrency = 'thread'
     server = None

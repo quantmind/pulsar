@@ -92,7 +92,7 @@ of available connections.
         for sc in stale_connections:
             sc.transport.close()
         if connection is None:
-            # build the new connection
+            # build a new connection
             connection = self.new_connection(self.address,
                                              client.consumer_factory,
                                              producer=client)
@@ -102,9 +102,9 @@ of available connections.
             connection.bind_event('connection_lost',
                                   partial(self._try_reconnect, connection))
             #IMPORTANT: create client transport an connect to endpoint
-            transport = create_transport(connection, address=connection.address,
-                                         event_loop=client.get_event_loop())
-            return transport.connect(connection.address)
+            return create_connection(lambda: connection,
+                                     address=connection.address,
+                                     event_loop=client.get_event_loop())
         else:
             return connection
         
@@ -379,6 +379,8 @@ taken to obtain all responses.'''
                 r = r.on_finished
             results.append(r)
         return multi_async(results)
+    
+    #    INTERNALS
     
     def _response(self, response, request, new_connection):
         if new_connection or response.connection is None:

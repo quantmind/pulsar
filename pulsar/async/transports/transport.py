@@ -8,27 +8,38 @@ from collections import deque
 from pulsar.utils import sockets
 from pulsar.utils.pep import get_event_loop, range
 from pulsar.utils.sockets import WRITE_BUFFER_MAX_SIZE, get_transport_type,\
-                                 create_socket
+                                 parse_address, platform
 from pulsar.async.defer import Deferred
 
 LOGGER = logging.getLogger('pulsar.transport')
 
 
-__all__ = ['Transport', 'SocketTransport', 'TransportProxy', 'create_transport']
+__all__ = ['Transport', 'SocketTransport', 'TransportProxy',
+           'create_connection']
 
 
-def create_transport(protocol, sock=None, address=None, event_loop=None, 
-                     source_address=None, **kw):
-    '''Create a new connection with a remote server. It returns
-a :class:`Transport` for the connection.'''
-    sock = create_socket(sock=sock, address=address)
-    sock.settimeout(0)
-    if source_address:
-        sock.bind(source_address)
-    transport_factory = get_transport_type(sock.TYPE).transport
+def create_connection(protocol_factory, address=None, event_loop=None,
+                      bind_address=None):
+    '''Create a new client connection to a remote server'''
+    address = parse_address(address)
     event_loop = event_loop or get_event_loop()
-    return transport_factory(event_loop, sock, protocol, **kw)
-
+    if isinstance(address, tuple):
+        return event_loop.create_connection(protocol_factory,
+                                            address[0], address[1],
+                                            family=socket.AF_INET,
+                                            bind_address=bind_address)
+    elif is_ipv6(address):
+        return event_loop.create_connection(protocol_factory,
+                                            address[0], address[1],
+                                            family=socket.AF_INET6,
+                                            bind_address=bind_address)
+    elif platform.type == 'posix':
+        return event_loop.connect_unix(protocol_factory, address,
+                                       bind_address=bind_address)
+    else:
+        raise RuntimeError('Socket address %s not supported in this platform' %
+                           address)
+    
 
 class TransportType(sockets.TransportType):
     '''A simple metaclass for Servers.'''
@@ -161,7 +172,7 @@ the :class:`EventHandler`.
 * **data_received** fired when new data has arrived
 '''
     def __init__(self, event_loop, sock, protocol, max_buffer_size=None,
-                  read_chunk_size=None):
+                 read_chunk_size=None):
         self._protocol = protocol
         self._sock = sock
         self._event_loop = event_loop
@@ -181,6 +192,11 @@ the :class:`EventHandler`.
     def __str__(self):
         return self.__repr__()
     
+    @classmethod
+    def connect(cls, protocol_factory, sock, event_loop, **kw):
+        '''Create a new client connection.'''
+        raise NotImplementedError
+        
     @property
     def connecting(self):
         return self._connector is not None

@@ -7,10 +7,10 @@ from pulsar.utils.sockets import create_socket, get_transport_type, wrap_socket
 from pulsar.async.defer import EventHandler
 
 from .protocols import Connection, Producer
-from .transport import TransportProxy, create_transport, LOGGER
+from .transport import TransportProxy, LOGGER
 
-__all__ = ['create_server', 'Server']
-
+__all__ = ['start_serving', 'Server']
+    
      
 class Server(Producer, TransportProxy):
     '''A :class:`Producer` for all server's listening for connections.

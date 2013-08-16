@@ -485,10 +485,16 @@ The main method in this class is :meth:`new_connection` where a new
         return len(self._concurrent_connections)
     
     def new_connection(self, address, consumer_factory, producer=None):
-        '''Called when a new :class:`Connection` is created. The *producer*
-is either a :class:`Server` or a :class:`Client`. If the number of
-:attr:`concurrent_connections` is greater or equal :attr:`max_connections`
-a :class:`RuntimeError` is raised.'''
+        '''Called when a new :class:`Connection` is needed.
+        
+:parameter address: the network address for the connection.
+:parameter consumer_factory: a factory of :class:`ProtocolConsumer` for the
+    new :class:`Connection`.
+:parameter producer: it is either a :class:`Server` or a :class:`Client`.
+:return: a :class:`Connection`
+
+If the number of :attr:`concurrent_connections` is greater or equal
+:attr:`max_connections` a :class:`RuntimeError` is raised.'''
         if self._max_connections and self._received >= self._max_connections:
             raise RuntimeError('Too many connections')
         # increased the connections counter
