@@ -162,10 +162,10 @@ was passed by the client.'''
         http = self.client()
         response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
         # do this so that the test suite does not fail on the test
-        yield response.on_finished.add_errback(lambda f: [f])
-        r = response.on_finished.result[0]
-        self.assertTrue(is_failure(r))
-        self.assertTrue(isinstance(r.trace[1], TooManyRedirects))
+        try:
+            yield response.on_finished
+        except TooManyRedirects:
+            pass
         history = response.history
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))

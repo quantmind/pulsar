@@ -172,13 +172,15 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def test_run_new_task_error(self):
         yield self.async.assertRaises(rpc.InvalidParams,
-                            self.proxy.run_new_task())
+                                      self.proxy.run_new_task)
         yield self.async.assertRaises(rpc.InternalError,
-                            self.proxy.run_new_task(jobname='xxxx', bla='foo'))
+                                      self.proxy.run_new_task,
+                                      jobname='xxxx', bla='foo')
 
     def test_run_new_task_run_py_code(self):
         '''Run a new task from the *runpycode* task factory.'''
-        r = yield self.proxy.run_new_task(jobname='runpycode', code=CODE_TEST, N=3)
+        r = yield self.proxy.run_new_task(jobname='runpycode',
+                                          code=CODE_TEST, N=3)
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)

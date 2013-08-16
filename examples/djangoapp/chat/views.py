@@ -72,7 +72,7 @@ class middleware(object):
         if response is not None:
             # Convert to django response
             if is_failure(response):
-                response.raise_all()
+                response.throw()
             resp = HttpResponse(status=response.status_code,
                                 content_type=response.content_type)
             for header, value in response.headers:

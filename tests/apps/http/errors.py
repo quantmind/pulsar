@@ -1,19 +1,21 @@
 '''Tests asynchronous HttpClient.'''
-from pulsar import is_failure, async
+import socket
+
+from pulsar import is_failure
 from pulsar.apps.test import unittest
 from pulsar.apps.http import HttpClient, URLError
 
 
 class TestHttpErrors(unittest.TestCase):
     
-    @async(max_errors=1)
     def test_bad_host(self):
         client = HttpClient()
         response = client.get('http://xxxyyyxxxxyyy/blafoo')
-        result = yield response.on_finished
+        try:
+            yield response.on_finished
+        except socket.error:
+            pass
         self.assertFalse(response.status_code)
-        self.assertTrue(is_failure(result))
         self.assertTrue(response.is_error)
         self.assertRaises(URLError, response.raise_for_status)
-        yield   # To remove the last error
         

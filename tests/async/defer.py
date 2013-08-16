@@ -1,13 +1,13 @@
 '''Deferred and asynchronous tools.'''
 import sys
-import time
 from functools import reduce
 
 from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
                      is_failure, MultiDeferred, maybe_async, CancelledError,\
-                        async_sleep, Failure
-from pulsar.async.defer import is_exc_info_error
-from pulsar.utils.pep import pickle
+                        async_sleep, Failure, safe_async, maybe_failure,\
+                          InvalidStateError
+from pulsar.async.defer import is_exc_info
+from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import unittest
 
 
@@ -151,6 +151,7 @@ class TestDeferred(unittest.TestCase):
         
     def testCancel(self):
         d = Deferred()
+        self.assertFalse(d.timeout)
         d.cancel('timeout')
         self.assertTrue(d.done())
         self.assertTrue(d.cancelled())
@@ -170,8 +171,10 @@ class TestDeferred(unittest.TestCase):
         self.assertEqual(str(d), 'Deferred (cancelled)')
         
     def testTimeout(self):
+        d = Deferred(timeout=1)
+        self.assertTrue(d.timeout)
         try:
-            yield Deferred(timeout=1)
+            yield d
         except Exception as e:
             self.assertIsInstance(e, CancelledError)
 
@@ -199,7 +202,7 @@ class TestDeferred(unittest.TestCase):
         except Exception as e:
             self.assertIsInstance(e, CancelledError)
         
-    def test_chain(self):
+    def test_then(self):
         d1 = Deferred()
         d2 = d1.then()
         self.assertNotEqual(d1, d2)
@@ -207,6 +210,24 @@ class TestDeferred(unittest.TestCase):
         d1.callback(1)
         self.assertEqual(d1.result, 1)
         self.assertEqual(d2.result, 2)
+        
+    def test_throw(self):
+        d = Deferred()
+        d.throw()
+        d.callback(1)
+        d.throw()
+        d = Deferred()
+        d.callback(ValueError())
+        self.assertRaises(ValueError, d.throw)
+        
+    def test_cancellation(self):
+        d = Deferred()
+        d.cancel()
+        self.assertTrue(d.cancelled())
+        failure = d.result
+        self.assertTrue(failure.isinstance(CancelledError))
+        self.assertEqual(d.callback(3), failure)
+        self.assertRaises(InvalidStateError, d.callback, 3)
         
 
 class TestFailure(unittest.TestCase):
@@ -227,6 +248,22 @@ class TestFailure(unittest.TestCase):
         s2 = str(remote)
         self.assertEqual(s1, s2)
         self.assertTrue(remote.logged)
+        
+    def testRemoteExcInfo(self):
+        failure = Failure(Exception('test'))
+        remote = pickle.loads(pickle.dumps(failure))
+        # Now create a failure from the remote.exc_info
+        failure = maybe_failure(remote.exc_info)
+        self.assertEqual(failure.exc_info, remote.exc_info)
+        self.assertTrue(failure.is_remote)
+        
+    def testFailureFromFailure(self):
+        failure = Failure(ValueError('test'))
+        failure2 = Failure(failure)
+        self.assertNotEqual(failure, failure2)
+        self.assertEqual(failure.exc_info, failure2.exc_info)
+        failure.logged = True
+        self.assertRaises(ValueError, failure.throw)
         
         
 class TestMultiDeferred(unittest.TestCase):
@@ -300,18 +337,28 @@ class TestMultiDeferred(unittest.TestCase):
 
 class TestFunctions(unittest.TestCase):
     
-    def test_is_exc_info_error(self):
-        self.assertFalse(is_exc_info_error(None))
-        self.assertFalse(is_exc_info_error((1,2)))
-        self.assertFalse(is_exc_info_error((1,2,3)))
-        self.assertFalse(is_exc_info_error((None, None, None)))
+    def test_is_exc_info(self):
+        self.assertFalse(is_exc_info(None))
+        self.assertFalse(is_exc_info((1,2)))
+        self.assertFalse(is_exc_info((1,2,3)))
+        self.assertFalse(is_exc_info((None, None, None)))
         try:
             raise ValueError
         except:
-            self.assertTrue(is_exc_info_error(sys.exc_info()))
+            self.assertTrue(is_exc_info(sys.exc_info()))
             
     def test_async_sleep(self):
-        start = time.time()
-        result = yield async_sleep(1)
-        self.assertEqual(result, 1)
-        self.assertTrue(time.time() - start > 1)
+        start = default_timer()
+        result = yield async_sleep(2.1)
+        self.assertEqual(result, 2.1)
+        self.assertTrue(default_timer() - start > 2.1)
+        
+    def test_safe_async(self):
+        def f():
+            raise ValueError
+        result = safe_async(f)
+        self.assertIsInstance(result, Deferred)
+        self.assertTrue(result.done())
+        result = result.result
+        self.assertIsInstance(result, Failure)
+        self.assertIsInstance(result.error, ValueError)

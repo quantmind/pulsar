@@ -348,6 +348,7 @@ status and performance.'''
         return r
     
     def _run(self, initial=True):
+        exc = None
         if initial:
             try:
                 self.cfg.when_ready(self)

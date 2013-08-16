@@ -10,16 +10,13 @@ The request is a single object serialized using JSON.
 The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
 import sys
-import logging
 import json
 from functools import partial
-from timeit import default_timer
 
-import pulsar
-from pulsar import async, is_failure, multi_async, log_failure
+from pulsar import async, Failure, multi_async
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import to_string, range
+from pulsar.utils.pep import range
 from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
@@ -28,7 +25,7 @@ from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 
 from .handlers import RpcHandler, InvalidRequest, exception
 
-__all__ = ['JSONRPC', 'JsonProxy', 'LocalJsonProxy']
+__all__ = ['JSONRPC', 'JsonProxy']
 
 
 class JsonToolkit(object):
@@ -82,14 +79,13 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             #
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
-        except Exception:
-            result = yield sys.exc_info()
+        except Exception as e:
+            result = Failure(e)
         #
         res = {'id': data.get('id'), "jsonrpc": self.version}
-        if is_failure(result):
-            log_failure(result)
+        if isinstance(result, Failure):
             msg = None
-            error = result.trace[1]
+            error = result.error
             if isinstance(error, TypeError):
                 msg = checkarity(callable, args, kwargs, discount=1)
             msg = msg or str(error) or 'JSON RPC exception'
@@ -209,7 +205,6 @@ usage is simple::
     >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
     >>> p.timeit('ping',10)
     0.56...
-    >>> _
     '''
         func = getattr(self, func)
         return multi_async((func(*args, **kwargs) for t in range(times)))
@@ -277,19 +272,3 @@ usage is simple::
             else:
                 return res.get('result')
         return res
-
-
-class LocalJsonProxy(JsonProxy):
-    '''A proxy class to use when accessing the rpc within the rpc application
-domain.'''
-    def setup(self, handler=None, environ=None, **kwargs):
-        self.local.handler = handler
-        self.local.environ = environ
-
-    def _call(self, name, *args, **kwargs):
-        data, raw = self._get_data(name, *args, **kwargs)
-        hnd = self.local.handler
-        environ = self.local.environ
-        method, args, kwargs, id, version = hnd.get_method_and_args(data)
-        hnd.request(environ, method, args, kwargs, id, version)
-        return environ['rpc'].process(Request(environ))

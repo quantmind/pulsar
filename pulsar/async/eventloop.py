@@ -440,7 +440,7 @@ raise TimeoutError (but don't cancel the future).'''
                 raise TimeoutError
         result = future.result
         if is_failure(result):
-            result.raise_all()
+            result.throw()
         else:
             return result
         

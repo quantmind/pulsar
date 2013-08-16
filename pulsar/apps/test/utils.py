@@ -84,59 +84,56 @@ class TestFunctionOnArbiter(TestFunction):
             return actor.send(actor.monitor, 'run', callable)
         
 def run_on_arbiter(f):
-    '''Decorator for running a test function in the arbiter domain. This
-can be useful to test Arbiter mechanics.'''
+    '''Decorator for running a test function in the :class:`pulsar.Arbiter`
+context domain. This can be useful to test Arbiter mechanics.'''
     f.testfunction = TestFunctionOnArbiter(f.__name__)
     return f
     
     
-class AsyncAssertTest(object):
+class AsyncAssert(object):
+    '''A `descriptor`_ which the :ref:`test-suite` add to all python
+:class:`unitest.TestCase`. It can be used to invoke the same
+``assertXXX`` methods available in the :class:`unitest.TestCase` with the
+added bonus they it waorks for asynchronous results too.
+
+The descriptor is available bia the ``async`` attribute. For example::
+
+    class MyTest(unittest.TestCase):
     
-    def __init__(self, a, test, name=None):
-        self.a = a
+        def test1(self):
+            yield self.async.assertEqual(3, Deferred().callback(3))
+          
+    
+.. _descriptor: http://users.rcn.com/python/download/Descriptor.htm'''
+    def __init__(self, test=None):
         self.test = test
-        self.name = name
+    
+    def __get__(self, instance, instance_type=None):
+        return AsyncAssert(instance)
         
     def __getattr__(self, name):
-        return self.__class__(self.a, self.test, name=name)
-    
-    def __call__(self, *args, **kwargs):
-        if self.name == 'assertRaises':
-            error, value, args = args[0], args[1], args[2:]
-            if hasattr(value, '__call__'):
-                value = safe_async(value, *args, **kwargs)
-            args = [error, value]
-        d = multi_async(args, type=list, raise_on_error=False)
-        return d.add_callback(self._check_result)
-    
-    def _check_result(self, args):
-        func = getattr(self.a, self.name, None)
-        if func:
-            return func(self.test, *args)
+        def _(*args, **kwargs):
+            args = yield multi_async(args)
+            yield getattr(self.test, name)(*args, **kwargs)
+        return _
+        
+    def assertRaises(self, error, callable, *args, **kwargs):
+        try:
+            yield callable(*args, **kwargs)
+        except error:
+            pass
+        except Exception:
+            raise self.test.failureException('%s not raised by %s'
+                                             % (error, callable))
         else:
-            func = getattr(self.test, self.name)
-            return func(*args)
-        
-        
-class AsyncAssert(object):
-        
-    def __get__(self, instance, instance_type=None):
-        return AsyncAssertTest(self, instance)
-    
-    def assertRaises(self, test, exc_type, value):
-        #if is_failure(value):
-        #    if not issubclass(exc_type, self.expected):
-        #        return False
-        def _():
-            if is_failure(value):
-                value.raise_all()
-        test.assertRaises(exc_type, _)
+            raise self.test.failureException('%s not raised by %s'
+                                             % (error, callable))
         
 
 class ActorTestMixin(object):
-    '''A mixin for testing spawning of actors. Make sure this
-is the first class you derive from, before the unittest.TestCase, so that
-the tearDown method is overwritten.'''
+    '''A mixin for :class:`unittest.TestCase` classes testing spawning
+of actors. Make sure this is the first class you derive from, before the
+unittest.TestCase, so that the tearDown method is overwritten.'''
     concurrency = 'thread'
     
     @property

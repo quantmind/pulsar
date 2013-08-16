@@ -262,6 +262,12 @@ Test Plugin
    
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
+
+Utilities
+~~~~~~~~~~~~~~~
+
+.. automodule:: pulsar.apps.test.utils
+    :members:
 '''
 import logging
 import time
