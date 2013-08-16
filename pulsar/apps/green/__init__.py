@@ -1,6 +1,6 @@
 '''
-Add support for greenlet_ micro-threads. The code was inspired by
-the greentulip_ experimental library.
+The :mod:`pulsar.apps.green` adds support for greenlet_ micro-threads.
+The code was inspired by the greentulip_ experimental library.
 
 
 Implementation
@@ -9,15 +9,15 @@ Implementation
 Lets assume a generator ``gen``.
         
 
-.. _greenlets: http://greenlet.readthedocs.org
-.. _grrentulip: https://github.com/1st1/greentulip
+.. _greenlet: http://greenlet.readthedocs.org
+.. _greentulip: https://github.com/1st1/greentulip
 '''
 from socket import socket
 
 import pulsar
 from pulsar import ImproperlyConfigured
 from pulsar.async.defer import _PENDING
-from pulsar.utils.pep import get_event_loop
+from pulsar.utils.pep import get_event_loop, ispy3k
 
 try:
     import greenlet
@@ -70,7 +70,8 @@ class GreenEventLoop(pulsar.EventLoop):
 
 class Socket(object):
 
-    def __init__(self, *args, _from_sock=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        _from_sock = kwargs.pop('_from_sock', None) 
         if _from_sock:
             self._sock = _from_sock
         else:
@@ -162,8 +163,9 @@ class Socket(object):
     getsockopt = _proxy('getsockopt')
     setsockopt = _proxy('setsockopt')
     fileno = _proxy('fileno')
-    detach = _proxy('detach')
     close = _proxy('close')
     shutdown = _proxy('shutdown')
+    if ispy3k:
+        detach = _proxy('detach')
 
     del _copydoc, _proxy
