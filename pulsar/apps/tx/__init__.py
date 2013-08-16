@@ -53,11 +53,11 @@ def _maybe_async(obj, **params):
         obj = d
     return default_maybe_async(obj, **params)
 
-def _maybe_failure(e, msg=''):
+def _maybe_failure(e):
     if isinstance(e, Failure):
-        return pulsar.Failure((e.type, e.value, e.tb), msg=msg)
+        return pulsar.Failure((e.type, e.value, e.tb))
     else:
-        return default_maybe_failure(e, msg=msg)
+        return default_maybe_failure(e)
         
 
 # Set the new async discovery functions

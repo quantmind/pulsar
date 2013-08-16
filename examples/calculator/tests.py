@@ -66,7 +66,7 @@ class TestRpcOnThread(unittest.TestCase):
         response = self.p.timeit('ping', 20)
         yield response
         self.assertTrue(response.locked_time > 0)
-        self.assertTrue(response.total_time > response.locked_time)
+        self.assertTrue(response.total_time >= response.locked_time)
         self.assertEqual(response.num_failures, 0)
         
     # Test Object method

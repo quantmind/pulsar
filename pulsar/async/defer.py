@@ -74,19 +74,11 @@ def is_generalised_generator(value):
 inspect.isgenerator function.'''
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 
-def is_exc_info_error(exc_info):
+def is_exc_info(exc_info):
     if isinstance(exc_info, remote_stacktrace):
         return True
     elif isinstance(exc_info, tuple) and len(exc_info) == 3:
-        trace = exc_info[2]
-        if not istraceback(trace):
-            err_class = exc_info[0]
-            if trace is None and isclass(err_class) and\
-                    issubclass(err_class, BaseException):
-                return isinstance(exc_info[1], err_class)
-            return False
-        else:
-            return True
+        return istraceback(exc_info[2])
     return False
     
 def multi_async(iterable, **kwargs):
@@ -114,7 +106,7 @@ are given, it checks if the error is an instance of those classes.'''
     return False
 
 def default_maybe_failure(value):
-    if isinstance(value, Exception) or is_exc_info_error(value):
+    if isinstance(value, Exception) or is_exc_info(value):
         return Failure(value)
     else:
         return value
@@ -778,9 +770,9 @@ function when a generator is passed as argument.'''
         del self._gen
         self.callback(result)
     
-    def cancel(self, msg):
+    def cancel(self, msg=''):
         if self._waiting:
-            self._waiting.cancel()
+            self._waiting.cancel(msg)
         else:
             super(Task, self).cancel(msg)
         

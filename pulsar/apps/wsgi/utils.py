@@ -229,7 +229,7 @@ def handle_wsgi_error(environ, failure):
     path = ' @ path "%s"' % environ.get('PATH_INFO','/')
     e = dump_environ(environ)
     exc_info = failure.exc_info
-    failure.clear()
+    failure.logged = True
     status = response.status_code
     if status == 500:
         LOGGER.critical('Unhandled exception during WSGI response %s.%s',

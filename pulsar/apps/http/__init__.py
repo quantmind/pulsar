@@ -299,7 +299,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
                 raise HTTPError(self.url, self.status_code,
                                 self.content_string(), self.headers, None)
             else:
-                raise URLError(self.on_finished.result.trace[1])
+                raise URLError(self.on_finished.result.error)
     
     def get_origin_req_host(self):
         response = self.history[-1] if self.history else self

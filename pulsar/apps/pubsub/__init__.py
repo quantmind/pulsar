@@ -1,5 +1,6 @@
 '''The :mod:`pulsar.apps.pubsub` implements a middleware
-handler for the Publish/Subscribe pattern.
+handler for the Publish/Subscribe pattern. The middleware can be used to
+synchronise pulsar actors across processes and machines.
 
 .. epigraph::
 
