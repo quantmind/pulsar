@@ -81,9 +81,16 @@ It is a producer of :class:`Transport` for server protocols.
         self.fire_event('finish')
         
     @classmethod
-    def create(cls, event_loop, sock=None, address=None, backlog=1024,
-               name=None, close_event_loop=None, **kw):
-        '''Create a new server!'''
+    def create(cls, event_loop, sock=None, address=None, name=None,
+               close_event_loop=None, **kw):
+        '''Create a new server'''
+        if sock is None:
+            address = parse_address(address)
+        else:
+            address = sock.getsockname()
+            family = sock.
+        if isinstance(address, tuple):
+            
         sock = create_socket(sock=sock, address=address, bindto=True,
                              backlog=backlog)
         transport_type = get_transport_type(sock.TYPE).transport

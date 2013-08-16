@@ -326,6 +326,15 @@ def get_connection_string(scheme, address, params):
         address += '?' + urlencode(params)
     return scheme + '://' + address
     
+def address_info(address=None, sock=None):
+    if sock:
+        if address:
+            raise ValueError('Cannot pass both address and socket')
+        address = sock.getsockname()
+    #first check if is a IPV6 address
+    if is_ipv6(address):
+        return address, socket.AF_INET6, 
+        
 def create_socket(address=None, sock=None, bindto=False, backlog=1024):
     if isinstance(sock, Socket):
         return sock

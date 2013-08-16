@@ -55,7 +55,9 @@ ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
 # SPECIAL objects for Deferred
 CONTINUE = object()
 NOT_DONE = object()
-CLEAR_ERRORS = object()
+#
+# Connections
+DEFAULT_CONNECT_TIMEOUT = 5
 #
 # Globals
 EMPTY_TUPLE = ()

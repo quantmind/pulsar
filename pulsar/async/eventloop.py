@@ -24,12 +24,10 @@ from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 from .access import thread_local_data
 from .defer import log_failure, is_failure, Deferred, TimeoutError,\
                     multi_async, maybe_async
-from .transports import start_serving
-from .transports.tcp import TRY_WRITE_AGAIN
+from .transports import tcp
 
 __all__ = ['EventLoop', 'TimedCall']
 
-DEFAULT_CONNECT_TIMEOUT = 5
 LOGGER = logging.getLogger('pulsar.eventloop')
 
 
@@ -599,12 +597,6 @@ default signal handler ``signal.SIG_DFL``.'''
         else:
             return False
         
-    def create_server(self, **kwargs):
-        '''Create a new :class:`Server`.'''
-        if self.cpubound:
-            raise RuntimeError('Cannot create server from a cpubound eventloop')
-        return create_server(self, **kwargs)
-    
     def wake(self):
         '''Wake up the eventloop.'''
         if self.running and self._waker:
@@ -673,22 +665,35 @@ the connection.
             return True #    A synchronous connection
     
     def start_serving(self, protocol_factory, host=None, port=None,
-                      family=socket.AF_UNSPEC,
-                      flags=socket.AI_PASSIVE,
-                      sock=None,
-                      backlog=100,
-                      ssl=None,
-                      reuse_address=None):
-        '''Enters a serving loop that accepts connections. This is a Task
-that completes once the serving loop is set up to serve.
+                      family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
+                      sock=None, backlog=100, ssl=None, reuse_address=None):
+        '''Creates a TCP server bound to ``host`` and ``port`` and return a
+        :class:`Deferred` whose result will be a list of socket objects which
+        will later be handled by protocol_factory.
 
-:return: a list of one or more sockets in listening mode (multiple sockets may
-    be returned if the specified address allows both IPv4 and IPv6
-    connections). '''
-        result = start_serving(self, protocol_factory, host, port,
-                               family=family, flags=flags, sock=sock,
-                               backlog=backlog, ssl=ssl,
-                               reuse_address=reuse_address)
+        If host is an empty string or None all interfaces are assumed
+        and a list of multiple sockets will be returned (most likely
+        one for IPv4 and another one for IPv6).
+
+        family can be set to either AF_INET or AF_INET6 to force the
+        socket to use IPv4 or IPv6. If not set it will be determined
+        from host (defaults to AF_UNSPEC).
+
+        flags is a bitmask for getaddrinfo().
+
+:parameter sock: Optional socket object to use rather than creating new ones.
+:parameter backlog: The maximum number of queued connections passed to
+    listen() (defaults to 100).
+:parameter ssl: can be set to an SSLContext to enable SSL over the
+    accepted connections.
+:parameter reuse_address: tells the kernel to reuse a local socket in
+    TIME_WAIT state, without waiting for its natural timeout to
+    expire. If not specified will automatically be set to True on
+    UNIX.'''
+        result = tcp.start_serving(self, protocol_factory, host, port,
+                                   family=family, flags=flags, sock=sock,
+                                   backlog=backlog, ssl=ssl,
+                                   reuse_address=reuse_address)
         return maybe_async(result, event_loop=event_loop)
         
     ############################################################ NON PEP METHODS
