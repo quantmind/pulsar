@@ -76,6 +76,7 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import pulsar
+from pulsar.utils.internet import parse_address
 
 
 class Bind(pulsar.Setting):
@@ -136,12 +137,26 @@ does not support multiprocessing sockets set the number of workers to 0.'''
         # Open the socket and bind to address
         address = self.cfg.address
         if address:
+            loop = monitor.event_loop
+            address = parse_address(address)
+            sockets = yield loop.start_serving(
+                                    protocol_factory=self.protocol_factory,
+                                    backlog=self.cfg.backlog)
+            adresses = []
+            if cfg.workers:
+                for sock in sockets:
+                    assert loop.remove_reader(sock.fileno()),\
+                            "Could not remove reader"
+                    adresses.append(sock.getsockname())
             sock = pulsar.create_socket(address, bindto=True,
                                         backlog=self.cfg.backlog)
         else:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
-        self.logger.info('Listening on %s', sock)
+        self.logger.info('Listening on %s',
+                         ', '.join((str(a) for a in adresses)))
+        monitor.params.sockets = sockets
+        monitor.params.addresses = addresses
         monitor.params.sock = sock
         self.address = sock.address
     

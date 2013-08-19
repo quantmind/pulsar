@@ -529,6 +529,12 @@ the result is a :class:`Failure`'''
         if self.done() and isinstance(self.result, Failure):
             self.result.throw()
             
+    def log(self, **kwargs):
+        '''Log a failure via the :meth:`Failure.log` method if the
+:attr:`result` is a :class:`Failure`.'''
+        if self.done() and isinstance(self.result, Failure):
+            self.result.log(**kwargs)
+            
     def then(self, deferred=None):
         '''Add another ``deferred`` to this :class:`Deferred` callbacks.
 

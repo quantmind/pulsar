@@ -24,6 +24,8 @@ from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 from .access import thread_local_data
 from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
 from .transports import create_server
+from .stream import create_connection, start_serving, sock_connect, sock_accept
+from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 
 __all__ = ['EventLoop', 'TimedCall']
 
@@ -517,11 +519,10 @@ NOT YET SUPPORTED.'''
         self._default_executor = executor
         
     def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
-        return self.run_in_executor(None, socket.getaddrinfo,
-                                    host, port, family, type, proto, flags)
+        return socket.getaddrinfo(host, port, family, type, proto, flags)
 
     def getnameinfo(self, sockaddr, flags=0):
-        return self.run_in_executor(None, socket.getnameinfo, sockaddr, flags)
+        return socket.getnameinfo(sockaddr, flags)
         
     def add_reader(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
@@ -602,7 +603,92 @@ default signal handler ``signal.SIG_DFL``.'''
         '''Wake up the eventloop.'''
         if self.running and self._waker:
             self._waker.wake()
-            
+    
+    def create_connection(self, protocol_factory, host=None, port=None,
+                          ssl=None, family=0, proto=0, flags=0, sock=None,
+                          local_addr=None, timeout=None):
+        '''Creates a stream connection to a given internet host and port.
+        
+It is the asynchronous equivalent of ``socket.create_connection``.
+
+:parameter protocol_factory: The callable to create the :class:`Protocol`
+    which handle the connection.
+:parameter host: If host is an empty string or None all interfaces are assumed
+    and a list of multiple sockets will be returned (most likely
+    one for IPv4 and another one for IPv6)
+:parameter port:
+:parameter ssl:
+:parameter family:
+:parameter proto:
+:parameter flags:
+:parameter sock:
+:parameter local_addr: if supplied, it must be a 2-tuple ``(host, port)`` for
+    the socket to bind to as its source address before connecting.
+:return: a :class:`Deferred` and its result on success is the
+    ``(transport, protocol)`` pair.
+    
+If a failure prevents the creation of a successful connection, an appropriate
+exception will be raised.'''
+        timeout = timeout or DEFAULT_CONNECT_TIMEOUT
+        res = create_connection(self, protocol_factory, host, port,
+                                ssl, family, proto, flags, sock, local_addr)
+        return maybe_async(res, event_loop=self, timeout=timeout)
+    
+    def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
+                      family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
+                      sock=None, backlog=100, reuse_address=None):
+        """Creates a TCP server bound to ``host`` and ``port``.
+        
+:parameter protocol_factory: The :class:`Protocol` which handle server requests.
+:parameter host: If host is an empty string or None all interfaces are assumed
+    and a list of multiple sockets will be returned (most likely
+    one for IPv4 and another one for IPv6).
+:parameter port: integer indicating the port number.
+:parameter ssl: can be set to an SSLContext to enable SSL over the accepted
+    connections.
+:parameter family: socket family can be set to either ``AF_INET`` or
+    ``AF_INET6`` to force the socket to use IPv4 or IPv6.
+    If not set it will be determined from host (defaults to ``AF_UNSPEC``).
+:parameter flags: is a bitmask for :meth:`getaddrinfo`.
+:parameter sock: can optionally be specified in order to use a pre-existing
+    socket object.
+:parameter backlog: is the maximum number of queued connections passed to
+    listen() (defaults to 100).
+:parameter reuse_address: tells the kernel to reuse a local socket in
+    ``TIME_WAIT`` state, without waiting for its natural timeout to
+    expire. If not specified will automatically be set to ``True`` on UNIX.
+:return: a :class:`Deferred` whose result will be a list of socket objects
+    which will later be handled by ``protocol_factory``.
+        """
+        res = start_serving(self, protocol_factory, host, port, ssl,
+                            family, flags, sock, backlog, reuse_address)
+        return maybe_async(res, event_loop=self)
+    
+    def stop_serving(self, sock):
+        '''The argument should be a socket from the list returned by
+:meth:`start_serving` method. The serving loop associated with that socket
+will be stopped.'''
+        self.remove_reader(sock.fileno())
+        sock.close()
+        
+    def sock_connect(self, sock, address, timeout=None):
+        '''Connect ``sock`` to the given ``address``.
+        
+        Returns a :class:`Deferred` whose result on success will be ``None``.'''
+        res = sock_connect(self, sock, address)
+        return maybe_async(res, event_loop=self, timeout=timeout)
+    
+    def sock_accept(self, sock, timeout=None):
+        '''Accept a connection from a socket ``sock``.
+        
+        The socket must be in listening mode and bound to an address.
+        Returns a :class:`Deferred` whose result on success will be a tuple
+        ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
+        and ``peer`` is the peer address.'''
+        timeout = timeout or DEFAULT_ACCEPT_TIMEOUT
+        res = sock_accept(self, sock)
+        return maybe_async(res, event_loop=self, timeout=timeout)
+        
     ############################################################ NON PEP METHODS
     def call_repeatedly(self, interval, callback, *args):
         """Call a ``callback`` every ``interval`` seconds. It handles

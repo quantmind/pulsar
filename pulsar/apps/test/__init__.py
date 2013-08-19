@@ -1,7 +1,7 @@
-'''The :class:`TestSuite` is a testing framework for
-asynchronous/synchronous applications and for running tests in parallel
+'''The :class:`TestSuite` is a testing framework for both synchronous and
+asynchronous applications and for running tests in parallel
 on multiple threads or processes.
-It is used for testing pulsar itself but it can be used
+It is used for testing pulsar but it can be used
 as a test suite for any other library.
 
 Requirements
