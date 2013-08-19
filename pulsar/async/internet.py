@@ -1,10 +1,20 @@
 import io
+import socket
 from collections import deque
 
-from pulsar.utils.internet import WRITE_BUFFER_MAX_SIZE
-from . import tcp
-from .defer import maybe_async
+from pulsar.utils.internet import WRITE_BUFFER_MAX_SIZE, nice_address
 
+__all__ = ['BaseProtocol', 'Protocol', 'DatagramProtocol',
+           'Transport', 'SocketTransport']
+
+AF_INET6 = getattr(socket, 'AF_INET6', 0)
+
+FAMILY_NAME = {socket.AF_INET: 'TCP'}
+if AF_INET6:
+    FAMILY_NAME[socket.AF_INET] = 'TCP6'
+if hasattr(socket, 'AF_UNIX'):
+    FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
+    
 
 class BaseProtocol:
     """ABC for base protocol class.
@@ -178,17 +188,7 @@ passed to the :meth:`Protocol.data_received` method."""
         
     
 class SocketTransport(Transport):
-    '''A class:`Transport` based on sockets. It handles events implemented by
-the :class:`EventHandler`.
-    
-.. attribute:: connecting
-
-    The transport is connecting, all writes are buffered until connection
-    is established.
-    
-.. attribute:: writing
-
-    The transport has data in the write buffer and it is not :class:`closed`.
+    '''A class:`Transport` for sockets.
     
 **One Time Events**
 
@@ -207,23 +207,28 @@ the :class:`EventHandler`.
         self._sock_fd = sock.fileno()
         self._event_loop = event_loop
         self._closing = False
-        self._paused = False
         self._extra = extra
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
+        event_loop.add_reader(self._sock_fd, self._read_ready)
+        event_loop.call_soon(self._protocol.connection_made, self)
     
     def __repr__(self):
-        try:
-            return self._sock.__repr__()
-        except Exception:
+        sock = self._sock
+        if self._sock:
+            address = sock.getsockname()
+            family = FAMILY_NAME.get(sock.family, 'UNKNOWN')
+            return '%s %s' % (family, nice_address(address))
+        else:
             return '<closed>'
-    
+        
     def __str__(self):
         return self.__repr__()
     
     @property
     def writing(self):
+        '''The :class:`Transport` has data in the write buffer.'''
         return self._sock is not None and bool(self._write_buffer)
     
     @property
@@ -241,7 +246,7 @@ the :class:`EventHandler`.
     @property
     def address(self):
         if self._sock:
-            return self._sock.address
+            return self._sock.getsockname()
     
     @property
     def event_loop(self):
@@ -250,39 +255,32 @@ the :class:`EventHandler`.
     def fileno(self):
         if self._sock:
             return self._sock.fileno()
-
-    def write(self, data):
-        self._check_closed()
-        writing = self.writing
-        if data:
-            assert isinstance(data, bytes)
-            if len(data) > WRITE_BUFFER_MAX_SIZE:
-                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
-                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
-            else:
-                self._write_buffer.append(data)
-        # Try to write only when not waiting for write callbacks
-        if not self.connecting and not writing:
-            self._do_write()
-    
-    def pause(self):
-        if not self._paused:
-            self._paused = True
-
-    def resume(self):
-        if self._paused:
-            self._paused = False
-            buffer = self._read_buffer
-            self._read_buffer = []
-            for data in buffer:
-                self._data_received(chunk)
-    
+                
     def close(self, async=True, exc=None):
         if not self.closing:
             self._closing = True
-            self._event_loop.remove_reader(self._sock.fileno())
+            self._event_loop.remove_reader(self._sock_fd)
             if async and not self.writing:
                 self._event_loop.call_soon(self._shutdown, exc)
         if not async:
             self._shutdown(exc)
     
+    def _read_ready(self):
+        raise NotImplementedError
+    
+    def _check_closed(self):
+        if self.closed:
+            raise IOError("Transport is closed")
+        elif self._closing:
+            raise IOError("Transport is closing")
+        
+    def _shutdown(self, exc=None):
+        if self._sock is not None:
+            self._write_buffer = deque()
+            self._event_loop.remove_writer(self._sock_fd)
+            try:
+                self._sock.close()
+            except Exception:
+                pass
+            self._sock = None
+            self._protocol.connection_lost(exc)

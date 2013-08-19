@@ -252,12 +252,12 @@ errors.
     def __init__(self, error):
         if isinstance(error, Failure):
             exc_info = error.exc_info
-        elif isinstance(error, Exception):
+        elif isinstance(error, BaseException):
             exc_info = sys.exc_info()
             if exc_info == EMPTY_EXC_INFO:
                 try:
                     raise error
-                except Exception:
+                except:
                     exc_info = sys.exc_info()
         else:
             exc_info = error
@@ -709,9 +709,14 @@ a callable which accept one argument only.'''
     def safe_callback(self, event, callback):
         def _(result):
             try:
-                callback(result)
-            except Exception:
-                LOGGER.exception('Unhandled exception in "%s" event', event)
+                r = callback(result)
+            except Exception as e:
+                r = Failure(e)
+            if isinstance(r, Deferred):
+                r.add_errback(lambda f: f.log(
+                            msg='Unhandled exception in "%s" event' % event))
+            elif isinstance(r, Failure):
+                r.log(msg='Unhandled exception in "%s" event' % event)
             # always return result
             return result
         return _

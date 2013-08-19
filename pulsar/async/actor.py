@@ -5,7 +5,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import setid
-from .defer import EventHandler, log_failure
+from .defer import EventHandler, Failure
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
@@ -359,11 +359,9 @@ status and performance.'''
         except Exception as e:
             exc = e
         except HaltServer as e:
-            exc = e
-            if e.exit_code:
-                log_failure(e, msg=str(e), level='critical')
-            else:
-                log_failure(e, msg='Exiting server.', level='info')
+            exc = Failure(e)
+            exc.log() if e.exit_code == 1 else exc.log(msg='Exiting server.',
+                                                       level='info')
         finally:
             self.stop(exc)
         

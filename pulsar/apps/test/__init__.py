@@ -485,7 +485,7 @@ configuration and plugins.'''
             runner.printSummary(time_taken)
             # Shut down the arbiter
             if runner.result.errors or runner.result.failures:
-                exit_code = 1
+                exit_code = 2
             else:
                 exit_code = 0
             raise pulsar.HaltServer(exit_code=exit_code)

@@ -76,7 +76,9 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import pulsar
+from pulsar import async
 from pulsar.utils.internet import parse_address
+from pulsar.async import TcpServer
 
 
 class Bind(pulsar.Setting):
@@ -127,42 +129,37 @@ the server. By default it returns the :attr:`pulsar.apps.Application.callable`
 attribute.'''
         return self.callable
     
+    @async()
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address. if the platform
 does not support multiprocessing sockets set the number of workers to 0.'''
         cfg = self.cfg
+        loop = monitor.event_loop
         if not pulsar.platform.has_multiProcessSocket\
             or cfg.concurrency == 'thread':
             cfg.set('workers', 0)
-        # Open the socket and bind to address
-        address = self.cfg.address
-        if address:
-            loop = monitor.event_loop
-            address = parse_address(address)
-            sockets = yield loop.start_serving(
-                                    protocol_factory=self.protocol_factory,
-                                    backlog=self.cfg.backlog)
-            adresses = []
-            if cfg.workers:
-                for sock in sockets:
-                    assert loop.remove_reader(sock.fileno()),\
-                            "Could not remove reader"
-                    adresses.append(sock.getsockname())
-            sock = pulsar.create_socket(address, bindto=True,
-                                        backlog=self.cfg.backlog)
-        else:
+        if not self.cfg.address:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
-        self.logger.info('Listening on %s',
-                         ', '.join((str(a) for a in adresses)))
+        address = parse_address(self.cfg.address)
+        # First create the sockets
+        sockets = yield loop.start_serving(lambda: None, *address)
+        addresses = []
+        for sock in sockets:
+            assert loop.remove_reader(sock.fileno()), (
+                        "Could not remove reader")
+            addresses.append(sock.getsockname())
+        #sock = pulsar.create_socket(address, bindto=True,
+        #                            backlog=self.cfg.backlog)
         monitor.params.sockets = sockets
         monitor.params.addresses = addresses
-        monitor.params.sock = sock
-        self.address = sock.address
     
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''
-        worker.servers[self.name] = self.create_server(worker)
+        worker.servers[self.name] = servers = []
+        for sock in worker.params.sockets:
+            server = self.create_server(worker, sock)
+            servers.append(server)
     
     def on_info(self, worker, data):
         server = worker.socket_server
@@ -172,18 +169,20 @@ does not support multiprocessing sockets set the number of workers to 0.'''
                           'received_connections': server.received}
         return data
 
-    def create_server(self, worker):
+    def create_server(self, worker, sock):
         '''Create the Server Protocol which will listen for requests. It
 uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
         cfg = self.cfg
-        server = worker.event_loop.create_server(
-                                      sock=worker.params.sock,
-                                      consumer_factory=self.protocol_consumer(),
-                                      max_connections=cfg.max_requests,
-                                      timeout=cfg.keep_alive)
+        server = TcpServer(worker.event_loop,
+                           sock=sock,
+                           consumer_factory=self.protocol_consumer(),
+                           max_connections=cfg.max_requests,
+                           timeout=cfg.keep_alive,
+                           name=self.name)
         server.bind_event('connection_made', cfg.connection_made)
         server.bind_event('pre_request', cfg.pre_request)
         server.bind_event('post_request', cfg.post_request)
         server.bind_event('connection_lost', cfg.connection_lost)
+        server.start_serving(cfg.backlog)
         return server
         

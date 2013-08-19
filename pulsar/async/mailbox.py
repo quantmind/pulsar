@@ -52,7 +52,8 @@ from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor
 from .defer import async, Failure, log_failure, Deferred
-from .transports import ProtocolConsumer, SingleClient, Request
+from .protocols import ProtocolConsumer
+from .clients import SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 
 

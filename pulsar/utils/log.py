@@ -94,6 +94,7 @@ def update_config(config, c):
     for name in ('handlers', 'formatters', 'filters', 'loggers', 'root'):
         if name in c:
             config[name].update(c[name])
+
     
 def local_method(f):
     name = f.__name__

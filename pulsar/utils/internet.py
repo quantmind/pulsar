@@ -44,9 +44,9 @@ else:
                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,\
                       EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED
 
-TCP_ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
-TCP_TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
-TCP_TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
+ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
+TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
+TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 
 SOCKET_INTERRUPT_ERRORS = (EINTR, ECONNRESET)
 
@@ -142,3 +142,22 @@ def is_closed(sock):
                 return True
     except Exception:
         return True
+
+def nice_address(address, family=None):
+    if isinstance(address, tuple):
+        return ':'.join((str(s) for s in address[:2]))
+    elif family:
+        return '%s:%s' % (family, address)
+    else:
+        return address
+    
+def format_address(address):
+    if isinstance(address, tuple):
+        if len(address) == 2:
+            return '%s:%s' % address
+        elif len(address) == 4:
+            return '[%s]:%s' % address[:2]
+        else:
+            raise ValueError('Could not format address %s' % str(address))
+    else:
+        return str(address)

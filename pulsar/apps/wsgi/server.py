@@ -27,6 +27,8 @@ from pulsar.utils.pep import is_string, to_bytes, native_str
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                  host_and_port_default, Headers, http_parser,\
                                  REDIRECT_CODES
+from pulsar.utils.internet import format_address
+from pulsar.async.protocols import ProtocolConsumer
 from pulsar.utils import events
 
 from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
@@ -78,7 +80,7 @@ def wsgi_environ(parser, address, client_address, request_headers,
         }
     url_scheme = "http"
     forward = client_address
-    server = '%s:%s' % address
+    server = format_address(address)
     script_name = os.environ.get("SCRIPT_NAME", "")
     for header, value in request_headers:
         header = header.lower()
@@ -163,7 +165,7 @@ def keep_alive_with_status(status, headers):
     return True
     
 
-class HttpServerResponse(pulsar.ProtocolConsumer):
+class HttpServerResponse(ProtocolConsumer):
     '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
     _status = None
     _headers_sent = None

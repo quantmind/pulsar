@@ -73,7 +73,7 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, EventHandler
+from pulsar import Actor, Monitor, get_actor, EventHandler, async
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.sockets import parse_connection_string, get_connection_string
@@ -107,11 +107,12 @@ def _get_app(arbiter, name):
     monitor = arbiter.get_actor(name)
     if monitor:
         return monitor.params.app
-        
+
+@async()
 def monitor_start(self):
-    self.app.monitor_start(self)
+    yield self.app.monitor_start(self)
     if not self.cfg.workers:
-        self.app.worker_start(self)
+        yield self.app.worker_start(self)
     self.app.fire_event('start')
         
 def monitor_stop(self):

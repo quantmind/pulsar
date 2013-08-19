@@ -12,6 +12,7 @@ from .threads import KillableThread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
 from .defer import async, multi_async, log_failure
 from .eventloop import new_event_loop, signal
+from .servers import TcpServer
 from .consts import *
 
 
@@ -110,8 +111,8 @@ implemented by subclasses.'''
                 r.add_callback(partial(self.started, actor))
             else:
                 actor.stop()
-        except Exception:
-            actor.stop(sys.exc_info())
+        except Exception as e:
+            actor.stop(e)
             
     def started(self, actor, result=None):
         actor.logger.info('%s started', actor)
@@ -260,12 +261,14 @@ to be spawned.'''
         pass
     
     def periodic_task(self, actor):
+        interval = 0
         if actor.running():
+            interval = MONITOR_TASK_PERIOD
             actor.manage_actors()
             actor.spawn_actors()
             actor.stop_actors()
             actor.monitor_task()
-        actor.event_loop.call_soon(self.periodic_task, actor)
+        actor.event_loop.call_later(interval, self.periodic_task, actor)
         
     @async()
     def _stop_actor(self, actor):
@@ -290,19 +293,22 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def create_mailbox(self, actor, event_loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
 mailbox server.'''
-        address = ('127.0.0.1', 0)
-        mailbox = event_loop.create_server(address=address,
-                                           name='Mailbox for %s' % actor,
-                                           consumer_factory=MailboxConsumer,
-                                           timeout=0,
-                                           close_event_loop=True)
-        event_loop.call_soon_threadsafe(self.hand_shake, actor)
+        mailbox = TcpServer(event_loop, '127.0.0.1', 0,
+                            consumer_factory=MailboxConsumer,
+                            name='mailbox')
+        # when the mailbox stop, close the event loop too
+        mailbox.bind_event('stop', lambda exc: event_loop.stop())
+        mailbox.bind_event('start', lambda exc: \
+            event_loop.call_soon_threadsafe(self.hand_shake, actor))
+        mailbox.start_serving()
         return mailbox
     
     def periodic_task(self, actor):
         # Arbiter periodic task
+        interval = 0
         if self.can_continue(actor) and actor.running():
             # managed actors job
+            interval = MONITOR_TASK_PERIOD
             actor.manage_actors()
             for m in list(itervalues(actor.monitors)):
                 if m.started():
@@ -310,7 +316,7 @@ mailbox server.'''
                         actor._remove_actor(m)
                 else:
                     m.start()
-        actor.event_loop.call_soon(self.periodic_task, actor)
+        actor.event_loop.call_later(interval, self.periodic_task, actor)
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''

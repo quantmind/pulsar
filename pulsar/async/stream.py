@@ -6,23 +6,104 @@ try:
 except ImportError:  # pragma: no cover
     ssl = None
 
-from pulsar.utils.internet import (TCP_TRY_WRITE_AGAIN, TCP_TRY_READ_AGAIN,
-                                   TCP_ACCEPT_ERRORS, EWOULDBLOCK, EPERM)
+from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
+                                   ACCEPT_ERRORS, EWOULDBLOCK, EPERM)
+from pulsar.utils.structures import merge_prefix
+
 from .consts import NUMBER_ACCEPTS
 from .defer import multi_async, Deferred
-from .internet import SocketTransport
-
-AF_INET6 = getattr(socket, 'AF_INET6', 0)
-
+from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE, AF_INET6
+    
 
 class SocketStreamTransport(SocketTransport):
+    _paused_reading = False
+    _paused_writing = False
+        
+    def pause(self):
+        if not self._paused_reading:
+            self._paused_reading = True
+
+    def resume(self):
+        if self._paused_reading:
+            self._paused_reading = False
+            buffer = self._read_buffer
+            self._read_buffer = []
+            for data in buffer:
+                self._data_received(chunk)
+                
+    def pause_writing(self):
+        '''Suspend sending data to the network until a subsequent
+:meth:`resume_writing` call. Between :meth:`pause_writing and
+:meth:`resume_writing` the transport's :meth:`write` method will just
+be accumulating data in an internal buffer.'''
+        if not self._paused_writing:
+            self._paused_writing = True
+            self._event_loop.remove_writer(self._sock_fd)
+
+    def resume_writing(self):
+        '''Restart sending data to the network.'''
+        if self._paused_writing:
+            if self._write_buffer:
+                self._event_loop.add_writer(self._sock_fd, self._write_ready)
+            self._paused_writing = False
+            
+    def write(self, data):
+        '''Write chunk of ``data`` to the endpoint.'''
+        if not data:
+            return
+        self._check_closed()
+        writing = self.writing
+        if data:
+            assert isinstance(data, bytes)
+            if len(data) > WRITE_BUFFER_MAX_SIZE:
+                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
+                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
+            else:
+                self._write_buffer.append(data)
+        # Try to write only when not waiting for write callbacks
+        if not writing and not self._paused_writing:
+            self._ready_write()
+            if self.writing:    # still writing
+                self._event_loop.add_writer(self._sock_fd, self._write_ready)
+            elif self._closing:
+                self._event_loop.call_soon(self._shutdown)
+                 
+    def _ready_write(self):
+        # Do the actual writing
+        buffer = self._write_buffer
+        tot_bytes = 0
+        if self._paused_writing:
+            return tot_bytes
+        if not buffer:
+            self._event_loop.warning('handling write on a 0 length buffer')
+        while buffer:
+            try:
+                sent = self.sock.send(buffer[0])
+                if sent == 0:
+                    # With OpenSSL, after send returns EWOULDBLOCK,
+                    # the very same string object must be used on the
+                    # next call to send.  Therefore we suppress
+                    # merging the write buffer after an EWOULDBLOCK.
+                    break
+                merge_prefix(buffer, sent)
+                buffer.popleft()
+                tot_bytes += sent
+            except socket.error as e:
+                if e.args[0] in TRY_WRITE_AGAIN:
+                    break
+                else:
+                    self.abort(exc=e)
+                    raise
+            except Exception as e:
+                self.abort(exc=e)
+                raise
+        if not self.writing:
+            self._event_loop.remove_writer(self._sock_fd)
+            if self._closing:
+                self._event_loop.call_soon(self._shutdown)
+        return tot_bytes
     
-    def start(self):
-        loop = self._event_loop
-        loop.add_reader(self._sock_fd, self._read_ready)
-        self._loop.call_soon(self._protocol.connection_made, self)
-    
-    def _ready_read(self):
+    def _read_ready(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
         passes = 0
@@ -37,10 +118,10 @@ class SocketStreamTransport(SocketTransport):
                     else:
                         raise
                 if chunk:
-                    if self._paused:
-                        self._read_buffer.append(data)
+                    if self._paused_reading:
+                        self._read_buffer.append(chunk)
                     else:
-                        self._protocol.data_received(data)
+                        self._protocol.data_received(chunk)
                 elif not passes and chunk == b'':
                     # We got empty data. Close the socket
                     try:
@@ -99,7 +180,7 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
         for family, type, proto, cname, address in fs[0]:
             try:
                 sock = socket_factory(family=family, type=type, proto=proto)
-                sock.setblocking(False)
+                sock.setblocking(0)
                 if laddr_infos is not None:
                     for _, _, _, _, laddr in laddr_infos:
                         try:
@@ -224,7 +305,7 @@ def sock_connect(event_loop, sock, address, future=None):
             try:
                 sock.connect(address)
             except socket.error as e:
-                if e.args[0] in TCP_TRY_WRITE_AGAIN:
+                if e.args[0] in TRY_WRITE_AGAIN:
                     event_loop.add_writer(fd, sock_connect, event_loop, sock,
                                           address, future)
                     return future
@@ -254,7 +335,7 @@ def sock_accept(event_loop, sock, future=None):
             conn.setblocking(False)
             future.set_result((conn, address))
         except socket.error as e:
-            if e.args[0] in TCP_TRY_READ_AGAIN:
+            if e.args[0] in TRY_READ_AGAIN:
                 event_loop.add_reader(fd, sock_accept, event_loop, sock, future)
             elif e.args[0] == EPERM:
                 # Netfilter on Linux may have rejected the
@@ -272,21 +353,22 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
             try:
                 conn, address = sock.accept()
             except socket.error as e:
-                if e.args[0] in TCP_TRY_READ_AGAIN:
+                if e.args[0] in TRY_READ_AGAIN:
                     break
                 elif e.args[0] == EPERM:
                     # Netfilter on Linux may have rejected the
                     # connection, but we get told to try to accept() anyway.
                     continue
-                elif e.args[0] in TCP_ACCEPT_ERRORS:
+                elif e.args[0] in ACCEPT_ERRORS:
                     event_loop.logger.info('Could not accept new connection')
                     break
                 raise
             protocol = protocol_factory()
             if ssl:
-                transport = StreamSslTransport(event_loop, conn, protocol, ssl)
+                SocketStreamSslTransport(event_loop, conn, protocol, ssl,
+                                         extra={'addr': address})
             else:
-                transport = StreamTransport(event_loop, conn, protocol)
-            transport.start()
+                SocketStreamTransport(event_loop, conn, protocol,
+                                      extra={'addr': address})
     except Exception:
         event_loop.logger.exception('Could not accept new connection')

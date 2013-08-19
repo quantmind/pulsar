@@ -83,6 +83,13 @@ HTML & Text
 .. automodule:: pulsar.utils.html
    :members:
    
+Logging
+==================
+
+.. automodule:: pulsar.utils.log
+   :members:
+   
+   
 Path
 ==================
 

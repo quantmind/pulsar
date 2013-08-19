@@ -8,7 +8,6 @@ from pulsar.utils.sockets import get_transport_type, create_socket
 from pulsar.async.defer import is_failure, multi_async
 
 from .protocols import ProtocolConsumer, EventHandler, Producer
-from .transport import create_transport, LOGGER
 
 __all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
 
@@ -26,6 +25,19 @@ the appropiate :class:`ConnectionPool` for the client request.'''
     
     def encode(self):
         raise NotImplementedError
+    
+    def create_connection(self, event_loop, connection):
+        '''Called by a :class:`Client` when a new connection with
+remote server is needed.'''
+        res = event_loop.create_connection(lambda: connection,
+                                           self.address[0],
+                                           self.address[1])
+        return res.add_callback(self._connection_made)
+        
+    def _connection_made(self, transport_protocol):
+        transport, connection = transport_protocol
+        connection.connection_made(transport)
+        connection.current_consumer.new_request(self)
     
     
 class ConnectionPool(Producer):
@@ -93,20 +105,14 @@ of available connections.
             sc.transport.close()
         if connection is None:
             # build the new connection
-            connection = self.new_connection(self.address,
-                                             client.consumer_factory,
+            connection = self.new_connection(client.consumer_factory,
                                              producer=client)
             # Bind the post request event to the release connection function
             connection.bind_event('post_request', self._release_response)
             # Bind the connection_lost to connection to handle dangling connections
             connection.bind_event('connection_lost',
                                   partial(self._try_reconnect, connection))
-            #IMPORTANT: create client transport an connect to endpoint
-            transport = create_transport(connection, address=connection.address,
-                                         event_loop=client.get_event_loop())
-            return transport.connect(connection.address)
-        else:
-            return connection
+        return connection
         
     ############################################################################
     ##    INTERNALS
@@ -382,8 +388,11 @@ taken to obtain all responses.'''
     
     def _response(self, response, request, new_connection):
         if new_connection or response.connection is None:
+            # Get the connection for this request
             conn = self.get_connection(request)
             conn.set_consumer(response)
+            if conn.transport is None:
+                return request.create_connection(self.event_loop, conn)
         response.new_request(request)
         
 

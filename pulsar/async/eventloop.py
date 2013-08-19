@@ -23,8 +23,8 @@ from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
 from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
-from .transports import create_server
 from .stream import create_connection, start_serving, sock_connect, sock_accept
+from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 
 __all__ = ['EventLoop', 'TimedCall']
@@ -134,6 +134,7 @@ class FileDescriptor(IObase):
         self.logger = eventloop.logger
         self.handle_write = None
         self.handle_read = None
+        self._state = None
 
     @property
     def poller(self):
@@ -149,83 +150,73 @@ class FileDescriptor(IObase):
     
     @property
     def state(self):
-        if self.reading:
-            if self.writing:
-                return self.READ | self.WRITE
-            else:
-                return self.READ
-        elif self.writing:
-            return self.WRITE
+        return self._state
             
-    @property
-    def state_code(self):
-        s = []
-        if self.state is None:
-            return 'closed'
-        if self.connecting:
-            s.append('connecting')
-        elif self.writing:
-            s.append('writing')
-        if self.reading:
-            s.append('reading')
-        return ' '.join(s) if s else 'idle'
-    
-    def add_connector(self, callback):
-        self.add_writer(callback, 'connector')
-        
     def add_reader(self, callback):
         handle_read = self.handle_read
         if handle_read:
-            if handle_read.callback != callback.callback:
-                raise RuntimeError('Read handler already registered')
+            raise RuntimeError('Read handler already registered')
         else:
-            self.logger.debug('Add reader on file descriptor %s', self.fd)
-            current_state = self.state
+            state = self.READ | self.ERROR
             self.handle_read = callback
-            self.modify_state(current_state, self.READ)
+            if self._state is None:
+                self.poller.register(self.fd, state)
+            else:
+                state = self._state | state
+                self.poller.modify(self.fd, state)
+            self._state = state
         
-    def add_writer(self, callback, name=None):
-        name = name or 'writer'
+    def add_writer(self, callback):
         handle_write = self.handle_write
         if handle_write:
-            if handle_write.callback != callback.callback:
-                raise RuntimeError('%s handler already registered', name)
+            raise RuntimeError('write handler already registered')
         else:
-            self.logger.debug('Add %s on file descriptor %s', name, self.fd)
-            current_state = self.state
+            state = self.WRITE | self.ERROR
             self.handle_write = callback
-            self.modify_state(current_state, self.WRITE)
+            if self._state is None:
+                self.poller.register(self.fd, state)
+            else:
+                state = self._state | state
+                self.poller.modify(self.fd, state)
+            self._state = state
         
-    def remove_connector(self):
-        return self.remove_writer('connector')
-    
     def remove_reader(self):
         '''Remove reader and return True if writing'''
-        if self.writing:
-            self.logger.debug('Remove reader from file descriptor %s', self.fd)
-            self.poller.modify(self.fd, self.WRITE)
-        else:
-            self.remove_handler()
-        self.handle_read = None
+        removed = self.handle_read is not None
+        if removed:
+            if self.handle_write:
+                self._state = self.WRITE | self.ERROR
+                self.poller.modify(self.fd, self._state)
+            else:
+                self._state = None
+                self.remove_handler()
+            self.handle_read = None
+        return removed
 
     def remove_writer(self, name=None):
         '''Remove writer and return True if reading'''
-        if self.reading:
-            self.logger.debug('Remove %s from file descriptor %s',
-                              name or 'writer', self.fd)
-            self.poller.modify(self.fd, self.READ)
-        else:
-            self.remove_handler()
-        self.handle_write = None
+        removed = self.handle_write is not None
+        if removed:
+            if self.handle_read:
+                self._state = self.READ | self.ERROR
+                self.poller.modify(self.fd, self._state)
+            else:
+                self._state = None
+                self.remove_handler()
+            self.handle_write = None
+        return removed
     
     def __call__(self, events):
-        if events & self.READ:
+        processed = False
+        if events & (self.READ | self.ERROR):
+            processed = True
             if self.handle_read:
                 log_failure(self.handle_read())
             else:
                 self.logger.warning('Read callback without handler for file'
                                     ' descriptor %s.', self.fd)
-        if events & self.WRITE:
+        if events & (self.WRITE | self.ERROR):
+            processed = True
             if self.handle_write:
                 log_failure(self.handle_write())
             else:
@@ -246,7 +237,6 @@ class FileDescriptor(IObase):
             self.poller.unregister(fd)
         except (OSError, IOError):
             self.eventloop.logger.error("Error removing %s from EventLoop", fd)
-        self.logger.debug('Remove file descriptor %s', fd)
         self.eventloop._handlers.pop(fd, None)
 
 
@@ -556,7 +546,8 @@ if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
-            self._handlers[fd].remove_reader()
+            return self._handlers[fd].remove_reader()
+        return False
     
     def remove_writer(self, fd):
         '''Cancels the current write callback for file descriptor fd,
@@ -564,7 +555,8 @@ if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
-            self._handlers[fd].remove_writer()
+            return self._handlers[fd].remove_writer()
+        return False
             
     def remove_connector(self, fd):
         fd = file_descriptor(fd)
@@ -593,12 +585,6 @@ default signal handler ``signal.SIG_DFL``.'''
         else:
             return False
         
-    def create_server(self, **kwargs):
-        '''Create a new :class:`Server`.'''
-        if self.cpubound:
-            raise RuntimeError('Cannot create server from a cpubound eventloop')
-        return create_server(self, **kwargs)
-    
     def wake(self):
         '''Wake up the eventloop.'''
         if self.running and self._waker:
@@ -632,7 +618,8 @@ exception will be raised.'''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)
-        return maybe_async(res, event_loop=self, timeout=timeout)
+        return maybe_async(res, event_loop=self, timeout=timeout,
+                           get_result=False)
     
     def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
@@ -662,8 +649,16 @@ exception will be raised.'''
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
                             family, flags, sock, backlog, reuse_address)
-        return maybe_async(res, event_loop=self)
+        return maybe_async(res, event_loop=self, get_result=False)
     
+    def create_datagram_endpoint(self, protocol_factory, local_addr=None,
+                                 remote_addr=None, family=socket.AF_UNSPEC,
+                                 proto=0, flags=0):
+        res = create_datagram_endpoint(self, protocol_factory, local_addr,
+                                       remote_addr, family, proto, flags)
+        return maybe_async(res, event_loop=self, get_result=False)
+        
+        
     def stop_serving(self, sock):
         '''The argument should be a socket from the list returned by
 :meth:`start_serving` method. The serving loop associated with that socket
