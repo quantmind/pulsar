@@ -76,40 +76,40 @@ be accumulating data in an internal buffer.'''
             return tot_bytes
         if not buffer:
             self._event_loop.warning('handling write on a 0 length buffer')
-        while buffer:
-            try:
-                sent = self.sock.send(buffer[0])
-                if sent == 0:
-                    # With OpenSSL, after send returns EWOULDBLOCK,
-                    # the very same string object must be used on the
-                    # next call to send.  Therefore we suppress
-                    # merging the write buffer after an EWOULDBLOCK.
-                    break
-                merge_prefix(buffer, sent)
-                buffer.popleft()
-                tot_bytes += sent
-            except socket.error as e:
-                if e.args[0] in TRY_WRITE_AGAIN:
-                    break
-                else:
-                    self.abort(exc=e)
-                    raise
-            except Exception as e:
-                self.abort(exc=e)
-                raise
-        if not self.writing:
-            self._event_loop.remove_writer(self._sock_fd)
-            if self._closing:
-                self._event_loop.call_soon(self._shutdown)
-        return tot_bytes
+        try:
+            while buffer:
+                try:
+                    sent = self.sock.send(buffer[0])
+                    if sent == 0:
+                        # With OpenSSL, after send returns EWOULDBLOCK,
+                        # the very same string object must be used on the
+                        # next call to send.  Therefore we suppress
+                        # merging the write buffer after an EWOULDBLOCK.
+                        break
+                    merge_prefix(buffer, sent)
+                    buffer.popleft()
+                    tot_bytes += sent
+                except socket.error as e:
+                    if e.args[0] in TRY_WRITE_AGAIN:
+                        break
+                    else:
+                        raise
+        except Exception as e:
+            self.abort(exc=e)
+        else:
+            if not self.writing:
+                self._event_loop.remove_writer(self._sock_fd)
+                if self._closing:
+                    self._event_loop.call_soon(self._shutdown)
+            return tot_bytes
     
     def _read_ready(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
         passes = 0
         chunk = True
-        while chunk:
-            try:
+        try:
+            while chunk:
                 try:
                     chunk = self._sock.recv(self._read_chunk_size)
                 except socket.error as e:
@@ -129,9 +129,8 @@ be accumulating data in an internal buffer.'''
                     finally:
                         self.close()
                 passes += 1
-            except Exception as exc:
-                self.abort(exc)
-                raise
+        except Exception as exc:
+            self.abort(exc)
     
     
 class SocketStreamSslTransport(SocketStreamTransport):

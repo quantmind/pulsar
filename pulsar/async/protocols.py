@@ -397,11 +397,11 @@ If the :attr:`current_consumer` is not ``None`` an exception occurs'''
         '''Implements the :meth:`Protocol.connection_lost` method. It performs
 these actions in the following order:
 
+* Fire the ``connection_lost`` :ref:`one time event <one-time-event>`
+  if not fired before, with ``exc`` as event data.
 * Cancel the idle timeout if set.
-* Fire the *connection_lost* :ref:`one time event <one-time-event>` with *exc*
-  as event data.
-* Invokes the connection_lost method in the :attr:`current_consumer` if
-  available.'''
+* Invokes the :meth:`ProtocolConsumer:connection_lost` method in the
+  :attr:`current_consumer` if available.'''
         if self.fire_event('connection_lost', exc):
             self._cancel_timeout()
             if self._current_consumer:

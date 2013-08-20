@@ -9,17 +9,17 @@ from pulsar.utils.internet import format_address
 from .defer import EventHandler
 from .protocols import Connection, Producer, TransportProxy
 
-__all__ = ['TcpServer']
+__all__ = ['Server', 'TcpServer']
     
 
 class Server(Producer):
-    '''A :class:`Producer` for TCP servers.
+    '''A base class for Servers listening on a socket.
+    
+An instance of this class is a :class:`Producer` of server sockets.
     
 .. attribute:: consumer_factory
 
-    Callable or a :class:`ProtocolConsumer` class for producing
-    :class:`ProtocolConsumer` which handle the receiving, decoding and
-    sending of data.
+    Factory of :class:`ProtocolConsumer` handling the server sockets.
     '''    
     ONE_TIME_EVENTS = ('start', 'stop')
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
@@ -72,16 +72,20 @@ class TcpServer(Server):
     
 '''
     def start_serving(self, backlog=100):
+        '''Start serving the Tcp socket.
+        
+It returns a :class:`Deferred` calldback when the server is serving
+the socket'''
         res = self._event_loop.start_serving(self.protocol_factory,
                                              host=self._host,
                                              port=self._port,
                                              sock=self._sock,
                                              backlog=backlog)
-        res.add_callback(self._got_sockets)\
-           .add_callback(lambda r: self.fire_event('start'))\
-           .add_errback(lambda f: f.log())
+        return res.add_callback(self._got_sockets, lambda f: f.log())\
+                  .add_callback(lambda r: self.fire_event('start'))
     
     def stop_serving(self):
+        '''Stop serving the :class:`Server.sock`'''
         if self._sock:
             self._event_loop.stop_serving(self._sock)
             self.fire_event('stop')

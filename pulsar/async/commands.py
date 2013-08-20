@@ -38,6 +38,7 @@ def run(request, callable, *args, **kwargs):
 @command(ack=False)
 def stop(request):
     '''Stop the actor from running.'''
+    actor.logger.debug('Got stop request from %s', request.caller)
     return request.actor.stop()
     
 @command()

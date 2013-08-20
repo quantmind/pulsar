@@ -132,7 +132,7 @@ spawn method when creating new actors.'''
 
     def manage_actor(self, actor, stop=False):
         '''If an actor failed to notify itself to the arbiter for more than
-the timeout. Stop the arbiter.'''
+the timeout. Stop the actor.'''
         if not self.running():
             stop = True
         if not actor.is_alive():
@@ -192,8 +192,10 @@ as required."""
         # Stop all of them
         to_stop = self.manage_actors(stop=True)
         while to_stop:
+            self.logger.debug('waiting for %s to stop', to_stop)
             yield NOT_DONE
             to_stop = self.manage_actors(stop=True)
+        yield NOT_DONE
     
     
 class Monitor(PoolMixin):

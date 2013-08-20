@@ -194,11 +194,16 @@ class ProcessMixin(object):
             for name in system.ALL_SIGNALS:
                 sig = getattr(signal, 'SIG%s' % name)
                 try:
-                    handler = partial(actor.signal_queue.put, sig)
-                    actor.event_loop.add_signal_handler(sig, handler)
+                    actor.event_loop.add_signal_handler(sig, self.handle_signal,
+                                                        actor)
                 except ValueError:
                     break
-                
+    
+    def handle_signal(self, actor, sig, frame):
+        actor.signal_queue.put(sig)
+        # call the periodic task of the actor
+        actor.event_loop.call_soon(self.periodic_task, actor)
+        
     def can_continue(self, actor):
         if actor.signal_queue is not None:
             while True:
@@ -236,8 +241,8 @@ class MonitorMixin(object):
             actor.state = ACTOR_STATES.RUN
             actor.fire_event('start')
             self.periodic_task(actor)
-        except Exception:
-            actor.stop(sys.exc_info())
+        except Exception as exc:
+            actor.stop(exc)
             
     @property
     def pid(self):
@@ -306,31 +311,35 @@ mailbox server.'''
     def periodic_task(self, actor):
         # Arbiter periodic task
         interval = 0
-        if self.can_continue(actor) and actor.running():
-            # managed actors job
-            interval = MONITOR_TASK_PERIOD
-            actor.manage_actors()
-            for m in list(itervalues(actor.monitors)):
-                if m.started():
-                    if not m.running():
-                        actor._remove_actor(m)
-                else:
-                    m.start()
-        actor.event_loop.call_later(interval, self.periodic_task, actor)
+        if self.can_continue(actor):
+            if actor.running():
+                # managed actors job
+                interval = MONITOR_TASK_PERIOD
+                actor.manage_actors()
+                for m in list(itervalues(actor.monitors)):
+                    if m.started():
+                        if not m.running():
+                            actor._remove_actor(m)
+                    else:
+                        m.start()
+            actor.event_loop.call_later(interval, self.periodic_task, actor)
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''
         if actor.event_loop.running:
             self._exit_arbiter(actor)
         else:
+            actor.logger.debug('Restarts event loop for removing actors')
             actor.event_loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
         
     def _exit_arbiter(self, actor, res=None):
         if res:
+            actor.logger.debug('Closing mailbox server')
             actor.state = ACTOR_STATES.CLOSE
             actor.mailbox.close()
         else:
+            actor.logger.debug('Close monitors and actors')
             active = multi_async((actor.close_monitors(), actor.close_actors()),
                                  log_failure=True)
             active.add_both(partial(self._exit_arbiter, actor))

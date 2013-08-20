@@ -113,6 +113,8 @@ else:   # pragma : no cover
 
 class EventLoop(object):
     '''This is just a signature'''
+    def run_in_executor(self, executor, callback, *args):
+        raise NotImplementedError
     
     
 class EventLoopPolicy:

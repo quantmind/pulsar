@@ -17,10 +17,10 @@ def check_actor(actor, name):
     
 
 def create_echo_server(address, actor):
-    sock = pulsar.create_socket(address, bindto=True)
-    actor.servers['echo'] = actor.event_loop.create_server(
-                                sock=sock,
-                                consumer_factory=EchoServerProtocol)
+    server = TcpServer(actor.event_loop, address[0], address[1])
+    yield server.start_serving()
+    actor.servers['echo'] = server
+    yield server.address
     
     
 class TestProxy(unittest.TestCase):

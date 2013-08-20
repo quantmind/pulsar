@@ -473,10 +473,10 @@ the :class:`Deferred` object.'''
         return self.callback(exc)
         
     def add_callback(self, callback, errback=None, continuation=None):
-        """Add a callback as a callable function.
-The function takes at most one argument, the result passed to the
-:meth:`callback` method. If the *errback* callable is provided it will
-be called when an exception occurs."""
+        """Add a ``callback``, and an optional ``errback``, to the list
+of callbaks. Both of them are functions which take at most one argument,
+the result passed to the :meth:`callback` method. If the ``errback`` callable
+is provided it will be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
         if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
             if self._callbacks is None:
