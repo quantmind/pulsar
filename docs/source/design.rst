@@ -245,21 +245,27 @@ the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
 its file descriptor with the :attr:`Actor.event_loop`.
 
-This snippet spawn a new actor which starts an
+This snippet spawns a new actor which starts an
 :ref:`Echo server <tutorials-writing-clients>`::
 
     from functools import partial
     
-    from pulsar import spawn
+    from pulsar import spawn, TcpServer
     
     def create_echo_server(address, actor):
-        sock = pulsar.create_socket(address, bindto=True)
-        actor.servers['echo'] = actor.event_loop.create_server(
-                                    sock=sock,
-                                    consumer_factory=EchoServerProtocol)
+        '''Starts an echo server on a newly spawn actor'''
+        server = TcpServer(actor.event_loop, address[0], address[1],
+                           EchoServerProtocol)
+        yield server.start_serving()
+        actor.servers['echo'] = server
+        actor.extra['echo-address'] = server.address
         
     proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
     
+The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
+:ref:`echo server and client tutorial <tutorials-writing-clients>`.
+
+
 .. note::
 
     Hooks are function receiving as only argument the actor which invokes them.

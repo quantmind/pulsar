@@ -14,7 +14,7 @@ __all__ = ['IOpoll',
            'close_on_exec',
            'Waker',
            'daemonize',
-           'socketpair'
+           'socketpair',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',

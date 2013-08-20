@@ -1,6 +1,6 @@
 '''pubsub redis backend.'''
 from pulsar.apps.test import unittest
-from pulsar.utils.sockets import parse_connection_string, get_connection_string
+from pulsar.utils.internet import parse_connection_string, get_connection_string
 
 from . import local
 

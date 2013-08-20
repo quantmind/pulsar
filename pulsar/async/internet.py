@@ -202,7 +202,10 @@ method.'''
         """
         if not self.closing:
             self._closing = True
-            self._sock.shutdown(socket.SHUT_RD)
+            try:
+                self._sock.shutdown(socket.SHUT_RD)
+            except Exception:
+                pass
             self._event_loop.remove_reader(self._sock_fd)
             if not async or not self.writing:
                 self._event_loop.call_soon(self._shutdown, exc)

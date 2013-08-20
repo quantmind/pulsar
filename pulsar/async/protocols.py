@@ -97,14 +97,6 @@ and one :ref:`many times events <many-times-event>`:
 
     Current request instance (used for clients only).
     
-.. attribute:: connecting
-
-    ``True`` if connecting to endpoint (for servers this is always false).
-    
-.. attribute:: connected
-
-    ``True`` if an end-point connection is available.
-    
 .. attribute:: producer
 
     The :class:`Producer` of this consumer.
@@ -208,7 +200,7 @@ no need to override this method, implement :meth:`start_request` instead.'''
     def reset_connection(self):
         '''Cleanly dispose of the current :attr:`connection`. Used
 by client consumers only.'''
-        if self.connected:
+        if self._connection:
             conn = self._connection
             clone = copy(self)
             conn._current_consumer = clone
