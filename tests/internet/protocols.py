@@ -43,7 +43,7 @@ class TestPulsarStreams(unittest.TestCase):
             yield pulsar.send('arbiter', 'kill_actor', cls.server.name)
         
     @run_on_arbiter
-    def testServer(self):
+    def test_server(self):
         app = yield pulsar.get_application(self.__class__.__name__.lower())
         self.assertTrue(app.address)
         self.assertTrue(app.cfg.address)

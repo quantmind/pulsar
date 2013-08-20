@@ -46,12 +46,12 @@ from collections import namedtuple
 from pulsar import platform, Config, ProtocolError, CommandError
 from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
                              new_event_loop
-from pulsar.utils.sockets import nice_address
+from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor
-from .defer import async, Failure, log_failure, Deferred
+from .defer import async, Failure, Deferred
 from .protocols import ProtocolConsumer
 from .clients import SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
@@ -148,7 +148,7 @@ protocol.'''
                 message = pickle.loads(msg.body)
             except Exception:
                 raise ProtocolError('Could not decode message body')
-            log_failure(self._responde(message))
+            self._responde(message)
             msg = self._parser.decode()
     
     def start_request(self):

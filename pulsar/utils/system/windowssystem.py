@@ -7,8 +7,6 @@ import socket
 import getpass
 from time import sleep
 
-from pulsar.utils.sockets import socket_pair
-
 from .winprocess import WINEXE
 from .base import *
 
@@ -16,6 +14,7 @@ __all__ = ['IOpoll',
            'close_on_exec',
            'Waker',
            'daemonize',
+           'socketpair',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
@@ -72,6 +71,30 @@ def get_maxfd():
 def daemonize():
     pass
 
+def socketpair(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0):
+    """A socket pair usable as a self-pipe, for Windows.
+
+    Origin: https://gist.github.com/4325783, by Geert Jansen.  Public domain.
+    """
+    # We create a connected TCP socket. Note the trick with setblocking(0)
+    # that prevents us from having to create a thread.
+    lsock = socket.socket(family, type, proto)
+    lsock.bind(('localhost', 0))
+    lsock.listen(1)
+    addr, port = lsock.getsockname()
+    csock = socket.socket(family, type, proto)
+    csock.setblocking(True)
+    try:
+        csock.connect((addr, port))
+    except Exception:
+        lsock.close()
+        csock.close()
+        raise
+    ssock, _ = lsock.accept()
+    csock.setblocking(True)
+    lsock.close()
+    return (ssock, csock)
+
 
 class IOpoll(IOselect):
     '''The default windows IO poll class. Based on select.'''
@@ -95,12 +118,9 @@ class IOpoll(IOselect):
 class Waker(object):
     '''In windows'''
     def __init__(self):
-        self._writer, s = socket_pair(backlog=1)
-        s.setblocking(True)   
-        self._reader, addr = s.accept()
+        self._reader, self._writer = socketpair()
         self._writer.setblocking(False)
         self._reader.setblocking(False)
-        s.close()
         
     def __str__(self):
         return 'Socket waker {0}'.format(self.fileno())

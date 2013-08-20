@@ -1,3 +1,14 @@
+'''
+The :mod:`pulsar.async.stream` implements classes and functions for
+handling TCP streams.
+
+SocketStreamTransport
+============================
+
+.. autoclass:: SocketStreamTransport
+   :members:
+   :member-order: bysource
+'''
 import os
 import sys
 import socket
@@ -16,14 +27,28 @@ from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE, AF_INET6
     
 
 class SocketStreamTransport(SocketTransport):
+    '''A :class:`pulsar.SocketTransport` for TCP streams.
+    
+The primary feature of a stream transport is sending bytes to a protocol
+and receiving bytes from the underlying protocol. Writing to the transport
+is done using the :meth:`write` and :meth:`writelines` methods.
+The latter method is a performance optimisation, to allow software to take
+advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
-        
+    
     def pause(self):
+        """A :class:`SocketStreamTransport` can be paused and resumed.
+Invoking this method will cause the transport to buffer data coming
+from protocols but not sending it to the :attr:`protocol`. In other words,
+no data will be passed to the :meth:`pulsar.Protocol.data_received` method
+until :meth:`resume` is called."""
         if not self._paused_reading:
             self._paused_reading = True
 
     def resume(self):
+        """Resume the receiving end. Data received will once again be
+passed to the :meth:`pulsar.Protocol.data_received` method."""
         if self._paused_reading:
             self._paused_reading = False
             buffer = self._read_buffer
@@ -33,7 +58,7 @@ class SocketStreamTransport(SocketTransport):
                 
     def pause_writing(self):
         '''Suspend sending data to the network until a subsequent
-:meth:`resume_writing` call. Between :meth:`pause_writing and
+:meth:`resume_writing` call. Between :meth:`pause_writing` and
 :meth:`resume_writing` the transport's :meth:`write` method will just
 be accumulating data in an internal buffer.'''
         if not self._paused_writing:
@@ -64,9 +89,14 @@ be accumulating data in an internal buffer.'''
         if not writing and not self._paused_writing:
             self._ready_write()
             if self.writing:    # still writing
-                self._event_loop.add_writer(self._sock_fd, self._write_ready)
+                self._event_loop.add_writer(self._sock_fd, self._ready_write)
             elif self._closing:
                 self._event_loop.call_soon(self._shutdown)
+                
+    def writelines(self, list_of_data):
+        """Write a list (or any iterable) of data bytes to the transport."""
+        for data in list_of_data:
+            self.write(data)
                  
     def _ready_write(self):
         # Do the actual writing

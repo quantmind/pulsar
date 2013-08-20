@@ -149,10 +149,9 @@ does not support multiprocessing sockets set the number of workers to 0.'''
             assert loop.remove_reader(sock.fileno()), (
                         "Could not remove reader")
             addresses.append(sock.getsockname())
-        #sock = pulsar.create_socket(address, bindto=True,
-        #                            backlog=self.cfg.backlog)
         monitor.params.sockets = sockets
-        monitor.params.addresses = addresses
+        self.addresses = addresses
+        self.address = addresses[0]
     
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''

@@ -288,18 +288,30 @@ commands via the :class:`pulsar.command` decorator as explained in the
 
 **ping**
 
-Ping the remote actor *abcd* and receive an asynchronous ``pong``::
+Ping the remote actor ``abcd`` and receive an asynchronous ``pong``::
 
     send('abcd', 'ping')
 
 
 **echo**
 
-received an asynchronous echo from a remote actor *abcd*::
+received an asynchronous echo from a remote actor ``abcd``::
 
     send('abcd', 'echo', 'Hello!')
 
 
+.. _actor_info_command:
+
+**info**
+
+Request information about a remote actor ``abcd``::
+
+    send('abcd', 'info')
+    
+The asynchronous result will be called back with the dictionary returned
+by the :meth:`Actor.info` method.
+    
+    
 **run**
 
 Run a function on a remote actor. The function must accept actor as its initial parameter::

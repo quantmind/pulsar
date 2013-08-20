@@ -1,6 +1,7 @@
 import time
 
 import pulsar
+from pulsar import async_while
 from pulsar.apps.test import unittest, run_on_arbiter
 from pulsar.apps.shell import InteractiveConsole, decode_line, PulsarShell
 
@@ -41,6 +42,5 @@ class TestShell(unittest.TestCase):
     def testTestWorker(self):
         arbiter = pulsar.get_actor()
         monitor = arbiter.get_actor('shell')
-        while not monitor.managed_actors:
-            yield pulsar.NOT_DONE
+        yield async_while(2, lambda: not monitor.managed_actors)
         self.assertEqual(len(monitor.managed_actors), 1)

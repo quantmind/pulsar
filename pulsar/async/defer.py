@@ -31,6 +31,7 @@ __all__ = ['Deferred',
            'async',
            'multi_async',
            'async_sleep',
+           'async_while',
            'safe_async']
 
 if ispy3k:
@@ -226,6 +227,23 @@ even if the ``callable`` is not asynchronous. Never throws.'''
 
 safe_async = async(get_result=False).call
 
+@async()
+def async_while(timeout, while_clause, *args):
+    start = default_timer()
+    di = 0.1
+    interval = 0
+    result = while_clause(*args)
+    while result:
+        interval = min(interval+di, 5) 
+        try:
+            yield Deferred(timeout=interval)
+        except CancelledError:
+            pass
+        if timeout and default_timer() - start >= timeout:
+            break
+        result = while_clause(*args)
+    yield result
+        
         
 ############################################################### FAILURE
 class Failure(object):
@@ -561,8 +579,7 @@ you obtains a new deferred ``d2`` which receives the callback when ``d1``
 has received the callback, with the following properties:
 
 * Any event that fires ``d1`` will also fire ``d2``.
-* The converse is not true; if ``d2`` is fired ``d1`` will not be affected. Infact
-  ``d2`` should only received the callback from ``d1``.
+* The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
 * The callbacks of ``d2`` won't affect ``d1`` result.
 
 This method can be used instead of :meth:`add_callback` if a bright new
@@ -708,26 +725,18 @@ a callable which accept one argument only.'''
     
     def safe_callback(self, event, callback):
         def _(result):
-            try:
-                r = callback(result)
-            except Exception as e:
-                r = Failure(e)
-            if isinstance(r, Deferred):
-                r.add_errback(lambda f: f.log(
+            safe_async(callback, result).add_errback(lambda f: f.log(
                             msg='Unhandled exception in "%s" event' % event))
-            elif isinstance(r, Failure):
-                r.log(msg='Unhandled exception in "%s" event' % event)
-            # always return result
             return result
         return _
             
                     
 class Task(Deferred):
-    '''A :class:`Deferred` coroutine is a consumer of, possibly,
-asynchronous objects.
-The callback will occur once the coroutine has stopped
-(when it raises StopIteration), or a preset maximum number of errors (default 1)
-has occurred. Instances of :class:`Task` are never
+    '''A :class:`Task` is a :class:`Deferred` which consumes a
+:ref:`coroutine <coroutine>`.
+The callback will occur once the coroutine has finished
+(when it raises StopIteration), or an unhandled exception occurs.
+Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
     _waiting = None

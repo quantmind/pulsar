@@ -1,11 +1,13 @@
 import os
+import io
 import socket
 import tempfile
 import time
 
 import pulsar
 from pulsar import platform
-from pulsar.utils.internet import parse_address, parse_connection_string
+from pulsar.utils.internet import (parse_address, parse_connection_string,
+                                   socketpair, close_socket)
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
@@ -70,3 +72,16 @@ class TestParseConnectionString(unittest.TestCase):
         self.assertEqual(scheme, 'https')
         self.assertEqual(address, ('127.0.0.1', 6439))
         self.assertEqual(params, {'db': '3', 'bla': 'foo'})
+        
+        
+class TestMisc(unittest.TestCase):
+    
+    def test_socketpair(self):
+        server, client = socketpair()
+        self.assertEqual(client.send(b'ciao'), 4)
+        self.assertEqual(server.recv(io.DEFAULT_BUFFER_SIZE), b'ciao')
+        self.assertEqual(server.send(b'ciao a te'), 9)
+        self.assertEqual(client.recv(io.DEFAULT_BUFFER_SIZE), b'ciao a te')
+        close_socket(server)
+        self.assertEqual(client.send(b'ciao'), 4)
+        

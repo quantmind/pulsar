@@ -6,7 +6,7 @@ from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
 from .actor import Actor
-from .defer import async, NOT_DONE
+from .defer import async_while
 from .concurrency import concurrency
 from .consts import *
 
@@ -186,16 +186,9 @@ as required."""
                         w, kage = w, age
                 self.manage_actor(w, True)
     
-    @async()
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        # Stop all of them
-        to_stop = self.manage_actors(stop=True)
-        while to_stop:
-            self.logger.debug('waiting for %s to stop', to_stop)
-            yield NOT_DONE
-            to_stop = self.manage_actors(stop=True)
-        yield NOT_DONE
+        return async_while(10, self.manage_actors, True)
     
     
 class Monitor(PoolMixin):

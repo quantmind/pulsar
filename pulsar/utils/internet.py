@@ -1,3 +1,5 @@
+import sys
+import os
 import socket
 
 try:
@@ -9,7 +11,7 @@ except ImportError: #pragma    nocover
     except ImportError: #pragma    nocover
         select = False
 
-from .system import platform
+from .system import platform, socketpair
 from .httpurl import urlsplit, parse_qsl, urlencode
 from .pep import native_str
 
@@ -121,10 +123,16 @@ and this example::
         scheme = ''
     return scheme, parse_address(host, default_port), params
 
-def is_closed(sock):
+def get_connection_string(scheme, address, params):
+    address = ':'.join((str(b) for b in address))
+    if params:
+        address += '?' + urlencode(params)
+    return scheme + '://' + address
+
+def is_socket_closed(sock):
     """Check if socket ``sock`` is closed."""
     if not sock:
-        return False
+        return True
     try:
         if not poll:
             if not select:
@@ -142,7 +150,35 @@ def is_closed(sock):
                 return True
     except Exception:
         return True
-
+    
+def close_socket(sock):
+    '''Shutdown and close the socket.'''
+    if sock:
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        try:
+            sock.close()
+        except Exception:
+            pass
+        
+def create_socket(bindto=None, local_addr=None, family=socket.AF_INET,
+                  type=socket.SOCK_STREAM, backlog=100, reuse_address=None):
+    sock = socket.socket(family=family, type=type)
+    if bindto:
+        assert not local_addr, 'either bind or local address bind'
+        if reuse_address is None:
+            reuse_address = os.name == 'posix' and sys.platform != 'cygwin'
+        if reuse_address:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+        sock.bind(bindto)
+        if backlog:
+            sock.listen(backlog)
+    if local_addr:
+        self.bind(local_addr)
+    return sock
+    
 def nice_address(address, family=None):
     if isinstance(address, tuple):
         return ':'.join((str(s) for s in address[:2]))

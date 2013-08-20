@@ -20,7 +20,7 @@ class BaseProtocol:
     """ABC for base protocol class.
 
     Usually user implements protocols that derived from BaseProtocol
-    like Protocol or ProcessProtocol.
+    like :class:`Protocol` or :class:`DatagramProtocol`.
 
     The only case when BaseProtocol should be implemented directly is
     write-only transport like write pipe
@@ -103,12 +103,6 @@ Its job can be described as allowing the protocol to just send and
 receive bytes, taking care of all of the magic that needs to happen to those
 bytes to be eventually sent across the wire.
 
-The primary feature of a transport is sending bytes to a protocol and receiving
-bytes from the underlying protocol. Writing to the transport is done using
-the :meth:`write` and :meth:`writelines` methods. The latter method is a
-performance optimisation, to allow software to take advantage of specific
-capabilities in some transport mechanisms.
-
 .. attribute:: event_loop
 
     The :class:`EventLoop` for this :class:`Transport`.
@@ -116,90 +110,22 @@ capabilities in some transport mechanisms.
 .. attribute:: protocol
 
     The :class:`Protocol` for this :class:`Transport`.
-    
-.. attribute:: sock
-
-    the socket/pipe for this :class:`Transport`.
-
-.. attribute:: connecting
-
-    ``True`` if the transport is connecting with an end-point.
-    
-.. attribute:: writing
-
-    The transport has data in the write buffer and it is not :attr:`closed`.
-
-.. attribute:: closing
-
-    The transport is about to close. In this state the transport is not
-    listening for ``read`` events but it may still be writing, unless it
-    is :attr:`closed`.
-        
-.. attribute:: closed
-
-    The transport is closed. No read/write operation avaibale.
 '''
-    closed = False
-    def write(self, data):
-        '''Write some data bytes to the transport.
-        This does not block; it buffers the data and arranges for it
-        to be sent out asynchronously.'''
-        raise NotImplementedMethod
-    
-    def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport.
-If *list_of_data* is a **generator**, and during iteration an empty byte is
-yielded, the function will postpone writing the remaining of the generator
-at the next loop in the :attr:`eventloop`."""
-        for data in list_of_data:
-            self.write(data)
-    
-    def pause(self):
-        """A :class:`Transport` can be paused and resumed. Invoking this
-method will cause the transport to buffer data coming from protocols but not
-sending it to the :attr:`protocol`. In other words, no data will be passed to
-the :meth:`Protocol.data_received` method until :meth:`resume` is called.
-        """
-        raise NotImplementedError
-
-    def resume(self):
-        """Resume the receiving end. Data received will once again be
-passed to the :meth:`Protocol.data_received` method."""
-        raise NotImplementedError
-    
-    def close(self, async=True, exc=None):
-        """Closes the transport.
-
-        Buffered data will be flushed asynchronously.  No more data
-        will be received.  After all buffered data is flushed, the
-        protocol's connection_lost() method will (eventually) called
-        with None as its argument.
-        """
-        raise NotImplementedError
-    
-    def abort(self, exc=None):
-        """Closes the transport immediately.
-
-        Buffered data will be lost.  No more data will be received.
-        The protocol's connection_lost() method will (eventually) be
-        called with None as its argument.
-        """
-        self.close(async=False, exc=exc)
+    def get_extra_info(name, default=None):
+        return None
         
     
 class SocketTransport(Transport):
-    '''A class:`Transport` for sockets.
+    '''A :class:`Transport` for sockets.
     
-**One Time Events**
+:parameter event_loop: Set the :attr:`Transport.event_loop` attribute.
+:parameter sock: Set the :attr:`sock` attribute.
+:parameter protocol: set the :class:`Transport.protocol` attribute.
 
-* **connection_made** fired when a connections made (for client connections)
-* **closing** when transport is about to close
-* **connection_lost** fired when a the connections with end-point is lost
-
-**Many Times Events**
-
-* **data_received** fired when new data has arrived
-'''
+When a new :class:`SocketTransport` is created, it adds a read handler
+to the :attr:`Transport.event_loop` and notifies the :attr:`Transport.protocol`
+that the connection is available via the :meth:`BaseProtocol.connection_made`
+method.'''
     def __init__(self, event_loop, sock, protocol, extra=None,
                  max_buffer_size=None, read_chunk_size=None):
         self._protocol = protocol
@@ -227,21 +153,31 @@ class SocketTransport(Transport):
         return self.__repr__()
     
     @property
+    def sock(self):
+        '''The socket for this :class:`SocketTransport`.'''
+        return self._sock
+     
+    @property
     def writing(self):
-        '''The :class:`Transport` has data in the write buffer.'''
+        '''The :class:`SocketTransport` has data in the write buffer and it is
+        not :attr:`closed`.'''
         return self._sock is not None and bool(self._write_buffer)
     
     @property
     def closing(self):
+        '''The transport is about to close. In this state the transport is not
+        listening for ``read`` events but it may still be writing, unless it
+        is :attr:`closed`.'''
         return bool(self._closing)
     
     @property
     def closed(self):
+        '''The transport is closed. No read/write operation available.'''
         return self._sock is None
     
     @property
-    def sock(self):
-        return self._sock
+    def protocol(self):
+        return self._protocol
     
     @property
     def address(self):
@@ -257,13 +193,28 @@ class SocketTransport(Transport):
             return self._sock.fileno()
                 
     def close(self, async=True, exc=None):
+        """Closes the transport.
+
+        Buffered data will be flushed asynchronously.  No more data
+        will be received.  After all buffered data is flushed, the
+        :class:`BaseProtocol.connection_lost` method will (eventually) called
+        with ``None`` as its argument.
+        """
         if not self.closing:
             self._closing = True
+            self._sock.shutdown(socket.SHUT_RD)
             self._event_loop.remove_reader(self._sock_fd)
-            if async and not self.writing:
+            if not async or not self.writing:
                 self._event_loop.call_soon(self._shutdown, exc)
-        if not async:
-            self._shutdown(exc)
+    
+    def abort(self, exc=None):
+        """Closes the transport immediately.
+
+        Buffered data will be lost.  No more data will be received.
+        The :class:`BaseProtocol.connection_lost` method will (eventually) be
+        called with ``None`` as its argument.
+        """
+        self.close(async=False, exc=exc)
     
     def _read_ready(self):
         raise NotImplementedError
@@ -279,6 +230,7 @@ class SocketTransport(Transport):
             self._write_buffer = deque()
             self._event_loop.remove_writer(self._sock_fd)
             try:
+                self._sock.shutdown(socket.SHUT_WR)
                 self._sock.close()
             except Exception:
                 pass

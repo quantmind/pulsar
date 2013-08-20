@@ -19,7 +19,7 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              set_event_loop, new_event_loop, get_event_loop,\
                              EventLoop as BaseEventLoop, range,\
                              EventLoopPolicy as BaseEventLoopPolicy
-from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
+from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
 from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async

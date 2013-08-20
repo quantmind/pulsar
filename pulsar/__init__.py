@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 5, 3, 'alpha', 2)
+VERSION = (0, 6, 0, 'alpha', 1)
 
 from .utils.version import get_version
 
@@ -42,7 +42,7 @@ SERVER_SOFTWARE = "python-{0}/{1}".format(SERVER_NAME, version)
 
 from .utils.exceptions import *
 from .utils import system
-from .utils.sockets import create_socket, parse_address
+from .utils.internet import parse_address
 from .utils.pep import to_string, native_str, to_bytes
 platform = system.platform
 

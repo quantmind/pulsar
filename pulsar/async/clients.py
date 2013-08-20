@@ -4,8 +4,8 @@ from threading import Lock
 
 from pulsar import TooManyConnections
 from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
-from pulsar.utils.sockets import get_transport_type, create_socket
-from pulsar.async.defer import is_failure, multi_async
+from pulsar.utils.internet import is_socket_closed
+from .defer import is_failure, multi_async
 
 from .protocols import ProtocolConsumer, EventHandler, Producer
 
@@ -35,8 +35,8 @@ remote server is needed.'''
         return res.add_callback(self._connection_made)
         
     def _connection_made(self, transport_protocol):
-        transport, connection = transport_protocol
-        connection.connection_made(transport)
+        _, connection = transport_protocol
+        yield connection.event('connection_made')
         connection.current_consumer.new_request(self)
     
     
@@ -93,8 +93,9 @@ of available connections.
                 closed = True
                 while closed:
                     connection = self._available_connections.pop()
-                    closed = connection.is_stale()
-                    if closed and not connection.closed:
+                    sock = connection.sock
+                    closed = is_socket_closed(sock)
+                    if closed and sock:
                         stale_connections.append(connection)
             except KeyError:
                 connection = None
@@ -299,7 +300,7 @@ This method is run on this client event loop (obtained via the
         event_loop = self.get_event_loop()
         if response is None:
             response = self.consumer_factory()
-        event_loop.call_now_threadsafe(self._response,
+        event_loop.call_now_threadsafe(self._response, event_loop,
                                        response, request, new_connection)
         if self.force_sync: # synchronous response
             event_loop.run_until_complete(response.on_finished)
@@ -386,13 +387,16 @@ taken to obtain all responses.'''
             results.append(r)
         return multi_async(results)
     
-    def _response(self, response, request, new_connection):
+    def _response(self, event_loop, response, request, new_connection,
+                  result=None):
         if new_connection or response.connection is None:
             # Get the connection for this request
             conn = self.get_connection(request)
             conn.set_consumer(response)
             if conn.transport is None:
-                return request.create_connection(self.event_loop, conn)
+                # There is no transport, we need to connect with server first
+                return request.create_connection(
+                    event_loop, conn).add_errback(response.finished)
         response.new_request(request)
         
 

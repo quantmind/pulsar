@@ -1,6 +1,7 @@
 Ver. 0.5.3 - Development
 ==============================
 * More design and API docs.
+* :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
 * Several fixes in the test application.
 * Tasks throw errors back to the coroutine via the generator ``throw`` method.
 * 50% Faster :class:`pulsar.Deferred` initialisation.

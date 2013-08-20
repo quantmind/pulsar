@@ -3,9 +3,10 @@ from copy import copy
 from functools import partial
 
 from pulsar import ProtocolError
-from pulsar.utils.sockets import nice_address
-from pulsar.async.defer import EventHandler, NOTHING
-from pulsar.async.internet import Protocol
+from pulsar.utils.internet import nice_address
+
+from .defer import EventHandler, NOTHING
+from .internet import Protocol
 
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer']

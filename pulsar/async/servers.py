@@ -1,13 +1,8 @@
 '''Servers creating Transports'''
-import socket
-from functools import partial
-
-from pulsar import create_socket, ProtocolError
-from pulsar.utils.sockets import create_socket, get_transport_type, wrap_socket
 from pulsar.utils.internet import format_address
 
-from .defer import EventHandler
-from .protocols import Connection, Producer, TransportProxy
+from .protocols import Producer
+
 
 __all__ = ['Server', 'TcpServer']
     
@@ -26,8 +21,8 @@ An instance of this class is a :class:`Producer` of server sockets.
                          'connection_lost')
     consumer_factory = None
     
-    def __init__(self, event_loop, host=None, port=None, sock=None,
-                 consumer_factory=None, name=None, **kw):
+    def __init__(self, event_loop, host=None, port=None,
+                 consumer_factory=None, name=None, sock=None, **kw):
         super(Server, self).__init__(**kw)
         self._name = name or self.__class__.__name__
         self._event_loop = event_loop
@@ -36,6 +31,8 @@ An instance of this class is a :class:`Producer` of server sockets.
         self._sock = sock
         if consumer_factory:
             self.consumer_factory = consumer_factory
+        assert hasattr(self.consumer_factory, '__call__'), (
+                'consumer_factory must be a callable')
     
     def close(self):
         '''Stop serving and close the listening socket.'''
@@ -89,10 +86,10 @@ the socket'''
         if self._sock:
             self._event_loop.stop_serving(self._sock)
             self.fire_event('stop')
+            self._sock = None
     
     def close(self):
         self.stop_serving()
-        self._sock = None
             
     def _got_sockets(self, sockets):
         self._sock = sockets[0]

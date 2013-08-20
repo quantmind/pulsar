@@ -2,9 +2,8 @@ from time import time
 
 from pulsar import CommandError
 
-from .defer import is_async
+from .defer import async_while
 from .proxy import command, ActorProxyMonitor
-from .consts import NOT_DONE
 
 
 @command()
@@ -38,7 +37,6 @@ def run(request, callable, *args, **kwargs):
 @command(ack=False)
 def stop(request):
     '''Stop the actor from running.'''
-    actor.logger.debug('Got stop request from %s', request.caller)
     return request.actor.stop()
     
 @command()
@@ -75,17 +73,20 @@ def info(request):
     return request.actor.info()
      
 @command()
-def kill_actor(request, aid):
+def kill_actor(request, aid, timeout=5):
     '''Kill an actor with id ``aid``. This command can only be executed by the
 arbiter, therefore a valid sintax is only::
 
     send('arbiter', 'kill_actor', 'abc')
 
-Return 'stopped abc` if succesful, otherwise it returns ``None``.
+Return 'killed abc` if successful, otherwise it returns ``None``.
 '''
     arb = request.actor 
     if arb.is_arbiter():
         arb.send(aid, 'stop')
-        while arb.get_actor(aid):
-            yield NOT_DONE
-        yield 'stopped %s' % aid
+        proxy = yield async_while(timeout, arb.get_actor, aid)
+        if proxy:
+            arb.logger.warning('Could not kill actor %s', aid)
+            yield None
+        else:
+            yield 'killed %s' % aid
