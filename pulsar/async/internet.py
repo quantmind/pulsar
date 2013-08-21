@@ -11,7 +11,7 @@ AF_INET6 = getattr(socket, 'AF_INET6', 0)
 
 FAMILY_NAME = {socket.AF_INET: 'TCP'}
 if AF_INET6:
-    FAMILY_NAME[socket.AF_INET] = 'TCP6'
+    FAMILY_NAME[socket.AF_INET6] = 'TCP6'
 if hasattr(socket, 'AF_UNIX'):
     FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
     
@@ -137,8 +137,7 @@ method.'''
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
-        event_loop.add_reader(self._sock_fd, self._read_ready)
-        event_loop.call_soon(self._protocol.connection_made, self)
+        self._setup()
     
     def __repr__(self):
         sock = self._sock
@@ -218,6 +217,9 @@ method.'''
         called with ``None`` as its argument.
         """
         self.close(async=False, exc=exc)
+    
+    def _setup(self):
+        pass
     
     def _read_ready(self):
         raise NotImplementedError

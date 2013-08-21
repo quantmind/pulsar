@@ -174,10 +174,17 @@ class Client(EventHandler):
     '''A client for a remote server which handles one or more
 :class:`ConnectionPool` of asynchronous connections.
 It has the ``finish`` :ref:`one time event <one-time-event>` fired when calling
-the :meth:`close` method, four :ref:`many time events <many-times-event>`
-which can be used to add additional information to the request to send
-to the remote server and to postprocess responses. These events are:
-``connection_made``, ``pre_request``, ``post_request``, ``connection_lost``.
+the :meth:`close` method.
+
+in the same way as the :class:`Server` class, :class:`Client` has four
+:ref:`many time events <many-times-event>`:
+
+* ``connection_made`` a new connection is made.
+* ``pre_request``, can be used to add information to the request
+  to send to the remote server.
+* ``post_request``, fired when a full response has been received. It can be
+  used to post-process responses.
+* ``connection_lost`` a connection dropped.
 
 Most initialisation parameters have sensible defaults and don't need to be
 passed for most use-cases. Additionally, they can also be set as class
@@ -340,7 +347,11 @@ This method is run on this client event loop (obtained via the
         return response
     
     def get_connection(self, request):
-        '''Get a suitable :class:`Connection` for *request*.'''
+        '''Get a suitable :class:`Connection` for ``request`` by first checking
+if an available open connection can be used. Alternatively it creates
+a new connection. This method invoks the
+:meth:`ConnectionPool.get_or_create_connection` on the appropiate
+connection pool.'''
         with self.lock:
             pool = self.connection_pools.get(request.key)
             if pool is None:
@@ -373,6 +384,8 @@ in :attr:`request_parameters` tuple.'''
             self.fire_event('finish')
         
     def abort(self):
+        ''':meth:`close` all connections without waiting for active connections
+        to finish.'''
         self.close(async=False)
 
     def can_reuse_connection(self, connection, response):
@@ -435,15 +448,22 @@ Usage::
     
     def _response(self, event_loop, response, request, new_connection,
                   result=None):
-        if new_connection or response.connection is None:
-            # Get the connection for this request
-            conn = self.get_connection(request)
-            conn.set_consumer(response)
+        # Actually execute the request. This method is always called on the
+        # event loop thread
+        try:
+            conn = response.connection
+            if new_connection or conn is None:
+                # Get the connection for this request
+                conn = self.get_connection(request)
+                conn.set_consumer(response)
             if conn.transport is None:
                 # There is no transport, we need to connect with server first
                 return request.create_connection(
                     event_loop, conn).add_errback(response.finished)
-        response.new_request(request)
+            else:
+                response.new_request(request)
+        except Exception as e:
+            response.finished(e)
         
 
 class SingleClient(Client):

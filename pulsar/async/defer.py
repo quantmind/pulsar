@@ -702,7 +702,7 @@ a callable which accept one argument only.'''
     dispatching :ref:`global events <global-events>`.
 :return: boolean indicating if the event was fired or not.
 """
-        event_data = self if event_data is NOTHING else event_data
+        event_data = self if event_data is NOTHING else maybe_failure(event_data)
         fired = True
         if event in self.ONE_TIME_EVENTS:
             fired = not self.ONE_TIME_EVENTS[event].done()

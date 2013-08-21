@@ -19,14 +19,10 @@ TcpServer
 import os
 import sys
 import socket
-try:
-    import ssl
-except ImportError:  # pragma: no cover
-    ssl = None
 
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
-                                   format_address)
+                                   format_address, ssl_context, ssl)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
@@ -46,6 +42,10 @@ advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
     
+    def _setup(self):
+        self._event_loop.add_reader(self._sock_fd, self._read_ready)
+        self._event_loop.call_soon(self._protocol.connection_made, self)
+        
     def pause(self):
         """A :class:`SocketStreamTransport` can be paused and resumed.
 Invoking this method will cause the transport to buffer data coming
@@ -175,19 +175,36 @@ be accumulating data in an internal buffer.'''
 class SocketStreamSslTransport(SocketStreamTransport):
     
     def __init__(self, event_loop, rawsock, protocol, sslcontext,
-                 server_side=False, **kwargs):
-        if server_side:
-            assert isinstance(
-                sslcontext, ssl.SSLContext), 'Must pass an SSLContext'
-        else:
-            # Client-side may pass ssl=True to use a default context.
-            sslcontext = sslcontext or ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                 server_side=True, **kwargs):
+        sslcontext = ssl_context(sslcontext, server_side=server_side)
         sslsock = sslcontext.wrap_socket(rawsock, server_side=server_side,
                                          do_handshake_on_connect=False)
-
-        super(SocketStreamSslTransport, self).__init__(loop, sslsock, protocol,
-                                                       **kwargs)
         self._rawsock = rawsock
+        self._handshake_reading = False
+        self._handshake_writing = False
+        super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
+                                                       protocol, **kwargs)
+        
+    def _setup(self):
+        try:
+            self._sock.do_handshake()
+        except ssl.SSLError as e:
+            if e.errno == ssl.SSL_ERROR_WANT_READ:
+                self._handshake_reading = True
+                self._loop.add_reader(self._sock_fd, self._setup)
+            elif e.errno == ssl.SSL_ERROR_WANT_WRITE:
+                self._handshake_writing = True
+                self._loop.add_writer(self._sock_fd, self._setup)
+            else:
+                self.abort(e)
+        except Eception as e:
+            return self.abort(e)
+        else:
+            loop = self._event_loop
+            loop.remove_reader(self._sock_fd)
+            loop.remove_writer(self._sock_fd)
+            loop.add_writer(self._sock_fd, self._ready_write)
+            super(SocketStreamSslTransport, self)._setup()
 
 
 class TcpServer(Server):
@@ -200,17 +217,20 @@ class TcpServer(Server):
     sending of data.
     
 '''
-    def start_serving(self, backlog=100):
+    def start_serving(self, backlog=100, sslcontext=None):
         '''Start serving the Tcp socket.
         
-It returns a :class:`pulsar.Deferred` called back when the server is serving
-the socket.'''
+:parameter backlog: Number of maximum connections
+:parameter sslcontext: optional SSLContext object.
+:return: a :class:`pulsar.Deferred` called back when the server is serving
+    the socket.'''
         if not self.event('start').done():
             res = self._event_loop.start_serving(self.protocol_factory,
                                                  host=self._host,
                                                  port=self._port,
                                                  sock=self._sock,
-                                                 backlog=backlog)
+                                                 backlog=backlog,
+                                                 ssl=sslcontext)
             return res.add_callback(self._got_sockets)\
                       .add_both(lambda r: self.fire_event('start', r))
     

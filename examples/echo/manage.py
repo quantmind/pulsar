@@ -12,19 +12,15 @@ Writing the Client
 The protocol consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first step is to subclass :class:`pulsar.ProtocolConsumer` which is needed
-for two reasons:
+The first step is to subclass :class:`pulsar.ProtocolConsumer` to create the
+:class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed
+for two reasons: 
 
-* It encodes and sends the request to the remote server.
-* It listen (if needed) for incoming data from the remote server.
+* It encodes and sends the request to the remote server via the
+  :meth:`EchoProtocol.start_request` method.
+* It listens for incoming data from the remote server via the
+  :meth:`EchoProtocol.data_received` method.
 
-There are two methods which needs implementing:
-
-* :meth:`pulsar.ProtocolConsumer.start_request` to kick start a request to a
-  remote server.
-* :meth:`pulsar.Protocol.data_received`, invoked by the
-  :class:`pulsar.Connection` when new data has been received from the
-  remote server.
 
 The client
 ~~~~~~~~~~~~~~~
@@ -125,6 +121,8 @@ It simply search for the :attr:`separator` and, if found, it invokes the
             self.buffer += data
     
     def start_request(self):
+        '''Override :meth:`pulsar.Protocol.start_request` to write
+the message ended by the :attr:`separator` into the transport.'''
         self.transport.write(self.current_request.message + self.separator)
         
     def response(self, data):
