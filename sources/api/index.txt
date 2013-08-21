@@ -50,6 +50,7 @@ Contents
    async
    actor
    protocols
+   stream
    application
    utilities
    exceptions

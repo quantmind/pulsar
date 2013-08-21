@@ -2,9 +2,9 @@
 
 .. _protocol-api:
 
-=======================
-Protocols API
-=======================
+================================
+Protocols/Transports API
+================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
 implementing the Protocol/Transport paradigm as well as :class:`Server` and
@@ -12,30 +12,61 @@ implementing the Protocol/Transport paradigm as well as :class:`Server` and
 and :class:`Protocol` are designed to
 comply with pep-3156_ specification
 
-Transport
+Transports
 ==========================
+
+Transport
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Transport
    :members:
    :member-order: bysource
    
    
-Protocol
+SocketTransport
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SocketTransport
+   :members:
+   :member-order: bysource
+   
+  
+Protocols
 ==========================
+
+BaseProtocol
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: BaseProtocol
+   :members:
+   :member-order: bysource
+
+
+Protocol
+~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: Protocol
+   :members:
+   :member-order: bysource
+   
+   
+DatagramProtocol
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: DatagramProtocol
    :members:
    :member-order: bysource
 
 
 Connection
-==========================
+~~~~~~~~~~~~~~
 .. autoclass:: Connection
    :members:
    :member-order: bysource
    
    
 Protocol Consumer
-=====================================
+~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProtocolConsumer
    :members:
    :member-order: bysource      
@@ -47,11 +78,15 @@ Producer
    :member-order: bysource
 
 
+.. _clients-api:
+
 Clients
 =================
 
-This section introduces two classes for transport/protocol clients with several
-connections to a remote :class:`Server`. 
+This section introduces classes implementing the transport/protocol paradigm
+for clients with several connections to a remote :class:`Server`.
+:class:`Client` is the main class here, and :class:`Client.request`
+is the single most important method a subclass must implement.
 
 Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +101,12 @@ Client Connection Pool
    :members:
    :member-order: bysource
 
-
+Request
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: Request
+   :members:
+   :member-order: bysource
+   
 Server
 ==================
 

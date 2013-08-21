@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Components &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Asynchronous Components &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Actor messages" href="messages.html" />
     <link rel="prev" title="Dining Philosophers" href="philosophers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="philosophers.html" title="Dining Philosophers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -141,15 +141,8 @@ finish. To cancel a deferred one invokes the <a class="reference internal" href=
 method. Calling <tt class="docutils literal"><span class="pre">cancel</span></tt> on an already called or cancelled deferred
 has no effect, therefore the <a class="reference internal" href="../api/async.html#pulsar.Deferred.cancel" title="pulsar.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.cancel()</span></tt></a> will always
 succeed.</p>
-<p>A useful application of deferred cancellation, is setting a <tt class="docutils literal"><span class="pre">timeout</span></tt> to an
-asynchronous operation. To set a timeout, one used the
-<a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-class docutils literal"><span class="pre">Deferred.set_timeout</span></tt></a> method:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
 <p>When a <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is cancelled, the deferred on which the task is blocked is
-not affected. For example:</p>
+cancelled too. For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">maybe_async</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">gen</span><span class="p">():</span>
@@ -159,9 +152,27 @@ not affected. For example:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">task</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">cancelled</span><span class="p">()</span>
-<span class="go">False</span>
+<span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
-<span class="go">False</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="timeouts">
+<h3>Timeouts<a class="headerlink" href="#timeouts" title="Permalink to this headline">¶</a></h3>
+<p>A useful application of <a class="reference internal" href="#deferred-cancel"><em>deferred cancellation</em></a>,
+is setting a <tt class="docutils literal"><span class="pre">timeout</span></tt> to an asynchronous operation. To set a timeout,
+one used the <a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-class docutils literal"><span class="pre">Deferred.set_timeout</span></tt></a> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To avoid cancelling the underlying operation one could use this trick:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">d2</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">then</span><span class="p">()</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or a double layer timeout:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">d2</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">()</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -236,6 +247,7 @@ are ready.</p>
 <li><a class="reference internal" href="#deferred">Deferred</a><ul>
 <li><a class="reference internal" href="#the-event-loop">The event loop</a></li>
 <li><a class="reference internal" href="#cancelling-a-deferred">Cancelling a deferred</a></li>
+<li><a class="reference internal" href="#timeouts">Timeouts</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#coroutines">Coroutines</a></li>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Synchronous Clients &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Greenlet Integration &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -25,9 +25,8 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
     <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
-    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="API" href="../api/index.html" />
-    <link rel="prev" title="Signal Handling" href="signal.html" /> 
+    <link rel="next" title="Asynchornous HTTP client" href="http.html" />
+    <link rel="prev" title="Django Application" href="pulse.html" /> 
   </head>
   <body>
 
@@ -41,13 +40,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../api/index.html" title="API"
+          <a href="http.html" title="Asynchornous HTTP client"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="signal.html" title="Signal Handling"
+          <a href="pulse.html" title="Django Application"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
-          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -55,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://pythonhosted.org/pulsar/tutorials/sync.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/apps/green.html">release docs here</a>.
         </p>
     
 </div>
@@ -67,23 +65,14 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="synchronous-clients">
-<span id="tutorials-synchronous"></span><h1>Synchronous Clients<a class="headerlink" href="#synchronous-clients" title="Permalink to this headline">¶</a></h1>
-<p>Both <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> and <a class="reference internal" href="../api/protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Server</span></tt></a> are asynchronous by design.
-However, sometimes, mainly for testing purposing, can be useful to have
-<a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> which behaves in a synchronous fashion.</p>
-<p>Pulsar achieves this by using the <tt class="docutils literal"><span class="pre">force_sync</span></tt> keyword when building a client.
-For example, this statement creates a synchronous <a class="reference internal" href="../apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">http</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">client</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">HttpClient</span><span class="p">(</span><span class="n">force_sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-</pre></div>
+  <div class="section" id="module-pulsar.apps.green">
+<span id="greenlet-integration"></span><span id="tutorials-greenlet"></span><h1>Greenlet Integration<a class="headerlink" href="#module-pulsar.apps.green" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-pulsar.apps.green" title="pulsar.apps.green"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.green</span></tt></a> adds support for <a class="reference external" href="http://greenlet.readthedocs.org">greenlet</a> micro-threads.
+The code was inspired by the <a class="reference external" href="https://github.com/1st1/greentulip">greentulip</a> experimental library.</p>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<p>Lets assume a generator <tt class="docutils literal"><span class="pre">gen</span></tt>.</p>
 </div>
-<p>Under the hood, pulsar treats a synchronous clients exactly in the same way as
-an asynchronous one with the only difference in the <a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>
-used.</p>
-<p>Synchronous clients create their own event loop and invoke the
-<a class="reference internal" href="../api/async.html#pulsar.EventLoop.run_until_complete" title="pulsar.EventLoop.run_until_complete"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.EventLoop.run_until_complete()</span></tt></a> to wait for the response to
-be available.</p>
 </div>
 
 
@@ -96,15 +85,23 @@ be available.</p>
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Greenlet Integration</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="signal.html"
-                        title="previous chapter">Signal Handling</a></p>
+  <p class="topless"><a href="pulse.html"
+                        title="previous chapter">Django Application</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../api/index.html"
-                        title="next chapter">API</a></p>
+  <p class="topless"><a href="http.html"
+                        title="next chapter">Asynchornous HTTP client</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/sync.txt"
+    <li><a href="../sources/apps/green.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

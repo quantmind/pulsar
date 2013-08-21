@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Dining Philosophers &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Dining Philosophers &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Asynchronous Components" href="coroutine.html" />
     <link rel="prev" title="Run a Django site with Pulsar" href="django.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="django.html" title="Run a Django site with Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -111,6 +111,13 @@ get a chance to eat.</li>
 <dt id="examples.philosophers.manage.DiningPhilosophers">
 <em class="property">class </em><tt class="descclassname">examples.philosophers.manage.</tt><tt class="descname">DiningPhilosophers</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
+<dt id="examples.philosophers.manage.DiningPhilosophers.worker_info">
+<tt class="descname">worker_info</tt><big>(</big><em>philosopher</em>, <em>info</em><big>)</big><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.worker_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Application.worker_info()</span></tt> to provide
+information about the philosopher.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="examples.philosophers.manage.DiningPhilosophers.take_action">
 <tt class="descname">take_action</tt><big>(</big><em>philosopher</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.take_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.take_action" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <tt class="docutils literal"><span class="pre">philosopher</span></tt> performs one of these two actions:</p>

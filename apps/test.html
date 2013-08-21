@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Test Suite &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Asynchronous and Parallel Test Suite &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -66,11 +66,11 @@
           <div class="body">
             
   <div class="section" id="module-pulsar.apps.test">
-<span id="asynchronous-test-suite"></span><span id="apps-test"></span><h1>Asynchronous Test Suite<a class="headerlink" href="#module-pulsar.apps.test" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> is a testing framework for
-asynchronous/synchronous applications and for running tests in parallel
+<span id="asynchronous-and-parallel-test-suite"></span><span id="apps-test"></span><h1>Asynchronous and Parallel Test Suite<a class="headerlink" href="#module-pulsar.apps.test" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> is a testing framework for both synchronous and
+asynchronous applications and for running tests in parallel
 on multiple threads or processes.
-It is used for testing pulsar itself but it can be used
+It is used for testing pulsar but it can be used
 as a test suite for any other library.</p>
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
@@ -579,6 +579,46 @@ as class attributes.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="module-pulsar.apps.test.utils">
+<span id="utilities"></span><h3>Utilities<a class="headerlink" href="#module-pulsar.apps.test.utils" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.test.utils.run_on_arbiter">
+<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">run_on_arbiter</tt><big>(</big><em>f</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#run_on_arbiter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.run_on_arbiter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator for running a test function in the <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a>
+context domain. This can be useful to test Arbiter mechanics.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.test.utils.ActorTestMixin">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">ActorTestMixin</tt><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A mixin for <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt> classes testing spawning
+of actors. Make sure this is the first class you derive from, before the
+unittest.TestCase, so that the tearDown method is overwritten.</p>
+<dl class="method">
+<dt id="pulsar.apps.test.utils.ActorTestMixin.spawn">
+<tt class="descname">spawn</tt><big>(</big><em>concurrency=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawn a new actor and perform some tests.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.test.utils.AsyncAssert">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">AsyncAssert</tt><big>(</big><em>test=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> which the <a class="reference internal" href="#test-suite"><em>Test Suite</em></a> add to all python
+<tt class="xref py py-class docutils literal"><span class="pre">unitest.TestCase</span></tt>. It can be used to invoke the same
+<tt class="docutils literal"><span class="pre">assertXXX</span></tt> methods available in the <tt class="xref py py-class docutils literal"><span class="pre">unitest.TestCase</span></tt> with the
+added bonus they it waorks for asynchronous results too.</p>
+<p>The descriptor is available bia the <tt class="docutils literal"><span class="pre">async</span></tt> attribute. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">test1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">async</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">()</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -594,7 +634,7 @@ as class attributes.</p>
 </p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Asynchronous Test Suite</a><ul>
+<li><a class="reference internal" href="#">Asynchronous and Parallel Test Suite</a><ul>
 <li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#writing-a-test-case">Writing a Test Case</a></li>
@@ -619,6 +659,7 @@ as class attributes.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#test-plugin">Test Plugin</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.test.utils">Utilities</a></li>
 </ul>
 </li>
 </ul>

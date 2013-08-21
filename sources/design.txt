@@ -57,8 +57,42 @@ Actors
 An :class:`Actor` is the atom of pulsar's concurrent computation,
 they do not share state between them, communication is achieved via asynchronous
 :ref:`inter-process message passing <tutorials-messages>`,
-implemented using the standard python socket library. They can be process based
-as well as thread based and can perform one or many activities.
+implemented using the standard python socket library. A pulsar actor can be
+process based as well as thread based and can perform one or many activities.
+
+The Theory
+~~~~~~~~~~~~~~~~~
+The actor model is the cornerstone of the Erlang programming language.
+Python has very few implementation and all of them seems quite limited in scope.
+
+.. epigraph::
+
+    The Actor model in computer science is a mathematical model of concurrent
+    computation that treats "actors" as the universal primitives of concurrent
+    digital computation: in response to a message that it receives, an actor
+    can make local decisions, create more actors, send more messages, and
+    determine how to respond to the next message received.
+    
+    -- Wikipedia
+
+**Actor's properties**
+
+* Each actor has its own ``process`` (not intended as an OS process) and they
+  don't shares state between them.
+* Actors can change their own states.
+* Actors can create other actors and when they do that they receive back the new actor address.
+* Actors exchange messages in an asynchronous fashion.
+
+**Why would one want to use an actor-based system?**
+
+* No shared memory and therefore locking is not required.
+* Race conditions greatly reduced.
+* It greatly simplify the control flow of a program, each actor has its own process (flow of control).
+* Easy to distribute, across cores, across program boundaries, across machines.
+* It simplifies error handling code.
+* It makes it easier to build fault-tolerant systems.
+
+.. _arbiter:
 
 The Arbiter
 ~~~~~~~~~~~~~~~~~
@@ -79,7 +113,7 @@ To access the :class:`Arbiter`, from the main process, one can use the
     
 .. _concurrency:
 
-Concurrency
+Implementation
 ~~~~~~~~~~~~~~~~~~
 An actor can be **processed based** (default) or **thread based** and control
 at least one running :class:`EventLoop`.
@@ -211,21 +245,27 @@ the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
 its file descriptor with the :attr:`Actor.event_loop`.
 
-This snippet spawn a new actor which starts an
+This snippet spawns a new actor which starts an
 :ref:`Echo server <tutorials-writing-clients>`::
 
     from functools import partial
     
-    from pulsar import spawn
+    from pulsar import spawn, TcpServer
     
     def create_echo_server(address, actor):
-        sock = pulsar.create_socket(address, bindto=True)
-        actor.servers['echo'] = actor.event_loop.create_server(
-                                    sock=sock,
-                                    consumer_factory=EchoServerProtocol)
+        '''Starts an echo server on a newly spawn actor'''
+        server = TcpServer(actor.event_loop, address[0], address[1],
+                           EchoServerProtocol)
+        yield server.start_serving()
+        actor.servers['echo'] = server
+        actor.extra['echo-address'] = server.address
         
     proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
     
+The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
+:ref:`echo server and client tutorial <tutorials-writing-clients>`.
+
+
 .. note::
 
     Hooks are function receiving as only argument the actor which invokes them.
@@ -254,18 +294,30 @@ commands via the :class:`pulsar.command` decorator as explained in the
 
 **ping**
 
-Ping the remote actor *abcd* and receive an asynchronous ``pong``::
+Ping the remote actor ``abcd`` and receive an asynchronous ``pong``::
 
     send('abcd', 'ping')
 
 
 **echo**
 
-received an asynchronous echo from a remote actor *abcd*::
+received an asynchronous echo from a remote actor ``abcd``::
 
     send('abcd', 'echo', 'Hello!')
 
 
+.. _actor_info_command:
+
+**info**
+
+Request information about a remote actor ``abcd``::
+
+    send('abcd', 'info')
+    
+The asynchronous result will be called back with the dictionary returned
+by the :meth:`Actor.info` method.
+    
+    
 **run**
 
 Run a function on a remote actor. The function must accept actor as its initial parameter::
@@ -283,6 +335,12 @@ Run a function on a remote actor. The function must accept actor as its initial 
 Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
+    
+.. _monitor:
+
+Monitors
+~~~~~~~~~~~~~~
+
     
 .. _exception-design:
 

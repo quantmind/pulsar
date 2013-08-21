@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Changelog &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,9 +67,14 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-5-3-development">
-<h2>Ver. 0.5.3 - Development<a class="headerlink" href="#ver-0-5-3-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-6-0-development">
+<h2>Ver. 0.6.0 - Development<a class="headerlink" href="#ver-0-6-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>More design and API docs.</li>
+<li>Socket servers handle IPV6 adresses.</li>
+<li><a class="reference internal" href="design.html#actor-hooks"><em>Actor&#8217;s hooks can be asynchronous</em></a>.</li>
+<li>Several fixes in the test application.</li>
+<li>Tasks throw errors back to the coroutine via the generator <tt class="docutils literal"><span class="pre">throw</span></tt> method.</li>
 <li>50% Faster <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> initialisation.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.Deferred.then" title="pulsar.Deferred.then"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.then()</span></tt></a> method for adding a deferred to a
 deferred&#8217;s callbacks without affecting the result.</li>
@@ -77,7 +82,7 @@ deferred&#8217;s callbacks without affecting the result.</li>
 <li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
 <li>Critical bug fix in python Http parser (<a class="reference external" href="https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc">4bd8a54</a>).</li>
 <li>Bug fix in <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.Router</span></tt> metaclass.</li>
-<li><strong>476 regression tests</strong>, <strong>88% coverage</strong>.</li>
+<li><strong>500 regression tests</strong>, <strong>88% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-5-2-2013-june-30">
@@ -364,7 +369,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-5-3-development">Ver. 0.5.3 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-6-0-development">Ver. 0.6.0 - Development</a></li>
 <li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>
 <li><a class="reference internal" href="#ver-0-5-0-2013-may-22">Ver. 0.5.0 - 2013-May-22</a></li>

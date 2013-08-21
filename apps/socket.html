@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Socket Servers &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -159,7 +159,7 @@ attribute.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.monitor_start">
-<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.monitor_start" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">monitor_start</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.monitor_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the socket listening to the <tt class="docutils literal"><span class="pre">bind</span></tt> address. if the platform
 does not support multiprocessing sockets set the number of workers to 0.</p>
 </dd></dl>
@@ -172,7 +172,7 @@ does not support multiprocessing sockets set the number of workers to 0.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.create_server">
-<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">create_server</tt><big>(</big><em>worker</em>, <em>sock</em>, <em>ssl=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the Server Protocol which will listen for requests. It
 uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="pulsar.apps.socket.SocketServer.protocol_consumer"><tt class="xref py py-meth docutils literal"><span class="pre">protocol_consumer()</span></tt></a> method as the protocol consumer factory.</p>
 </dd></dl>

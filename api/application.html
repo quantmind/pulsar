@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Applications API &mdash; pulsar 0.5.3-beta.2 documentation</title>
+    <title>Applications API &mdash; pulsar 0.6.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.5.3-beta.2',
+        VERSION:     '0.6.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +24,10 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.5.3-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
-    <link rel="prev" title="Protocols API" href="protocols.html" /> 
+    <link rel="prev" title="Tcp Stream API" href="stream.html" /> 
   </head>
   <body>
 
@@ -44,9 +44,9 @@
           <a href="utilities.html" title="Tools"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="protocols.html" title="Protocols API"
+          <a href="stream.html" title="Tcp Stream API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.5.3-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -261,17 +261,15 @@ and the <a class="reference internal" href="#pulsar.apps.Application" title="pul
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.Application.io_poller">
-<tt class="descname">io_poller</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.io_poller"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.io_poller" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called by <a class="reference internal" href="#pulsar.apps.Worker.io_poller" title="pulsar.apps.Worker.io_poller"><tt class="xref py py-meth docutils literal"><span class="pre">Worker.io_poller()</span></tt></a> method during the initialization
-of the <a class="reference internal" href="#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">Worker</span></tt></a> event loop. By default it does nothing so that
-the event loop chooses the most suitable IO poller.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.Application.worker_start">
 <tt class="descname">worker_start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Added to the <tt class="docutils literal"><span class="pre">start</span></tt> <a class="reference internal" href="../design.html#actor-hooks"><em>worker hook</em></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.worker_info">
+<tt class="descname">worker_info</tt><big>(</big><em>worker</em>, <em>info</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook to add additional entries to the worker <tt class="docutils literal"><span class="pre">info</span></tt> dictionary.</p>
 </dd></dl>
 
 <dl class="method">
@@ -299,6 +297,12 @@ the <a class="reference internal" href="#pulsar.apps.ApplicationMonitor" title="
 <tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback by <a class="reference internal" href="#pulsar.apps.ApplicationMonitor" title="pulsar.apps.ApplicationMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ApplicationMonitor</span></tt></a> when starting.
 The application is now in the arbiter but has not yet started.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.Application.monitor_info">
+<tt class="descname">monitor_info</tt><big>(</big><em>monitor</em>, <em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook to add additional entries to the monitor <tt class="docutils literal"><span class="pre">info</span></tt> dictionary.</p>
 </dd></dl>
 
 <dl class="method">
@@ -421,13 +425,6 @@ The application name is set during initialisation. Check the
 <dt id="pulsar.apps.Worker.app">
 <tt class="descname">app</tt><a class="reference internal" href="../modules/pulsar/apps.html#Worker.app"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Worker.app" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> served by this <a class="reference internal" href="#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">Worker</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.Worker.io_poller">
-<tt class="descname">io_poller</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Worker.io_poller"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Worker.io_poller" title="Permalink to this definition">¶</a></dt>
-<dd><p>Delegates the <a class="reference internal" href="actor.html#pulsar.Actor.io_poller" title="pulsar.Actor.io_poller"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Actor.io_poller()</span></tt></a> method to the
-<a class="reference internal" href="#pulsar.apps.Application.io_poller" title="pulsar.apps.Application.io_poller"><tt class="xref py py-meth docutils literal"><span class="pre">Application.io_poller()</span></tt></a> method of the <a class="reference internal" href="#pulsar.apps.Worker.app" title="pulsar.apps.Worker.app"><tt class="xref py py-attr docutils literal"><span class="pre">app</span></tt></a> attribute.</p>
 </dd></dl>
 
 </dd></dl>
@@ -572,8 +569,8 @@ during initialisation.</li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="protocols.html"
-                        title="previous chapter">Protocols API</a></p>
+  <p class="topless"><a href="stream.html"
+                        title="previous chapter">Tcp Stream API</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="utilities.html"
                         title="next chapter">Tools</a></p>
