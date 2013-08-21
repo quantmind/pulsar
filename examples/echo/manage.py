@@ -1,49 +1,37 @@
-'''Pulsar provides several classes for writing clients. The first step
-is to subclass :class:`pulsar.ProtocolConsumer` which is needed
-for two reasons:
-
-* It encodes and sends the request to the remote server.
-* It listen (if needed) for incoming data from the remote server.
-
-There are two methods which needs implementing:
-
-* :meth:`pulsar.ProtocolConsumer.start_request` to kick start a request to a
-  remote server.
-* :meth:`pulsar.Protocol.data_received`, invoked by the
-  :class:`pulsar.Connection` when new data has been received from the
-  remote server.
-
-In this example we implement a very simple Echo server/client pair. Because
-this example has symmetric client and server protocols, the
-:class:`EchoProtocol` will also be used as based class for
+'''
+This example illustrates how to write a simple TCP Echo server and client pair.
+The example is simple because the client and server protocols are symmetrical
+and therefore the :class:`EchoProtocol` will also be used as based class for
 :class:`EchoServerProtocol`.
+The code for this example is located in the :mod:`examples.echo.manage`
+module.
+
+Writing the Client
+=========================
+
+The protocol consumer
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first step is to subclass :class:`pulsar.ProtocolConsumer` to create the
+:class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed
+for two reasons: 
+
+* It encodes and sends the request to the remote server via the
+  :meth:`EchoProtocol.start_request` method.
+* It listens for incoming data from the remote server via the
+  :meth:`EchoProtocol.data_received` method.
 
 
-Echo Client Protocol
-======================
+The client
+~~~~~~~~~~~~~~~
 
-.. autoclass:: EchoProtocol
-   :members:
-   :member-order: bysource
+Pulsar provides :ref:`additional classes <clients-api>` for writing
+clients handling multiple requests. Here we subclass the :class:`pulsar.Client`
+and implement the :class:`Echo.request` method. :class:`Echo` is the main
+client class, used in all interactions with the echo server::
 
-Echo Server Protocol
-======================
-
-.. autoclass:: EchoServerProtocol
-   :members:
-   :member-order: bysource
-   
-Echo Client
-==================
-
-.. autoclass:: Echo
-   :members:
-   :member-order: bysource
-   
-Echo Server
-==================
-
-.. autofunction:: server
+    >>> client = Echo(('127,0,0,1', 8080))
+    >>> response = client.request(b'Hello!')
 
 
 Run The example
@@ -65,6 +53,36 @@ for further information.
 
     >>> p.request(b'Hello')
     b'Hello'
+    
+Implementation
+==================
+
+Echo Client Protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: EchoProtocol
+   :members:
+   :member-order: bysource
+
+Echo Server Protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: EchoServerProtocol
+   :members:
+   :member-order: bysource
+   
+Echo Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Echo
+   :members:
+   :member-order: bysource
+   
+Echo Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: server
+
 '''
 try:
     import pulsar
@@ -77,7 +95,7 @@ from pulsar.apps.socket import SocketServer
 
 
 class EchoProtocol(pulsar.ProtocolConsumer):
-    '''A symmetric echo protocol consumer for client and servers.
+    '''A symmetric echo :class:`pulsar.ProtocolConsumer` for client and servers.
 The only difference between client and server is the implementation of the
 :meth:`response` method.'''
     separator = b'\r\n\r\n'
@@ -103,6 +121,8 @@ It simply search for the :attr:`separator` and, if found, it invokes the
             self.buffer += data
     
     def start_request(self):
+        '''Override :meth:`pulsar.Protocol.start_request` to write
+the message ended by the :attr:`separator` into the transport.'''
         self.transport.write(self.current_request.message + self.separator)
         
     def response(self, data):
@@ -125,7 +145,16 @@ class EchoServerProtocol(EchoProtocol):
     
     
 class Echo(pulsar.Client):
-    '''Echo client'''
+    '''Echo :class:`pulsar.Client`.
+    
+.. attribute:: full_response
+
+    Flag indicating if the :meth:`request` method should return the
+    :class:`EchoProtocol` handling the request (``True``) or a :class:`Deferred`
+    which will result in the server response message (``False``).
+    
+    Default: ``False``
+'''
     consumer_factory = EchoProtocol
 
     def __init__(self, address, full_response=False, **params):

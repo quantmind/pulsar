@@ -59,6 +59,7 @@ Middleware
    apps/pubsub
    apps/twisted
    apps/pulse
+   apps/green
    
 Clients
 ---------

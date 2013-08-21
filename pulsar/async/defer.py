@@ -31,6 +31,7 @@ __all__ = ['Deferred',
            'async',
            'multi_async',
            'async_sleep',
+           'async_while',
            'safe_async']
 
 if ispy3k:
@@ -86,13 +87,14 @@ def multi_async(iterable, **kwargs):
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
 
-def log_failure(failure, msg=None, level=None):
-    '''Log the *failure* if *failure* is a :class:`Failure` or a
+def log_failure(obj, **kw):
+    '''Log the ``obj`` if ``obj`` is a :class:`Failure` or a
 :class:`Deferred` with a called failure.'''
-    failure = maybe_async(failure)
-    if is_failure(failure):
-        failure.log(msg=msg, level=level)
-    return failure
+    obj = maybe_async(obj)
+    if isinstance(obj, Failure):
+        return obj.log(**kw)
+    else:
+        return obj
 
 def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
@@ -111,9 +113,11 @@ def default_maybe_failure(value):
     else:
         return value
 
-def default_maybe_async(val, get_result=True, **kwargs):
+def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
     if isgenerator(val):
-        val = Task(val, **kwargs)
+        event_loop = event_loop or get_request_loop()
+        task_factory = getattr(event_loop, 'task_factory', Task)
+        val = task_factory(val, event_loop, **kwargs)
     if isinstance(val, Deferred):
         if get_result and val.done():
             return val.result
@@ -128,19 +132,19 @@ def default_maybe_async(val, get_result=True, **kwargs):
     
 def maybe_async(value, canceller=None, event_loop=None, timeout=None,
                 get_result=True):
-    '''Return an asynchronous instance only if *value* is
-a generator or already an asynchronous instance. If *value* is asynchronous
-it checks if it done. In this case it returns the *result*.
+    '''Return an :ref:`asynchronous instance <tutorials-coroutine>`
+only if ``value`` is a generator, a :class:`Deferred` or ``get_result`` is
+set to ``False``.
 
 :parameter value: the value to convert to an asynchronous instance
     if it needs to.
-:parameter canceller: optional canceller (seed :attr:`Deferred.canceller`).
+:parameter canceller: optional canceller (see :attr:`Deferred.canceller`).
 :parameter event_loop: optional :class:`EventLoop`.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
 :parameter get_result: optional flag indicating if to get the result in case
-    the return values is a :class:`Deferred` already done. Default: ``True``.
-:return: a :class:`Deferred` or  a :class:`Failure` or a **synchronous value**.
+    the return value is a :class:`Deferred` already done. Default: ``True``.
+:return: a :class:`Deferred` or  a :class:`Failure` or a synchronous value.
 '''
     global _maybe_async
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
@@ -224,6 +228,23 @@ even if the ``callable`` is not asynchronous. Never throws.'''
 
 safe_async = async(get_result=False).call
 
+@async()
+def async_while(timeout, while_clause, *args):
+    start = default_timer()
+    di = 0.1
+    interval = 0
+    result = while_clause(*args)
+    while result:
+        interval = min(interval+di, 5) 
+        try:
+            yield Deferred(timeout=interval)
+        except CancelledError:
+            pass
+        if timeout and default_timer() - start >= timeout:
+            break
+        result = while_clause(*args)
+    yield result
+        
         
 ############################################################### FAILURE
 class Failure(object):
@@ -250,12 +271,12 @@ errors.
     def __init__(self, error):
         if isinstance(error, Failure):
             exc_info = error.exc_info
-        elif isinstance(error, Exception):
+        elif isinstance(error, BaseException):
             exc_info = sys.exc_info()
             if exc_info == EMPTY_EXC_INFO:
                 try:
                     raise error
-                except Exception:
+                except:
                     exc_info = sys.exc_info()
         else:
             exc_info = error
@@ -316,7 +337,15 @@ supporting both synchronous and asynchronous flow controls.'''
 
     def log(self, log=None, msg=None, level=None):
         '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
-The logging can append once only.'''
+        
+Logging for a given failure occurs once only. To suppress logging for
+a given failure set :attr:`logged` to ``True`` of invoke the :meth:`mute`
+method.
+Returns ``self`` so that this method can easily be added as an error
+back to perform logging and propagate the failure. For example::
+
+    .add_errback(lambda failure: failure.log())
+'''
         if not self.logged:
             log = log or LOGGER
             if self.is_remote:
@@ -330,7 +359,13 @@ The logging can append once only.'''
             else:
                 log.error(msg, exc_info=exc_info)
         self.logged = True
-
+        return self
+    
+    def mute(self):
+        '''Mute logging and return self.'''
+        self.logged = True
+        return self
+       
     def __getstate__(self):
         self.log()
         exctype, value, tb = self.exc_info
@@ -471,10 +506,10 @@ the :class:`Deferred` object.'''
         return self.callback(exc)
         
     def add_callback(self, callback, errback=None, continuation=None):
-        """Add a callback as a callable function.
-The function takes at most one argument, the result passed to the
-:meth:`callback` method. If the *errback* callable is provided it will
-be called when an exception occurs."""
+        """Add a ``callback``, and an optional ``errback``, to the list
+of callbaks. Both of them are functions which take at most one argument,
+the result passed to the :meth:`callback` method. If the ``errback`` callable
+is provided it will be called when an exception occurs."""
         errback = errback if errback is not None else pass_through
         if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
             if self._callbacks is None:
@@ -527,6 +562,12 @@ the result is a :class:`Failure`'''
         if self.done() and isinstance(self.result, Failure):
             self.result.throw()
             
+    def log(self, **kwargs):
+        '''Log a failure via the :meth:`Failure.log` method if the
+:attr:`result` is a :class:`Failure`.'''
+        if self.done() and isinstance(self.result, Failure):
+            self.result.log(**kwargs)
+            
     def then(self, deferred=None):
         '''Add another ``deferred`` to this :class:`Deferred` callbacks.
 
@@ -553,8 +594,7 @@ you obtains a new deferred ``d2`` which receives the callback when ``d1``
 has received the callback, with the following properties:
 
 * Any event that fires ``d1`` will also fire ``d2``.
-* The converse is not true; if ``d2`` is fired ``d1`` will not be affected. Infact
-  ``d2`` should only received the callback from ``d1``.
+* The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
 * The callbacks of ``d2`` won't affect ``d1`` result.
 
 This method can be used instead of :meth:`add_callback` if a bright new
@@ -653,8 +693,8 @@ a callable which accept one argument only.'''
             LOGGER.warning('unknown event "%s" for %s', event, self)
         
     def fire_event(self, event, event_data=NOTHING, sender=None):
-        """Dispatches *event_data* to the *event* listeners.
-* If *event* is a one-time event, it makes sure that it was not fired before.
+        """Dispatches ``event_data`` to the ``event`` listeners.
+* If ``event`` is a one-time event, it makes sure that it was not fired before.
         
 :param event_data: if not provided, ``self`` will be dispatched instead, if an
     error it will be converted to a :class:`Failure`.
@@ -669,7 +709,7 @@ a callable which accept one argument only.'''
             if fired:
                 self.ONE_TIME_EVENTS[event].callback(event_data)
             else:
-                LOGGER.debug('Event "%s" already fired for %s', event, self)
+                LOGGER.warning('Event "%s" already fired for %s', event, self)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
@@ -700,64 +740,69 @@ a callable which accept one argument only.'''
     
     def safe_callback(self, event, callback):
         def _(result):
-            try:
-                callback(result)
-            except Exception:
-                LOGGER.exception('Unhandled exception in "%s" event', event)
-            # always return result
+            safe_async(callback, result).add_errback(lambda f: f.log(
+                            msg='Unhandled exception in "%s" event' % event))
             return result
         return _
             
                     
 class Task(Deferred):
-    '''A :class:`Deferred` coroutine is a consumer of, possibly,
-asynchronous objects.
-The callback will occur once the coroutine has stopped
-(when it raises StopIteration), or a preset maximum number of errors (default 1)
-has occurred. Instances of :class:`Task` are never
+    '''A :class:`Task` is a :class:`Deferred` which consumes a
+:ref:`coroutine <coroutine>`.
+The callback will occur once the coroutine has finished
+(when it raises StopIteration), or an unhandled exception occurs.
+Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
-    def __init__(self, gen, canceller=None, event_loop=None, timeout=None):
+    _waiting = None
+    
+    def __init__(self, gen, event_loop, canceller=None, timeout=None):
         self._gen = gen
+        self._event_loop = event_loop
         self._canceller = canceller
-        self._event_loop = event_loop or get_request_loop()
         if timeout:
             self.set_timeout(timeout)
         self._consume(None)
     
     def _consume(self, result):
-        self._waiting = None
-        gen = self._gen
-        while not self.done():
-            try:
-                if isinstance(result, Failure):
-                    failure, result = result, None
-                    try:
-                        result = failure.throw(gen)
-                    except StopIteration:
-                        failure.logged = True
-                        raise
-                    else:
-                        failure.logged = True
+        step = self._step
+        switch = False
+        while self._state == _PENDING and not switch:
+            result, switch = step(result, self._gen)            
+            
+    def _step(self, result, gen):
+        try:
+            if isinstance(result, Failure):
+                failure, result = result, None
+                try:
+                    result = failure.throw(gen)
+                except StopIteration:
+                    failure.logged = True
+                    raise
                 else:
-                    result = gen.send(result)
-            except StopIteration:
-                break
-            except Exception as e:
-                return self._conclude(Failure(e))
+                    failure.logged = True
             else:
-                result = maybe_async(result, event_loop=self.event_loop)
-                if isinstance(result, Deferred):
-                    # async result add callback/errorback and transfer control
-                    # to the event loop
-                    self._waiting = result.add_both(self._restart)
-                    return
-                elif result == NOT_DONE:
-                    # transfer control to the event loop
-                    return self.event_loop.call_soon(self._consume, None)
-        self._conclude(result)
+                result = gen.send(result)
+        except StopIteration:
+            self._conclude(result)
+        except Exception as e:
+            result = Failure(e)
+            self._conclude(result)
+        else:
+            result = maybe_async(result, event_loop=self.event_loop)
+            if isinstance(result, Deferred):
+                # async result add callback/errorback and transfer control
+                # to the event loop
+                self._waiting = result.add_both(self._restart)
+                return None, True 
+            elif result == NOT_DONE:
+                # transfer control to the event loop
+                self.event_loop.call_soon(self._consume, None)
+                return None, True
+        return result, False
     
     def _restart(self, result):
+        self._waiting = None
         #restart the coroutine in the same event loop it was started
         self.event_loop.call_now_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
@@ -785,15 +830,6 @@ The :class:`MultiDeferred` is recursive on values which are ``generators``,
 ``Mapping``, ``lists`` and ``sets``. It is not recursive on immutable
 containers such as tuple and frozenset.
 
-.. attribute:: locked
-
-    When ``True``, the :meth:`update` or :meth:`append` methods can no longer
-    be used.
-    
-.. attribute:: type
-
-    The type of multi-deferred. Either a ``list`` or a ``Mapping``.
-    
 .. attribute:: raise_on_error
 
     When ``True`` and at least one value of the result collections is a
@@ -826,19 +862,24 @@ containers such as tuple and frozenset.
 
     @property
     def locked(self):
+        '''When ``True``, the :meth:`update` or :meth:`append` methods can no
+longer be used.'''
         return self._locked
         
     @property
     def type(self):
+        '''The type of multi-deferred. Either a ``list`` or a ``Mapping``.'''
         return self._stream.__class__.__name__
     
     @property
     def total_time(self):
+        '''Total number of seconds taken to obtain the result.'''
         if self._time_finished:
             return self._time_finished - self._time_start
         
     @property
     def locked_time(self):
+        '''Number of econds taken to obtain the result once :class:`locked`.'''
         if self._time_finished:
             return self._time_finished - self._time_locked
         

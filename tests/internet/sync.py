@@ -8,6 +8,7 @@ from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from examples.echo.manage import server, Echo
 
+
 class TestSyncClient(unittest.TestCase):
     server = None
     

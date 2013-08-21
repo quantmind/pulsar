@@ -47,8 +47,8 @@ Configuration
 Socket and addresses
 =======================
 
-.. automodule:: pulsar.utils.sockets
-
+.. automodule:: pulsar.utils.internet
+   :members:
 
 Internals
 =======================
@@ -82,6 +82,13 @@ HTML & Text
 
 .. automodule:: pulsar.utils.html
    :members:
+   
+Logging
+==================
+
+.. automodule:: pulsar.utils.log
+   :members:
+   
    
 Path
 ==================

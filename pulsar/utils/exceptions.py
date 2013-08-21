@@ -26,7 +26,7 @@ class ProtocolError(Exception):
 the socket connection.'''
 
 
-class TooManyConnections(Exception):
+class TooManyConnections(RuntimeError):
     '''Raised when there are too many concurrent connections.'''
     
     
@@ -55,8 +55,16 @@ class NotRegisteredWithServer(PulsarException):
 
 
 ##################################################################### HTTP
-class HttpException(PulsarException):
-    '''The base class of all ``Http`` exceptions
+class HTTPError(PulsarException):
+    "Base for all HTTP related errors."
+    pass
+
+class SSLError(HTTPError):
+    "Raised when SSL certificate fails in an HTTPS connection."
+    pass
+
+class HttpException(HTTPError):
+    '''The base class of all ``HTTP`` server exceptions
     
 Introduces the following attributes:
 

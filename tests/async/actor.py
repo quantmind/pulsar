@@ -3,8 +3,8 @@ from functools import partial
 from multiprocessing.queues import Queue
 
 import pulsar
-from pulsar import send, get_actor, CommandNotFound
-from pulsar.utils.pep import pickle
+from pulsar import send, get_actor, CommandNotFound, async_while, TcpServer
+from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import unittest, ActorTestMixin, run_on_arbiter,\
                                  dont_run_with_thread
 
@@ -15,14 +15,15 @@ def check_actor(actor, name):
     actor.put(None)
     assert(actor.name==name)
     
-
 def create_echo_server(address, actor):
-    sock = pulsar.create_socket(address, bindto=True)
-    actor.servers['echo'] = actor.event_loop.create_server(
-                                sock=sock,
-                                consumer_factory=EchoServerProtocol)
+    '''Starts an echo server on a newly spawn actor'''
+    server = TcpServer(actor.event_loop, address[0], address[1],
+                       EchoServerProtocol)
+    yield server.start_serving()
+    actor.servers['echo'] = server
+    actor.extra['echo-address'] = server.address
     
-    
+
 class TestProxy(unittest.TestCase):
     
     def test_get_proxy(self):
@@ -53,7 +54,6 @@ class TestProxy(unittest.TestCase):
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
-    echo_port = 9898
     
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
@@ -79,7 +79,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
     @run_on_arbiter
     def testSimpleSpawn(self):
         '''Test start and stop for a standard actor on the arbiter domain.'''
-        proxy = yield self.spawn()
+        proxy = yield self.spawn(name='simple-actor-on-%s' % self.concurrency)
         arbiter = pulsar.get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
         self.assertEqual(proxy_monitor, proxy)
@@ -89,13 +89,20 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         # ActorTestMixin.tearDown method is invoked on the test-worker domain
         # (here we are in the arbiter domain)
         yield self.stop_actors(proxy)
-        # lets join the
-        proxy_monitor.join(0.5)
-        self.assertFalse(proxy_monitor.is_alive())
+        is_alive = yield async_while(3, proxy_monitor.is_alive)
+        self.assertFalse(is_alive)
         
     def test_start_hook(self):
-        address = ('localhost', self.echo_port)
-        proxy = yield self.spawn(start=partial(create_echo_server, address))
+        proxy = yield self.spawn(
+                        start=partial(create_echo_server, ('127.0.0.1', 0)))
+        address = None
+        start = default_timer()
+        while not address:
+            info = yield send(proxy, 'info')
+            address = info['extra'].get('echo-address')
+            if default_timer() - start > 3:
+                break
+        self.assertTrue(address)
         client = Echo(address)
         result = yield client.request(b'Hello')
         self.assertEqual(result, b'Hello')
@@ -104,5 +111,4 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
 @dont_run_with_thread
 class TestActorProcess(TestActorThread):
     concurrency = 'process'
-    echo_port = 9899        
 

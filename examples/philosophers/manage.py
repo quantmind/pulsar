@@ -110,6 +110,14 @@ class DiningPhilosophers(pulsar.Application):
         
     def worker_start(self, philosopher):
         self.take_action(philosopher)
+        
+    def worker_info(self, philosopher, info):
+        '''Override :meth:`pulsar.Application.worker_info` to provide
+information about the philosopher.'''
+        params = philosopher.params
+        info['philosopher'] = {'number': params.number,
+                               'eaten': params.eaten}
+        return info
     
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
@@ -190,7 +198,15 @@ action to the monitor.'''
         self.take_action(philosopher)
     
     def actorparams(self, monitor, params):
-        number = len(monitor.managed_actors) + 1
+        avail = set(range(1, monitor.cfg.workers+1))
+        for philosopher in monitor.managed_actors.values():
+            info = philosopher.info
+            if info:
+                avail.discard(info['philosopher']['number'])
+            else:
+                avail = None
+                break
+        number = min(avail) if avail else len(monitor.managed_actors) + 1
         name = 'Philosopher %s' % number
         params.update({'name': name,
                        'number': number,

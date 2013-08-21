@@ -73,10 +73,10 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, EventHandler
+from pulsar import Actor, Monitor, get_actor, EventHandler, async
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
-from pulsar.utils.sockets import parse_connection_string, get_connection_string
+from pulsar.utils.internet import parse_connection_string, get_connection_string
 from pulsar.utils.log import LocalMixin
 from pulsar.utils.importer import import_module
 from pulsar.utils.security import gen_unique_id
@@ -107,11 +107,12 @@ def _get_app(arbiter, name):
     monitor = arbiter.get_actor(name)
     if monitor:
         return monitor.params.app
-        
+
+@async()
 def monitor_start(self):
-    self.app.monitor_start(self)
+    yield self.app.monitor_start(self)
     if not self.cfg.workers:
-        self.app.worker_start(self)
+        yield self.app.worker_start(self)
     self.app.fire_event('start')
         
 def monitor_stop(self):
@@ -469,8 +470,9 @@ and the :class:`Application` have the same interface.'''
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_info(self, worker, data):
-        return data
+    def worker_info(self, worker, info):
+        '''Hook to add additional entries to the worker ``info`` dictionary.'''
+        return info
     
     def worker_stopping(self, worker):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
@@ -493,6 +495,7 @@ The application is now in the arbiter but has not yet started.'''
         pass
 
     def monitor_info(self, monitor, data):
+        '''Hook to add additional entries to the monitor ``info`` dictionary.'''
         return data
     
     def monitor_stop(self, monitor):

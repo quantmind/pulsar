@@ -86,13 +86,6 @@ method. Calling ``cancel`` on an already called or cancelled deferred
 has no effect, therefore the :meth:`Deferred.cancel` will always
 succeed.
 
-A useful application of deferred cancellation, is setting a ``timeout`` to an
-asynchronous operation. To set a timeout, one used the
-:class:`Deferred.set_timeout` method::
-
-    >>> d = Deferred()
-    >>> d.set_timeout(5)
-    
 When a :class:`Task` is cancelled, the deferred on which the task is blocked is
 cancelled too. For example::
 
@@ -109,6 +102,23 @@ cancelled too. For example::
     >>> d.done()
     True
 
+Timeouts
+~~~~~~~~~~~~~~
+A useful application of :ref:`deferred cancellation <deferred-cancel>`,
+is setting a ``timeout`` to an asynchronous operation. To set a timeout,
+one used the :class:`Deferred.set_timeout` method::
+
+    >>> d = Deferred()
+    >>> d.set_timeout(5)
+    
+To avoid cancelling the underlying operation one could use this trick::
+
+    d2 = d1.then().set_timeout(5)
+    
+or a double layer timeout::
+
+    d2 = d1.set_timeout(10).then().set_timeout(5)
+    
 .. _coroutine:
   
 Coroutines

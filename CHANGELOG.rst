@@ -1,6 +1,8 @@
-Ver. 0.5.3 - Development
+Ver. 0.6.0 - Development
 ==============================
 * More design and API docs.
+* Socket servers handle IPV6 adresses.
+* :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
 * Several fixes in the test application.
 * Tasks throw errors back to the coroutine via the generator ``throw`` method.
 * 50% Faster :class:`pulsar.Deferred` initialisation.
@@ -10,7 +12,7 @@ Ver. 0.5.3 - Development
 * Added ``full_route`` and ``rule`` attributes to wsgi Router.
 * Critical bug fix in python Http parser (4bd8a54_).
 * Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
-* **490 regression tests**, **88% coverage**.
+* **474 regression tests**, **88% coverage**.
 
 .. _4bd8a54: https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc
 

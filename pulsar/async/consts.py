@@ -26,6 +26,7 @@ Constants
   which don't respond to the stop command.
 
 '''
+from pulsar import platform
 from pulsar.utils.structures import AttributeDictionary, FrozenDict
 
 # LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
@@ -51,13 +52,15 @@ MIN_NOTIFY = 3     # DON'T NOTIFY BELOW THIS INTERVAL
 MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TIMEOUT_TOLE = 0.3  # NOTIFY AFTER THIS TIMES THE TIMEOUT
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A TERMINATING ACTOR
+MONITOR_TASK_PERIOD = 5 # Period of Monitors tasks
 #
 # SPECIAL objects for Deferred
 CONTINUE = object()
 NOT_DONE = object()
-#
-# Connections
-DEFAULT_CONNECT_TIMEOUT = 5
+
+DEFAULT_CONNECT_TIMEOUT = 10
+DEFAULT_ACCEPT_TIMEOUT = 10
+NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1
 #
 # Globals
 EMPTY_TUPLE = ()

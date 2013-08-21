@@ -19,12 +19,13 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              set_event_loop, new_event_loop, get_event_loop,\
                              EventLoop as BaseEventLoop, range,\
                              EventLoopPolicy as BaseEventLoopPolicy
-from pulsar.utils.sockets import SOCKET_INTERRUPT_ERRORS
+from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 
 from .access import thread_local_data
-from .defer import log_failure, is_failure, Deferred, TimeoutError,\
-                    multi_async, maybe_async
-from .transports import tcp
+from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
+from .stream import create_connection, start_serving, sock_connect, sock_accept
+from .udp import create_datagram_endpoint
+from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 
 __all__ = ['EventLoop', 'TimedCall']
 
@@ -133,6 +134,7 @@ class FileDescriptor(IObase):
         self.logger = eventloop.logger
         self.handle_write = None
         self.handle_read = None
+        self._state = None
 
     @property
     def poller(self):
@@ -148,83 +150,73 @@ class FileDescriptor(IObase):
     
     @property
     def state(self):
-        if self.reading:
-            if self.writing:
-                return self.READ | self.WRITE
-            else:
-                return self.READ
-        elif self.writing:
-            return self.WRITE
+        return self._state
             
-    @property
-    def state_code(self):
-        s = []
-        if self.state is None:
-            return 'closed'
-        if self.connecting:
-            s.append('connecting')
-        elif self.writing:
-            s.append('writing')
-        if self.reading:
-            s.append('reading')
-        return ' '.join(s) if s else 'idle'
-    
-    def add_connector(self, callback):
-        self.add_writer(callback, 'connector')
-        
     def add_reader(self, callback):
         handle_read = self.handle_read
         if handle_read:
-            if handle_read.callback != callback.callback:
-                raise RuntimeError('Read handler already registered')
+            raise RuntimeError('Read handler already registered')
         else:
-            self.logger.debug('Add reader on file descriptor %s', self.fd)
-            current_state = self.state
+            state = self.READ | self.ERROR
             self.handle_read = callback
-            self.modify_state(current_state, self.READ)
+            if self._state is None:
+                self.poller.register(self.fd, state)
+            else:
+                state = self._state | state
+                self.poller.modify(self.fd, state)
+            self._state = state
         
-    def add_writer(self, callback, name=None):
-        name = name or 'writer'
+    def add_writer(self, callback):
         handle_write = self.handle_write
         if handle_write:
-            if handle_write.callback != callback.callback:
-                raise RuntimeError('%s handler already registered', name)
+            raise RuntimeError('write handler already registered')
         else:
-            self.logger.debug('Add %s on file descriptor %s', name, self.fd)
-            current_state = self.state
+            state = self.WRITE | self.ERROR
             self.handle_write = callback
-            self.modify_state(current_state, self.WRITE)
+            if self._state is None:
+                self.poller.register(self.fd, state)
+            else:
+                state = self._state | state
+                self.poller.modify(self.fd, state)
+            self._state = state
         
-    def remove_connector(self):
-        return self.remove_writer('connector')
-    
     def remove_reader(self):
         '''Remove reader and return True if writing'''
-        if self.writing:
-            self.logger.debug('Remove reader from file descriptor %s', self.fd)
-            self.poller.modify(self.fd, self.WRITE)
-        else:
-            self.remove_handler()
-        self.handle_read = None
+        removed = self.handle_read is not None
+        if removed:
+            if self.handle_write:
+                self._state = self.WRITE | self.ERROR
+                self.poller.modify(self.fd, self._state)
+            else:
+                self._state = None
+                self.remove_handler()
+            self.handle_read = None
+        return removed
 
     def remove_writer(self, name=None):
         '''Remove writer and return True if reading'''
-        if self.reading:
-            self.logger.debug('Remove %s from file descriptor %s',
-                              name or 'writer', self.fd)
-            self.poller.modify(self.fd, self.READ)
-        else:
-            self.remove_handler()
-        self.handle_write = None
+        removed = self.handle_write is not None
+        if removed:
+            if self.handle_read:
+                self._state = self.READ | self.ERROR
+                self.poller.modify(self.fd, self._state)
+            else:
+                self._state = None
+                self.remove_handler()
+            self.handle_write = None
+        return removed
     
     def __call__(self, events):
-        if events & self.READ:
+        processed = False
+        if events & (self.READ | self.ERROR):
+            processed = True
             if self.handle_read:
                 log_failure(self.handle_read())
             else:
                 self.logger.warning('Read callback without handler for file'
                                     ' descriptor %s.', self.fd)
-        if events & self.WRITE:
+        if events & (self.WRITE | self.ERROR):
+            processed = True
             if self.handle_write:
                 log_failure(self.handle_write())
             else:
@@ -245,7 +237,6 @@ class FileDescriptor(IObase):
             self.poller.unregister(fd)
         except (OSError, IOError):
             self.eventloop.logger.error("Error removing %s from EventLoop", fd)
-        self.logger.debug('Remove file descriptor %s', fd)
         self.eventloop._handlers.pop(fd, None)
 
 
@@ -522,11 +513,10 @@ NOT YET SUPPORTED.'''
         self._default_executor = executor
         
     def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
-        return self.run_in_executor(None, socket.getaddrinfo,
-                                    host, port, family, type, proto, flags)
+        return socket.getaddrinfo(host, port, family, type, proto, flags)
 
     def getnameinfo(self, sockaddr, flags=0):
-        return self.run_in_executor(None, socket.getnameinfo, sockaddr, flags)
+        return socket.getnameinfo(sockaddr, flags)
         
     def add_reader(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
@@ -560,7 +550,8 @@ if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
-            self._handlers[fd].remove_reader()
+            return self._handlers[fd].remove_reader()
+        return False
     
     def remove_writer(self, fd):
         '''Cancels the current write callback for file descriptor fd,
@@ -568,7 +559,8 @@ if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
         fd = file_descriptor(fd)
         if fd in self._handlers:
-            self._handlers[fd].remove_writer()
+            return self._handlers[fd].remove_writer()
+        return False
             
     def remove_connector(self, fd):
         fd = file_descriptor(fd)
@@ -603,98 +595,98 @@ default signal handler ``signal.SIG_DFL``.'''
             self._waker.wake()
     
     def create_connection(self, protocol_factory, host=None, port=None,
-                          ssl=None, family=None, proto=0, sock=None,
-                          bind_address=None, timeout=None):
-        '''Coroutine for creating a stream connection to a given ``host``
-and ``port``. This is a task that is typically called from the client side of
-the connection.
+                          ssl=None, family=0, proto=0, flags=0, sock=None,
+                          local_addr=None, timeout=None):
+        '''Creates a stream connection to a given internet host and port.
+        
+It is the asynchronous equivalent of ``socket.create_connection``.
 
-:parameter host: endpoint host.
-:parameter host: endpoint port.
-:return: the ``(transport, protocol)`` pair. If a failure prevents the creation
-    of a successful connection, an appropriate exception will be raised.'''
-        if host is not None or port is not None:
-            if sock is not None:
-                raise ValueError(
-                    'host/port and sock can not be specified at the same time')
-            if bind_address:
-                bind = yield self.getaddrinfo(*bind_address, family=family,
-                                              type=socket.SOCK_STREAM,
-                                              proto=proto)
-                bind_address = bind[-1]
-            #
-            info = yield self.getaddrinfo(host, port, family=family,
-                                          type=socket.SOCK_STREAM,
-                                          proto=proto)
-            
-            sock = self.socket_factory(family=family, type=type, proto=proto)
-            if bind_address:
-                try:
-                    sock.bind(bind_address)
-                except socket.error as exc:
-                    raise socket.error(
-                        exc.errno, 'error while '
-                        'attempting to bind on address '
-                        '{!r}: {}'.format(
-                            bind_address, exc.strerror.lower()))
-            sock.setblocking(False)
-            yield self.sock_connect(sock, address, timeout)
-        elif sock is None:
-            raise ValueError(
-                'host and port was not specified and no sock specified')
-        sock.setblocking(False)
-        protocol = protocol_factory()
-        if ssl:
-            sslcontext = None if isinstance(ssl, bool) else ssl
-            transport = self._make_ssl_transport(
-                sock, protocol, sslcontext, server_side=False)
-        else:
-            transport = self._make_socket_transport(sock, protocol)
-        yield transport, protocol
+:parameter protocol_factory: The callable to create the :class:`Protocol`
+    which handle the connection.
+:parameter host: If host is an empty string or None all interfaces are assumed
+    and a list of multiple sockets will be returned (most likely
+    one for IPv4 and another one for IPv6)
+:parameter port:
+:parameter ssl:
+:parameter family:
+:parameter proto:
+:parameter flags:
+:parameter sock:
+:parameter local_addr: if supplied, it must be a 2-tuple ``(host, port)`` for
+    the socket to bind to as its source address before connecting.
+:return: a :class:`Deferred` and its result on success is the
+    ``(transport, protocol)`` pair.
+    
+If a failure prevents the creation of a successful connection, an appropriate
+exception will be raised.'''
+        timeout = timeout or DEFAULT_CONNECT_TIMEOUT
+        res = create_connection(self, protocol_factory, host, port,
+                                ssl, family, proto, flags, sock, local_addr)
+        return maybe_async(res, event_loop=self, timeout=timeout,
+                           get_result=False)
+    
+    def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
+                      family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
+                      sock=None, backlog=100, reuse_address=None):
+        """Creates a TCP server bound to ``host`` and ``port``.
+        
+:parameter protocol_factory: The :class:`Protocol` which handle server requests.
+:parameter host: If host is an empty string or None all interfaces are assumed
+    and a list of multiple sockets will be returned (most likely
+    one for IPv4 and another one for IPv6).
+:parameter port: integer indicating the port number.
+:parameter ssl: can be set to an SSLContext to enable SSL over the accepted
+    connections.
+:parameter family: socket family can be set to either ``AF_INET`` or
+    ``AF_INET6`` to force the socket to use IPv4 or IPv6.
+    If not set it will be determined from host (defaults to ``AF_UNSPEC``).
+:parameter flags: is a bitmask for :meth:`getaddrinfo`.
+:parameter sock: can optionally be specified in order to use a pre-existing
+    socket object.
+:parameter backlog: is the maximum number of queued connections passed to
+    listen() (defaults to 100).
+:parameter reuse_address: tells the kernel to reuse a local socket in
+    ``TIME_WAIT`` state, without waiting for its natural timeout to
+    expire. If not specified will automatically be set to ``True`` on UNIX.
+:return: a :class:`Deferred` whose result will be a list of socket objects
+    which will later be handled by ``protocol_factory``.
+        """
+        res = start_serving(self, protocol_factory, host, port, ssl,
+                            family, flags, sock, backlog, reuse_address)
+        return maybe_async(res, event_loop=self, get_result=False)
+    
+    def create_datagram_endpoint(self, protocol_factory, local_addr=None,
+                                 remote_addr=None, family=socket.AF_UNSPEC,
+                                 proto=0, flags=0):
+        res = create_datagram_endpoint(self, protocol_factory, local_addr,
+                                       remote_addr, family, proto, flags)
+        return maybe_async(res, event_loop=self, get_result=False)
+        
+        
+    def stop_serving(self, sock):
+        '''The argument should be a socket from the list returned by
+:meth:`start_serving` method. The serving loop associated with that socket
+will be stopped.'''
+        self.remove_reader(sock.fileno())
+        sock.close()
         
     def sock_connect(self, sock, address, timeout=None):
-        return self._sock_connect(sock, address, timeout)
-        try:
-            self.sock.connect(address)
-        except socket.error as e:
-            if e.args[0] in TRY_WRITE_AGAIN:
-                return False
-            else:
-                raise
-        else:
-            return True #    A synchronous connection
+        '''Connect ``sock`` to the given ``address``.
+        
+        Returns a :class:`Deferred` whose result on success will be ``None``.'''
+        res = sock_connect(self, sock, address)
+        return maybe_async(res, event_loop=self, timeout=timeout)
     
-    def start_serving(self, protocol_factory, host=None, port=None,
-                      family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
-                      sock=None, backlog=100, ssl=None, reuse_address=None):
-        '''Creates a TCP server bound to ``host`` and ``port`` and return a
-        :class:`Deferred` whose result will be a list of socket objects which
-        will later be handled by protocol_factory.
-
-        If host is an empty string or None all interfaces are assumed
-        and a list of multiple sockets will be returned (most likely
-        one for IPv4 and another one for IPv6).
-
-        family can be set to either AF_INET or AF_INET6 to force the
-        socket to use IPv4 or IPv6. If not set it will be determined
-        from host (defaults to AF_UNSPEC).
-
-        flags is a bitmask for getaddrinfo().
-
-:parameter sock: Optional socket object to use rather than creating new ones.
-:parameter backlog: The maximum number of queued connections passed to
-    listen() (defaults to 100).
-:parameter ssl: can be set to an SSLContext to enable SSL over the
-    accepted connections.
-:parameter reuse_address: tells the kernel to reuse a local socket in
-    TIME_WAIT state, without waiting for its natural timeout to
-    expire. If not specified will automatically be set to True on
-    UNIX.'''
-        result = tcp.start_serving(self, protocol_factory, host, port,
-                                   family=family, flags=flags, sock=sock,
-                                   backlog=backlog, ssl=ssl,
-                                   reuse_address=reuse_address)
-        return maybe_async(result, event_loop=event_loop)
+    def sock_accept(self, sock, timeout=None):
+        '''Accept a connection from a socket ``sock``.
+        
+        The socket must be in listening mode and bound to an address.
+        Returns a :class:`Deferred` whose result on success will be a tuple
+        ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
+        and ``peer`` is the peer address.'''
+        timeout = timeout or DEFAULT_ACCEPT_TIMEOUT
+        res = sock_accept(self, sock)
+        return maybe_async(res, event_loop=self, timeout=timeout)
         
     ############################################################ NON PEP METHODS
     def call_repeatedly(self, interval, callback, *args):

@@ -97,9 +97,8 @@ instance of this class is as a proxy for a remote `underlying`
 :class:`Actor`. This is a lightweight class which delegates
 function calls to the underlying remote object.
 
-It is pickable and therefore can be send from actor to actor using pulsar
-messaging. It exposes all the underlying :class:`command` which have been
-implemented.
+It is pickable and therefore can be send from actor to actor using
+:ref:`actor message passing <tutorials-messages>`.
 
 For example, lets say we have a proxy ``a``, to send a message to it::
 
@@ -107,7 +106,7 @@ For example, lets say we have a proxy ``a``, to send a message to it::
     
     send(a, 'echo', 'hello there!')
     
-will send the command ``echo`` to actor ``a`` with
+will send the :ref:`command <actor_commands>` ``echo`` to actor ``a`` with
 parameter ``"hello there!"``.
     
 .. attribute:: aid

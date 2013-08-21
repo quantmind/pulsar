@@ -6,7 +6,7 @@ from pulsar.utils.pep import iteritems, itervalues, range
 
 from . import proxy
 from .actor import Actor
-from .defer import async, NOT_DONE
+from .defer import async_while
 from .concurrency import concurrency
 from .consts import *
 
@@ -132,7 +132,7 @@ spawn method when creating new actors.'''
 
     def manage_actor(self, actor, stop=False):
         '''If an actor failed to notify itself to the arbiter for more than
-the timeout. Stop the arbiter.'''
+the timeout. Stop the actor.'''
         if not self.running():
             stop = True
         if not actor.is_alive():
@@ -186,14 +186,9 @@ as required."""
                         w, kage = w, age
                 self.manage_actor(w, True)
     
-    @async()
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        # Stop all of them
-        to_stop = self.manage_actors(stop=True)
-        while to_stop:
-            yield NOT_DONE
-            to_stop = self.manage_actors(stop=True)
+        return async_while(10, self.manage_actors, True)
     
     
 class Monitor(PoolMixin):

@@ -5,7 +5,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import setid
-from .defer import EventHandler, log_failure
+from .defer import EventHandler, Failure
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
@@ -131,6 +131,14 @@ an :class:`ActorProxy`.
     A :class:`pulsar.utils.structures.AttributeDictionary` which contains
     parameters which are passed to actors spawned by this actor.
     
+.. attribute:: extra
+
+    A dictionary which can be populated with extra parameters useful
+    for other actors. This dictionary is included in the dictionary
+    returned by the :meth:`info` method.
+    Check the :ref:`info command <actor_info_command>` for how to obtain
+    information about an actor.
+    
 .. attribute:: info_state
 
     Current state description string. One of ``initial``, ``running``,
@@ -155,6 +163,7 @@ an :class:`ActorProxy`.
         self.monitor = impl.params.pop('monitor', None)
         self.params = AttributeDictionary(**impl.params)
         self.servers = {}
+        self.extra = {}
         del impl.params
         setid(self)
         try:
@@ -253,7 +262,7 @@ properly this actor will go out of scope.
 
 :param exc: optional exception.
 '''
-        self.__impl.stop(self, exc)
+        return self.__impl.stop(self, exc)
     
     def create_thread_pool(self, workers=1):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
@@ -323,8 +332,17 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
             return self.monitor or self
 
     def info(self):
-        '''Return a dictionary of information related to the actor
-status and performance.'''
+        '''Return a nested dictionary of information related to the actor
+status and performance. The dictionary contains the following entries:
+
+* ``actor`` a dictionary containing information regarding the type of actor
+  and its status.
+* ``events`` a dictionary of information about the event loop running the actor.
+* ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
+* ``system`` system info.
+
+This method is invoked when you run the :ref:`info command <actor_info_command>`
+from another actor.'''
         if not self.started():
             return
         isp = self.is_process()
@@ -338,7 +356,9 @@ status and performance.'''
                  'age': self.impl.age}
         events = {'callbacks': len(self.event_loop._callbacks),
                   'io_loops': self.event_loop.num_loops}
-        data = {'actor': actor, 'events': events}
+        data = {'actor': actor,
+                'events': events,
+                'extra': self.extra}
         if isp:
             data['system'] = system.system_info(self.pid)
         return data
@@ -359,11 +379,9 @@ status and performance.'''
         except Exception as e:
             exc = e
         except HaltServer as e:
-            exc = e
-            if e.exit_code:
-                log_failure(e, msg=str(e), level='critical')
-            else:
-                log_failure(e, msg='Exiting server.', level='info')
+            exc = Failure(e)
+            exc.log() if e.exit_code == 1 else exc.log(msg='Exiting server.',
+                                                       level='info')
         finally:
             self.stop(exc)
         

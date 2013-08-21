@@ -15,7 +15,7 @@ from collections import namedtuple
 from base64 import b64encode, b64decode
 
 import pulsar
-from pulsar import create_transport, is_failure
+from pulsar import is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS

@@ -81,7 +81,7 @@ class IObase(object):
         
     
 class EpollInterface(object):
-    
+    '''An epoll like interface'''
     def close(self):
         raise NotImplementedError
     
@@ -128,7 +128,9 @@ class IOselect(EpollInterface):
             self.read_fds.add(fd)
                 
     def modify(self, fd, events):
-        self.unregister(fd)
+        self.read_fds.discard(fd)
+        self.write_fds.discard(fd)
+        self.error_fds.discard(fd)
         self.register(fd, events)
 
     def unregister(self, fd):
