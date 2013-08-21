@@ -315,6 +315,7 @@ event loop is the place where most asynchronous operations are carried out.
 
     The thread id where the eventloop is running
 """
+    # Never use an infinite timeout here - it can stall epoll
     poll_timeout = 0.5
     tid = None
     pid = None
