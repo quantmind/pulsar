@@ -823,34 +823,3 @@ if we are calling from the same thread of execution as this
                 eno = args[0]
         if eno not in SOCKET_INTERRUPT_ERRORS and self.running:
             return True
-        
-    def _sock_connect(self, sock, address, timeout, connector=None):
-        fd = sock.fileno()
-        if connector is None:
-            try:
-                sock.connect(address)
-            except socket.error as e:
-                def cancel(d):
-                    self.remove_writer(fd)
-                #
-                connector = Deferred(canceller=cancel, event_loop=self)
-                if e.args[0] in TRY_WRITE_AGAIN:
-                    connector.set_timeout(timeout or DEFAULT_CONNECT_TIMEOUT)
-                    self.add_writer(fd, self._sock_connect, sock, address,
-                                    timeout, connector)
-                else:
-                    connector.callback(e)
-        else:
-            self.remove_writer(fd)
-            try:
-                err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-                if err != 0:
-                    raise socket.error(err, 'Connect call failed')
-            except socket.error as e:
-                connector.callback(e)
-        
-    def _make_socket_transport(self, sock, protocol):
-        return TCP(event_loop, sock, protocol)
-        
-    def _make_ssl_transport(self, sock, protocol, sslcontext, server_side=True):
-        raise NotImplementedError
