@@ -7,7 +7,7 @@ import time
 import pulsar
 from pulsar import platform
 from pulsar.utils.internet import (parse_address, parse_connection_string,
-                                   socketpair, close_socket)
+                                   socketpair, close_socket, is_socket_closed)
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
@@ -83,5 +83,4 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(server.send(b'ciao a te'), 9)
         self.assertEqual(client.recv(io.DEFAULT_BUFFER_SIZE), b'ciao a te')
         close_socket(server)
-        self.assertEqual(client.send(b'ciao'), 4)
-        
+        self.assertTrue(is_socket_closed(server))        
