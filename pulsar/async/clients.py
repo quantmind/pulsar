@@ -13,14 +13,24 @@ __all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
 
     
 class Request(object):
-    '''A :class:`Client` request class is an hashable object used to select
-the appropiate :class:`ConnectionPool` for the client request.'''
+    '''A :class:`Client` request.
+    
+A request object is hashable an it is used to select
+the appropriate :class:`ConnectionPool` for the client request.
+
+.. attribute:: address
+
+    The socket address of the remote server
+    
+'''
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
         
     @property
     def key(self):
+        '''Attribute used for selecting the appropriate
+:class:`ConnectionPool`'''
         return (self.address, self.timeout)
     
     def encode(self):
@@ -277,9 +287,16 @@ is ``True`` a specialised event loop is created.'''
         return hash((address, timeout))
     
     def request(self, *args, **params):
-        '''Abstract method for creating a request to send to the server.
-**Must be implemented by subclasses**. The method should return a
-:class:`ProtocolConsumer` via invoking the :meth:`response` method. '''
+        '''Abstract method for creating a :class:`Request` to send to a
+remote server. This method **must be implemented by subclasses** and should
+return a :class:`ProtocolConsumer` via invoking the :meth:`response` method::
+
+    def request(self, ...):
+        ...
+        request = ...
+        return self.response(request)
+    
+'''
         raise NotImplementedError
     
     def response(self, request, response=None, new_connection=True):

@@ -81,8 +81,10 @@ Producer
 Clients
 =================
 
-This section introduces two classes for transport/protocol clients with several
-connections to a remote :class:`Server`. 
+This section introduces classes implementing the transport/protocol paradigm
+for clients with several connections to a remote :class:`Server`.
+:class:`Client` is the main class here, and :class:`Client.request`
+is the single most important method a subclass must implement.
 
 Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +99,12 @@ Client Connection Pool
    :members:
    :member-order: bysource
 
-
+Request
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: Request
+   :members:
+   :member-order: bysource
+   
 Server
 ==================
 
