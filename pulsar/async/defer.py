@@ -87,13 +87,14 @@ def multi_async(iterable, **kwargs):
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
 
-def log_failure(failure, msg=None, level=None):
-    '''Log the *failure* if *failure* is a :class:`Failure` or a
+def log_failure(obj, **kw):
+    '''Log the ``obj`` if ``obj`` is a :class:`Failure` or a
 :class:`Deferred` with a called failure.'''
-    failure = maybe_async(failure)
-    if is_failure(failure):
-        failure.log(msg=msg, level=level)
-    return failure
+    obj = maybe_async(obj)
+    if isinstance(obj, Failure):
+        return obj.log(**kw)
+    else:
+        return obj
 
 def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
@@ -131,19 +132,19 @@ def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
     
 def maybe_async(value, canceller=None, event_loop=None, timeout=None,
                 get_result=True):
-    '''Return an asynchronous instance only if *value* is
-a generator or already an asynchronous instance. If *value* is asynchronous
-it checks if it done. In this case it returns the *result*.
+    '''Return an :ref:`asynchronous instance <tutorials-coroutine>`
+only if ``value`` is a generator, a :class:`Deferred` or ``get_result`` is
+set to ``False``.
 
 :parameter value: the value to convert to an asynchronous instance
     if it needs to.
-:parameter canceller: optional canceller (seed :attr:`Deferred.canceller`).
+:parameter canceller: optional canceller (see :attr:`Deferred.canceller`).
 :parameter event_loop: optional :class:`EventLoop`.
 :parameter timeout: optional timeout after which any asynchronous element get
     a cancellation.
 :parameter get_result: optional flag indicating if to get the result in case
-    the return values is a :class:`Deferred` already done. Default: ``True``.
-:return: a :class:`Deferred` or  a :class:`Failure` or a **synchronous value**.
+    the return value is a :class:`Deferred` already done. Default: ``True``.
+:return: a :class:`Deferred` or  a :class:`Failure` or a synchronous value.
 '''
     global _maybe_async
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
@@ -336,7 +337,15 @@ supporting both synchronous and asynchronous flow controls.'''
 
     def log(self, log=None, msg=None, level=None):
         '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
-The logging can append once only.'''
+        
+Logging for a given failure occurs once only. To suppress logging for
+a given failure set :attr:`logged` to ``True`` of invoke the :meth:`mute`
+method.
+Returns ``self`` so that this method can easily be added as an error
+back to perform logging and propagate the failure. For example::
+
+    .add_errback(lambda failure: failure.log())
+'''
         if not self.logged:
             log = log or LOGGER
             if self.is_remote:
@@ -350,7 +359,13 @@ The logging can append once only.'''
             else:
                 log.error(msg, exc_info=exc_info)
         self.logged = True
-
+        return self
+    
+    def mute(self):
+        '''Mute logging and return self.'''
+        self.logged = True
+        return self
+       
     def __getstate__(self):
         self.log()
         exctype, value, tb = self.exc_info
@@ -678,8 +693,8 @@ a callable which accept one argument only.'''
             LOGGER.warning('unknown event "%s" for %s', event, self)
         
     def fire_event(self, event, event_data=NOTHING, sender=None):
-        """Dispatches *event_data* to the *event* listeners.
-* If *event* is a one-time event, it makes sure that it was not fired before.
+        """Dispatches ``event_data`` to the ``event`` listeners.
+* If ``event`` is a one-time event, it makes sure that it was not fired before.
         
 :param event_data: if not provided, ``self`` will be dispatched instead, if an
     error it will be converted to a :class:`Failure`.
@@ -687,14 +702,14 @@ a callable which accept one argument only.'''
     dispatching :ref:`global events <global-events>`.
 :return: boolean indicating if the event was fired or not.
 """
-        event_data = self if event_data is NOTHING else maybe_failure(event_data)
+        event_data = self if event_data is NOTHING else event_data
         fired = True
         if event in self.ONE_TIME_EVENTS:
             fired = not self.ONE_TIME_EVENTS[event].done()
             if fired:
                 self.ONE_TIME_EVENTS[event].callback(event_data)
             else:
-                LOGGER.debug('Event "%s" already fired for %s', event, self)
+                LOGGER.warning('Event "%s" already fired for %s', event, self)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
@@ -815,15 +830,6 @@ The :class:`MultiDeferred` is recursive on values which are ``generators``,
 ``Mapping``, ``lists`` and ``sets``. It is not recursive on immutable
 containers such as tuple and frozenset.
 
-.. attribute:: locked
-
-    When ``True``, the :meth:`update` or :meth:`append` methods can no longer
-    be used.
-    
-.. attribute:: type
-
-    The type of multi-deferred. Either a ``list`` or a ``Mapping``.
-    
 .. attribute:: raise_on_error
 
     When ``True`` and at least one value of the result collections is a
@@ -856,19 +862,24 @@ containers such as tuple and frozenset.
 
     @property
     def locked(self):
+        '''When ``True``, the :meth:`update` or :meth:`append` methods can no
+longer be used.'''
         return self._locked
         
     @property
     def type(self):
+        '''The type of multi-deferred. Either a ``list`` or a ``Mapping``.'''
         return self._stream.__class__.__name__
     
     @property
     def total_time(self):
+        '''Total number of seconds taken to obtain the result.'''
         if self._time_finished:
             return self._time_finished - self._time_start
         
     @property
     def locked_time(self):
+        '''Number of econds taken to obtain the result once :class:`locked`.'''
         if self._time_finished:
             return self._time_finished - self._time_locked
         

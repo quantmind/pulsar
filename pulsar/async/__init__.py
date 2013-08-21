@@ -9,7 +9,7 @@ from .actor import *
 from .arbiter import *
 from .monitor import *
 from .protocols import *
+from .stream import *
 from .clients import *
-from .servers import *
 from .concurrency import *
 from . import commands

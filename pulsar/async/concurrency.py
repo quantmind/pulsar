@@ -12,7 +12,7 @@ from .threads import KillableThread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
 from .defer import async, multi_async, log_failure
 from .eventloop import new_event_loop, signal
-from .servers import TcpServer
+from .stream import TcpServer
 from .consts import *
 
 

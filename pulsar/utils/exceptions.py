@@ -26,7 +26,7 @@ class ProtocolError(Exception):
 the socket connection.'''
 
 
-class TooManyConnections(Exception):
+class TooManyConnections(RuntimeError):
     '''Raised when there are too many concurrent connections.'''
     
     

@@ -470,8 +470,9 @@ and the :class:`Application` have the same interface.'''
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_info(self, worker, data):
-        return data
+    def worker_info(self, worker, info):
+        '''Hook to add additional entries to the worker ``info`` dictionary.'''
+        return info
     
     def worker_stopping(self, worker):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
@@ -494,6 +495,7 @@ The application is now in the arbiter but has not yet started.'''
         pass
 
     def monitor_info(self, monitor, data):
+        '''Hook to add additional entries to the monitor ``info`` dictionary.'''
         return data
     
     def monitor_stop(self, monitor):

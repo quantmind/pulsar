@@ -2,7 +2,6 @@ import socket
 from functools import partial, reduce
 from threading import Lock
 
-from pulsar import TooManyConnections
 from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.internet import is_socket_closed
 from .defer import is_failure, multi_async
@@ -180,10 +179,17 @@ which can be used to add additional information to the request to send
 to the remote server and to postprocess responses. These events are:
 ``connection_made``, ``pre_request``, ``post_request``, ``connection_lost``.
 
-:param max_connections: Optional maximum number of connections.
-:param timeout: Optional timeout in seconds for closing idle connections.
+Most initialisation parameters have sensible defaults and don't need to be
+passed for most use-cases. Additionally, they can also be set as class
+attributes to override defaults.
+
+:param max_connections: set the :attr:`max_connections` attribute.
+:param timeout: set the :attr:`timeout` attribute.
 :param force_sync: set the :attr:`force_sync` attribute.
-:param event_loop: Optional :class:`EventLoop` which set the :attr:`event_loop`.
+:param event_loop: optional :class:`EventLoop` which set the :attr:`event_loop`.
+:param connection_pool: optional factory which set the :attr:`connection_pool`.
+    The :attr:`connection_pool` can also be set at class level.
+:parameter client_version: optional version string for this :class:`Client`.
 
 .. attribute:: event_loop
 
@@ -193,8 +199,9 @@ to the remote server and to postprocess responses. These events are:
     
 .. attribute:: force_sync
 
-    Force a synchronous client, that is a client which has it
-    own :class:`EventLoop` and blocks until a response is available.
+    Force a :ref:`synchronous client <tutorials-synchronous>`, that is a
+    client which has it own :class:`EventLoop` and blocks until a response
+    is available.
     
     Default: `False`
 '''
@@ -203,7 +210,7 @@ to the remote server and to postprocess responses. These events are:
     connection_pools = None
     '''Dictionar of :class:`ConnectionPool`. If initialized at class level it
 will remain as a class attribute, otherwise it will be an instance attribute.'''
-    connection_pool = ConnectionPool
+    connection_pool = None
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
     '''A factory of :class:`ProtocolConsumer` for sending and consuming data.'''
@@ -212,9 +219,12 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     client_version = ''
     '''An optional version for this client'''
     timeout = 0
-    '''Optional timeout in seconds for idle connections.'''
+    '''Optional timeout in seconds for idle connections. This is not the timeout
+    for the sockets (which is always 0, i.e. asynchronous).'''
     max_connections = 0
-    '''Maximum number of concurrent connections.'''
+    '''Maximum number of :attr:`concurrent_connections` allowed. Exceeding this
+    number will result in a :class:`pulsar.utils.exceptions.TooManyConnections`
+    error. ``0`` means an unlimited number is allowed.'''
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
     
@@ -225,13 +235,16 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     
     def __init__(self, max_connections=None, timeout=None, client_version=None,
                  trust_env=True, consumer_factory=None, max_reconnect=None,
-                 force_sync=False, event_loop=None, **params):
+                 force_sync=False, event_loop=None, connection_pool=None,
+                 **params):
         super(Client, self).__init__()
         self.lock = Lock()
         self._closed = False
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
         self.timeout = timeout if timeout is not None else self.timeout
+        self.connection_pool = (connection_pool or self.connection_pool or
+                                ConnectionPool)
         if consumer_factory:
             self.consumer_factory = consumer_factory
         self.max_connections = max_connections or self.max_connections or 2**31
@@ -242,10 +255,6 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
         self.force_sync = force_sync
         self.event_loop = event_loop
         self.setup(**params)
-    
-    def setup(self, **params):
-        '''Setup the client. By default it does nothing.'''
-        pass
     
     def __str__(self):
         return self.__repr__()
@@ -271,6 +280,13 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
 A closed :class:`Client` cannot send :meth:`request` to remote servers.'''
         return self._closed
         
+    def setup(self, **params):
+        '''Setup the client.
+
+Invoked at the end of initialisation with the additional parameters passed.
+By default it does nothing.'''
+        pass
+    
     def get_event_loop(self):
         '''Return the :class:`EventLoop` used by this :class:`Client`.
 The event loop can be set during initialisation. If :attr:`force_sync`
@@ -394,8 +410,21 @@ is available.'''
             return connection
     
     def timeit(self, times, *args, **kwargs):
-        '''Send *times* requests asynchronously and evaluate the time
-taken to obtain all responses.'''
+        '''Send ``times`` requests asynchronously and evaluate the time
+taken to obtain all responses. In the standard implementation
+this method will open ``times`` :class:`Connection` with the remote server.
+Usage::
+
+    client = Client(...)
+    multi = client.timeit(100, ...)
+    response = yield multi
+    multi.total_time
+    
+:return: a :class:`MultiDeferred` which results in the list of results
+  for the individual requests. Its :attr:`MultiDeferred.total_time` attribute
+  indicates the number of seconds taken (once the deferred has been
+  called back).
+'''
         results = []
         for _ in range(times):
             r = self.request(*args, **kwargs)

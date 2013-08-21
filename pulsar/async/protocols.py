@@ -2,14 +2,14 @@ import sys
 from copy import copy
 from functools import partial
 
-from pulsar import ProtocolError
+from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
 from .defer import EventHandler, NOTHING
 from .internet import Protocol
 
 
-__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer']
+__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer', 'Server']
 
 
 class TransportProxy(object):
@@ -170,8 +170,9 @@ and one :ref:`many times events <many-times-event>`:
     
     def start_request(self):
         '''Invoked by the :meth:`new_request` method to kick start the
-request with remote server/client. For server :class:`ProtocolConsumer` this
-method is usually not implemented and therefore is simply a pass-through.
+request with remote server. For server :class:`ProtocolConsumer` this
+method is not invoked at all.
+
 **For clients this method should be implemented** and it is critical method
 where errors caused by stale socket connections can arise.
 **This method should not be called directly.** Use :meth:`new_request`
@@ -184,10 +185,17 @@ into the transport. Something like this::
     
     def new_request(self, request=None):
         '''Starts a new ``request`` for this protocol consumer. There is
-no need to override this method, implement :meth:`start_request` instead.'''
+no need to override this method, implement :meth:`start_request` instead.
+If either :attr:`connection` or :attr:`transport` are missing, a
+:class:`RuntimeError` occurs.
+
+For server side consumer, this method simply add to the
+:attr:`request_processed` count and fire the ``pre_request`` event.'''
         conn = self.connection
-        if not conn or not conn.transport:
+        if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
+        if  not conn.transport:
+            raise RuntimeError('Cannot start new request. No transport.')
         self._request_processed += 1
         self._current_request = request
         self._connection.fire_event('pre_request', request)
@@ -417,7 +425,7 @@ the *consumer* must be the same as the :attr:`current_consumer` attribute.'''
             consumer.fire_event('finish', result, sender=self)
             consumer._connection = None
         else:
-            raise RuntimeError()
+            raise RuntimeError('No consumer. Cannot finish.')
     
     ############################################################################
     ##    INTERNALS
@@ -501,7 +509,7 @@ is either a :class:`Server` or a :class:`Client`. If the number of
 :attr:`concurrent_connections` is greater or equal :attr:`max_connections`
 a :class:`RuntimeError` is raised.'''
         if self._max_connections and self._received >= self._max_connections:
-            raise RuntimeError('Too many connections')
+            raise TooManyConnections('Too many connections')
         # increased the connections counter
         self._received = session = self._received + 1
         # new connection - not yet connected!
@@ -535,3 +543,65 @@ active connections.'''
         # Called when the connection is lost
         self._concurrent_connections.discard(connection)
     
+    
+class Server(Producer):
+    '''A base class for Servers listening on a socket.
+    
+An instance of this class is a :class:`Producer` of server sockets and has
+available two :ref:`one time events <one-time-event>`:
+
+* ``start`` fired when the server is ready to accept connections.
+* ``stop`` fired when the server has stopped accepting connections. Once a
+  a server has stopped, it cannot be reused.
+  
+In addition it has four :ref:`many times event <many-times-event>`:
+
+* ``connection_made`` fired every time a new connection is made.
+* ``pre_request`` fired every time a new request is made on a given connection.
+* ``post_request`` fired every time a request is finished on a given connection.
+* ``connection_lost`` fired every time a connection is gone.
+
+.. attribute:: consumer_factory
+
+    Factory of :class:`ProtocolConsumer` handling the server sockets.
+    '''
+    ONE_TIME_EVENTS = ('start', 'stop')
+    MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
+                         'connection_lost')
+    consumer_factory = None
+    
+    def __init__(self, event_loop, host=None, port=None,
+                 consumer_factory=None, name=None, sock=None, **kw):
+        super(Server, self).__init__(**kw)
+        self._name = name or self.__class__.__name__
+        self._event_loop = event_loop
+        self._host = host
+        self._port = port
+        self._sock = sock
+        if consumer_factory:
+            self.consumer_factory = consumer_factory
+        assert hasattr(self.consumer_factory, '__call__'), (
+                'consumer_factory must be a callable')
+    
+    def close(self):
+        '''Stop serving and close the listening socket.'''
+        raise NotImplementedError
+    
+    def protocol_factory(self):
+        return self.new_connection(self.consumer_factory)
+        
+    @property
+    def event_loop(self):
+        '''The :class:`EventLoop` running the server'''
+        return self._event_loop
+    
+    @property
+    def sock(self):
+        '''The socket receiving connections.'''
+        return self._sock
+    
+    @property
+    def address(self):
+        '''Server address, where clients send requests to.'''
+        return self._sock.getsockname()
+        

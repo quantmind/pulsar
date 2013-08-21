@@ -8,6 +8,13 @@ SocketStreamTransport
 .. autoclass:: SocketStreamTransport
    :members:
    :member-order: bysource
+   
+TcpServer
+============================
+
+.. autoclass:: TcpServer
+   :members:
+   :member-order: bysource
 '''
 import os
 import sys
@@ -18,12 +25,14 @@ except ImportError:  # pragma: no cover
     ssl = None
 
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
-                                   ACCEPT_ERRORS, EWOULDBLOCK, EPERM)
+                                   ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
+                                   format_address)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
 from .defer import multi_async, Deferred
 from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE, AF_INET6
+from .protocols import Server
     
 
 class SocketStreamTransport(SocketTransport):
@@ -181,6 +190,48 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self._rawsock = rawsock
 
 
+class TcpServer(Server):
+    '''A TCP :class:`pulsar.Server`.
+    
+.. attribute:: consumer_factory
+
+    Callable or a :class:`pulsar.ProtocolConsumer` class for producing
+    :class:`ProtocolConsumer` which handle the receiving, decoding and
+    sending of data.
+    
+'''
+    def start_serving(self, backlog=100):
+        '''Start serving the Tcp socket.
+        
+It returns a :class:`pulsar.Deferred` called back when the server is serving
+the socket.'''
+        if not self.event('start').done():
+            res = self._event_loop.start_serving(self.protocol_factory,
+                                                 host=self._host,
+                                                 port=self._port,
+                                                 sock=self._sock,
+                                                 backlog=backlog)
+            return res.add_callback(self._got_sockets)\
+                      .add_both(lambda r: self.fire_event('start', r))
+    
+    def stop_serving(self):
+        '''Stop serving the :class:`pulsar.Server.sock`'''
+        if self._sock:
+            self._event_loop.stop_serving(self._sock)
+            self.fire_event('stop')
+            self._sock = None
+    
+    def close(self):
+        '''Same as :meth:`stop_serving` method.'''
+        self.stop_serving()
+            
+    def _got_sockets(self, sockets):
+        self._sock = sockets[0]
+        self.event_loop.logger.info('%s serving on %s', self._name,
+                                    format_address(self._sock.getsockname()))
+        return self
+    
+    
 def create_connection(event_loop, protocol_factory, host, port, ssl,
                       family, proto, flags, sock, local_addr):
     if host is not None or port is not None:

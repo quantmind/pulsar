@@ -78,6 +78,8 @@ Producer
    :member-order: bysource
 
 
+.. _clients-api:
+
 Clients
 =================
 

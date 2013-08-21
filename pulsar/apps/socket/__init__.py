@@ -76,9 +76,8 @@ In addition, a :class:`SocketServer` in multi-process mode is only available for
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import pulsar
-from pulsar import async
+from pulsar import async, TcpServer
 from pulsar.utils.internet import parse_address
-from pulsar.async import TcpServer
 
 
 class Bind(pulsar.Setting):
