@@ -5,7 +5,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import setid
-from .defer import EventHandler, Failure
+from .defer import EventHandler, Failure, Deferred
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
@@ -278,6 +278,8 @@ if not already present.
         '''Close the :attr:`thread_pool`.'''
         if self._thread_pool:
             self._thread_pool.close()
+            self._thread_pool.join()
+            
     ###############################################################  STATES
     def running(self):
         '''``True`` if actor is running, that is when the :attr:`state`

@@ -53,14 +53,6 @@ Actor
    :members:
    :member-order: bysource
 
-
-PoolMixin
-~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PoolMixin
-   :members:
-   :member-order: bysource
-
 Monitor
 ~~~~~~~~~~~~~~~~~~
 
@@ -76,6 +68,17 @@ Arbiter
    :members:
    :member-order: bysource
       
+
+Actor Internals
+=======================
+
+PoolMixin
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PoolMixin
+   :members:
+   :member-order: bysource
+
 
 ActorProxy
 ~~~~~~~~~~~~~~~~~~~~
@@ -146,6 +149,14 @@ pulsar command
 .. autoclass:: command
 
 
+Mailbox Consumer
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.async.mailbox.MailboxConsumer
+   :members:
+   :member-order: bysource
+   
+   
 Pulsar constants
 =========================
 

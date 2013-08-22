@@ -371,17 +371,27 @@ in :attr:`request_parameters` tuple.'''
         return params
         
     def close_connections(self, async=True):
-        '''Close all connections in each :attr:`connection_pools`.'''
+        '''Close all connections in each :attr:`connection_pools`.
+        
+:parameter async: if ``True`` flush the write buffer before closing (same
+    as :class:`SocketTransport.close` method).
+:return: a :class:`Deferred` called back once all connections are closed.'''
+        all = []
         for p in self.connection_pools.values():
-            p.close_connections(async=async)
+            all.append(p.close_connections(async=async))
+        return multi_async(all)
             
-    def close(self, async=True):
+    def close(self, async=True, timeout=5):
         '''Close all connections and fire the ``finish``
-:ref:`one time event <one-time-event>`'''
+:ref:`one time event <one-time-event>`. Return the :class:`Deferred`
+fired by the ``finish`` event.'''
         if not self.closed:
             self._closed = True
-            self.close_connections(async)
-            self.fire_event('finish')
+            event = self.close_connections(async)
+            event.add_callback(lambda r: self.fire_event('finish'),
+                               lambda f: self.fire_event('finish', f))
+            event.set_timeout(timeout, self.get_event_loop())
+        return self.event('finish')
         
     def abort(self):
         ''':meth:`close` all connections without waiting for active connections

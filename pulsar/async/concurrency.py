@@ -126,9 +126,11 @@ implemented by subclasses.'''
         return ActorProxyMonitor(self)
     
     def create_mailbox(self, actor, event_loop):
+        '''Create the mailbox for ``actor``.'''
         set_actor(actor)
         client = MailboxClient(actor.monitor.address, actor, event_loop)
         client.event_loop.call_soon_threadsafe(self.hand_shake, actor)
+        client.bind_event('finish', lambda s: event_loop.stop())
         return client
 
     def periodic_task(self, actor):

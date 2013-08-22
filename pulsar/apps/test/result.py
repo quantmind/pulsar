@@ -20,13 +20,12 @@ Test Runner
    
 '''
 import traceback
-import logging
 from inspect import istraceback
 from copy import deepcopy
 
 from pulsar.utils.structures import AttributeDictionary
 
-from .case import unittest
+from .case import unittest, LOGGER
 from .utils import TestFunction
 
 __all__ = ['Plugin',
@@ -37,7 +36,6 @@ __all__ = ['Plugin',
            'LOGGER']
 
 
-LOGGER = logging.getLogger('pulsar.test')
 STDOUT_LINE = '\nStdout:\n%s'
 STDERR_LINE = '\nStderr:\n%s'
 

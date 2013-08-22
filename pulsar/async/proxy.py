@@ -143,17 +143,30 @@ parameter ``"hello there!"``.
 
 class ActorProxyMonitor(ActorProxy):
     '''A specialised :class:`ActorProxy` class which contains additional
-information about the remote underlying :class:`pulsar.Actor`. Unlike the
-:class:`pulsar.ActorProxy` class, instances of this class serialise
-into their :attr:`proxy` attribute..
+information about the remote underlying :class:`pulsar.Actor`.
+Instances of this class serialise into :class:`ActorProxy`.
+
+The :class:`ActorProxyMonitor` is special since it lives in the :class:`Arbiter`
+domain and it is used by the :class:`Arbiter` (or a :class:`Monitor`) to
+monitor the state of the spawned actor.
 
 .. attribute:: impl
 
-    The :class:`Concurrency` instance for the remote :class:`Actor`.
+    The :class:`Concurrency` instance for the remote :class:`Actor`. This
+    dictionary is constantly updated by the remote actor by sending the
+    :ref:`info message <actor_info_command>`.
     
 .. attribute:: info
 
     Dictionary of information regarding the remote :class:`Actor`
+    
+.. attribute:: mailbox
+
+    This is the connection with the remote actor. It is available once the
+    :ref:`actor handshake <handshake>` between the actor and the monitor
+    has completed. The :attr:`mailbox` is a server-side
+    :class:`pulsar.async.mailbox.MailboxConsumer` instance and it is used by
+    the :func:`send` function to send messages to the remote actor.
 '''
     monitor = None
     def __init__(self, impl):
@@ -167,6 +180,8 @@ into their :attr:`proxy` attribute..
         
     @property
     def notified(self):
+        '''Last time this :class:`ActorProxyMonitor` was notified by the
+        remote actor.'''
         return self.info.get('last_notified')
     
     @property
@@ -175,13 +190,14 @@ into their :attr:`proxy` attribute..
     
     @property
     def proxy(self):
+        '''The :class:`ActorProxy` for this monitor.'''
         return ActorProxy(self)
     
     def __reduce__(self):
         return self.proxy.__reduce__()
     
     def is_alive(self):
-        '''True if underlying actor is alive'''
+        '''``True`` if underlying actor is alive'''
         return self.impl.is_alive()
         
     def terminate(self):

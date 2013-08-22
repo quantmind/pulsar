@@ -28,7 +28,7 @@ from pulsar.utils.structures import merge_prefix
 from .consts import NUMBER_ACCEPTS
 from .defer import multi_async, Deferred
 from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE, AF_INET6
-from .protocols import Server
+from .protocols import Server, logger
     
 
 class SocketStreamTransport(SocketTransport):
@@ -41,9 +41,10 @@ The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
+    SocketError = socket.error
     
-    def _setup(self):
-        self._event_loop.add_reader(self._sock_fd, self._read_ready)
+    def _do_handshake(self):
+        self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
         
     def pause(self):
@@ -106,7 +107,13 @@ be accumulating data in an internal buffer.'''
         """Write a list (or any iterable) of data bytes to the transport."""
         for data in list_of_data:
             self.write(data)
-                 
+    
+    def _write_continue(self, e):
+        return e.args[0] in TRY_WRITE_AGAIN
+        
+    def _read_continue(self, e):
+        return e.args[0] == EWOULDBLOCK
+        
     def _ready_write(self):
         # Do the actual writing
         buffer = self._write_buffer
@@ -120,16 +127,12 @@ be accumulating data in an internal buffer.'''
                 try:
                     sent = self.sock.send(buffer[0])
                     if sent == 0:
-                        # With OpenSSL, after send returns EWOULDBLOCK,
-                        # the very same string object must be used on the
-                        # next call to send.  Therefore we suppress
-                        # merging the write buffer after an EWOULDBLOCK.
                         break
                     merge_prefix(buffer, sent)
                     buffer.popleft()
                     tot_bytes += sent
-                except socket.error as e:
-                    if e.args[0] in TRY_WRITE_AGAIN:
+                except self.SocketError as e:
+                    if self._write_continue(e):
                         break
                     else:
                         raise
@@ -142,7 +145,7 @@ be accumulating data in an internal buffer.'''
                     self._event_loop.call_soon(self._shutdown)
             return tot_bytes
     
-    def _read_ready(self):
+    def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
         passes = 0
@@ -151,8 +154,8 @@ be accumulating data in an internal buffer.'''
             while chunk:
                 try:
                     chunk = self._sock.recv(self._read_chunk_size)
-                except socket.error as e:
-                    if e.args[0] == EWOULDBLOCK:
+                except self.SocketError as e:
+                    if self._read_continue(e):
                         return
                     else:
                         raise
@@ -173,6 +176,7 @@ be accumulating data in an internal buffer.'''
     
     
 class SocketStreamSslTransport(SocketStreamTransport):
+    SocketError = getattr(ssl, 'SSLError', None)
     
     def __init__(self, event_loop, rawsock, protocol, sslcontext,
                  server_side=True, **kwargs):
@@ -184,27 +188,51 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self._handshake_writing = False
         super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
                                                        protocol, **kwargs)
+    
+    def _write_continue(self, e):
+        return e.errno == ssl.SSL_ERROR_WANT_WRITE
         
-    def _setup(self):
+    def _read_continue(self, e):
+        return e.errno == ssl.SSL_ERROR_WANT_READ
+    
+    def _do_handshake(self):
+        loop = self._event_loop
         try:
             self._sock.do_handshake()
-        except ssl.SSLError as e:
-            if e.errno == ssl.SSL_ERROR_WANT_READ:
+        except self.SocketError as e:
+            if self._read_continue(e):
                 self._handshake_reading = True
-                self._loop.add_reader(self._sock_fd, self._setup)
-            elif e.errno == ssl.SSL_ERROR_WANT_WRITE:
+                loop.remove_reader(self._sock_fd)
+                loop.add_reader(self._sock_fd, self._do_handshake)
+            elif self._write_continue(e):
                 self._handshake_writing = True
-                self._loop.add_writer(self._sock_fd, self._setup)
+                loop.remove_writer(self._sock_fd)
+                loop.add_writer(self._sock_fd, self._do_handshake)
+            elif e.errno == ssl.SSL_ERROR_SSL:
+                try:
+                    peer = self._sock.getpeername()
+                except Exception:
+                    peer = '(not connected)'
+                self.logger.warning("SSL Error on fd %d %s: %s",
+                                    self._sock_fd, peer, e)
+                self.abort(e)
             else:
                 self.abort(e)
-        except Eception as e:
-            return self.abort(e)
+        except Exception as e:
+            self.abort(e)
         else:
             loop = self._event_loop
-            loop.remove_reader(self._sock_fd)
-            loop.remove_writer(self._sock_fd)
-            loop.add_writer(self._sock_fd, self._ready_write)
-            super(SocketStreamSslTransport, self)._setup()
+            if self._handshake_reading:
+                loop.remove_reader(self._sock_fd)
+                loop.add_reader(self._sock_fd, self._ready_read)
+            else:
+                if self._handshake_writing:
+                    loop.remove_writer(self._sock_fd)
+                loop.add_reader(self._sock_fd, self._ready_read)
+                loop.add_writer(self._sock_fd, self._ready_write)
+            self._handshake_reading = False
+            self._handshake_writing = False
+            self._event_loop.call_soon(self._protocol.connection_made, self)
 
 
 class TcpServer(Server):
@@ -247,8 +275,8 @@ class TcpServer(Server):
             
     def _got_sockets(self, sockets):
         self._sock = sockets[0]
-        self.event_loop.logger.info('%s serving on %s', self._name,
-                                    format_address(self._sock.getsockname()))
+        self.logger.info('%s serving on %s', self._name,
+                         format_address(self.address))
         return self
     
     
@@ -460,7 +488,7 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                     # connection, but we get told to try to accept() anyway.
                     continue
                 elif e.args[0] in ACCEPT_ERRORS:
-                    event_loop.logger.info('Could not accept new connection')
+                    logger(event_loop).info('Could not accept new connection')
                     break
                 raise
             protocol = protocol_factory()
@@ -471,4 +499,4 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                 SocketStreamTransport(event_loop, conn, protocol,
                                       extra={'addr': address})
     except Exception:
-        event_loop.logger.exception('Could not accept new connection')
+        logger(event_loop).exception('Could not accept new connection')

@@ -189,7 +189,8 @@ The :attr:`Actor.thread_pool` needs to be initialised via the
 .. _design-spawning:
 
 Spawning
-~~~~~~~~~~~~~~
+==============
+
 Spawning a new actor is achieved via the :func:`spawn` function::
     
     from pulsar import spawn
@@ -222,10 +223,21 @@ the workflow of the :func:`spawn` function is as follow:
 
 .. _handshake:
 
-The actor **hand-shake** is the mechanism with which a :class:`Actor` register
-its :ref:`mailbox address <tutorials-messages>` with the :class:`Arbiter` so that
-the arbiter can monitor its behavior. If the hand-shake fails, the spawned
-actor will eventually stop.
+Handshake
+~~~~~~~~~~~~~~~
+
+The actor **hand-shake** is the mechanism with which an :class:`Actor` register
+its :ref:`mailbox address <tutorials-messages>` with its manager.
+The actor manager is either a :class:`Monitor` or the :class:`Arbiter`
+depending on which spawned the actor.
+
+The handshake occurs when the monitor receives, for the first time,
+the actor :ref:`notify message <actor_notify_command>`.
+
+For the curious, the handshake is responsible for setting the
+:class:`ActorProxyMonitor.mailbox` attribute.
+
+If the hand-shake fails, the spawned actor will eventually stop.
 
 
 .. _actor-hooks:
@@ -283,7 +295,7 @@ Fired just before the :class:`Actor` is garbage collected
 .. _actor_commands:
 
 Commands
-~~~~~~~~~~~~~~~~~
+===============
 
 An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
 **action** to perform. This action takes the form of a **command** name and
@@ -292,14 +304,16 @@ commands via the :class:`pulsar.command` decorator as explained in the
 :ref:`api documentation <api-remote_commands>`.
 
 
-**ping**
+ping
+~~~~~~~~~
 
 Ping the remote actor ``abcd`` and receive an asynchronous ``pong``::
 
     send('abcd', 'ping')
 
 
-**echo**
+echo
+~~~~~~~~~~~
 
 received an asynchronous echo from a remote actor ``abcd``::
 
@@ -308,7 +322,8 @@ received an asynchronous echo from a remote actor ``abcd``::
 
 .. _actor_info_command:
 
-**info**
+info
+~~~~~~~~~~~~~
 
 Request information about a remote actor ``abcd``::
 
@@ -317,8 +332,21 @@ Request information about a remote actor ``abcd``::
 The asynchronous result will be called back with the dictionary returned
 by the :meth:`Actor.info` method.
     
-    
-**run**
+.. _actor_notify_command:
+
+notify
+~~~~~~~~~~~~~~~~
+
+This message is used periodically by actors, to notify their manager. If an
+actor fails to notify itself on a regular basis, its manager will shut it down.
+The first ``notify`` message is sent to the manager as soon as the actor is up
+and running so that the :ref:`handshake <handshake>` can occur.
+ 
+
+.. _actor_run_command:
+
+run
+~~~~~~~~~~
 
 Run a function on a remote actor. The function must accept actor as its initial parameter::
 
@@ -330,7 +358,8 @@ Run a function on a remote actor. The function must accept actor as its initial 
 
 .. _actor_stop_command:
 
-**stop**
+stop
+~~~~~~~~~~~~~~~~~~
 
 Tell the remote actor ``abc`` to gracefully shutdown::
 
@@ -339,7 +368,7 @@ Tell the remote actor ``abc`` to gracefully shutdown::
 .. _monitor:
 
 Monitors
-~~~~~~~~~~~~~~
+==============
 
     
 .. _exception-design:

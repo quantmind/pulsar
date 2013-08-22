@@ -51,7 +51,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor, set_actor
-from .defer import async, Failure, Deferred
+from .defer import async, Failure, Deferred, maybe_failure
 from .protocols import ProtocolConsumer
 from .clients import SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
@@ -131,6 +131,9 @@ protocol.'''
         super(MailboxConsumer, self).__init__(*args, **kwargs)
         self._pending_responses = {}
         self._parser = FrameParser(kind=2)
+        actor = get_actor()
+        if actor.is_arbiter():
+            self.connection.bind_event('connection_lost', self._connection_lost)
     
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
@@ -161,9 +164,16 @@ protocol.'''
                 req.future.callback(e)
         else:
             self._write(req)
-    
+            
     ############################################################################
     ##    INTERNALS
+    def _connection_lost(self, exc):
+        actor = get_actor()
+        if not actor.running():
+            exc = maybe_failure(exc)
+            if isinstance(exc, Failure):
+                exc.log(msg='Connection lost with actor.', level='debug')
+    
     @async()
     def _responde(self, message):
         actor = get_actor()
@@ -222,8 +232,6 @@ class MailboxClient(SingleClient):
     def __init__(self, address, actor, event_loop):
         super(MailboxClient, self).__init__(address, event_loop=event_loop)
         self.name = 'Mailbox for %s' % actor
-        # when the mailbox shutdown, the event loop must stop.
-        self.bind_event('finish', lambda s: s.event_loop.stop())
     
     def __repr__(self):
         return '%s %s' % (self.__class__.__name__, nice_address(self.address))

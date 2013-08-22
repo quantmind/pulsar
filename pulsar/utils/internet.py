@@ -18,7 +18,7 @@ try:
     ssl = None
     CERT_NONE = 0
     import ssl
-    from ssl import wrap_socket, CERT_NONE
+    from ssl import wrap_socket, PROTOCOL_SSLv23
     from ssl import SSLContext as _SSLContext
     from ssl import HAS_SNI  # Has SNI?
 except ImportError:  # pragma: no cover
@@ -218,13 +218,13 @@ class SSLContext:
     
     def __init__(self, keyfile=None, certfile=None, cert_reqs=None,
                  ca_certs=None, server_hostname=None,
-                 protocol=None):
+                 protocol=PROTOCOL_SSLv23):
         self.keyfile = keyfile
         self.certfile = certfile
         self.cert_reqs = cert_reqs
         self.ca_certs = ca_certs
         self.server_hostname = server_hostname
-        self.protocol = CERT_NONE
+        self.protocol = protocol
     
     def wrap_socket(self, sock, server_side=False, do_handshake_on_connect=True,
                     suppress_ragged_eofs=True, server_hostname=None):
@@ -270,5 +270,5 @@ def ssl_context(context, server_side=False):
             context, SSLContext), 'Must pass an SSLContext'
     else:
         # Client-side may pass ssl=True to use a default context.
-        context = context or SSLContext(ssl.PROTOCOL_SSLv23)
+        context = context or SSLContext(PROTOCOL_SSLv23)
     return context

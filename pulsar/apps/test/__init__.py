@@ -151,7 +151,8 @@ Options
 ==================
 
 All standard :ref:`settings <settings>` can be applied to the test application.
-In addition, the following options are testsuite-specific:
+In addition, the following options are
+:ref:`test-suite specific <setting-section-test>`:
 
 .. _apps-test-sequential:
 
@@ -160,7 +161,8 @@ sequential
 By default, test functions within a :class:`unittest.TestCase`
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
-By specifying the ``--sequential`` command line option, the :class:`TestSuite`
+By specifying the :ref:`--sequential <setting-sequential>` command line option,
+the :class:`TestSuite`
 forces tests to be run in a sequential model, one after the other::
 
     python runtests.py --sequential
@@ -177,7 +179,7 @@ in a sequential way, you can use the :func:`sequential` decorator::
         
 list labels
 ~~~~~~~~~~~~~~~~~~~
-By passing the ``-l`` or ``--list-labels`` flag to the command line, the
+By passing the ``-l`` or :ref:`--list-labels <setting-list_labels>` flag to the command line, the
 full list of test labels available is displayed::
 
     python runtests.py -l
@@ -187,7 +189,7 @@ test timeout
 ~~~~~~~~~~~~~~~~~~~
 When running asynchronous tests, it can be useful to set a cap on how
 long a test function can wait for results. This is what the
-``--test-timeout`` command line flag does::
+:ref:`--test-timeout <setting-test_timeout>` command line flag does::
 
     python runtests.py --test-timeout 10
     
@@ -269,13 +271,12 @@ Utilities
 .. automodule:: pulsar.apps.test.utils
     :members:
 '''
-import logging
-import time
-
 import pulsar
 from pulsar.apps import tasks
 from pulsar.utils import events
 from pulsar.utils.log import local_property
+from pulsar.utils.config import section_docs
+from pulsar.utils.pep import default_timer
 
 from .case import *
 from .result import *
@@ -283,6 +284,10 @@ from .plugins.base import *
 from .loader import *
 from .utils import *
 from .wsgi import *
+
+section_docs['Test'] = '''
+This section covers configuration parameters used by the
+:ref:`Asynchronous/Parallel test suite <apps-test>`.'''
 
 def dont_run_with_thread(obj):
     '''Decorator for disabling test cases when the test suite runs in
@@ -327,6 +332,14 @@ class TestLabels(TestOption):
  all tests are run.
 
 To see available labels use the -l option."""
+
+
+class TestExcludeLabels(TestOption):
+    name = "exclude_labels"
+    flags = ['-e', '--exclude-labels']
+    nargs = '*'
+    desc = 'Exclude a group o labels from running.'
+    validator = pulsar.validate_list
 
 
 class TestSize(TestOption):
@@ -437,10 +450,11 @@ configuration and plugins.'''
         super(TestSuite, self).monitor_start(monitor)
         loader = self.local.loader
         tags = self.cfg.labels
+        exclude_tags = self.cfg.exclude_labels
         try:
             self.local.tests = tests = []
             self.runner.on_start()
-            for tag, testcls in loader.testclasses(tags):
+            for tag, testcls in loader.testclasses(tags, exclude_tags):
                 suite = self.runner.loadTestsFromTestCase(testcls)
                 if suite and suite._tests:
                     tests.append((tag, testcls))
@@ -449,7 +463,7 @@ configuration and plugins.'''
                 self.logger.info('loaded %s test classes', len(tests))
                 events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
-                self._time_start = time.time()
+                self._time_start = default_timer()
                 for tag, testcls in self.local.tests:
                     self.backend.run('test', testcls, tag)
                 monitor.event_loop.call_every(self._check_queue)
@@ -478,7 +492,7 @@ configuration and plugins.'''
         tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
         if len(tests) == len(self.local.tests):
             self.logger.info('All tests have finished.')
-            time_taken = time.time() - self._time_start
+            time_taken = default_timer() - self._time_start
             for task in tests:
                 runner.add(task.result)
             runner.on_end()

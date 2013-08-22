@@ -5,8 +5,8 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
-from .defer import EventHandler, NOTHING, maybe_failure
-from .internet import Protocol
+from .defer import EventHandler, NOTHING, maybe_failure, multi_async, Failure
+from .internet import Protocol, logger
 
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer', 'Server']
@@ -217,8 +217,10 @@ by client consumers only.'''
         
     def finished(self, result=NOTHING):
         '''Call this method when done with this :class:`ProtocolConsumer`.
-By default it calls the :meth:`Connection.finished` method of the
-:attr:`connection` attribute.'''
+        
+If a :attr:`connection` is available, fire the connection ``post_request``
+event and set :attr:`connection` to ``None``. Finally fire the ``finish``
+event with ``result`` as argument. Return ``result``.'''
         c = self._connection
         if c:
             c._current_consumer = None
@@ -230,7 +232,8 @@ By default it calls the :meth:`Connection.finished` method of the
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
         
-        By default it calls the :meth:`finish` method.'''
+        By default it calls the :meth:`finished` method. It can be overwritten
+        to handle the potential exception ``exc``.'''
         return self.finished(exc)
         
     def can_reconnect(self, max_reconnect, exc):
@@ -261,14 +264,15 @@ By default it calls the :meth:`Connection.finished` method of the
         
 class Connection(EventHandler, Protocol, TransportProxy):
     '''A :class:`Protocol` which represents a client or server connection
-with an end-point. This is not connected until :meth:`Protocol.connection_made`
-is called by the :class:`Transport`.
+with an end-point. This is not connected until
+:meth:`connection_made` is called by the :class:`Transport`.
 This is the bridge between the :class:`Transport`
 and the :class:`ProtocolConsumer`. It has a :class:`Protocol`
 interface and it routes data arriving from the :attr:`transport` to
 the :attr:`current_consumer`, an instance of :class:`ProtocolConsumer`.
 
-It has two :ref:`one time events <one-time-event>`:
+A :class:`Connection` is an :class:`EventHandler` which has
+two :ref:`one time events <one-time-event>`:
 
 * ``connection_made``
 * ``connection_lost``
@@ -368,6 +372,9 @@ If the :attr:`current_consumer` is not ``None`` an exception occurs'''
         self._processed += 1
     
     def connection_made(self, transport):
+        '''Override :class:`BaseProtocol.connection_made` by setting
+the transport, firing the ``connection_made`` event and adding a timeout
+for idel connections.'''
         # Implements protocol connection_made
         self._transport = transport
         # let everyone know we have a connection with endpoint
@@ -419,10 +426,10 @@ response).'''
     ############################################################################
     ##    INTERNALS
     def _timed_out(self):
-        self.event_loop.logger.info(
+        logger(self.event_loop).info(
             '%s idle for %d seconds. Closing connection.', self, self._timeout)
         self.close()
-         
+        
     def _add_idle_timeout(self):
         if not self.closed and not self._idle_timeout and self._timeout:
             self._idle_timeout = self.event_loop.call_later(self._timeout,
@@ -515,12 +522,17 @@ a :class:`pulsar.utils.exceptions.TooManyConnections` is raised.'''
     
     def close_connections(self, connection=None, async=True):
         '''Close ``connection`` if specified, otherwise close all
-active connections.'''
+active connections. Return a list of :class:`Deferred` called
+back once the connection/s are closed.'''
+        all = []
         if connection:
+            all.append(connection.event('connection_lost'))
             connection.transport.close(async)
         else:
             for connection in list(self._concurrent_connections):
+                all.append(connection.event('connection_lost'))
                 connection.transport.close(async)
+        return multi_async(all)
                 
     def can_reuse_connection(self, connection, response):
         return True
@@ -567,6 +579,7 @@ In addition it has four :ref:`many times event <many-times-event>`:
         self._host = host
         self._port = port
         self._sock = sock
+        self.logger = logger(event_loop)
         if consumer_factory:
             self.consumer_factory = consumer_factory
         assert hasattr(self.consumer_factory, '__call__'), (

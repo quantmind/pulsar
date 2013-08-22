@@ -17,6 +17,6 @@ of configuration parameters with the only exception of the
 .. pulsar_settings::
 
 Utilities
-================
+==============
 
 .. autofunction:: pass_through

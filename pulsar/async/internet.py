@@ -4,6 +4,8 @@ from collections import deque
 
 from pulsar.utils.internet import WRITE_BUFFER_MAX_SIZE, nice_address
 
+from .access import logger
+
 __all__ = ['BaseProtocol', 'Protocol', 'DatagramProtocol',
            'Transport', 'SocketTransport']
 
@@ -62,6 +64,7 @@ class Protocol(BaseProtocol):
 
       start -> CM [-> DR*] [-> ER?] -> CL -> end
     """
+    _transport = None
 
     def data_received(self, data):
         """Called when some data is received.
@@ -130,6 +133,7 @@ method.'''
                  max_buffer_size=None, read_chunk_size=None):
         self._protocol = protocol
         self._sock = sock
+        self._sock.setblocking(False)
         self._sock_fd = sock.fileno()
         self._event_loop = event_loop
         self._closing = False
@@ -137,7 +141,8 @@ method.'''
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._write_buffer = deque()
-        self._setup()
+        self.logger = logger(event_loop)
+        self._do_handshake()
     
     def __repr__(self):
         sock = self._sock
@@ -218,7 +223,7 @@ method.'''
         """
         self.close(async=False, exc=exc)
     
-    def _setup(self):
+    def _do_handshake(self):
         pass
     
     def _read_ready(self):

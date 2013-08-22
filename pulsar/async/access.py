@@ -11,6 +11,7 @@ __all__ = ['get_request_loop',
            'is_mainthread',
            'process_local_data',
            'thread_local_data',
+           'logger',
            'NOTHING']
 
 LOGGER = logging.getLogger('pulsar')
@@ -24,6 +25,9 @@ the current thread'''
 
 def get_request_loop():
     return get_event_loop_policy().get_request_loop()
+
+def logger(event_loop=None):
+    return getattr(event_loop or get_request_loop(), 'logger', LOGGER)
 
 def process_local_data(name=None):
     '''Fetch the current process local data dictionary. If *name* is not

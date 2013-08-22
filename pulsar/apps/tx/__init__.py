@@ -37,7 +37,7 @@ try:    #pragma    nocover
 except ImportError: #pragma    nocover
     # This is for when we build documentation with sphinx in python 3
     import os
-    if os.environ['BUILDING-PULSAR-DOCS'] == 'yes':
+    if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':
         PosixReactorBase = object
         installReactor = None
     else:

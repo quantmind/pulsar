@@ -40,21 +40,21 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(app.cfg.unz, 'whatz')
         self.assertEqual(app.cfg.bind, ':9999')
         
-    def testBacklog(self):
-        app = self.create(backlog=22, name='pippo')
+    def testTimeout(self):
+        app = self.create(timeout=22, name='pippo')
         self.assertEqual(app.name, 'pippo')
-        self.assertEqual(app.cfg.backlog, 22)
+        self.assertEqual(app.cfg.timeout, 22)
         apps = app.apps()
-        self.assertEqual(app.cfg.backlog, 22)
-        self.assertNotEqual(app.cfg.rpc_backlog, 22)
+        self.assertEqual(app.cfg.timeout, 22)
+        self.assertNotEqual(app.cfg.rpc_timeout, 22)
         app1 = apps[0]
         self.assertEqual(app1.name, 'pippo')
-        self.assertEqual(app1.cfg.backlog, 22)
+        self.assertEqual(app1.cfg.timeout, 22)
         app2 = apps[1]
         self.assertEqual(app2.name, 'rpc_pippo')
-        self.assertNotEqual(app2.cfg.backlog, 22)
-        self.assertEqual(app2.cfg.backlog,
-                         app2.cfg.settings['backlog'].default)
+        self.assertNotEqual(app2.cfg.timeout, 22)
+        self.assertEqual(app2.cfg.timeout,
+                         app2.cfg.settings['timeout'].default)
         
     def testName(self):
         app = self.create()

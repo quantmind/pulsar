@@ -13,6 +13,4 @@ class TestOneAsync(unittest.TestCase):
         self.assertEqual(future, 'pong')
         yield self.async.assertEqual(send(worker.monitor, 'ping'), 'pong')
         response = yield send('monitor', 'notify', worker.info())
-        # make sure your last line is a yield if you are waiting for
-        # yields as above
-        self.assertTrue(response < time.time())
+        self.assertTrue(response <= time.time())

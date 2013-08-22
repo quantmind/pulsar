@@ -42,5 +42,5 @@ class TestShell(unittest.TestCase):
     def testTestWorker(self):
         arbiter = pulsar.get_actor()
         monitor = arbiter.get_actor('shell')
-        yield async_while(2, lambda: not monitor.managed_actors)
+        yield async_while(5, lambda: not monitor.managed_actors)
         self.assertEqual(len(monitor.managed_actors), 1)

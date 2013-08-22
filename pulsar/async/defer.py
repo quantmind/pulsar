@@ -1,5 +1,4 @@
 import sys
-import logging
 import traceback
 from collections import deque, namedtuple, Mapping
 from itertools import chain
@@ -9,7 +8,7 @@ from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\
                              get_event_loop, ispy3k
 
-from .access import get_request_loop, NOTHING
+from .access import get_request_loop, NOTHING, logger
 from .consts import *
 
 
@@ -54,7 +53,6 @@ _PENDING = 'PENDING'
 _CANCELLED = 'CANCELLED'
 _FINISHED = 'FINISHED'
 EMPTY_EXC_INFO = (None, None, None)
-LOGGER = logging.getLogger('pulsar.defer')
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
@@ -347,7 +345,7 @@ back to perform logging and propagate the failure. For example::
     .add_errback(lambda failure: failure.log())
 '''
         if not self.logged:
-            log = log or LOGGER
+            log = log or logger()
             if self.is_remote:
                 msg = msg or str(self)
                 exc_info = None
@@ -446,16 +444,24 @@ can be set during initialisation.'''
 :class:`Deferred`. Available only when a timeout is set.'''
         return self._timeout
     
-    def set_timeout(self, timeout):
-        '''Set a the :attr:`timeout` for this :class:`Deferred`. It returns
-``self`` so that other methods can be concatenated.'''
+    def set_timeout(self, timeout, event_loop=None):
+        '''Set a the :attr:`timeout` for this :class:`Deferred`.
+
+:parameter timeout: a timeout in seconds.
+:parameter event_loop: optional event loop where to run the callback. If not
+    supplied the :attr:`event_loop` attribute is used.
+:return: returns ``self`` so that other methods can be concatenated.'''
         if timeout and timeout > 0:
             if self._timeout:
                 self._timeout.cancel()
+            if not event_loop:
+                event_loop = self.event_loop
+            elif self._event_loop:
+                assert event_loop == self._event_loop, "Incompatible event loop"
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
-            self._timeout = self.event_loop.call_later(timeout, self.cancel,
-                                            'timeout (%s seconds)' % timeout)
+            self._timeout = event_loop.call_later(
+                timeout, self.cancel, 'timeout (%s seconds)' % timeout)
         return self
         
     def cancelled(self):
@@ -690,7 +696,7 @@ a callable which accept one argument only.'''
         elif event in self.MANY_TIMES_EVENTS:
             self.MANY_TIMES_EVENTS[event].append(callback)
         else:
-            LOGGER.warning('unknown event "%s" for %s', event, self)
+            logger().warning('unknown event "%s" for %s', event, self)
         
     def fire_event(self, event, event_data=NOTHING, sender=None):
         """Dispatches ``event_data`` to the ``event`` listeners.
@@ -709,13 +715,13 @@ a callable which accept one argument only.'''
             if fired:
                 self.ONE_TIME_EVENTS[event].callback(event_data)
             else:
-                LOGGER.warning('Event "%s" already fired for %s', event, self)
+                logger().warning('Event "%s" already fired for %s', event, self)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
         else:
             fired = False
-            LOGGER.warning('unknown event "%s" for %s', event, self)
+            logger().warning('unknown event "%s" for %s', event, self)
         if fired:
             if sender is None:
                 sender = getattr(event_data, '__class__', event_data) 

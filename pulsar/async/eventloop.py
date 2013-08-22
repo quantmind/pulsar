@@ -399,21 +399,6 @@ loop of the thread where it is run.'''
                         break
             finally:
                 self._after_run()
-
-    def run_once(self, timeout=None):
-        """Run through all callbacks and all I/O polls once.
-
-        Calling stop() will break out of this too.
-        """
-        if not self.running:
-            self._before_run()
-            try:
-                try:
-                    self._run_once(timeout)
-                except StopEventLoop:
-                    pass
-            finally:
-                self._after_run()
                 
     def run_until_complete(self, future, timeout=None):
         '''Run the event loop until a :class:`Deferred` *future* is done.
@@ -435,10 +420,14 @@ raise TimeoutError (but don't cancel the future).'''
             result.throw()
         else:
             return result
-        
+    
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(self._raise_stop_event_loop)
+    
+    def is_running(self):
+        '''``True`` if the loop is running.'''
+        return bool(self._name)
     
     def call_at(self, when, callback, *args):
         '''Arrange for a ``callback`` to be called at a given time ``when``

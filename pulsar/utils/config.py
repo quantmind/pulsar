@@ -853,24 +853,6 @@ class MaxRequests(Setting):
         restarts are disabled.
         """
 
-class Backlog(Setting):
-    name = "backlog"
-    section = "Worker Processes"
-    flags = ["--backlog"]
-    validator = validate_pos_int
-    type = int
-    default = 2048
-    desc = """\
-        The maximum number of queued connections in a socket.
-        
-        This refers to the number of clients that can be waiting to be served.
-        Exceeding this number results in the client getting an error when
-        attempting to connect. It should only affect servers under significant
-        load.
-        Must be a positive integer. Generally set in the 64-2048 range.
-        """
-
-
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"

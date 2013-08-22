@@ -47,9 +47,18 @@ class TestTestLoader(unittest.TestCase):
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
         self.assertEqual(len(modules), 7)
+        
+    def test_load_exclude(self):
+        app = pulsar.get_actor().app
+        loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
+        modules = dict(loader.testmodules(exclude_tags=
+                            ('taskqueue', 'apps.pubsub')))
+        self.assertTrue(modules)
+        for module in modules:
+            self.assertTrue('taskqueue' not in module)
+            self.assertTrue('apps.pubsub' not in module)
                 
-    def __test_load_tags2(self):
-        #TODO: Fix this test
+    def test_load_tags2(self):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('djangoapp',)))

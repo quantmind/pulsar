@@ -45,12 +45,22 @@ keep_alive
 ---------------
 To control how long a server :class:`pulsar.Connection` is kept alive after the
 last read from the remote client, one can use the
-:ref:`keepalive <setting-keep_alive>` setting::
+:ref:`keep-alive <setting-keep_alive>` setting::
 
     python script.py --keep-alive 10
     
 will close client connections which have been idle for 10 seconds.
- 
+
+.. _socket-server-ssl:
+
+TLS/SSL support
+------------------------
+Transport Layer Security (often known as Secure Sockets Layer) is handled by
+the :ref:`cert-file <setting-cert_file>` and :ref:`key-file <setting-key_file>`
+settings::
+
+    python script.py --cert-file server.crt --key-file server.key
+    
 
 .. _socket-server-concurrency:
 
@@ -82,14 +92,17 @@ from pulsar import async, TcpServer
 from pulsar.utils.internet import parse_address, SSLContext
 
 
-class Bind(pulsar.Setting):
-    section = "Socket Servers"
+class SocketSetting(pulsar.Setting):
+    virtual = True
     app = 'socket'
+    section = "Socket Servers"
+    
+
+class Bind(SocketSetting):
     name = "bind"
     flags = ["-b", "--bind"]
     meta = "ADDRESS"
     default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
-    can_prefix = True
     desc = """\
         The socket to bind.
         
@@ -97,39 +110,49 @@ class Bind(pulsar.Setting):
         An IP is a valid HOST.
         """
         
-class KeepAlive(pulsar.Setting):
-    section = "Socket Servers"
-    app = 'socket'
+class KeepAlive(SocketSetting):
     name = "keep_alive"
     flags = ["--keep-alive"]
     validator = pulsar.validate_pos_int
     type = int
     default = 15
-    can_prefix = True
     desc = """\
         The number of seconds to keep an idle client connection
         open."""
 
 
-class KeyFile(pulsar.Setting):
-    section = "Socket Servers"
+class Backlog(SocketSetting):
+    name = "backlog"
+    flags = ["--backlog"]
+    validator = pulsar.validate_pos_int
+    type = int
+    default = 2048
+    desc = """\
+        The maximum number of queued connections in a socket.
+        
+        This refers to the number of clients that can be waiting to be served.
+        Exceeding this number results in the client getting an error when
+        attempting to connect. It should only affect servers under significant
+        load.
+        Must be a positive integer. Generally set in the 64-2048 range.
+        """
+
+
+class KeyFile(SocketSetting):
     name = "key_file"
     flags = ["--key-file"]
     meta = "FILE"
     default = None
-    can_prefix = True
     desc = """\
     SSL key file
     """
 
 
-class CertFile(pulsar.Setting):
-    section = "Socket Servers"
+class CertFile(SocketSetting):
     name = "cert_file"
     flags = ["--cert-file"]
     meta = "FILE"
     default = None
-    can_prefix = True
     desc = """\
     SSL certificate file
     """

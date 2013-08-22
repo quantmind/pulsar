@@ -1,8 +1,12 @@
 import sys
+import logging
 
 from pulsar import multi_async, async
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
+
+
+LOGGER = logging.getLogger('pulsar.apps.test')
 
 
 if ispy26: # pragma nocover

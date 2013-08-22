@@ -7,14 +7,10 @@
 import os
 import re
 import sys
-import logging
 
 from pulsar.utils.importer import import_module
 
-from .case import unittest
-
-LOGGER = logging.getLogger('pulsar.apps.test')
-
+from .case import unittest, LOGGER
 
 __all__ = ['TestLoader']
 
@@ -34,6 +30,7 @@ you give a *root* directory and a list of submodules where to look for tests.
 :parameter modules: list (or tuple) of entries where to look for tests.
     Check :ref:`loading test documentation <apps-test-loading>` for
     more information.
+:parameter runner: The test suite runner.
 '''
     def __init__(self, root, modules, runner, logger=None):
         self.runner = runner
@@ -53,14 +50,20 @@ you give a *root* directory and a list of submodules where to look for tests.
 
     def alltags(self, tag):
         bits = tag.split('.')
-        tag,rest = bits[0],bits[1:]
+        tag, rest = bits[0], bits[1:]
         yield tag
         for b in rest:
             tag += '.' + b
             yield tag
 
-    def checktag(self, tag, import_tags):
-        '''return ``True`` if ``tag`` is in ``import_tags``.'''
+    def checktag(self, tag, import_tags, exclude_tags):
+        '''Return ``True`` if ``tag`` is in ``import_tags``.'''
+        if exclude_tags:
+            alltags = list(self.alltags(tag))
+            for exclude_tag in exclude_tags:
+                for bit in alltags:
+                    if bit == exclude_tag:
+                        return 0
         if import_tags:
             c = 0
             alltags = list(self.alltags(tag))
@@ -75,10 +78,11 @@ you give a *root* directory and a list of submodules where to look for tests.
         else:
             return 2
 
-    def testclasses(self, tags=None):
+    def testclasses(self, tags=None, exclude_tags=None):
         pt = ', '.join(tags) if tags else 'all'
-        self.logger.info('Load test classes for %s tags', pt)
-        for tag, mod in self.testmodules(tags):
+        ex = (' excluding %s' % ', '.join(exclude_tags)) if exclude_tags else ''
+        self.logger.info('Load test classes for %s tags%s', pt, ex)
+        for tag, mod in self.testmodules(tags, exclude_tags):
             if tags:
                 skip = True
                 for bit in self.alltags(tag):
@@ -92,12 +96,17 @@ you give a *root* directory and a list of submodules where to look for tests.
                 if issubclass_safe(obj, unittest.TestCase):
                     yield tag, obj
     
-    def testmodules(self, tags=None):
-        '''Generator of tag, test modules pairs.'''
-        d = dict(self._testmodules(tags))
+    def testmodules(self, tags=None, exclude_tags=None):
+        '''Generator of ``tag``, ``modules`` pairs.
+        
+:parameter tags: optional list of tags to include, if not available all tags
+    will be included.
+:parameter exclude_tags: optional list of tags to exclude. If not provided no
+    tags will be excluded.'''
+        d = dict(self._testmodules(tags, exclude_tags))
         return [(k, d[k]) for k in sorted(d)]
     
-    def _testmodules(self, tags):
+    def _testmodules(self, tags, exclude_tags):
         for name, pattern, tag in self.modules:
             if pattern == '*':
                 pattern = None
@@ -113,7 +122,8 @@ you give a *root* directory and a list of submodules where to look for tests.
                 name = names[-1]
                 stags = (tag,) if tag else ()
                 for tag, mod in self.get_tests(absolute_path, name, pattern,
-                                               import_tags=tags, tags=stags):
+                                               import_tags=tags, tags=stags,
+                                               exclude_tags=exclude_tags):
                     yield tag, mod
             elif os.path.isfile(absolute_path + '.py'):
                 include, ntag = self.match(pattern, os.path.basename(absolute_path))
@@ -127,7 +137,7 @@ you give a *root* directory and a list of submodules where to look for tests.
                                   % (name, self.root))
 
     def get_tests(self, path, dotted_path, pattern, import_tags=None,
-                  tags=(), parent=None):
+                  tags=(), exclude_tags=None, parent=None):
         '''Collect python modules for testing and return a generator of
 tag,module pairs.
 
@@ -166,7 +176,7 @@ tag,module pairs.
                 continue
             ctags = tags + addtag
             tag = '.'.join(ctags)
-            c = self.checktag(tag, import_tags)
+            c = self.checktag(tag, import_tags, exclude_tags)
             if not c:
                 continue
             if is_file:
@@ -176,7 +186,7 @@ tag,module pairs.
                 # Recursively import modules
                 for ctag, mod in self.get_tests(mod_path, mod_dotted_path,
                                                 pattern, import_tags, ctags,
-                                                parent=module):
+                                                exclude_tags, parent=module):
                     counter += 1
                     yield ctag, mod
                 # If more than one submodule, yield this tag too

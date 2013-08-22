@@ -1,7 +1,7 @@
 Ver. 0.6.0 - Development
 ==============================
-* More design and API docs.
 * Socket servers handle IPV6 adresses.
+* Added :ref:`SSL support <socket-server-ssl>` for socket servers.
 * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
 * Several fixes in the test application.
 * Tasks throw errors back to the coroutine via the generator ``throw`` method.
