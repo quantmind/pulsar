@@ -123,6 +123,15 @@ Events Handler
    :members:
    :member-order: bysource
 
+Queues
+=============
+
+Queue
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Queue
+   :members:
+   :member-order: bysource
 
 
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

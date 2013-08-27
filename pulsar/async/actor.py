@@ -382,8 +382,12 @@ from another actor.'''
             exc = e
         except HaltServer as e:
             exc = Failure(e)
-            exc.log() if e.exit_code == 1 else exc.log(msg='Exiting server.',
-                                                       level='info')
+            if e.exit_code == 1:
+                exc.log()
+            elif e.exit_code:
+                exc.log(msg=str(e), level='error')
+            else:
+                exc.log(msg=str(e), level='info')
         finally:
             self.stop(exc)
         

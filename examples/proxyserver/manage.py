@@ -40,7 +40,7 @@ try:
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import Deferred, HttpException
+from pulsar import async, HttpException, Queue
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -110,52 +110,31 @@ The returned headers will be sent to the target uri.'''
         return headers
 
 
-class Queue:
-    
-    def __init__(self):
-        self._futures_in = deque()
-        self._futures_out = deque()
-        
-    def size(self):
-        return len(self._futures_out)
-    
-    def put(self, result):
-        '''Put a result in the queue.'''
-        future = self._futures_in.popleft()
-        future.callback(result)
-        
-    def get(self):
-        '''get a future from the queue.'''
-        return self._futures_out.popleft()
-        
-    def add(self):
-        '''Add a future to the queue'''
-        future = Deferred()
-        self._futures_in.append(future)
-        self._futures_out.append(future)
-        
-    
 class ProxyResponse(object):
     '''Asynchronous wsgi response.'''
     def __init__(self, start_response):
         self.start_response = start_response
         self.headers = None
-        self.futures = Queue()
-        self.futures.add()
+        self.queue = Queue()
+        self._done = False
         
     def __iter__(self):
-        while self.futures.size():
-            yield self.futures.get()
+        while not self._done:
+            yield self.queue.get()
             
+    @async()
     def __call__(self, response):
-        try:
-            result = self._body(response)
-        except Exception:
-            result = sys.exc_info()
-        if result is not None:
-            if not response.parser.is_message_complete():
-                self.futures.add()
-            self.futures.put(result)
+        '''Receive data from the requesting HTTP client.'''
+        if response.parser.is_headers_complete():
+            if self.headers is None:
+                headers = self.remove_hop_headers(response.headers)
+                self.headers = Headers(headers, kind='server')
+                # start the response
+                self.start_response(response.status, list(self.headers))
+            body = response.recv_body()
+            if response.parser.is_message_complete():
+                self._done = True
+            yield self.queue.put(body)
         
     def error(self, uri, failure):
         '''Handle a failure.'''
@@ -164,26 +143,17 @@ class ProxyResponse(object):
         html = wsgi.HtmlDocument(title=msg)
         html.body.append('<h1>%s</h1>' % msg)
         data = html.render()
-        response = wsgi.WsgiResponse(504, data, content_type='text/html',
-                                environ={}, start_response=self.start_response)
-        response.start()
-        self.futures.put(response.content[0])
-        
-    def _body(self, response):
-        if response.parser.is_headers_complete():
-            if self.headers is None:
-                headers = self.remove_hop_headers(response.headers)
-                self.headers = Headers(headers, kind='server')
-                # start the response
-                self.start_response(response.status, list(self.headers))
-            return response.recv_body()
+        resp = wsgi.WsgiResponse(504, data, content_type='text/html')
+        self.start_response(resp.status, resp.get_headers(), failure.exc_info)
+        self.queue.put(resp.content[0])
+        self.queue.put(b'')
     
     def remove_hop_headers(self, headers):
         for header, value in headers:
             if header.lower() not in wsgi.HOP_HEADERS:
                 yield header, value
                 
-
+                
 def server(name='proxy-server', headers_middleware=None, **kwargs):
     if headers_middleware is None:
         headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]

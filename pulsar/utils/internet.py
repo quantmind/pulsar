@@ -213,6 +213,20 @@ def format_address(address):
     else:
         return str(address)
     
+
+class WrapSocket:
+    
+    def __init__(self, sock):
+        self.sock = sock
+        
+    def __getstate__(self):
+        s = self.sock
+        return {'sock': (s.fileno(), s.family, s.type, s.proto)}
+
+    def __setstate__(self, state):
+        values = state.pop('sock')
+        self.sock = socket.fromfd(*values)
+        
     
 class SSLContext:
     

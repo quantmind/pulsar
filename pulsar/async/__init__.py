@@ -12,4 +12,5 @@ from .protocols import *
 from .stream import *
 from .clients import *
 from .concurrency import *
+from .queues import *
 from . import commands

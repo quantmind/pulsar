@@ -258,6 +258,8 @@ class Failure(object):
 methods and features which facilitates logging, pickling and throwing
 errors.
 
+:parameter error: an ``exc_info`` tuple or a :class:`BaseException` instance.
+
 .. attribute:: exc_info
 
     The exception as a three elements tuple
@@ -279,7 +281,7 @@ errors.
             exc_info = error.exc_info
         elif isinstance(error, BaseException):
             exc_info = sys.exc_info()
-            if exc_info == EMPTY_EXC_INFO:
+            if error is not exc_info[1]: 
                 try:
                     raise error
                 except:

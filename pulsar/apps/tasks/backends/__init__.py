@@ -294,6 +294,16 @@ It also schedules the run of periodic tasks if enabled to do so.
     Passed by the task-queue application
     :ref:`max requests setting <setting-max_requests>`.
     
+.. attribute:: poll_timeout
+
+    The (asynchronous) timeout for polling tasks from the task queue. It is
+    always a positive number and it can be specified via the backend
+    connection string::
+    
+        local://?poll_timeout=3
+        
+    Default: ``2``
+    
 .. attribute:: processed
 
     The number of tasks processed by the worker.
@@ -303,10 +313,11 @@ It also schedules the run of periodic tasks if enabled to do so.
     A :class:`pulsar.apps.pubsub.PubSub` handler for tasks signals.
 '''
     def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
-              max_tasks=0, **params):
+              max_tasks=0, poll_timeout=None, **params):
         self.task_paths = task_paths
         self.backlog = backlog
         self.max_tasks = max_tasks
+        self.poll_timeout = max(poll_timeout or 0, 2)
         self.processed = 0
         self.local.schedule_periodic = schedule_periodic
         self.next_run = datetime.now()
@@ -549,34 +560,38 @@ value ``now`` can be passed.'''
         worker.create_thread_pool()
         self.local.task_poller = worker.event_loop.call_soon(
                                     self.may_pool_task, worker)
-        LOGGER.debug('%s started polling tasks', worker)
+        worker.logger.debug('started polling tasks')
         
     def close(self, worker):
         '''Close this :class:`TaskBackend`. Invoked by the
 :class:`pulsar.apps.Worker` when is stopping.'''
         if self.local.task_poller:
             self.local.task_poller.cancel()
-            LOGGER.debug('%s stopped polling tasks', worker)
+            worker.logger.debug('stopped polling tasks')
     
     ############################################################################
     ##    ABSTRACT METHODS
     ############################################################################
     def put_task(self, task_id):
-        '''Put the ``task_id`` into the queue. Must be implemented
-by subclasses.'''
+        '''Put the ``task_id`` into the queue.
+
+:parameter task_id: the task id.
+:return: an :ref:`asynchronous component <tutorial-coroutine>` which results in
+    the ``task_id`` added.
+    
+Must be implemented by subclasses.'''
         raise NotImplementedError
     
     def num_tasks(self):
         '''Retrieve the number of tasks in the task queue.'''
         raise NotImplementedError
     
-    def get_task(self, task_id=None, when_done=False, timeout=1):
+    def get_task(self, task_id=None, when_done=False):
         '''Retrieve a :class:`Task` from a ``task_id``. Must be implemented
 by subclasses.
 
 :param task_id: the :attr:`Task.id` of the task to retrieve.
 :param when_done: if ``True`` return only when the task is in a ready state.
-:param timeout: timeout to use when polling a task from the distributed queue.
 :return: a :class:`Task` or ``None``.
 '''
         raise NotImplementedError
@@ -602,12 +617,11 @@ parameters ``params``. Must be implemented by subclasses.'''
         '''Called at every loop in the worker event loop, it pool a new task
 if possible and add it to the queue of tasks consumed by the worker
 CPU-bound thread.'''
-        next_time = 1
-        while worker.running:
+        next_time = 0
+        if worker.running:
             thread_pool = worker.thread_pool
             if not thread_pool:
-                LOGGER.warning('No thread pool, cannot poll tasks.')
-                break
+                worker.logger.warning('No thread pool, cannot poll tasks.')
             elif self.num_concurrent_tasks < self.backlog:
                 if self.max_tasks and self.processed >= self.max_tasks:
                     if not self.num_concurrent_tasks:
@@ -621,13 +635,10 @@ CPU-bound thread.'''
                         self.concurrent_tasks.add(task.id)
                         thread_pool.apply_async(self._execute_task,
                                                 (worker, task))
-                    else:
-                        break
             else:
-                LOGGER.info('%s concurrent requests. Cannot poll.',
-                            self.num_concurrent_tasks)
+                worker.logger.info('%s concurrent requests. Cannot poll.',
+                                   self.num_concurrent_tasks)
                 next_time = 2*self.num_concurrent_tasks/5
-                break
         worker.event_loop.call_later(next_time, self.may_pool_task, worker)
             
     @async()
@@ -650,7 +661,7 @@ CPU-bound thread.'''
                 if task.expiry and time_ended > task.expiry:
                     raise TaskTimeout
                 else:
-                    LOGGER.info('starting task %s', task)
+                    worker.logger.info('starting task %s', task)
                     yield self.save_task(task_id, status=states.STARTED,
                                          time_started=time_ended)
                     pubsub.publish(self.channel('task_start'), task_id)
@@ -659,7 +670,7 @@ CPU-bound thread.'''
             else:
                 consumer = None
         except TaskTimeout:
-            LOGGER.debug('Task %s timed-out', task)
+            worker.logger.debug('Task %s timed-out', task)
             status = states.REVOKED
         except:
             result = maybe_failure(sys.exc_info())
@@ -672,7 +683,7 @@ CPU-bound thread.'''
         if consumer:
             yield self.save_task(task_id, time_ended=time_ended,
                                  status=status, result=result)
-            LOGGER.debug('Finished task %s', task)
+            worker.logger.debug('Finished task %s', task)
             # PUBLISH task_done
             pubsub.publish(self.channel('task_done'), task.id)
         self.concurrent_tasks.discard(task.id)
@@ -701,8 +712,7 @@ CPU-bound thread.'''
         # Create a new task and put it in the task queue
         task_id = yield self.create_task(jobname, targs, tkwargs, **meta_params)
         if task_id:
-            self.put_task(task_id)
-            yield task_id
+            yield self.put_task(task_id)
     
     @async()
     def task_done_callback(self, task_id):

@@ -1,6 +1,9 @@
 Ver. 0.6.0 - Development
-==============================
-* Socket servers handle IPV6 adresses.
+=============================
+* Critical bug fix in python 3 WSGI server.
+* Added an asynchronous FIFO :class:`pulsar.Queue`.
+* Proxy server example uses the new :class:`pulsar.Queue`.
+* Socket servers handle IPV6 addresses.
 * Added :ref:`SSL support <socket-server-ssl>` for socket servers.
 * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
 * Several fixes in the test application.

@@ -12,6 +12,7 @@ except ImportError: #pragma nocover
     import Queue as queue
 ThreadQueue = queue.Queue
 Empty = queue.Empty
+Full = queue.Full
 
 from pulsar.utils.system import EpollInterface
 from pulsar.utils.log import LocalMixin, local_property
@@ -22,7 +23,7 @@ from .eventloop import StopEventLoop, EventLoop
 from .defer import maybe_async, is_async, log_failure
 
 
-__all__ = ['Thread', 'IOQueue', 'ThreadPool', 'ThreadQueue', 'Empty']
+__all__ = ['Thread', 'IOQueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
 
 def _async_raise(tid, exctype):
     """raises the exception, performs cleanup if needed"""

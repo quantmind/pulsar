@@ -10,7 +10,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, get_actor_from_id, remove_actor
 from .threads import KillableThread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
-from .defer import async, multi_async, log_failure
+from .defer import async, multi_async, log_failure, Failure
 from .eventloop import new_event_loop, signal
 from .stream import TcpServer
 from .consts import *
@@ -155,11 +155,14 @@ ping the actor monitor.'''
                     
     def stop(self, actor, exc):
         if exc != -1:
-            log_failure(exc)
+            failure = log_failure(exc)
             if actor.state <= ACTOR_STATES.RUN:
                 # The actor has not started the stopping process. Starts it now.
-                actor.exit_code = getattr(exc, 'exit_code', 1) if exc else 0
                 actor.state = ACTOR_STATES.STOPPING
+                if isinstance(failure, Failure):
+                    actor.exit_code = getattr(failure.error, 'exit_code', 1)
+                else:
+                    actor.exit_code = 0
                 actor.fire_event('stopping')
                 actor.close_thread_pool()
                 self._stop_actor(actor)
@@ -331,7 +334,7 @@ mailbox server.'''
         if actor.event_loop.running:
             self._exit_arbiter(actor)
         else:
-            actor.logger.debug('Restarts event loop for removing actors')
+            actor.logger.debug('Restarts event loop to removing actors')
             actor.event_loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
         

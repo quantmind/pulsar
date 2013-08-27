@@ -67,6 +67,12 @@ settings::
 Concurrency
 ==================
 
+When running a :class:`SocketServer` in multi-process mode (default),
+the application, create a listening socket in the parent (Arbiter) process
+and then spawn several process-based actors which listen on the
+same shared socket.
+This is how, pre-forking servers operate.
+
 When running a :class:`SocketServer` in threading mode::
 
     python script.py --concurrency thread
@@ -89,7 +95,7 @@ import os
 
 import pulsar
 from pulsar import async, TcpServer
-from pulsar.utils.internet import parse_address, SSLContext
+from pulsar.utils.internet import parse_address, SSLContext, WrapSocket
 
 
 class SocketSetting(pulsar.Setting):
@@ -204,7 +210,7 @@ does not support multiprocessing sockets set the number of workers to 0.'''
             assert loop.remove_reader(sock.fileno()), (
                         "Could not remove reader")
             addresses.append(sock.getsockname())
-        monitor.params.sockets = sockets
+        monitor.params.sockets = [WrapSocket(s) for s in sockets]
         monitor.params.ssl = ssl
         self.addresses = addresses
         self.address = addresses[0]
@@ -213,7 +219,7 @@ does not support multiprocessing sockets set the number of workers to 0.'''
         '''Start the worker by invoking the :meth:`create_server` method.'''
         worker.servers[self.name] = servers = []
         for sock in worker.params.sockets:
-            server = self.create_server(worker, sock)
+            server = self.create_server(worker, sock.sock)
             servers.append(server)
     
     def on_info(self, worker, data):

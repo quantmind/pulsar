@@ -2,10 +2,10 @@
 import sys
 from functools import reduce
 
-from pulsar import InvalidStateError, Deferred, is_async, NOT_DONE,\
-                     is_failure, MultiDeferred, maybe_async, CancelledError,\
-                        async_sleep, Failure, safe_async, maybe_failure,\
-                          InvalidStateError
+from pulsar import (InvalidStateError, Deferred, is_async, NOT_DONE,
+                    is_failure, MultiDeferred, maybe_async, CancelledError,
+                    async_sleep, Failure, safe_async, maybe_failure,
+                    InvalidStateError, coroutine_return)
 from pulsar.async.defer import is_exc_info
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import unittest
@@ -335,6 +335,20 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(is_failure(r[0]))
     
 
+class TestCoroutine(unittest.TestCase):
+    
+    def test_coroutine_return(self):
+        def f(count=0):
+            yield -1
+            coroutine_return('a')
+            for i in range(count):
+                yield i
+        result = yield f()
+        self.assertEqual(result, 'a')
+        result = yield f(10)
+        self.assertEqual(result, 'a')
+        
+        
 class TestFunctions(unittest.TestCase):
     
     def test_is_exc_info(self):
@@ -362,3 +376,4 @@ class TestFunctions(unittest.TestCase):
         result = result.result
         self.assertIsInstance(result, Failure)
         self.assertIsInstance(result.error, ValueError)
+        

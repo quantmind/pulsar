@@ -23,7 +23,7 @@ from io import BytesIO
 import pulsar
 from pulsar import HttpException, ProtocolError, maybe_async, is_async,\
                    is_failure
-from pulsar.utils.pep import is_string, to_bytes, native_str
+from pulsar.utils.pep import is_string, to_bytes, native_str, raise_error_trace
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                  host_and_port_default, Headers, http_parser,\
                                  REDIRECT_CODES
@@ -263,7 +263,7 @@ the current invocation of the application.
                     # if exc_info is provided, and the HTTP headers have
                     # already been sent, start_response must raise an error,
                     # and should re-raise using the exc_info tuple
-                    raise (exc_info[0], exc_info[1], exc_info[2])
+                    raise_error_trace(exc_info[1], exc_info[2])
             finally:
                 # Avoid circular reference
                 exc_info = None

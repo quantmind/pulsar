@@ -66,7 +66,7 @@ class TestHttpClientBase:
         
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
+   
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished

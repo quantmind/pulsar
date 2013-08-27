@@ -77,9 +77,10 @@ def stop_arbiter(self):
         p.unlink()
     if self.managed_actors:
         self.state = ACTOR_STATES.TERMINATE
-    self.logger.info("Bye.")
-    if self.exit_code:
-        sys.exit(self.exit_code)
+    exit_code = self.exit_code or 0
+    self.logger.info("Bye (exit code = %s)", exit_code)
+    if exit_code:
+        sys.exit(exit_code)
     
 def start_arbiter(self):
     if current_process().daemon:
@@ -92,7 +93,7 @@ def start_arbiter(self):
             p = Pidfile(pidfile)
             p.create(self.pid)
         except RuntimeError as e:
-            raise HaltServer(str(e))
+            raise HaltServer(str(e), exit_code=3)
         self.pidfile = p
     
     

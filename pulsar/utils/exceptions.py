@@ -40,8 +40,8 @@ class ConnectionError(Exception):
 
 class HaltServer(BaseException):
 
-    def __init__(self, reason='Halt', signal=None, exit_code=1):
-        super(HaltServer,self).__init__(reason)
+    def __init__(self, reason='Exiting server.', signal=None, exit_code=1):
+        super(HaltServer, self).__init__(reason)
         self.exit_code = exit_code
         self.signal = signal
 
