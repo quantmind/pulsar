@@ -121,7 +121,7 @@ be accumulating data in an internal buffer.'''
         if self._paused_writing:
             return tot_bytes
         if not buffer:
-            self._event_loop.warning('handling write on a 0 length buffer')
+            self.logger.warning('handling write on a 0 length buffer')
         try:
             while buffer:
                 try:

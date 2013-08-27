@@ -86,8 +86,9 @@ from collections import deque
 from datetime import datetime, timedelta
 from functools import partial
 
-from pulsar import async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,\
-                maybe_failure, is_failure, PulsarException, Backend, Deferred
+from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,
+                    maybe_failure, is_failure, PulsarException, Backend,
+                    Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues, iteritems
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
@@ -329,11 +330,16 @@ the :meth:`wait_for_task` method.'''
     
     @local_property
     def pubsub(self):
-        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notify tasks
-execution status.'''
+        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notifies tasks
+execution status. There are three channels:
+
+* ``<name>_task_created`` when a new task is created.
+* ``<name>_task_start`` when the task queue starts executing a task.
+* ``<name>_task_done`` when a task is done.
+'''
         p = pubsub.PubSub(backend=self.connection_string, name=self.name)
         p.add_client(PubSubClient(self))
-        c=  self.channel
+        c = self.channel
         p.subscribe(c('task_created'), c('task_start'), c('task_done'))
         return p
         
@@ -492,7 +498,7 @@ and key-valued arguments *kwargs*.'''
         
     def wait_for_task(self, task_id):
         '''Asynchronously wait for a task with ``task_id`` to have finished
-its execution. It returns an `asynchronous component <tutorials-coroutine>`_'''
+its execution. It returns a `coroutine <tutorials-coroutine>`_'''
         # make sure we are subscribed to the task_done channel
         self.pubsub
         task = yield self.get_task(task_id)
@@ -593,20 +599,21 @@ parameters ``params``. Must be implemented by subclasses.'''
     ############################################################################
     @async()
     def may_pool_task(self, worker):
-        '''Called at every loop in the worker IO loop, it pool a new task
+        '''Called at every loop in the worker event loop, it pool a new task
 if possible and add it to the queue of tasks consumed by the worker
 CPU-bound thread.'''
-        next_time = 0
+        next_time = 1
         while worker.running:
             thread_pool = worker.thread_pool
             if not thread_pool:
                 LOGGER.warning('No thread pool, cannot poll tasks.')
+                break
             elif self.num_concurrent_tasks < self.backlog:
                 if self.max_tasks and self.processed >= self.max_tasks:
                     if not self.num_concurrent_tasks:
                         worker.logger.warning('Processed %s tasks. Restarting.')
                         worker.stop()
-                        return
+                        coroutine_return()
                 else:
                     task = yield self.get_task()
                     if task:    # Got a new task
@@ -614,6 +621,8 @@ CPU-bound thread.'''
                         self.concurrent_tasks.add(task.id)
                         thread_pool.apply_async(self._execute_task,
                                                 (worker, task))
+                    else:
+                        break
             else:
                 LOGGER.info('%s concurrent requests. Cannot poll.',
                             self.num_concurrent_tasks)

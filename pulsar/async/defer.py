@@ -22,6 +22,7 @@ __all__ = ['Deferred',
            'InvalidStateError',
            'Failure',
            'maybe_failure',
+           'coroutine_return',
            'is_failure',
            'log_failure',
            'is_async',
@@ -48,6 +49,10 @@ else:   #pragma    nocover
 class InvalidStateError(Error):
     """The operation is not allowed in this state."""
     
+class CoroutineReturn(BaseException):
+    def __init__(self, value):
+        self.value = value
+    
 # States of Deferred
 _PENDING = 'PENDING'
 _CANCELLED = 'CANCELLED'
@@ -58,6 +63,9 @@ remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
 
 pass_through = lambda result: result
+
+def coroutine_return(value=None):
+    raise CoroutineReturn(value)
 
 def iterdata(stream, start=0):
     '''Iterate over a stream which is either a dictionary or a list. This
@@ -789,6 +797,8 @@ function when a generator is passed as argument.'''
                     failure.logged = True
             else:
                 result = gen.send(result)
+        except CoroutineReturn as e:
+            self._conclude(e.value)
         except StopIteration:
             self._conclude(result)
         except Exception as e:

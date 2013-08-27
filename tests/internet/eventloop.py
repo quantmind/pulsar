@@ -19,7 +19,7 @@ class TestEventLoop(unittest.TestCase):
         except socket.error:
             pass
         
-    def test_start_serving(self):
+    def __test_start_serving(self):
         protocol_factory = lambda : Connection()
         loop = get_event_loop()
         sockets = yield loop.start_serving(server_protocol,'127.0.0.1', 0)
@@ -35,7 +35,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(handler)
         self.assertTrue(is_socket_closed(socket))
         
-    def test_start_serving_ipv6(self):
+    def __test_start_serving_ipv6(self):
         loop = get_event_loop()
         sockets = yield loop.start_serving(Protocol,'::1', 0)
         self.assertEqual(len(sockets), 1)
