@@ -9,6 +9,14 @@ Asynchonous API
 Event loop
 =================
 
+Poller
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Poller
+   :members:
+   :member-order: bysource
+   
+   
 Timed Call
 ~~~~~~~~~~~~~~~~~~~~
 

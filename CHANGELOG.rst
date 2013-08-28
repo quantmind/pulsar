@@ -1,6 +1,10 @@
 Ver. 0.6.0 - Development
 =============================
-* Modified :class:`Failure` implementation to handle one ``exc_info`` only.
+* Added :ref:`--io option <setting-poller>` for controlling the default
+  :class:`pulsar.Poller`.
+* Added support of ``kqueue`` :class:`pulsar.Poller` for systems supporting it.
+* Modified :class:`pulsar.Failure` implementation to handle one ``exc_info`` only and
+  better handling of unlogged failures.
 * Critical bug fix in python 3 WSGI server.
 * Added an asynchronous FIFO :class:`pulsar.Queue`.
 * Proxy server example uses the new :class:`pulsar.Queue`.

@@ -169,19 +169,6 @@ class LoopingCall(object):
 class EventLoop(IObase, BaseEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API. The
 event loop is the place where most asynchronous operations are carried out.
-
-.. attribute:: io
-
-    The I/O implementation. If not supplied, the best possible
-    implementation available will be used. On posix system this is ``epoll``,
-    or else ``select``. It can be any other custom implementation as long as
-    it has an ``epoll`` like interface.
-
-.. attribute:: cpubound
-
-    If ``True`` this is a CPU bound event loop, otherwise it is an I/O
-    event loop. CPU bound loops can block the loop for considerable amount
-    of time.
         
 .. attribute:: num_loops
 
@@ -233,6 +220,10 @@ event loop is the place where most asynchronous operations are carried out.
             
     @property
     def io(self):
+        '''The :class:`Poller` for this event loop. If not supplied,
+        the best possible implementation available will be used. On posix
+        system this is ``epoll`` or ``kqueue`` (Mac OS)
+        or else ``select``.'''
         return self._io
     
     @property
@@ -243,6 +234,9 @@ loop of the thread where it is run.'''
     
     @property
     def cpubound(self):
+        '''If ``True`` this is a CPU bound event loop, otherwise it is an I/O
+        event loop. CPU bound loops can block the loop for considerable amount
+        of time.'''
         return getattr(self._io, 'cpubound', False)
     
     @property

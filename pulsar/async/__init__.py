@@ -3,6 +3,7 @@ from .access import *
 from .defer import *
 from .proxy import *
 from .internet import *
+from .pollers import *
 from .eventloop import *
 from .threads import *
 from .actor import *

@@ -1,3 +1,4 @@
+import os
 import select
 
 from pulsar.utils.structures import OrderedDict
@@ -27,18 +28,22 @@ _select = select.select
 POLLERS = OrderedDict()
 
 
+__all__ = ['Poller']
+
+
 class Poller(object):
     '''The Poller interface'''
     def __init__(self):
         self._handlers = {}
         
     def install_waker(self, event_loop):
-        # Install event loop wake if possible
+        '''Install event loop waker.'''
         waker = Waker()
         event_loop.add_reader(waker, waker.consume)
         return waker
 
     def add_reader(self, fd, handler):
+        '''Add a reader ``handler`` on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if reader:
@@ -51,6 +56,7 @@ class Poller(object):
             self._handlers[fd] = (READ, handler, None, None)
             
     def add_writer(self, fd, handler):
+        '''Add a writer ``handler`` on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if writer:
@@ -63,6 +69,7 @@ class Poller(object):
             self._handlers[fd] = (WRITE, None, handler, None)
             
     def add_error(self, fd, handler):
+        '''Add a error ``handler`` on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if error:
@@ -75,6 +82,7 @@ class Poller(object):
             self._handlers[fd] = (ERROR, None, None, handler)
     
     def remove_reader(self, fd):
+        '''Remove the read event on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if reader:
@@ -91,6 +99,7 @@ class Poller(object):
             return False
         
     def remove_writer(self, fd):
+        '''Remove the write event on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if writer:
@@ -107,6 +116,7 @@ class Poller(object):
             return False
         
     def remove_error(self, fd):
+        '''Remove the error event on file descriptor ``fd``.'''
         try:
             oevents, reader, writer, error = self._handlers[fd]
             if error:
@@ -192,7 +202,10 @@ if hasattr(select, 'kqueue'):
     
     KQ_FILTER_READ = select.KQ_FILTER_READ
     KQ_FILTER_WRITE = select.KQ_FILTER_WRITE
+    KQ_FILTER_WRITE = select.KQ_FILTER_WRITE
     KQ_EV_ADD = select.KQ_EV_ADD
+    KQ_EV_DELETE = select.KQ_EV_DELETE
+    KQ_EV_ERROR = select.KQ_EV_ERROR
     KQ_EV_EOF = select.KQ_EV_EOF
     kevent = select.kevent
     
@@ -208,7 +221,7 @@ if hasattr(select, 'kqueue'):
         def unregister(self, fd):
             if fd in self._handlers:
                 events, _, _, _ = self._handlers.pop(fd)
-                self._control(fd, events, select.KQ_EV_DELETE)
+                self._control(fd, events, KQ_EV_DELETE)
             else:
                 raise IOError("fd %d not registered" % fd)
         
@@ -220,25 +233,26 @@ if hasattr(select, 'kqueue'):
                 if kevent.filter == KQ_FILTER_READ:
                     events[fd] = events.get(fd, 0) | READ
                 if kevent.filter == KQ_FILTER_WRITE:
-                    if kevent.flags & select.KQ_EV_EOF:
+                    if kevent.flags & KQ_EV_EOF:
                         # If an asynchronous connection is refused, kqueue
                         # returns a write event with the EOF flag set.
                         # Turn this into an error for consistency with the
-                        # other IOLoop implementations.
+                        # other Poller implementations.
+                        # Thanks to tornado.
                         # Note that for read events, EOF may be returned before
                         # all data has been consumed from the socket buffer,
                         # so we only check for EOF on write events.
-                        events[fd] = IOLoop.ERROR
+                        events[fd] = ERROR
                     else:
-                        events[fd] = events.get(fd, 0) | IOLoop.WRITE
+                        events[fd] = events.get(fd, 0) | WRITE
                 if kevent.flags & KQ_EV_ERROR:
-                    events[fd] = events.get(fd, 0) | IOLoop.ERROR
+                    events[fd] = events.get(fd, 0) | ERROR
             return events.items()
     
         def _register(self, fd, events, old_events=None):
             if old_events is not None:
-                self._control(fd, old_events, select.KQ_EV_DELETE)
-            self._control(fd, events, select.KQ_EV_ADD)
+                self._control(fd, old_events, KQ_EV_DELETE)
+            self._control(fd, events, KQ_EV_ADD)
     
         def _control(self, fd, events, flags):
             k = None
@@ -248,9 +262,6 @@ if hasattr(select, 'kqueue'):
             if events & READ or not k:
                 # Always read when there is not a write
                 k = kevent(fd, filter=KQ_FILTER_READ, flags=flags)
-                self._kqueue.control([k], 0)
-            if events & ERROR:
-                k = kevent(fd, filter=KQ_EV_ERROR, flags=flags)
                 self._kqueue.control([k], 0)
         
     POLLERS['kqueue'] = IOkqueue
@@ -304,13 +315,21 @@ class IOselect(Poller):
 
 POLLERS['select'] = IOselect
 DefaultIO = list(POLLERS.values())[0]
+
+if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':
+    default_name = 'epoll on linux, kqueue on mac, select on windows'
+else:
+    default_name = tuple(POLLERS)[0]
     
     
 class PollerSetting(Global):
     name = "poller"
     flags = ["--io"]
     choices = tuple(POLLERS)
-    default = tuple(POLLERS)[0]
+    default = default_name
     desc = """\
-        Specify the selectors used for I/O event polling.
+        Specify the default selector used for I/O event polling.
+        
+        The default value is the best possible for the system running the
+        application.
         """

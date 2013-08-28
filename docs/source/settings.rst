@@ -2,9 +2,9 @@
 
 .. module:: pulsar.utils.config
 
-=======================
+====================
 Settings
-=======================
+====================
 
 This is the full list of :ref:`pulsar settings <api-config>` available for
 configuring your pulsar server or applications. Pulsar can
