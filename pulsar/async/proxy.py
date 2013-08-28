@@ -2,7 +2,7 @@ import sys
 import json
 from collections import deque
 
-from pulsar import AuthenticationError, CommandNotFound
+from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
 from .defer import Deferred

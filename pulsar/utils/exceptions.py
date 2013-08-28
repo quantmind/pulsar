@@ -29,12 +29,10 @@ the socket connection.'''
 class TooManyConnections(RuntimeError):
     '''Raised when there are too many concurrent connections.'''
     
+    
 class EventAlreadyRegistered(RuntimeError):
     pass
     
-class AuthenticationError(Exception):
-    pass
-
 
 class ConnectionError(Exception):
     pass
@@ -42,11 +40,11 @@ class ConnectionError(Exception):
 
 
 class StopEventLoop(BaseException):
-    """Raised to stop the event loop."""
+    ''':class:`BaseException` raised to stop a :class:`pulsar.EventLoop`.'''
     
     
 class HaltServer(BaseException):
-
+    ''':class:`BaseException` raised to stop a running server.'''
     def __init__(self, reason='Exiting server.', signal=None, exit_code=1):
         super(HaltServer, self).__init__(reason)
         self.exit_code = exit_code
