@@ -11,6 +11,8 @@ from .winprocess import WINEXE
 from .base import *
 
 __all__ = ['IOpoll',
+           'Epoll',
+           'Kqueue',
            'close_on_exec',
            'Waker',
            'daemonize',
@@ -114,7 +116,10 @@ class IOpoll(IOselect):
             timeout = 0.5
         return super(IOpoll, self).poll(timeout)
     
-    
+
+Epoll = IOpoll
+Kqueue = IOpoll
+
 class Waker(object):
     '''In windows'''
     def __init__(self):

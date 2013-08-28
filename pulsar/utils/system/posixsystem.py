@@ -24,6 +24,7 @@ __all__ = ['IOpoll',
 import select
 if hasattr(select, 'epoll'):
     IOpoll = select.epoll
+    
 else:   #pragma    nocover
     IOpoll = IOselect
     Epoll = IOselect

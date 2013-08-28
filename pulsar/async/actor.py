@@ -278,7 +278,10 @@ if not already present.
         '''Close the :attr:`thread_pool`.'''
         if self._thread_pool:
             self._thread_pool.close()
+            self.logger.debug('Waiting for thread pool to exit')
             self._thread_pool.join()
+            self.logger.debug('Thread pool closed')
+            self._thread_pool = None
             
     ###############################################################  STATES
     def running(self):

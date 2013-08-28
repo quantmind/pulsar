@@ -100,7 +100,7 @@ class EpollInterface(object):
     def unregister(self, fd):
         raise NotImplementedError
     
-    def poll(self, timeout=-1):
+    def poll(self, timeout=1):
         raise NotImplementedError
         
         
@@ -152,6 +152,29 @@ class IOselect(EpollInterface):
         for fd in errors:
             events[fd] = events.get(fd, 0) | IObase.ERROR
         return list(iteritems(events))
-    
 
-Epoll = IOselect
+
+if hasattr(_select, 'kqueue'):
+    KQ_FILTER_READ = _select.KQ_FILTER_READ
+    KQ_FILTER_WRITE = _select.KQ_FILTER_WRITE
+    KQ_EV_ADD = _select.KQ_EV_ADD
+    
+    class IOkqueue(_select.kqueue, EpollInterface):
+        
+        def register(self, fd, events):
+            if events & IObase.READ:
+                kev = kevent(fd, KQ_FILTER_READ, KQ_EV_ADD)
+                self.control([kev], 0, 0)
+            if events & IObase.WRITE:
+                kev = kevent(key.fd, KQ_FILTER_WRITE, KQ_EV_ADD)
+                self.control([kev], 0, 0)
+            return key
+    
+        def unregister(self, fd):
+            if key.events & IObase.READ:
+                kev = kevent(fd, KQ_FILTER_READ, KQ_EV_DELETE)
+                self._kqueue.control([kev], 0, 0)
+            if key.events & EVENT_WRITE:
+                kev = kevent(fd, KQ_FILTER_WRITE, KQ_EV_DELETE)
+                self._kqueue.control([kev], 0, 0)
+            return key

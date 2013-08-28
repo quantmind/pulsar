@@ -19,7 +19,7 @@ from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.pep import set_event_loop
 
 from .access import get_actor, set_actor, thread_local_data
-from .eventloop import StopEventLoop, EventLoop
+from .eventloop import StopEventLoop, EventLoop, get_event_loop
 from .defer import maybe_async, is_async, log_failure
 
 
@@ -101,7 +101,7 @@ the running thread.'''
     @property
     def event_loop(self):
         return thread_local_data('_request_loop', ct=self)
-
+    
 
 class _FdFactory:
     
