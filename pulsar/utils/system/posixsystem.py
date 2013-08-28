@@ -6,6 +6,7 @@ import pwd
 import signal
 import socket
 from multiprocessing import Pipe
+import select
 
 from .base import *
 
@@ -19,15 +20,6 @@ __all__ = ['IOpoll',
            'get_uid',
            'get_gid',
            'get_maxfd']
-
-
-import select
-if hasattr(select, 'epoll'):
-    IOpoll = select.epoll
-    
-else:   #pragma    nocover
-    IOpoll = IOselect
-    Epoll = IOselect
 
 # standard signal quit
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
@@ -133,11 +125,11 @@ class Waker(object):
                  r.recv()
         except (IOError, EOFError):
             pass
-
-
-if hasattr(select, 'epoll'):
     
-    class Epoll(EpollInterface):
+if hasattr(select, 'epoll'):
+    IOpoll = select.epoll
+    
+    class Epoll(select.epoll, EpollInterface):
         
         def __init__(self, ep=None):
             self._epoll = ep or select.epoll()
@@ -162,3 +154,7 @@ if hasattr(select, 'epoll'):
         
         def poll(self, timeout=-1):
             return self._epoll.poll(timeout=timeout)
+
+else:   #pragma    nocover
+    IOpoll = IOselect
+    Epoll = IOselect
