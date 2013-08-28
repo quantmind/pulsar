@@ -633,15 +633,13 @@ CPU-bound thread.'''
                     if task:    # Got a new task
                         self.processed += 1
                         self.concurrent_tasks.add(task.id)
-                        thread_pool.apply_async(self._execute_task,
-                                                (worker, task))
+                        thread_pool.apply(self._execute_task, worker, task)
             else:
                 worker.logger.info('%s concurrent requests. Cannot poll.',
                                    self.num_concurrent_tasks)
                 next_time = 2*self.num_concurrent_tasks/5
         worker.event_loop.call_later(next_time, self.may_pool_task, worker)
-            
-    @async()
+    
     def _execute_task(self, worker, task):
         #Asynchronous execution of a Task. This method is called
         #on a separate thread of execution from the worker event loop thread.

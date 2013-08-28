@@ -29,6 +29,8 @@ the socket connection.'''
 class TooManyConnections(RuntimeError):
     '''Raised when there are too many concurrent connections.'''
     
+class EventAlreadyRegistered(RuntimeError):
+    pass
     
 class AuthenticationError(Exception):
     pass
@@ -38,6 +40,11 @@ class ConnectionError(Exception):
     pass
 
 
+
+class StopEventLoop(BaseException):
+    """Raised to stop the event loop."""
+    
+    
 class HaltServer(BaseException):
 
     def __init__(self, reason='Exiting server.', signal=None, exit_code=1):

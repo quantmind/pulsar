@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 import traceback
 import inspect
 import errno
@@ -20,16 +19,16 @@ from pulsar.utils.pep import default_timer, set_event_loop_policy,\
                              EventLoop as BaseEventLoop, range,\
                              EventLoopPolicy as BaseEventLoopPolicy
 from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
+from pulsar.utils.exceptions import StopEventLoop
 
-from .access import thread_local_data
+from .access import thread_local_data, LOGGER
 from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
 from .stream import create_connection, start_serving, sock_connect, sock_accept
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
+from .pollers import DefaultIO
 
 __all__ = ['EventLoop', 'TimedCall']
-
-LOGGER = logging.getLogger('pulsar.eventloop')
 
 
 def file_descriptor(fd):
@@ -44,10 +43,6 @@ def setid(self):
     self.pid = os.getpid()
     return ct
 
-
-class StopEventLoop(BaseException):
-    """Raised to stop the event loop."""
-    
     
 class EventLoopPolicy(BaseEventLoopPolicy):
     '''Pulsar event loop policy'''
@@ -126,119 +121,6 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
             args = self._args + args
             return self._callback(*args, **kwargs)
         
-        
-class FileDescriptor(IObase):
-    def __init__(self, fd, eventloop):
-        self.fd = fd
-        self.eventloop = eventloop
-        self.logger = eventloop.logger
-        self.handle_write = None
-        self.handle_read = None
-        self._state = None
-
-    @property
-    def poller(self):
-        return self.eventloop._impl
-    
-    @property
-    def reading(self):
-        return bool(self.handle_read)
-    
-    @property
-    def writing(self):
-        return bool(self.handle_write)
-    
-    @property
-    def state(self):
-        return self._state
-            
-    def add_reader(self, callback):
-        handle_read = self.handle_read
-        if handle_read:
-            raise RuntimeError('Read handler already registered')
-        else:
-            state = self.READ | self.ERROR
-            self.handle_read = callback
-            if self._state is None:
-                self.poller.register(self.fd, state)
-            else:
-                state = self._state | state
-                self.poller.modify(self.fd, state)
-            self._state = state
-        
-    def add_writer(self, callback):
-        handle_write = self.handle_write
-        if handle_write:
-            raise RuntimeError('write handler already registered')
-        else:
-            state = self.WRITE | self.ERROR
-            self.handle_write = callback
-            if self._state is None:
-                self.poller.register(self.fd, state)
-            else:
-                state = self._state | state
-                self.poller.modify(self.fd, state)
-            self._state = state
-        
-    def remove_reader(self):
-        '''Remove reader and return True if writing'''
-        removed = self.handle_read is not None
-        if removed:
-            if self.handle_write:
-                self._state = self.WRITE | self.ERROR
-                self.poller.modify(self.fd, self._state)
-            else:
-                self._state = None
-                self.remove_handler()
-            self.handle_read = None
-        return removed
-
-    def remove_writer(self, name=None):
-        '''Remove writer and return True if reading'''
-        removed = self.handle_write is not None
-        if removed:
-            if self.handle_read:
-                self._state = self.READ | self.ERROR
-                self.poller.modify(self.fd, self._state)
-            else:
-                self._state = None
-                self.remove_handler()
-            self.handle_write = None
-        return removed
-    
-    def __call__(self, events):
-        processed = False
-        if events & (self.READ | self.ERROR):
-            processed = True
-            if self.handle_read:
-                log_failure(self.handle_read())
-            else:
-                self.logger.warning('Read callback without handler for file'
-                                    ' descriptor %s.', self.fd)
-        if events & (self.WRITE | self.ERROR):
-            processed = True
-            if self.handle_write:
-                log_failure(self.handle_write())
-            else:
-                self.logger.warning('Write callback without handler for file'
-                                    ' descriptor %s.', self.fd)
-            
-    def modify_state(self, current_state, state):
-        if current_state != state:
-            if current_state is None:
-                self.poller.register(self.fd, state)
-            else:
-                self.poller.modify(self.fd, current_state | state)
-    
-    def remove_handler(self):
-        """Stop listening for events on fd."""
-        fd = self.fd
-        try:
-            self.poller.unregister(fd)
-        except (OSError, IOError):
-            self.eventloop.logger.error("Error removing %s from EventLoop", fd)
-        self.eventloop._handlers.pop(fd, None)
-
 
 class LoopingCall(object):
     
@@ -323,12 +205,11 @@ event loop is the place where most asynchronous operations are carried out.
 
     def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
                  iothreadloop=True):
-        self._impl = io or IOpoll()
-        self.fd_factory = getattr(self._impl, 'fd_factory', FileDescriptor)
+        self._io = io or DefaultIO()
         self.timer = timer or default_timer
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.logger = logger or LOGGER
-        close_on_exec(self._impl.fileno())
+        close_on_exec(self._io.fileno())
         self._iothreadloop = iothreadloop
         self._handlers = {}
         self._callbacks = deque()
@@ -336,7 +217,7 @@ event loop is the place where most asynchronous operations are carried out.
         self._name = None
         self.num_loops = 0
         self._default_executor = None
-        self._waker = self.install_waker()
+        self._waker = self._io.install_waker(self)
     
     def __repr__(self):
         return self.name
@@ -352,7 +233,7 @@ event loop is the place where most asynchronous operations are carried out.
             
     @property
     def io(self):
-        return self._impl
+        return self._io
     
     @property
     def iothreadloop(self):
@@ -362,7 +243,7 @@ loop of the thread where it is run.'''
     
     @property
     def cpubound(self):
-        return getattr(self._impl, 'cpubound', False)
+        return getattr(self._io, 'cpubound', False)
     
     @property
     def running(self):
@@ -506,51 +387,39 @@ NOT YET SUPPORTED.'''
     def add_reader(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
         handler = TimedCall(None, callback, args)
-        fd = file_descriptor(fd)
-        if fd not in self._handlers:
-            self._handlers[fd] = self.fd_factory(fd, self)
-        self._handlers[fd].add_reader(handler)
+        self._io.add_reader(file_descriptor(fd), handler)
         return handler
     
     def add_writer(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
         handler = TimedCall(None, callback, args)
-        fd = file_descriptor(fd)
-        if fd not in self._handlers:
-            self._handlers[fd] = self.fd_factory(fd, self)
-        self._handlers[fd].add_writer(handler)
+        self._io.add_writer(file_descriptor(fd), handler)
         return handler
     
     def add_connector(self, fd, callback, *args):
         handler = TimedCall(None, callback, args)
         fd = file_descriptor(fd)
-        if fd not in self._handlers:
-            self._handlers[fd] = self.fd_factory(fd, self)
-        self._handlers[fd].add_connector(handler)
+        self._io.add_writer(fd, handler)
+        self._io.add_error(fd, handler)
         return handler
     
     def remove_reader(self, fd):
         '''Cancels the current read callback for file descriptor fd,
 if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
-        fd = file_descriptor(fd)
-        if fd in self._handlers:
-            return self._handlers[fd].remove_reader()
-        return False
+        return self._io.remove_reader(file_descriptor(fd))
     
     def remove_writer(self, fd):
         '''Cancels the current write callback for file descriptor fd,
 if one is set. A no-op if no callback is currently set for the file
 descriptor.'''
-        fd = file_descriptor(fd)
-        if fd in self._handlers:
-            return self._handlers[fd].remove_writer()
-        return False
+        return self._io.remove_writer(file_descriptor(fd))
             
     def remove_connector(self, fd):
         fd = file_descriptor(fd)
-        if fd in self._handlers:
-            self._handlers[fd].remove_connector()
+        w = self._io.remove_writer(fd)
+        e = self._io.remove_error(fd)
+        return w or e
     
     def add_signal_handler(self, sig, callback, *args):
         '''Whenever signal ``sig`` is received, arrange for `callback(*args)` to
@@ -699,15 +568,6 @@ if we are calling from the same thread of execution as this
             return callback in self._scheduled
         else:
             return callback in self._callbacks
-        
-    def install_waker(self):
-        # Install event loop wake if possible
-        if hasattr(self._impl, 'install_waker'):
-            return self._impl.install_waker(self)
-        else:
-            waker = Waker()
-            self.add_reader(waker, waker.consume)
-            return waker
 
     ############################################################################
     ##    INTERNALS
@@ -769,8 +629,9 @@ if we are calling from the same thread of execution as this
     
     def _poll(self, timeout):
         callbacks = self._callbacks
+        io = self._io
         try:
-            event_pairs = self._impl.poll(timeout)
+            event_pairs = io.poll(timeout)
         except Exception as e:
             if self._raise_loop_error(e):
                 raise
@@ -778,17 +639,12 @@ if we are calling from the same thread of execution as this
             self.logger.warning('%s stop event loop', e.__class__.__name__)
             raise StopEventLoop
         else:
-            events = []
             for fd, events in event_pairs:
-                if fd in self._handlers:
-                    callbacks.append(partial(self._handlers[fd], events))
-                else:
-                    self.logger.warning('Received an event on unregistered '\
-                                        'file descriptor %s' % fd)
+                callbacks.append(partial(io.handle_events, self, fd, events))
         
     def _call(self, callback, *args):
         try:
-            log_failure(callback(*args))
+            callback(*args)
         except socket.error as e:
             if self._raise_loop_error(e):
                 log_failure(e, msg='Exception in event loop callback.')

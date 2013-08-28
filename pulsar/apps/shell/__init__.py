@@ -104,7 +104,7 @@ class PulsarShell(pulsar.Application):
         '''When the worker starts, create the :attr:`Actor.thread_pool`
 with one thread only and send the :meth:`interact` method to it.'''
         worker.create_thread_pool()
-        worker.thread_pool.apply_async(self.start_shell, (worker,))
+        worker.thread_pool.apply(self.start_shell, worker)
         
     def start_shell(self, worker):
         imported_objects = {'pshell': self,
@@ -123,12 +123,12 @@ with one thread only and send the :meth:`interact` method to it.'''
             readline.parse_and_bind("tab:complete")
         self.local.console = self.cfg.console_class(imported_objects)
         self.local.console.setup()
-        worker.thread_pool.apply_async(self.interact, (worker,))
+        worker.thread_pool.apply(self.interact, worker)
                 
     def interact(self, worker):
         '''Handled by the :attr:`Actor.thread_pool`'''
         try:
             self.local.console.interact(self.cfg.timeout)
-            worker.thread_pool.apply_async(self.interact, (worker,))
+            worker.thread_pool.apply(self.interact, worker)
         except:
             worker.send('arbiter', 'stop')

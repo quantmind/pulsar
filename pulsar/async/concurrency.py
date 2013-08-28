@@ -8,11 +8,12 @@ from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, get_actor_from_id, remove_actor
-from .threads import KillableThread, ThreadQueue, Empty
+from .threads import Thread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
 from .defer import async, multi_async, log_failure, Failure
 from .eventloop import new_event_loop, signal
 from .stream import TcpServer
+from .pollers import POLLERS
 from .consts import *
 
 
@@ -85,7 +86,7 @@ This is an abstract class, derived classes must implement the ``start`` method.
         '''Return a IO poller instance which sets the :class:`EventLoop.io`
 handler. By default it return nothing so that the best handler for the
 system is chosen.'''
-        pass
+        return POLLERS[self.cfg.poller]()
     
     def run_actor(self, actor):
         '''Start running the ``actor``.'''
@@ -358,7 +359,11 @@ python multiprocessing module.'''
         actor.start()
 
 
-class ActorThread(Concurrency, KillableThread):
+class TerminateActorThread(Exception):
+    pass
+
+
+class ActorThread(Concurrency, Thread):
     '''Actor on a thread in the master process.'''
     def run(self):
         actor = self.actor_class(self)
@@ -369,16 +374,6 @@ class ActorThread(Concurrency, KillableThread):
         event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                                     poll_timeout=actor.params.poll_timeout)
         actor.mailbox = self.create_mailbox(actor, event_loop)
-        
-    def terminate(self, kill=False):
-        if self.is_alive():
-            actor = get_actor_from_id(self.aid)
-            me = get_actor()
-            if not kill and actor and actor != me:
-                actor.stop(1)
-                me.event_loop.call_later(1, self.terminate, True)
-            else:
-                KillableThread.terminate(self)
 
 
 class ActorCoroutine(MonitorConcurrency):

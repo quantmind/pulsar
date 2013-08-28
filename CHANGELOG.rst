@@ -1,5 +1,6 @@
 Ver. 0.6.0 - Development
 =============================
+* Modified :class:`Failure` implementation to handle one ``exc_info`` only.
 * Critical bug fix in python 3 WSGI server.
 * Added an asynchronous FIFO :class:`pulsar.Queue`.
 * Proxy server example uses the new :class:`pulsar.Queue`.

@@ -26,7 +26,7 @@ class TestQueue(unittest.TestCase):
             item = yield q.get(timeout=0.5)
         except Empty:
             pass
-        self.assertTrue(default_timer()-start > 0.5)
+        self.assertTrue(default_timer()-start >= 0.5)
         self.assertEqual(q.qsize(), 0)
         
     def test_timeout_and_put(self):
@@ -37,7 +37,7 @@ class TestQueue(unittest.TestCase):
             item = yield q.get(timeout=0.5)
         except Empty:
             pass
-        self.assertTrue(default_timer()-start > 0.5)
+        self.assertTrue(default_timer()-start >= 0.5)
         self.assertEqual(q.qsize(), 0)
         yield q.put('hello')
         self.assertEqual(q.qsize(), 1)
@@ -65,7 +65,7 @@ class TestQueue(unittest.TestCase):
         self.assertTrue(q.full())
         start = default_timer()
         yield self.async.assertRaises(Full, q.put, 'ciao', timeout=0.5)
-        self.assertTrue(default_timer()-start > 0.5)
+        self.assertTrue(default_timer()-start >= 0.5)
         
     def test_maxsize_callback(self):
         q = Queue(maxsize=2)

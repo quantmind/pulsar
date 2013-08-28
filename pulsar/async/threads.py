@@ -2,8 +2,8 @@ import sys
 import threading
 import inspect
 import ctypes
-from multiprocessing import pool, dummy, current_process
-from threading import Lock, ThreadError
+from multiprocessing import dummy, current_process
+from threading import Lock
 from functools import partial
 
 try:
@@ -16,79 +16,50 @@ Full = queue.Full
 
 from pulsar.utils.system import EpollInterface
 from pulsar.utils.log import LocalMixin, local_property
-from pulsar.utils.pep import set_event_loop
+from pulsar.utils.pep import set_event_loop, get_event_loop, new_event_loop
+from pulsar.utils.exceptions import StopEventLoop
 
-from .access import get_actor, set_actor, thread_local_data
-from .eventloop import StopEventLoop, EventLoop, get_event_loop
-from .defer import maybe_async, is_async, log_failure
+from .access import set_actor, thread_local_data, LOGGER
+from .defer import Deferred, log_failure, safe_async
+from .pollers import Poller, READ
 
 
-__all__ = ['Thread', 'IOQueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
+__all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
 
-def _async_raise(tid, exctype):
-    """raises the exception, performs cleanup if needed"""
-    if not inspect.isclass(exctype):
-        raise TypeError("Only types can be raised (not instances)")
-    set_exc = getattr(ctypes.pythonapi, 'PyThreadState_SetAsyncExc', None)
-    if set_exc:
-        res = set_exc(tid, ctypes.py_object(exctype))
-        if res == 0:
-            raise ValueError("invalid thread id")
-        elif res != 1:
-            # """if it returns a number greater than one, you're in trouble, 
-            # and you should call it again with exc=NULL to revert the effect"""
-            set_exc(tid, 0)
-            raise SystemError("PyThreadState_SetAsyncExc failed")
+class Thread(dummy.DummyProcess):
     
-    
-class KillableThread(dummy.DummyProcess):
-    '''A killable thread has the :meth:`terminate` method.
-    
-http://tomerfiliba.com/recipes/Thread2/
-'''
     @property
     def pid(self):
         return current_process().pid
     
-    # Internals
-    def _get_my_tid(self):
-        """determines this (self's) thread id"""
-        if not self.isAlive():
-            raise ThreadError("the thread is not active")
-        # do we have it cached?
-        if hasattr(self, "_thread_id"):
-            return self._thread_id
-        # no, look for it in the _active dict
-        for tid, tobj in threading._active.items():
-            if tobj is self:
-                self._thread_id = tid
-                return tid
-        raise AssertionError("could not determine the thread's id")
-    
+    def loop(self):
+        return get_event_loop()
+
     def terminate(self):
-        '''First check if the thread has an event_loop attribute, if so
-it invoke the stop method. Otherwise it raises SystemExit in the context of
-the given thread, which should cause the thread to exit silently
-(unless caught). Originally from http://tomerfiliba.com/recipes/Thread2/.'''
-        event_loop = getattr(self, 'event_loop', None)
-        if event_loop:
-            self.event_loop.stop()
-        else:
-            try:
-                tid = self._get_my_tid()
-            except ThreadError:
-                return
-            _async_raise(self._get_my_tid(), SystemExit)
+        '''Invoke the stop on the event loop method.'''
+        if self.is_alive():
+            loop = self.loop()
+            if loop:
+                loop.stop()
+            else:
+                LOGGER.error('Cannot terminate thread. No loop.')            
     
     
-class Thread(KillableThread):
-    '''This class should be used when creating threads in pulsar. It
+class PoolThread(Thread):
+    '''This class should be used when creating CPU threads in pulsar. It
 makes sure the class:`Actor` controlling the thread is available.'''
-    def __init__(self, *args, **kwargs):
-        self.actor = get_actor()
-        super(Thread, self).__init__(*args, **kwargs)
+    def __init__(self, actor, *args, **kwargs):
+        self.actor = actor
+        super(PoolThread, self).__init__(*args, **kwargs)
         self.name = '%s-%s' % (self.actor, self.name)
-        
+    
+    def __repr__(self):
+        if self.ident:
+            return '%s-%s' % (self.name, self.ident)
+        else:
+            return self.name
+    __str__ = __repr__
+    
     def run(self):
         '''Modified run method which set the actor and the event_loop for
 the running thread.'''
@@ -98,107 +69,29 @@ the running thread.'''
         set_event_loop(actor.event_loop)
         super(Thread, self).run()
         
-    @property
-    def event_loop(self):
+    def loop(self):
         return thread_local_data('_request_loop', ct=self)
-    
-
-class _FdFactory:
-    
-    def __init__(self, fd, eventloop, read=None, **kwargs):
-        self.fd = fd
-        self.eventloop = eventloop
-        self.handle_read = None
-        self.add_reader(read)
-    
-    def add_connector(self, callback):
-        pass
-        
-    def add_reader(self, callback):
-        if not self.handle_read:
-            self.handle_read = callback
-        else:
-            raise RuntimeError("Already reading!")
-        
-    def add_writer(self, callback):
-        pass
-        
-    def remove_connector(self):
-        pass
-    
-    def remove_writer(self):
-        pass
-    
-    def remove_reader(self):
-        '''Remove reader and return True if writing'''
-        self.handle_read = None
-    
-    def __call__(self, request):
-        return self.handle_read(request)
 
 
-class IOQueue(EpollInterface, LocalMixin):
-    '''Epoll like class for a IO based on queues rather than sockets.
-The interface is the same as the python epoll_ implementation.
+class IOqueue(Poller):
 
-.. attribute:: queue
-
-    The python ``Queue`` from where this poller get tasks at each
-    iteration of the :class:`EventLoop`
-    
-.. attribute:: maxtasks
-
-    Optional number of maximum tasks to process
-    
-.. attribute:: received
-
-    Number of tasks received by this :class:`IOQueue`
-    
-.. attribute:: completed
-
-    Number of tasks completed by this :class:`IOQueue`
-
-.. _epoll: http://docs.python.org/library/select.html#epoll-objects'''
-    fd_factory = _FdFactory
-    
-    def __init__(self, queue, maxtasks=None):
-        assert maxtasks is None or (type(maxtasks) == int and maxtasks > 0)
+    def __init__(self, queue, maxtasks):
+        super(IOqueue, self).__init__()
+        self._queue = queue
+        self._maxtasks = maxtasks
+        self._wakeup = 0
         self.received = 0
         self.completed = 0
-        self._wakeup = 0
-        self._queue = queue
-        self.maxtasks = maxtasks
-
+        self.lock = Lock()
+        
     @property
     def cpubound(self):
         '''Required by the :class:`EventLoop` so that the event loop
 install itself as a request loop rather than the IO event loop.'''
         return True
     
-    def fileno(self):
-        '''dummy file number'''
-        return 0
-    
-    def register(self, fd, events=None):
-        pass
-
-    def modify(self, fd, events=None):
-        pass
-
-    def unregister(self, fd):
-        pass
-
-    def get(self, timeout=0.5):
-        '''Wait for events. timeout in seconds (float)'''
-        block = True
-        with self.lock:
-            if self._wakeup:
-                block = False
-                self._wakeup -= 1
-        return self._queue.get(block=block, timeout=timeout)
-    
     def poll(self, timeout=0.5):
-        if self.maxtasks and self.received >= self.maxtasks:
+        if self._maxtasks and self.received >= self._maxtasks:
             if self.completed < self.received:
                 return ()
             else:
@@ -211,65 +104,168 @@ install itself as a request loop rather than the IO event loop.'''
             raise StopEventLoop
         if task is None:    # got the sentinel, exit!
             raise StopEventLoop
-        self.received += 1
         return ((self.fileno(), task),)
     
-    def install_waker(self, loop):
+    def install_waker(self, event_loop):
         return self
-        
+    
     def wake(self):
-        '''Waker implementation. This IOQueue is its own waker.'''
+        '''Waker implementation. This IOqueue is its own waker.'''
         with self.lock:
             self._wakeup += 1
             
-    @local_property
-    def lock(self):
-        return Lock()
+    def check_stream(self):
+        raise IOError('Cannot use stream interface')
+    
+    def handle_events(self, loop, fd, task):
+        try:
+            self._handlers[fd]
+        except KeyError:
+            raise KeyError('Received an event on unregistered file '
+                           'descriptor %s' % fd)
+        self.received += 1
+        future, func, args, kwargs = task
+        result = safe_async(func, *args, **kwargs)
+        result.add_both(partial(self._handle_result, future))
+        return future
+                
+    def get(self, timeout=0.5):
+        '''Wait for events. timeout in seconds (float)'''
+        block = True
+        with self.lock:
+            if self._wakeup:
+                block = False
+                self._wakeup -= 1
+        return self._queue.get(block=block, timeout=timeout)
+    
+    def _register(self, fd, events, old_events=None):
+        if events != READ:
+            raise IOError('Only read events can be attached to IOqueue')
+        if fd != self.fileno():
+            raise IOError('Only read events on %s allowed' % self.fileno())
+        
+    def _handle_result(self, future, result):
+        self.completed += 1
+        future.callback(result)
+        
 
+RUN = 0
+CLOSE = 1
+TERMINATE = 2
 
-class PoolWorker(object):
-    '''A pool worker which handles asynchronous results form
-functions send to the task queue. Instances of this class are
-initialised on a new pulsar :class:`Thread`.'''
-    def __init__(self, inqueue, outqueue, initializer=None, initargs=(),
-                 maxtasks=None):
-        if hasattr(inqueue, '_writer'):
-            inqueue._writer.close()
-            outqueue._reader.close()
-        if initializer is not None:
-            initializer(*initargs)
-        self.io_poller = IOQueue(inqueue, maxtasks)
-        self.outqueue = outqueue
+class ThreadPool(object):
+    '''A thread pool for an actor.
+    
+This pool maintains a group of threads to perform asynchronous tasks via
+the :meth:`apply` method.'''
+    def __init__(self, actor, threads=None, check_every=5, maxtasks=None):
+        self._actor = actor
+        self._check_every = check_every
+        self._threads = max(threads or 1, 1)
+        self._pool = []
+        self._state = RUN
+        self._closed = Deferred(event_loop=actor.event_loop)
+        self._maxtasks = maxtasks
+        self._inqueue = ThreadQueue()
+        self._check = actor.event_loop.call_soon(self._maintain)
+    
+    @property
+    def status(self):
+        '''String status of this pool.'''
+        if self._state == RUN:
+            return 'running'
+        elif self._state == CLOSE:
+            return 'closed'
+        elif self._state == TERMINATE:
+            return 'terminated'
+        else:
+            return 'unknown'
+            
+    def apply(self, func, *args, **kwargs):
+        '''Equivalent to ``func(*args, **kwargs)``.
+    
+This method create a new task for function ``func`` and adds it to the queue.
+It return a :class:`Deferred` called back once the task has finished.'''
+        assert self._state == RUN, 'Pool not running'
+        d = Deferred()
+        self._inqueue.put((d, func, args, kwargs))
+        
+    def close(self, timeout=None):
+        '''Close the thread pool.
+        
+Return a :class:`Deferred` fired when all threads have exited.'''
+        if self._state == RUN:
+            self._check.cancel()
+            self._check = None
+            self._check_every = 0
+            self._state = CLOSE
+            self._maintain()
+        return self._closed.then().set_timeout(timeout)
+            
+    def terminate(self, timeout=None):
+        '''Shut down the event loop of threads'''
+        if self._state < TERMINATE:
+            self._state = TERMINATE
+            for worker in self._pool:
+                worker.terminate()
+            self._maintain()
+        return self._closed.then().set_timeout(timeout)
+            
+    def join(self):
+        assert self._state in (CLOSE, TERMINATE)
+        for worker in self._pool:
+            worker.join()
+        
+    def _maintain(self):
+        populate = self._join_exited_workers() if self._pool else True
+        if self._state == RUN and populate:
+            self._repopulate_pool()
+        elif self._state == CLOSE:
+            self._close_pool()
+        if self._pool:
+            self._maintain_call = self._actor.event_loop.call_later(
+                self._check_every, self._maintain)
+        elif not self._closed.done():
+            self._closed.callback(self._state)
+        
+    def _join_exited_workers(self):
+        """Cleanup after any worker processes which have exited due to reaching
+        their specified lifetime.  Returns True if any workers were cleaned up.
+        """
+        cleaned = []
+        for worker in self._pool:
+            if worker.exitcode is not None:
+                # worker exited
+                self._actor.logger.debug('cleaning up thread pool worker %s'
+                                         % worker)
+                worker.join()
+                cleaned.append(worker)
+        if cleaned:
+            for c in cleaned:
+                self._pool.remove(c)
+        return bool(cleaned)
+        
+    def _repopulate_pool(self):
+        """Bring the number of pool processes up to the specified number,
+        for use after reaping workers which have exited.
+        """
+        while len(self._pool) < self._threads:
+            worker = PoolThread(self._actor, name='PoolWorker',
+                                target=self._run)
+            self._pool.append(worker)
+            worker.daemon = True
+            worker.start()
+            self._actor.logger.debug('Added thread pool worker %s' % worker)
+            
+    def _close_pool(self):
+        for i in range(len(self._pool)):
+            self._inqueue.put(None)
+            
+    def _run(self):
+        poller = IOqueue(self._inqueue, self._maxtasks)
         # Create the event loop which get tasks from the task queue 
-        event_loop = EventLoop(io=self.io_poller, poll_timeout=1)
-        event_loop.add_reader(self.io_poller.fileno(), self._handle_request)
+        event_loop = new_event_loop(io=poller, poll_timeout=1,
+                                    logger=self._actor.logger)
+        event_loop.add_reader(poller.fileno(), poller.handle_events)
         event_loop.run_forever()
         
-    def _handle_request(self, task):
-        job, i, func, args, kwds = task
-        try:
-            result = func(*args, **kwds)
-        except Exception:
-            result = sys.exc_info()
-        result = maybe_async(result)
-        if is_async(result):
-            result.add_both(partial(self._handle_result, job, i))
-        else:
-            self._handle_result(job, i, result)
-            
-    def _handle_result(self, job, i, result):
-        log_failure(result)
-        self.outqueue.put((job, i, (True, result)))
-        self.io_poller.completed += 1
-
-
-class ThreadPool(pool.ThreadPool):
-    '''A modified :class:`multiprocessing.pool.ThreadPool` used by a pulsar
-:class:`Actor` when it needs CPUbound workers to consume tasks
-on a task queue. An actor can create a new :class:`ThreadPool` via
-the :meth:`Actor.create_thread_pool` method.'''
-    def Process(self, target=None, **kwargs):
-        return Thread(target=PoolWorker, **kwargs)
-    
-    def apply(self, *args, **kwargs):
-        raise NotImplementedError('Use apply_async')

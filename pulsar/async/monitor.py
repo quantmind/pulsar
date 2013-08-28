@@ -188,7 +188,7 @@ as required."""
     
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
-        return async_while(10, self.manage_actors, True)
+        return async_while(2*ACTOR_ACTION_TIMEOUT, self.manage_actors, True)
     
     
 class Monitor(PoolMixin):

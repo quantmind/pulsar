@@ -204,8 +204,8 @@ protocol.'''
                     req = CommandRequest(target, caller, self.connection)
                     result = yield command(req, message['args'],
                                            message['kwargs'])
-            except Exception as e:
-                result = Failure(e)
+            except Exception:
+                result = Failure(sys.exc_info())
             if message.get('ack'):
                 req = Message.callback(result, message['ack'])
                 self.new_request(req)

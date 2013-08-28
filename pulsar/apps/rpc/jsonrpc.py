@@ -80,7 +80,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
         except Exception as e:
-            result = Failure(e)
+            result = Failure.make(e)
         #
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if isinstance(result, Failure):

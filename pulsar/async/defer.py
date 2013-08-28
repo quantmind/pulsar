@@ -114,7 +114,9 @@ are given, it checks if the error is an instance of those classes.'''
     return False
 
 def default_maybe_failure(value):
-    if isinstance(value, Exception) or is_exc_info(value):
+    if isinstance(value, Exception):
+        return Failure.make(value)
+    elif is_exc_info(value):
         return Failure(value)
     else:
         return value
@@ -188,8 +190,13 @@ the coroutine after *timeout* seconds. For example::
     yield async_sleep(2)
     ...
 '''
-    return Deferred(timeout=timeout).add_errback(
-            lambda err: timeout if err.isinstance(CancelledError) else err)
+    def _cancel(failure):
+        if failure.isinstance(CancelledError):
+            failure.mute()
+            return timeout
+        else:
+            return failure        
+    return Deferred(timeout=timeout).add_errback(_cancel)
     
 ############################################################### DECORATORS
 class async:
@@ -241,7 +248,7 @@ def async_while(timeout, while_clause, *args):
     interval = 0
     result = while_clause(*args)
     while result:
-        interval = min(interval+di, 5) 
+        interval = min(interval+di, MAX_ASYNC_WHILE) 
         try:
             yield Deferred(timeout=interval)
         except CancelledError:
@@ -276,8 +283,9 @@ errors.
 '''
     _msg = 'Pulsar asynchronous failure'
     
-    def __init__(self, error):
-        if isinstance(error, Failure):
+    @classmethod
+    def make(cls, error):
+        if isinstance(error, cls):
             exc_info = error.exc_info
         elif isinstance(error, BaseException):
             exc_info = sys.exc_info()
@@ -288,6 +296,9 @@ errors.
                     exc_info = sys.exc_info()
         else:
             exc_info = error
+        return cls(exc_info)
+        
+    def __init__(self, exc_info):
         self.exc_info = exc_info
         
     def __repr__(self):
@@ -298,7 +309,7 @@ errors.
         return ''.join(tb)
     __str__ = __repr__
     
-    def __del__(self):
+    def __del__ (self):
         self.log(msg='Deferred Failure never retrieved')
 
     def _get_logged(self):
@@ -619,7 +630,7 @@ deferred is required::
     d2 = d1.then().add_callback(...)
 '''
         if deferred is None:
-            deferred = Deferred()
+            deferred = Deferred(event_loop=self._event_loop)
         def cbk(result):
             deferred.callback(result)
             return result
@@ -640,7 +651,7 @@ deferred is required::
                 finally:
                     self._runningCallbacks = False
             except Exception as e:
-                self.result = Failure(e)
+                self.result = Failure.make(e)
             else:
                 # if we received an asynchronous instance we add a continuation
                 if is_async(self.result):
@@ -784,7 +795,8 @@ function when a generator is passed as argument.'''
         step = self._step
         switch = False
         while self._state == _PENDING and not switch:
-            result, switch = step(result, self._gen)            
+            result, switch = step(result, self._gen)
+        return self
             
     def _step(self, result, gen):
         try:
@@ -800,11 +812,12 @@ function when a generator is passed as argument.'''
             else:
                 result = gen.send(result)
         except CoroutineReturn as e:
-            self._conclude(e.value)
+            result = e.value
+            self._conclude(result)
         except StopIteration:
             self._conclude(result)
         except Exception as e:
-            result = Failure(e)
+            result = Failure(sys.exc_info())
             self._conclude(result)
         else:
             result = maybe_async(result, event_loop=self.event_loop)

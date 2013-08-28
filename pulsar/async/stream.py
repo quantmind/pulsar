@@ -423,7 +423,7 @@ def sock_connect(event_loop, sock, address, future=None):
     connect = False
     if future is None:
         def canceller(d):
-            event_loop.remove_writer(fd)
+            event_loop.remove_connector(fd)
             d._suppressAlreadyCalled = True
         #
         future = Deferred(canceller=canceller, event_loop=event_loop)
@@ -434,13 +434,13 @@ def sock_connect(event_loop, sock, address, future=None):
                 sock.connect(address)
             except socket.error as e:
                 if e.args[0] in TRY_WRITE_AGAIN:
-                    event_loop.add_writer(fd, sock_connect, event_loop, sock,
-                                          address, future)
+                    event_loop.add_connector(fd, sock_connect, event_loop, sock,
+                                             address, future)
                     return future
                 else:
                     raise
         else:   # This is the callback from the event loop
-            event_loop.remove_writer(fd)
+            event_loop.remove_connector(fd)
             if future.cancelled():
                 return
             err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)

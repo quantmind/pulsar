@@ -257,7 +257,8 @@ parameters *params*.'''
     
     def stop(self, exc=None):
         '''Stop the actor by closing its :attr:`mailbox` which
-in turns stops the :attr:`event_loop`. Once everything is closed
+in turns stops the :attr:`eve
+nt_loop`. Once everything is closed
 properly this actor will go out of scope.
 
 :param exc: optional exception.
@@ -271,16 +272,18 @@ if not already present.
 :param workers: number of threads to use in the :class:`ThreadPool`
 '''
         if self._thread_pool is None:
-            self._thread_pool = ThreadPool(processes=workers)
+            self._thread_pool = ThreadPool(self, threads=workers)
         return self._thread_pool
     
     def close_thread_pool(self):
         '''Close the :attr:`thread_pool`.'''
         if self._thread_pool:
-            self._thread_pool.close()
+            timeout = 0.5*ACTOR_ACTION_TIMEOUT
+            d = self._thread_pool.close(timeout)
             self.logger.debug('Waiting for thread pool to exit')
+            d.add_errback(lambda r: self._thread_pool.terminate(timeout))
             self._thread_pool.join()
-            self.logger.debug('Thread pool closed')
+            self.logger.debug('Thread pool %s' % self._thread_pool.status)
             self._thread_pool = None
             
     ###############################################################  STATES
@@ -384,7 +387,7 @@ from another actor.'''
         except Exception as e:
             exc = e
         except HaltServer as e:
-            exc = Failure(e)
+            exc = Failure.make(e)
             if e.exit_code == 1:
                 exc.log()
             elif e.exit_code:

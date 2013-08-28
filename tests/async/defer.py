@@ -4,7 +4,7 @@ from functools import reduce
 
 from pulsar import (InvalidStateError, Deferred, is_async, NOT_DONE,
                     is_failure, MultiDeferred, maybe_async, CancelledError,
-                    async_sleep, Failure, safe_async, maybe_failure,
+                    async_sleep, Failure, safe_async,
                     InvalidStateError, coroutine_return)
 from pulsar.async.defer import is_exc_info
 from pulsar.utils.pep import pickle, default_timer
@@ -28,12 +28,7 @@ class Cbk(Deferred):
         self.add(result)
         self.callback(self.r)
     
-    def set_error(self):
-        try:
-            raise ValueError('Bad callback')
-        except Exception as e:
-            self.callback(e)
-
+    
 def async_pair():
     c = Deferred()
     d = Deferred().add_both(c.callback)
@@ -105,9 +100,16 @@ class TestDeferred(unittest.TestCase):
         def _gen():
             yield d
         a = maybe_async(_gen())
+        # The waiting deferred is the original deferred
+        self.assertEqual(a._waiting, d)
+        # Callback d
         result = d.callback('ciao')
         self.assertTrue(d.done())
+        self.assertFalse(a.done())
         self.assertEqual(d.paused, 1)
+        # still the same deferred
+        self.assertEqual(a._waiting, d)
+        #
         self.assertEqual(len(d._callbacks), 2)
         self.assertEqual(len(rd._callbacks), 1)
         #
@@ -120,7 +122,7 @@ class TestDeferred(unittest.TestCase):
         yield a
         self.assertTrue(a.done())
         self.assertFalse(d.paused)
-        self.assertEqual(d.result,('ciao','luca','second'))
+        self.assertEqual(d.result,('ciao', 'luca', 'second'))
         
     def testDeferredErrorbackInGenerator(self):
         d = Deferred()
@@ -142,7 +144,7 @@ class TestDeferred(unittest.TestCase):
         self.assertFalse(a.done())
         #
         # set Error back
-        rd.set_error()
+        rd.set_exception(ValueError('Bad callback'))
         self.assertFalse(d.paused)
         self.assertTrue(is_failure(d.result))
         yield a
@@ -178,7 +180,7 @@ class TestDeferred(unittest.TestCase):
         except Exception as e:
             self.assertIsInstance(e, CancelledError)
 
-    def test_last_yeild(self):
+    def test_last_yield(self):
         def gen():
             try:
                 yield Deferred(timeout=1)
@@ -218,7 +220,9 @@ class TestDeferred(unittest.TestCase):
         d.throw()
         d = Deferred()
         d.callback(ValueError())
+        d.result.mute()
         self.assertRaises(ValueError, d.throw)
+        self.assertTrue(d.result.logged)
         
     def test_cancellation(self):
         d = Deferred()
@@ -228,42 +232,6 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(failure.isinstance(CancelledError))
         self.assertEqual(d.callback(3), failure)
         self.assertRaises(InvalidStateError, d.callback, 3)
-        
-
-class TestFailure(unittest.TestCase):
-    
-    def testRepr(self):
-        failure = Failure(Exception('test'))
-        val = str(failure)
-        self.assertEqual(repr(failure), val)
-        self.assertTrue('Exception: test' in val)
-        
-    def testRemote(self):
-        failure = Failure(Exception('test'))
-        s1 = str(failure)
-        self.assertFalse(failure.is_remote)
-        failure.logged = True
-        remote = pickle.loads(pickle.dumps(failure))
-        self.assertTrue(remote.is_remote)
-        s2 = str(remote)
-        self.assertEqual(s1, s2)
-        self.assertTrue(remote.logged)
-        
-    def testRemoteExcInfo(self):
-        failure = Failure(Exception('test'))
-        remote = pickle.loads(pickle.dumps(failure))
-        # Now create a failure from the remote.exc_info
-        failure = maybe_failure(remote.exc_info)
-        self.assertEqual(failure.exc_info, remote.exc_info)
-        self.assertTrue(failure.is_remote)
-        
-    def testFailureFromFailure(self):
-        failure = Failure(ValueError('test'))
-        failure2 = Failure(failure)
-        self.assertNotEqual(failure, failure2)
-        self.assertEqual(failure.exc_info, failure2.exc_info)
-        failure.logged = True
-        self.assertRaises(ValueError, failure.throw)
         
         
 class TestMultiDeferred(unittest.TestCase):
