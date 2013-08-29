@@ -88,6 +88,9 @@ Async Sleep
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_sleep
 
+Async While
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: async_while
 
 Asynchronous Classes
 ==========================

@@ -34,6 +34,10 @@ class Poller(object):
     def __init__(self):
         self._handlers = {}
         
+    def handlers(self, fd):
+        '''Return the handlers for file descriptor ``fd``.'''
+        return self._handlers[fd]
+    
     def install_waker(self, event_loop):
         '''Install event loop waker.'''
         waker = Waker()
@@ -135,9 +139,9 @@ class Poller(object):
         
         This method is called by the event ``loop`` when new events are
         triggered.'''
-        try:
+        if fd in self._handlers:
             mask, reader, writer, error = self._handlers[fd]
-        except KeyError:
+        else:
             raise KeyError('Received an event on unregistered file '
                            'descriptor %s' % fd)    
         processed = False

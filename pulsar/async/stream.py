@@ -265,9 +265,8 @@ class TcpServer(Server):
     def stop_serving(self):
         '''Stop serving the :class:`pulsar.Server.sock`'''
         if self._sock:
-            self._event_loop.stop_serving(self._sock)
-            self.fire_event('stop')
-            self._sock = None
+            sock, self._sock = self._sock, None
+            self._event_loop.call_now_threadsafe(self._stop_serving, sock)
     
     def close(self):
         '''Same as :meth:`stop_serving` method.'''
@@ -278,6 +277,10 @@ class TcpServer(Server):
         self.logger.info('%s serving on %s', self._name,
                          format_address(self.address))
         return self
+    
+    def _stop_serving(self, sock):
+        self._event_loop.stop_serving(sock)
+        self.fire_event('stop')
     
     
 def create_connection(event_loop, protocol_factory, host, port, ssl,

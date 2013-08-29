@@ -1,17 +1,16 @@
-import sys
 from functools import partial
 from multiprocessing import Process, current_process
 
 from pulsar import system, platform
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import itervalues
+from pulsar.utils.pep import new_event_loop, itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import get_actor, set_actor, get_actor_from_id, remove_actor
+from .access import get_actor, set_actor, remove_actor
 from .threads import Thread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
-from .defer import async, multi_async, log_failure, Failure
-from .eventloop import new_event_loop, signal
+from .defer import async, multi_async, maybe_failure, Failure
+from .eventloop import signal
 from .stream import TcpServer
 from .pollers import POLLERS
 from .consts import *
@@ -156,7 +155,7 @@ ping the actor monitor.'''
                     
     def stop(self, actor, exc):
         if exc != -1:
-            failure = log_failure(exc)
+            failure = maybe_failure(exc)
             if actor.state <= ACTOR_STATES.RUN:
                 # The actor has not started the stopping process. Starts it now.
                 actor.state = ACTOR_STATES.STOPPING

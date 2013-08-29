@@ -1,4 +1,4 @@
-'''API design'''
+'''MultiDeferred coverage'''
 import sys
 from pulsar.apps.test import unittest
 from pulsar.utils.pep import get_event_loop

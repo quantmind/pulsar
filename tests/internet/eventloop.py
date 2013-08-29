@@ -1,10 +1,11 @@
 '''Test Internet connections and wrapped socket methods in event loop.'''
 import socket
 
-from pulsar import Connection, Protocol, TcpServer
+from pulsar import Connection, Protocol, TcpServer, async_while
 from pulsar.utils.pep import get_event_loop, new_event_loop
 from pulsar.utils.internet import is_socket_closed
 from pulsar.apps.test import unittest
+from pulsar.async.pollers import READ
 
 from examples.echo.manage import Echo, EchoServerProtocol
 
@@ -12,30 +13,30 @@ server_protocol = lambda: Connection(1, 0, EchoServerProtocol, None)
 
 class TestEventLoop(unittest.TestCase):
     
-    def __test_create_connection_error(self):
+    def test_create_connection_error(self):
         loop = get_event_loop()
         try:
             result = yield loop.create_connection(Protocol,'127.0.0.1', 9898)
         except socket.error:
             pass
         
-    def __test_start_serving(self):
+    def test_start_serving(self):
         protocol_factory = lambda : Connection()
         loop = get_event_loop()
         sockets = yield loop.start_serving(server_protocol,'127.0.0.1', 0)
         self.assertEqual(len(sockets), 1)
         socket = sockets[0]
         fn = socket.fileno()
-        handler = loop._handlers[fn]
-        self.assertTrue(handler)
-        self.assertTrue(handler.handle_read)
-        self.assertFalse(handler.handle_write)
+        events, read, write, error = loop.io.handlers(fn)
+        self.assertEqual(events, READ)
+        self.assertTrue(read)
+        self.assertFalse(write)
+        self.assertFalse(error)
         loop.stop_serving(socket)
-        handler = loop._handlers.get(fn)
-        self.assertFalse(handler)
+        self.assertRaises(KeyError, loop.io.handlers, fn)
         self.assertTrue(is_socket_closed(socket))
         
-    def __test_start_serving_ipv6(self):
+    def test_start_serving_ipv6(self):
         loop = get_event_loop()
         sockets = yield loop.start_serving(Protocol,'::1', 0)
         self.assertEqual(len(sockets), 1)
@@ -61,4 +62,5 @@ class TestEventLoop(unittest.TestCase):
         yield server.stop_serving()
         handler = loop._handlers.get(fn)
         self.assertFalse(handler)
+        yield async_while(3, lambda: not is_socket_closed(sock))
         self.assertTrue(is_socket_closed(sock))

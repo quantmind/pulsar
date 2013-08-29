@@ -86,7 +86,7 @@ from collections import deque
 from datetime import datetime, timedelta
 from functools import partial
 
-from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, get_actor, log_failure,
+from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, get_actor,
                     maybe_failure, is_failure, PulsarException, Backend,
                     Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues, iteritems
@@ -397,8 +397,7 @@ a ``TaskNotAvailable`` exception occurs.
     constructor (not its callable function).
 :return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
     on success.'''
-        return self._run_job(jobname, targs, tkwargs, meta_params)\
-                   .add_errback(log_failure)
+        return self._run_job(jobname, targs, tkwargs, meta_params)
         
     def create_task_id(self, job, args, kwargs):
         '''Create a :attr:`Task.id` from *job*, positional arguments *args*

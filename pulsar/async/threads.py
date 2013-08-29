@@ -1,7 +1,3 @@
-import sys
-import threading
-import inspect
-import ctypes
 from multiprocessing import dummy, current_process
 from threading import Lock
 from functools import partial
@@ -14,13 +10,11 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from pulsar.utils.system import EpollInterface
-from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.pep import set_event_loop, get_event_loop, new_event_loop
 from pulsar.utils.exceptions import StopEventLoop
 
 from .access import get_actor, set_actor, thread_local_data, LOGGER
-from .defer import Deferred, log_failure, safe_async
+from .defer import Deferred, safe_async
 from .pollers import Poller, READ
 
 
@@ -195,7 +189,7 @@ the :meth:`apply` method.'''
         '''Equivalent to ``func(*args, **kwargs)``.
     
 This method create a new task for function ``func`` and adds it to the queue.
-It return a :class:`Deferred` called back once the task has finished.'''
+Return a :class:`Deferred` called back once the task has finished.'''
         assert self._state == RUN, 'Pool not running'
         d = Deferred()
         self._inqueue.put((d, func, args, kwargs))
@@ -206,15 +200,21 @@ It return a :class:`Deferred` called back once the task has finished.'''
 Return a :class:`Deferred` fired when all threads have exited.'''
         if self._state == RUN:
             self._state = CLOSE
-            self.event_loop.call_soon(self._close)
+            if self.event_loop.is_running():
+                self.event_loop.call_now_threadsafe(self._close)
+            else:
+                self._close()
         return self._closed.then().set_timeout(timeout)
             
     def terminate(self, timeout=None):
         '''Shut down the event loop of threads'''
         if self._state < TERMINATE:
-            if self.num_threads:
+            if not self._closed.done():
                 self._state = TERMINATE
-                self.event_loop.call_soon(self._terminate)
+                if self.event_loop.is_running():
+                    self.event_loop.call_now_threadsafe(self._terminate)
+                else:
+                    self._terminate()
         return self._closed.then().set_timeout(timeout)
             
     def join(self):
@@ -253,8 +253,7 @@ Return a :class:`Deferred` fired when all threads have exited.'''
         for worker in self._pool:
             if worker.exitcode is not None:
                 # worker exited
-                self._actor.logger.debug('cleaning up thread pool worker %s'
-                                         % worker)
+                self._actor.logger.debug('Cleaning up %s', worker)
                 worker.join()
                 cleaned.append(worker)
         if cleaned:
@@ -272,7 +271,7 @@ Return a :class:`Deferred` fired when all threads have exited.'''
             self._pool.append(worker)
             worker.daemon = True
             worker.start()
-            self._actor.logger.debug('Added thread pool worker %s' % worker)
+            self._actor.logger.debug('Added %s', worker)
             
     def _close_pool(self):
         for i in range(len(self._pool)):

@@ -24,7 +24,6 @@ __all__ = ['Deferred',
            'maybe_failure',
            'coroutine_return',
            'is_failure',
-           'log_failure',
            'is_async',
            'set_async',
            'maybe_async',
@@ -92,15 +91,6 @@ def multi_async(iterable, **kwargs):
     '''This is an utility function to convert an *iterable* into a
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
-
-def log_failure(obj, **kw):
-    '''Log the ``obj`` if ``obj`` is a :class:`Failure` or a
-:class:`Deferred` with a called failure.'''
-    obj = maybe_async(obj)
-    if isinstance(obj, Failure):
-        return obj.log(**kw)
-    else:
-        return obj
 
 def is_async(obj):
     '''Return ``True`` if *obj* is an asynchronous object'''
@@ -241,22 +231,34 @@ even if the ``callable`` is not asynchronous. Never throws.'''
 
 safe_async = async(get_result=False).call
 
-@async()
 def async_while(timeout, while_clause, *args):
-    start = default_timer()
-    di = 0.1
-    interval = 0
-    result = while_clause(*args)
-    while result:
-        interval = min(interval+di, MAX_ASYNC_WHILE) 
-        try:
-            yield Deferred(timeout=interval)
-        except CancelledError:
-            pass
-        if timeout and default_timer() - start >= timeout:
-            break
+    '''The asynchronous equivalent of ``while while_clause(*args):``.
+    
+    Use this function within a :ref:`coroutine <coroutine>` when you need
+    to wait ``while_clause`` to be satisfied.
+    
+    :parameter timeout: a timeout in seconds after which this function stop.
+    :parameter while_clause: while clause callable.
+    :parameter args: optional arguments to pass to the ``while_clause``
+        callable.
+    :return: A :ref:`coroutine <coroutine>`.
+    '''
+    def _():
+        start = default_timer()
+        di = 0.1
+        interval = 0
         result = while_clause(*args)
-    yield result
+        while result:
+            interval = min(interval+di, MAX_ASYNC_WHILE) 
+            try:
+                yield Deferred(timeout=interval)
+            except CancelledError:
+                pass
+            if timeout and default_timer() - start >= timeout:
+                break
+            result = while_clause(*args)
+        yield result
+    return maybe_async(_())
         
         
 ############################################################### FAILURE
@@ -747,7 +749,6 @@ a callable which accept one argument only.'''
             if sender is None:
                 sender = getattr(event_data, '__class__', event_data) 
             events.fire(event, sender, data=event_data)
-            log_failure(event_data)
         return fired
         
     def all_events(self):
@@ -796,7 +797,6 @@ function when a generator is passed as argument.'''
         switch = False
         while self._state == _PENDING and not switch:
             result, switch = step(result, self._gen)
-        return self
             
     def _step(self, result, gen):
         try:

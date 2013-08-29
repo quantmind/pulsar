@@ -1,8 +1,5 @@
 import os
 import sys
-import traceback
-import inspect
-import errno
 import socket
 from heapq import heappush, heappop
 from functools import partial
@@ -13,16 +10,16 @@ try:
 except ImportError: #pragma    nocover
     signal = None
 
-from pulsar.utils.system import IObase, IOpoll, close_on_exec, platform, Waker
-from pulsar.utils.pep import default_timer, set_event_loop_policy,\
-                             set_event_loop, new_event_loop, get_event_loop,\
-                             EventLoop as BaseEventLoop, range,\
-                             EventLoopPolicy as BaseEventLoopPolicy
+from pulsar.utils.system import IObase, close_on_exec
+from pulsar.utils.pep import (default_timer, set_event_loop_policy,
+                              set_event_loop, range,
+                              EventLoop as BaseEventLoop, 
+                              EventLoopPolicy as BaseEventLoopPolicy)
 from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
-from pulsar.utils.exceptions import StopEventLoop
+from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import thread_local_data, LOGGER
-from .defer import log_failure, is_failure, Deferred, TimeoutError, maybe_async
+from .defer import Failure, TimeoutError, maybe_async
 from .stream import create_connection, start_serving, sock_connect, sock_accept
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
@@ -144,7 +141,6 @@ class LoopingCall(object):
     def cancel(self, result=None):
         '''Attempt to cancel the callback.'''
         self._cancelled = True
-        log_failure(result)
         
     def __call__(self):
         # If this fails, the chain is broken.
@@ -169,20 +165,18 @@ class LoopingCall(object):
 class EventLoop(IObase, BaseEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API. The
 event loop is the place where most asynchronous operations are carried out.
-        
-.. attribute:: num_loops
-
-    Total number of loops
 
 .. attribute:: poll_timeout
 
-    The timeout in seconds when polling with epol or select.
+    The timeout in seconds when polling with ``epolL``, ``kqueue``, ``select``
+    and so forth.
 
-    Default: `0.5`
+    Default: ``0.5``
 
 .. attribute:: tid
 
-    The thread id where the eventloop is running
+    The thread id where this event loop is running. If the event loop is not
+    running this attribute is ``None``.
 
 """
     # Never use an infinite timeout here - it can stall epoll
@@ -202,7 +196,7 @@ event loop is the place where most asynchronous operations are carried out.
         self._callbacks = deque()
         self._scheduled = []
         self._name = None
-        self.num_loops = 0
+        self._num_loops = 0
         self._default_executor = None
         self._waker = self._io.install_waker(self)
     
@@ -247,8 +241,12 @@ loop of the thread where it is run.'''
     def active(self):
         return bool(self._callbacks or self._scheduled or self._handlers)
     
-    ############################################################################
-    ##    PEP 3156 Methods
+    @property
+    def num_loops(self):
+        '''Total number of loops.'''
+        return self._num_loops
+    
+    #################################################    STARTING & STOPPING
     def run(self):
         '''Run the event loop until nothing left to do or stop() called.'''
         if not self.running:
@@ -291,7 +289,7 @@ raise TimeoutError (but don't cancel the future).'''
             else:
                 raise TimeoutError
         result = future.result
-        if is_failure(result):
+        if isinstance(result, Failure):
             result.throw()
         else:
             return result
@@ -304,6 +302,7 @@ raise TimeoutError (but don't cancel the future).'''
         '''``True`` if the loop is running.'''
         return bool(self._name)
     
+    #################################################    CALLBACKS
     def call_at(self, when, callback, *args):
         '''Arrange for a ``callback`` to be called at a given time ``when``
 in the future. The time is an absolute time, for relative time check
@@ -348,6 +347,7 @@ the callback when it is called.'''
         self._callbacks.append(timeout)
         return timeout
     
+    #################################################    THREAD INTERACTION
     def call_soon_threadsafe(self, callback, *args):
         '''Calls the given callback on the next I/O loop iteration.
 It is safe to call this method from any thread at any time.
@@ -360,24 +360,25 @@ to transfer control from other threads to the EventLoop's thread.'''
         return timeout
     
     def run_in_executor(self, executor, callback, *args):
-        '''Arrange to call ``callback(*args)`` in an executor.
-NOT YET SUPPORTED.'''
+        '''Arrange to call ``callback(*args)`` in an ``executor``.
+        
+        Return a :class:`Deferred` called once the callback has finished.'''
         executor = executor or self._default_executor
         if executor is None:
-            from pulsar import ThreadPool
-            executor = ThreadPool(_MAX_WORKERS)
-            self._default_executor = executor
-        return wrap_future(executor.submit(callback, *args), loop=self)
+            raise ImproperlyConfigured('No executor available')
+        return executor.apply(callback, *args)
         
     def set_default_executor(self, executor):
         self._default_executor = executor
-        
+    
+    #################################################    INTERNET NAME LOOKUPS
     def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
         return socket.getaddrinfo(host, port, family, type, proto, flags)
 
     def getnameinfo(self, sockaddr, flags=0):
         return socket.getnameinfo(sockaddr, flags)
-        
+    
+    #################################################    I/O CALLBACKS
     def add_reader(self, fd, callback, *args):
         """Add a reader callback.  Return a Handler instance."""
         handler = TimedCall(None, callback, args)
@@ -415,6 +416,7 @@ descriptor.'''
         e = self._io.remove_error(fd)
         return w or e
     
+    #################################################    SIGNAL CALLBACKS
     def add_signal_handler(self, sig, callback, *args):
         '''Whenever signal ``sig`` is received, arrange for `callback(*args)` to
 be called. Returns a :class:`TimedCall` handler which can be used to cancel
@@ -436,12 +438,8 @@ default signal handler ``signal.SIG_DFL``.'''
             return True
         else:
             return False
-        
-    def wake(self):
-        '''Wake up the eventloop.'''
-        if self.running and self._waker:
-            self._waker.wake()
     
+    #################################################    SOCKET METHODS        
     def create_connection(self, protocol_factory, host=None, port=None,
                           ssl=None, family=0, proto=0, flags=0, sock=None,
                           local_addr=None, timeout=None):
@@ -536,7 +534,12 @@ will be stopped.'''
         res = sock_accept(self, sock)
         return maybe_async(res, event_loop=self, timeout=timeout)
         
-    ############################################################ NON PEP METHODS
+    #################################################    NON PEP METHODS
+    def wake(self):
+        '''Wake up the eventloop.'''
+        if self.running and self._waker:
+            self._waker.wake()
+            
     def call_repeatedly(self, interval, callback, *args):
         """Call a ``callback`` every ``interval`` seconds. It handles
 asynchronous results. If an error occur in the ``callback``, the chain is
@@ -551,7 +554,8 @@ the ``callback`` is scheduled at every loop."""
     def call_now_threadsafe(self, callback, *args):
         '''Same as :meth:`call_soon_threadsafe` with the only exception that
 if we are calling from the same thread of execution as this
-:class:`EventLoop`, the ``callback`` is called immediately.'''
+:class:`EventLoop`, the ``callback`` is called immediately. Otherwise
+:meth:`call_soon_threadsafe` is invoked.'''
         if self.tid != current_thread().ident:
             return self.call_soon_threadsafe(callback, *args)
         else:
@@ -563,10 +567,7 @@ if we are calling from the same thread of execution as this
         else:
             return callback in self._callbacks
 
-    ############################################################################
-    ##    INTERNALS
-    ############################################################################
-    
+    #################################################    INTERNALS    
     def _before_run(self):
         ct = setid(self)
         self._name = ct.name
@@ -598,7 +599,7 @@ if we are calling from the same thread of execution as this
 
     def _run_once(self, timeout=None):
         timeout = timeout or self.poll_timeout
-        self.num_loops += 1
+        self._num_loops += 1
         #
         # Compute the desired timeout
         if self._callbacks:
@@ -641,9 +642,11 @@ if we are calling from the same thread of execution as this
             callback(*args)
         except socket.error as e:
             if self._raise_loop_error(e):
-                log_failure(e, msg='Exception in event loop callback.')
+                Failure(sys.exc_info()).log(
+                    msg='Unhadled exception in event loop callback.')
         except Exception as e:
-            log_failure(e, msg='Exception in event loop callback.')
+            Failure(sys.exc_info()).log(
+                msg='Unhadled exception in event loop callback.')
 
     def _raise_loop_error(self, e):
         # Depending on python version and EventLoop implementation,

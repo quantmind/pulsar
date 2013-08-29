@@ -3,7 +3,7 @@ import hashlib
 from functools import partial
 
 from pulsar import HttpException, ProtocolError, ProtocolConsumer
-from pulsar import async, log_failure
+from pulsar import async
 from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
@@ -149,7 +149,6 @@ class WebSocketProtocol(ProtocolConsumer):
             
     def close(self, error=None):
         if not self.closed:
-            log_failure(error)
             self.closed = True
             self.handler.on_close(self)
             self.transport.close()
