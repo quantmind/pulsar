@@ -10,10 +10,7 @@ from time import sleep
 from .winprocess import WINEXE
 from .base import *
 
-__all__ = ['IOpoll',
-           'Epoll',
-           'Kqueue',
-           'close_on_exec',
+__all__ = ['close_on_exec',
            'Waker',
            'daemonize',
            'socketpair',
@@ -97,28 +94,6 @@ def socketpair(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0):
     lsock.close()
     return (ssock, csock)
 
-
-class IOpoll(IOselect):
-    '''The default windows IO poll class. Based on select.'''
-    def poll(self, timeout=None):
-        """Win32 select wrapper."""
-        if not (self.read_fds or self.write_fds):
-            # windows select() exits immediately when no sockets
-            if timeout is None:
-                timeout = 0.01
-            else:
-                timeout = min(timeout, 0.001)
-            sleep(timeout)
-            return ()
-        # windows doesn't process 'signals' inside select(), so we set a max
-        # time or ctrl-c will never be recognized
-        if timeout is None or timeout > 0.5:
-            timeout = 0.5
-        return super(IOpoll, self).poll(timeout)
-    
-
-Epoll = IOpoll
-Kqueue = IOpoll
 
 class Waker(object):
     '''In windows'''

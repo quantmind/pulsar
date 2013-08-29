@@ -10,9 +10,7 @@ import select
 
 from .base import *
 
-__all__ = ['IOpoll',
-           'Epoll',
-           'close_on_exec',
+__all__ = ['close_on_exec',
            'Waker',
            'daemonize',
            'socketpair',
@@ -126,35 +124,3 @@ class Waker(object):
         except (IOError, EOFError):
             pass
     
-if hasattr(select, 'epoll'):
-    IOpoll = select.epoll
-    
-    class Epoll(select.epoll, EpollInterface):
-        
-        def __init__(self, ep=None):
-            self._epoll = ep or select.epoll()
-        
-        def close(self):
-            self._epoll.close()
-            
-        def fileno(self):
-            return self._epoll.fileno()
-        
-        def fromfd(self, fd):
-            return self._epoll.fromfd(fd)
-        
-        def register(self, fd, events):
-            return self._epoll.register(fd, events)
-        
-        def modify(self, fd, events):
-            return self._epoll.modify(fd, events)
-        
-        def unregister(self, fd):
-            return self._epoll.unregister(fd)
-        
-        def poll(self, timeout=-1):
-            return self._epoll.poll(timeout=timeout)
-
-else:   #pragma    nocover
-    IOpoll = IOselect
-    Epoll = IOselect

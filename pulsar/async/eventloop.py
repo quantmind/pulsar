@@ -10,7 +10,7 @@ try:
 except ImportError: #pragma    nocover
     signal = None
 
-from pulsar.utils.system import IObase, close_on_exec
+from pulsar.utils.system import close_on_exec
 from pulsar.utils.pep import (default_timer, set_event_loop_policy,
                               set_event_loop, range,
                               EventLoop as BaseEventLoop, 
@@ -162,7 +162,7 @@ class LoopingCall(object):
                 self.event_loop._callbacks.append(self.handler)
                 
 
-class EventLoop(IObase, BaseEventLoop):
+class EventLoop(BaseEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API. The
 event loop is the place where most asynchronous operations are carried out.
 
