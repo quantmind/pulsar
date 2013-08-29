@@ -271,6 +271,8 @@ Utilities
 .. automodule:: pulsar.apps.test.utils
     :members:
 '''
+import sys
+
 import pulsar
 from pulsar.apps import tasks
 from pulsar.utils import events
@@ -380,6 +382,8 @@ class TestShowLeaks(TestOption):
     the memory leak report."""
     
 
+pyver = '%s.%s' % (sys.version_info[:2])
+
 class TestSuite(tasks.TaskQueue):
     '''An asynchronous test suite which works like a task queue where each task
 is a group of tests specified in a test class.
@@ -414,6 +418,12 @@ is a group of tests specified in a test class.
     def runner(self):
         '''Instance of :class:`TestRunner` driving the test case
 configuration and plugins.'''
+        if unittest is None:
+            raise ImportError('python %s requires unittest2 library for pulsar '
+                              'test suite application' % pyver)
+        if mock is None:
+            raise ImportError('python %s requires mock library for pulsar '
+                              'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
         stream = get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
