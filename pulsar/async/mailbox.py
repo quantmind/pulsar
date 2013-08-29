@@ -48,7 +48,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .defer import async, Failure, Deferred, maybe_failure
+from .defer import async, Failure, Deferred, maybe_failure, maybe_async
 from .protocols import ProtocolConsumer
 from .clients import SingleClient, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
@@ -148,7 +148,7 @@ protocol.'''
                 message = pickle.loads(msg.body)
             except Exception:
                 raise ProtocolError('Could not decode message body')
-            self._responde(message)
+            maybe_async(self._responde(message), event_loop=self.event_loop)
             msg = self._parser.decode()
     
     def start_request(self):
@@ -171,7 +171,6 @@ protocol.'''
             if isinstance(exc, Failure):
                 exc.log(msg='Connection lost with actor.', level='debug')
     
-    @async()
     def _responde(self, message):
         actor = get_actor()
         command = message.get('command')

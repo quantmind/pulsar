@@ -639,7 +639,7 @@ if we are calling from the same thread of execution as this
         
     def _call(self, callback, *args):
         try:
-            callback(*args)
+            maybe_async(callback(*args), event_loop=self)
         except socket.error as e:
             if self._raise_loop_error(e):
                 Failure(sys.exc_info()).log(

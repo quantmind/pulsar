@@ -22,12 +22,13 @@ import socket
 
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
-                                   format_address, ssl_context, ssl)
+                                   format_address, ssl_context, ssl,
+                                   WRITE_BUFFER_MAX_SIZE)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
 from .defer import multi_async, Deferred
-from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE, AF_INET6
+from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
     
 

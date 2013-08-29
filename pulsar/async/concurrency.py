@@ -178,6 +178,10 @@ ping the actor monitor.'''
         actor.bind_event('stop', actor._bye)
         actor.state = ACTOR_STATES.CLOSE
         actor.mailbox.close()
+        try:
+            self.cfg.when_exit(self)
+        except Exception:
+            pass
 
 
 class ProcessMixin(object):

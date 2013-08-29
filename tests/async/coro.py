@@ -9,21 +9,21 @@ def c_summation(value):
 
 
 class TestCoroDeferred(unittest.TestCase):
-    
+  
     def test_coroutine1(self):
         d1 = Deferred()
         a = maybe_async(c_summation(d1))
         d1.callback(1)
         self.assertEqual(a.result, 3)
         self.assertEqual(d1.result, 1)
-        
+
     def test_deferred1(self):
         a = Deferred()
         d1 = Deferred().add_callback(lambda r: a.callback(r+2))
         d1.callback(1)
         self.assertEqual(a.result, 3)
         self.assertEqual(d1.result, 3)
-        
+      
     def test_then1(self):
         a = Deferred()
         d1 = Deferred()

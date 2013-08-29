@@ -1,4 +1,5 @@
 import sys
+import gc
 from inspect import isclass
 from functools import partial
 import threading
@@ -6,11 +7,13 @@ import threading
 import pulsar
 from pulsar import is_failure, safe_async, get_actor, send, multi_async
 
+from .case import get_stream
 
 __all__ = ['run_on_arbiter',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
-           'AsyncAssert']
+           'AsyncAssert',
+           'show_leaks']
 
 
 class MockArbiter(pulsar.Arbiter):
@@ -172,3 +175,23 @@ def inject_async_assert(obj):
     if not hasattr(tcls, 'async'):
         tcls.async = AsyncAssert()
 
+
+def show_leaks(actor):
+    '''Function to show memory leaks on a processed-based actor.'''
+    if not actor.is_process():
+        return
+    gc.collect()
+    if gc.garbage:
+        MAX_SHOW = 100
+        stream = get_stream(actor.cfg)
+        stream.writeln('MEMORY LEAKS REPORT IN %s' % actor)
+        stream.writeln('Created %s uncollectable objects' % len(gc.garbage))
+        for obj in gc.garbage[:MAX_SHOW]:
+            stream.writeln('Type: %s' % type(obj))
+            stream.writeln('=================================================')
+            stream.writeln('%s' % obj)
+            stream.writeln('-------------------------------------------------')
+            stream.writeln('')
+            stream.writeln('')
+        if len(gc.garbage) > MAX_SHOW:
+            stream.writeln('And %d more' % (len(gc.garbage) - MAX_SHOW))

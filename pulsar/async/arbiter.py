@@ -79,6 +79,10 @@ def stop_arbiter(self):
         self.state = ACTOR_STATES.TERMINATE
     exit_code = self.exit_code or 0
     self.logger.info("Bye (exit code = %s)", exit_code)
+    try:
+        self.cfg.when_exit(self)
+    except Exception:
+        pass
     if exit_code:
         sys.exit(exit_code)
     

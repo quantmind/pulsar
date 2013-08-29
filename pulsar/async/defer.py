@@ -1,5 +1,6 @@
 import sys
 import traceback
+from weakref import ref
 from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, istraceback
@@ -21,6 +22,7 @@ __all__ = ['Deferred',
            'TimeoutError',
            'InvalidStateError',
            'Failure',
+           'FailureRefs',
            'maybe_failure',
            'coroutine_return',
            'is_failure',
@@ -62,6 +64,13 @@ remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
 
 pass_through = lambda result: result
+
+def remote_exc_info(exc_info):
+    if not isinstance(exc_info, remote_stacktrace):
+        exctype, value, tb = exc_info
+        tb = traceback.format_exception(exctype, value, tb)
+        exc_info = remote_stacktrace(exctype, value, tb)
+    return exc_info
 
 def coroutine_return(value=None):
     raise CoroutineReturn(value)
@@ -259,8 +268,38 @@ def async_while(timeout, while_clause, *args):
             result = while_clause(*args)
         yield result
     return maybe_async(_())
+
+
+class FailureRefs(object):
+    '''Avoid the use of ``__del__`` method in the failure class.'''
+    def __init__(self):
+        self._refs = {}
+        
+    def add(self, failure):
+        self._refs[ref(failure, self._log_failure)] = failure.exc_info
+    
+    def _log_failure(self, ref):
+        exc_info = self._refs.pop(ref, None)
+        if exc_info:
+            log_exc('Deferred Failure never retrieved', exc_info)
+
+    
+def log_exc(msg, exc_info, log=None, level=None):
+    error = exc_info[1]
+    if not getattr(error, '_failure_logged', False):
+        setattr(error, '_failure_logged', True)
+        log = log or logger()
+        if isinstance(exc_info, remote_stacktrace):
+            msg = msg or ''.join(exc_info[2])
+            exc_info = None
+        if level:
+            getattr(log, level)(msg)
+        else:
+            log.error(msg, exc_info=exc_info)
         
         
+failure_refs = FailureRefs()
+
 ############################################################### FAILURE
 class Failure(object):
     '''The asynchronous equivalent of python Exception. It has several useful
@@ -286,7 +325,7 @@ errors.
     _msg = 'Pulsar asynchronous failure'
     
     @classmethod
-    def make(cls, error):
+    def make(cls, error, frefs=None):
         if isinstance(error, cls):
             return error
         elif isinstance(error, BaseException):
@@ -298,11 +337,12 @@ errors.
                     exc_info = sys.exc_info()
         else:
             exc_info = error
-        return cls(exc_info)
-        
-    def __init__(self, exc_info):
+        return cls(exc_info, frefs)
+    
+    def __init__(self, exc_info, frefs=None):
         self.exc_info = exc_info
-        
+        (frefs or failure_refs).add(self)
+         
     def __repr__(self):
         if self.is_remote:
             tb = self.exc_info[2]
@@ -311,8 +351,8 @@ errors.
         return ''.join(tb)
     __str__ = __repr__
     
-    def __del__ (self):
-        self.log(msg='Deferred Failure never retrieved')
+    #def __del__ (self):
+    #    self.log(msg='Deferred Failure never retrieved')
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
@@ -367,19 +407,10 @@ back to perform logging and propagate the failure. For example::
 
     .add_errback(lambda failure: failure.log())
 '''
-        if not self.logged:
-            log = log or logger()
-            if self.is_remote:
-                msg = msg or str(self)
-                exc_info = None
-            else:
+        if not getattr(self.error, '_failure_logged', False):
+            if not self.is_remote:
                 msg = msg or self._msg
-                exc_info=self.exc_info
-            if level:
-                getattr(log, level)(msg)
-            else:
-                log.error(msg, exc_info=exc_info)
-        self.logged = True
+            log_exc(msg, self.exc_info, log, level)
         return self
     
     def mute(self):
@@ -389,11 +420,7 @@ back to perform logging and propagate the failure. For example::
        
     def __getstate__(self):
         self.log()
-        exctype, value, tb = self.exc_info
-        tb = traceback.format_exception(exctype, value, tb)
-        state = self.__dict__.copy()
-        state['exc_info'] = remote_stacktrace(exctype, value, tb)
-        return state
+        return {'exc_info': remote_exc_info(self.exc_info)}
 
 ############################################################### Deferred
 class Deferred(object):

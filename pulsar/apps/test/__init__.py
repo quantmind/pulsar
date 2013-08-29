@@ -367,6 +367,18 @@ class TestSequential(TestOption):
     validator = pulsar.validate_bool
     desc = """Run test functions sequentially. Don't run them asynchronously."""
     
+    
+class TestShowLeaks(TestOption):
+    name = "show_leaks"
+    flags = ['--show_leaks']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Shows memory leaks.
+    
+    Run the garbadge collector before a process-based actor dies and shows
+    the memory leak report."""
+    
 
 class TestSuite(tasks.TaskQueue):
     '''An asynchronous test suite which works like a task queue where each task
@@ -403,8 +415,7 @@ is a group of tests specified in a test class.
         '''Instance of :class:`TestRunner` driving the test case
 configuration and plugins.'''
         result_class = getattr(self, 'result_class', None)
-        r = unittest.TextTestRunner()
-        stream = r.stream
+        stream = get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
         abort_message = runner.configure(self.cfg)
         if abort_message:
@@ -451,6 +462,10 @@ configuration and plugins.'''
         loader = self.local.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
+        if self.cfg.show_leaks:
+            self.cfg.set('when_exit', show_leaks)
+            arbiter = pulsar.arbiter()
+            arbiter.cfg.set('when_exit', show_leaks)
         try:
             self.local.tests = tests = []
             self.runner.on_start()
@@ -503,3 +518,4 @@ configuration and plugins.'''
             else:
                 exit_code = 0
             raise pulsar.HaltServer(exit_code=exit_code)
+        

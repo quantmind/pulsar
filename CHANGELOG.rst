@@ -1,28 +1,45 @@
 Ver. 0.6.0 - Development
 =============================
-* Added :ref:`--io option <setting-poller>` for controlling the default
-  :class:`pulsar.Poller`.
-* Added support of ``kqueue`` :class:`pulsar.Poller` for systems supporting it.
-* New asynchronous :class:`pulsar.ThreadPool` for CPU bound operations.
-* Modified :class:`pulsar.Failure` implementation to handle one ``exc_info`` only and
-  better handling of unlogged failures.
-* Critical bug fix in python 3 WSGI server.
-* Added an asynchronous FIFO :class:`pulsar.Queue`.
-* Proxy server example uses the new :class:`pulsar.Queue`.
-* Added :func:`pulsar.async_while` utility function.
-* Socket servers handle IPV6 addresses.
-* Added :ref:`SSL support <socket-server-ssl>` for socket servers.
-* :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
-* Several fixes in the test application.
-* Tasks throw errors back to the coroutine via the generator ``throw`` method.
-* 50% Faster :class:`pulsar.Deferred` initialisation.
-* Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
-  deferred's callbacks without affecting the result.
-* Added :mod:`pulsar.utils.exceptions` documentation.
-* Added ``full_route`` and ``rule`` attributes to wsgi Router.
-* Critical bug fix in python Http parser (4bd8a54_).
-* Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
-* **500 regression tests**, **88% coverage**.
+* Several new features, critical bug fixes and increased tests coverage.
+* Asynchronous framework:
+    * Added support :class:`pulsar.Poller` base on ``kqueue`` for systems
+      supporting it.
+    * Modified :class:`pulsar.Failure` implementation to handle one ``exc_info``
+      only and better handling of unlogged failures.
+    * Added an asynchronous FIFO :class:`pulsar.Queue`.
+    * Added :func:`pulsar.async_while` utility function.
+    * Socket servers handle IPV6 addresses.
+    * Added :ref:`SSL support <socket-server-ssl>` for socket servers.
+    * Tasks throw errors back to the coroutine via the generator ``throw`` method.
+    * 50% Faster :class:`pulsar.Deferred` initialisation.
+    * Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
+      deferred's callbacks without affecting the result.
+  
+* Actors:
+    * New asynchronous :class:`pulsar.ThreadPool` for CPU bound operations.
+    * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
+    
+* Applications:
+    * Added :ref:`when_exit <setting-when_exit>` application hook.
+    * Added :ref:`--io option <setting-poller>` for controlling the default
+      :class:`pulsar.Poller`.
+    * Critical bug fix in python 3 WSGI server.
+    * Added ``full_route`` and ``rule`` attributes to wsgi Router.
+    * Added :ref:`--show_leaks option <setting-show_leaks>`
+      for showing a memory leak report after a test run.
+    * Added :ref:`-e, --exclude-labels option <setting-exclude_labels>`
+      for excluding labels in a test run.
+    * Several fixes in the test application.
+    * Critical bug fix in python Http parser (4bd8a54_).
+    * Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
+    
+* Examples:
+    * Proxy server example uses the new :class:`pulsar.Queue`.
+    
+* Miscellaneous:
+    * Added :mod:`pulsar.utils.exceptions` documentation.
+
+* **530 regression tests**, **88% coverage**.
 
 .. _4bd8a54: https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc
 

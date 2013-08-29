@@ -29,8 +29,12 @@ else: # pragma nocover
         mock = None
 
 
-__all__ = ['sequential', 'unittest', 'mock']
+__all__ = ['sequential', 'unittest', 'mock', 'get_stream']
 
+
+def get_stream(cfg):
+    r = unittest.TextTestRunner()
+    return r.stream
 
 def sequential(cls):
     '''Decorator for a :class:`TestCase` which cause its test functions to run

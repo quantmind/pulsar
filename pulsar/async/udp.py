@@ -2,9 +2,9 @@ import socket
 
 from pulsar.utils.structures import OrderedDict 
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
-                                   ECONNREFUSED)
+                                   ECONNREFUSED, WRITE_BUFFER_MAX_SIZE)
 
-from .internet import SocketTransport, WRITE_BUFFER_MAX_SIZE
+from .internet import SocketTransport
 from .consts import LOG_THRESHOLD_FOR_CONNLOST_WRITES
 
 

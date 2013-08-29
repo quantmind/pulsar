@@ -902,6 +902,19 @@ class WhenReady(Setting):
         This is a chance to setup :class:`pulsar.EventLoop` callbacks which
         can run periodically, at every loop or when some defined events occur.
         """
+        
+        
+class WhenExit(Setting):
+    name = "when_exit"
+    section = "Application Hooks"
+    validator = validate_callable(1)
+    type = "callable"
+    default = staticmethod(pass_through)
+    desc = """\
+        Called just before an actor is garbadge collected.
+        
+        This is a chance to check the actor status if needed.
+        """
 
 
 class ConnectionMade(Setting):

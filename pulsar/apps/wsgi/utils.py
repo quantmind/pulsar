@@ -227,23 +227,23 @@ def handle_wsgi_error(environ, failure):
         response.status_code = getattr(error, 'status', 500)
         response.headers.update(getattr(error, 'headers', None) or ())
     path = ' @ path "%s"' % environ.get('PATH_INFO','/')
-    e = dump_environ(environ)
-    exc_info = failure.exc_info
-    failure.logged = True
     status = response.status_code
-    if status == 500:
-        LOGGER.critical('Unhandled exception during WSGI response %s.%s',
-                        path, e, exc_info=exc_info)
-    else:
-        LOGGER.warning('WSGI %s status code %s.', status, path)
-        LOGGER.debug('%s', e, exc_info=exc_info)
+    if not failure.logged:  #Log only if not previously logged
+        e = dump_environ(environ)
+        failure.logged = True
+        if status == 500:
+            LOGGER.critical('Unhandled exception during WSGI response %s.%s',
+                            path, e, exc_info=failure.exc_info)
+        else:
+            LOGGER.warning('WSGI %s status code %s.', status, path)
+            LOGGER.debug('%s', e, exc_info=failure.exc_info)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         content = None
     else:
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
         try:
-            content = renderer(request, exc_info)
+            content = renderer(request, failure.exc_info)
             if is_failure(content):
                 content.log()
                 content = None

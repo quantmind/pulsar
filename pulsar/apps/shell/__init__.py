@@ -34,7 +34,6 @@ Implementation
    :members:
    :member-order: bysource
 '''
-import os
 import sys
 import code
 from time import time

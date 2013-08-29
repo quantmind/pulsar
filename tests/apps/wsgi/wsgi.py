@@ -104,7 +104,8 @@ class TestWsgiMiddleware(unittest.TestCase):
         try:
             raise ValueError('just a test')
         except ValueError:
-            failure = pulsar.maybe_failure(sys.exc_info())
+            failure = pulsar.Failure(sys.exc_info())
+            failure.mute()
             response = wsgi.handle_wsgi_error(environ, failure)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.content, (b'bla',))
