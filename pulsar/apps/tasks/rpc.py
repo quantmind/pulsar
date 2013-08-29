@@ -15,10 +15,7 @@ TaskQueue Rpc Mixin
    :members:
    :member-order: bysource
 '''
-from collections import Mapping
-
 import pulsar
-from pulsar.apps import wsgi
 from pulsar.apps import rpc
 
 from .backends import Task, TaskNotAvailable

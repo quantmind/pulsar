@@ -16,16 +16,16 @@ def echo(request, message):
     return message
 
 @command()
-def config(request, setget, name, *value):
+def config(request, setget, name, *values):
     setget = setget.lower()
     if setget == 'get':
         if len(values) > 0:
             raise CommandError('"config get" accept only one parameter')
-        return client.actor.cfg.get(name)
+        return request.actor.cfg.get(name)
     elif setget == 'set':
         if len(values) > 1:
             raise CommandError('"config get" accept only two parameters')
-        client.actor.cfg.set(name, value[0])
+        request.actor.cfg.set(name, values[0])
     else:
         raise CommandError('config must be followed by set or get')
 

@@ -1,7 +1,3 @@
-import sys
-import json
-from collections import deque
-
 from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 

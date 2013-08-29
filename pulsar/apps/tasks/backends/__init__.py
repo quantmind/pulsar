@@ -82,14 +82,12 @@ Scheduler Entry
 '''
 import sys
 import logging
-from collections import deque
 from datetime import datetime, timedelta
-from functools import partial
 
-from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, get_actor,
+from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT,
                     maybe_failure, is_failure, PulsarException, Backend,
                     Deferred, coroutine_return)
-from pulsar.utils.pep import itervalues, iteritems
+from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
 from pulsar.apps import pubsub

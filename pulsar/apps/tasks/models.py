@@ -63,10 +63,9 @@ Job registry
    :member-order: bysource
 
 '''
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from hashlib import sha1
 import logging
-import inspect
 
 from pulsar.utils.pep import iteritems
 from pulsar.utils.importer import import_modules

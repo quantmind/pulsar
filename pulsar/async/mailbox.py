@@ -39,18 +39,15 @@ Actor mailbox protocol
 '''
 import sys
 import logging
-import tempfile
-from functools import partial
 from collections import namedtuple
 
-from pulsar import platform, Config, ProtocolError, CommandError
-from pulsar.utils.pep import to_bytes, ispy3k, ispy3k, pickle, set_event_loop,\
-                             new_event_loop
+from pulsar import ProtocolError, CommandError
+from pulsar.utils.pep import pickle
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
-from .access import get_actor, set_actor
+from .access import get_actor
 from .defer import async, Failure, Deferred, maybe_failure
 from .protocols import ProtocolConsumer
 from .clients import SingleClient, Request

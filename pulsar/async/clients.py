@@ -1,4 +1,5 @@
 import socket
+import math
 from functools import partial, reduce
 from threading import Lock
 
@@ -6,7 +7,7 @@ from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.internet import is_socket_closed
 from .defer import is_failure, multi_async
 
-from .protocols import ProtocolConsumer, EventHandler, Producer
+from .protocols import EventHandler, Producer
 
 __all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
 
@@ -88,8 +89,6 @@ of available connections.
     connection.
 '''
         with self.lock:
-            #LOGGER.debug('release connection: available %s, concurrent %s',
-            #        self.available_connections, self.concurrent_connections)
             self._concurrent_connections.discard(connection)
             if connection.producer.can_reuse_connection(connection, response):
                 self._available_connections.add(connection)
@@ -135,7 +134,6 @@ of available connections.
                 # No consumer, The address was probably wrong. Connection Refused
                 return
             client = connection.producer
-            received = getattr(consumer, '_received_count', -1)
             # The connection has processed request before and the consumer
             # has never received data. If the client allows it, try to
             # reconnect, it was probably a stale connection.
@@ -145,11 +143,11 @@ of available connections.
                 lag = retries - 1
                 if lag:
                     lag = client.reconnect_time_lag(lag)
-                    LOGGER.debug('Try to reconnect in %s seconds', lag)
+                    connection.logger.debug('Reconnecting in %s seconds', lag)
                     loop = get_event_loop()
                     loop.call_later(lag, self._reconnect, client, consumer)
                 else:
-                    LOGGER.debug('Try to reconnect')
+                    connection.logger.debug('Reconnecting')
                     self._reconnect(client, consumer)
                     
     def _reconnect(self, client, consumer):

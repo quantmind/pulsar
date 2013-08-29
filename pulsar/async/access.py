@@ -2,7 +2,6 @@ import threading
 import logging
 from threading import current_thread
 from multiprocessing import current_process
-from multiprocessing.dummy import DummyProcess
 
 from pulsar.utils.pep import get_event_loop_policy
 

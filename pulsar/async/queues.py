@@ -96,6 +96,6 @@ available before ``timeout``.
                 item = Deferred(event_loop=self._event_loop, timeout=timeout)
                 self._waiting.append(item)
         try:
-            result = yield item
+            yield item
         except CancelledError:
             raise Empty

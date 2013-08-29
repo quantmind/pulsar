@@ -166,6 +166,8 @@ class Poller(object):
             else:
                 loop.logger.warning('Error callback without handler for file'
                                     ' descriptor %s.', fd)
+        if not processed:
+            loop.logger.warning('Could not handle events %s on %s', events, fd)
     
     def unregister(self, fd):
         '''Unregister file descriptor ``fd`` from the poller.'''

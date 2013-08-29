@@ -68,7 +68,6 @@ Backend
 '''
 import os
 import sys
-import logging
 from hashlib import sha1
 from inspect import getfile
 
@@ -79,7 +78,6 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.internet import parse_connection_string, get_connection_string
 from pulsar.utils.log import LocalMixin
 from pulsar.utils.importer import import_module
-from pulsar.utils.security import gen_unique_id
 
 __all__ = ['Application',
            'MultiApp',
@@ -605,7 +603,7 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
         
     def start(self):
         '''Use this method to start all applications at once.'''
-        apps = self.apps()
+        self.apps()
         arbiter = pulsar.arbiter()
         if arbiter:
             arbiter.start()

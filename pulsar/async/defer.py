@@ -2,7 +2,7 @@ import sys
 import traceback
 from collections import deque, namedtuple, Mapping
 from itertools import chain
-from inspect import isgenerator, istraceback, isclass
+from inspect import isgenerator, istraceback
 
 from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\

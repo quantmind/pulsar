@@ -63,7 +63,7 @@ passed to the :meth:`pulsar.Protocol.data_received` method."""
             self._paused_reading = False
             buffer = self._read_buffer
             self._read_buffer = []
-            for data in buffer:
+            for chunk in buffer:
                 self._data_received(chunk)
                 
     def pause_writing(self):
@@ -357,7 +357,7 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
     if ssl:
         sslcontext = None if isinstance(ssl, bool) else ssl
         transport = SocketStreamSslTransport(
-            event_loop, sock, protocol, sslcontext, waiter, server_side=False)
+            event_loop, sock, protocol, sslcontext, server_side=False)
     else:
         transport = SocketStreamTransport(event_loop, sock, protocol)
     yield transport, protocol

@@ -143,10 +143,6 @@ class PubSubBackend(pulsar.Backend):
         '''The set of clients for this :class:`PubSub` handler.'''
         return set()
     
-    @local_property
-    def lock(self):
-        return Lock()
-    
     @classmethod
     def path_from_scheme(cls, scheme):
         return 'pulsar.apps.pubsub.%s' % scheme
@@ -186,7 +182,7 @@ implemented by subclasses.'''
         for client in clients:
             try:
                 client(channel, message)
-            except Exception as e:
+            except Exception:
                 LOGGER.exception('Exception while processing pub/sub client. '
                                  'Removing it.')
                 remove.add(client)

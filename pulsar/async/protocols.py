@@ -5,7 +5,7 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
-from .defer import EventHandler, NOTHING, maybe_failure, multi_async, Failure
+from .defer import EventHandler, NOTHING, multi_async
 from .internet import Protocol, logger
 
 
@@ -334,6 +334,11 @@ and two :ref:`many times events <many-times-event>`:
             return self._transport._extra['addr']
         except Exception:
             return None
+        
+    @property
+    def logger(self):
+        '''The python logger for this connection.'''
+        return logger(self.event_loop)
     
     @property
     def consumer_factory(self):
@@ -426,7 +431,7 @@ response).'''
     ############################################################################
     ##    INTERNALS
     def _timed_out(self):
-        logger(self.event_loop).info(
+        self.logger.info(
             '%s idle for %d seconds. Closing connection.', self, self._timeout)
         self.close()
         

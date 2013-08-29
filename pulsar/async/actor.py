@@ -5,7 +5,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import setid
-from .defer import EventHandler, Failure, Deferred
+from .defer import EventHandler, Failure
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context

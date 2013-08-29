@@ -2,7 +2,7 @@ import io
 import socket
 from collections import deque
 
-from pulsar.utils.internet import WRITE_BUFFER_MAX_SIZE, nice_address
+from pulsar.utils.internet import nice_address
 
 from .access import logger
 
@@ -140,6 +140,7 @@ method.'''
         self._extra = extra
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
+        self._conn_lost = 0
         self._write_buffer = deque()
         self.logger = logger(event_loop)
         self._do_handshake()
@@ -206,6 +207,7 @@ method.'''
         """
         if not self.closing:
             self._closing = True
+            self._conn_lost += 1
             try:
                 self._sock.shutdown(socket.SHUT_RD)
             except Exception:

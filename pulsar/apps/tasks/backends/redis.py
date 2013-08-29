@@ -7,7 +7,7 @@ Requires python-stdnet_
 from stdnet import odm
 
 from pulsar import async
-from pulsar.apps.tasks import backends, states, LOGGER
+from pulsar.apps.tasks import backends, states
 from pulsar.utils.log import local_method
 
 
@@ -78,17 +78,12 @@ class TaskBackend(backends.TaskBackend):
             yield task_data.save()
         else:
             task_data = yield task_manager.new(id=task_id, **params)
-        task = task_data.as_task()
         yield task_id
     
     def get_task(self, task_id=None, timeout=1):
         task_manager = self.task_manager()
         #
         if not task_id:
-            #pool = task_manager.backend.client.connection_pool
-            #LOGGER.info('CONNECTIONS: AVAILABLE %s, CONCURRENT %s, TOTAL %s',
-            #            pool.available_connections, pool.concurrent_connections,
-            #            pool.available_connections+pool.concurrent_connections)
             task_id = yield task_manager.queue.block_pop_front(timeout=timeout)
         if task_id:
             task_data = yield self._get_task(task_id)

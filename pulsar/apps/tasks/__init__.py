@@ -65,12 +65,10 @@ Task queue application
 
 .. _celery: http://celeryproject.org/
 '''
-import os
 from datetime import datetime
 
 import pulsar
-from pulsar import to_string, command
-from pulsar.utils.log import local_property
+from pulsar import command
 from pulsar.utils.config import section_docs
 
 from .models import *

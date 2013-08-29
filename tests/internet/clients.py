@@ -1,3 +1,4 @@
+'''test classes for socket clients.'''
 import socket
 
 from pulsar import Deferred
