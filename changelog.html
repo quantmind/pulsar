@@ -69,20 +69,75 @@
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="ver-0-6-0-development">
 <h2>Ver. 0.6.0 - Development<a class="headerlink" href="#ver-0-6-0-development" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>More design and API docs.</li>
-<li>Socket servers handle IPV6 adresses.</li>
-<li><a class="reference internal" href="design.html#actor-hooks"><em>Actor&#8217;s hooks can be asynchronous</em></a>.</li>
-<li>Several fixes in the test application.</li>
+<ul>
+<li><p class="first">Several new features, critical bug fixes and increased tests coverage.</p>
+</li>
+<li><dl class="first docutils">
+<dt>Asynchronous framework:</dt>
+<dd><ul class="first last simple">
+<li>Created the <a class="reference internal" href="api/async.html#pulsar.Poller" title="pulsar.Poller"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Poller</span></tt></a> base class for implementing different
+types of event loop pollers. Implementation available for <tt class="docutils literal"><span class="pre">epoll</span></tt>,
+<tt class="docutils literal"><span class="pre">kqueue</span></tt> and <tt class="docutils literal"><span class="pre">select</span></tt>.</li>
+<li>Modified <a class="reference internal" href="api/async.html#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Failure</span></tt></a> implementation to handle one <tt class="docutils literal"><span class="pre">exc_info</span></tt>
+only and better handling of unlogged failures.</li>
+<li>Added an asynchronous FIFO <a class="reference internal" href="api/async.html#pulsar.Queue" title="pulsar.Queue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Queue</span></tt></a>.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async_while" title="pulsar.async_while"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.async_while()</span></tt></a> utility function.</li>
+<li>Socket servers handle IPV6 addresses.</li>
+<li>Added <a class="reference internal" href="apps/socket.html#socket-server-ssl"><em>SSL support</em></a> for socket servers.</li>
 <li>Tasks throw errors back to the coroutine via the generator <tt class="docutils literal"><span class="pre">throw</span></tt> method.</li>
 <li>50% Faster <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> initialisation.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.Deferred.then" title="pulsar.Deferred.then"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.then()</span></tt></a> method for adding a deferred to a
 deferred&#8217;s callbacks without affecting the result.</li>
-<li>Added <a class="reference internal" href="api/exceptions.html#module-pulsar.utils.exceptions" title="pulsar.utils.exceptions"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.exceptions</span></tt></a> documentation.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Actors:</dt>
+<dd><ul class="first last simple">
+<li>New asynchronous <a class="reference internal" href="api/actor.html#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ThreadPool</span></tt></a> for CPU bound operations.</li>
+<li><a class="reference internal" href="design.html#actor-hooks"><em>Actor&#8217;s hooks can be asynchronous</em></a>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Applications:</dt>
+<dd><ul class="first last simple">
+<li>Added <a class="reference internal" href="settings.html#setting-when-exit"><em>when_exit</em></a> application hook.</li>
+<li>Added <a class="reference internal" href="settings.html#setting-poller"><em>&#8211;io option</em></a> for controlling the default
+<a class="reference internal" href="api/async.html#pulsar.Poller" title="pulsar.Poller"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Poller</span></tt></a>.</li>
+<li>Critical bug fix in python 3 WSGI server.</li>
 <li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
+<li>Added <a class="reference internal" href="settings.html#setting-show-leaks"><em>&#8211;show_leaks option</em></a>
+for showing a memory leak report after a test run.</li>
+<li>Added <a class="reference internal" href="settings.html#setting-exclude-labels"><em>-e, &#8211;exclude-labels option</em></a>
+for excluding labels in a test run.</li>
+<li>Several fixes in the test application.</li>
 <li>Critical bug fix in python Http parser (<a class="reference external" href="https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc">4bd8a54</a>).</li>
 <li>Bug fix in <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.Router</span></tt> metaclass.</li>
-<li><strong>500 regression tests</strong>, <strong>88% coverage</strong>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Examples:</dt>
+<dd><ul class="first last simple">
+<li>Proxy server example uses the new <a class="reference internal" href="api/async.html#pulsar.Queue" title="pulsar.Queue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Queue</span></tt></a>.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Miscellaneous:</dt>
+<dd><ul class="first last simple">
+<li>Added <a class="reference internal" href="api/exceptions.html#module-pulsar.utils.exceptions" title="pulsar.utils.exceptions"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.exceptions</span></tt></a> documentation.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>530 regression tests</strong>, <strong>88% coverage</strong>.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="ver-0-5-2-2013-june-30">

@@ -109,14 +109,27 @@ to bind the server to:</p>
 <h3>keep_alive<a class="headerlink" href="#keep-alive" title="Permalink to this headline">¶</a></h3>
 <p>To control how long a server <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Connection</span></tt></a> is kept alive after the
 last read from the remote client, one can use the
-<a class="reference internal" href="../settings.html#setting-keep-alive"><em>keepalive</em></a> setting:</p>
+<a class="reference internal" href="../settings.html#setting-keep-alive"><em>keep-alive</em></a> setting:</p>
 <div class="highlight-python"><pre>python script.py --keep-alive 10</pre>
 </div>
 <p>will close client connections which have been idle for 10 seconds.</p>
 </div>
+<div class="section" id="tls-ssl-support">
+<span id="socket-server-ssl"></span><h3>TLS/SSL support<a class="headerlink" href="#tls-ssl-support" title="Permalink to this headline">¶</a></h3>
+<p>Transport Layer Security (often known as Secure Sockets Layer) is handled by
+the <a class="reference internal" href="../settings.html#setting-cert-file"><em>cert-file</em></a> and <a class="reference internal" href="../settings.html#setting-key-file"><em>key-file</em></a>
+settings:</p>
+<div class="highlight-python"><pre>python script.py --cert-file server.crt --key-file server.key</pre>
+</div>
+</div>
 </div>
 <div class="section" id="concurrency">
 <span id="socket-server-concurrency"></span><h2>Concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h2>
+<p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in multi-process mode (default),
+the application, create a listening socket in the parent (Arbiter) process
+and then spawn several process-based actors which listen on the
+same shared socket.
+This is how, pre-forking servers operate.</p>
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
 <div class="highlight-python"><pre>python script.py --concurrency thread</pre>
 </div>
@@ -200,6 +213,7 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
 <li><a class="reference internal" href="#bind">bind</a></li>
 <li><a class="reference internal" href="#backlog">backlog</a></li>
 <li><a class="reference internal" href="#keep-alive">keep_alive</a></li>
+<li><a class="reference internal" href="#tls-ssl-support">TLS/SSL support</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#concurrency">Concurrency</a></li>

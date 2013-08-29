@@ -219,8 +219,9 @@ have installed two events loops: the event loop running on the
 <p>The <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> needs to be initialised via the
 <a class="reference internal" href="api/actor.html#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.create_thread_pool</span></tt></a> method before it can be used.</p>
 </div>
+</div>
 <div class="section" id="spawning">
-<span id="design-spawning"></span><h3>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h3>
+<span id="design-spawning"></span><h2>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h2>
 <p>Spawning a new actor is achieved via the <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">spawn</span>
 
@@ -250,10 +251,17 @@ a new actor.</li>
 hand shake is done, it sends the response (the <a class="reference internal" href="api/actor.html#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> of the
 spawned actor) to the original actor.</li>
 </ul>
-<p id="handshake">The actor <strong>hand-shake</strong> is the mechanism with which a <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> register
-its <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>mailbox address</em></a> with the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> so that
-the arbiter can monitor its behavior. If the hand-shake fails, the spawned
-actor will eventually stop.</p>
+<div class="section" id="handshake">
+<span id="id2"></span><h3>Handshake<a class="headerlink" href="#handshake" title="Permalink to this headline">¶</a></h3>
+<p>The actor <strong>hand-shake</strong> is the mechanism with which an <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> register
+its <a class="reference internal" href="tutorials/messages.html#tutorials-messages"><em>mailbox address</em></a> with its manager.
+The actor manager is either a <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a> or the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>
+depending on which spawned the actor.</p>
+<p>The handshake occurs when the monitor receives, for the first time,
+the actor <a class="reference internal" href="#actor-notify-command"><em>notify message</em></a>.</p>
+<p>For the curious, the handshake is responsible for setting the
+<a class="reference internal" href="api/actor.html#pulsar.ActorProxyMonitor.mailbox" title="pulsar.ActorProxyMonitor.mailbox"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor.mailbox</span></tt></a> attribute.</p>
+<p>If the hand-shake fails, the spawned actor will eventually stop.</p>
 </div>
 <div class="section" id="hooks">
 <span id="actor-hooks"></span><h3>Hooks<a class="headerlink" href="#hooks" title="Permalink to this headline">¶</a></h3>
@@ -294,31 +302,46 @@ its file descriptor with the <a class="reference internal" href="api/actor.html#
 <p><strong>stop</strong></p>
 <p>Fired just before the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is garbage collected</p>
 </div>
+</div>
 <div class="section" id="commands">
-<span id="actor-commands"></span><h3>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h3>
+<span id="actor-commands"></span><h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
 <p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> communicate with a remote <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> by <em>sending</em> an
 <strong>action</strong> to perform. This action takes the form of a <strong>command</strong> name and
 optional positional and key-valued parameters. It is possible to add new
 commands via the <a class="reference internal" href="api/actor.html#pulsar.command" title="pulsar.command"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.command</span></tt></a> decorator as explained in the
 <a class="reference internal" href="api/actor.html#api-remote-commands"><em>api documentation</em></a>.</p>
-<p><strong>ping</strong></p>
+<div class="section" id="ping">
+<h3>ping<a class="headerlink" href="#ping" title="Permalink to this headline">¶</a></h3>
 <p>Ping the remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt> and receive an asynchronous <tt class="docutils literal"><span class="pre">pong</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;ping&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>echo</strong></p>
+</div>
+<div class="section" id="echo">
+<h3>echo<a class="headerlink" href="#echo" title="Permalink to this headline">¶</a></h3>
 <p>received an asynchronous echo from a remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="s">&#39;Hello!&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p id="actor-info-command"><strong>info</strong></p>
+</div>
+<div class="section" id="info">
+<span id="actor-info-command"></span><h3>info<a class="headerlink" href="#info" title="Permalink to this headline">¶</a></h3>
 <p>Request information about a remote actor <tt class="docutils literal"><span class="pre">abcd</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abcd&#39;</span><span class="p">,</span> <span class="s">&#39;info&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The asynchronous result will be called back with the dictionary returned
 by the <a class="reference internal" href="api/actor.html#pulsar.Actor.info" title="pulsar.Actor.info"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.info()</span></tt></a> method.</p>
-<p><strong>run</strong></p>
+</div>
+<div class="section" id="notify">
+<span id="actor-notify-command"></span><h3>notify<a class="headerlink" href="#notify" title="Permalink to this headline">¶</a></h3>
+<p>This message is used periodically by actors, to notify their manager. If an
+actor fails to notify itself on a regular basis, its manager will shut it down.
+The first <tt class="docutils literal"><span class="pre">notify</span></tt> message is sent to the manager as soon as the actor is up
+and running so that the <a class="reference internal" href="#handshake"><em>handshake</em></a> can occur.</p>
+</div>
+<div class="section" id="run">
+<span id="actor-run-command"></span><h3>run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h3>
 <p>Run a function on a remote actor. The function must accept actor as its initial parameter:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">dosomething</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="o">...</span>
@@ -326,15 +349,17 @@ by the <a class="reference internal" href="api/actor.html#pulsar.Actor.info" tit
 <span class="n">send</span><span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">dosomething</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p id="actor-stop-command"><strong>stop</strong></p>
+</div>
+<div class="section" id="stop">
+<span id="actor-stop-command"></span><h3>stop<a class="headerlink" href="#stop" title="Permalink to this headline">¶</a></h3>
 <p>Tell the remote actor <tt class="docutils literal"><span class="pre">abc</span></tt> to gracefully shutdown:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">send</span><span class="p">(</span><span class="s">&#39;abc&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="monitors">
-<span id="monitor"></span><h3>Monitors<a class="headerlink" href="#monitors" title="Permalink to this headline">¶</a></h3>
 </div>
+<div class="section" id="monitors">
+<span id="monitor"></span><h2>Monitors<a class="headerlink" href="#monitors" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="exceptions">
 <span id="exception-design"></span><h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
@@ -379,12 +404,23 @@ framework, the library ships with the <a class="reference internal" href="api/ap
 <li><a class="reference internal" href="#implementation">Implementation</a></li>
 <li><a class="reference internal" href="#io-bound">IO-bound</a></li>
 <li><a class="reference internal" href="#cpu-bound">CPU-bound</a></li>
-<li><a class="reference internal" href="#spawning">Spawning</a></li>
-<li><a class="reference internal" href="#hooks">Hooks</a></li>
-<li><a class="reference internal" href="#commands">Commands</a></li>
-<li><a class="reference internal" href="#monitors">Monitors</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#spawning">Spawning</a><ul>
+<li><a class="reference internal" href="#handshake">Handshake</a></li>
+<li><a class="reference internal" href="#hooks">Hooks</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#commands">Commands</a><ul>
+<li><a class="reference internal" href="#ping">ping</a></li>
+<li><a class="reference internal" href="#echo">echo</a></li>
+<li><a class="reference internal" href="#info">info</a></li>
+<li><a class="reference internal" href="#notify">notify</a></li>
+<li><a class="reference internal" href="#run">run</a></li>
+<li><a class="reference internal" href="#stop">stop</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#monitors">Monitors</a></li>
 <li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 <li><a class="reference internal" href="#application-framework">Application Framework</a></li>
 </ul>

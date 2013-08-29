@@ -105,14 +105,14 @@
     <span class="sd">&#39;&#39;&#39;A :class:`PulsarException` raised when trying to start an actor already started&#39;&#39;&#39;</span>
 
 </div>
-<span class="k">class</span> <span class="nc">HaltServer</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+<div class="viewcode-block" id="HaltServer"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HaltServer">[docs]</a><span class="k">class</span> <span class="nc">HaltServer</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Halt&#39;</span><span class="p">,</span> <span class="n">signal</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">HaltServer</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="n">exit_code</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">signal</span> <span class="o">=</span> <span class="n">signal</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">CannotCallBackError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="k">pass</span>
 

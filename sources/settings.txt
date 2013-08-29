@@ -2,9 +2,9 @@
 
 .. module:: pulsar.utils.config
 
-=======================
+====================
 Settings
-=======================
+====================
 
 This is the full list of :ref:`pulsar settings <api-config>` available for
 configuring your pulsar server or applications. Pulsar can
@@ -17,6 +17,6 @@ of configuration parameters with the only exception of the
 .. pulsar_settings::
 
 Utilities
-================
+==============
 
 .. autofunction:: pass_through

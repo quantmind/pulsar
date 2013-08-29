@@ -189,6 +189,14 @@ module.</p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">Pulsar</span></tt></p>
 <p>Internal setting that is adjusted for each type of application.</p>
 </div>
+<div class="section" id="poller">
+<span id="setting-poller"></span><h3>poller<a class="headerlink" href="#poller" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--io</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">epoll</span> <span class="pre">on</span> <span class="pre">linux,</span> <span class="pre">kqueue</span> <span class="pre">on</span> <span class="pre">mac,</span> <span class="pre">select</span> <span class="pre">on</span> <span class="pre">windows</span></tt></p>
+<p>Specify the default selector used for I/O event polling.</p>
+<p>The default value is the best possible for the system running the
+application.</p>
+</div>
 </div>
 <div class="section" id="worker-processes">
 <span id="setting-section-worker-processes"></span><h2>Worker Processes<a class="headerlink" href="#worker-processes" title="Permalink to this headline">¶</a></h2>
@@ -221,17 +229,6 @@ to help limit the damage of memory leaks.</p>
 <p>If this is set to zero (the default) then the automatic worker
 restarts are disabled.</p>
 </div>
-<div class="section" id="backlog">
-<span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
-<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
-<p>The maximum number of queued connections in a socket.</p>
-<p>This refers to the number of clients that can be waiting to be served.
-Exceeding this number results in the client getting an error when
-attempting to connect. It should only affect servers under significant
-load.
-Must be a positive integer. Generally set in the 64-2048 range.</p>
-</div>
 <div class="section" id="timeout">
 <span id="setting-timeout"></span><h3>timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-t</span></tt>, <tt class="docutils literal"><span class="pre">--timeout</span></tt></p>
@@ -260,6 +257,12 @@ invoking the function.</p>
 <p>Called just before a worker starts its event loop.</p>
 <p>This is a chance to setup <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a> callbacks which
 can run periodically, at every loop or when some defined events occur.</p>
+</div>
+<div class="section" id="when-exit">
+<span id="setting-when-exit"></span><h3>when_exit<a class="headerlink" href="#when-exit" title="Permalink to this headline">¶</a></h3>
+<p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
+<p>Called just before an actor is garbadge collected.</p>
+<p>This is a chance to check the actor status if needed.</p>
 </div>
 <div class="section" id="connection-made">
 <span id="setting-connection-made"></span><h3>connection_made<a class="headerlink" href="#connection-made" title="Permalink to this headline">¶</a></h3>
@@ -309,14 +312,28 @@ An IP is a valid HOST.</p>
 <p>The number of seconds to keep an idle client connection
 open.</p>
 </div>
+<div class="section" id="backlog">
+<span id="setting-backlog"></span><h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">socket</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--backlog</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">2048</span></tt></p>
+<p>The maximum number of queued connections in a socket.</p>
+<p>This refers to the number of clients that can be waiting to be served.
+Exceeding this number results in the client getting an error when
+attempting to connect. It should only affect servers under significant
+load.
+Must be a positive integer. Generally set in the 64-2048 range.</p>
+</div>
 <div class="section" id="key-file">
 <span id="setting-key-file"></span><h3>key_file<a class="headerlink" href="#key-file" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">socket</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--key-file</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>SSL key file</p>
 </div>
 <div class="section" id="cert-file">
 <span id="setting-cert-file"></span><h3>cert_file<a class="headerlink" href="#cert-file" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">socket</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--cert-file</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>SSL certificate file</p>
@@ -372,6 +389,8 @@ tasks according to their schedule.</p>
 </div>
 <div class="section" id="test">
 <span id="setting-section-test"></span><h2>Test<a class="headerlink" href="#test" title="Permalink to this headline">¶</a></h2>
+<p>This section covers configuration parameters used by the
+<a class="reference internal" href="apps/test.html#apps-test"><em>Asynchronous/Parallel test suite</em></a>.</p>
 <div class="section" id="verbosity">
 <span id="setting-verbosity"></span><h3>verbosity<a class="headerlink" href="#verbosity" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
@@ -394,6 +413,13 @@ and failed.</p>
 <p>Optional test labels to run. If not provided all tests are run.</p>
 <p>To see available labels use the -l option.</p>
 </div>
+<div class="section" id="exclude-labels">
+<span id="setting-exclude-labels"></span><h3>exclude_labels<a class="headerlink" href="#exclude-labels" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">-e</span></tt>, <tt class="docutils literal"><span class="pre">--exclude-labels</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
+<p>Exclude a group o labels from running.</p>
+</div>
 <div class="section" id="size">
 <span id="setting-size"></span><h3>size<a class="headerlink" href="#size" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
@@ -414,6 +440,16 @@ and failed.</p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--sequential</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Run test functions sequentially. Don&#8217;t run them asynchronously.</p>
+</div>
+<div class="section" id="show-leaks">
+<span id="setting-show-leaks"></span><h3>show_leaks<a class="headerlink" href="#show-leaks" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--show-leaks</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Shows memory leaks.</p>
+<blockquote>
+<div>Run the garbadge collector before a process-based actor dies and shows
+the memory leak report.</div></blockquote>
 </div>
 </div>
 <div class="section" id="utilities">
@@ -456,19 +492,20 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 <li><a class="reference internal" href="#logconfig">logconfig</a></li>
 <li><a class="reference internal" href="#process-name">process_name</a></li>
 <li><a class="reference internal" href="#default-process-name">default_process_name</a></li>
+<li><a class="reference internal" href="#poller">poller</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#worker-processes">Worker Processes</a><ul>
 <li><a class="reference internal" href="#workers">workers</a></li>
 <li><a class="reference internal" href="#concurrency">concurrency</a></li>
 <li><a class="reference internal" href="#max-requests">max_requests</a></li>
-<li><a class="reference internal" href="#backlog">backlog</a></li>
 <li><a class="reference internal" href="#timeout">timeout</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#application-hooks">Application Hooks</a><ul>
 <li><a class="reference internal" href="#post-fork">post_fork</a></li>
 <li><a class="reference internal" href="#when-ready">when_ready</a></li>
+<li><a class="reference internal" href="#when-exit">when_exit</a></li>
 <li><a class="reference internal" href="#connection-made">connection_made</a></li>
 <li><a class="reference internal" href="#connection-lost">connection_lost</a></li>
 <li><a class="reference internal" href="#pre-request">pre_request</a></li>
@@ -478,6 +515,7 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 <li><a class="reference internal" href="#socket-servers">Socket Servers</a><ul>
 <li><a class="reference internal" href="#bind">bind</a></li>
 <li><a class="reference internal" href="#keep-alive">keep_alive</a></li>
+<li><a class="reference internal" href="#backlog">backlog</a></li>
 <li><a class="reference internal" href="#key-file">key_file</a></li>
 <li><a class="reference internal" href="#cert-file">cert_file</a></li>
 </ul>
@@ -493,9 +531,11 @@ used as default by <a class="reference internal" href="#setting-section-applicat
 <li><a class="reference internal" href="#verbosity">verbosity</a></li>
 <li><a class="reference internal" href="#test-timeout">test_timeout</a></li>
 <li><a class="reference internal" href="#labels">labels</a></li>
+<li><a class="reference internal" href="#exclude-labels">exclude_labels</a></li>
 <li><a class="reference internal" href="#size">size</a></li>
 <li><a class="reference internal" href="#list-labels">list_labels</a></li>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
+<li><a class="reference internal" href="#show-leaks">show_leaks</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#utilities">Utilities</a></li>

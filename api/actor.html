@@ -309,7 +309,8 @@ parameters <em>params</em>.</p>
 <dt id="pulsar.Actor.stop">
 <tt class="descname">stop</tt><big>(</big><em>exc=None</em><big>)</big><a class="headerlink" href="#pulsar.Actor.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop the actor by closing its <a class="reference internal" href="#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">mailbox</span></tt></a> which
-in turns stops the <a class="reference internal" href="#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a>. Once everything is closed
+in turns stops the <tt class="xref py py-attr docutils literal"><span class="pre">eve</span>
+<span class="pre">nt_loop</span></tt>. Once everything is closed
 properly this actor will go out of scope.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -421,92 +422,6 @@ from another actor.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="poolmixin">
-<h3>PoolMixin<a class="headerlink" href="#poolmixin" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.PoolMixin">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">PoolMixin</tt><big>(</big><em>impl</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Not an actor per se, this is a mixin for <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
-which manages a pool (group) of actors. Given an <a class="reference internal" href="#pulsar.PoolMixin.actor_class" title="pulsar.PoolMixin.actor_class"><tt class="xref py py-attr docutils literal"><span class="pre">actor_class</span></tt></a>
-it makes sure there are always <tt class="xref py py-attr docutils literal"><span class="pre">cfg.workers</span></tt> alive.
-It is used by both the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> and the <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a> classes.</p>
-<dl class="attribute">
-<dt id="pulsar.PoolMixin.managed_actors">
-<tt class="descname">managed_actors</tt><a class="headerlink" href="#pulsar.PoolMixin.managed_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>dictionary with keys given by actor&#8217;s ids and values by
-<a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> instances. These are the actors managed by the
-pool.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.PoolMixin.actor_class">
-<tt class="descname">actor_class</tt><a class="headerlink" href="#pulsar.PoolMixin.actor_class" title="Permalink to this definition">¶</a></dt>
-<dd><p>The class derived form <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> which the monitor manages
-during its life time.</p>
-<blockquote>
-<div>Default: <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></div></blockquote>
-<p>alias of <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.spawn">
-<tt class="descname">spawn</tt><big>(</big><em>actor_class=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.spawn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn a new <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and return its
-<a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.actorparams">
-<tt class="descname">actorparams</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.actorparams" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a dictionary of parameters to be passed to the
-spawn method when creating new actors.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.manage_actors">
-<tt class="descname">manage_actors</tt><big>(</big><em>stop=False</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.manage_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> which are not alive from the
-<a class="reference internal" href="#pulsar.PoolMixin.managed_actors" title="pulsar.PoolMixin.managed_actors"><tt class="xref py py-class docutils literal"><span class="pre">PoolMixin.managed_actors</span></tt></a> and return the number of actors still alive.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stop</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> stops all alive actor.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.manage_actor">
-<tt class="descname">manage_actor</tt><big>(</big><em>actor</em>, <em>stop=False</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.manage_actor" title="Permalink to this definition">¶</a></dt>
-<dd><p>If an actor failed to notify itself to the arbiter for more than
-the timeout. Stop the actor.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.spawn_actors">
-<tt class="descname">spawn_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.spawn_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spawn new actors if needed. If the <a class="reference internal" href="#pulsar.PoolMixin" title="pulsar.PoolMixin"><tt class="xref py py-class docutils literal"><span class="pre">PoolMixin</span></tt></a> is spawning
-do nothing.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.stop_actors">
-<tt class="descname">stop_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.stop_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maintain the number of workers by spawning or killing
-as required.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.PoolMixin.close_actors">
-<tt class="descname">close_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.close_actors" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close all managed <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="monitor">
 <h3>Monitor<a class="headerlink" href="#monitor" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -593,6 +508,95 @@ and the <a class="reference external" href="http://www.tornadoweb.org/">tornado<
 </dd></dl>
 
 </div>
+</div>
+<div class="section" id="actor-internals">
+<h2>Actor Internals<a class="headerlink" href="#actor-internals" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="poolmixin">
+<h3>PoolMixin<a class="headerlink" href="#poolmixin" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.PoolMixin">
+<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">PoolMixin</tt><big>(</big><em>impl</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not an actor per se, this is a mixin for <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
+which manages a pool (group) of actors. Given an <a class="reference internal" href="#pulsar.PoolMixin.actor_class" title="pulsar.PoolMixin.actor_class"><tt class="xref py py-attr docutils literal"><span class="pre">actor_class</span></tt></a>
+it makes sure there are always <tt class="xref py py-attr docutils literal"><span class="pre">cfg.workers</span></tt> alive.
+It is used by both the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> and the <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a> classes.</p>
+<dl class="attribute">
+<dt id="pulsar.PoolMixin.managed_actors">
+<tt class="descname">managed_actors</tt><a class="headerlink" href="#pulsar.PoolMixin.managed_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>dictionary with keys given by actor&#8217;s ids and values by
+<a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> instances. These are the actors managed by the
+pool.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.PoolMixin.actor_class">
+<tt class="descname">actor_class</tt><a class="headerlink" href="#pulsar.PoolMixin.actor_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class derived form <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> which the monitor manages
+during its life time.</p>
+<blockquote>
+<div>Default: <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></div></blockquote>
+<p>alias of <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.spawn">
+<tt class="descname">spawn</tt><big>(</big><em>actor_class=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.spawn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawn a new <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and return its
+<a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.actorparams">
+<tt class="descname">actorparams</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.actorparams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dictionary of parameters to be passed to the
+spawn method when creating new actors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.manage_actors">
+<tt class="descname">manage_actors</tt><big>(</big><em>stop=False</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.manage_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> which are not alive from the
+<a class="reference internal" href="#pulsar.PoolMixin.managed_actors" title="pulsar.PoolMixin.managed_actors"><tt class="xref py py-class docutils literal"><span class="pre">PoolMixin.managed_actors</span></tt></a> and return the number of actors still alive.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stop</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> stops all alive actor.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.manage_actor">
+<tt class="descname">manage_actor</tt><big>(</big><em>actor</em>, <em>stop=False</em><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.manage_actor" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an actor failed to notify itself to the arbiter for more than
+the timeout. Stop the actor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.spawn_actors">
+<tt class="descname">spawn_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.spawn_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spawn new actors if needed. If the <a class="reference internal" href="#pulsar.PoolMixin" title="pulsar.PoolMixin"><tt class="xref py py-class docutils literal"><span class="pre">PoolMixin</span></tt></a> is spawning
+do nothing.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.stop_actors">
+<tt class="descname">stop_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.stop_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maintain the number of workers by spawning or killing
+as required.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.PoolMixin.close_actors">
+<tt class="descname">close_actors</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.PoolMixin.close_actors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close all managed <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="actorproxy">
 <h3>ActorProxy<a class="headerlink" href="#actorproxy" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -650,13 +654,17 @@ is fully functional.</p>
 <dt id="pulsar.ActorProxyMonitor">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">ActorProxyMonitor</tt><big>(</big><em>impl</em><big>)</big><a class="headerlink" href="#pulsar.ActorProxyMonitor" title="Permalink to this definition">¶</a></dt>
 <dd><p>A specialised <a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> class which contains additional
-information about the remote underlying <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a>. Unlike the
-<a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorProxy</span></tt></a> class, instances of this class serialise
-into their <tt class="xref py py-attr docutils literal"><span class="pre">proxy</span></tt> attribute..</p>
+information about the remote underlying <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a>.
+Instances of this class serialise into <a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>.</p>
+<p>The <a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> is special since it lives in the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>
+domain and it is used by the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> (or a <a class="reference internal" href="#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>) to
+monitor the state of the spawned actor.</p>
 <dl class="attribute">
 <dt id="pulsar.ActorProxyMonitor.impl">
 <tt class="descname">impl</tt><a class="headerlink" href="#pulsar.ActorProxyMonitor.impl" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.Concurrency" title="pulsar.Concurrency"><tt class="xref py py-class docutils literal"><span class="pre">Concurrency</span></tt></a> instance for the remote <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>.</p>
+<dd><p>The <a class="reference internal" href="#pulsar.Concurrency" title="pulsar.Concurrency"><tt class="xref py py-class docutils literal"><span class="pre">Concurrency</span></tt></a> instance for the remote <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>. This
+dictionary is constantly updated by the remote actor by sending the
+<a class="reference internal" href="../design.html#actor-info-command"><em>info message</em></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -665,10 +673,33 @@ into their <tt class="xref py py-attr docutils literal"><span class="pre">proxy<
 <dd><p>Dictionary of information regarding the remote <a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a></p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pulsar.ActorProxyMonitor.mailbox">
+<tt class="descname">mailbox</tt><a class="headerlink" href="#pulsar.ActorProxyMonitor.mailbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the connection with the remote actor. It is available once the
+<a class="reference internal" href="../design.html#handshake"><em>actor handshake</em></a> between the actor and the monitor
+has completed. The <a class="reference internal" href="#pulsar.ActorProxyMonitor.mailbox" title="pulsar.ActorProxyMonitor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">mailbox</span></tt></a> is a server-side
+<a class="reference internal" href="../tutorials/messages.html#pulsar.async.mailbox.MailboxConsumer" title="pulsar.async.mailbox.MailboxConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.async.mailbox.MailboxConsumer</span></tt></a> instance and it is used by
+the <a class="reference internal" href="#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> function to send messages to the remote actor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ActorProxyMonitor.notified">
+<tt class="descname">notified</tt><a class="headerlink" href="#pulsar.ActorProxyMonitor.notified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last time this <a class="reference internal" href="#pulsar.ActorProxyMonitor" title="pulsar.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> was notified by the
+remote actor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ActorProxyMonitor.proxy">
+<tt class="descname">proxy</tt><a class="headerlink" href="#pulsar.ActorProxyMonitor.proxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.ActorProxy" title="pulsar.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> for this monitor.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.ActorProxyMonitor.is_alive">
 <tt class="descname">is_alive</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.ActorProxyMonitor.is_alive" title="Permalink to this definition">¶</a></dt>
-<dd><p>True if underlying actor is alive</p>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if underlying actor is alive</p>
 </dd></dl>
 
 <dl class="method">
@@ -747,6 +778,12 @@ implemented by subclasses.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.Concurrency.create_mailbox">
+<tt class="descname">create_mailbox</tt><big>(</big><em>actor</em>, <em>event_loop</em><big>)</big><a class="headerlink" href="#pulsar.Concurrency.create_mailbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the mailbox for <tt class="docutils literal"><span class="pre">actor</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.Concurrency.periodic_task">
 <tt class="descname">periodic_task</tt><big>(</big><em>actor</em><big>)</big><a class="headerlink" href="#pulsar.Concurrency.periodic_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Internal method called periodically by the <tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt> to
@@ -760,11 +797,49 @@ ping the actor monitor.</p>
 <h3>ThreadPool<a class="headerlink" href="#threadpool" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.ThreadPool">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">ThreadPool</tt><big>(</big><em>processes=None</em>, <em>initializer=None</em>, <em>initargs=()</em><big>)</big><a class="headerlink" href="#pulsar.ThreadPool" title="Permalink to this definition">¶</a></dt>
-<dd><p>A modified <tt class="xref py py-class docutils literal"><span class="pre">multiprocessing.pool.ThreadPool</span></tt> used by a pulsar
-<a class="reference internal" href="#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> when it needs CPUbound workers to consume tasks
-on a task queue. An actor can create a new <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a> via
-the <a class="reference internal" href="#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-meth docutils literal"><span class="pre">Actor.create_thread_pool()</span></tt></a> method.</p>
+<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">ThreadPool</tt><big>(</big><em>actor=None</em>, <em>threads=None</em>, <em>check_every=5</em>, <em>maxtasks=None</em><big>)</big><a class="headerlink" href="#pulsar.ThreadPool" title="Permalink to this definition">¶</a></dt>
+<dd><p>A thread pool for an actor.</p>
+<p>This pool maintains a group of threads to perform asynchronous tasks via
+the <a class="reference internal" href="#pulsar.ThreadPool.apply" title="pulsar.ThreadPool.apply"><tt class="xref py py-meth docutils literal"><span class="pre">apply()</span></tt></a> method.</p>
+<dl class="attribute">
+<dt id="pulsar.ThreadPool.status">
+<tt class="descname">status</tt><a class="headerlink" href="#pulsar.ThreadPool.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>String status of this pool.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ThreadPool.event_loop">
+<tt class="descname">event_loop</tt><a class="headerlink" href="#pulsar.ThreadPool.event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event loop running this <a class="reference internal" href="#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.ThreadPool.num_threads">
+<tt class="descname">num_threads</tt><a class="headerlink" href="#pulsar.ThreadPool.num_threads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of threads in the pool.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.ThreadPool.apply">
+<tt class="descname">apply</tt><big>(</big><em>func</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.ThreadPool.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Equivalent to <tt class="docutils literal"><span class="pre">func(*args,</span> <span class="pre">**kwargs)</span></tt>.</p>
+<p>This method create a new task for function <tt class="docutils literal"><span class="pre">func</span></tt> and adds it to the queue.
+Return a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> called back once the task has finished.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.ThreadPool.close">
+<tt class="descname">close</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.ThreadPool.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the thread pool.</p>
+<p>Return a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> fired when all threads have exited.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.ThreadPool.terminate">
+<tt class="descname">terminate</tt><big>(</big><em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.ThreadPool.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down the event loop of threads</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -802,6 +877,23 @@ response. Usually is set to <tt class="docutils literal"><span class="pre">True<
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+</div>
+<div class="section" id="mailbox-consumer">
+<h3>Mailbox Consumer<a class="headerlink" href="#mailbox-consumer" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.mailbox.MailboxConsumer">
+<em class="property">class </em><tt class="descclassname">pulsar.async.mailbox.</tt><tt class="descname">MailboxConsumer</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for internal message passing
+between actors. Encoding and decoding uses the unmasked websocket
+protocol.</p>
+<dl class="method">
+<dt id="pulsar.async.mailbox.MailboxConsumer.request">
+<tt class="descname">request</tt><big>(</big><em>command</em>, <em>sender</em>, <em>target</em>, <em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer.request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used by the server to send messages to the client.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -857,9 +949,12 @@ which don&#8217;t respond to the stop command.</li>
 </li>
 <li><a class="reference internal" href="#actors">Actors</a><ul>
 <li><a class="reference internal" href="#actor">Actor</a></li>
-<li><a class="reference internal" href="#poolmixin">PoolMixin</a></li>
 <li><a class="reference internal" href="#monitor">Monitor</a></li>
 <li><a class="reference internal" href="#id1">Arbiter</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#actor-internals">Actor Internals</a><ul>
+<li><a class="reference internal" href="#poolmixin">PoolMixin</a></li>
 <li><a class="reference internal" href="#actorproxy">ActorProxy</a></li>
 <li><a class="reference internal" href="#actorproxydeferred">ActorProxyDeferred</a></li>
 <li><a class="reference internal" href="#actorproxymonitor">ActorProxyMonitor</a></li>
@@ -869,6 +964,7 @@ which don&#8217;t respond to the stop command.</li>
 </li>
 <li><a class="reference internal" href="#messages">Messages</a><ul>
 <li><a class="reference internal" href="#pulsar-command">pulsar command</a></li>
+<li><a class="reference internal" href="#mailbox-consumer">Mailbox Consumer</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.async.consts">Pulsar constants</a><ul>
