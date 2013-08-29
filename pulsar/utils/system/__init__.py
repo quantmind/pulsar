@@ -45,12 +45,17 @@ it returns an empty dictionary.
     if psutil is None:  #pragma    nocover
         return {}
     pid = pid or os.getpid()
-    p = psutil.Process(pid)
-    mem = p.get_memory_info()
-    return {'memory': mem.rss,
-            'memory_virtual': mem.vms,
-            'cpu_percent': p.get_cpu_percent(),
-            'nice': p.get_nice(),
-            'num_threads': p.get_num_threads()}
+    try:
+        p = psutil.Process(pid)
+    # this fails on platforms which don't allow multiprocessing
+    except psutil.NoSuchProcess:
+        return {}
+    else:
+        mem = p.get_memory_info()
+        return {'memory': mem.rss,
+                'memory_virtual': mem.vms,
+                'cpu_percent': p.get_cpu_percent(),
+                'nice': p.get_nice(),
+                'num_threads': p.get_num_threads()}
     
     

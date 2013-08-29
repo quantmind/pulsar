@@ -24,9 +24,9 @@ def concurrency(kind, actor_class, monitor, cfg, **params):
 spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
 which handle the contruction and the lif of an :class:`Actor`.
 
-:paramater kind: Type of concurrency
-:paramater monitor: The monitor (or arbiter) managing the :class:`Actor`.
-:rtype: a :class:`Councurrency` instance
+:parameter kind: Type of concurrency.
+:parameter monitor: The monitor (or arbiter) managing the :class:`Actor`.
+:return: a :class:`Councurrency` instance.
 '''
     maker = concurrency_models.get(kind)
     if maker:
