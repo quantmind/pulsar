@@ -157,12 +157,12 @@ Kudo
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
 and has been developed using ideas from nodejs_ (api design), Twisted_
 (the deferred implementation), tornado_ web server (the initial event-loop
-implementation), celery_ (the task queue application) and
-many other open-source efforts.
-In addition it uses several snippets of code from around the open-source community,
-in particular:
+implementation), celery_ (the task queue application) and,
+since version 0.5, tulip_ and PEP-3156_.
+In addition, pulsar uses several snippet of code from around the open-source
+community, in particular:
 
-* An HTTP Parser originally written by benoitc_.
+* A python HTTP Parser originally written by benoitc_.
 * A ``url`` Rule class originally from werkzeug_.
 
 .. _contributing:
@@ -205,3 +205,5 @@ file in the top distribution directory for the full license text.
 .. _benoitc: https://github.com/benoitc
 .. _werkzeug: http://werkzeug.pocoo.org/
 .. _Django: https://www.djangoproject.com/
+.. _tulip: https://code.google.com/p/tulip/
+.. _pep-3156: http://www.python.org/dev/peps/pep-3156/

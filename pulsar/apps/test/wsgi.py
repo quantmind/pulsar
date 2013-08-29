@@ -1,7 +1,5 @@
 '''Classes for testing WSGI servers using the HttpClient'''
 from functools import partial
-from io import BytesIO
-import socket
 
 import pulsar
 from pulsar.apps import http

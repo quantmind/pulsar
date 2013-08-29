@@ -1,7 +1,5 @@
-import unittest
-
 import pulsar
-from pulsar.utils.httpurl import iteritems, itervalues
+from pulsar.utils.httpurl import iteritems
 from pulsar.apps.test.result import Plugin
 
 

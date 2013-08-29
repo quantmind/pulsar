@@ -5,7 +5,8 @@ from pulsar.apps.test import unittest
 from .test_local import TaskQueueBase
 
 
-class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
+class a:
+#class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
     
     def info(self):
         info = yield self.proxy.server_info()

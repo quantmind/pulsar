@@ -2,8 +2,9 @@ Ver. 0.6.0 - Development
 =============================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
-    * Added support :class:`pulsar.Poller` base on ``kqueue`` for systems
-      supporting it.
+    * Created the :class:`pulsar.Poller` base class for implementing different
+      types of event loop pollers. Implementation available for ``epoll``,
+      ``kqueue`` and ``select``.
     * Modified :class:`pulsar.Failure` implementation to handle one ``exc_info``
       only and better handling of unlogged failures.
     * Added an asynchronous FIFO :class:`pulsar.Queue`.

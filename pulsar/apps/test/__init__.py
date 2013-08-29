@@ -370,7 +370,7 @@ class TestSequential(TestOption):
     
 class TestShowLeaks(TestOption):
     name = "show_leaks"
-    flags = ['--show_leaks']
+    flags = ['--show-leaks']
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool

@@ -1,11 +1,10 @@
-import sys
 import gc
 from inspect import isclass
 from functools import partial
 import threading
 
 import pulsar
-from pulsar import is_failure, safe_async, get_actor, send, multi_async
+from pulsar import safe_async, get_actor, send, multi_async
 
 from .case import get_stream
 
