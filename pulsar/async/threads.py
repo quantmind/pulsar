@@ -19,7 +19,7 @@ from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.pep import set_event_loop, get_event_loop, new_event_loop
 from pulsar.utils.exceptions import StopEventLoop
 
-from .access import set_actor, thread_local_data, LOGGER
+from .access import get_actor, set_actor, thread_local_data, LOGGER
 from .defer import Deferred, log_failure, safe_async
 from .pollers import Poller, READ
 
@@ -158,16 +158,16 @@ class ThreadPool(object):
     
 This pool maintains a group of threads to perform asynchronous tasks via
 the :meth:`apply` method.'''
-    def __init__(self, actor, threads=None, check_every=5, maxtasks=None):
-        self._actor = actor
+    def __init__(self, actor=None, threads=None, check_every=5, maxtasks=None):
+        self._actor = actor or get_actor()
         self._check_every = check_every
         self._threads = max(threads or 1, 1)
         self._pool = []
         self._state = RUN
-        self._closed = Deferred(event_loop=actor.event_loop)
+        self._closed = Deferred(event_loop=self.event_loop)
         self._maxtasks = maxtasks
         self._inqueue = ThreadQueue()
-        self._check = actor.event_loop.call_soon(self._maintain)
+        self._check = self.event_loop.call_soon(self._maintain)
     
     @property
     def status(self):
@@ -180,7 +180,17 @@ the :meth:`apply` method.'''
             return 'terminated'
         else:
             return 'unknown'
-            
+        
+    @property
+    def event_loop(self):
+        '''The event loop running this :class:`ThreadPool`.'''
+        return self._actor.event_loop
+    
+    @property
+    def num_threads(self):
+        '''Number of threads in the pool.'''
+        return len(self._pool)
+    
     def apply(self, func, *args, **kwargs):
         '''Equivalent to ``func(*args, **kwargs)``.
     
@@ -195,20 +205,16 @@ It return a :class:`Deferred` called back once the task has finished.'''
         
 Return a :class:`Deferred` fired when all threads have exited.'''
         if self._state == RUN:
-            self._check.cancel()
-            self._check = None
-            self._check_every = 0
             self._state = CLOSE
-            self._maintain()
+            self.event_loop.call_soon(self._close)
         return self._closed.then().set_timeout(timeout)
             
     def terminate(self, timeout=None):
         '''Shut down the event loop of threads'''
         if self._state < TERMINATE:
-            self._state = TERMINATE
-            for worker in self._pool:
-                worker.terminate()
-            self._maintain()
+            if self.num_threads:
+                self._state = TERMINATE
+                self.event_loop.call_soon(self._terminate)
         return self._closed.then().set_timeout(timeout)
             
     def join(self):
@@ -227,7 +233,18 @@ Return a :class:`Deferred` fired when all threads have exited.'''
                 self._check_every, self._maintain)
         elif not self._closed.done():
             self._closed.callback(self._state)
-        
+    
+    def _close(self):
+        self._check.cancel()
+        self._check = None
+        self._check_every = 0
+        self._maintain()
+    
+    def _terminate(self):
+        for worker in self._pool:
+            worker.terminate()
+        self._maintain()
+            
     def _join_exited_workers(self):
         """Cleanup after any worker processes which have exited due to reaching
         their specified lifetime.  Returns True if any workers were cleaned up.

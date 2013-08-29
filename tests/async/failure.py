@@ -63,7 +63,7 @@ class TestFailure(unittest.TestCase):
     def testFailureFromFailure(self):
         failure = Failure.make(ValueError('test'))
         failure2 = Failure.make(failure)
-        self.assertNotEqual(failure, failure2)
+        self.assertEqual(failure, failure2)
         self.assertEqual(failure.exc_info, failure2.exc_info)
         failure.logged = True
         self.assertRaises(ValueError, failure.throw)

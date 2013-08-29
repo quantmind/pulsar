@@ -7,8 +7,6 @@ from pulsar.utils.system import Waker
 from pulsar.utils.pep import iteritems
 from pulsar.utils.exceptions import EventAlreadyRegistered
 
-from .defer import log_failure
-
 
 _EPOLLIN = 0x001
 _EPOLLPRI = 0x002
@@ -19,7 +17,7 @@ _EPOLLRDHUP = 0x2000
 _EPOLLONESHOT = (1 << 30)
 _EPOLLET = (1 << 31)
 
-# Events map exactly to the epoll events
+# Events map the epoll events
 READ = _EPOLLIN
 WRITE = _EPOLLOUT
 ERROR = _EPOLLERR | _EPOLLHUP | _EPOLLRDHUP
@@ -133,6 +131,10 @@ class Poller(object):
             return False
     
     def handle_events(self, loop, fd, events):
+        '''Handle ``events`` on file descriptor ``fd``.
+        
+        This method is called by the event ``loop`` when new events are
+        triggered.'''
         try:
             mask, reader, writer, error = self._handlers[fd]
         except KeyError:
@@ -142,35 +144,37 @@ class Poller(object):
         if events & READ:
             processed = True
             if reader:
-                log_failure(reader())
+                reader()
             else:
                 loop.logger.warning('Read callback without handler for file'
                                     ' descriptor %s.', fd)
         if events & WRITE:
             processed = True
             if writer:
-                log_failure(writer())
+                writer()
             else:
                 loop.logger.warning('Write callback without handler for file'
                                     ' descriptor %s.', fd)
         if events & ERROR:
             processed = True
             if error:
-                log_failure(error())
+                error()
             else:
                 loop.logger.warning('Error callback without handler for file'
                                     ' descriptor %s.', fd)
-        
+    
+    def unregister(self, fd):
+        '''Unregister file descriptor ``fd`` from the poller.'''
+        raise NotImplementedError
+    
     def close(self):
         self._handlers.clear()
     
     def fileno(self):
+        '''File descriptor for this poller.'''
         return 0
     
     def fromfd(self, fd):
-        raise NotImplementedError
-        
-    def unregister(self, fd):
         raise NotImplementedError
     
     def poll(self, timeout=1):
@@ -193,6 +197,19 @@ if hasattr(select, 'epoll'):
             
         def poll(self, timeout=0.5):
             return self._epoll.poll(timeout)
+        
+        def unregister(self, fd):
+            if fd in self._handlers:
+                self._handlers.pop(fd)
+                self._epoll.unregister(fd)
+            else:
+                raise IOError("fd %d not registered" % fd)
+            
+        def _register(self, fd, events, old_events=None):
+            if old_events is None:
+                self._epoll.register(fd, events)
+            else:
+                self._epoll.modify(fd, events)
             
             
     POLLERS['epoll'] = IOepoll

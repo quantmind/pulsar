@@ -286,7 +286,7 @@ errors.
     @classmethod
     def make(cls, error):
         if isinstance(error, cls):
-            exc_info = error.exc_info
+            return error
         elif isinstance(error, BaseException):
             exc_info = sys.exc_info()
             if error is not exc_info[1]: 
