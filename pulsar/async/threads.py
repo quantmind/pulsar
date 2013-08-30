@@ -10,7 +10,7 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from pulsar.utils.pep import set_event_loop, get_event_loop, new_event_loop
+from pulsar.utils.pep import set_event_loop, new_event_loop
 from pulsar.utils.exceptions import StopEventLoop
 
 from .access import get_actor, set_actor, thread_local_data, LOGGER
@@ -27,7 +27,7 @@ class Thread(dummy.DummyProcess):
         return current_process().pid
     
     def loop(self):
-        return get_event_loop()
+        raise NotImplemented
 
     def terminate(self):
         '''Invoke the stop on the event loop method.'''
@@ -43,9 +43,9 @@ class PoolThread(Thread):
     '''This class should be used when creating CPU threads in pulsar. It
 makes sure the class:`Actor` controlling the thread is available.'''
     def __init__(self, actor, *args, **kwargs):
-        self.actor = actor
+        self._actor = actor
         super(PoolThread, self).__init__(*args, **kwargs)
-        self.name = '%s-%s' % (self.actor, self.name)
+        self.name = '%s-%s' % (self._actor, self.name)
     
     def __repr__(self):
         if self.ident:
@@ -57,8 +57,8 @@ makes sure the class:`Actor` controlling the thread is available.'''
     def run(self):
         '''Modified run method which set the actor and the event_loop for
 the running thread.'''
-        actor = self.actor
-        del self.actor
+        actor = self._actor
+        del self._actor
         set_actor(actor)
         set_event_loop(actor.event_loop)
         super(Thread, self).run()

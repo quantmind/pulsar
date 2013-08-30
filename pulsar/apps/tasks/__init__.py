@@ -11,8 +11,11 @@ little setup effort::
 
     from pulsar.apps import tasks
 
-    tq = tasks.TaskQueue(tasks_path=['path.to.tasks.*'])
-    tq.start()
+    if __name__ == '__main__':
+        tasks.TaskQueue(tasks_path=['path.to.tasks.*']).start()
+        
+Check the :ref:`task queue tutorial <tutorials-taskqueue>` for a running
+example with simple tasks.
     
 To get started, follow the these points:
 
@@ -49,8 +52,8 @@ standard :ref:`application settings <settings>`:
   ``--schedule-periodic`` flag. Default: ``False``.
   
 * The :ref:`task_backend <setting-task_backend>` parameter is a url
-  type string which specifies the :class:`backends.TaskBackend`
-  to use.
+  type string which specifies the :ref:`task backend <apps-taskqueue-backend>`
+  to use. Default: ``local://``.
 
 
 .. _app-taskqueue-app:

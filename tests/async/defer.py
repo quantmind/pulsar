@@ -4,7 +4,7 @@ from functools import reduce
 
 from pulsar import (InvalidStateError, Deferred, is_async, NOT_DONE,
                     is_failure, MultiDeferred, maybe_async, CancelledError,
-                    async_sleep, Failure, safe_async,
+                    async_sleep, Failure, safe_async, async,
                     InvalidStateError, coroutine_return)
 from pulsar.async.defer import is_exc_info
 from pulsar.utils.pep import pickle, default_timer
@@ -28,7 +28,11 @@ class Cbk(Deferred):
         self.add(result)
         self.callback(self.r)
     
-    
+
+@async()
+def simple_error():
+    raise ValueError('Kaput!')
+
 def async_pair():
     c = Deferred()
     d = Deferred().add_both(c.callback)
@@ -329,11 +333,23 @@ class TestFunctions(unittest.TestCase):
         except:
             self.assertTrue(is_exc_info(sys.exc_info()))
             
+    def test_async_error(self):
+        d = simple_error()
+        self.assertIsInstance(d, Deferred)
+        self.assertTrue(d.done())
+        self.assertIsInstance(d.result, Failure)
+        
     def test_async_sleep(self):
         start = default_timer()
         result = yield async_sleep(2.1)
         self.assertEqual(result, 2.1)
         self.assertTrue(default_timer() - start > 2.1)
+        
+    def test_async_sleep_callback(self):
+        start = default_timer()
+        result = yield async_sleep(1.1).add_callback(async_sleep)
+        self.assertTrue(default_timer() - start >= 2.2)
+        self.assertEqual(result, 1.1)
         
     def test_safe_async(self):
         def f():

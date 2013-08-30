@@ -1,5 +1,5 @@
 '''
-The :class:`TaskBackend` is at the hart of the
+The :class:`TaskBackend` is at the heart of the
 :ref:`task queue application <apps-taskqueue>`. It exposes
 all the functionalities for running new tasks, scheduling periodic tasks
 and retrieving task information. Pulsar ships with two backends, one which uses
@@ -7,8 +7,16 @@ pulsar internals and store tasks in the arbiter domain and another which stores
 tasks in redis_.
 
 
-Implementing a Task Backend
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Overview
+===============
+
+The backend is created by the :class:`pulsar.apps.tasks.TaskQueue`
+as soon as it starts. It is then passed to all task queue workers
+which, in turns, invoke the :class:`TaskBackend.start` method
+to start pulling tasks form the distributed task queue.
+
+Implementation
+~~~~~~~~~~~~~~~~~
 When creating a new :class:`TaskBackend` there are five methods which must
 be implemented:
 
@@ -22,24 +30,6 @@ be implemented:
   or updating a :class:`Task`.
 * The :meth:`TaskBackend.delete_tasks` method, invoked when deleting
   a bunch of :class:`Task`.
-
-.. _apps-taskqueue-task:
-
-Task
-~~~~~~~~~~~~~
-
-.. autoclass:: Task
-   :members:
-   :member-order: bysource
-      
-   
-TaskBackend
-~~~~~~~~~~~~~
-
-.. autoclass:: TaskBackend
-   :members:
-   :member-order: bysource
-
 
 .. _task-state:
 
@@ -69,6 +59,35 @@ The set of states for which a :class:`Task` has run:
 
 The set of states for which a :class:`Task` has finished:
 ``REVOKED``, ``FAILURE`` and ``SUCCESS``
+
+.. _tasks-pubsub:
+
+Task status broadcasting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A :class:`TaskBackend` broadcast :class:`Task` state into three different
+channels.
+
+
+API
+=========
+
+.. _apps-taskqueue-task:
+
+Task
+~~~~~~~~~~~~~
+
+.. autoclass:: Task
+   :members:
+   :member-order: bysource
+      
+   
+TaskBackend
+~~~~~~~~~~~~~
+
+.. autoclass:: TaskBackend
+   :members:
+   :member-order: bysource
    
    
 Scheduler Entry
@@ -84,8 +103,8 @@ import sys
 import logging
 from datetime import datetime, timedelta
 
-from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, Failure, PulsarException,
-                    Backend, Deferred, coroutine_return)
+from pulsar import (maybe_async, EMPTY_TUPLE, EMPTY_DICT, Failure,
+                    PulsarException, Backend, Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
@@ -257,7 +276,7 @@ class PubSubClient(pubsub.Client):
         
     def __call__(self, channel, message):
         if channel == self.task_done:
-            self._be.task_done_callback(message)
+            maybe_async(self._be.task_done_callback(message))
             
         
 class TaskBackend(Backend):
@@ -299,15 +318,15 @@ It also schedules the run of periodic tasks if enabled to do so.
     
         local://?poll_timeout=3
         
-    Default: ``2``
+    There shouldn't be any reason to modify the default value.
+    
+    Default: ``2``.
     
 .. attribute:: processed
 
-    The number of tasks processed by the worker.
+    The number of tasks processed (so far) by the worker running this backend.
+    This value is important in connection with the :attr:`max_tasks` attribute.
     
-.. attribute:: pubsub
-
-    A :class:`pulsar.apps.pubsub.PubSub` handler for tasks signals.
 '''
     def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
               max_tasks=0, poll_timeout=None, **params):
@@ -339,11 +358,14 @@ the :meth:`wait_for_task` method.'''
     @local_property
     def pubsub(self):
         '''A :class:`pulsar.apps.pubsub.PubSub` handler which notifies tasks
-execution status. There are three channels:
+execution status. There are three channels::
 
 * ``<name>_task_created`` when a new task is created.
 * ``<name>_task_start`` when the task queue starts executing a task.
 * ``<name>_task_done`` when a task is done.
+
+Check the :ref:`task broadcasting documentation <tasks-pubsub>` for more
+information.
 '''
         p = pubsub.PubSub(backend=self.connection_string, name=self.name)
         p.add_client(PubSubClient(self))
@@ -380,21 +402,23 @@ execution status. There are three channels:
     
     def run_job(self, jobname, targs=None, tkwargs=None, **meta_params):
         '''Create a new :ref:`task <apps-taskqueue-task>` which may or
-may not be queued. This method returns a :ref:`coroutine <coroutine>`.
-If *jobname* is not a valid :attr:`pulsar.apps.tasks.models.Job.name`,
+may not be queued. This method returns a :class:`pulsar.Deferred` which
+results in the :attr:`Task.id` created.
+If ``jobname`` is not a valid :attr:`pulsar.apps.tasks.models.Job.name`,
 a ``TaskNotAvailable`` exception occurs.
 
-:parameter jobname: the name of a :class:`Job` registered
-    with the :class:`TaskQueue` application.
+:parameter jobname: the name of a :class:`pulsar.apps.tasks.models.Job`
+    registered with the :class:`pulsar.apps.tasks.TaskQueue` application.
 :parameter targs: optional tuple used for the positional arguments in the
     task callable.
 :parameter tkwargs: optional dictionary used for the key-valued arguments
     in the task callable.
 :parameter meta_params: Additional parameters to be passed to the :class:`Task`
     constructor (not its callable function).
-:return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
+:return: a :class:`pulsar.Deferred` resulting in a :attr:`Task.id`
     on success.'''
-        return self._run_job(jobname, targs, tkwargs, meta_params)
+        c = self.create_task(jobname, targs, tkwargs, **meta_params)
+        return maybe_async(c, get_result=False).add_callback(self.put_task)
         
     def create_task_id(self, job, args, kwargs):
         '''Create a :attr:`Task.id` from *job*, positional arguments *args*
@@ -407,7 +431,7 @@ and key-valued arguments *kwargs*.'''
 ``targs``, key-valued arguments ``tkwargs`` and :class:`Task` meta parameters
 ``params``. This method can be called by any process domain.
         
-:param jobname: the name of job which create the task.
+:param jobname: the name of the :class:`Job` which create the task.
 :param targs: task positional arguments (a ``tuple`` or ``None``).
 :param tkwargs: task key-valued arguments (a ``dict`` or ``None``).
 :return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
@@ -551,8 +575,11 @@ value ``now`` can be passed.'''
     ##    START/CLOSE METHODS FOR TASK WORKERS
     ############################################################################
     def start(self, worker):
-        '''Start this :class:`TaskBackend`. Invoked by the
-:class:`pulsar.apps.Worker` which is ready to consume tasks.'''
+        '''invoked by the task queue ``worker`` when it starts.
+        
+        Here, the ``worker`` creates its thread pool via
+        :meth:`pulsar.Actor.create_thread_pool` and register the
+        :meth:`may_pool_task` callback in its event loop.'''
         worker.create_thread_pool()
         self.local.task_poller = worker.event_loop.call_soon(
                                     self.may_pool_task, worker)
@@ -609,9 +636,10 @@ parameters ``params``. Must be implemented by subclasses.'''
     ##    PRIVATE METHODS
     ############################################################################
     def may_pool_task(self, worker):
-        '''Called at every loop in the worker event loop, it pool a new task
-if possible and add it to the queue of tasks consumed by the worker
-CPU-bound thread.'''
+        '''Called in the ``worker`` event loop.
+        
+        It pools a new task if possible, and add it to the queue of
+        tasks consumed by the ``worker`` CPU-bound thread.'''
         next_time = 0
         if worker.running:
             thread_pool = worker.thread_pool
@@ -667,9 +695,8 @@ CPU-bound thread.'''
             status = states.REVOKED
         except Exception:
             result = Failure(sys.exc_info())
-            result.log(msg='Unhandled failure in task %s' % task,
-                       log=worker.logger)
         if isinstance(result, Failure):
+            result.log(msg='Failure in task %s' % task, log=worker.logger)
             status = states.FAILURE
             result = str(result)
         elif not status:
@@ -701,14 +728,6 @@ CPU-bound thread.'''
             raise ValueError('Schedule %s is not a timedelta' % s)
         return Schedule(s, anchor)
     
-    @async(get_result=False)
-    def _run_job(self, jobname, targs, tkwargs, meta_params):
-        # Create a new task and put it in the task queue
-        task_id = yield self.create_task(jobname, targs, tkwargs, **meta_params)
-        if task_id:
-            yield self.put_task(task_id)
-    
-    @async()
     def task_done_callback(self, task_id):
         '''Got a new message from redis pubsub task_done channel.
 This is the write method required by all pubsub clients.'''
@@ -794,7 +813,7 @@ class SchedulerEntry(object):
     def anchor(self):
         return self.schedule.anchor
 
-    def next(self, now = None):
+    def next(self, now=None):
         """Returns a new instance of the same class, but with
         its date and count fields updated. Function called by :class:`Scheduler`
         when the ``this`` is due to run."""
@@ -803,5 +822,5 @@ class SchedulerEntry(object):
         self.total_run_count += 1
         return self
 
-    def is_due(self, now = None):
+    def is_due(self, now=None):
         return self.schedule.is_due(self.scheduled_last_run_at, now=now)

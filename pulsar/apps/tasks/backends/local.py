@@ -7,7 +7,8 @@ from pulsar.apps.pubsub import PubSub
 class TaskBackend(backends.TaskBackend):
         
     def put_task(self, task_id):
-        return send(self.name, 'put_task', task_id)
+        if task_id:
+            return send(self.name, 'put_task', task_id)
     
     def get_task(self, task_id=None):
         return send(self.name, 'get_task', task_id, self.poll_timeout)

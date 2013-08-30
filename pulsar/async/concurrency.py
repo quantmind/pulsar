@@ -9,7 +9,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, remove_actor
 from .threads import Thread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
-from .defer import async, multi_async, maybe_failure, Failure
+from .defer import multi_async, maybe_failure, Failure
 from .eventloop import signal
 from .stream import TcpServer
 from .pollers import POLLERS
@@ -89,7 +89,7 @@ system is chosen.'''
     
     def run_actor(self, actor):
         '''Start running the ``actor``.'''
-        actor.event_loop.run()
+        actor.event_loop.run_forever()
     
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``. Must be
@@ -134,26 +134,28 @@ implemented by subclasses.'''
         return client
 
     def periodic_task(self, actor):
-        '''Internal method called periodically by the :attr:`event_loop` to
-ping the actor monitor.'''
+        '''Implement the :ref:`actor period task <actor-periodic-task>`.
+        
+This is an internal method called periodically by the :attr:`Actor.event_loop`
+to ping the actor monitor. If successful return a :class:`Deferred` called back
+with the acknowledgement from the monitor.'''
+        actor.next_periodic_task = None
         if self.can_continue(actor):
+            ack = None
             if actor.running():
                 actor.logger.debug('%s notifying the monitor', actor)
                 # if an error occurs, shut down the actor
-                try:
-                    r = actor.send('monitor', 'notify', actor.info())\
-                            .add_errback(actor.stop)
-                except Exception as e:
-                    actor.stop(e)
-                else:
-                    secs = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
-                    next = min(secs, MAX_NOTIFY)
-                    actor.event_loop.call_later(next, self.periodic_task, actor)
-                    return r
+                ack = actor.send('monitor', 'notify', actor.info())\
+                           .add_errback(actor.stop)
+                next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
             else:
-                actor.event_loop.call_soon_threadsafe(self.periodic_task, actor)
-                    
+                next = 0
+            actor.next_periodic_task = actor.event_loop.call_later(
+                min(next, MAX_NOTIFY), self.periodic_task, actor)
+            return ack
+    
     def stop(self, actor, exc):
+        '''Gracefully stop the ``actor``.'''
         if exc != -1:
             failure = maybe_failure(exc)
             if actor.state <= ACTOR_STATES.RUN:
@@ -161,6 +163,16 @@ ping the actor monitor.'''
                 actor.state = ACTOR_STATES.STOPPING
                 if isinstance(failure, Failure):
                     actor.exit_code = getattr(failure.error, 'exit_code', 1)
+                    if actor.exit_code == 1:
+                        failure.log(msg='Stopping %s' % actor,
+                                    log=actor.logger)
+                    elif actor.exit_code:
+                        failure.mute()
+                        print(str(failure.error))
+                    else:
+                        failure.log(msg='Stopping %s' % actor,
+                                    log=actor.logger,
+                                    level='info')
                 else:
                     actor.exit_code = 0
                 actor.fire_event('stopping')
@@ -246,12 +258,9 @@ class MonitorMixin(object):
 
     def hand_shake(self, actor):
         ''':class:`MonitorMixin` doesn't do hand shakes'''
-        try:
-            actor.state = ACTOR_STATES.RUN
-            actor.fire_event('start')
-            self.periodic_task(actor)
-        except Exception as exc:
-            actor.stop(exc)
+        actor.state = ACTOR_STATES.RUN
+        actor.fire_event('start')
+        self.periodic_task(actor)
             
     @property
     def pid(self):
@@ -275,23 +284,25 @@ to be spawned.'''
         pass
     
     def periodic_task(self, actor):
+        '''Override the :meth:`Concurrency.periodic_task` to implement
+        the :class:`Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
+        actor.next_periodic_task = None
         if actor.running():
             interval = MONITOR_TASK_PERIOD
             actor.manage_actors()
             actor.spawn_actors()
             actor.stop_actors()
             actor.monitor_task()
-        actor.event_loop.call_later(interval, self.periodic_task, actor)
+        actor.next_periodic_task = actor.event_loop.call_later(
+            interval, self.periodic_task, actor)
         
-    @async()
     def _stop_actor(self, actor):
-        try:
-            yield actor.close_actors()
-        finally:
+        def _cleanup(result):
             if not actor.terminated_actors:
                 actor.monitor._remove_actor(actor)
-            actor.fire_event('stop')          
+            actor.fire_event('stop')
+        return actor.close_actors().add_both(_cleanup)          
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
@@ -318,8 +329,10 @@ mailbox server.'''
         return mailbox
     
     def periodic_task(self, actor):
-        # Arbiter periodic task
+        '''Override the :meth:`Concurrency.periodic_task` to implement
+        the :class:`Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
+        actor.next_periodic_task = None
         if self.can_continue(actor):
             if actor.running():
                 # managed actors job
@@ -331,7 +344,8 @@ mailbox server.'''
                             actor._remove_actor(m)
                     else:
                         m.start()
-            actor.event_loop.call_later(interval, self.periodic_task, actor)
+            actor.next_periodic_task = actor.event_loop.call_later(
+                interval, self.periodic_task, actor)
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''
@@ -368,10 +382,16 @@ class TerminateActorThread(Exception):
 
 class ActorThread(Concurrency, Thread):
     '''Actor on a thread in the master process.'''
+    _actor = None
+    
     def run(self):
-        actor = self.actor_class(self)
-        actor.start()
-        
+        self._actor = self.actor_class(self)
+        self._actor.start()
+    
+    def loop(self):
+        if self._actor:
+            return self._actor.event_loop
+    
     def setup_event_loop(self, actor):
         '''Create the event loop but don't install signals.'''
         event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,

@@ -2,6 +2,8 @@ Ver. 0.6.0 - Development
 =============================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
+    * The :class:`pulsar.async` decorator always return a :class:`pulsar.Deferred`,
+      it never throws.
     * Created the :class:`pulsar.Poller` base class for implementing different
       types of event loop pollers. Implementation available for ``epoll``,
       ``kqueue`` and ``select``.
@@ -17,6 +19,8 @@ Ver. 0.6.0 - Development
       deferred's callbacks without affecting the result.
   
 * Actors:
+    * Added :ref:`--thread_workers <setting-thread_workers>` config option
+      for controlling the default number of workers in actor thread pools.
     * New asynchronous :class:`pulsar.ThreadPool` for CPU bound operations.
     * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
     

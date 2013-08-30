@@ -17,8 +17,8 @@ LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 
 def is_mainthread(thread=None):
-    '''Check if thread is the main thread. If *thread* is not supplied check
-the current thread'''
+    '''Check if thread is the main thread. If ``thread`` is not supplied check
+the current thread.'''
     thread = thread if thread is not None else current_thread() 
     return isinstance(thread, threading._MainThread)
 
@@ -66,30 +66,23 @@ get_actor = lambda: thread_local_data('actor')
 def set_actor(actor):
     '''Set and returns the actor running the current thread.'''
     actor = thread_local_data('actor', value=actor)
-    if actor.impl.kind == 'thread':
-        process_local_data('thread_actors')[actor.aid] = actor
+    #if actor.impl.kind == 'thread':
+    #    process_local_data('thread_actors')[actor.aid] = actor
     return actor
 
 def remove_actor(actor):
     '''Remove actor from threaded_actors dictionary'''
     if actor.impl.kind == 'thread':
         LOGGER.debug('Removing threaded actor %s' % actor)
-        process_local_data('thread_actors').pop(actor.aid, None)
-
-def get_actor_from_id(aid):
-    '''Retrieve an actor from its actor id. This function can be used by
-actors with thread concurrency ince they live in the arbiter process domain.'''
-    actors = process_local_data('thread_actors')
-    if actors:
-        return actors.get(aid)
+        #process_local_data('thread_actors').pop(actor.aid, None)
         
         
 class plocal(object):
     pass
         
 class ProcessLocal(object):
-    def __init__(self):
-        self.thread_actors = {}
+    #def __init__(self):
+    #    self.thread_actors = {}
         
     def local(self):
         return plocal()

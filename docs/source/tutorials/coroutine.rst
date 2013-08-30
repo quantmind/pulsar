@@ -30,19 +30,28 @@ pulsar:
   
   Note that ``o`` is coroutine which has not yet started.
   
+.. _task-component:
+
 * A :class:`Task`, is a component which has been added to pulsar asynchronous
-  engine. It is created via the :class:`async` decorator::
+  engine. It is created via the :class:`async` decorator is applied
+  to a generator function or, equivalently, the :func:`safe_async` function
+  is invoked with argument a generator function::
   
-      from pulsar import async
+      from pulsar import async, safe_async
       
       @async()
-      def my_async_generator(...):
+      def my_async_generator1(...):
           yield something_but_dont_care_what_it_returns()
           ...
           bla = yield something_and_care_what_it_returns()
           yield do_something(bla)
+          
+      def my_async_generator2(...):
+          yield ...
+          ...
   
-      task = my_async_generator()
+      task1 = my_async_generator1()
+      task2 = safe_async(my_async_generator2)
       
   A :class:`Task` is a subclass of :class:`Deferred` and therefore it has
   the same API, for example, you can add callbacks to a task::
@@ -176,3 +185,24 @@ are ready.
 
 
 .. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
+
+
+.. _tutorial-async-utilities:
+
+Async Utilities
+==================
+There are three important utilities which makes the handling of asynchronous
+components is a little more fun.
+
+The :class:`async` decorator class has been introduced when discussing
+the :ref:`task componet <task-component>`.
+This decorator can be applied to **any callable** to safely handle
+the execution of the ``callable`` it is decorating and return
+a :class:`Deferred`.
+The returned :class:`Deferred` can already be called if the original ``callable``
+returned a synchronous result or fails (in which case the deferred has
+a :class:`Failure` as result).
+
+If :class:`async` decorates a generator function, it access the
+event loop, via the ``get_event_loop`` function, and creates a
+:class:`Task`.

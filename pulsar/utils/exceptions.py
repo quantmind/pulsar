@@ -40,15 +40,18 @@ class ConnectionError(Exception):
 
 
 class StopEventLoop(BaseException):
-    ''':class:`BaseException` raised to stop a :class:`pulsar.EventLoop`.'''
+    ''':class:`BaseException` raised to cleanly stop a
+    :class:`pulsar.EventLoop`.'''
     
     
 class HaltServer(BaseException):
-    ''':class:`BaseException` raised to stop a running server.'''
-    def __init__(self, reason='Exiting server.', signal=None, exit_code=1):
+    ''':class:`BaseException` raised to stop a running server.
+    
+    When ``exit_code`` is greater than 1, it is considered an expected
+    failure and therefore the full stack trace is not logged.'''
+    def __init__(self, reason='Exiting server.', exit_code=1):
         super(HaltServer, self).__init__(reason)
         self.exit_code = exit_code
-        self.signal = signal
 
 
 class CannotCallBackError(PulsarException):

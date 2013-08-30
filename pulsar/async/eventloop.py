@@ -40,6 +40,7 @@ def setid(self):
     self.pid = os.getpid()
     return ct
 
+STOP_LOOP = (KeyboardInterrupt, )
     
 class EventLoopPolicy(BaseEventLoopPolicy):
     '''Pulsar event loop policy'''
@@ -143,11 +144,13 @@ class LoopingCall(object):
         self._cancelled = True
         
     def __call__(self):
-        # If this fails, the chain is broken.
         try:
-            result = maybe_async(self.callback(*self.args), get_result=False)
+            result = maybe_async(self.callback(*self.args),
+                                 get_result=False,
+                                 event_loop=self.event_loop)
         except Exception:
-            self.cancel(sys.exc_info())
+            result = Failure(sys.exc_info())
+            self.cancel(result)
         else:
             result.add_callback(self._continue, self.cancel)
         
@@ -547,10 +550,11 @@ broken and the ``callback`` won't be called anymore."""
         return LoopingCall(self, callback, args, interval)
     
     def call_every(self, callback, *args):
-        """Same as :meth:``call_repeatedly`` with the only difference that
-the ``callback`` is scheduled at every loop."""
+        '''Same as :meth:`call_repeatedly` with the only difference that
+the ``callback`` is scheduled at every loop. Installing this callback cause
+the event loop to poll with a 0 timeout all the times.'''
         return LoopingCall(self, callback, args)
-            
+    
     def call_now_threadsafe(self, callback, *args):
         '''Same as :meth:`call_soon_threadsafe` with the only exception that
 if we are calling from the same thread of execution as this
@@ -630,8 +634,7 @@ if we are calling from the same thread of execution as this
         except Exception as e:
             if self._raise_loop_error(e):
                 raise
-        except KeyboardInterrupt as e:
-            self.logger.warning('%s stop event loop', e.__class__.__name__)
+        except KeyboardInterrupt:
             raise StopEventLoop
         else:
             for fd, events in event_pairs:

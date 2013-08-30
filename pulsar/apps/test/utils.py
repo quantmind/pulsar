@@ -133,9 +133,17 @@ The descriptor is available bia the ``async`` attribute. For example::
         
 
 class ActorTestMixin(object):
-    '''A mixin for :class:`unittest.TestCase` classes testing spawning
-of actors. Make sure this is the first class you derive from, before the
-unittest.TestCase, so that the tearDown method is overwritten.'''
+    '''A mixin for :class:`unittest.TestCase`.
+    
+Useful for classes testing spawning of actors.
+Make sure this is the first class you derive from, before the
+unittest.TestCase, so that the tearDown method is overwritten.
+
+.. attribute:: concurrency
+
+    The concurrency model used to spawn actors via the :meth:`spawn`
+    method.
+'''
     concurrency = 'thread'
     
     @property

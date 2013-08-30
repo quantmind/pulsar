@@ -71,6 +71,9 @@ Is failure
 Async Utilities
 ====================
 
+A collection of asynchronous utilities which facilitates manipulation and
+interaction with :ref:`asynchronous components <tutorials-coroutine>`.
+
 Async
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -82,7 +85,10 @@ Multi Async
 
 Safe Async
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: safe_async
+.. function:: safe_async(callable, *args, **kwargs)
+
+    Safely execute a ``callable`` and always return a :class:`Deferred`,
+    even if the ``callable`` is not asynchronous. Never throws.
 
 Async Sleep
 ~~~~~~~~~~~~~~~~~~~~~~~~

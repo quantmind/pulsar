@@ -491,7 +491,7 @@ configuration and plugins.'''
                 self._time_start = default_timer()
                 for tag, testcls in self.local.tests:
                     self.backend.run('test', testcls, tag)
-                monitor.event_loop.call_every(self._check_queue)
+                monitor.event_loop.call_repeatedly(1, self._check_queue)
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
@@ -511,7 +511,6 @@ configuration and plugins.'''
             cfg.settings.update(plugin.config.settings)
         return cfg
     
-    @pulsar.async()
     def _check_queue(self):
         runner=  self.runner
         tests = yield self.backend.get_tasks(status=tasks.READY_STATES)

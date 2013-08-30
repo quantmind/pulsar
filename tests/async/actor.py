@@ -49,7 +49,8 @@ class TestProxy(unittest.TestCase):
     def testActorCoverage(self):
         '''test case for coverage'''
         actor = pulsar.get_actor()
-        self.assertRaises(CommandNotFound, send, 'sjdcbhjscbhjdbjsj', 'bla')
+        d = send('sjdcbhjscbhjdbjsj', 'bla')
+        self.assertIsInstance(d.result.error, CommandNotFound)
         self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
         
 

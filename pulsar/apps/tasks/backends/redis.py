@@ -56,12 +56,13 @@ class TaskBackend(backends.TaskBackend):
     
     @async()
     def put_task(self, task_id):
-        task_data = yield self._get_task(task_id)
-        if task_data:
-            task_data.status = states.QUEUED
-            task_data = yield task_data.save()
-            yield self.task_manager().queue.push_back(task_data.id)
-            yield task_data.id
+        if task_id:
+            task_data = yield self._get_task(task_id)
+            if task_data:
+                task_data.status = states.QUEUED
+                task_data = yield task_data.save()
+                yield self.task_manager().queue.push_back(task_data.id)
+                yield task_data.id
     
     @async()    
     def save_task(self, task_id, **params):

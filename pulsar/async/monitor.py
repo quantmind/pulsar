@@ -74,6 +74,10 @@ It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
     :class:`ActorProxyMonitor` instances. These are the actors managed by the
     pool.
 
+.. attribute:: terminated_actors
+
+    list of :class:`ActorProxyMonitor` which have been terminated
+    (the remote actor did not have a cleaned shutdown).
 '''
     CLOSE_TIMEOUT = 30000000000000
     actor_class = Actor
@@ -132,7 +136,12 @@ spawn method when creating new actors.'''
 
     def manage_actor(self, actor, stop=False):
         '''If an actor failed to notify itself to the arbiter for more than
-the timeout. Stop the actor.'''
+the timeout, stop the actor.
+
+:param actor: the :class:`Actor` to manage.
+:param stop: if ``True``, stop the actor.
+:return: if the actor is alive 0 if it is not.
+'''
         if not self.running():
             stop = True
         if not actor.is_alive():
@@ -143,23 +152,27 @@ the timeout. Stop the actor.'''
             return 0
         timeout = None
         started_stopping = bool(actor.stopping_start)
+        # if started_stopping is True, set stop to True
         stop = stop or started_stopping
         if not stop and actor.notified:
             gap = time() - actor.notified
             stop = timeout = gap > actor.cfg.timeout
-        if stop:   # we are shutting down
-            if not actor.mailbox or actor.should_terminate():
+        if stop:   # we are stopping the actor
+            dt = actor.should_terminate()
+            if not actor.mailbox or dt:
                 if not actor.mailbox:
-                    self.logger.info('Terminating %s. No mailbox.', actor)
+                    self.logger.warning('Terminating %s. No mailbox.', actor)
                 else:
-                    self.logger.warning('Terminating %s. Timeout.', actor)
+                    self.logger.warning('Terminating %s. '
+                        'Could not stop after %.2f seconds.', actor, dt)
                 actor.terminate()
                 self.terminated_actors.append(actor)
                 self._remove_actor(actor)
                 return 0
             elif not started_stopping:
                 if timeout:
-                    self.logger.warning('Stopping %s. Timeout', actor)
+                    self.logger.warning('Stopping %s. Timeout %.2f',
+                                        actor, timeout)
                 else:
                     self.logger.info('Stopping %s.', actor)
                 self.send(actor, 'stop')

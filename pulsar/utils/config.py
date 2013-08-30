@@ -865,6 +865,21 @@ class Timeout(Setting):
         killed and restarted."""
 
 
+class ThreadWorkers(Setting):
+    name = "thread_workers"
+    section = "Worker Processes"
+    flags = ["--thread-workers"]
+    validator = validate_pos_int
+    type = int
+    default = 1
+    desc = """\
+        The number of threads in an actor thread pool.
+        
+        The thread pool is used by actors to perform CPU intensive calculations.
+        In this way the actor main thread is free to listen to events on file
+        descriptors and process them as quick as possible."""
+
+
 ################################################################################
 ##    APPLICATION HOOKS
 

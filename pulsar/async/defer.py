@@ -183,11 +183,14 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
 def async_sleep(timeout):
     '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
 function within a :ref:`coroutine <coroutine>` when you need to resume
-the coroutine after *timeout* seconds. For example::
+the coroutine after ``timeout`` seconds. For example::
 
     ...
     yield async_sleep(2)
     ...
+    
+This function returns a :class:`Deferred` called back in ``timeout`` seconds
+with the ``timeout`` value.
 '''
     def _cancel(failure):
         if failure.isinstance(CancelledError):
@@ -199,9 +202,14 @@ the coroutine after *timeout* seconds. For example::
     
 ############################################################### DECORATORS
 class async:
-    '''A decorator class which invokes :func:`maybe_async` on the return
-value of the function it is decorating. The input parameters and the outcome
-are the same as :func:`maybe_async`.
+    '''A decorator for :ref:`asynchronous components <tutorials-coroutine>`.
+    
+It convert the return value of the callable it decorates into a
+:class:`Deferred` via the :func:`maybe_async` function. The return value is
+**always** a :class:`Deferred`, and the function never throws.
+    
+Check the :ref:`Asynchronous utilities tutorial <tutorial-async-utilities>`
+for detailed discussion and examples.
 
 Typical usage::
 
@@ -209,16 +217,41 @@ Typical usage::
     def myfunction(...):
         ...
         
-It can also be used to safely call functions::
+When invoked, ``myfunction`` it returns a :class:`Deferred`. For example::
 
-    async()(myfunction, ...)
-    
-This syntax will always return a :class:`Deferred`::
+    @async()
+    def simple():
+        return 1
+        
+    @async()
+    def simple_error():
+        raise ValueError('Kaput!')
+        
+    @async()
+    def simple_coro():
+        result = yield ...
+        ...
 
-    async(get_result=False)(myfunction, ...)
+when invoked::
+        
+    >>> d = simple()
+    >>> d
+    Deferred (done)
+    >>> d.result
+    1
+    >>> d = simple_error()
+    >>> d
+    Deferred (done)
+    >>> d.result
+    Failure: Traceback (most recent call last):
+      File "...pulsar\async\defer.py", line 260, in call
+        result = callable(*args, **kwargs)
+      File ...
+        raise ValueError('Kaput!')
+    ValueError: Kaput!
 '''
-    def __init__(self, **params):
-         self.params = params
+    def __init__(self, timeout=None):
+        self.timeout = timeout
 
     def __call__(self, func):
         def _(*args, **kwargs):
@@ -229,19 +262,17 @@ This syntax will always return a :class:`Deferred`::
         return _
     
     def call(self, callable, *args, **kwargs):
-        '''Safely execute a ``callable`` and always return a :class:`Deferred`,
-even if the ``callable`` is not asynchronous. Never throws.'''
         try:
             result = callable(*args, **kwargs)
         except Exception:
-            result = sys.exc_info()
-        return maybe_async(result, **self.params)
+            result = Failure(sys.exc_info())
+        return maybe_async(result, get_result=False, timeout=self.timeout)
 
 
-safe_async = async(get_result=False).call
+safe_async = async().call
 
 def async_while(timeout, while_clause, *args):
-    '''The asynchronous equivalent of ``while while_clause(*args):``.
+    '''The asynchronous equivalent of ``while while_clause(*args):``
     
     Use this function within a :ref:`coroutine <coroutine>` when you need
     to wait ``while_clause`` to be satisfied.
@@ -250,7 +281,7 @@ def async_while(timeout, while_clause, *args):
     :parameter while_clause: while clause callable.
     :parameter args: optional arguments to pass to the ``while_clause``
         callable.
-    :return: A :ref:`coroutine <coroutine>`.
+    :return: A :class:`Deferred`.
     '''
     def _():
         start = default_timer()
@@ -267,7 +298,7 @@ def async_while(timeout, while_clause, *args):
                 break
             result = while_clause(*args)
         yield result
-    return maybe_async(_())
+    return maybe_async(_(), get_result=False)
 
 
 class FailureRefs(object):
@@ -672,18 +703,18 @@ deferred is required::
             return
         while self._callbacks:
             callbacks = self._callbacks.popleft()
-            callback = callbacks[is_failure(self.result)]
+            callback = callbacks[isinstance(self.result, Failure)]
             try:
                 self._runningCallbacks = True
                 try:
                     self.result = maybe_async(callback(self.result))
                 finally:
                     self._runningCallbacks = False
-            except Exception as e:
-                self.result = Failure.make(e)
+            except Exception:
+                self.result = Failure(sys.exc_info())
             else:
                 # if we received an asynchronous instance we add a continuation
-                if is_async(self.result):
+                if isinstance(self.result, Deferred):
                     # Add a pause
                     self._pause()
                     # Add a callback to the result to resume callbacks

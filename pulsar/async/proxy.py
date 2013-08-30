@@ -218,5 +218,6 @@ provided, it raises an exception if the timeout is reached.'''
             self.stopping_start = default_timer()
             return False
         else:
-            return default_timer() - self.stopping_start > ACTOR_ACTION_TIMEOUT
+            dt = default_timer() - self.stopping_start
+            return dt if dt >= ACTOR_ACTION_TIMEOUT else False
     

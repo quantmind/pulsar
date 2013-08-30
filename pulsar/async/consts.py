@@ -1,6 +1,18 @@
 '''
-Constats used throughout pulsar.
+Constants used throughout pulsar.
+'''
+from pulsar import platform
+from pulsar.utils.structures import AttributeDictionary, FrozenDict
 
+# LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
+ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
+                                   INACTIVE=0X1,
+                                   STARTING=0x2,
+                                   RUN=0x3,
+                                   STOPPING=0x4,
+                                   CLOSE=0x5,
+                                   TERMINATE=0x6)
+'''
 .. _actor-states:
 
 Actor States
@@ -18,25 +30,7 @@ They are:
 * ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up and running.
 * ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been called
   for the first time and the actor is running.
-  
-Constants
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-* ``ACTOR_ACTION_TIMEOUT`` used by :class:`pulsar.Monitor` to kill actors
-  which don't respond to the stop command.
-
 '''
-from pulsar import platform
-from pulsar.utils.structures import AttributeDictionary, FrozenDict
-
-# LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################
-ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
-                                   INACTIVE=0X1,
-                                   STARTING=0x2,
-                                   RUN=0x3,
-                                   STOPPING=0x4,
-                                   CLOSE=0x5,
-                                   TERMINATE=0x6)
 ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.INITIAL: 'initial',
                             ACTOR_STATES.STARTING: 'starting',
@@ -46,15 +40,19 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.TERMINATE:'terminated'}
 SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
-# TIMEOUT FOR WHEN AN ACTOR IS NOT RESPONSING TO A STOP COMMAND
-ACTOR_ACTION_TIMEOUT = 600 # TERMINATE ACTORS WHICH DON'T DIE AFTER THIS INTERVAL
+ACTOR_ACTION_TIMEOUT = 5
+'''Important constant used by :class:`pulsar.Monitor` to kill actors which
+don't respond to the ``stop`` command.'''
+
 MAX_ASYNC_WHILE = 1 # Max interval for async_while
 MIN_NOTIFY = 3     # DON'T NOTIFY BELOW THIS INTERVAL
 MAX_NOTIFY = 30    # NOTIFY AT LEAST AFTER THESE SECONDS
 ACTOR_TIMEOUT_TOLE = 0.3  # NOTIFY AFTER THIS TIMES THE TIMEOUT
 ACTOR_TERMINATE_TIMEOUT = 2 # TIMEOUT WHEN JOINING A NOT ALIVE ACTOR
 ACTOR_JOIN_THREAD_POOL_TIMEOUT = 5  # TIMEOUT WHEN JOINING THE THREAD POOL
-MONITOR_TASK_PERIOD = 5 # Period of Monitors tasks
+MONITOR_TASK_PERIOD = 2
+'''Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`
+periodic task.'''
 #
 # SPECIAL objects for Deferred
 CONTINUE = object()

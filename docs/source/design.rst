@@ -186,6 +186,19 @@ CPU-bound :class:`Actor` have the following properties:
 The :attr:`Actor.thread_pool` needs to be initialised via the
 :attr:`Actor.create_thread_pool` method before it can be used.
 
+
+.. _actor-periodic-task:
+
+Periodic task
+~~~~~~~~~~~~~~~~~~~~~~
+
+Each :class:`Actor`, including the :class:`Arbiter` and :class:`Monitor`,
+perform one crucial periodic task at given intervals. The next
+call of the task is stored in the :class:`Actor.next_periodic_task`
+attribute.
+
+Periodic task are implemented by the :class:`Concurrency.periodic_task` method.
+
 .. _design-spawning:
 
 Spawning

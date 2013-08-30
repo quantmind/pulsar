@@ -153,7 +153,7 @@ class WebSocketProtocol(ProtocolConsumer):
             self.handler.on_close(self)
             self.transport.close()
 
-    @async(get_result=False)
+    @async()
     def _handle_frame(self, frame):
         if not self.started:
             self.started = True

@@ -97,7 +97,7 @@ def start_arbiter(self):
             p = Pidfile(pidfile)
             p.create(self.pid)
         except RuntimeError as e:
-            raise HaltServer(str(e), exit_code=3)
+            raise HaltServer('ERROR. %s' % str(e), exit_code=3)
         self.pidfile = p
     
     

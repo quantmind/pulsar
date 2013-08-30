@@ -1,3 +1,4 @@
+import sys
 from time import time
 
 from pulsar import HaltServer, CommandError, system
@@ -5,7 +6,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin
 
 from .eventloop import setid
-from .defer import EventHandler, Failure
+from .defer import async, EventHandler, Failure
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
@@ -143,6 +144,11 @@ an :class:`ActorProxy`.
 
     Current state description string. One of ``initial``, ``running``,
     ``stopping``, ``closed`` and ``terminated``.
+    
+.. attribute:: next_periodic_task
+
+    The :class:`TimedCall` for the next
+    :ref:`actor periodic task <actor-periodic-task>`.
  
 **PUBLIC METHODS**
 '''
@@ -150,6 +156,7 @@ an :class:`ActorProxy`.
     exit_code = None
     mailbox = None
     signal_queue = None
+    next_periodic_task = None
     
     def __init__(self, impl):
         super(Actor, self).__init__()
@@ -230,9 +237,11 @@ more than once does nothing.'''
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    def send(self, target, action, *args, **params):
-        '''Send a message to *target* to perform *action* with given
-parameters *params*.'''
+    @async()
+    def send(self, target, action, *args, **kwargs):
+        '''Send a message to ``target`` to perform ``action`` with given
+positional ``args`` and key-valued ``kwargs``.
+Always return a :class:`Deferred`.'''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):
@@ -242,36 +251,36 @@ parameters *params*.'''
             if isinstance(actor, Actor):
                 # this occur when sending a message from arbiter to monitors or
                 # viceversa.
-                return command_in_context(action, self, actor, args, params)
+                return command_in_context(action, self, actor, args, kwargs)
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox
         if hasattr(mailbox, 'request'):
             #if not mailbox.closed:
-            return mailbox.request(action, self, target, args, params)
+            return mailbox.request(action, self, target, args, kwargs)
         else:
-            raise CommandError('Cannot execute "%s" in %s. Unknown actor '
-                               '%s.' % (action, self, target))
+            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
+                               % (action, self, target))
     
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
     
     def stop(self, exc=None):
-        '''Stop the actor by closing its :attr:`mailbox` which
-in turns stops the :attr:`eve
-nt_loop`. Once everything is closed
-properly this actor will go out of scope.
-
-:param exc: optional exception.
-'''
+        '''Gracefully stop the :class:`Actor`.
+        
+        Implemented by the :meth:`Concurrency.stop` method of the :attr:`impl`
+        attribute.'''
         return self.__impl.stop(self, exc)
     
-    def create_thread_pool(self, workers=1):
+    def create_thread_pool(self, workers=None):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
 if not already present.
 
-:param workers: number of threads to use in the :class:`ThreadPool`
+:param workers: number of threads to use in the :class:`ThreadPool`. If not
+    supplied, the value in the :ref:`setting-thread_workers` setting is used.
+:return: a :class:`ThreadPool`.
 '''
         if self._thread_pool is None:
+            workers = workers or self.cfg.thread_workers
             self._thread_pool = ThreadPool(self, threads=workers)
         return self._thread_pool
     
@@ -384,16 +393,13 @@ from another actor.'''
                 pass
         try:
             exc = self.__impl.run_actor(self)
-        except Exception as e:
-            exc = e
-        except HaltServer as e:
-            exc = Failure.make(e)
-            if e.exit_code == 1:
-                exc.log()
-            elif e.exit_code:
-                exc.log(msg=str(e), level='error')
-            else:
-                exc.log(msg=str(e), level='info')
+        except (Exception, HaltServer):
+            exc = Failure(sys.exc_info())
+        except:
+            exc = Failure(sys.exc_info())
+            exc.mute()
+            raise
         finally:
             self.stop(exc)
+            
         
