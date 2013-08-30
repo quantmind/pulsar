@@ -297,8 +297,8 @@ Fired just before the :class:`Actor` is garbage collected
 Commands
 ===============
 
-An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
-**action** to perform. This action takes the form of a **command** name and
+An :class:`Actor` communicates with another remote :class:`Actor` by *sending*
+an **action** to perform. This action takes the form of a **command** name and
 optional positional and key-valued parameters. It is possible to add new
 commands via the :class:`pulsar.command` decorator as explained in the
 :ref:`api documentation <api-remote_commands>`.

@@ -84,9 +84,8 @@ import sys
 import logging
 from datetime import datetime, timedelta
 
-from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT,
-                    maybe_failure, is_failure, PulsarException, Backend,
-                    Deferred, coroutine_return)
+from pulsar import (async, EMPTY_TUPLE, EMPTY_DICT, Failure, PulsarException,
+                    Backend, Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
@@ -609,7 +608,6 @@ parameters ``params``. Must be implemented by subclasses.'''
     ############################################################################
     ##    PRIVATE METHODS
     ############################################################################
-    @async()
     def may_pool_task(self, worker):
         '''Called at every loop in the worker event loop, it pool a new task
 if possible and add it to the queue of tasks consumed by the worker
@@ -665,12 +663,13 @@ CPU-bound thread.'''
             else:
                 consumer = None
         except TaskTimeout:
-            worker.logger.debug('Task %s timed-out', task)
+            worker.logger.info('Task %s timed-out', task)
             status = states.REVOKED
-        except:
-            result = maybe_failure(sys.exc_info())
-        if is_failure(result):
-            result.log()
+        except Exception:
+            result = Failure(sys.exc_info())
+            result.log(msg='Unhandled failure in task %s' % task,
+                       log=worker.logger)
+        if isinstance(result, Failure):
             status = states.FAILURE
             result = str(result)
         elif not status:
@@ -678,7 +677,7 @@ CPU-bound thread.'''
         if consumer:
             yield self.save_task(task_id, time_ended=time_ended,
                                  status=status, result=result)
-            worker.logger.debug('Finished task %s', task)
+            worker.logger.info('Finished task %s', task)
             # PUBLISH task_done
             pubsub.publish(self.channel('task_done'), task.id)
         self.concurrent_tasks.discard(task.id)

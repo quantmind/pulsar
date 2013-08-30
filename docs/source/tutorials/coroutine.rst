@@ -54,8 +54,8 @@ pulsar:
   
 Deferred
 ===================
-A :class:`Deferred` is a callback which will be put off until later. its
-implementation is similar to the `twisted deferred`_ class with few
+A :class:`Deferred` is a callback which will be put off until later. Its
+implementation is similar to the `twisted deferred`_ class with several
 important differences. A deferred is the product of an asynchronous operation.
 
 .. _deferred-event-loop:
@@ -105,8 +105,7 @@ cancelled too. For example::
 Timeouts
 ~~~~~~~~~~~~~~
 A useful application of :ref:`deferred cancellation <deferred-cancel>`,
-is setting a ``timeout`` to an asynchronous operation. To set a timeout,
-one used the :class:`Deferred.set_timeout` method::
+is setting a ``timeout`` to an asynchronous operation::
 
     >>> d = Deferred()
     >>> d.set_timeout(5)
