@@ -579,12 +579,11 @@ if we are calling from the same thread of execution as this
             set_event_loop(self)
     
     def _after_run(self):
-        self.logger.debug('Exiting %s', self)
+        self.logger.info('Exiting %s', self)
         self._name = None
         self.tid = None
         
     def _raise_stop_event_loop(self, exc=None):
-        self.logger.debug('Stopping %s', self)
         raise StopEventLoop
 
     def _check_signal(self, sig):

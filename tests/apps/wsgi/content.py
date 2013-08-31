@@ -1,6 +1,6 @@
 import json
 
-from pulsar import Deferred, is_async
+from pulsar import Deferred
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
 
@@ -34,7 +34,7 @@ class TestAsyncContent(unittest.TestCase):
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
         result = response.render()
-        self.assertTrue(is_async(result))
+        self.assertIsInstance(result, Deferred)
         d.callback('ciao')
         result = yield result
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))

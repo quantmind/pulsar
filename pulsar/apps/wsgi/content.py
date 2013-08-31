@@ -124,7 +124,7 @@ from collections import Mapping
 from functools import partial
 from copy import copy
 
-from pulsar import Deferred, multi_async, is_async, maybe_async, is_failure, async
+from pulsar import Deferred, multi_async, maybe_async, is_failure, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
@@ -293,7 +293,7 @@ This is a shortcut for the :meth:`insert` method at index 0.
 This method can be called once only since it invokes the :meth:`stream`
 method.'''
         res = self.stream(request)
-        if is_async(res):
+        if isinstance(res, Deferred):
             return res.add_callback(lambda r: StreamRenderer(r, self.to_string))
         else:
             return StreamRenderer(res, self.to_string)

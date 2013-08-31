@@ -1,29 +1,12 @@
 import socket
 
 import pulsar
-from pulsar import is_failure
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
 
 from examples.echo.manage import server, Echo
 
     
-class SafeCallback(pulsar.Deferred):
-    
-    def __call__(self):
-        try:
-            r = self._call()
-        except Exception as e:
-            r = e
-        if pulsar.is_async(r):
-            return r.add_callback(self)
-        else:
-            return self.callback(r)
-        
-    def _call(self):
-        raise NotImplementedError()
-    
-
 class TestPulsarStreams(unittest.TestCase):
     concurrency = 'thread'
     server = None

@@ -140,7 +140,29 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
                                  lambda: proxy.aid in arbiter.managed_actors)
         self.assertTrue(proxy in arbiter.terminated_actors)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
-                
+    
+    @run_on_arbiter
+    def test_actor_termination(self):
+        '''Terminate the remote actor via the concurreny terminate method.'''
+        arbiter = pulsar.get_actor()
+        self.assertTrue(arbiter.is_arbiter())
+        name = 'actor-term-%s' % self.concurrency
+        proxy = yield self.spawn(name=name)
+        self.assertEqual(proxy.name, name)
+        self.assertTrue(proxy.aid in arbiter.managed_actors)
+        proxy = arbiter.managed_actors[proxy.aid]
+        #
+        # terminate the actor and see what appens
+        proxy.terminate()
+        #
+        # The arbiter should soon start stop the actor
+        interval = 3*MONITOR_TASK_PERIOD
+        #
+        yield pulsar.async_while(interval,
+                                 lambda: proxy.aid in arbiter.managed_actors)
+        self.assertFalse(proxy in arbiter.terminated_actors)
+        self.assertFalse(proxy.aid in arbiter.managed_actors)
+        
     @unittest.skipUnless(platform.is_posix, 'For posix systems only')
     @run_on_arbiter
     def testFakeSignal(self):

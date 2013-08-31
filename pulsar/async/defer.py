@@ -26,7 +26,6 @@ __all__ = ['Deferred',
            'maybe_failure',
            'coroutine_return',
            'is_failure',
-           'is_async',
            'set_async',
            'maybe_async',
            'async',
@@ -100,10 +99,6 @@ def multi_async(iterable, **kwargs):
     '''This is an utility function to convert an *iterable* into a
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
-
-def is_async(obj):
-    '''Return ``True`` if *obj* is an asynchronous object'''
-    return isinstance(obj, Deferred)
 
 def is_failure(obj, *classes):
     '''Check if ``obj`` is a :class:`Failure`. If optional ``classes``
@@ -640,7 +635,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             state = _CANCELLED if is_failure(self.result, CancelledError) else\
                         _FINISHED
         self._state = state
-        self._run_callbacks()
+        if self._callbacks:
+            self._run_callbacks()
         return self.result
         
     def throw(self):
@@ -1020,17 +1016,17 @@ list :attr:`type` only.'''
             value = list(value)
         if isinstance(value, (Mapping, list, set)):
             value = self._make(value)    
-        if not is_async(value) and self.handle_value:
+        if not isinstance(value, Deferred) and self.handle_value:
             try:
                 val = self.handle_value(value)
-            except Exception as e:
-                value = maybe_failure(e)
+            except Exception:
+                value = Failure(sys.exc_info())
             else:
                 if val is not value:
                     return self._add(key, val)
         self._setitem(key, value)
         # add callback if an asynchronous value
-        if is_async(value):
+        if isinstance(value, Deferred):
             self._deferred[key] = value
             value.add_both(lambda result: self._deferred_done(key, result))
 

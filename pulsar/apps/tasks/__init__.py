@@ -176,7 +176,7 @@ task.Tasks and managing scheduling of tasks via a
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
 to check if the :attr:`scheduler` needs to perform a new run.'''
         super(TaskQueue, self).monitor_task(monitor)
-        if self.backend and monitor.running:
+        if self.backend and monitor.is_running():
             if self.backend.next_run <= datetime.now():
                 self.backend.tick()
 

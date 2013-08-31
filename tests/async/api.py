@@ -1,7 +1,7 @@
 '''API design'''
 import sys
 from pulsar.apps.test import unittest
-from pulsar import NOT_DONE, Failure, maybe_async, is_async
+from pulsar import NOT_DONE, Failure, maybe_async, Deferred
 
 
 class Context(object):
@@ -28,6 +28,6 @@ class TestApi(unittest.TestCase):
         
     def test_maybe_async_get_result_false(self):
         a = maybe_async(3, get_result=False)
-        self.assertTrue(is_async(a))
+        self.assertTrue(isinstance(a, Deferred))
         self.assertTrue(a.done())
         self.assertEqual(a.result, 3)

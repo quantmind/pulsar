@@ -2,7 +2,7 @@
 import sys
 from functools import reduce
 
-from pulsar import (InvalidStateError, Deferred, is_async, NOT_DONE,
+from pulsar import (InvalidStateError, Deferred, NOT_DONE,
                     is_failure, MultiDeferred, maybe_async, CancelledError,
                     async_sleep, Failure, safe_async, async,
                     InvalidStateError, coroutine_return)
@@ -87,7 +87,7 @@ class TestDeferred(unittest.TestCase):
         result = d.callback('ciao')
         self.assertTrue(d.done())
         self.assertEqual(d.paused,1)
-        self.assertTrue(is_async(result))
+        self.assertIsInstance(result, Deferred)
         self.assertEqual(len(result._callbacks),1)
         self.assertFalse(result.done())
         result.set_result('luca')
@@ -201,7 +201,7 @@ class TestDeferred(unittest.TestCase):
                 yield NOT_DONE
         d = Deferred(timeout=1).add_callback(gen)
         res = d.callback(True)
-        self.assertTrue(is_async(res))
+        self.assertIsInstance(res, Deferred)
         self.assertEqual(d.result, res)
         try:
             yield res
@@ -288,7 +288,7 @@ class TestMultiDeferred(unittest.TestCase):
         d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
         self.assertTrue(d.locked)
-        self.assertFalse(is_async(r))
+        self.assertNotIsInstance(r, Deferred)
         self.assertEqual(r, [[1,2,3,4,5,6,7,8,9,10]])
         
     def testNestedhandle(self):
@@ -297,13 +297,13 @@ class TestMultiDeferred(unittest.TestCase):
         d = MultiDeferred(handle_value=handle)
         d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
-        self.assertFalse(is_async(r))
+        self.assertNotIsInstance(r, Deferred)
         self.assertEqual(r, [55])
         handle = lambda value: 'c'*value
         d = MultiDeferred(handle_value=handle, raise_on_error=False)
         d.append([a for a in range(1,11)])
         r = maybe_async(d.lock())
-        self.assertFalse(is_async(r))
+        self.assertNotIsInstance(r, Deferred)
         self.assertTrue(is_failure(r[0]))
     
 

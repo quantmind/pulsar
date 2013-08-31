@@ -296,15 +296,11 @@ if not already present.
             self._thread_pool = None
             
     ###############################################################  STATES
-    def running(self):
+    def is_running(self):
         '''``True`` if actor is running, that is when the :attr:`state`
-is equal to :ref:`ACTOR_STATES.RUN <actor-states>`.'''
-        return self.state == ACTOR_STATES.RUN
-    
-    def active(self):
-        '''``True`` if actor is active by being both running and having
-the :attr:`event_loop` running.'''
-        return self.running()
+is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
+running.'''
+        return self.state == ACTOR_STATES.RUN and self.event_loop.is_running()
     
     def started(self):
         '''``True`` if actor has started. It does not necessarily
@@ -379,10 +375,6 @@ from another actor.'''
         if isp:
             data['system'] = system.system_info(self.pid)
         return data
-        
-    def _bye(self, r):
-        self.logger.debug('Bye from "%s"', self)
-        return r
     
     def _run(self, initial=True):
         exc = None
@@ -400,6 +392,7 @@ from another actor.'''
             exc.mute()
             raise
         finally:
-            self.stop(exc)
+            if exc != -1:
+                self.stop(exc)
             
         

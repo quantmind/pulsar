@@ -33,7 +33,7 @@ class TestHelloWorldThread(unittest.TestCase):
     def testMeta(self):
         app = yield get_application(self.name())
         self.assertEqual(app.name, self.name())
-        self.assertTrue(app.monitor.running())
+        self.assertTrue(app.monitor.is_running())
         self.assertEqual(app, app.app)
         self.assertEqual(str(app), app.name)
         self.assertEqual(app.cfg.bind, '127.0.0.1:0')

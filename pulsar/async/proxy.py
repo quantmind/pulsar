@@ -211,7 +211,10 @@ provided, it raises an exception if the timeout is reached.'''
         self.impl.start()
         
     def should_be_alive(self):
-        return default_timer() - self.spawning_start > ACTOR_ACTION_TIMEOUT
+        if not self.mailbox:
+            return default_timer() - self.spawning_start > ACTOR_ACTION_TIMEOUT
+        else:
+            return True
 
     def should_terminate(self):
         if self.stopping_start is None:

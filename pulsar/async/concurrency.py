@@ -142,7 +142,7 @@ with the acknowledgement from the monitor.'''
         actor.next_periodic_task = None
         if self.can_continue(actor):
             ack = None
-            if actor.running():
+            if actor.is_running():
                 actor.logger.debug('%s notifying the monitor', actor)
                 # if an error occurs, shut down the actor
                 ack = actor.send('monitor', 'notify', actor.info())\
@@ -156,44 +156,45 @@ with the acknowledgement from the monitor.'''
     
     def stop(self, actor, exc):
         '''Gracefully stop the ``actor``.'''
-        if exc != -1:
-            failure = maybe_failure(exc)
-            if actor.state <= ACTOR_STATES.RUN:
-                # The actor has not started the stopping process. Starts it now.
-                actor.state = ACTOR_STATES.STOPPING
-                if isinstance(failure, Failure):
-                    actor.exit_code = getattr(failure.error, 'exit_code', 1)
-                    if actor.exit_code == 1:
-                        failure.log(msg='Stopping %s' % actor,
-                                    log=actor.logger)
-                    elif actor.exit_code:
-                        failure.mute()
-                        print(str(failure.error))
-                    else:
-                        failure.log(msg='Stopping %s' % actor,
-                                    log=actor.logger,
-                                    level='info')
+        failure = maybe_failure(exc)
+        if actor.state <= ACTOR_STATES.RUN:
+            # The actor has not started the stopping process. Starts it now.
+            actor.state = ACTOR_STATES.STOPPING
+            if isinstance(failure, Failure):
+                actor.exit_code = getattr(failure.error, 'exit_code', 1)
+                if actor.exit_code == 1:
+                    failure.log(msg='Stopping %s' % actor,
+                                log=actor.logger)
+                elif actor.exit_code:
+                    failure.mute()
+                    print(str(failure.error))
                 else:
-                    actor.exit_code = 0
-                actor.fire_event('stopping')
-                actor.close_thread_pool()
-                self._stop_actor(actor)
-            elif actor.stopped():
-                # The actor has finished the stopping process.
-                #Remove itself from the actors dictionary
-                remove_actor(actor)
-                actor.fire_event('stop')
-            return actor.event('stop')
+                    failure.log(msg='Stopping %s' % actor,
+                                log=actor.logger,
+                                level='info')
+            else:
+                if actor.logger:
+                    actor.logger.debug('stopping')
+                actor.exit_code = 0
+            actor.fire_event('stopping')
+            actor.close_thread_pool()
+            self._stop_actor(actor)
+        elif actor.stopped():
+            # The actor has finished the stopping process.
+            #Remove itself from the actors dictionary
+            remove_actor(actor)
+            actor.fire_event('stop')
+        return actor.event('stop')
         
     def _stop_actor(self, actor):
         '''Exit from the :class:`Actor` domain.'''
-        actor.bind_event('stop', actor._bye)
         actor.state = ACTOR_STATES.CLOSE
-        actor.mailbox.close()
-        try:
-            self.cfg.when_exit(self)
-        except Exception:
-            pass
+        if actor.event_loop.is_running():
+            actor.mailbox.close()
+        else:
+            actor.exit_code = 1
+            actor.mailbox.abort()
+            self.stop(actor, 0)
 
 
 class ProcessMixin(object):
@@ -237,11 +238,11 @@ class ProcessMixin(object):
                 else:
                     signame = system.SIG_NAMES.get(sig)
                     if sig in system.EXIT_SIGNALS:
-                        actor.logger.warning("Got signal %s. Stopping.", signame)
-                        actor.stop()
+                        actor.logger.warning("Got %s. Stopping.", signame)
+                        actor.event_loop.stop()
                         return False
                     else:
-                        actor.logger.debug('No handler for signal %s.', signame)
+                        actor.logger.debug('No handler for %s.', signame)
         return True
                 
                 
@@ -288,7 +289,7 @@ to be spawned.'''
         the :class:`Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
-        if actor.running():
+        if actor.is_running():
             interval = MONITOR_TASK_PERIOD
             actor.manage_actors()
             actor.spawn_actors()
@@ -334,13 +335,13 @@ mailbox server.'''
         interval = 0
         actor.next_periodic_task = None
         if self.can_continue(actor):
-            if actor.running():
+            if actor.is_running():
                 # managed actors job
                 interval = MONITOR_TASK_PERIOD
                 actor.manage_actors()
                 for m in list(itervalues(actor.monitors)):
                     if m.started():
-                        if not m.running():
+                        if not m.is_running():
                             actor._remove_actor(m)
                     else:
                         m.start()
@@ -367,13 +368,23 @@ mailbox server.'''
                                  log_failure=True)
             active.add_both(partial(self._exit_arbiter, actor))
     
-    
+
+def run_actor(self):
+    self._actor = actor = self.actor_class(self)
+    try:
+        actor.start()
+    finally:
+        try:
+            actor.cfg.when_exit(actor)
+        except Exception:
+            pass
+        actor.logger.debug('Bye from "%s"', actor)
+        
 class ActorProcess(ProcessMixin, Concurrency, Process):
     '''Actor on a Operative system process. Created using the
 python multiprocessing module.'''
     def run(self):
-        actor = self.actor_class(self)
-        actor.start()
+        run_actor(self)
 
 
 class TerminateActorThread(Exception):
@@ -385,8 +396,7 @@ class ActorThread(Concurrency, Thread):
     _actor = None
     
     def run(self):
-        self._actor = self.actor_class(self)
-        self._actor.start()
+        run_actor(self)
     
     def loop(self):
         if self._actor:

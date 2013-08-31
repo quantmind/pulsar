@@ -21,8 +21,7 @@ from wsgiref.handlers import format_date_time
 from io import BytesIO
 
 import pulsar
-from pulsar import HttpException, ProtocolError, maybe_async, is_async,\
-                   is_failure
+from pulsar import HttpException, ProtocolError, maybe_async, Deferred, Failure
 from pulsar.utils.pep import is_string, to_bytes, native_str, raise_error_trace
 from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
                                  host_and_port_default, Headers, http_parser,\
@@ -320,7 +319,7 @@ method as required by the WSGI specification.
         except Exception:
             result = sys.exc_info()
         else:
-            if not is_failure(wsgi_iter):
+            if not isinstance(wsgi_iter, Failure):
                 result = self.async_wsgi(wsgi_iter)
             else:
                 result = wsgi_iter
@@ -331,7 +330,7 @@ method as required by the WSGI specification.
     def async_wsgi(self, wsgi_iter):
         '''Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_
 when the ``wsgi_iter`` yields bytes only.'''
-        if is_async(wsgi_iter): # handle asynchronous wsgi response
+        if isinstance(wsgi_iter, Deferred): # handle asynchronous wsgi response
             wsgi_iter = yield wsgi_iter 
         try:
             for b in wsgi_iter:

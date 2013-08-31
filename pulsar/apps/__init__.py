@@ -320,7 +320,7 @@ The parameters overriding order is the following:
         # get the actor if available and override default cfg values with those
         # from the actor
         actor = get_actor()
-        if actor and actor.running:
+        if actor and actor.is_running():
             # actor available and running. unless argv is set, skip parsing
             if self.argv is None:
                 self.parsed_console = False

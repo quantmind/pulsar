@@ -121,8 +121,8 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.log import LocalMixin, local_property
-from pulsar import Http404, PermissionDenied, HttpException, HttpRedirect,\
-                    async, is_async, multi_async, maybe_async, is_failure
+from pulsar import (Http404, PermissionDenied, HttpException, HttpRedirect,
+                    async, Failure, multi_async, maybe_async)
 
 from .route import Route
 from .utils import wsgi_request, handle_wsgi_error
@@ -169,15 +169,13 @@ class WsgiHandler(object):
         resp = None
         for middleware in self.middleware:
             try:
-                resp = middleware(environ, start_response)
+                resp = yield middleware(environ, start_response)
             except Exception:
-                resp = handle_wsgi_error(environ, maybe_async(sys.exc_info()))
+                resp = yield handle_wsgi_error(environ, Failure(sys.exc_info()))
             if resp is not None:
                 break
         if resp is None:
             raise Http404
-        if is_async(resp):
-            resp = yield resp.add_errback(partial(handle_wsgi_error, environ))
         if isinstance(resp, WsgiResponse):
             for middleware in self.response_middleware:
                 resp = yield middleware(environ, resp)
@@ -495,7 +493,7 @@ to actually produce the WSGI response.'''
         cache = yield async_cache
         if async_cache.num_failures:
             for key, value in list(cache.items()):
-                if is_failure(value):
+                if isinstance(value, Failure):
                     cache.pop(key)
             environ['pulsar.cache'] = cache
             yield async_cache.failures

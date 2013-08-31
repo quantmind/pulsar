@@ -166,7 +166,7 @@ protocol.'''
     ##    INTERNALS
     def _connection_lost(self, exc):
         actor = get_actor()
-        if not actor.running():
+        if not actor.is_running():
             exc = maybe_failure(exc)
             if isinstance(exc, Failure):
                 exc.log(msg='Connection lost with actor.', level='debug')

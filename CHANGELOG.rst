@@ -2,6 +2,7 @@ Ver. 0.6.0 - Development
 =============================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
+    * Remove ``is_async`` function. Not used.
     * The :class:`pulsar.async` decorator always return a :class:`pulsar.Deferred`,
       it never throws.
     * Created the :class:`pulsar.Poller` base class for implementing different
@@ -96,7 +97,7 @@ Ver. 0.5.0 - 2013-May-22
    * :class:`pulsar.Actor` internal message passing uses the (unmasked) websocket protocol
      in a bidirectional communication between the :class:`pulsar.Arbiter` and actors.
    * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
-   * Added :mod:`pulsar.async.const` module for low level actor constants.
+   * Added :mod:`pulsar.async.consts` module for low level pulsar constants.
    * Removed the requestloop attribute, the actor event loop is now accessed
      via the :attr:`pulsar.Actor.event_loop` attribute or via the pep-3156_
      function ``get_event_loop``.

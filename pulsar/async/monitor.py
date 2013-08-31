@@ -100,9 +100,6 @@ during its life time.
             return self.managed_actors[aid]
         elif self.monitor and aid==self.monitor.aid:
             return self.monitor
-        
-    def active(self):
-        return self.running()
 
     def spawn(self, actor_class=None, **params):
         '''Spawn a new :class:`Actor` and return its
@@ -142,12 +139,12 @@ the timeout, stop the actor.
 :param stop: if ``True``, stop the actor.
 :return: if the actor is alive 0 if it is not.
 '''
-        if not self.running():
+        if not self.is_running():
             stop = True
         if not actor.is_alive():
             if not actor.should_be_alive() and not stop:
                 return 1
-            actor.join(ACTOR_TERMINATE_TIMEOUT)
+            actor.join()
             self._remove_actor(actor)
             return 0
         timeout = None

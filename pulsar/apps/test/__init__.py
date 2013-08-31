@@ -81,33 +81,38 @@ An example test case::
 Loading Tests
 =================
 
-Loading test cases is accomplished via the :class:`loader.TestLoader` class. In
-this context we refer to an ``object`` as a ``module`` (including a
-directory module) or a ``class``.
+The loading of test cases is controlled by the ``modules`` parameter when
+initialising the :class:`TestSuite`::
 
-.. note::
+    from pulsar.apps import TestSuite
 
-    Test modules are specified when initialising a :class:`TestSuite`, by
-    passing the ``modules`` tuple/list of python dotted paths. If not defined
-    the default is to load test cases from the ``tests`` module.
+    if __name__ == '__main__':
+        TestSuite(modules=('tests',
+                          ('examples','tests'))).start()
+                           
+The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.
+
+In the context of explaining the rules for loading tests, we refer to
+an ``object`` as
+
+* a ``module`` (including a directory module)
+* a python ``class``.
     
+with this in mind:
 
-These are the rules for loading tests:
-
-* Directories that aren't packages are not inspected. This means that if a directory
-  does not have a ``__init__.py`` file it won't be inspected.
+* Directories that aren't packages are not inspected. This means that if a
+  directory does not have a ``__init__.py`` file, it won't be inspected.
 * Any class that is a ``unittest.TestCase`` subclass is collected.
-* If an object starts with ``_`` or ``.`` it won't be collected,
-  nor will any objects it contains.
-* If an object defines a ``__test__`` attribute that does not evaluate to
-  ``True``, that object will not be collected, nor will any objects it contains.
+* If an ``object`` starts with ``_`` or ``.`` it won't be collected,
+  nor will any ``objects`` it contains.
+* If an ``object`` defines a ``__test__`` attribute that does not evaluate to
+  ``True``, that object will not be collected, nor will any ``objects``
+  it contains.
   
-The paths which will be inspected are defined by the **modules** initialisation
-parameter for the :class:`TestSuite` class.
-The **modules** parameter is a tuple or list of entries where each single entry
-follow the following rules:
+The ``modules`` parameter is a tuple or list of entries where each single
+``entry`` follows the rules:
 
-* If the entry is a string, it indicates the **dotted path** relative to the
+* If the ``entry`` is a string, it indicates the **dotted path** relative to the
   **root** directory (the directory of the script running the tests). For
   example::
   

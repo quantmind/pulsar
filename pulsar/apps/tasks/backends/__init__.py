@@ -641,7 +641,7 @@ parameters ``params``. Must be implemented by subclasses.'''
         It pools a new task if possible, and add it to the queue of
         tasks consumed by the ``worker`` CPU-bound thread.'''
         next_time = 0
-        if worker.running:
+        if worker.is_running():
             thread_pool = worker.thread_pool
             if not thread_pool:
                 worker.logger.warning('No thread pool, cannot poll tasks.')

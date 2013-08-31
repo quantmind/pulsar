@@ -1,4 +1,3 @@
-import sys
 import json
 import time
 import re
@@ -12,20 +11,18 @@ from email.utils import formatdate
 
 import pulsar
 from pulsar.utils.structures import MultiValueDict
-from pulsar import is_failure, HttpException, maybe_async, is_async, get_actor
+from pulsar import Failure, get_actor
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
-from pulsar.utils.httpurl import responses, has_empty_content, ispy3k,\
-                                 REDIRECT_CODES, iteritems, ENCODE_URL_METHODS,\
-                                 parse_qsl, HTTPError
+from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
+                                  parse_qsl, HTTPError)
                                  
-from .structures import Accept, MIMEAccept, CharsetAccept, LanguageAccept
+from .structures import Accept
 from .content import Html
 
 __all__ = ['handle_wsgi_error',
            'wsgi_error_msg',
            'render_error_debug',
-           'async_wsgi',
            'wsgi_request',
            'set_wsgi_request_class',
            'HOP_HEADERS']
@@ -62,14 +59,6 @@ def wsgi_iterator(gen, encoding):
             yield data
         else:
             yield data.encode(encoding)
-
-def async_wsgi(request, result, callback):
-    result = maybe_async(result)
-    while is_async(result):
-        yield b''
-        result = maybe_async(result)
-    for b in callback(request, result):
-        yield b
 
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
@@ -212,10 +201,7 @@ def handle_wsgi_error(environ, failure):
     '''The default handler for errors while serving an Http requests.
 
 :parameter environ: The WSGI environment.
-:parameter trace: the error traceback. If not avaiable it will be obtained from
-    ``sys.exc_info()``.
-:parameter content_type: Optional content type.
-:parameter encoding: Optional charset.
+:parameter failure: a :class:`Failure`.
 :return: a :class:`WsgiResponse`
 '''
     request = wsgi_request(environ)
@@ -244,7 +230,7 @@ def handle_wsgi_error(environ, failure):
         renderer = environ.get('error.handler') or render_error
         try:
             content = renderer(request, failure.exc_info)
-            if is_failure(content):
+            if isinstance(content, Failure):
                 content.log()
                 content = None
         except Exception:

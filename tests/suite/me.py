@@ -3,7 +3,7 @@ import os
 from threading import current_thread
 
 import pulsar
-from pulsar import send, is_async, multi_async, is_async, is_failure
+from pulsar import send, multi_async, is_failure
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.pep import get_event_loop, default_timer
@@ -23,7 +23,7 @@ class TestTestWorker(unittest.TestCase):
         '''Test the test worker'''
         worker = pulsar.get_actor()
         self.assertTrue(pulsar.is_actor(worker))
-        self.assertTrue(worker.running())
+        self.assertTrue(worker.is_running())
         self.assertFalse(worker.closed())
         self.assertFalse(worker.stopped())
         self.assertEqual(worker.info_state, 'running')
