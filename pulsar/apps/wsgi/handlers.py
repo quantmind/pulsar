@@ -475,7 +475,7 @@ the best match.'''
         else:
             return self, match
     
-    @async()
+    @async(get_result=True)
     def response(self, environ, start_response, args):
         '''Once the :meth:`resolve` method has matched the correct
 :class:`Router` for serving the request, this matched router invokes this method
@@ -501,7 +501,7 @@ to actually produce the WSGI response.'''
             environ['pulsar.cache'] = cache
             yield callable(request)
     
-    @async()
+    @async(get_result=True)
     def redirect(self, environ, start_response, path):
         request = wsgi_request(environ, self)
         environ['pulsar.cache'] = yield multi_async(request.cache)

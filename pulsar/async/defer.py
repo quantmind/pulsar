@@ -201,8 +201,13 @@ class async:
     
 It convert the return value of the callable it decorates into a
 :class:`Deferred` via the :func:`maybe_async` function. The return value is
-**always** a :class:`Deferred`, and the function never throws.
-    
+**always** a :class:`Deferred` (unless :attr:`get_result` is ``True``),
+and the function never throws.
+
+:parameter timeout: Optional timeout in seconds.
+:parameter get_result: if ``True`` return the deferred value if the deferred
+    is done. Default ``False``.
+
 Check the :ref:`Asynchronous utilities tutorial <tutorial-async-utilities>`
 for detailed discussion and examples.
 
@@ -245,8 +250,9 @@ when invoked::
         raise ValueError('Kaput!')
     ValueError: Kaput!
 '''
-    def __init__(self, timeout=None):
+    def __init__(self, timeout=None, get_result=False):
         self.timeout = timeout
+        self.get_result = get_result
 
     def __call__(self, func):
         def _(*args, **kwargs):
@@ -261,7 +267,8 @@ when invoked::
             result = callable(*args, **kwargs)
         except Exception:
             result = Failure(sys.exc_info())
-        return maybe_async(result, get_result=False, timeout=self.timeout)
+        return maybe_async(result, get_result=self.get_result,
+                           timeout=self.timeout)
 
 
 safe_async = async().call

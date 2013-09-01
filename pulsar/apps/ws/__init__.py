@@ -84,7 +84,7 @@ This method must be overloaded.'''
         pass
     
     def on_bytes(self, websocket, body):
-        '''Handles incoming bytes'''
+        '''Handles incoming bytes.'''
         pass
     
     def on_ping(self, websocket, body):
