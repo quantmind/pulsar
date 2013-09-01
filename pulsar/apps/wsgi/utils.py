@@ -15,9 +15,9 @@ from pulsar import Failure, get_actor
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
-                                  parse_qsl, HTTPError)
+                                  parse_qsl, HTTPError, parse_dict_header)
                                  
-from .structures import Accept
+from .structures import Accept, RequestCacheControl
 from .content import Html
 
 __all__ = ['handle_wsgi_error',
@@ -142,16 +142,13 @@ def parse_cache_control_header(value, on_update=None, cls=None):
     request cache control, this method does not.  It's your responsibility
     to not use the wrong control statements.
 
-    .. versionadded:: 0.5
-       The `cls` was added.  If not specified an immutable
-       :class:`~werkzeug.datastructures.RequestCacheControl` is returned.
-
     :param value: a cache control header to be parsed.
     :param on_update: an optional callable that is called every time a value
                       on the :class:`~werkzeug.datastructures.CacheControl`
                       object is changed.
     :param cls: the class for the returned object.  By default
-                :class:`~werkzeug.datastructures.RequestCacheControl` is used.
+                :class:`pulsar.apps.wsgi.structures.RequestCacheControl` is
+                used.
     :return: a `cls` object.
     """
     if cls is None:

@@ -24,8 +24,9 @@ except ImportError: #pragma    nocover
     import pulsar
 
 from pulsar import HttpRedirect, HttpException, version, JAPANESE
-from pulsar.utils.pep import ispy3k
-from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS, WWWAuthenticate
+from pulsar.utils.pep import ispy3k, to_bytes
+from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, WWWAuthenticate,
+                                  hexmd5)
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi
 from pulsar.apps.wsgi import route, Html, Json
@@ -151,7 +152,7 @@ class HttpBin(wsgi.Router):
     @route('basic-auth/<username>/<password>', title='Challenges HTTPBasic Auth',
            defaults={'username': 'username', 'password': 'password'})
     def challenge_auth(self, request):
-        auth = request.get('HTTP_AUTHORIZATION')
+        auth = request.get('http.authorization')
         if auth and auth.type == 'basic':
             username = request.urlargs['username']
             password = request.urlargs['password']
@@ -161,10 +162,13 @@ class HttpBin(wsgi.Router):
         h = ('WWW-Authenticate', str(WWWAuthenticate.basic("Fake Realm")))
         raise HttpException(status=401, headers=[h])
         
-    @route('digest-auth/<username>/<password>/<qop>', title='Challenges HTTP Digest Auth',
-           defaults={'username': 'username', 'password': 'password', 'qop': 'auth'})
+    @route('digest-auth/<username>/<password>/<qop>',
+           title='Challenges HTTP Digest Auth',
+           defaults={'username': 'username',
+                     'password': 'password',
+                     'qop': 'auth'})
     def challenge_digest_auth(self, request):
-        auth = environ.get('HTTP_AUTHORIZATION')
+        auth = request.get('http.authorization')
         if auth and auth.authenticated(environ, *bits[1:]):
             data = jsonbytes({'autheinticated': True,
                               'username': auth.username})
@@ -172,7 +176,7 @@ class HttpBin(wsgi.Router):
         nonce = hexmd5(to_bytes('%d' % time.time()) + os.urandom(10))
         digest = WWWAuthenticate.digest("Fake Realm", nonce,
                                         opaque=hexmd5(os.urandom(10)),
-                                        qop=bits[:1])
+                                        qop=request.urlargs['qop'])
         raise HttpException(status=401,
                             headers=[('WWW-Authenticate', str(digest))])
         

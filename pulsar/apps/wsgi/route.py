@@ -52,7 +52,7 @@ Route
 '''
 import re
 
-from pulsar import Http404, HttpException
+from pulsar import Http404
 from pulsar.utils.httpurl import iteritems, iri_to_uri, remove_double_slash
 from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.pep import to_string

@@ -42,20 +42,20 @@ import re
 from functools import reduce
 
 from pulsar.utils.multipart import parse_form_data, parse_options_header
-from pulsar.utils.structures import MultiValueDict, AttributeDictionary
-from pulsar.utils.httpurl import Headers, SimpleCookie, responses,\
-                                 has_empty_content, string_type, ispy3k,\
-                                 ENCODE_URL_METHODS, JSON_CONTENT_TYPES,\
-                                 urlencode, remove_double_slash, iri_to_uri
+from pulsar.utils.structures import AttributeDictionary
+from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
+                                  has_empty_content, ispy3k,
+                                  ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
+                                  remove_double_slash, iri_to_uri)
 
 from .middleware import is_streamed
 from .content import HtmlDocument
-from .utils import LOGGER, set_wsgi_request_class, set_cookie, query_dict,\
-                    parse_accept_header, parse_cache_control_header
-from .structures import MIMEAccept, CharsetAccept, LanguageAccept
+from .utils import (set_wsgi_request_class, set_cookie, query_dict,
+                    parse_accept_header)
+from .structures import ContentAccept, CharsetAccept, LanguageAccept
 
 
-__all__ = ['EnvironMixin', 'Accept', 'WsgiResponse',
+__all__ = ['EnvironMixin', 'WsgiResponse',
            'WsgiRequest', 'cached_property']
 
 MAX_BUFFER_SIZE = 2**16
@@ -152,8 +152,7 @@ client.
                 content = ()
             elif ispy3k: #what a pain
                 if isinstance(content, str):
-                    self.encoding = self.encoding or 'utf-8'
-                    content = content.encode(self.encoding)
+                    content = content.encode(self.encoding or 'utf-8')
             else: #pragma    nocover
                 if isinstance(content, unicode):
                     content = content.encode(self.encoding or 'utf-8')
@@ -298,16 +297,26 @@ key ``pulsar.cache``.'''
         return self.environ.get(key, default)
     
     
-class Accept(EnvironMixin):
-    """A mixin for classes with an :attr:`~BaseResponse.environ` attribute
-    to get all the HTTP accept headers as
-    :class:`~werkzeug.datastructures.Accept` objects (or subclasses
-    thereof).
-    """
+class WsgiRequest(EnvironMixin):
+    '''An :class:`EnvironMixin` for wsgi requests.'''    
+    def __init__(self, environ, app_handler=None, urlargs=None):
+        super(WsgiRequest, self).__init__(environ)
+        self.cache.cfg = environ.get('pulsar.cfg', {})
+        if app_handler:
+            self.cache.app_handler = app_handler
+            self.cache.urlargs = urlargs
+    
+    def __repr__(self):
+        return self.path
+    
+    def __str__(self):
+        return self.__repr__()
+    
     @cached_property
     def content_types(self):
         """List of content types this client supports."""
-        return parse_accept_header(self.environ.get('HTTP_ACCEPT'), MIMEAccept)
+        return parse_accept_header(self.environ.get('HTTP_ACCEPT'),
+                                   ContentAccept)
 
     @cached_property
     def charsets(self):
@@ -336,23 +345,7 @@ class Accept(EnvironMixin):
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
-    
-    
-class WsgiRequest(Accept):
-    '''An :class:`EnvironMixin` for wsgi requests.'''    
-    def __init__(self, environ, app_handler=None, urlargs=None):
-        super(WsgiRequest, self).__init__(environ)
-        self.cache.cfg = environ.get('pulsar.cfg', {})
-        if app_handler:
-            self.cache.app_handler = app_handler
-            self.cache.urlargs = urlargs
-    
-    def __repr__(self):
-        return self.path
-    
-    def __str__(self):
-        return self.__repr__()
-    
+        
     @property
     def app_handler(self):
         '''The WSGI application handling this request.'''

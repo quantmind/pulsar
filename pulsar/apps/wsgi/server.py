@@ -22,16 +22,15 @@ from io import BytesIO
 
 import pulsar
 from pulsar import HttpException, ProtocolError, maybe_async, Deferred, Failure
-from pulsar.utils.pep import is_string, to_bytes, native_str, raise_error_trace
-from pulsar.utils.httpurl import Headers, unquote, has_empty_content,\
-                                 host_and_port_default, Headers, http_parser,\
-                                 REDIRECT_CODES
+from pulsar.utils.pep import is_string, native_str, raise_error_trace
+from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
+                                  host_and_port_default, http_parser)
+                                 
 from pulsar.utils.internet import format_address
 from pulsar.async.protocols import ProtocolConsumer
 from pulsar.utils import events
 
 from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
-from .wrappers import WsgiResponse
 
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']

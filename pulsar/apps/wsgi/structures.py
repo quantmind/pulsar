@@ -1,6 +1,11 @@
+import re
+import codecs
+
 from pulsar.utils.pep import ispy3k
+from pulsar.utils.structures import FrozenDict
 
 string_type = str if ispy3k else basestring
+_locale_delim_re = re.compile(r'[_-]')
 
 
 def order(values):
@@ -20,7 +25,7 @@ class Accept(tuple):
 
     All :class:`Accept` objects work similar to a list but provide extra
     functionality for working with the data.  Containment checks are
-    normalized to the rules of that header:
+    normalised to the rules of that header:
 
     >>> a = CharsetAccept([('ISO-8859-1', 1), ('utf-8', 0.7)])
     >>> a.best
@@ -34,13 +39,10 @@ class Accept(tuple):
 
     To get the quality for an item you can use normal item lookup:
 
-    >>> print a['utf-8']
+    >>> print(a['utf-8'])
     0.7
-    >>> a['utf7']
+    >>> a(['utf7'])
     0
-
-    .. versionchanged:: 0.5
-       :class:`Accept` objects are forced immutable now.
     """
     def __new__(cls, values=None):
         values = order(values) if values else ()
@@ -147,9 +149,9 @@ class Accept(tuple):
             return self[0][0]
 
 
-class MIMEAccept(Accept):
+class ContentAccept(Accept):
     """Like :class:`Accept` but with special methods and behaviour for
-    mimetypes.
+    content types.
     """
 
     def _value_matches(self, value, item):
@@ -202,7 +204,7 @@ class MIMEAccept(Accept):
 
 
 class LanguageAccept(Accept):
-    """Like :class:`Accept` but with normalization for languages."""
+    """Like :class:`Accept` but with normalisation for languages."""
 
     def _value_matches(self, value, item):
         def _normalize(language):
@@ -211,7 +213,7 @@ class LanguageAccept(Accept):
 
 
 class CharsetAccept(Accept):
-    """Like :class:`Accept` but with normalization for charsets."""
+    """Like :class:`Accept` but with normalisation for charsets."""
 
     def _value_matches(self, value, item):
         def _normalize(name):
@@ -220,3 +222,7 @@ class CharsetAccept(Accept):
             except LookupError:
                 return name.lower()
         return item == '*' or _normalize(value) == _normalize(item)
+    
+    
+class RequestCacheControl(FrozenDict):
+    pass

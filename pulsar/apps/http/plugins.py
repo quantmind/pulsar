@@ -2,7 +2,6 @@ from base64 import b64encode, b64decode
 
 import pulsar
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.httpurl import parse_dict_header
 from pulsar.utils.pep import native_str
 from pulsar.utils.websocket import FrameParser
 

@@ -30,10 +30,12 @@ HTTPDigestAuth
    :member-order: bysource
    
 '''
+import os
+import time
+from hashlib import sha1
 from base64 import b64encode, b64decode
 
-import pulsar
-from pulsar.utils.httpurl import parse_dict_header
+from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
 from pulsar.utils.pep import native_str
 
 __all__ = ['Auth', 
@@ -184,7 +186,7 @@ class HTTPDigestAuth(Auth):
         elif self.algorithm == 'SHA1':
             return hexsha1(x)
         else:
-            raise valueError('Unknown algorithm %s' % self.algorithm)
+            raise ValueError('Unknown algorithm %s' % self.algorithm)
         
     def ha1(self, realm, password):
         return self.hex('%s:%s:%s' % (self.username, realm, password))
@@ -222,7 +224,7 @@ not given, otherwise an :class:`Auth` object.
         try:
             up = b64decode(auth_info.encode('latin-1')).decode(charset)
             username, password = up.split(':', 1)
-        except Exception as e:
+        except Exception:
             return
         return HTTPBasicAuth(username, password)
     elif auth_type == 'digest':
