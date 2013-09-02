@@ -8,7 +8,11 @@ from examples.httpbin.manage import HttpBin
 class HttpBin2(HttpBin):
     
     def gzip(self):
-        pass    # switch off gzip handler
+        pass    # switch off gzip handler, it is not a route anymore
+    
+    @route('get2')
+    def _get(self, request):    # override the _get handler
+        raise pulsar.Http404
     
     @route('async', async=True)
     def teast_async_route(self, request):
@@ -17,6 +21,18 @@ class HttpBin2(HttpBin):
     @route('async', async=True, method='post')
     def teast_async_route_post(self, request):
         yield  'Hello'
+        
+        
+class HttpBin3(HttpBin):
+    
+    @route('post', method='post', title='Returns POST data', position=-1)
+    def _post(self, request):
+        return self.info_data_response(request)
+    
+    @route('new', position=0)
+    def new(self, request):
+        return self.info_data_response(request)
+    
 
 
 class TestRouter(unittest.TestCase):
@@ -70,4 +86,24 @@ class TestRouter(unittest.TestCase):
         self.assertTrue(get.async)
         self.assertTrue(post.async)
         
-    
+    def test_override(self):
+        self.assertTrue('_get' in HttpBin.rule_methods)
+        self.assertEqual(HttpBin.rule_methods['_get'][0].rule, 'get')
+        self.assertTrue('_get' in HttpBin2.rule_methods)
+        self.assertEqual(HttpBin2.rule_methods['_get'][0].rule, 'get2')
+        # The position in the ordered dict should be the same too
+        all = list(HttpBin.rule_methods)
+        all2 = list(HttpBin2.rule_methods)
+        self.assertEqual(all2.index('_get'), all.index('_get'))
+
+    def test_override_change_position(self):
+        self.assertTrue('_post' in HttpBin.rule_methods)
+        self.assertEqual(HttpBin.rule_methods['_post'][0].rule, 'post')
+        self.assertTrue('_get' in HttpBin3.rule_methods)
+        self.assertEqual(HttpBin3.rule_methods['_post'][0].rule, 'post')
+        # The position in the ordered dict should be the same too
+        all = list(HttpBin.rule_methods)
+        all3 = list(HttpBin3.rule_methods)
+        self.assertEqual(all3.index('new'), 0)
+        self.assertTrue(all3.index('_post') < all.index('_post'))
+        

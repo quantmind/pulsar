@@ -119,9 +119,32 @@ def parse_rule(rule):
 
 
 class route(object):
-    '''Decorator for creating a (:class:`Route`, ``HTTPmethod``, ``parameters``)
-tuple and assign it to the ``rule_method`` attribute of the ``callable`` which
-is decorated. Check the :ref:`HttpBin example <tutorials-httpbin>`
+    '''Decorator to create a child route from a :ref:`Router <wsgi-router>` method.
+    
+Tipical usage::
+
+    from pulsar.apps import wsgi
+    
+    class View(wsgi.Router):
+    
+        wsgi.route('/foo')
+        def handle_view(self, request):
+            ...
+            
+        wsgi.route('/bla', async=True)
+        def asynchronous_handle(self, request):
+            result = yield async_function(...)
+            yield ...
+
+
+In this example, ``View`` is the **parent router**.
+
+The decorator injects the :attr:`rule_method` attribute to the
+method it decorates. The attribute is a four elements tuple
+contains the :class:`Route`, the HTTP ``method``, a
+dictionary of ``parameters`` and the ``position`` for ordering.
+
+Check the :ref:`HttpBin example <tutorials-httpbin>`
 for a sample usage.
 
 :param rule: Optional string for the relative url served by the method which
@@ -129,32 +152,21 @@ for a sample usage.
 :param method: Optional HTTP method name. Default is `get`.
 :param defaults: Optional dictionary of default parameters used when
     initialising the :class:`Route` instance.
+:param position: Optional positioning of the router within the
+    list of child routers of the parent router.
 :param parameters: Additional parameters used when initialising
     the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.
     The ``async=True`` parameter will treat the ``callable`` as an asynchronous
     component.
-    
-The ``callable`` could be an unbound method of a
-:ref:`Router <wsgi-router>` class or a standard python function::
-
-    from pulsar.apps import wsgi
-    
-    class View(wsgi.Router):
-    
-        wsgi.route('/foo')
-        def handle_view(request):
-            ...
-            
-        wsgi.route('/bla', async=True)
-        def asynchronous_handle(request):
-            result = yield async_function(...)
-            yield ...
-            
+                
 '''
     creation_count = 0
-    def __init__(self, rule=None, method=None, defaults=None, **parameters):
+    def __init__(self, rule=None, method=None, defaults=None,
+                 position=None, **parameters):
         self.__class__.creation_count += 1
-        self.creation_count = self.__class__.creation_count
+        self.position = position
+        if position is None:
+            self.position = self.__class__.creation_count
         self.rule = rule
         self.defaults = defaults
         self.method = method
@@ -170,8 +182,7 @@ The ``callable`` could be an unbound method of a
                 bits = bits[1:]
         method = (self.method or method or 'get').lower()
         rule = Route(self.rule or '_'.join(bits), defaults=self.defaults)
-        callable.rule_method = (rule, method, self.parameters,
-                                self.creation_count)
+        callable.rule_method = (rule, method, self.parameters, self.position)
         return callable
         
     

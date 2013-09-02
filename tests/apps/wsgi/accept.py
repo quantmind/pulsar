@@ -1,4 +1,4 @@
-from pulsar.apps.wsgi import Accept
+from pulsar.apps.wsgi import WsgiRequest
 from pulsar.apps.test import unittest
 
 
@@ -6,13 +6,13 @@ class AcceptTests(unittest.TestCase):
     
     def test_empty_mime(self):
         environ = {}
-        a = Accept(environ)
+        a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertFalse(content_types)
         
     def test_content_types(self):
         environ = {'HTTP_ACCEPT': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8'}
-        a = Accept(environ)
+        a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertTrue(content_types)
         self.assertEqual(len(content_types), 4)
@@ -26,7 +26,7 @@ class AcceptTests(unittest.TestCase):
         
     def test_best(self):
         environ = {'HTTP_ACCEPT': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8'}
-        a = Accept(environ)
+        a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertTrue(content_types)
         self.assertEqual(content_types.best_match(('text/html', 'application/json')),
