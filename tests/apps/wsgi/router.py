@@ -15,22 +15,22 @@ class HttpBin2(HttpBin):
         raise pulsar.Http404
     
     @route('async', async=True)
-    def teast_async_route(self, request):
+    def test_async_route(self, request):
         yield  'Hello'
         
     @route('async', async=True, method='post')
-    def teast_async_route_post(self, request):
+    def test_async_route_post(self, request):
         yield  'Hello'
         
         
 class HttpBin3(HttpBin):
     
-    @route('post', method='post', title='Returns POST data', position=-1)
-    def _post(self, request):
-        return self.info_data_response(request)
-    
     @route('new', position=0)
     def new(self, request):
+        return self.info_data_response(request)
+    
+    @route('post', method='post', title='Returns POST data', position=-1)
+    def _post(self, request):
         return self.info_data_response(request)
     
 
@@ -75,8 +75,8 @@ class TestRouter(unittest.TestCase):
         self.assertFalse('gzip' in HttpBin2.rule_methods)
         
     def test_async_route(self):
-        self.assertTrue('teast_async_route' in HttpBin2.rule_methods)
-        method = HttpBin2.rule_methods['teast_async_route']
+        self.assertTrue('test_async_route' in HttpBin2.rule_methods)
+        method = HttpBin2.rule_methods['test_async_route']
         self.assertEqual(method[2].get('async'), True)
         app = HttpBin2('/')
         router, args = app.resolve('async')
@@ -104,6 +104,6 @@ class TestRouter(unittest.TestCase):
         # The position in the ordered dict should be the same too
         all = list(HttpBin.rule_methods)
         all3 = list(HttpBin3.rule_methods)
-        self.assertEqual(all3.index('new'), 0)
+        self.assertEqual(all3.index('new'), 1)
         self.assertTrue(all3.index('_post') < all.index('_post'))
         

@@ -2,7 +2,7 @@ Ver. 0.6.0 - Development
 =============================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
-    * Remove ``is_async`` function. Not used.
+    * Removed ``is_async`` function. Not used.
     * The :class:`pulsar.async` decorator always return a :class:`pulsar.Deferred`,
       it never throws.
     * Created the :class:`pulsar.Poller` base class for implementing different
@@ -37,7 +37,10 @@ Ver. 0.6.0 - Development
       for excluding labels in a test run.
     * Several fixes in the test application.
     * Critical bug fix in python Http parser (4bd8a54_).
-    * Bug fix in :class:`pulsar.apps.wsgi.Router` metaclass.
+    * Bug fix and enhancement of :ref:`Router <wsgi-router>` metaclass. It
+      is now possible to overwrite the relative ``position`` of children routes
+      via the :ref:`route decorator <wsgi-route-decorator>`.
+      
     
 * Examples:
     * Proxy server example uses the new :class:`pulsar.Queue`.

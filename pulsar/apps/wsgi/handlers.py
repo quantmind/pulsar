@@ -3,7 +3,7 @@
 WSGI application handlers
 ===============================
 
-Pulsar is shipped with four WSGI application handlers which facilitate the
+Pulsar is shipped with two WSGI application handlers to facilitate the
 development of server-side python web applications.
 
 .. note::
@@ -17,7 +17,7 @@ development of server-side python web applications.
 WsgiHandler
 ======================
 
-The first and most basic application handler is the :class:`WsgiHandler`
+The first application handler is the :class:`WsgiHandler`
 which is a step above the :ref:`hello callable <tutorials-hello-world>`
 in the tutorial. It accepts two iterables, a list of
 :ref:`wsgi middleware <wsgi-middleware>` and an optional list of
@@ -215,7 +215,7 @@ def get_roule_methods(attrs):
         rule_method = getattr(callable, 'rule_method', None)
         if isinstance(rule_method, tuple):
             rule_methods.append((code, rule_method))
-    return sorted(rule_methods, key=lambda x: x[1][3])
+    return sorted(rule_methods, key=lambda x: x[1].order)
     
 
 class RouterParam(object):
@@ -260,7 +260,14 @@ class RouterType(type):
             base_rules = base_rules + rules
             
         if base_rules:
-            rule_methods = base_rules + rule_methods                
+            all = base_rules + rule_methods
+            rule_methods = {}
+            for name, rule in all:
+                if name in rule_methods:
+                    rule = rule.override(rule_methods[name])
+                rule_methods[name] = rule
+            rule_methods = sorted(rule_methods.items(),
+                                  key=lambda x: x[1].order)
         attrs['rule_methods'] = OrderedDict(rule_methods)
         attrs['parameters'] = parameters
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
@@ -333,7 +340,7 @@ request, the ``get(self, request)`` method must be implemented.
             self.add_child(router)
         self.parameters = AttributeDictionary(self.parameters)
         for name, rule_method in self.rule_methods.items():
-            rule, method, params, count = rule_method
+            rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
             if rparameters.pop('async', False): # asynchronous method

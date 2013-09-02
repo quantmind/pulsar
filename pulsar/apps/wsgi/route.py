@@ -31,7 +31,7 @@ Paths::
     
 
 
-.. _apps-wsgi-route-decorator:
+.. _wsgi-route-decorator:
 
 Route decorator
 ==================
@@ -51,6 +51,7 @@ Route
    
 '''
 import re
+from collections import namedtuple
 
 from pulsar import Http404
 from pulsar.utils.httpurl import iteritems, iri_to_uri, remove_double_slash
@@ -61,10 +62,20 @@ from pulsar.utils.pep import to_string
 __all__ = ['route', 'Route']
 
 
+class rule_info(namedtuple('rinfo', 'rule method parameters position order')):
+    
+    def override(self, parent):
+        if self.position is None:
+            return rule_info(self.rule, self.method, self.parameters,
+                             parent.position, parent.order)
+        else:
+            return self
+        
+
 _rule_re = re.compile(r'''
     (?:
         (?P<converter>[a-zA-Z_][a-zA-Z0-9_]*)   # converter name
-        (?:\((?P<args>.*?)\))?                  # converter arguments
+        (?:\((?P<args>.*?)\))?                  # converter parameters
         \:                                      # variable delimiter
     )?
     (?P<variable>[a-zA-Z_][a-zA-Z0-9_]*)        # variable name
@@ -105,7 +116,7 @@ def _pythonize(value):
 
 def parse_rule(rule):
     """Parse a rule and return it as generator. Each iteration yields tuples
-    in the form ``(converter, arguments, variable)``. If the converter is
+    in the form ``(converter, parameters, variable)``. If the converter is
     `None` it's a static url part, otherwise it's a dynamic one.
 
     :internal:
@@ -142,7 +153,7 @@ In this example, ``View`` is the **parent router**.
 The decorator injects the :attr:`rule_method` attribute to the
 method it decorates. The attribute is a four elements tuple
 contains the :class:`Route`, the HTTP ``method``, a
-dictionary of ``parameters`` and the ``position`` for ordering.
+dictionary of additional ``parameters`` and the ``position`` for ordering.
 
 Check the :ref:`HttpBin example <tutorials-httpbin>`
 for a sample usage.
@@ -150,7 +161,7 @@ for a sample usage.
 :param rule: Optional string for the relative url served by the method which
     is decorated. If not supplied, the method name is used.
 :param method: Optional HTTP method name. Default is `get`.
-:param defaults: Optional dictionary of default parameters used when
+:param defaults: Optional dictionary of default variable values used when
     initialising the :class:`Route` instance.
 :param position: Optional positioning of the router within the
     list of child routers of the parent router.
@@ -165,12 +176,15 @@ for a sample usage.
                  position=None, **parameters):
         self.__class__.creation_count += 1
         self.position = position
-        if position is None:
-            self.position = self.__class__.creation_count
+        self.creation_count = self.__class__.creation_count
         self.rule = rule
         self.defaults = defaults
         self.method = method
         self.parameters = parameters
+        
+    @property
+    def order(self):
+        return self.creation_count if self.position is None else self.position
         
     def __call__(self, callable):
         bits = callable.__name__.split('_')
@@ -182,7 +196,8 @@ for a sample usage.
                 bits = bits[1:]
         method = (self.method or method or 'get').lower()
         rule = Route(self.rule or '_'.join(bits), defaults=self.defaults)
-        callable.rule_method = (rule, method, self.parameters, self.position)
+        callable.rule_method = rule_info(rule, method, self.parameters,
+                                         self.position, self.order)
         return callable
         
     
@@ -190,15 +205,12 @@ class Route(object):
     '''A Route is a class with a relative :attr:`path`.
     
 :parameter rule: Rule strings basically are just normal URL paths
-    with placeholders in the format ``<converter(arguments):name>``
-    where the converter and the arguments are optional.
-    If no converter is defined the `default` converter is used which
-    means `string`.
-    
-:parameter defaults: optional dictionary of default values for variables.
-:parameter append_slash: Force a slash to be the last character of the rule.
-    In doing so the :attr:`is_leaf` is guaranteed to be ``False``.
-    
+    with placeholders in the format ``<converter(parameters):name>``
+    where both the ``converter`` and the ``parameters`` are optional.
+    If no ``converter`` is defined the `default` converter is used which
+    means ``string``. ``name`` is the variable name.
+:parameter defaults: optional dictionary of default values for the rule
+    variables.
     
 .. attribute:: is_leaf
 
@@ -209,9 +221,9 @@ class Route(object):
 
     The full path for this route including initial ``'/'``.
     
-.. attribute:: arguments
+.. attribute:: variables
 
-    a set of arguments for this route. If the route has no variables, the
+    a set of  variable names for this route. If the route has no variables, the
     set is empty.
     
 .. _werkzeug: https://github.com/mitsuhiko/werkzeug
@@ -221,7 +233,7 @@ class Route(object):
         self.defaults = defaults if defaults is not None else {}
         self.is_leaf = not rule.endswith('/')
         self.rule = rule[1:]
-        self.arguments = set(map(str, self.defaults))
+        self.variables = set(map(str, self.defaults))
         breadcrumbs = []
         self._converters = {}
         regex_parts = []
@@ -234,15 +246,15 @@ class Route(object):
                 if s == '<' or e == '>':
                     if s + e != '<>':
                         raise ValueError('malformed rule {0}'.format(self.rule))
-                    converter, arguments, variable = parse_rule(bit[1:-1])
+                    converter, parameters, variable = parse_rule(bit[1:-1])
                     if variable in self._converters:
                         raise ValueError('variable name {0} used twice\
  in rule {1}.'.format(variable,self.rule))
-                    convobj = get_converter(converter, arguments)
+                    convobj = get_converter(converter, parameters)
                     regex_parts.append('(?P<%s>%s)' % (variable, convobj.regex))
                     breadcrumbs.append((True,variable))
                     self._converters[variable] = convobj
-                    self.arguments.add(str(variable))
+                    self.variables.add(str(variable))
                 else:
                     variable = bit
                     regex_parts.append(re.escape(variable))
@@ -429,7 +441,7 @@ class AnyConverter(BaseConverter):
         Rule('/<any(about, help, imprint, class, "foo,bar"):page_name>')
 
     :param items: this function accepts the possible items as positional
-                  arguments.
+                  parameters.
     """
 
     def __init__(self, *items):
@@ -535,12 +547,12 @@ def parse_converter_args(argstr):
     return tuple(args), kwargs
 
 
-def get_converter(name, arguments):
+def get_converter(name, parameters):
     c = _CONVERTERS.get(name)
     if not c:
         raise LookupError('Route converter {0} not available'.format(name))
-    if arguments:
-        args, kwargs = parse_converter_args(arguments)
+    if parameters:
+        args, kwargs = parse_converter_args(parameters)
         return c(*args,**kwargs)
     else:
         return c()
