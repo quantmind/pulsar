@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -
-import sys
-
 import pulsar
 from pulsar.apps.wsgi import WSGIServer, LazyWsgi
 

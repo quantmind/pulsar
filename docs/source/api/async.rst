@@ -57,12 +57,6 @@ Set Async
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: set_async
 
-
-Is async
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: is_async
-
 Is failure
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: is_failure

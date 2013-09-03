@@ -3,10 +3,18 @@ from stdnet import getdb
 from pulsar import async
 from pulsar.apps import pubsub
 from pulsar.utils.log import local_property
+from pulsar.utils.internet import get_connection_string
 
 
 class PubSubBackend(pubsub.PubSubBackend):
     '''Implements :class:`PubSub` using a redis backend.'''
+    
+    @classmethod
+    def get_connection_string(cls, scheme, address, params, name):
+        if name:
+            params['namespace'] = '%s.' % name
+        return get_connection_string(scheme, address, params)
+        
     @local_property
     def redis(self):
         redis = getdb(self.connection_string, timeout=0).client.pubsub()

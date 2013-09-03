@@ -24,6 +24,9 @@ When using this middleware, one starts by creating a :class:`PubSub` handler::
 The ``backend`` parameter is needed in order to select the backend
 to use. If not supplied, the default ``local://`` backend is used.
 
+A backend handler is a pickable instance and therefore it can be passed to
+different process domains.
+
 
 PubSub handler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,9 +79,6 @@ class PubSub(object):
 
     Optional callable which encode the messages before they are published.
     
-.. attribute:: clients
-
-    Set of all clients for this :class:`PubSub` handler.
 '''
     def __init__(self, backend=None, encoder=None, **params):
         be = PubSubBackend.make(backend=backend, **params)
@@ -87,6 +87,7 @@ class PubSub(object):
     
     @property
     def clients(self):
+        '''Set of all clients for this :class:`PubSub` handler.'''
         return self.backend.clients
     
     @property
@@ -117,13 +118,11 @@ via the :attr:`encoder` callable (if available).'''
         return self.backend.publish(channel, message)
     
     def subscribe(self, *channels):
-        '''Subscribe to the server which publish messages. Must be
-implemented by subclasses.'''
+        '''Invoke the :meth:`PubSubBackend.subscribe` method.'''
         return self.backend.subscribe(*channels)
     
     def unsubscribe(self, *channels):
-        '''Un-subscribe to the server which publish messages. Must be
-implemented by subclasses.'''
+        '''Invoke the :meth:`PubSubBackend.unsubscribe` method.'''
         return self.backend.unsubscribe(*channels)
     
     def close(self):
@@ -159,18 +158,25 @@ from the publisher, the :meth:`broadcast` method will notify all
         self.clients.discard(client)
         
     def publish(self, channel, message):
-        '''Publish a ``message`` into ``channel``. Must be implemented
-by subclasses.'''
+        '''Publish a ``message`` into ``channel``.
+        
+Must be implemented by subclasses.'''
         raise NotImplementedError
     
     def subscribe(self, *channels):
-        '''Subscribe to the server which publish messages. Must be
-implemented by subclasses.'''
+        '''Subscribe to the server which publish messages.
+        
+A series of one or more ``channels`` to subscribe to must be passed to this
+method which must be implemented by subclasses.'''
         raise NotImplementedError
     
     def unsubscribe(self, *channels):
-        '''Un-subscribe to the server which publish messages. Must be
-implemented by subclasses.'''
+        '''Un-subscribe from the server which publish messages.
+        
+An optional series of ``channels`` can be passed. If no channels are passed,
+it unsubscribed from all channels.
+
+Must be implemented by subclasses.'''
         raise NotImplementedError
         
     def broadcast(self, channel, message):

@@ -1,15 +1,11 @@
-import sys
 import inspect
-import logging
 
 from pulsar import HttpException
-from pulsar.apps.wsgi import WsgiRequest
 from pulsar.utils.tools import checkarity
 
 __all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
            'NoSuchFunction', 'InternalError']
 
-LOGGER = logging.getLogger('pulsar.rpc')
 _exceptions = {}
 
 def rpc_exception(cls):
@@ -171,9 +167,6 @@ is the root handler.'''
     def getSubHandler(self, prefix):
         '''Get a sub :class:`RpcHandler` at ``prefix``.'''
         return self.subHandlers.get(prefix)
-
-    def wrap_function_decorator(self, request, *args, **kwargs):
-        return request.func(rpc.handler, request, *args,**kwargs)
 
     def get_handler(self, method):
         if not method:

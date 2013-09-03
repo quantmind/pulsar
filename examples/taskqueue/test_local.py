@@ -61,9 +61,14 @@ class TaskQueueBase(object):
         cmnds = [send('arbiter', 'kill_actor', a.name) for a in cls.apps]
         yield multi_async(cmnds)
         
+    def pubsub_test(self, app):
+        pubsub = app.backend.pubsub
+        self.assertEqual(pubsub.backend.connection_string,
+                         'local://?name=%s' % app.name)
+        
         
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
-
+        
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
         app = yield get_application(self.name())
@@ -90,10 +95,9 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         pubsub = app.backend.pubsub
         self.assertEqual(app.backend.local.pubsub, pubsub)
         # the pubsub name is the same as the task queue application
+        self.assertEqual(app.backend.name, app.name)
         self.assertEqual(pubsub.name, app.name)
-        if not self.task_backend():
-            self.assertEqual(pubsub.backend.connection_string,
-                             'local://?name=%s' % app.name)
+        self.pubsub_test(app)
 
     def test_rpc_meta(self):
         app = yield get_application(self.rpc_name())
@@ -209,25 +213,26 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r1 = yield app.backend.get_task(r1.id)
         self.assertFalse(r1)
       
-    def __test_run_producerconsumer(self):
+    def test_run_producerconsumer(self):
         '''A task which produce other tasks'''
-        sample = 10
+        sample = 5
         r = yield self.proxy.run_new_task(jobname='standarddeviation',
                                           sample=sample, size=100)
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 'produced %s new tasks' % sample)
         self.assertTrue(tasks.nice_task_message(r))
         # We check for the tasks created
+        created = yield self.proxy.get_tasks(from_task=r['id'])
+        self.assertEqual(len(created), sample)
         stasks = []
-        while len(stasks) < sample:
-            ts = yield self.proxy.get_tasks(from_task=r['id'])
-            stasks = []
-            for t in ts:
-                if t['status'] not in tasks.UNREADY_STATES:
-                    stasks.append(t)
-                    self.assertEqual(t['status'], tasks.SUCCESS)
-        self.assertEqual(len(stasks), sample)
+        for task in created:
+            stasks.append(self.proxy.wait_for_task(task['id']))
+        created = yield multi_async(stasks)
+        self.assertEqual(len(created), sample)
+        for task in created:
+            self.assertEqual(task['status'], tasks.SUCCESS)
 
     ##    RPC TESTS
     def test_rpc_job_list(self):

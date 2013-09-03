@@ -66,8 +66,11 @@ Task status broadcasting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
-channels.
+channels via the :attr:`TaskBackend.pubsub` handler.
 
+The pubsub handler is constructed using the same
+:attr:`pulsar.apps.Backend.connection_string` and
+:attr:`pulsar.apps.Backend.name` as the the :class:`TaskBackend`. 
 
 API
 =========
@@ -89,6 +92,12 @@ TaskBackend
    :members:
    :member-order: bysource
    
+TaskConsumer
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TaskConsumer
+   :members:
+   :member-order: bysource
    
 Scheduler Entry
 ~~~~~~~~~~~~~~~~~~~
@@ -102,6 +111,7 @@ Scheduler Entry
 import sys
 import logging
 from datetime import datetime, timedelta
+from threading import Lock
 
 from pulsar import (maybe_async, EMPTY_TUPLE, EMPTY_DICT, Failure,
                     PulsarException, Backend, Deferred, coroutine_return)
@@ -152,21 +162,25 @@ class TaskTimeout(PulsarException):
 class TaskConsumer(object):
     '''A context manager for consuming tasks.
 
+Instances of this consumer are created by the :class:`TaskBackend` when
+a task is executed.
+
 .. attribute:: task_id
 
     the :attr:`Task.id` being consumed.
 
 .. attribute:: job
 
-    the :class:`Job` which generated the :attr:`task`.
+    the :ref:`Job <apps-taskqueue-job>` which generated the :attr:`task`.
 
 .. attribute:: worker
 
-    the :class:`pulsar.apps.Worker` running the process.
+    the :class:`pulsar.Actor` running the task worker.
     
 .. attribute:: backend
 
-    give access to the :class:`TaskBackend`.
+    Access to the :class:`TaskBackend`. This is useful when creating
+    tasks from within a :ref:`job callable <job-callable>`.
 '''
     def __init__(self, backend, worker, task_id, job):
         self.backend = backend
@@ -348,6 +362,10 @@ It also schedules the run of periodic tasks if enabled to do so.
         return self.local.schedule_periodic
     
     @local_property
+    def lock(self):
+        return Lock()
+    
+    @local_property
     def callbacks(self):
         '''Dictionary of :class:`pulsar.Deferred` with keys given by
 :attr:`Task.id` which this instance is waiting on. The :class:`pulsar.Deferred`
@@ -357,12 +375,15 @@ the :meth:`wait_for_task` method.'''
     
     @local_property
     def pubsub(self):
-        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notifies tasks
-execution status. There are three channels::
+        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notifies
+and listen tasks execution status. There are three channels:
 
-* ``<name>_task_created`` when a new task is created.
-* ``<name>_task_start`` when the task queue starts executing a task.
-* ``<name>_task_done`` when a task is done.
+* ``<name>_task_created`` published when a new task is created.
+* ``<name>_task_start`` published when the task queue starts executing a task.
+* ``<name>_task_done`` published when a task is done.
+
+All three messages are composed by the task id only. Here ``<name>`` is replaced
+by the :attr:`pulsar.Backend.name` attribute of this task backend.
 
 Check the :ref:`task broadcasting documentation <tasks-pubsub>` for more
 information.
@@ -527,25 +548,22 @@ and key-valued arguments *kwargs*.'''
         yield self.save_task(new_id, **data)
         yield None
         
-    def wait_for_task(self, task_id):
+    def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
-its execution. It returns a `coroutine <tutorials-coroutine>`_'''
+its execution. It returns a :class:`pulsar.Deferred`.'''
         # make sure we are subscribed to the task_done channel
-        self.pubsub
-        task = yield self.get_task(task_id)
-        if task:
-            if task.done(): # task done, simply return it
-                when_done = self.callbacks.pop(task.id, None)
-                yield when_done.callback(task) if when_done else task
-            else:
-                when_done = self.callbacks.get(task.id)
-                if not when_done:
-                    # No deferred, create one and check again
-                    self.callbacks[task.id] = when_done = Deferred()
-                    yield self.wait_for_task(task_id)
+        def _():
+            self.pubsub
+            task = yield self.get_task(task_id)
+            if task:
+                if task.done(): # task done, simply return it
+                    when_done = self.pop_callback(task.id)
+                    if when_done:
+                        when_done.callback(task)
+                    yield task
                 else:
-                    # deferred already available, return it
-                    yield when_done
+                    yield self.get_callback(task_id)
+        return maybe_async(_(), timeout=timeout, get_result=False)
             
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
@@ -729,13 +747,31 @@ parameters ``params``. Must be implemented by subclasses.'''
         return Schedule(s, anchor)
     
     def task_done_callback(self, task_id):
-        '''Got a new message from redis pubsub task_done channel.
-This is the write method required by all pubsub clients.'''
+        '''Got a task_id from the ``<name>_task_done`` channel.
+        
+Check if a ``callback`` is available in the :attr:`callbacks` dictionary. If
+so fire the callback with the ``task`` instance corresponsding to the input
+``task_id``.
+
+If a callback is not available, it must have been fired already.'''
         task = yield self.get_task(task_id)
         if task:
-            when_done = self.callbacks.pop(task.id, None)
+            when_done = self.pop_callback(task.id)
             if when_done:
                 when_done.callback(task)
+                
+    def pop_callback(self, task_id):
+        with self.lock:
+            return self.callbacks.pop(task_id, None)
+        
+    def get_callback(self, task_id):
+        with self.lock:
+            callbacks = self.callbacks
+            when_done = callbacks.get(task_id)
+            if not when_done:
+                # No deferred, create one and check again
+                callbacks[task_id] = when_done = Deferred()
+            return when_done            
             
     
 class Schedule(object):

@@ -652,7 +652,19 @@ A :class:`Backend` is never initialised directly, the
     
 .. attribute:: connection_string
 
-    The connection string fro this backend.
+    The connection string fro this backend. It is always in the form::
+    
+        scheme:://address?param1=..&params2=... &...
+        
+    where ``address`` is usually a ``host:port`` string.
+    
+    A special connection string is::
+    
+        local://&param1=...&...
+        
+    which represents a backend implemented using pulsar itself. A local backend
+    is installed in the monitor managing the :class:`Application` which
+    createded it.
     
 .. attribute:: default_path
 
@@ -675,7 +687,10 @@ A :class:`Backend` is never initialised directly, the
         '''Identy for this backend, calculated from the class name and the
 :attr:`connection_string`. Therefore if two backend instances from
 the same class have the same connection string, than the :attr:`id`
-is the same.'''
+is the same.
+
+The :attr:`id`` is important when creating a new backend via the
+:meth:`make` method.'''
         return self._id
     
     @classmethod
@@ -685,7 +700,7 @@ which is of the form::
 
     scheme:://host?params
 
-For example, the local backend is::
+For example, a parameter-less local backend is::
 
     local://
     
@@ -693,7 +708,7 @@ A redis backend could be::
 
     redis://127.0.0.1:6379?db=1&password=bla
     
-:param backend: the connection string
+:param backend: the connection string, if not supplied ``local://`` is used.
 :param kwargs: additional key-valued parameters used by the :class:`Backend`
     during initialisation.
     '''
@@ -705,17 +720,23 @@ A redis backend could be::
         if scheme == 'local':
             if address[0] == '0.0.0.0':
                 address = ('',)
-            if name:
-                params['name'] = name
-        else:
-            kwargs['name'] = name
-        con_str = get_connection_string(scheme, address, params)
+        path = cls.path_from_scheme(scheme)
+        module = import_module(path)
+        bcls = getattr(module, cls.__name__)
+        con_str = bcls.get_connection_string(scheme, address, params, name)
+        kwargs['name'] = name
         params.update(kwargs)
         if 'timeout' in params:
             params['timeout'] = int(params['timeout'])
-        path = cls.path_from_scheme(scheme)
-        module = import_module(path)
-        return getattr(module, cls.__name__)(scheme, con_str, **params)
+        return bcls(scheme, con_str, **params)
+    
+    @classmethod
+    def get_connection_string(cls, scheme, address, params, name):
+        '''Create the connection string used during initialisation
+        of a new :attr:`Backend`.'''
+        if name:
+            params['name'] = name
+        return get_connection_string(scheme, address, params)
     
     @classmethod
     def path_from_scheme(cls, scheme):

@@ -90,11 +90,16 @@ available tasks call the "job_list" function. It returns the task id.'''
             result = yield task_backend.get_tasks(**filters)
             yield task_to_json(result)
         
-    def rpc_wait_for_task(self, request, id=None):
-        '''Wait for a task to have finished.'''
+    def rpc_wait_for_task(self, request, id=None, timeout=None):
+        '''Wait for a task to have finished.
+        
+        :param id: the id of the task to wait for.
+        :param timeout: optional timeout in seconds.
+        :return: the json representation of the task once it has finished.
+        '''
         if id:
             task_backend = yield self.task_backend()
-            result = yield task_backend.wait_for_task(id)
+            result = yield task_backend.wait_for_task(id, timeout=timeout)
             yield task_to_json(result)
             
     def rpc_num_tasks(self, request):

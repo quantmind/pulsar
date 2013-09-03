@@ -9,6 +9,7 @@ from stdnet import odm
 from pulsar import async
 from pulsar.apps.tasks import backends, states
 from pulsar.utils.log import local_method
+from pulsar.utils.internet import get_connection_string
 
 
 class TaskData(odm.StdModel):
@@ -43,6 +44,14 @@ class TaskData(odm.StdModel):
 
 class TaskBackend(backends.TaskBackend):
     
+    @classmethod
+    def get_connection_string(cls, scheme, address, params, name):
+        '''The ``name`` is used to set the ``namespace`` parameters in the
+        connection string.''' 
+        if name:
+            params['namespace'] = '%s.' % name
+        return get_connection_string(scheme, address, params)
+        
     @local_method
     def task_manager(self):
         self.local.models = odm.Router(self.connection_string)

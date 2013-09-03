@@ -394,3 +394,8 @@ a:hover tt {
     background-color: #F6F6F6;
     overflow: hidden;
 }
+
+.epigraph {
+    font-style: italic;
+}
+    

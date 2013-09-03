@@ -1,6 +1,6 @@
 '''
 An application implements several :class:`Job`
-classes which specify the way each :class:`pulsar.apps.tasks.task.Task` is run.
+classes which specify the way each :ref:`task <apps-taskqueue-task>` is run.
 Each :class:`Job` class is a task-factory, therefore,
 a :ref:`task <apps-taskqueue-task>` is always associated
 with one :class:`Job`, which can be of two types:
@@ -24,10 +24,10 @@ To define a job is simple, subclass from :class:`Job` and implement the
             "Add two numbers"
             return a+b
 
-The ``consumer``, instance of :class:`pulsar.apps.tasks.task.TaskConsumer`,
+The ``consumer``, instance of :class:`pulsar.apps.tasks.backends.TaskConsumer`,
 is passed by the :ref:`Task backend <apps-taskqueue-backend>` and should
-always be the first positional argument in the callable function.
-The remaining positional arguments and/or key-valued parameters are needed by
+always be the first positional parameter in the callable method.
+The remaining (optional) positional and key-valued parameters are needed by
 your job implementation.
 
 A :ref:`job callable <job-callable>` can also return a
@@ -40,6 +40,8 @@ execution::
             response = yield http.request(...)
             content = response.content
             ...
+            
+This allows for cooperative task execution on each task thread workers.
 
 Job class
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -193,11 +195,14 @@ implemented by subclasses.'''
 :parameter args: positional argument for the :ref:`job callable <job-callable>`.
 :parameter kwargs: key-valued parameters for the
     :ref:`job callable <job-callable>`.
-:rtype: A :class:`pulsar.ActorMessage` if **ack=True** was passed in the
-    key-valued parameters, otherwise nothing.
+:return: a :class:`Deferred` called back with the task id of the new job.
+
+This method invokes the :meth:`pulsar.apps.tasks.backends.TaskBackend.run_job`
+method with the additional ``from_task`` argument equal to the
+id of the task invoking the method.
 '''
-        kwargs['from_task'] = consumer.task_id
-        return consumer.backend.run_job(jobname, args, kwargs)
+        return consumer.backend.run_job(jobname, args, kwargs,
+                                        from_task=consumer.task_id)
 
     def make_task_id(self, args, kwargs):
         '''Get the task unique identifier.

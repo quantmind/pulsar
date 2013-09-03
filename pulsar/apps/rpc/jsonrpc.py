@@ -9,7 +9,6 @@ The request is a single object serialized using JSON.
 
 The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
-import sys
 import json
 from functools import partial
 

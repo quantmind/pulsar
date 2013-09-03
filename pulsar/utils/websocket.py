@@ -3,13 +3,12 @@
 These two classes can be used for both clients and server protocols.
 
 .. _WebSocket: http://tools.ietf.org/html/rfc6455'''
-import array
 import os
 from struct import pack, unpack
 from array import array
 from io import BytesIO
 
-from .pep import ispy3k, range, to_bytes, is_string
+from .pep import ispy3k, range, to_bytes
 from .exceptions import ProtocolError
 
 DEFAULT_VERSION = 13
@@ -263,9 +262,6 @@ class FrameParser(object):
     def expect_masked(self):
         return True if self.kind == 0 else False
     
-    def decode(self, data):
-        return self.execute(data), bytearray()
-    
     def encode(self, data, final=True, masking_key=None, **params):
         '''Encode data into a :class:`Frame`.
         
@@ -324,7 +320,7 @@ into a server frame (unmasked).'''
             rsv3 = (first_byte >> 4) & 1
             opcode = first_byte & 0xf
             if fin not in (0, 1):
-                raise WebSocketProtocolError('FIN must be 0 or 1')
+                raise ProtocolError('FIN must be 0 or 1')
             is_masked = bool(second_byte & 0x80)
             if masked_frame != is_masked:
                 if masked_frame:
