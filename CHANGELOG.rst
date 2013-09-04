@@ -1,5 +1,5 @@
 Ver. 0.6.0 - Development
-=============================
+===========================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
     * Removed ``is_async`` function. Not used.
