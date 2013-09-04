@@ -36,6 +36,8 @@ class PulsarSettings(Directive):
             
     def text(self):
         for section, settings in self.sections():
+            if section is None:
+                continue
             s = section.lower().replace(' ', '-')
             yield '.. _setting-section-{0}:\n\n\
 {1}\n=====================================\n\n'.format(s, section)
