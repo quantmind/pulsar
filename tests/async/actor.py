@@ -92,7 +92,8 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         proxy_monitor = arbiter.get_actor(proxy.aid)
         self.assertEqual(proxy_monitor, proxy)
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
-        yield self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'), 'Hello!')
+        yield self.async.assertEqual(send(proxy.proxy, 'echo', 'Hello!'),
+                                     'Hello!')
         # We call the ActorTestMixin.stop_actors method here, since the
         # ActorTestMixin.tearDown method is invoked on the test-worker domain
         # (here we are in the arbiter domain)

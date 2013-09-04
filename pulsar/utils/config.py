@@ -77,8 +77,10 @@ KNOWN_SETTINGS_ORDER = []
 
 
 def pass_through(arg):
-    '''A dummy function accepting on parameter only. It does nothing. It is
-used as default by :ref:`Application Hooks <setting-section-application-hooks>`.'''
+    '''A dummy function accepting one parameter only.
+    
+It does nothing and it is used as default by
+:ref:`Application Hooks <setting-section-application-hooks>`.'''
     pass
 
 def wrap_method(func):
