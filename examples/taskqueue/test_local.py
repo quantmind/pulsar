@@ -25,6 +25,7 @@ class TaskQueueBase(object):
     # used for both keep-alive and timeout in JsonProxy
     # long enough to allow to wait for tasks
     rpc_timeout = 500
+    concurrent_tasks = 6
     apps = ()
     
     @classmethod
@@ -44,7 +45,7 @@ class TaskQueueBase(object):
         # The name of the task queue application
         s = server(name=cls.name(),
                    rpc_bind='127.0.0.1:0',
-                   concurrent_tasks=4,
+                   concurrent_tasks=cls.concurrent_tasks,
                    concurrency=cls.concurrency,
                    rpc_concurrency=cls.concurrency,
                    rpc_keep_alive=cls.rpc_timeout,
@@ -55,6 +56,9 @@ class TaskQueueBase(object):
         # make sure the time out is high enough (bigger than test-timeout)
         cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address,
                                   timeout=cls.rpc_timeout)
+        # Now flush the task queue
+        backend = cls.apps[0].backend
+        yield backend.flush()
 
     @classmethod
     def tearDownClass(cls):
@@ -69,14 +73,44 @@ class TaskQueueBase(object):
         
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         
+    def test_run_producerconsumer(self):
+        '''A task which produce other tasks'''
+        sample = 5
+        r = yield self.proxy.run_new_task(jobname='standarddeviation',
+                                          sample=sample, size=100)
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 'produced %s new tasks' % sample)
+        self.assertTrue(tasks.nice_task_message(r))
+        # We check for the tasks created
+        created = yield self.proxy.get_tasks(from_task=r['id'])
+        self.assertEqual(len(created), sample)
+        stasks = []
+        for task in created:
+            stasks.append(self.proxy.wait_for_task(task['id']))
+        created = yield multi_async(stasks)
+        self.assertEqual(len(created), sample)
+        for task in created:
+            self.assertEqual(task['status'], tasks.SUCCESS)
+
+    def test_pickled_app(self):
+        tq = self.apps[0]
+        self.assertEqual(tq.name, self.name())
+        self.assertTrue(tq.backend)
+        backend = tq.backend
+        self.assertEqual(backend.poll_timeout, 2)
+        self.assertEqual(backend.num_concurrent_tasks, 0)
+        self.assertEqual(backend.backlog, self.concurrent_tasks)
+    
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
         app = yield get_application(self.name())
         self.assertTrue(app)
         self.assertEqual(app.name, self.name())
         self.assertFalse(app.cfg.address)
-        self.assertEqual(app.cfg.concurrent_tasks, 4)
-        self.assertEqual(app.backend.backlog, 4)
+        self.assertEqual(app.cfg.concurrent_tasks, self.concurrent_tasks)
+        self.assertEqual(app.backend.backlog, self.concurrent_tasks)
         self.assertTrue(app.backend.registry)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
         backend = app.backend
@@ -84,9 +118,12 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
-        id = job.make_task_id((),{})
+        id, oid = job.generate_task_ids((),{})
         self.assertTrue(id)
-        self.assertNotEqual(id, job.make_task_id((),{}))
+        self.assertFalse(oid)
+        id1, oid = job.generate_task_ids((),{})
+        self.assertNotEqual(id, id1)
+        self.assertFalse(oid)
 
     def test_pubsub(self):
         '''Tests meta attributes of taskqueue'''
@@ -278,25 +315,36 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertTrue(next[1] >= 0)
         
     def test_id_not_overlap(self):
-        '''Check `make_task_id` when `can_overlap` attribute is set to False.'''
+        '''Check `generate_task_ids` when `can_overlap` attribute is set to False.'''
         app = yield get_application(self.name())
         job = app.backend.registry['notoverlap']
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)
         #
-        id = job.make_task_id((),{})
-        self.assertTrue(id)
-        self.assertEqual(id, job.make_task_id((),{}))
+        id1, oid1 = job.generate_task_ids((),{})
+        self.assertTrue(oid1)
+        id2, oid2 = job.generate_task_ids((),{})
+        self.assertTrue(oid2)
+        self.assertNotEqual(id2, id1)
+        self.assertEqual(oid2, oid1)
         #
-        id = job.make_task_id((10,'bla'),{'p':45})
-        self.assertTrue(id)
-        self.assertEqual(id,job.make_task_id((10,'bla'),{'p':45}))
+        id3, oid3 = job.generate_task_ids((10,'bla'),{'p':45})
+        self.assertTrue(oid3)
+        self.assertNotEqual(id3, id2)
+        self.assertNotEqual(oid3, oid2)
+        id4, oid4 = job.generate_task_ids((10,'bla'),{'p':45})
+        self.assertNotEqual(id4, id3)
+        self.assertEqual(oid4, oid3)
         #
-        id = job.make_task_id((),{'p':45,'c':'bla'})
-        self.assertTrue(id)
-        self.assertEqual(id,job.make_task_id((),{'p':45,'c':'bla'}))
-        self.assertNotEqual(id,job.make_task_id((),{'p':45,'d':'bla'}))
-        self.assertNotEqual(id,job.make_task_id((),{'p':45,'c':'blas'}))
+        id5, oid5 = job.generate_task_ids((),{'p':45,'c':'bla'})
+        self.assertTrue(oid5)
+        id6, oid6 = job.generate_task_ids((),{'p':45,'c':'bla'})
+        id7, oid7 = job.generate_task_ids((),{'p':45,'d':'bla'})
+        id8, oid8 = job.generate_task_ids((),{'p':45,'c':'blas'})
+        #
+        self.assertEqual(oid5, oid6)
+        self.assertNotEqual(oid5, oid7)
+        self.assertNotEqual(oid5, oid8)
 
 
 @dont_run_with_thread

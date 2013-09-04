@@ -47,15 +47,33 @@ standard :ref:`application settings <settings>`:
 * The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
   if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,
   only one running :class:`TaskQueue` application is responsible for
-  scheduling tasks while all the other, simply consume tasks.
-  This parameter can also be specified in the command line via the
-  ``--schedule-periodic`` flag. Default: ``False``.
+  scheduling tasks while any the other, simply consume tasks.
+  
+  It can be specified in the command line via the
+  ``--schedule-periodic`` flag.
+  
+  Default: ``False``.
   
 * The :ref:`task_backend <setting-task_backend>` parameter is a url
   type string which specifies the :ref:`task backend <apps-taskqueue-backend>`
-  to use. Default: ``local://``.
+  to use.
+  
+  It can be specified in the command line via the
+  ``--task-backend ...`` option.
+  
+  Default: ``local://``.
 
-
+* The :ref:`concurrent_tasks <setting-concurrent_tasks>` parameter control
+  the maximum number of concurrent tasks for a given task worker.
+  This parameter is important when tasks are asynchronous, that is when
+  they perform some sort of I/O and the :ref:`job callable <job-callable>`
+  returns and :ref:`asynchronous component <tutorials-coroutine>`.
+  
+  It can be specified in the command line via the
+  ``--concurrent-tasks ...`` option.
+  
+  Default: ``5``.
+  
 .. _app-taskqueue-app:
 
 Task queue application
@@ -154,6 +172,10 @@ class TaskQueue(pulsar.Application):
 task.Tasks and managing scheduling of tasks via a
 :class:`scheduler.Scheduler`.'''
     backend = None
+    '''The :ref:`TaskBackend <apps-taskqueue-backend>` for this task queue.
+    This pickable attribute is available once the :class:`TaskQueue` has
+    started (that is when the :meth:`monitor_start` method is invoked by the
+    :class:`pulsar.apps.ApplicationMonitor` running it).'''
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
 
@@ -161,7 +183,10 @@ task.Tasks and managing scheduling of tasks via a
         return self.scheduler.get_task(request)
     
     def monitor_start(self, monitor):
-        '''When the monitor starts create the :class:`backends.TaskBackend`.'''
+        '''Starts running the task queue in ``monitor``.
+        
+        It calles the :attr:`pulsar.Application.callable` (if available) and
+        create the :attr:`backend`.'''
         if self.callable:
             self.callable()
         self.backend = TaskBackend.make(

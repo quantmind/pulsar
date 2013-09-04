@@ -34,7 +34,7 @@ tutorial.
 
 Event Loop
 ~~~~~~~~~~~~~~~
-The pulsating hart of the asynchronous framework.
+The pulsating heart of the asynchronous framework.
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 
 Deferred

@@ -1,3 +1,7 @@
+'''
+The local task backend store tasks in pulsar process domain and therefore
+is accessed only from one running task queue.
+'''
 from pulsar import send, command, Queue, Empty, coroutine_return
 from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks import backends, states
@@ -20,7 +24,10 @@ class TaskBackend(backends.TaskBackend):
         return send(self.name, 'save_task', task_id, **params)
     
     def delete_tasks(self, ids=None):
-        return send(self.name, 'delete_tasks', ids)
+        return send(self.name, 'delete_tasks', ids or ())
+    
+    def flush(self):
+        return send(self.name, 'delete_tasks', None)
     
 
 #########################################################    INTERNALS
@@ -29,8 +36,7 @@ class LocalTaskBackend(object):
     
     def __init__(self, name):
         self.pubsub = PubSub(name=name)
-        self._tasks = {}
-        self.queue = Queue()
+        self._init()
     
     def put_task(self, task_id):
         if task_id in self._tasks:
@@ -58,12 +64,15 @@ class LocalTaskBackend(object):
         return task.id
 
     def delete_tasks(self, ids):
-        ids = ids or list(self._tasks)
-        deleted = []
-        for id in ids:
-            task = self._tasks.pop(id, None)
-            if task:
-                deleted.append(id)
+        if ids is None:
+            deleted = list(self._tasks)
+            self._init()
+        else:
+            deleted = []
+            for id in ids:
+                task = self._tasks.pop(id, None)
+                if task:
+                    deleted.append(id)
         return deleted
     
     def get_tasks(self, **filters):
@@ -85,6 +94,10 @@ class LocalTaskBackend(object):
                 if select:
                     tasks.append(task)
         return tasks
+    
+    def _init(self):
+        self._tasks = {}
+        self.queue = Queue()
     
 #################################################    TASKQUEUE COMMANDS
 @command()

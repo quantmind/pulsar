@@ -10,10 +10,10 @@ __all__ = ['SoketIO']
 class SocketIO(WebSocket):
     
     def __init__(self, path='socket.io', handler=None, transports=None,
-                 hartbeat_timeout=None, close_timeout=None):
+                 heartbeat_timeout=None, close_timeout=None):
         super(SocketIO, self).__init__(path, handler)
         self.transports = []
-        self.heartbeat_timeout = hartbeat_timeout or ''
+        self.heartbeat_timeout = heartbeat_timeout or ''
         self.close_timeout = close_timeout or ''
         transports = transports or list(TRANSPORTS)
         for transport in transports:

@@ -10,10 +10,10 @@ from . import test_local
 
 
 def redis_pubsub_test(self, app):
-        pubsub = app.backend.pubsub
-        con_str = pubsub.backend.connection_string
-        self.assertTrue('namespace=%s.' % app.name in con_str)
-        self.assertFalse('name=%s' % app.name in con_str)
+    pubsub = app.backend.pubsub
+    con_str = pubsub.backend.connection_string
+    self.assertTrue('namespace=%s.' % app.name in con_str)
+    self.assertFalse('name=%s' % app.name in con_str)
         
         
 @unittest.skipUnless(stdnet, 'Requires python-stdnet')

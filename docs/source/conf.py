@@ -8,9 +8,10 @@ ext_dir = os.path.join(source_dir,'_ext')
 docs_dir   = p(source_dir)
 base_dir   = p(docs_dir)
 #sys.path.append(os.path.join(source_dir, "_ext"))
-sys.path.insert(0,base_dir)
-sys.path.insert(0,ext_dir)
+sys.path.insert(0, base_dir)
+sys.path.insert(0, ext_dir)
 import pulsar
+import runtests # so that it import stdnet if available
 
 version = pulsar.__version__
 release = version

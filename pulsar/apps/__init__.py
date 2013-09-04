@@ -676,9 +676,12 @@ A :class:`Backend` is never initialised directly, the
         self.name = name or 'arbiter'
         self.connection_string = connection_string
         self.params = dict(self.setup(**params) or {})
-        value = '%s\n%s' % (self.__class__.__name__, self.connection_string)
-        self._id = sha1(value.encode('utf-8')).hexdigest()
+        self._id = sha1(str(self).encode('utf-8')).hexdigest()
         
+    def __repr__(self):
+        return '%s. %s' % (self.__class__.__name__, self.connection_string)
+    __str__ = __repr__
+    
     def setup(self, **params):
         return params
     

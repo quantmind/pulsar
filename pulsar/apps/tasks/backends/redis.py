@@ -1,7 +1,9 @@
 '''
-An implementation of a :class:`TaskBackend` which uses redis as data server.
-Requires python-stdnet_
+A :class:`pulsar.apps.tasks.backends.TaskBackend` implementation
+based on redis_ as data server.
+Requires python-stdnet_ for mapping tasks into redis hashes.
 
+.. _redis: http://redis.io/
 .. _python-stdnet: https://pypi.python.org/pypi/python-stdnet
 '''
 from stdnet import odm
@@ -14,6 +16,7 @@ from pulsar.utils.internet import get_connection_string
 
 class TaskData(odm.StdModel):
     id = odm.SymbolField(primary_key=True)
+    overlap_id = odm.SymbolField(required=False)
     name = odm.SymbolField()
     status = odm.SymbolField()
     args = odm.PickleObjectField()
@@ -26,8 +29,10 @@ class TaskData(odm.StdModel):
     expiry = odm.DateTimeField(required=False, index=False)
     meta = odm.JSONField()
     #
-    # List where all TaskData objects are queued
+    # List where all TaskData ids are queued
     queue = odm.ListField(class_field=True)
+    # Set where TaskData ids under execution are stored
+    outqueue = odm.SetField(class_field=True)
     
     class Meta:
         app_label = 'tasks'
@@ -51,13 +56,7 @@ class TaskBackend(backends.TaskBackend):
         if name:
             params['namespace'] = '%s.' % name
         return get_connection_string(scheme, address, params)
-        
-    @local_method
-    def task_manager(self):
-        self.local.models = odm.Router(self.connection_string)
-        self.local.models.register(TaskData)
-        return self.local.models.taskdata
-    
+            
     def num_tasks(self):
         '''Retrieve the number of tasks in the task queue.'''
         task_manager = self.task_manager()
@@ -115,8 +114,20 @@ class TaskBackend(backends.TaskBackend):
                 deleted.append(task_data.id)
         yield deleted
         
+    def flush(self):
+        return self.models().flush()
+        
     ############################################################################
     ##    INTERNALS
+    @local_method
+    def models(self):
+        models = odm.Router(self.connection_string)
+        models.register(TaskData)
+        return models
+        
+    def task_manager(self):
+        return self.models().taskdata
+
     def _get_task(self, task_id):
         tasks = yield self.task_manager().filter(id=task_id).all()
         if tasks:

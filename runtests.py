@@ -12,7 +12,7 @@ from pulsar.apps.test import TestSuite, TestOption
 from pulsar.apps.test.plugins import bench, profile, cov
 import pulsar.utils.settings.backend
 
-Path().add2python('stdnet', 1, down=['python-stdnet'], must_exist=False)
+Path(__file__).add2python('stdnet', 1, down=['python-stdnet'], must_exist=False)
 
 if __name__ == '__main__':
     print(sys.version)
