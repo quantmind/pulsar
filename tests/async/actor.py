@@ -75,8 +75,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
         #yield send(proxy, 'run', check_actor, 'pluto')
         
-    def __test_info(self):
-        #TODO: this fails in Travis when using python 2.6
+    def test_info(self):
         proxy = yield self.spawn(name='pippo')
         self.assertEqual(proxy.name, 'pippo')
         info = yield send(proxy, 'info')
