@@ -15,7 +15,7 @@ install:
   - python setup.py install
   - sudo rm -rf pulsar
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-script: python -m runtests --profile --verbosity 2 -w 2 -e taskqueue.redis apps.pubsub.redis --show-leaks
+script: python -m runtests --profile --verbosity 2 -w 2 -e taskqueue.redis apps.pubsub.redis --show-leaks --test-timeout 60
 
 branches:
   only:
