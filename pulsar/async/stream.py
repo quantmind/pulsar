@@ -27,7 +27,7 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
-from .defer import multi_async, Deferred
+from .defer import multi_async, Deferred, Failure
 from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
     
@@ -137,8 +137,8 @@ be accumulating data in an internal buffer.'''
                         break
                     else:
                         raise
-        except Exception as e:
-            self.abort(exc=e)
+        except Exception:
+            self.abort(Failure(sys.exc_info()))
         else:
             if not self.writing:
                 self._event_loop.remove_writer(self._sock_fd)
@@ -172,8 +172,8 @@ be accumulating data in an internal buffer.'''
                     finally:
                         self.close()
                 passes += 1
-        except Exception as exc:
-            self.abort(exc)
+        except Exception:
+            self.abort(Failure(sys.exc_info()))
     
     
 class SocketStreamSslTransport(SocketStreamTransport):
@@ -214,13 +214,15 @@ class SocketStreamSslTransport(SocketStreamTransport):
                     peer = self._sock.getpeername()
                 except Exception:
                     peer = '(not connected)'
-                self.logger.warning("SSL Error on fd %d %s: %s",
-                                    self._sock_fd, peer, e)
-                self.abort(e)
+                failure = Failure(sys.exc_info())
+                failure.log(msg="SSL Error on fd %d %s: %s" % (
+                                                self._sock_fd, peer, e),
+                            log = self.logger, level='warning')
+                self.abort(failure)
             else:
-                self.abort(e)
-        except Exception as e:
-            self.abort(e)
+                self.abort(Failure(sys.exc_info()))
+        except Exception:
+            self.abort(Failure(sys.exc_info()))
         else:
             loop = self._event_loop
             if self._handshake_reading:

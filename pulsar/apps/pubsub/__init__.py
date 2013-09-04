@@ -24,7 +24,7 @@ When using this middleware, one starts by creating a :class:`PubSub` handler::
 The ``backend`` parameter is needed in order to select the backend
 to use. If not supplied, the default ``local://`` backend is used.
 
-A backend handler is a pickable instance and therefore it can be passed to
+A backend handler is a picklable instance and therefore it can be passed to
 different process domains.
 
 

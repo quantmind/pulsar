@@ -21,6 +21,7 @@ __all__ = ['Deferred',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
+           'log_failure',
            'Failure',
            'FailureRefs',
            'maybe_failure',
@@ -152,6 +153,16 @@ set to ``False``.
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
                         timeout=timeout, get_result=get_result)
     
+def log_failure(value):
+    value = maybe_failure(value)
+    if isinstance(value, Failure):
+        value.log()
+    else:
+        value = maybe_failure(value)
+        if isinstance(value, Failure):
+            value.log()
+    return value
+
 def maybe_failure(value):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
 exception, otherwise returns *value*.

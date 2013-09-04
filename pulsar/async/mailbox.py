@@ -98,6 +98,10 @@ class Message(Request):
         self.data = data
         self.future = future
     
+    def __repr__(self):
+        return self.data.get('command', 'unknown')
+    __str__ = __repr__
+    
     @classmethod
     def command(cls, command, sender, target, args, kwargs, address=None,
                  timeout=None):
@@ -146,8 +150,8 @@ protocol.'''
         while msg:
             try:
                 message = pickle.loads(msg.body)
-            except Exception:
-                raise ProtocolError('Could not decode message body')
+            except Exception as e:
+                raise ProtocolError('Could not decode message body: %s' % e)
             maybe_async(self._responde(message), event_loop=self.event_loop)
             msg = self._parser.decode()
     

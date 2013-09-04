@@ -187,7 +187,7 @@ class LazyWsgi(LocalMixin):
 handler the first time it is called. Subclasses must implement
 the :meth:`setup` method.
 Useful when working in multiprocessing mode when the application
-handler must be a ``pickable`` instance. This handler can rebuild
+handler must be a ``picklable`` instance. This handler can rebuild
 its wsgi :attr:`handler` every time is pickled and un-pickled without
 causing serialisation issues.'''        
     def __call__(self, environ, start_response):

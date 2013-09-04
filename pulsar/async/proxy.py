@@ -93,7 +93,7 @@ instance of this class is as a proxy for a remote `underlying`
 :class:`Actor`. This is a lightweight class which delegates
 function calls to the underlying remote object.
 
-It is pickable and therefore can be send from actor to actor using
+It is picklable and therefore can be send from actor to actor using
 :ref:`actor message passing <tutorials-messages>`.
 
 For example, lets say we have a proxy ``a``, to send a message to it::

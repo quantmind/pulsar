@@ -173,7 +173,7 @@ task.Tasks and managing scheduling of tasks via a
 :class:`scheduler.Scheduler`.'''
     backend = None
     '''The :ref:`TaskBackend <apps-taskqueue-backend>` for this task queue.
-    This pickable attribute is available once the :class:`TaskQueue` has
+    This picklable attribute is available once the :class:`TaskQueue` has
     started (that is when the :meth:`monitor_start` method is invoked by the
     :class:`pulsar.apps.ApplicationMonitor` running it).'''
     name = 'tasks'

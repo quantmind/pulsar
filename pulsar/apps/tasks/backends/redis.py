@@ -32,7 +32,7 @@ class TaskData(odm.StdModel):
     # List where all TaskData ids are queued
     queue = odm.ListField(class_field=True)
     # Set where TaskData ids under execution are stored
-    outqueue = odm.SetField(class_field=True)
+    executing = odm.SetField(class_field=True)
     
     class Meta:
         app_label = 'tasks'

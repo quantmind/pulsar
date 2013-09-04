@@ -9,8 +9,8 @@ The :class:`Configurator` is a mixin used as base class for both
 
 .. note::
 
-    An instance of an :class:`Application` is pickable and therefore can be sent
-    from actor to actor using the
+    An instance of an :class:`Application` is picklable and therefore can be
+    sent from actor to actor using the
     :ref:`actor message passing api <tutorials-messages>`.
 
 Configurator
@@ -377,7 +377,7 @@ These are the most important facts about a pulsar :class:`Application`:
 
 * It derives from :class:`Configurator` so that it has all the functionalities
   to parse command line arguments and setup the :attr:`Configurator.cfg`.
-* Instances must be pickable. If non-pickable data needs to be add on an
+* Instances must be picklable. If non-picklable data needs to be add on an
   :class:`Application` instance, it must be stored on the
   :attr:`Application.local` dictionary.
 * Instances of an :class:`Application` are callable objects.
@@ -393,8 +393,8 @@ These are the most important facts about a pulsar :class:`Application`:
 .. attribute:: callable
 
     Optional callable serving or configuring your application.
-    If provided, the callable must be pickable, therefore it is either
-    a function or a pickable object.
+    If provided, the callable must be picklable, therefore it is either
+    a function or a picklable object.
 
     Default ``None``
 """

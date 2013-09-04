@@ -115,7 +115,7 @@ an :class:`ActorProxy`.
     Instance of a :class:`ActorProxy` holding a reference
     to this :class:`Actor`. The proxy is a lightweight representation
     of the actor which can be shared across different processes
-    (i.e. it is pickable).
+    (i.e. it is picklable).
 
 .. attribute:: state
 

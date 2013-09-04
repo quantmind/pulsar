@@ -1,5 +1,4 @@
 '''Tests actor and actor proxies.'''
-from functools import partial
 from multiprocessing.queues import Queue
 
 import pulsar
@@ -16,17 +15,23 @@ def check_actor(actor, name):
     actor.put(None)
     assert(actor.name==name)
     
-def create_echo_server(address, actor):
-    '''Starts an echo server on a newly spawn actor'''
-    server = TcpServer(actor.event_loop, address[0], address[1],
-                       EchoServerProtocol)
-    yield server.start_serving()
-    actor.servers['echo'] = server
-    actor.extra['echo-address'] = server.address
+class create_echo_server(object):
+    '''partial is not picklable in python 2.6'''
+    def __init__(self, address):
+        self.address = address
+        
+    def __call__(self, actor):
+        '''Starts an echo server on a newly spawn actor'''
+        address = self.address
+        server = TcpServer(actor.event_loop, address[0], address[1],
+                           EchoServerProtocol)
+        yield server.start_serving()
+        actor.servers['echo'] = server
+        actor.extra['echo-address'] = server.address
     
 
 class TestProxy(unittest.TestCase):
-
+    
     def test_get_proxy(self):
         self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
         self.assertEqual(pulsar.get_proxy('shcbjsbcjcdcd', safe=True), None)
@@ -56,7 +61,7 @@ class TestProxy(unittest.TestCase):
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
-
+    
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
         proxy = yield self.spawn(name='pippo')
@@ -95,8 +100,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertFalse(is_alive)
         
     def test_start_hook(self):
-        proxy = yield self.spawn(
-                        start=partial(create_echo_server, ('127.0.0.1', 0)))
+        proxy = yield self.spawn(start=create_echo_server(('127.0.0.1', 0)))
         address = None
         start = default_timer()
         while not address:

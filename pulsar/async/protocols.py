@@ -5,7 +5,7 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
-from .defer import EventHandler, NOTHING, multi_async
+from .defer import EventHandler, NOTHING, multi_async, log_failure
 from .internet import Protocol, logger
 
 
@@ -234,6 +234,7 @@ event with ``result`` as argument. Return ``result``.'''
         
         By default it calls the :meth:`finished` method. It can be overwritten
         to handle the potential exception ``exc``.'''
+        log_failure(exc)
         return self.finished(exc)
         
     def can_reconnect(self, max_reconnect, exc):
@@ -420,6 +421,8 @@ It performs these actions in the following order:
             self._cancel_timeout()
             if self._current_consumer:
                 self._current_consumer.connection_lost(exc)
+            else:
+                log_failure(exc)
                              
     def upgrade(self, consumer_factory):
         '''Update the :attr:`consumer_factory` attribute with a new

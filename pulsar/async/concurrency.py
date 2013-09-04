@@ -6,7 +6,7 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import new_event_loop, itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import get_actor, set_actor, remove_actor
+from .access import get_actor, set_actor, remove_actor, logger
 from .threads import Thread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure
@@ -39,7 +39,7 @@ which handle the contruction and the lif of an :class:`Actor`.
 
 class Concurrency(object):
     '''Actor :class:`Concurrency` is responsible for the actual spawning of
-actors according to a concurrency implementation. Instances are pickable
+actors according to a concurrency implementation. Instances are picklable
 and are shared between the :class:`Actor` and its
 :class:`ActorProxyMonitor`.
 This is an abstract class, derived classes must implement the ``start`` method.
@@ -121,7 +121,7 @@ implemented by subclasses.'''
     def get_actor(self):
         self.daemon = True
         self.params['monitor'] = get_proxy(self.params['monitor'])
-        # make sure these parameters are pickable
+        # make sure these parameters are picklable
         #pickle.dumps(self.params)
         return ActorProxyMonitor(self)
     
@@ -378,7 +378,8 @@ def run_actor(self):
             actor.cfg.when_exit(actor)
         except Exception:
             pass
-        actor.logger.debug('Bye from "%s"', actor)
+        log = actor.logger or logger()
+        log.info('Bye from "%s"', actor)
         
 class ActorProcess(ProcessMixin, Concurrency, Process):
     '''Actor on a Operative system process. Created using the
@@ -409,19 +410,8 @@ class ActorThread(Concurrency, Thread):
         actor.mailbox = self.create_mailbox(actor, event_loop)
 
 
-class ActorCoroutine(MonitorConcurrency):
-    '''Actor sharing the :class:`Arbiter` event loop.'''
-    def start(self):
-        actor = self.actor_class(self)
-        actor.start()
-        
-    def periodic_task(self, actor):
-        pass
-
-
 concurrency_models = {'arbiter': ArbiterConcurrency,
                       'monitor': MonitorConcurrency,
                       'thread': ActorThread,
-                      'process': ActorProcess,
-                      'coroutine': ActorCoroutine}
+                      'process': ActorProcess}
     
