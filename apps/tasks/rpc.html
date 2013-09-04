@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>RPC &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>RPC &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Asynchronous and Parallel Test Suite" href="../test.html" />
     <link rel="prev" title="Task Backend" href="backend.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="backend.html" title="Task Backend"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -126,8 +126,23 @@ available tasks call the &#8220;job_list&#8221; function. It returns the task id
 
 <dl class="method">
 <dt id="pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task">
-<tt class="descname">rpc_wait_for_task</tt><big>(</big><em>request</em>, <em>id=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_wait_for_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">rpc_wait_for_task</tt><big>(</big><em>request</em>, <em>id=None</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/rpc.html#TaskQueueRpcMixin.rpc_wait_for_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.rpc.TaskQueueRpcMixin.rpc_wait_for_task" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wait for a task to have finished.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> &#8211; the id of the task to wait for.</li>
+<li><strong>timeout</strong> &#8211; optional timeout in seconds.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the json representation of the task once it has finished.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">

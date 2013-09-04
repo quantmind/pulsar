@@ -34,7 +34,7 @@ tutorial.
 
 Event Loop
 ~~~~~~~~~~~~~~~
-The pulsating hart of the asynchronous framework.
+The pulsating heart of the asynchronous framework.
 Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
 
 Deferred
@@ -186,6 +186,19 @@ CPU-bound :class:`Actor` have the following properties:
 The :attr:`Actor.thread_pool` needs to be initialised via the
 :attr:`Actor.create_thread_pool` method before it can be used.
 
+
+.. _actor-periodic-task:
+
+Periodic task
+~~~~~~~~~~~~~~~~~~~~~~
+
+Each :class:`Actor`, including the :class:`Arbiter` and :class:`Monitor`,
+perform one crucial periodic task at given intervals. The next
+call of the task is stored in the :class:`Actor.next_periodic_task`
+attribute.
+
+Periodic task are implemented by the :class:`Concurrency.periodic_task` method.
+
 .. _design-spawning:
 
 Spawning
@@ -297,8 +310,8 @@ Fired just before the :class:`Actor` is garbage collected
 Commands
 ===============
 
-An :class:`Actor` communicate with a remote :class:`Actor` by *sending* an
-**action** to perform. This action takes the form of a **command** name and
+An :class:`Actor` communicates with another remote :class:`Actor` by *sending*
+an **action** to perform. This action takes the form of a **command** name and
 optional positional and key-valued parameters. It is possible to add new
 commands via the :class:`pulsar.command` decorator as explained in the
 :ref:`api documentation <api-remote_commands>`.

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Jobs &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Jobs &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Task Backend" href="backend.html" />
     <link rel="prev" title="Getting Started" href="intro.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="intro.html" title="Getting Started"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -70,7 +70,7 @@
   <div class="section" id="module-pulsar.apps.tasks.models">
 <span id="jobs"></span><span id="apps-taskqueue-job"></span><h1>Jobs<a class="headerlink" href="#module-pulsar.apps.tasks.models" title="Permalink to this headline">¶</a></h1>
 <p>An application implements several <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>
-classes which specify the way each <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.task.Task</span></tt> is run.
+classes which specify the way each <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>task</em></a> is run.
 Each <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> class is a task-factory, therefore,
 a <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>task</em></a> is always associated
 with one <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>, which can be of two types:</p>
@@ -91,10 +91,10 @@ with one <a class="reference internal" href="#pulsar.apps.tasks.models.Job" titl
         <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">consumer</span></tt>, instance of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.task.TaskConsumer</span></tt>,
+<p>The <tt class="docutils literal"><span class="pre">consumer</span></tt>, instance of <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskConsumer</span></tt></a>,
 is passed by the <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>Task backend</em></a> and should
-always be the first positional argument in the callable function.
-The remaining positional arguments and/or key-valued parameters are needed by
+always be the first positional parameter in the callable method.
+The remaining (optional) positional and key-valued parameters are needed by
 your job implementation.</p>
 <p>A <a class="reference internal" href="#job-callable"><em>job callable</em></a> can also return a
 <a class="reference internal" href="../../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> if it needs to perform asynchronous IO during its
@@ -107,9 +107,18 @@ execution:</p>
         <span class="o">...</span>
 </pre></div>
 </div>
+<p>This allows for cooperative task execution on each task thread workers.</p>
+<div class="section" id="non-overlapping-jobs">
+<span id="job-non-overlap"></span><h3>Non overlapping Jobs<a class="headerlink" href="#non-overlapping-jobs" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#pulsar.apps.tasks.models.Job.can_overlap" title="pulsar.apps.tasks.models.Job.can_overlap"><tt class="xref py py-attr docutils literal"><span class="pre">Job.can_overlap</span></tt></a> attribute controls the way tasks are generated
+by a specific <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>. By default, a <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> creates a new task
+every time the <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>task backend</em></a> requests it.</p>
+<p>However, when setting the <a class="reference internal" href="#pulsar.apps.tasks.models.Job.can_overlap" title="pulsar.apps.tasks.models.Job.can_overlap"><tt class="xref py py-attr docutils literal"><span class="pre">Job.can_overlap</span></tt></a> attribute to <tt class="docutils literal"><span class="pre">False</span></tt>,
+a new task cannot be started unless a previous task of the same job
+is done.</p>
 </div>
 <div class="section" id="job-class">
-<h2>Job class<a class="headerlink" href="#job-class" title="Permalink to this headline">¶</a></h2>
+<h3>Job class<a class="headerlink" href="#job-class" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.models.Job">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.models.</tt><tt class="descname">Job</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job" title="Permalink to this definition">¶</a></dt>
@@ -118,19 +127,21 @@ execution:</p>
 <dt id="pulsar.apps.tasks.models.Job.name">
 <tt class="descname">name</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The unique name which defines the Job and which can be used to retrieve
-it from the job registry.</p>
+it from the job registry. This attribute is set to the Job class name
+in lower case by default, unless a <tt class="docutils literal"><span class="pre">name</span></tt> class attribute is defined.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.tasks.models.Job.abstract">
 <tt class="descname">abstract</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.abstract" title="Permalink to this definition">¶</a></dt>
-<dd><p>If set to <tt class="docutils literal"><span class="pre">True</span></tt> (default is <tt class="docutils literal"><span class="pre">False</span></tt>), the Job won&#8217;t be registered
-with the <a class="reference internal" href="#pulsar.apps.tasks.models.JobRegistry" title="pulsar.apps.tasks.models.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a>.</p>
+<dd><p>If set to <tt class="docutils literal"><span class="pre">True</span></tt> (default is <tt class="docutils literal"><span class="pre">False</span></tt>), the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> won&#8217;t be
+registered with the <a class="reference internal" href="#pulsar.apps.tasks.models.JobRegistry" title="pulsar.apps.tasks.models.JobRegistry"><tt class="xref py py-class docutils literal"><span class="pre">JobRegistry</span></tt></a>. Useful when creating a new
+base class for several other jobs.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.tasks.models.Job.type">
-<tt class="descname">type</tt><a class="headerlink" href="#pulsar.apps.tasks.models.Job.type" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">type</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type of Job, one of <tt class="docutils literal"><span class="pre">regular</span></tt> and <tt class="docutils literal"><span class="pre">periodic</span></tt>.</p>
 </dd></dl>
 
@@ -164,17 +175,27 @@ callable function.</p>
 <dd><p>an instance of a logger. Created at runtime.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt>
+<tt class="descname">type</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.type"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Type of Job, one of <tt class="docutils literal"><span class="pre">regular</span></tt> and <tt class="docutils literal"><span class="pre">periodic</span></tt>.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.tasks.models.Job.run_job">
 <tt class="descname">run_job</tt><big>(</big><em>consumer</em>, <em>jobname</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.run_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.run_job" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send a new task request to the task queue from within another
-<tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>. This allows tasks to act as tasks factories.</p>
+<dd><p>Run a new task in the task queue.</p>
+<p>This utility method can be used from within the
+<a class="reference internal" href="#job-callable"><em>job callable</em></a> method and it allows tasks to act
+as tasks factories.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>consumer</strong> &#8211; The <tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt> handling the <tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt>.</li>
+<li><strong>consumer</strong> &#8211; the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskConsumer</span></tt></a>
+handling the <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>Task</em></a>. Must be the same instance
+as the one passed to the <a class="reference internal" href="#job-callable"><em>job callable</em></a> method.</li>
 <li><strong>jobname</strong> &#8211; The name of the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
 <li><strong>args</strong> &#8211; positional argument for the <a class="reference internal" href="#job-callable"><em>job callable</em></a>.</li>
 <li><strong>kwargs</strong> &#8211; key-valued parameters for the
@@ -182,43 +203,48 @@ callable function.</p>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.ActorMessage</span></tt> if <strong>ack=True</strong> was passed in the
-key-valued parameters, otherwise nothing.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> called back with the task id of the new job.</p>
 </td>
 </tr>
 </tbody>
 </table>
+<p>This method invokes the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskBackend.run_job" title="pulsar.apps.tasks.backends.TaskBackend.run_job"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskBackend.run_job()</span></tt></a>
+method with the additional <tt class="docutils literal"><span class="pre">from_task</span></tt> argument equal to the
+id of the task invoking the method.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.tasks.models.Job.make_task_id">
-<tt class="descname">make_task_id</tt><big>(</big><em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.make_task_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.make_task_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the task unique identifier.
-This can be overridden by Job implementation.</p>
+<dt id="pulsar.apps.tasks.models.Job.generate_task_ids">
+<tt class="descname">generate_task_ids</tt><big>(</big><em>args</em>, <em>kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#Job.generate_task_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.Job.generate_task_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a task unique identifiers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>args</strong> &#8211; tuple of positional arguments passed to the job callable.</li>
-<li><strong>kwargs</strong> &#8211; dictionary of key-valued parameters passed to
-the job callable.</li>
+<li><strong>args</strong> &#8211; tuple of positional arguments passed to the
+<a class="reference internal" href="#job-callable"><em>job callable</em></a> method.</li>
+<li><strong>kwargs</strong> &#8211; dictionary of key-valued parameters passed to the
+<a class="reference internal" href="#job-callable"><em>job callable</em></a> method.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a native string.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a two-elements tuple containing the unique id and an
+identifier for overlapping tasks if the <a class="reference internal" href="#pulsar.apps.tasks.models.Job.can_overlap" title="pulsar.apps.tasks.models.Job.can_overlap"><tt class="xref py py-attr docutils literal"><span class="pre">can_overlap</span></tt></a> results
+in <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Called by the <tt class="xref py py-attr docutils literal"><span class="pre">TaskQueue.scheduler</span></tt> when creating a new task.</p>
+<p>Called by the <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>TaskBackend</em></a> when creating
+a new task.</p>
 </dd></dl>
 
 </dd></dl>
 
 </div>
 <div class="section" id="periodic-job">
-<h2>Periodic job<a class="headerlink" href="#periodic-job" title="Permalink to this headline">¶</a></h2>
+<h3>Periodic job<a class="headerlink" href="#periodic-job" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.models.PeriodicJob">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.models.</tt><tt class="descname">PeriodicJob</tt><big>(</big><em>run_every=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#PeriodicJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.PeriodicJob" title="Permalink to this definition">¶</a></dt>
@@ -258,7 +284,7 @@ where next time to run is in seconds. e.g.</p>
 
 </div>
 <div class="section" id="job-registry">
-<h2>Job registry<a class="headerlink" href="#job-registry" title="Permalink to this headline">¶</a></h2>
+<h3>Job registry<a class="headerlink" href="#job-registry" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.models.JobRegistry">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.models.</tt><tt class="descname">JobRegistry</tt><a class="reference internal" href="../../modules/pulsar/apps/tasks/models.html#JobRegistry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.models.JobRegistry" title="Permalink to this definition">¶</a></dt>
@@ -293,6 +319,7 @@ instance.</p>
 
 </div>
 </div>
+</div>
 
 
           </div>
@@ -307,10 +334,13 @@ instance.</p>
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Jobs</a><ul>
-<li><a class="reference internal" href="#implementing-jobs">Implementing jobs</a></li>
+<li><a class="reference internal" href="#implementing-jobs">Implementing jobs</a><ul>
+<li><a class="reference internal" href="#non-overlapping-jobs">Non overlapping Jobs</a></li>
 <li><a class="reference internal" href="#job-class">Job class</a></li>
 <li><a class="reference internal" href="#periodic-job">Periodic job</a></li>
 <li><a class="reference internal" href="#job-registry">Job registry</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

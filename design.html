@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Design &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -89,7 +89,7 @@ can be found in the <a class="reference internal" href="tutorials/coroutine.html
 tutorial.</p>
 <div class="section" id="event-loop">
 <span id="eventloop"></span><h3>Event Loop<a class="headerlink" href="#event-loop" title="Permalink to this headline">¶</a></h3>
-<p>The pulsating hart of the asynchronous framework.
+<p>The pulsating heart of the asynchronous framework.
 Pulsar <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> will be following <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> guidelines.</p>
 </div>
 <div class="section" id="deferred">
@@ -219,6 +219,14 @@ have installed two events loops: the event loop running on the
 <p>The <a class="reference internal" href="api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a> needs to be initialised via the
 <a class="reference internal" href="api/actor.html#pulsar.Actor.create_thread_pool" title="pulsar.Actor.create_thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.create_thread_pool</span></tt></a> method before it can be used.</p>
 </div>
+<div class="section" id="periodic-task">
+<span id="actor-periodic-task"></span><h3>Periodic task<a class="headerlink" href="#periodic-task" title="Permalink to this headline">¶</a></h3>
+<p>Each <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>, including the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>,
+perform one crucial periodic task at given intervals. The next
+call of the task is stored in the <a class="reference internal" href="api/actor.html#pulsar.Actor.next_periodic_task" title="pulsar.Actor.next_periodic_task"><tt class="xref py py-class docutils literal"><span class="pre">Actor.next_periodic_task</span></tt></a>
+attribute.</p>
+<p>Periodic task are implemented by the <a class="reference internal" href="api/actor.html#pulsar.Concurrency.periodic_task" title="pulsar.Concurrency.periodic_task"><tt class="xref py py-class docutils literal"><span class="pre">Concurrency.periodic_task</span></tt></a> method.</p>
+</div>
 </div>
 <div class="section" id="spawning">
 <span id="design-spawning"></span><h2>Spawning<a class="headerlink" href="#spawning" title="Permalink to this headline">¶</a></h2>
@@ -305,8 +313,8 @@ its file descriptor with the <a class="reference internal" href="api/actor.html#
 </div>
 <div class="section" id="commands">
 <span id="actor-commands"></span><h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
-<p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> communicate with a remote <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> by <em>sending</em> an
-<strong>action</strong> to perform. This action takes the form of a <strong>command</strong> name and
+<p>An <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> communicates with another remote <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> by <em>sending</em>
+an <strong>action</strong> to perform. This action takes the form of a <strong>command</strong> name and
 optional positional and key-valued parameters. It is possible to add new
 commands via the <a class="reference internal" href="api/actor.html#pulsar.command" title="pulsar.command"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.command</span></tt></a> decorator as explained in the
 <a class="reference internal" href="api/actor.html#api-remote-commands"><em>api documentation</em></a>.</p>
@@ -404,6 +412,7 @@ framework, the library ships with the <a class="reference internal" href="api/ap
 <li><a class="reference internal" href="#implementation">Implementation</a></li>
 <li><a class="reference internal" href="#io-bound">IO-bound</a></li>
 <li><a class="reference internal" href="#cpu-bound">CPU-bound</a></li>
+<li><a class="reference internal" href="#periodic-task">Periodic task</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#spawning">Spawning</a><ul>

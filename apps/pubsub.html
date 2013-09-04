@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Publish/Subscribe &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Publish/Subscribe &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="Twisted Integration" href="twisted.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -88,6 +88,8 @@ of interest, without knowledge of what, if any, publishers there are.</p>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">backend</span></tt> parameter is needed in order to select the backend
 to use. If not supplied, the default <tt class="docutils literal"><span class="pre">local://</span></tt> backend is used.</p>
+<p>A backend handler is a picklable instance and therefore it can be passed to
+different process domains.</p>
 <div class="section" id="pubsub-handler">
 <h2>PubSub handler<a class="headerlink" href="#pubsub-handler" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -138,15 +140,13 @@ via the <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.encoder" 
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSub.subscribe">
 <tt class="descname">subscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.subscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to the server which publish messages. Must be
-implemented by subclasses.</p>
+<dd><p>Invoke the <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.subscribe" title="pulsar.apps.pubsub.PubSubBackend.subscribe"><tt class="xref py py-meth docutils literal"><span class="pre">PubSubBackend.subscribe()</span></tt></a> method.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSub.unsubscribe">
 <tt class="descname">unsubscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSub.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSub.unsubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Un-subscribe to the server which publish messages. Must be
-implemented by subclasses.</p>
+<dd><p>Invoke the <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.unsubscribe" title="pulsar.apps.pubsub.PubSubBackend.unsubscribe"><tt class="xref py py-meth docutils literal"><span class="pre">PubSubBackend.unsubscribe()</span></tt></a> method.</p>
 </dd></dl>
 
 <dl class="method">
@@ -206,8 +206,8 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.publish">
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.publish" title="Permalink to this definition">¶</a></dt>
-<dd><p>Publish a <tt class="docutils literal"><span class="pre">message</span></tt> into <tt class="docutils literal"><span class="pre">channel</span></tt>. Must be implemented
-by subclasses.</p>
+<dd><p>Publish a <tt class="docutils literal"><span class="pre">message</span></tt> into <tt class="docutils literal"><span class="pre">channel</span></tt>.</p>
+<p>Must be implemented by subclasses.</p>
 </dd></dl>
 
 <dl class="method">
@@ -219,15 +219,18 @@ by subclasses.</p>
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.subscribe">
 <tt class="descname">subscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.subscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to the server which publish messages. Must be
-implemented by subclasses.</p>
+<dd><p>Subscribe to the server which publish messages.</p>
+<p>A series of one or more <tt class="docutils literal"><span class="pre">channels</span></tt> to subscribe to must be passed to this
+method which must be implemented by subclasses.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.unsubscribe">
 <tt class="descname">unsubscribe</tt><big>(</big><em>*channels</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.unsubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Un-subscribe to the server which publish messages. Must be
-implemented by subclasses.</p>
+<dd><p>Un-subscribe from the server which publish messages.</p>
+<p>An optional series of <tt class="docutils literal"><span class="pre">channels</span></tt> can be passed. If no channels are passed,
+it unsubscribed from all channels.</p>
+<p>Must be implemented by subclasses.</p>
 </dd></dl>
 
 </dd></dl>

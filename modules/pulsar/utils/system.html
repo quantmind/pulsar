@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.system &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.utils.system &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -61,7 +61,11 @@
           <div class="body">
             
   <h1>Source code for pulsar.utils.system</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;Operative system specific functions and classes.&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;Operative system specific functions and classes.</span>
+
+<span class="sd">Epoll and Select</span>
+<span class="sd">====================</span>
+<span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">.runtime</span> <span class="kn">import</span> <span class="n">Platform</span>
 
 <span class="n">platform</span> <span class="o">=</span> <span class="n">Platform</span><span class="p">()</span>
@@ -104,13 +108,18 @@
     <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="c">#pragma    nocover</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
-    <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get_memory_info</span><span class="p">()</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
-            <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
-            <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_cpu_percent</span><span class="p">(),</span>
-            <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_nice</span><span class="p">(),</span>
-            <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_num_threads</span><span class="p">()}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+    <span class="c"># this fails on platforms which don&#39;t allow multiprocessing</span>
+    <span class="k">except</span> <span class="n">psutil</span><span class="o">.</span><span class="n">NoSuchProcess</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mem</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get_memory_info</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;memory&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span>
+                <span class="s">&#39;memory_virtual&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">,</span>
+                <span class="s">&#39;cpu_percent&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_cpu_percent</span><span class="p">(),</span>
+                <span class="s">&#39;nice&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_nice</span><span class="p">(),</span>
+                <span class="s">&#39;num_threads&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get_num_threads</span><span class="p">()}</span>
     
     </div>
 </pre></div>

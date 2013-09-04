@@ -22,6 +22,13 @@ Authentication
 
 .. automodule:: pulsar.apps.wsgi.plugins
 
-   
+
+Structures
+=================
+
+.. automodule:: pulsar.apps.wsgi.structures
+    :members:
+
+
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _cython: http://cython.org/

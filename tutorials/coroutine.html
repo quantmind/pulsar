@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Components &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Asynchronous Components &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Actor messages" href="messages.html" />
     <link rel="prev" title="Dining Philosophers" href="philosophers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="philosophers.html" title="Dining Philosophers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -94,18 +94,27 @@ For example:</p>
 </div>
 <p>Note that <tt class="docutils literal"><span class="pre">o</span></tt> is coroutine which has not yet started.</p>
 </li>
+</ul>
+<ul id="task-component">
 <li><p class="first">A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>, is a component which has been added to pulsar asynchronous
-engine. It is created via the <a class="reference internal" href="../api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span>
+engine. It is created via the <a class="reference internal" href="../api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator is applied
+to a generator function or, equivalently, the <a class="reference internal" href="../api/async.html#pulsar.safe_async" title="pulsar.safe_async"><tt class="xref py py-func docutils literal"><span class="pre">safe_async()</span></tt></a> function
+is invoked with argument a generator function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">safe_async</span>
 
 <span class="nd">@async</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">my_async_generator1</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
     <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
     <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
     <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
 
-<span class="n">task</span> <span class="o">=</span> <span class="n">my_async_generator</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_async_generator2</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="k">yield</span> <span class="o">...</span>
+    <span class="o">...</span>
+
+<span class="n">task1</span> <span class="o">=</span> <span class="n">my_async_generator1</span><span class="p">()</span>
+<span class="n">task2</span> <span class="o">=</span> <span class="n">safe_async</span><span class="p">(</span><span class="n">my_async_generator2</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A <a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a subclass of <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> and therefore it has
@@ -117,8 +126,8 @@ the same API, for example, you can add callbacks to a task:</p>
 </ul>
 <div class="section" id="deferred">
 <span id="id1"></span><h2>Deferred<a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h2>
-<p>A <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is a callback which will be put off until later. its
-implementation is similar to the <a class="reference external" href="http://twistedmatrix.com/documents/current/core/howto/defer.html">twisted deferred</a> class with few
+<p>A <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is a callback which will be put off until later. Its
+implementation is similar to the <a class="reference external" href="http://twistedmatrix.com/documents/current/core/howto/defer.html">twisted deferred</a> class with several
 important differences. A deferred is the product of an asynchronous operation.</p>
 <div class="section" id="the-event-loop">
 <span id="deferred-event-loop"></span><h3>The event loop<a class="headerlink" href="#the-event-loop" title="Permalink to this headline">¶</a></h3>
@@ -161,8 +170,7 @@ cancelled too. For example:</p>
 <div class="section" id="timeouts">
 <h3>Timeouts<a class="headerlink" href="#timeouts" title="Permalink to this headline">¶</a></h3>
 <p>A useful application of <a class="reference internal" href="#deferred-cancel"><em>deferred cancellation</em></a>,
-is setting a <tt class="docutils literal"><span class="pre">timeout</span></tt> to an asynchronous operation. To set a timeout,
-one used the <a class="reference internal" href="../api/async.html#pulsar.Deferred.set_timeout" title="pulsar.Deferred.set_timeout"><tt class="xref py py-class docutils literal"><span class="pre">Deferred.set_timeout</span></tt></a> method:</p>
+is setting a <tt class="docutils literal"><span class="pre">timeout</span></tt> to an asynchronous operation:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
@@ -229,6 +237,22 @@ python types), one can use the <a class="reference internal" href="../api/async.
 an asynchronous component which will be ready once all the components
 are ready.</p>
 </div>
+<div class="section" id="async-utilities">
+<span id="tutorial-async-utilities"></span><h2>Async Utilities<a class="headerlink" href="#async-utilities" title="Permalink to this headline">¶</a></h2>
+<p>There are three important utilities which makes the handling of asynchronous
+components is a little more fun.</p>
+<p>The <a class="reference internal" href="../api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator class has been introduced when discussing
+the <a class="reference internal" href="#task-component"><em>task componet</em></a>.
+This decorator can be applied to <strong>any callable</strong> to safely handle
+the execution of the <tt class="docutils literal"><span class="pre">callable</span></tt> it is decorating and return
+a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.
+The returned <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> can already be called if the original <tt class="docutils literal"><span class="pre">callable</span></tt>
+returned a synchronous result or fails (in which case the deferred has
+a <a class="reference internal" href="../api/async.html#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> as result).</p>
+<p>If <a class="reference internal" href="../api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorates a generator function, it access the
+event loop, via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function, and creates a
+<a class="reference internal" href="../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.</p>
+</div>
 </div>
 
 
@@ -253,6 +277,7 @@ are ready.</p>
 <li><a class="reference internal" href="#coroutines">Coroutines</a></li>
 <li><a class="reference internal" href="#task">Task</a></li>
 <li><a class="reference internal" href="#collections">Collections</a></li>
+<li><a class="reference internal" href="#async-utilities">Async Utilities</a></li>
 </ul>
 </li>
 </ul>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Applications API &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Applications API &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Tcp Stream API" href="stream.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="stream.html" title="Tcp Stream API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -78,8 +78,8 @@ The <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar
 <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> and <a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><tt class="xref py py-class docutils literal"><span class="pre">MultiApp</span></tt></a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">An instance of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> is pickable and therefore can be sent
-from actor to actor using the
+<p class="last">An instance of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> is picklable and therefore can be
+sent from actor to actor using the
 <a class="reference internal" href="../tutorials/messages.html#tutorials-messages"><em>actor message passing api</em></a>.</p>
 </div>
 <div class="section" id="configurator">
@@ -222,7 +222,7 @@ several battery included examples in the <a class="reference internal" href="#mo
 <ul class="simple">
 <li>It derives from <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><tt class="xref py py-class docutils literal"><span class="pre">Configurator</span></tt></a> so that it has all the functionalities
 to parse command line arguments and setup the <a class="reference internal" href="#pulsar.apps.Configurator.cfg" title="pulsar.apps.Configurator.cfg"><tt class="xref py py-attr docutils literal"><span class="pre">Configurator.cfg</span></tt></a>.</li>
-<li>Instances must be pickable. If non-pickable data needs to be add on an
+<li>Instances must be picklable. If non-picklable data needs to be add on an
 <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> instance, it must be stored on the
 <tt class="xref py py-attr docutils literal"><span class="pre">Application.local</span></tt> dictionary.</li>
 <li>Instances of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> are callable objects.</li>
@@ -248,8 +248,8 @@ is not invoked. Default <tt class="docutils literal"><span class="pre">True</spa
 <dt id="pulsar.apps.Application.callable">
 <tt class="descname">callable</tt><a class="headerlink" href="#pulsar.apps.Application.callable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Optional callable serving or configuring your application.
-If provided, the callable must be pickable, therefore it is either
-a function or a pickable object.</p>
+If provided, the callable must be picklable, therefore it is either
+a function or a picklable object.</p>
 <p>Default <tt class="docutils literal"><span class="pre">None</span></tt></p>
 </dd></dl>
 
@@ -485,7 +485,16 @@ of this <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.
 <dl class="attribute">
 <dt id="pulsar.apps.Backend.connection_string">
 <tt class="descname">connection_string</tt><a class="headerlink" href="#pulsar.apps.Backend.connection_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>The connection string fro this backend.</p>
+<dd><p>The connection string fro this backend. It is always in the form:</p>
+<div class="highlight-python"><pre>scheme:://address?param1=..&amp;params2=... &amp;...</pre>
+</div>
+<p>where <tt class="docutils literal"><span class="pre">address</span></tt> is usually a <tt class="docutils literal"><span class="pre">host:port</span></tt> string.</p>
+<p>A special connection string is:</p>
+<div class="highlight-python"><pre>local://&amp;param1=...&amp;...</pre>
+</div>
+<p>which represents a backend implemented using pulsar itself. A local backend
+is installed in the monitor managing the <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> which
+createded it.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -502,6 +511,8 @@ implementations.</p>
 <a class="reference internal" href="#pulsar.apps.Backend.connection_string" title="pulsar.apps.Backend.connection_string"><tt class="xref py py-attr docutils literal"><span class="pre">connection_string</span></tt></a>. Therefore if two backend instances from
 the same class have the same connection string, than the <a class="reference internal" href="#pulsar.apps.Backend.id" title="pulsar.apps.Backend.id"><tt class="xref py py-attr docutils literal"><span class="pre">id</span></tt></a>
 is the same.</p>
+<p>The <tt class="xref py py-attr docutils literal"><span class="pre">id`</span></tt> is important when creating a new backend via the
+<a class="reference internal" href="#pulsar.apps.Backend.make" title="pulsar.apps.Backend.make"><tt class="xref py py-meth docutils literal"><span class="pre">make()</span></tt></a> method.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -511,7 +522,7 @@ is the same.</p>
 which is of the form:</p>
 <div class="highlight-python"><pre>scheme:://host?params</pre>
 </div>
-<p>For example, the local backend is:</p>
+<p>For example, a parameter-less local backend is:</p>
 <div class="highlight-python"><pre>local://</pre>
 </div>
 <p>A redis backend could be:</p>
@@ -522,7 +533,7 @@ which is of the form:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>backend</strong> &#8211; the connection string</li>
+<li><strong>backend</strong> &#8211; the connection string, if not supplied <tt class="docutils literal"><span class="pre">local://</span></tt> is used.</li>
 <li><strong>kwargs</strong> &#8211; additional key-valued parameters used by the <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.apps.Backend"><tt class="xref py py-class docutils literal"><span class="pre">Backend</span></tt></a>
 during initialisation.</li>
 </ul>
@@ -530,6 +541,13 @@ during initialisation.</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="pulsar.apps.Backend.get_connection_string">
+<em class="property">classmethod </em><tt class="descname">get_connection_string</tt><big>(</big><em>scheme</em>, <em>address</em>, <em>params</em>, <em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Backend.get_connection_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Backend.get_connection_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the connection string used during initialisation
+of a new <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.apps.Backend"><tt class="xref py py-attr docutils literal"><span class="pre">Backend</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="classmethod">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tcp Stream API &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Tcp Stream API &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Protocols/Transports API" href="protocols.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="protocols.html" title="Protocols/Transports API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -139,7 +139,7 @@ be accumulating data in an internal buffer.</p>
 <h2>TcpServer<a class="headerlink" href="#tcpserver" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.async.stream.TcpServer">
-<em class="property">class </em><tt class="descclassname">pulsar.async.stream.</tt><tt class="descname">TcpServer</tt><big>(</big><em>event_loop</em>, <em>host=None</em>, <em>port=None</em>, <em>consumer_factory=None</em>, <em>name=None</em>, <em>sock=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.async.stream.TcpServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.stream.</tt><tt class="descname">TcpServer</tt><big>(</big><em>event_loop</em>, <em>host=None</em>, <em>port=None</em>, <em>consumer_factory=None</em>, <em>name=None</em>, <em>sock=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#TcpServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.TcpServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>A TCP <a class="reference internal" href="protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Server</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.async.stream.TcpServer.consumer_factory">
@@ -151,7 +151,7 @@ sending of data.</p>
 
 <dl class="method">
 <dt id="pulsar.async.stream.TcpServer.start_serving">
-<tt class="descname">start_serving</tt><big>(</big><em>backlog=100</em>, <em>sslcontext=None</em><big>)</big><a class="headerlink" href="#pulsar.async.stream.TcpServer.start_serving" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">start_serving</tt><big>(</big><em>backlog=100</em>, <em>sslcontext=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#TcpServer.start_serving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.TcpServer.start_serving" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start serving the Tcp socket.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -173,13 +173,13 @@ the socket.</p>
 
 <dl class="method">
 <dt id="pulsar.async.stream.TcpServer.stop_serving">
-<tt class="descname">stop_serving</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.async.stream.TcpServer.stop_serving" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stop_serving</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#TcpServer.stop_serving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.TcpServer.stop_serving" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop serving the <a class="reference internal" href="protocols.html#pulsar.Server.sock" title="pulsar.Server.sock"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Server.sock</span></tt></a></p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.async.stream.TcpServer.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.async.stream.TcpServer.close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#TcpServer.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.TcpServer.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Same as <a class="reference internal" href="#pulsar.async.stream.TcpServer.stop_serving" title="pulsar.async.stream.TcpServer.stop_serving"><tt class="xref py py-meth docutils literal"><span class="pre">stop_serving()</span></tt></a> method.</p>
 </dd></dl>
 

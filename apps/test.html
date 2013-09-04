@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous and Parallel Test Suite &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Asynchronous and Parallel Test Suite &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Shell" href="shell.html" />
     <link rel="prev" title="RPC" href="tasks/rpc.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="tasks/rpc.html" title="RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -141,31 +141,37 @@ just after all tests functions are run.</p>
 </div>
 <div class="section" id="loading-tests">
 <span id="apps-test-loading"></span><h2>Loading Tests<a class="headerlink" href="#loading-tests" title="Permalink to this headline">¶</a></h2>
-<p>Loading test cases is accomplished via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">loader.TestLoader</span></tt></a> class. In
-this context we refer to an <tt class="docutils literal"><span class="pre">object</span></tt> as a <tt class="docutils literal"><span class="pre">module</span></tt> (including a
-directory module) or a <tt class="docutils literal"><span class="pre">class</span></tt>.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Test modules are specified when initialising a <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>, by
-passing the <tt class="docutils literal"><span class="pre">modules</span></tt> tuple/list of python dotted paths. If not defined
-the default is to load test cases from the <tt class="docutils literal"><span class="pre">tests</span></tt> module.</p>
+<p>The loading of test cases is controlled by the <tt class="docutils literal"><span class="pre">modules</span></tt> parameter when
+initialising the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">TestSuite</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">TestSuite</span><span class="p">(</span><span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,</span>
+                      <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
 </div>
-<p>These are the rules for loading tests:</p>
+<p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> loads tests via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">loader.TestLoader</span></tt></a> class.</p>
+<p>In the context of explaining the rules for loading tests, we refer to
+an <tt class="docutils literal"><span class="pre">object</span></tt> as</p>
 <ul class="simple">
-<li>Directories that aren&#8217;t packages are not inspected. This means that if a directory
-does not have a <tt class="docutils literal"><span class="pre">__init__.py</span></tt> file it won&#8217;t be inspected.</li>
-<li>Any class that is a <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> subclass is collected.</li>
-<li>If an object starts with <tt class="docutils literal"><span class="pre">_</span></tt> or <tt class="docutils literal"><span class="pre">.</span></tt> it won&#8217;t be collected,
-nor will any objects it contains.</li>
-<li>If an object defines a <tt class="docutils literal"><span class="pre">__test__</span></tt> attribute that does not evaluate to
-<tt class="docutils literal"><span class="pre">True</span></tt>, that object will not be collected, nor will any objects it contains.</li>
+<li>a <tt class="docutils literal"><span class="pre">module</span></tt> (including a directory module)</li>
+<li>a python <tt class="docutils literal"><span class="pre">class</span></tt>.</li>
 </ul>
-<p>The paths which will be inspected are defined by the <strong>modules</strong> initialisation
-parameter for the <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> class.
-The <strong>modules</strong> parameter is a tuple or list of entries where each single entry
-follow the following rules:</p>
+<p>with this in mind:</p>
+<ul class="simple">
+<li>Directories that aren&#8217;t packages are not inspected. This means that if a
+directory does not have a <tt class="docutils literal"><span class="pre">__init__.py</span></tt> file, it won&#8217;t be inspected.</li>
+<li>Any class that is a <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> subclass is collected.</li>
+<li>If an <tt class="docutils literal"><span class="pre">object</span></tt> starts with <tt class="docutils literal"><span class="pre">_</span></tt> or <tt class="docutils literal"><span class="pre">.</span></tt> it won&#8217;t be collected,
+nor will any <tt class="docutils literal"><span class="pre">objects</span></tt> it contains.</li>
+<li>If an <tt class="docutils literal"><span class="pre">object</span></tt> defines a <tt class="docutils literal"><span class="pre">__test__</span></tt> attribute that does not evaluate to
+<tt class="docutils literal"><span class="pre">True</span></tt>, that object will not be collected, nor will any <tt class="docutils literal"><span class="pre">objects</span></tt>
+it contains.</li>
+</ul>
+<p>The <tt class="docutils literal"><span class="pre">modules</span></tt> parameter is a tuple or list of entries where each single
+<tt class="docutils literal"><span class="pre">entry</span></tt> follows the rules:</p>
 <ul>
-<li><p class="first">If the entry is a string, it indicates the <strong>dotted path</strong> relative to the
+<li><p class="first">If the <tt class="docutils literal"><span class="pre">entry</span></tt> is a string, it indicates the <strong>dotted path</strong> relative to the
 <strong>root</strong> directory (the directory of the script running the tests). For
 example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;tests&#39;</span><span class="p">,</span> <span class="s">&#39;moretests.here&#39;</span><span class="p">]</span>
@@ -608,9 +614,17 @@ context domain. This can be useful to test Arbiter mechanics.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.utils.ActorTestMixin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">ActorTestMixin</tt><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>A mixin for <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt> classes testing spawning
-of actors. Make sure this is the first class you derive from, before the
+<dd><p>A mixin for <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt>.</p>
+<p>Useful for classes testing spawning of actors.
+Make sure this is the first class you derive from, before the
 unittest.TestCase, so that the tearDown method is overwritten.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.test.utils.ActorTestMixin.concurrency">
+<tt class="descname">concurrency</tt><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin.concurrency" title="Permalink to this definition">¶</a></dt>
+<dd><p>The concurrency model used to spawn actors via the <a class="reference internal" href="#pulsar.apps.test.utils.ActorTestMixin.spawn" title="pulsar.apps.test.utils.ActorTestMixin.spawn"><tt class="xref py py-meth docutils literal"><span class="pre">spawn()</span></tt></a>
+method.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.test.utils.ActorTestMixin.spawn">
 <tt class="descname">spawn</tt><big>(</big><em>concurrency=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin.spawn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin.spawn" title="Permalink to this definition">¶</a></dt>
@@ -637,7 +651,7 @@ added bonus they it waorks for asynchronous results too.</p>
 
 <dl class="function">
 <dt id="pulsar.apps.test.utils.show_leaks">
-<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">show_leaks</tt><big>(</big><em>actor</em><big>)</big><a class="headerlink" href="#pulsar.apps.test.utils.show_leaks" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">show_leaks</tt><big>(</big><em>actor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#show_leaks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.show_leaks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to show memory leaks on a processed-based actor.</p>
 </dd></dl>
 

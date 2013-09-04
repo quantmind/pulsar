@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Exceptions &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Exceptions &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Changelog" href="../changelog.html" />
     <link rel="prev" title="Tools" href="utilities.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -98,25 +98,28 @@ the socket connection.</p>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.StopEventLoop">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">StopEventLoop</tt><a class="headerlink" href="#pulsar.utils.exceptions.StopEventLoop" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt> raised to stop a <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.</p>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">StopEventLoop</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#StopEventLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.StopEventLoop" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt> raised to cleanly stop a
+<a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.HaltServer">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HaltServer</tt><big>(</big><em>reason='Exiting server.'</em>, <em>signal=None</em>, <em>exit_code=1</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#HaltServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.HaltServer" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HaltServer</tt><big>(</big><em>reason='Exiting server.'</em>, <em>exit_code=1</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#HaltServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.HaltServer" title="Permalink to this definition">¶</a></dt>
 <dd><p><tt class="xref py py-class docutils literal"><span class="pre">BaseException</span></tt> raised to stop a running server.</p>
+<p>When <tt class="docutils literal"><span class="pre">exit_code</span></tt> is greater than 1, it is considered an expected
+failure and therefore the full stack trace is not logged.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.HTTPError">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HTTPError</tt><a class="headerlink" href="#pulsar.utils.exceptions.HTTPError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">HTTPError</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#HTTPError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.HTTPError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base for all HTTP related errors.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.SSLError">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">SSLError</tt><a class="headerlink" href="#pulsar.utils.exceptions.SSLError" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">SSLError</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#SSLError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.SSLError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raised when SSL certificate fails in an HTTPS connection.</p>
 </dd></dl>
 
@@ -174,7 +177,7 @@ the socket connection.</p>
 
 <dl class="exception">
 <dt id="pulsar.utils.exceptions.ContentNotAccepted">
-<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ContentNotAccepted</tt><big>(</big><em>msg=''</em>, <em>status=None</em>, <em>handler=None</em>, <em>strict=False</em>, <em>headers=None</em>, <em>content_type=None</em><big>)</big><a class="headerlink" href="#pulsar.utils.exceptions.ContentNotAccepted" title="Permalink to this definition">¶</a></dt>
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ContentNotAccepted</tt><big>(</big><em>msg=''</em>, <em>status=None</em>, <em>handler=None</em>, <em>strict=False</em>, <em>headers=None</em>, <em>content_type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#ContentNotAccepted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.ContentNotAccepted" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.utils.exceptions.HttpException" title="pulsar.utils.exceptions.HttpException"><tt class="xref py py-class docutils literal"><span class="pre">HttpException</span></tt></a> with default <tt class="docutils literal"><span class="pre">406</span></tt> status code.</p>
 </dd></dl>
 

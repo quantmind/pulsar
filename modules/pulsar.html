@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -62,7 +62,7 @@
   <h1>Source code for pulsar</h1><div class="highlight"><pre>
 <span class="c"># -*- coding: utf-8 -</span>
 <span class="sd">&#39;&#39;&#39;Event driven concurrent framework for Python&#39;&#39;&#39;</span>
-<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.utils.version</span> <span class="kn">import</span> <span class="n">get_version</span>
 
@@ -104,7 +104,7 @@
 
 <span class="kn">from</span> <span class="nn">.utils.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">.utils.sockets</span> <span class="kn">import</span> <span class="n">create_socket</span><span class="p">,</span> <span class="n">parse_address</span>
+<span class="kn">from</span> <span class="nn">.utils.internet</span> <span class="kn">import</span> <span class="n">parse_address</span>
 <span class="kn">from</span> <span class="nn">.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_bytes</span>
 <span class="n">platform</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">platform</span>
 

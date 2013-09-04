@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.tasks &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.tasks &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -75,8 +75,11 @@
 
 <span class="sd">    from pulsar.apps import tasks</span>
 
-<span class="sd">    tq = tasks.TaskQueue(tasks_path=[&#39;path.to.tasks.*&#39;])</span>
-<span class="sd">    tq.start()</span>
+<span class="sd">    if __name__ == &#39;__main__&#39;:</span>
+<span class="sd">        tasks.TaskQueue(tasks_path=[&#39;path.to.tasks.*&#39;]).start()</span>
+<span class="sd">        </span>
+<span class="sd">Check the :ref:`task queue tutorial &lt;tutorials-taskqueue&gt;` for a running</span>
+<span class="sd">example with simple tasks.</span>
 <span class="sd">    </span>
 <span class="sd">To get started, follow the these points:</span>
 
@@ -108,15 +111,33 @@
 <span class="sd">* The :ref:`schedule_periodic &lt;setting-schedule_periodic&gt;` flag indicates</span>
 <span class="sd">  if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,</span>
 <span class="sd">  only one running :class:`TaskQueue` application is responsible for</span>
-<span class="sd">  scheduling tasks while all the other, simply consume tasks.</span>
-<span class="sd">  This parameter can also be specified in the command line via the</span>
-<span class="sd">  ``--schedule-periodic`` flag. Default: ``False``.</span>
+<span class="sd">  scheduling tasks while any the other, simply consume tasks.</span>
+<span class="sd">  </span>
+<span class="sd">  It can be specified in the command line via the</span>
+<span class="sd">  ``--schedule-periodic`` flag.</span>
+<span class="sd">  </span>
+<span class="sd">  Default: ``False``.</span>
 <span class="sd">  </span>
 <span class="sd">* The :ref:`task_backend &lt;setting-task_backend&gt;` parameter is a url</span>
-<span class="sd">  type string which specifies the :class:`backends.TaskBackend`</span>
+<span class="sd">  type string which specifies the :ref:`task backend &lt;apps-taskqueue-backend&gt;`</span>
 <span class="sd">  to use.</span>
+<span class="sd">  </span>
+<span class="sd">  It can be specified in the command line via the</span>
+<span class="sd">  ``--task-backend ...`` option.</span>
+<span class="sd">  </span>
+<span class="sd">  Default: ``local://``.</span>
 
-
+<span class="sd">* The :ref:`concurrent_tasks &lt;setting-concurrent_tasks&gt;` parameter control</span>
+<span class="sd">  the maximum number of concurrent tasks for a given task worker.</span>
+<span class="sd">  This parameter is important when tasks are asynchronous, that is when</span>
+<span class="sd">  they perform some sort of I/O and the :ref:`job callable &lt;job-callable&gt;`</span>
+<span class="sd">  returns and :ref:`asynchronous component &lt;tutorials-coroutine&gt;`.</span>
+<span class="sd">  </span>
+<span class="sd">  It can be specified in the command line via the</span>
+<span class="sd">  ``--concurrent-tasks ...`` option.</span>
+<span class="sd">  </span>
+<span class="sd">  Default: ``5``.</span>
+<span class="sd">  </span>
 <span class="sd">.. _app-taskqueue-app:</span>
 
 <span class="sd">Task queue application</span>
@@ -129,12 +150,10 @@
 
 <span class="sd">.. _celery: http://celeryproject.org/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">command</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">local_property</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">command</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span>
 
 <span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="o">*</span>
@@ -217,6 +236,10 @@
 <span class="sd">task.Tasks and managing scheduling of tasks via a</span>
 <span class="sd">:class:`scheduler.Scheduler`.&#39;&#39;&#39;</span>
     <span class="n">backend</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;The :ref:`TaskBackend &lt;apps-taskqueue-backend&gt;` for this task queue.</span>
+<span class="sd">    This picklable attribute is available once the :class:`TaskQueue` has</span>
+<span class="sd">    started (that is when the :meth:`monitor_start` method is invoked by the</span>
+<span class="sd">    :class:`pulsar.apps.ApplicationMonitor` running it).&#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
 
@@ -224,7 +247,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">get_task</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
     
 <div class="viewcode-block" id="TaskQueue.monitor_start"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;When the monitor starts create the :class:`backends.TaskBackend`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Starts running the task queue in ``monitor``.</span>
+<span class="sd">        </span>
+<span class="sd">        It calles the :attr:`pulsar.Application.callable` (if available) and</span>
+<span class="sd">        create the :attr:`backend`.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">TaskBackend</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
@@ -239,7 +265,7 @@
         <span class="sd">&#39;&#39;&#39;Override the :meth:`pulsar.apps.Application.monitor_task` callback</span>
 <span class="sd">to check if the :attr:`scheduler` needs to perform a new run.&#39;&#39;&#39;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TaskQueue</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">and</span> <span class="n">monitor</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">and</span> <span class="n">monitor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">next_run</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">tick</span><span class="p">()</span>
 </div>

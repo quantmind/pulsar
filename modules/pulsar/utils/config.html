@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.config &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.utils.config &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -916,24 +916,6 @@
 <span class="s">        restarts are disabled.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
-<span class="k">class</span> <span class="nc">Backlog</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;backlog&quot;</span>
-    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--backlog&quot;</span><span class="p">]</span>
-    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_pos_int</span>
-    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="mi">2048</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        The maximum number of queued connections in a socket.</span>
-<span class="s">        </span>
-<span class="s">        This refers to the number of clients that can be waiting to be served.</span>
-<span class="s">        Exceeding this number results in the client getting an error when</span>
-<span class="s">        attempting to connect. It should only affect servers under significant</span>
-<span class="s">        load.</span>
-<span class="s">        Must be a positive integer. Generally set in the 64-2048 range.</span>
-<span class="s">        &quot;&quot;&quot;</span>
-
-
 <span class="k">class</span> <span class="nc">Timeout</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;timeout&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
@@ -944,6 +926,21 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        Workers silent for more than this many seconds are</span>
 <span class="s">        killed and restarted.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">ThreadWorkers</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;thread_workers&quot;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--thread-workers&quot;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_pos_int</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        The number of threads in an actor thread pool.</span>
+<span class="s">        </span>
+<span class="s">        The thread pool is used by actors to perform CPU intensive calculations.</span>
+<span class="s">        In this way the actor main thread is free to listen to events on file</span>
+<span class="s">        descriptors and process them as quick as possible.&quot;&quot;&quot;</span>
 
 
 <span class="c">################################################################################</span>
@@ -982,6 +979,19 @@
 <span class="s">        </span>
 <span class="s">        This is a chance to setup :class:`pulsar.EventLoop` callbacks which</span>
 <span class="s">        can run periodically, at every loop or when some defined events occur.</span>
+<span class="s">        &quot;&quot;&quot;</span>
+        
+        
+<span class="k">class</span> <span class="nc">WhenExit</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;when_exit&quot;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Application Hooks&quot;</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_callable</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;callable&quot;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        Called just before an actor is garbadge collected.</span>
+<span class="s">        </span>
+<span class="s">        This is a chance to check the actor status if needed.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
 

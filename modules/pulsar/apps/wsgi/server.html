@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -64,12 +64,17 @@
             
   <h1>Source code for pulsar.apps.wsgi.server</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">HTTP Protocol Consumer</span>
+<span class="sd">==============================</span>
 
 <span class="sd">.. autoclass:: HttpServerResponse</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 <span class="sd">   </span>
 <span class="sd">   </span>
+<span class="sd">Testing WSGI Environ</span>
+<span class="sd">=========================</span>
+
 <span class="sd">.. autofunction:: test_wsgi_environ</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
@@ -81,16 +86,16 @@
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">is_async</span><span class="p">,</span>\
-                   <span class="n">is_failure</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">native_str</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>\
-                                 <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>\
-                                 <span class="n">REDIRECT_CODES</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">raise_error_trace</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
+                                  <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">)</span>
+                                 
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span>
+<span class="kn">from</span> <span class="nn">pulsar.async.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils</span> <span class="kn">import</span> <span class="n">events</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
-<span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">WsgiResponse</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s">&#39;MAX_CHUNK_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;test_wsgi_environ&#39;</span><span class="p">]</span>
@@ -99,7 +104,8 @@
 
 
 <div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Create a WSGI environment dictionary for testing purposes.</span>
+    <span class="sd">&#39;&#39;&#39;An utility function for creating a WSGI environment dictionary</span>
+<span class="sd">for testing purposes.</span>
 <span class="sd">    </span>
 <span class="sd">:param url: the resource in the ``PATH_INFO``.</span>
 <span class="sd">:param method: the ``REQUEST_METHOD``.</span>
@@ -137,7 +143,7 @@
         <span class="p">}</span>
     <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;http&quot;</span>
     <span class="n">forward</span> <span class="o">=</span> <span class="n">client_address</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">address</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">format_address</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
     <span class="n">script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;SCRIPT_NAME&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -222,7 +228,7 @@
     <span class="k">return</span> <span class="bp">True</span>
     
 
-<div class="viewcode-block" id="HttpServerResponse"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpServerResponse</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
+<div class="viewcode-block" id="HttpServerResponse"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpServerResponse</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Server side HTTP :class:`pulsar.ProtocolConsumer`.&#39;&#39;&#39;</span>
     <span class="n">_status</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_headers_sent</span> <span class="o">=</span> <span class="bp">None</span>
@@ -294,11 +300,12 @@
         <span class="sd">&#39;&#39;&#39;WSGI compliant ``start_response`` callable, see pep3333_.</span>
 <span class="sd">The application may call start_response more than once, if and only</span>
 <span class="sd">if the ``exc_info`` argument is provided.</span>
-<span class="sd">More precisely, it is a fatal error to call start_response without the exc_info</span>
-<span class="sd">argument if start_response has already been called within the current</span>
-<span class="sd">invocation of the application.</span>
+<span class="sd">More precisely, it is a fatal error to call ``start_response`` without the</span>
+<span class="sd">``exc_info`` argument if start_response has already been called within</span>
+<span class="sd">the current invocation of the application.</span>
 
-<span class="sd">:parameter status: an HTTP &quot;status&quot; string like &quot;200 OK&quot; or &quot;404 Not Found&quot;.</span>
+<span class="sd">:parameter status: an HTTP ``status`` string like ``200 OK`` or</span>
+<span class="sd">    ``404 Not Found``.</span>
 <span class="sd">:parameter response_headers: a list of ``(header_name, header_value)`` tuples.</span>
 <span class="sd">    It must be a Python list. Each header_name must be a valid HTTP header</span>
 <span class="sd">    field-name (as defined by RFC 2616_, Section 4.2), without a trailing</span>
@@ -306,10 +313,9 @@
 <span class="sd">:parameter exc_info: optional python ``sys.exc_info()`` tuple. This argument</span>
 <span class="sd">    should be supplied by the application only if start_response is being</span>
 <span class="sd">    called by an error handler.</span>
+<span class="sd">:return: The :meth:`write` method.</span>
 
-<span class="sd">:rtype: The :meth:`HttpResponse.write` callable.</span>
-
-<span class="sd">The ``HOP_HEADERS`` are not considered but no error is raised.</span>
+<span class="sd">``HOP_HEADERS`` are not considered but no error is raised.</span>
 
 <span class="sd">.. _pep3333: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">.. _2616: http://www.faqs.org/rfcs/rfc2616.html</span>
@@ -320,7 +326,7 @@
                     <span class="c"># if exc_info is provided, and the HTTP headers have</span>
                     <span class="c"># already been sent, start_response must raise an error,</span>
                     <span class="c"># and should re-raise using the exc_info tuple</span>
-                    <span class="k">raise</span> <span class="p">(</span><span class="n">exc_info</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">raise_error_trace</span><span class="p">(</span><span class="n">exc_info</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
             <span class="k">finally</span><span class="p">:</span>
                 <span class="c"># Avoid circular reference</span>
                 <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
@@ -377,7 +383,7 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_failure</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="n">Failure</span><span class="p">):</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">wsgi_iter</span>
@@ -388,7 +394,7 @@
 <div class="viewcode-block" id="HttpServerResponse.async_wsgi"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.async_wsgi">[docs]</a>    <span class="k">def</span> <span class="nf">async_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_</span>
 <span class="sd">when the ``wsgi_iter`` yields bytes only.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">is_async</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">):</span> <span class="c"># handle asynchronous wsgi response</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span> <span class="c"># handle asynchronous wsgi response</span>
             <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">wsgi_iter</span> 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">wsgi_iter</span><span class="p">:</span>

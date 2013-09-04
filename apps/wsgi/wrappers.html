@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Wrappers &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Content" href="content.html" />
     <link rel="prev" title="WSGI application handlers" href="handlers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="handlers.html" title="WSGI application handlers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -115,6 +115,34 @@ key <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt>.</p>
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiRequest</tt><big>(</big><em>environ</em>, <em>app_handler=None</em>, <em>urlargs=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="pulsar.apps.wsgi.wrappers.EnvironMixin"><tt class="xref py py-class docutils literal"><span class="pre">EnvironMixin</span></tt></a> for wsgi requests.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.content_types">
+<tt class="descname">content_types</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.content_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of content types this client supports.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets">
+<tt class="descname">charsets</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.charsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of charsets this client supports as
+<tt class="xref py py-class docutils literal"><span class="pre">CharsetAccept</span></tt> object.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.encodings">
+<tt class="descname">encodings</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.encodings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of encodings this client accepts.  Encodings in a HTTP term
+are compression encodings such as gzip.  For charsets have a look at
+<tt class="xref py py-attr docutils literal"><span class="pre">accept_charset</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.languages">
+<tt class="descname">languages</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.languages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.languages" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of languages this client accepts as
+<tt class="xref py py-class docutils literal"><span class="pre">LanguageAccept</span></tt> object.</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">
 <tt class="descname">app_handler</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.app_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler" title="Permalink to this definition">¶</a></dt>

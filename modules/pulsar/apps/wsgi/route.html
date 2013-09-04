@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -63,7 +63,7 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.wsgi.route</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;Routing classes for managing urls.</span>
+<span class="sd">&#39;&#39;&#39;Routing classes for matching and parsing urls.</span>
 
 <span class="sd">.. note::</span>
 
@@ -96,7 +96,7 @@
 <span class="sd">    </span>
 
 
-<span class="sd">.. _apps-wsgi-route-decorator:</span>
+<span class="sd">.. _wsgi-route-decorator:</span>
 
 <span class="sd">Route decorator</span>
 <span class="sd">==================</span>
@@ -116,8 +116,9 @@
 <span class="sd">   </span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">HttpException</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span> <span class="n">remove_double_slash</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">ENCODE_BODY_METHODS</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span>
@@ -126,10 +127,20 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;route&#39;</span><span class="p">,</span> <span class="s">&#39;Route&#39;</span><span class="p">]</span>
 
 
+<span class="k">class</span> <span class="nc">rule_info</span><span class="p">(</span><span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;rinfo&#39;</span><span class="p">,</span> <span class="s">&#39;rule method parameters position order&#39;</span><span class="p">)):</span>
+    
+    <span class="k">def</span> <span class="nf">override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">rule_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
+                             <span class="n">parent</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        
+
 <span class="n">_rule_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;&#39;&#39;</span>
 <span class="s">    (?:</span>
 <span class="s">        (?P&lt;converter&gt;[a-zA-Z_][a-zA-Z0-9_]*)   # converter name</span>
-<span class="s">        (?:\((?P&lt;args&gt;.*?)\))?                  # converter arguments</span>
+<span class="s">        (?:\((?P&lt;args&gt;.*?)\))?                  # converter parameters</span>
 <span class="s">        \:                                      # variable delimiter</span>
 <span class="s">    )?</span>
 <span class="s">    (?P&lt;variable&gt;[a-zA-Z_][a-zA-Z0-9_]*)        # variable name</span>
@@ -170,7 +181,7 @@
 
 <span class="k">def</span> <span class="nf">parse_rule</span><span class="p">(</span><span class="n">rule</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parse a rule and return it as generator. Each iteration yields tuples</span>
-<span class="sd">    in the form ``(converter, arguments, variable)``. If the converter is</span>
+<span class="sd">    in the form ``(converter, parameters, variable)``. If the converter is</span>
 <span class="sd">    `None` it&#39;s a static url part, otherwise it&#39;s a dynamic one.</span>
 
 <span class="sd">    :internal:</span>
@@ -184,46 +195,61 @@
 
 
 <div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator for creating a (:class:`Route`, ``HTTPmethod``, ``parameters``)</span>
-<span class="sd">tuple and assign it to the ``rule_method`` attribute of the ``callable`` which</span>
-<span class="sd">is decorated. Check the :ref:`HttpBin example &lt;tutorials-httpbin&gt;`</span>
-<span class="sd">for a sample usage.</span>
-
-<span class="sd">:param rule: Optional string for the relative url served by the method which</span>
-<span class="sd">    is decorated. If not supplied, the method name is used.</span>
-<span class="sd">:param method: Optional HTTP method name. Default is `get`.</span>
-<span class="sd">:param defaults: Optional dictionary of default parameters used when</span>
-<span class="sd">    initialising the :class:`Route` instance.</span>
-<span class="sd">:param parameters: Additional parameters used when initialising</span>
-<span class="sd">    the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.</span>
-<span class="sd">    The ``async=True`` parameter will treat the ``callable`` as an asynchronous</span>
-<span class="sd">    component.</span>
+    <span class="sd">&#39;&#39;&#39;Decorator to create a child route from a :ref:`Router &lt;wsgi-router&gt;` method.</span>
 <span class="sd">    </span>
-<span class="sd">The ``callable`` could be an unbound method of a</span>
-<span class="sd">:ref:`Router &lt;wsgi-router&gt;` class or a standard python function::</span>
+<span class="sd">Tipical usage::</span>
 
 <span class="sd">    from pulsar.apps import wsgi</span>
 <span class="sd">    </span>
 <span class="sd">    class View(wsgi.Router):</span>
 <span class="sd">    </span>
 <span class="sd">        wsgi.route(&#39;/foo&#39;)</span>
-<span class="sd">        def handle_view(request):</span>
+<span class="sd">        def handle_view(self, request):</span>
 <span class="sd">            ...</span>
 <span class="sd">            </span>
 <span class="sd">        wsgi.route(&#39;/bla&#39;, async=True)</span>
-<span class="sd">        def asynchronous_handle(request):</span>
+<span class="sd">        def asynchronous_handle(self, request):</span>
 <span class="sd">            result = yield async_function(...)</span>
 <span class="sd">            yield ...</span>
-<span class="sd">            </span>
+
+
+<span class="sd">In this example, ``View`` is the **parent router**.</span>
+
+<span class="sd">The decorator injects the :attr:`rule_method` attribute to the</span>
+<span class="sd">method it decorates. The attribute is a four elements tuple</span>
+<span class="sd">contains the :class:`Route`, the HTTP ``method``, a</span>
+<span class="sd">dictionary of additional ``parameters`` and the ``position`` for ordering.</span>
+
+<span class="sd">Check the :ref:`HttpBin example &lt;tutorials-httpbin&gt;`</span>
+<span class="sd">for a sample usage.</span>
+
+<span class="sd">:param rule: Optional string for the relative url served by the method which</span>
+<span class="sd">    is decorated. If not supplied, the method name is used.</span>
+<span class="sd">:param method: Optional HTTP method name. Default is `get`.</span>
+<span class="sd">:param defaults: Optional dictionary of default variable values used when</span>
+<span class="sd">    initialising the :class:`Route` instance.</span>
+<span class="sd">:param position: Optional positioning of the router within the</span>
+<span class="sd">    list of child routers of the parent router.</span>
+<span class="sd">:param parameters: Additional parameters used when initialising</span>
+<span class="sd">    the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.</span>
+<span class="sd">    The ``async=True`` parameter will treat the ``callable`` as an asynchronous</span>
+<span class="sd">    component.</span>
+<span class="sd">                </span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">position</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">position</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">defaults</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
         
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
         <span class="n">bits</span> <span class="o">=</span> <span class="nb">callable</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
@@ -235,8 +261,8 @@
                 <span class="n">bits</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">or</span> <span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;get&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
         <span class="n">rule</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="ow">or</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">),</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
-        <span class="nb">callable</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span><span class="p">)</span>
+        <span class="nb">callable</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="n">rule_info</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">callable</span>
         
     </div>
@@ -244,15 +270,12 @@
     <span class="sd">&#39;&#39;&#39;A Route is a class with a relative :attr:`path`.</span>
 <span class="sd">    </span>
 <span class="sd">:parameter rule: Rule strings basically are just normal URL paths</span>
-<span class="sd">    with placeholders in the format ``&lt;converter(arguments):name&gt;``</span>
-<span class="sd">    where the converter and the arguments are optional.</span>
-<span class="sd">    If no converter is defined the `default` converter is used which</span>
-<span class="sd">    means `string`.</span>
-<span class="sd">    </span>
-<span class="sd">:parameter defaults: optional dictionary of default values for variables.</span>
-<span class="sd">:parameter append_slash: Force a slash to be the last character of the rule.</span>
-<span class="sd">    In doing so the :attr:`is_leaf` is guaranteed to be ``False``.</span>
-<span class="sd">    </span>
+<span class="sd">    with placeholders in the format ``&lt;converter(parameters):name&gt;``</span>
+<span class="sd">    where both the ``converter`` and the ``parameters`` are optional.</span>
+<span class="sd">    If no ``converter`` is defined the `default` converter is used which</span>
+<span class="sd">    means ``string``. ``name`` is the variable name.</span>
+<span class="sd">:parameter defaults: optional dictionary of default values for the rule</span>
+<span class="sd">    variables.</span>
 <span class="sd">    </span>
 <span class="sd">.. attribute:: is_leaf</span>
 
@@ -263,9 +286,9 @@
 
 <span class="sd">    The full path for this route including initial ``&#39;/&#39;``.</span>
 <span class="sd">    </span>
-<span class="sd">.. attribute:: arguments</span>
+<span class="sd">.. attribute:: variables</span>
 
-<span class="sd">    a set of arguments for this route. If the route has no variables, the</span>
+<span class="sd">    a set of  variable names for this route. If the route has no variables, the</span>
 <span class="sd">    set is empty.</span>
 <span class="sd">    </span>
 <span class="sd">.. _werkzeug: https://github.com/mitsuhiko/werkzeug</span>
@@ -275,7 +298,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">defaults</span> <span class="k">if</span> <span class="n">defaults</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">rule</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arguments</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">))</span>
         <span class="n">breadcrumbs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">regex_parts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -288,15 +311,15 @@
                 <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span> <span class="ow">or</span> <span class="n">e</span> <span class="o">==</span> <span class="s">&#39;&gt;&#39;</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">s</span> <span class="o">+</span> <span class="n">e</span> <span class="o">!=</span> <span class="s">&#39;&lt;&gt;&#39;</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;malformed rule {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
-                    <span class="n">converter</span><span class="p">,</span> <span class="n">arguments</span><span class="p">,</span> <span class="n">variable</span> <span class="o">=</span> <span class="n">parse_rule</span><span class="p">(</span><span class="n">bit</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">converter</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">variable</span> <span class="o">=</span> <span class="n">parse_rule</span><span class="p">(</span><span class="n">bit</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                     <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;variable name {0} used twice</span><span class="se">\</span>
 <span class="s"> in rule {1}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
-                    <span class="n">convobj</span> <span class="o">=</span> <span class="n">get_converter</span><span class="p">(</span><span class="n">converter</span><span class="p">,</span> <span class="n">arguments</span><span class="p">)</span>
+                    <span class="n">convobj</span> <span class="o">=</span> <span class="n">get_converter</span><span class="p">(</span><span class="n">converter</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
                     <span class="n">regex_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;(?P&lt;</span><span class="si">%s</span><span class="s">&gt;</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">convobj</span><span class="o">.</span><span class="n">regex</span><span class="p">))</span>
                     <span class="n">breadcrumbs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">True</span><span class="p">,</span><span class="n">variable</span><span class="p">))</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span> <span class="o">=</span> <span class="n">convobj</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">arguments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">variable</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">variable</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">variable</span> <span class="o">=</span> <span class="n">bit</span>
                     <span class="n">regex_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">variable</span><span class="p">))</span>
@@ -483,7 +506,7 @@
 <span class="sd">        Rule(&#39;/&lt;any(about, help, imprint, class, &quot;foo,bar&quot;):page_name&gt;&#39;)</span>
 
 <span class="sd">    :param items: this function accepts the possible items as positional</span>
-<span class="sd">                  arguments.</span>
+<span class="sd">                  parameters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">items</span><span class="p">):</span>
@@ -589,12 +612,12 @@
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="n">kwargs</span>
 
 
-<span class="k">def</span> <span class="nf">get_converter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">arguments</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_converter</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">_CONVERTERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s">&#39;Route converter {0} not available&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">arguments</span><span class="p">:</span>
-        <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">parse_converter_args</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">parse_converter_args</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">c</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">c</span><span class="p">()</span>

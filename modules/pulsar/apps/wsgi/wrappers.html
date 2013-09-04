@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -107,20 +107,20 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.multipart</span> <span class="kn">import</span> <span class="n">parse_form_data</span><span class="p">,</span> <span class="n">parse_options_header</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">MultiValueDict</span><span class="p">,</span> <span class="n">AttributeDictionary</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">SimpleCookie</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span>\
-                                 <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">string_type</span><span class="p">,</span> <span class="n">ispy3k</span><span class="p">,</span>\
-                                 <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">,</span>\
-                                 <span class="n">urlencode</span><span class="p">,</span> <span class="n">remove_double_slash</span><span class="p">,</span> <span class="n">iri_to_uri</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">SimpleCookie</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span>
+                                  <span class="n">has_empty_content</span><span class="p">,</span> <span class="n">ispy3k</span><span class="p">,</span>
+                                  <span class="n">ENCODE_URL_METHODS</span><span class="p">,</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">,</span>
+                                  <span class="n">remove_double_slash</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.middleware</span> <span class="kn">import</span> <span class="n">is_streamed</span>
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="n">HtmlDocument</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">set_wsgi_request_class</span><span class="p">,</span> <span class="n">set_cookie</span><span class="p">,</span> <span class="n">query_dict</span><span class="p">,</span>\
-                    <span class="n">parse_accept_header</span><span class="p">,</span> <span class="n">parse_cache_control_header</span>
-<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">MIMEAccept</span><span class="p">,</span> <span class="n">CharsetAccept</span><span class="p">,</span> <span class="n">LanguageAccept</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">set_wsgi_request_class</span><span class="p">,</span> <span class="n">set_cookie</span><span class="p">,</span> <span class="n">query_dict</span><span class="p">,</span>
+                    <span class="n">parse_accept_header</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">ContentAccept</span><span class="p">,</span> <span class="n">CharsetAccept</span><span class="p">,</span> <span class="n">LanguageAccept</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EnvironMixin&#39;</span><span class="p">,</span> <span class="s">&#39;Accept&#39;</span><span class="p">,</span> <span class="s">&#39;WsgiResponse&#39;</span><span class="p">,</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EnvironMixin&#39;</span><span class="p">,</span> <span class="s">&#39;WsgiResponse&#39;</span><span class="p">,</span>
            <span class="s">&#39;WsgiRequest&#39;</span><span class="p">,</span> <span class="s">&#39;cached_property&#39;</span><span class="p">]</span>
 
 <span class="n">MAX_BUFFER_SIZE</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span>
@@ -217,8 +217,7 @@
                 <span class="n">content</span> <span class="o">=</span> <span class="p">()</span>
             <span class="k">elif</span> <span class="n">ispy3k</span><span class="p">:</span> <span class="c">#what a pain</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span>
-                    <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span> <span class="c">#pragma    nocover</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
                     <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">or</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
@@ -363,47 +362,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
     
     </div></div>
-<span class="k">class</span> <span class="nc">Accept</span><span class="p">(</span><span class="n">EnvironMixin</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A mixin for classes with an :attr:`~BaseResponse.environ` attribute</span>
-<span class="sd">    to get all the HTTP accept headers as</span>
-<span class="sd">    :class:`~werkzeug.datastructures.Accept` objects (or subclasses</span>
-<span class="sd">    thereof).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">content_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of content types this client supports.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT&#39;</span><span class="p">),</span> <span class="n">MIMEAccept</span><span class="p">)</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">charsets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of charsets this client supports as</span>
-<span class="sd">        :class:`~werkzeug.datastructures.CharsetAccept` object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_CHARSET&#39;</span><span class="p">),</span>
-                                   <span class="n">CharsetAccept</span><span class="p">)</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">encodings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of encodings this client accepts.  Encodings in a HTTP term</span>
-<span class="sd">        are compression encodings such as gzip.  For charsets have a look at</span>
-<span class="sd">        :attr:`accept_charset`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">))</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">languages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of languages this client accepts as</span>
-<span class="sd">        :class:`~werkzeug.datastructures.LanguageAccept` object.</span>
-
-<span class="sd">        .. versionchanged 0.5</span>
-<span class="sd">           In previous versions this was a regular</span>
-<span class="sd">           :class:`~werkzeug.datastructures.Accept` object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_LANGUAGE&#39;</span><span class="p">),</span>
-                                   <span class="n">LanguageAccept</span><span class="p">)</span>
-    
-    
-<div class="viewcode-block" id="WsgiRequest"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest">[docs]</a><span class="k">class</span> <span class="nc">WsgiRequest</span><span class="p">(</span><span class="n">Accept</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest">[docs]</a><span class="k">class</span> <span class="nc">WsgiRequest</span><span class="p">(</span><span class="n">EnvironMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`EnvironMixin` for wsgi requests.&#39;&#39;&#39;</span>    
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">app_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">urlargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">WsgiRequest</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
@@ -418,6 +377,40 @@
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
     
+    <span class="nd">@cached_property</span>
+<div class="viewcode-block" id="WsgiRequest.content_types"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types">[docs]</a>    <span class="k">def</span> <span class="nf">content_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of content types this client supports.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT&#39;</span><span class="p">),</span>
+                                   <span class="n">ContentAccept</span><span class="p">)</span>
+</div>
+    <span class="nd">@cached_property</span>
+<div class="viewcode-block" id="WsgiRequest.charsets"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets">[docs]</a>    <span class="k">def</span> <span class="nf">charsets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of charsets this client supports as</span>
+<span class="sd">        :class:`~werkzeug.datastructures.CharsetAccept` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_CHARSET&#39;</span><span class="p">),</span>
+                                   <span class="n">CharsetAccept</span><span class="p">)</span>
+</div>
+    <span class="nd">@cached_property</span>
+<div class="viewcode-block" id="WsgiRequest.encodings"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings">[docs]</a>    <span class="k">def</span> <span class="nf">encodings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of encodings this client accepts.  Encodings in a HTTP term</span>
+<span class="sd">        are compression encodings such as gzip.  For charsets have a look at</span>
+<span class="sd">        :attr:`accept_charset`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">))</span>
+</div>
+    <span class="nd">@cached_property</span>
+<div class="viewcode-block" id="WsgiRequest.languages"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.languages">[docs]</a>    <span class="k">def</span> <span class="nf">languages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List of languages this client accepts as</span>
+<span class="sd">        :class:`~werkzeug.datastructures.LanguageAccept` object.</span>
+
+<span class="sd">        .. versionchanged 0.5</span>
+<span class="sd">           In previous versions this was a regular</span>
+<span class="sd">           :class:`~werkzeug.datastructures.Accept` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_LANGUAGE&#39;</span><span class="p">),</span>
+                                   <span class="n">LanguageAccept</span><span class="p">)</span>
+        </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="WsgiRequest.app_handler"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.app_handler">[docs]</a>    <span class="k">def</span> <span class="nf">app_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The WSGI application handling this request.&#39;&#39;&#39;</span>
@@ -472,9 +465,15 @@
 <span class="sd">:class:`pulsar.utils.structures.MultiValueDict` containing data from the</span>
 <span class="sd">request body, and data from uploaded files.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">)</span>
+            <span class="n">content_type</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type_options</span>
+            <span class="n">charset</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">content_type</span> <span class="ow">in</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">MAX_BUFFER_SIZE</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">charset</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">charset</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">MultiValueDict</span><span class="p">(),</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="p">{},</span> <span class="bp">None</span>
         </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="WsgiRequest.body_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">[docs]</a>    <span class="k">def</span> <span class="nf">body_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

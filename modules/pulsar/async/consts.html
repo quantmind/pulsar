@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pulsar.async.consts &mdash; pulsar 0.6.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.6.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar" href="../../pulsar.html" /> 
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the 
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/async/consts.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.async.consts</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Constants used throughout pulsar.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">platform</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span><span class="p">,</span> <span class="n">FrozenDict</span>
+
+<span class="c"># LOW LEVEL CONSTANTS - NO NEED TO CHANGE THOSE ###########################</span>
+<span class="n">ACTOR_STATES</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="n">INITIAL</span><span class="o">=</span><span class="mh">0X0</span><span class="p">,</span>
+                                   <span class="n">INACTIVE</span><span class="o">=</span><span class="mh">0X1</span><span class="p">,</span>
+                                   <span class="n">STARTING</span><span class="o">=</span><span class="mh">0x2</span><span class="p">,</span>
+                                   <span class="n">RUN</span><span class="o">=</span><span class="mh">0x3</span><span class="p">,</span>
+                                   <span class="n">STOPPING</span><span class="o">=</span><span class="mh">0x4</span><span class="p">,</span>
+                                   <span class="n">CLOSE</span><span class="o">=</span><span class="mh">0x5</span><span class="p">,</span>
+                                   <span class="n">TERMINATE</span><span class="o">=</span><span class="mh">0x6</span><span class="p">)</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">.. _actor-states:</span>
+
+<span class="sd">Actor States</span>
+<span class="sd">~~~~~~~~~~~~~~</span>
+
+<span class="sd">Actor state constants are access via::</span>
+
+<span class="sd">    from pulsar import ACTOR_STATES</span>
+<span class="sd">    </span>
+<span class="sd">They are:  </span>
+
+<span class="sd">* ``ACTOR_STATES.INITIAL = 0`` when an actor is just created, before the</span>
+<span class="sd">  :class:`pulsar.Actor.start` method is called.</span>
+<span class="sd">* ``ACTOR_STATES.STARTING = 2`` when :class:`pulsar.Actor.start` method is called.</span>
+<span class="sd">* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up and running.</span>
+<span class="sd">* ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been called</span>
+<span class="sd">  for the first time and the actor is running.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">DESCRIPTION</span> <span class="o">=</span> <span class="p">{</span><span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INACTIVE</span><span class="p">:</span> <span class="s">&#39;inactive&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span><span class="p">:</span> <span class="s">&#39;initial&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STARTING</span><span class="p">:</span> <span class="s">&#39;starting&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span><span class="p">:</span> <span class="s">&#39;running&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STOPPING</span><span class="p">:</span> <span class="s">&#39;stopping&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">CLOSE</span><span class="p">:</span> <span class="s">&#39;closed&#39;</span><span class="p">,</span>
+                            <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">TERMINATE</span><span class="p">:</span><span class="s">&#39;terminated&#39;</span><span class="p">}</span>
+<span class="n">SPECIAL_ACTORS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="s">&#39;arbiter&#39;</span><span class="p">)</span>
+<span class="c">#</span>
+<span class="n">ACTOR_ACTION_TIMEOUT</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="sd">&#39;&#39;&#39;Important constant used by :class:`pulsar.Monitor` to kill actors which</span>
+<span class="sd">don&#39;t respond to the ``stop`` command.&#39;&#39;&#39;</span>
+
+<span class="n">MAX_ASYNC_WHILE</span> <span class="o">=</span> <span class="mi">1</span> <span class="c"># Max interval for async_while</span>
+<span class="n">MIN_NOTIFY</span> <span class="o">=</span> <span class="mi">3</span>     <span class="c"># DON&#39;T NOTIFY BELOW THIS INTERVAL</span>
+<span class="n">MAX_NOTIFY</span> <span class="o">=</span> <span class="mi">30</span>    <span class="c"># NOTIFY AT LEAST AFTER THESE SECONDS</span>
+<span class="n">ACTOR_TIMEOUT_TOLE</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c"># NOTIFY AFTER THIS TIMES THE TIMEOUT</span>
+<span class="n">ACTOR_JOIN_THREAD_POOL_TIMEOUT</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c"># TIMEOUT WHEN JOINING THE THREAD POOL</span>
+<span class="n">MONITOR_TASK_PERIOD</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="sd">&#39;&#39;&#39;Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`</span>
+<span class="sd">periodic task.&#39;&#39;&#39;</span>
+<span class="c">#</span>
+<span class="c"># SPECIAL objects for Deferred</span>
+<span class="n">CONTINUE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+<span class="n">NOT_DONE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+<span class="n">DEFAULT_CONNECT_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">DEFAULT_ACCEPT_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">NUMBER_ACCEPTS</span> <span class="o">=</span> <span class="mi">30</span> <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&quot;posix&quot;</span> <span class="k">else</span> <span class="mi">1</span>
+<span class="n">LOG_THRESHOLD_FOR_CONNLOST_WRITES</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="c">#</span>
+<span class="c"># Globals</span>
+<span class="n">EMPTY_TUPLE</span> <span class="o">=</span> <span class="p">()</span>
+<span class="n">EMPTY_DICT</span> <span class="o">=</span> <span class="n">FrozenDict</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../index.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2011-2013, Luca Sbardella.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+  </body>
+</html>

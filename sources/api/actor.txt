@@ -102,14 +102,6 @@ ActorProxyMonitor
 .. autoclass:: ActorProxyMonitor
    :members:
    :member-order: bysource
-   
-   
-Concurrency
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Concurrency
-   :members:
-   :member-order: bysource
 
 
 ThreadPool
@@ -155,9 +147,42 @@ Mailbox Consumer
 .. autoclass:: pulsar.async.mailbox.MailboxConsumer
    :members:
    :member-order: bysource
+
+
+Concurrency
+==================
+
+The :class:`Concurrency` class implements the behaviour of an :class:`Actor`
+and therefore allows for decoupling between the :class:`Actor` abstraction
+and its implementation (`bridge pattern`).
+
+Base Concurrency
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Concurrency
+   :members:
+   :member-order: bysource
+
+   
+Monitor Concurrency
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.async.concurrency.MonitorConcurrency
+   :members:
+   :member-order: bysource
    
    
-Pulsar constants
+Arbiter Concurrency
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.async.concurrency.ArbiterConcurrency
+   :members:
+   :member-order: bysource
+   
+   
+Constants
 =========================
 
 .. automodule:: pulsar.async.consts
+   :members:
+   :member-order: bysource

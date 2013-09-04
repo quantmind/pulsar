@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -63,19 +63,21 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.test.utils</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">is_failure</span><span class="p">,</span> <span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span>
 
+<span class="kn">from</span> <span class="nn">.case</span> <span class="kn">import</span> <span class="n">get_stream</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;run_on_arbiter&#39;</span><span class="p">,</span>
            <span class="s">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
            <span class="s">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
-           <span class="s">&#39;AsyncAssert&#39;</span><span class="p">]</span>
+           <span class="s">&#39;AsyncAssert&#39;</span><span class="p">,</span>
+           <span class="s">&#39;show_leaks&#39;</span><span class="p">]</span>
 
 
 <span class="k">class</span> <span class="nc">MockArbiter</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Arbiter</span><span class="p">):</span>
@@ -196,9 +198,17 @@
         
 </div>
 <div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A mixin for :class:`unittest.TestCase` classes testing spawning</span>
-<span class="sd">of actors. Make sure this is the first class you derive from, before the</span>
-<span class="sd">unittest.TestCase, so that the tearDown method is overwritten.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A mixin for :class:`unittest.TestCase`.</span>
+<span class="sd">    </span>
+<span class="sd">Useful for classes testing spawning of actors.</span>
+<span class="sd">Make sure this is the first class you derive from, before the</span>
+<span class="sd">unittest.TestCase, so that the tearDown method is overwritten.</span>
+
+<span class="sd">.. attribute:: concurrency</span>
+
+<span class="sd">    The concurrency model used to spawn actors via the :meth:`spawn`</span>
+<span class="sd">    method.</span>
+<span class="sd">&#39;&#39;&#39;</span>
     <span class="n">concurrency</span> <span class="o">=</span> <span class="s">&#39;thread&#39;</span>
     
     <span class="nd">@property</span>
@@ -236,6 +246,27 @@
     <span class="n">tcls</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tcls</span><span class="p">,</span> <span class="s">&#39;async&#39;</span><span class="p">):</span>
         <span class="n">tcls</span><span class="o">.</span><span class="n">async</span> <span class="o">=</span> <span class="n">AsyncAssert</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="show_leaks"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.show_leaks">[docs]</a><span class="k">def</span> <span class="nf">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Function to show memory leaks on a processed-based actor.&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_process</span><span class="p">():</span>
+        <span class="k">return</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">:</span>
+        <span class="n">MAX_SHOW</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">get_stream</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;MEMORY LEAKS REPORT IN </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span><span class="p">)</span>
+        <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;Created </span><span class="si">%s</span><span class="s"> uncollectable objects&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">[:</span><span class="n">MAX_SHOW</span><span class="p">]:</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;Type: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;=================================================&#39;</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;-------------------------------------------------&#39;</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_SHOW</span><span class="p">:</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;And </span><span class="si">%d</span><span class="s"> more&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">-</span> <span class="n">MAX_SHOW</span><span class="p">))</span></div>
 </pre></div>
 
           </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utilities &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>Utilities &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Distributed Task Queue" href="../tasks/index.html" />
     <link rel="prev" title="Middleware" href="middleware.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="middleware.html" title="Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -154,6 +154,160 @@ not given, otherwise an <a class="reference internal" href="#pulsar.apps.wsgi.pl
 
 </div>
 </div>
+<div class="section" id="module-pulsar.apps.wsgi.structures">
+<span id="structures"></span><h2>Structures<a class="headerlink" href="#module-pulsar.apps.wsgi.structures" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.structures.Accept">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">Accept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> object is a tuple subclass for tuples of
+<tt class="docutils literal"><span class="pre">(value,</span> <span class="pre">quality)</span></tt> tuples.  It is automatically sorted by quality.</p>
+<p>All <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> objects work similar to a list but provide extra
+functionality for working with the data.  Containment checks are
+normalised to the rules of that header:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">CharsetAccept</span><span class="p">([(</span><span class="s">&#39;ISO-8859-1&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">best</span>
+<span class="go">&#39;ISO-8859-1&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s">&#39;iso-8859-1&#39;</span> <span class="ow">in</span> <span class="n">a</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s">&#39;UTF8&#39;</span> <span class="ow">in</span> <span class="n">a</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s">&#39;utf7&#39;</span> <span class="ow">in</span> <span class="n">a</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>To get the quality for an item you can use normal item lookup:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s">&#39;utf-8&#39;</span><span class="p">])</span>
+<span class="go">0.7</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="p">([</span><span class="s">&#39;utf7&#39;</span><span class="p">])</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.structures.Accept.best">
+<tt class="descname">best</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.best"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best" title="Permalink to this definition">¶</a></dt>
+<dd><p>The best match as value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.best_match">
+<tt class="descname">best_match</tt><big>(</big><em>matches</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.best_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.best_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the best match from a list of possible matches based
+on the quality of the client.  If two items have the same quality,
+the one is returned that comes first.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>matches</strong> &#8211; a list of matches to check for</li>
+<li><strong>default</strong> &#8211; the value that is returned if none match</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.find">
+<tt class="descname">find</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the position of an entry or return -1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to be looked up.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.index">
+<tt class="descname">index</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the position of an entry or raise <tt class="xref py py-exc docutils literal"><span class="pre">ValueError</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; The key to be looked up.</td>
+</tr>
+</tbody>
+</table>
+<div class="versionchanged">
+<p><span>Changed in version 0.5: </span>This used to raise <tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt>, which was inconsistent
+with the list API.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.itervalues">
+<tt class="descname">itervalues</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.itervalues"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.itervalues" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over all values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.quality">
+<tt class="descname">quality</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.quality"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.quality" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the quality of the key.</p>
+<div class="versionadded">
+<p><span>New in version 0.6: </span>In previous versions you had to use the item-lookup syntax
+(eg: <tt class="docutils literal"><span class="pre">obj[key]</span></tt> instead of <tt class="docutils literal"><span class="pre">obj.quality(key)</span></tt>)</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.to_header">
+<tt class="descname">to_header</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.to_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.to_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the header set into an HTTP header string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.structures.Accept.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of the values, not the qualities.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.wsgi.structures.CharsetAccept">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">CharsetAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#CharsetAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.CharsetAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with normalisation for charsets.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.wsgi.structures.ContentAccept">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">ContentAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with special methods and behaviour for
+content types.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_html">
+<tt class="descname">accept_html</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if this object accepts HTML.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_json">
+<tt class="descname">accept_json</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if this object accepts JSON.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.structures.ContentAccept.accept_xhtml">
+<tt class="descname">accept_xhtml</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#ContentAccept.accept_xhtml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.ContentAccept.accept_xhtml" title="Permalink to this definition">¶</a></dt>
+<dd><p>True if this object accepts XHTML.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pulsar.apps.wsgi.structures.LanguageAccept">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.structures.</tt><tt class="descname">LanguageAccept</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#LanguageAccept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.LanguageAccept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like <a class="reference internal" href="#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> but with normalisation for languages.</p>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -177,6 +331,7 @@ not given, otherwise an <a class="reference internal" href="#pulsar.apps.wsgi.pl
 <li><a class="reference internal" href="#httpdigestauth">HTTPDigestAuth</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-pulsar.apps.wsgi.structures">Structures</a></li>
 </ul>
 </li>
 </ul>

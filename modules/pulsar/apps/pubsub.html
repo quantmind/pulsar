@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.pubsub &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.apps.pubsub &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -63,7 +63,8 @@
             
   <h1>Source code for pulsar.apps.pubsub</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;The :mod:`pulsar.apps.pubsub` implements a middleware</span>
-<span class="sd">handler for the Publish/Subscribe pattern.</span>
+<span class="sd">handler for the Publish/Subscribe pattern. The middleware can be used to</span>
+<span class="sd">synchronise pulsar actors across processes and machines.</span>
 
 <span class="sd">.. epigraph::</span>
 
@@ -86,6 +87,9 @@
 <span class="sd">    </span>
 <span class="sd">The ``backend`` parameter is needed in order to select the backend</span>
 <span class="sd">to use. If not supplied, the default ``local://`` backend is used.</span>
+
+<span class="sd">A backend handler is a picklable instance and therefore it can be passed to</span>
+<span class="sd">different process domains.</span>
 
 
 <span class="sd">PubSub handler</span>
@@ -139,9 +143,6 @@
 
 <span class="sd">    Optional callable which encode the messages before they are published.</span>
 <span class="sd">    </span>
-<span class="sd">.. attribute:: clients</span>
-
-<span class="sd">    Set of all clients for this :class:`PubSub` handler.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="n">be</span> <span class="o">=</span> <span class="n">PubSubBackend</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
@@ -150,6 +151,7 @@
     
     <span class="nd">@property</span>
 <div class="viewcode-block" id="PubSub.clients"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.clients">[docs]</a>    <span class="k">def</span> <span class="nf">clients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set of all clients for this :class:`PubSub` handler.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">clients</span>
     </div>
     <span class="nd">@property</span>
@@ -180,13 +182,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
     </div>
 <div class="viewcode-block" id="PubSub.subscribe"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">channels</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Subscribe to the server which publish messages. Must be</span>
-<span class="sd">implemented by subclasses.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Invoke the :meth:`PubSubBackend.subscribe` method.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="o">*</span><span class="n">channels</span><span class="p">)</span>
     </div>
 <div class="viewcode-block" id="PubSub.unsubscribe"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.unsubscribe">[docs]</a>    <span class="k">def</span> <span class="nf">unsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">channels</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Un-subscribe to the server which publish messages. Must be</span>
-<span class="sd">implemented by subclasses.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Invoke the :meth:`PubSubBackend.unsubscribe` method.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">unsubscribe</span><span class="p">(</span><span class="o">*</span><span class="n">channels</span><span class="p">)</span>
     </div>
 <div class="viewcode-block" id="PubSub.close"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSub.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -206,10 +206,6 @@
         <span class="sd">&#39;&#39;&#39;The set of clients for this :class:`PubSub` handler.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
     </div>
-    <span class="nd">@local_property</span>
-    <span class="k">def</span> <span class="nf">lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Lock</span><span class="p">()</span>
-    
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">path_from_scheme</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">scheme</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;pulsar.apps.pubsub.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">scheme</span>
@@ -226,18 +222,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="PubSubBackend.publish"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSubBackend.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Publish a ``message`` into ``channel``. Must be implemented</span>
-<span class="sd">by subclasses.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Publish a ``message`` into ``channel``.</span>
+<span class="sd">        </span>
+<span class="sd">Must be implemented by subclasses.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
     </div>
 <div class="viewcode-block" id="PubSubBackend.subscribe"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSubBackend.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">channels</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Subscribe to the server which publish messages. Must be</span>
-<span class="sd">implemented by subclasses.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Subscribe to the server which publish messages.</span>
+<span class="sd">        </span>
+<span class="sd">A series of one or more ``channels`` to subscribe to must be passed to this</span>
+<span class="sd">method which must be implemented by subclasses.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
     </div>
 <div class="viewcode-block" id="PubSubBackend.unsubscribe"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSubBackend.unsubscribe">[docs]</a>    <span class="k">def</span> <span class="nf">unsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">channels</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Un-subscribe to the server which publish messages. Must be</span>
-<span class="sd">implemented by subclasses.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Un-subscribe from the server which publish messages.</span>
+<span class="sd">        </span>
+<span class="sd">An optional series of ``channels`` can be passed. If no channels are passed,</span>
+<span class="sd">it unsubscribed from all channels.</span>
+
+<span class="sd">Must be implemented by subclasses.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
         </div>
 <div class="viewcode-block" id="PubSubBackend.broadcast"><a class="viewcode-back" href="../../../apps/pubsub.html#pulsar.apps.pubsub.PubSubBackend.broadcast">[docs]</a>    <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
@@ -249,7 +252,7 @@
         <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">client</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Exception while processing pub/sub client. &#39;</span>
                                  <span class="s">&#39;Removing it.&#39;</span><span class="p">)</span>
                 <span class="n">remove</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>

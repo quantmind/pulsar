@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.internet &mdash; pulsar 0.6.0-beta.1 documentation</title>
+    <title>pulsar.utils.internet &mdash; pulsar 0.6.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.6.0-beta.1',
+        VERSION:     '0.6.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.6.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.6.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.6.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -64,6 +64,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">poll</span><span class="p">,</span> <span class="n">POLLIN</span>
@@ -74,9 +75,23 @@
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma    nocover</span>
         <span class="n">select</span> <span class="o">=</span> <span class="bp">False</span>
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">_SSLContext</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">HAS_SNI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">CERT_NONE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="kn">import</span> <span class="nn">ssl</span>
+    <span class="kn">from</span> <span class="nn">ssl</span> <span class="kn">import</span> <span class="n">wrap_socket</span><span class="p">,</span> <span class="n">PROTOCOL_SSLv23</span>
+    <span class="kn">from</span> <span class="nn">ssl</span> <span class="kn">import</span> <span class="n">SSLContext</span> <span class="k">as</span> <span class="n">_SSLContext</span>
+    <span class="kn">from</span> <span class="nn">ssl</span> <span class="kn">import</span> <span class="n">HAS_SNI</span>  <span class="c"># Has SNI?</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma: no cover</span>
+    <span class="k">pass</span>
+
+
 <span class="kn">from</span> <span class="nn">.system</span> <span class="kn">import</span> <span class="n">platform</span><span class="p">,</span> <span class="n">socketpair</span>
 <span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">parse_qsl</span><span class="p">,</span> <span class="n">urlencode</span>
-<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">ispy3k</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">SSLError</span>
 
 <span class="n">WRITE_BUFFER_MAX_SIZE</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="mi">1024</span>  <span class="c"># 128 kb</span>
 
@@ -260,6 +275,80 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Could not format address </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">address</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+    
+
+<span class="k">class</span> <span class="nc">WrapSocket</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">sock</span>
+        
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;sock&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">s</span><span class="o">.</span><span class="n">family</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">proto</span><span class="p">)}</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;sock&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">fromfd</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
+        
+    
+<span class="k">class</span> <span class="nc">SSLContext</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">certfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cert_reqs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">ca_certs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">server_hostname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">protocol</span><span class="o">=</span><span class="n">PROTOCOL_SSLv23</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keyfile</span> <span class="o">=</span> <span class="n">keyfile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">certfile</span> <span class="o">=</span> <span class="n">certfile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cert_reqs</span> <span class="o">=</span> <span class="n">cert_reqs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ca_certs</span> <span class="o">=</span> <span class="n">ca_certs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_hostname</span> <span class="o">=</span> <span class="n">server_hostname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol</span>
+    
+    <span class="k">def</span> <span class="nf">wrap_socket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">do_handshake_on_connect</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">suppress_ragged_eofs</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">server_hostname</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">server_hostname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_hostname</span> <span class="ow">or</span> <span class="n">server_hostname</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ssl</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">if</span> <span class="n">_SSLContext</span><span class="p">:</span>
+            <span class="n">wrap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap3k</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">server_hostname</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wrap</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">wrap_socket</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">keyfile</span><span class="p">,</span>
+                           <span class="n">certfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">certfile</span><span class="p">,</span> <span class="n">ca_certs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ca_certs</span><span class="p">,</span>
+                           <span class="n">cert_reqs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cert_reqs</span><span class="p">,</span> <span class="n">ssl_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wrap</span><span class="p">(</span><span class="n">server_side</span><span class="o">=</span><span class="n">server_side</span><span class="p">,</span>
+                    <span class="n">do_handshake_on_connect</span><span class="o">=</span><span class="n">do_handshake_on_connect</span><span class="p">,</span>
+                    <span class="n">suppress_ragged_eofs</span><span class="o">=</span><span class="n">suppress_ragged_eofs</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_wrap3k</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">server_hostname</span><span class="p">):</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">_SSLContext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cert_reqs</span><span class="p">:</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">verify_mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cert_reqs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ca_certs</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">load_verify_locations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ca_certs</span><span class="p">)</span>
+            <span class="c"># Py32 raises IOError</span>
+            <span class="c"># Py33 raises FileNotFoundError</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c"># Re-raise as SSLError</span>
+                <span class="k">raise</span> <span class="n">SSLError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">certfile</span><span class="p">:</span>
+            <span class="c"># FIXME: This block needs a test.</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">load_cert_chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">certfile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keyfile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">HAS_SNI</span><span class="p">:</span>  <span class="c"># Platform-specific: OpenSSL with enabled SNI</span>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span>
+                           <span class="n">server_hostname</span><span class="o">=</span><span class="n">server_hostname</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
+        
+        
+<span class="k">def</span> <span class="nf">ssl_context</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ssl</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+    <span class="k">if</span> <span class="n">server_side</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">context</span><span class="p">,</span> <span class="n">SSLContext</span><span class="p">),</span> <span class="s">&#39;Must pass an SSLContext&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># Client-side may pass ssl=True to use a default context.</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">context</span> <span class="ow">or</span> <span class="n">SSLContext</span><span class="p">(</span><span class="n">PROTOCOL_SSLv23</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">context</span>
 </pre></div>
 
           </div>
