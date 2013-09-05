@@ -10,11 +10,16 @@ from .pep import ispy3k, native_str, to_string, iteritems, is_string, string_typ
 NOTHING = ('', b'', None)
 '''Tuple of elements considered as null.'''
 INLINE_TAGS = set(('input', 'meta', 'hr'))
-DEFAULT_HTML_ATTRIBUTES = ('id', 'title')
+# The global attributes below can be used on any HTML element
+# class and style are misssing here since they are treated separately
+GLOBAL_HTML_ATTRIBUTES = ('accesskey', 'contenteditable', 'contextmenu', 'dir',
+                          'draggable', 'dropzone', 'hidden', 'id', 'lang',
+                          'spellcheck', 'tabindex', 'title', 'traslate')
 HTML_ATTRIBUTES = {}
 HTML_CHILDREN_TAG = {}
 
-e = lambda *t: DEFAULT_HTML_ATTRIBUTES + t
+# Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).
+e = lambda *t: GLOBAL_HTML_ATTRIBUTES + t
 input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled', 'form',
                           'formnovalidate', 'list', 'max', 'maxlength', 'min',
                           'multiple', 'name', 'pattern', 'placeholder',
@@ -37,6 +42,7 @@ HTML_ATTRIBUTES['input[type="submit"]'] = input_attr('formaction',
 HTML_ATTRIBUTES['meta'] = e('name', 'charset', 'content')
 HTML_ATTRIBUTES['option'] = e('disabled', 'label', 'selected', 'value')
 HTML_ATTRIBUTES['script'] = e('async', 'charset', 'defer', 'src', 'type')
+HTML_ATTRIBUTES['style'] = e('media', 'scoped', 'type')
 HTML_ATTRIBUTES['select'] = e('autofocus', 'disabled', 'form', 'multiple',
                               'name', 'required', 'size')
 HTML_ATTRIBUTES['textarea'] = e('autofocus', 'cols', 'disabled', 'maxlength',
@@ -71,12 +77,12 @@ csslink = namedtuple('cssentry', 'link condition')
 def tag_attributes(tag, type=None):
     '''Return a tuple of valid attributes for the HTML ``tag`` and optional
 ``type``. If the ``tag`` is not found in the global ``HTML_ATTRIBUTES``
-dictionary, the ``DEFAULT_HTML_ATTRIBUTES`` set is returned.'''
+dictionary, the ``GLOBAL_HTML_ATTRIBUTES`` set is returned.'''
     if type:
         ntag = '%s[type="%s"]' % (tag, type)
         if ntag in HTML_ATTRIBUTES:
             return HTML_ATTRIBUTES[ntag]
-    return HTML_ATTRIBUTES.get(tag, DEFAULT_HTML_ATTRIBUTES)
+    return HTML_ATTRIBUTES.get(tag, GLOBAL_HTML_ATTRIBUTES)
     
 def child_tag(tag):
     '''The default children ``tag`` for a given ``tag``.'''

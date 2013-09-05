@@ -6,7 +6,6 @@ import threading
 import pulsar
 from pulsar import safe_async, get_actor, send, multi_async
 
-from .case import get_stream
 
 __all__ = ['run_on_arbiter',
            'NOT_TEST_METHODS',
@@ -190,7 +189,7 @@ def show_leaks(actor):
     gc.collect()
     if gc.garbage:
         MAX_SHOW = 100
-        stream = get_stream(actor.cfg)
+        stream = actor.stream
         stream.writeln('MEMORY LEAKS REPORT IN %s' % actor)
         stream.writeln('Created %s uncollectable objects' % len(gc.garbage))
         for obj in gc.garbage[:MAX_SHOW]:

@@ -430,7 +430,7 @@ configuration and plugins.'''
             raise ImportError('python %s requires mock library for pulsar '
                               'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
-        stream = get_stream(self.cfg)
+        stream = pulsar.get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
         abort_message = runner.configure(self.cfg)
         if abort_message:
@@ -452,23 +452,24 @@ configuration and plugins.'''
     
     def on_config(self):
         loader = self.loader
+        stream = pulsar.get_actor().stream
         if self.cfg.list_labels:
             tags = self.cfg.labels
             if tags:
                 s = '' if len(tags) == 1 else 's'
-                print('\nTest labels for label{0} {1}\n'\
-                      .format(s,', '.join(tags)))
+                stream.writeln('\nTest labels for%s %s:' % (s, ', '.join(tags)))
             else:
-                print('\nAll test labels\n')
+                stream.writeln('\nAll test labels:')
+            stream.writeln('')
             def _tags():
                 for tag, mod in loader.testmodules(tags):
                     doc = mod.__doc__
                     if doc:
-                        tag = '{0} - {1}'.format(tag,doc)
+                        tag = '{0} - {1}'.format(tag, doc)
                     yield tag
             for tag in sorted(_tags()):
-                print(tag)
-            print('\n')
+                stream.writeln(tag)
+            stream.writeln('')
             return False
     
     def monitor_start(self, monitor):
@@ -500,7 +501,7 @@ configuration and plugins.'''
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
-            print(str(e))
+            monitor.stream(str(e))
             monitor.arbiter.stop()
         except Exception:
             self.logger.critical('Error occurred before starting tests',

@@ -3,7 +3,7 @@ from time import time
 
 from pulsar import HaltServer, CommandError, system
 from pulsar.utils.pep import pickle
-from pulsar.utils.log import LogginMixin
+from pulsar.utils.log import LogginMixin, WritelnDecorator
 
 from .eventloop import setid
 from .defer import async, EventHandler, Failure
@@ -14,11 +14,16 @@ from .access import get_actor
 from .consts import *
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar']
+__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'get_stream']
 
 
 def is_actor(obj):
     return isinstance(obj, Actor)
+
+def get_stream(cfg):
+    '''Obtain the python stream handler given a config dictionary.'''
+    stream = sys.stderr
+    return WritelnDecorator(stream)
 
 def send(target, action, *args, **params):
     '''Send a :ref:`message <api-remote_commands>` to ``target`` to perform
@@ -149,6 +154,10 @@ an :class:`ActorProxy`.
 
     The :class:`TimedCall` for the next
     :ref:`actor periodic task <actor-periodic-task>`.
+    
+.. attribute:: stream
+
+    A ``stream`` handler to write information messages without using the logger.
  
 **PUBLIC METHODS**
 '''
@@ -171,6 +180,7 @@ an :class:`ActorProxy`.
         self.params = AttributeDictionary(**impl.params)
         self.servers = {}
         self.extra = {}
+        self.stream = get_stream(self.cfg) 
         del impl.params
         setid(self)
         try:

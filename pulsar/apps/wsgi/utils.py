@@ -42,6 +42,13 @@ HOP_HEADERS = frozenset((
 
 LOGGER = logging.getLogger('pulsar.wsgi')
 
+error_css = '''
+.pulsar-error {
+    width: 500px;
+    margin: 50px auto;
+}
+'''
+
 _RequestClass = None
 
 def wsgi_request(environ, app_handler=None, urlargs=None):
@@ -236,7 +243,8 @@ def handle_wsgi_error(environ, failure):
     response.content = content
     return response
            
-def render_error(request, exc_info): 
+def render_error(request, exc_info):
+    '''Default renderer for errors.''' 
     debug = get_actor().cfg.debug
     response = request.response
     if response.content_type == 'text/html':
@@ -254,8 +262,10 @@ def render_error(request, exc_info):
                          "version": pulsar.SERVER_SOFTWARE})
     #
     if response.content_type == 'text/html':
-        request.html_document.body.append(msg)
-        return request.html_document.render(request)
+        doc = request.html_document
+        doc.head.embedded_css.append(error_css)
+        doc.body.append(Html('div', msg, cn='pulsar-error'))
+        return doc.render(request)
     else:
         return wsgi_error_msg(response, msg)
 

@@ -147,7 +147,7 @@ class TestHtmlDocument(unittest.TestCase):
     
     def testSimple(self):
         html = wsgi.HtmlDocument()
-        self.assertEqual(len(html.head.children), 3)
+        self.assertEqual(len(html.head.children), 4)
         self.assertEqual(len(html.body.children), 0)
         
     def testHead(self):

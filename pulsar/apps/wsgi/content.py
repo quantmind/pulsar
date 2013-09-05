@@ -77,12 +77,14 @@ Asynchronous Html
 Html Document
 ==================
 
-Document
-~~~~~~~~~~
+Html Document
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HtmlDocument
    :members:
    :member-order: bysource
+
+.. _wsgi-html-head:
    
 Head
 ~~~~~~~~~~
@@ -812,18 +814,28 @@ class Scripts(Media):
                 yield bit
             yield '\n'
         
+
+class EmbeddedCss(Html):
+    
+    def append(self, child, media=None, type=None):
+        type = type or 'text/css'
+        child = Html('style', child, media=media, type=type or 'text/css')
+        super(EmbeddedCss, self).append(child)
+        
         
 class Head(Html):
-    ''':class:`Html` head tag. It contains :class:`Html` handlers for the
-various part of an HTML Head element.
+    ''':class:`HtmlDocument` ``head`` tag element.
+    
+Contains :class:`Html` attributes for the various part of an HTML Head element.
+The head element is accessed via the :attr:`HtmlDocument.head` attribute.
     
 .. attribute:: title
 
-    Text in the title tag
+    Text in the ``title`` tag.
     
 .. attribute:: meta
 
-    A container of :class:`Html` meta tags. To add new meta tags use the
+    A container of :class:`Html` ``meta`` tags. To add new meta tags use the
     :meth:`add_meta` method rather than accessing the :attr:`meta`
     attribute directly.
     
@@ -842,7 +854,8 @@ various part of an HTML Head element.
     
     as well as absolute paths::
     
-        html.head.scripts.append('https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+        html.head.scripts.append(
+            'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
 
 '''
     def __init__(self, media_path=None, title=None, meta=None, charset=None):
@@ -850,6 +863,7 @@ various part of an HTML Head element.
         self.title = title
         self.append(Html(None, meta))
         self.append(Css(media_path))
+        self.append(EmbeddedCss(None))
         self.append(Scripts(media_path))
         self.add_meta(charset=charset or 'utf-8')
     
@@ -862,11 +876,17 @@ various part of an HTML Head element.
     def __set_links(self, links):
         self._children[1] = links
     links = property(__get_links, __set_links)
-    
-    def __get_scripts(self):
+
+    def __get_css(self):
         return self._children[2]
+    def __set_css(self, css):
+        self._children[2] = css
+    embedded_css = property(__get_css, __set_css, doc='Embedded css rules.')
+        
+    def __get_scripts(self):
+        return self._children[3]
     def __set_scripts(self, scripts):
-        self._children[2] = scripts
+        self._children[3] = scripts
     scripts = property(__get_scripts, __set_scripts)
     
     def do_stream(self, request):

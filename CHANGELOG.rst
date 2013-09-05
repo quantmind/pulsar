@@ -1,3 +1,11 @@
+Ver. 0.6.1 - Development
+===========================
+* Ability to add embedded css rules into the :ref:`head <wsgi-html-head>`
+  element of an :ref:`Html document <wsgi-html-document>`.
+* Added :class:`Actor.stream` attribute to write messages without using the
+  logger.
+* **558 regression tests**, **88% coverage**.
+
 Ver. 0.6.0 - 2013-Sep-05
 ===========================
 * Several new features, critical bug fixes and increased tests coverage.
@@ -47,7 +55,6 @@ Ver. 0.6.0 - 2013-Sep-05
       is now possible to overwrite the relative ``position`` of children routes
       via the :ref:`route decorator <wsgi-route-decorator>`.
       
-    
 * Examples:
     * Proxy server example uses the new :class:`pulsar.Queue`.
     

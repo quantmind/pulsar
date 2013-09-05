@@ -167,7 +167,7 @@ with the acknowledgement from the monitor.'''
                                 log=actor.logger)
                 elif actor.exit_code:
                     failure.mute()
-                    print(str(failure.error))
+                    actor.stream.writeln(str(failure.error))
                 else:
                     failure.log(msg='Stopping %s' % actor,
                                 log=actor.logger,
