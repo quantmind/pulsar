@@ -69,7 +69,7 @@ class TestConfig(unittest.TestCase):
         cfg = Config()
         self.assertEqual(cfg.uid, system.get_uid())
         self.assertEqual(cfg.gid, system.get_gid())
-        self.assertEqual(cfg.proc_name, 'Pulsar')
+        self.assertEqual(cfg.proc_name, 'pulsar')
         cfg.set('process_name', 'bla')
         self.assertEqual(cfg.proc_name, 'bla')
         
