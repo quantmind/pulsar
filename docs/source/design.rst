@@ -63,7 +63,7 @@ process based as well as thread based and can perform one or many activities.
 The Theory
 ~~~~~~~~~~~~~~~~~
 The actor model is the cornerstone of the Erlang programming language.
-Python has very few implementation and all of them seems quite limited in scope.
+Python has very few implementation and all of them seem quite limited in scope.
 
 .. epigraph::
 
@@ -100,7 +100,7 @@ When using pulsar actor layer, you need to use pulsar in **server state**,
 that is to say, there will be a centralised :class:`Arbiter` controlling the main
 :class:`EventLoop` in the **main thread** of the **master process**.
 The arbiter is a specialised :class:`Actor`
-which control the life all :class:`Actor` and :class:`Monitor`.
+which control the life of all :class:`Actor` and :class:`Monitor`.
 
 .. _design-arbiter:
 

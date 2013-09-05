@@ -501,7 +501,7 @@ configuration and plugins.'''
             else:
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:
-            monitor.stream(str(e))
+            monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:
             self.logger.critical('Error occurred before starting tests',
