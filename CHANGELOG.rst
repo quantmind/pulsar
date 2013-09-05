@@ -1,5 +1,6 @@
 Ver. 0.6.1 - Development
 ===========================
+* Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.
 * Ability to add embedded css rules into the :ref:`head <wsgi-html-head>`
   element of an :ref:`Html document <wsgi-html-document>`.
 * Added :class:`Actor.stream` attribute to write messages without using the

@@ -129,6 +129,7 @@ from .route import Route
 from .utils import wsgi_request, handle_wsgi_error
 from .content import Html
 from .wrappers import WsgiResponse
+from .structures import ContentAccept
 
 __all__ = ['WsgiHandler', 'LazyWsgi', 'Router',
            'MediaRouter', 'FileRouter', 'MediaMixin',
@@ -442,7 +443,15 @@ the best match.'''
         response_content_types = self.response_content_types
         if response_content_types:
             return request.content_types.best_match(response_content_types)
-       
+    
+    def accept_content_type(self, *content_types):
+        '''Check if content_types are accepted by this :class:`Router`.
+        
+        Return the best mach or ``None``.'''
+        response_content_types = self.response_content_types
+        if response_content_types:
+            return ContentAccept(*values).best_match(response_content_types)
+    
     def __repr__(self):
         return self.route.__repr__()
         
