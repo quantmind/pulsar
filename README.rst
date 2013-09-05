@@ -130,7 +130,7 @@ uses them to add additional functionalities.
   the running application.  
 * psutil_: if installed, a ``system`` key is available in the dictionary returned by
   Actor info method.
-* Twisted_: required by the :mod:`pulsar.apps.tx` application when using pulsar
+* Twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
   with twisted protocols.
 
 Running Tests

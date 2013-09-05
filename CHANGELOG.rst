@@ -1,5 +1,5 @@
-Ver. 0.6.0 - Development
-=============================
+Ver. 0.6.0 - 2013-Sep-05
+===========================
 * Several new features, critical bug fixes and increased tests coverage.
 * Asynchronous framework:
     * Removed ``is_async`` function. Not used.
@@ -54,7 +54,7 @@ Ver. 0.6.0 - Development
 * Miscellaneous:
     * Added :mod:`pulsar.utils.exceptions` documentation.
 
-* **559 regression tests**, **88% coverage**.
+* **558 regression tests**, **88% coverage**.
 
 .. _4bd8a54: https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc
 

@@ -9,6 +9,9 @@ from .manage import server
 class TestRpcOnThread(unittest.TestCase):
     app = None
     concurrency = 'thread'
+    # used for both keep-alive and timeout in JsonProxy
+    # long enough to allow to wait for tasks
+    rpc_timeout = 500
     
     @classmethod
     def setUpClass(cls):
@@ -16,7 +19,7 @@ class TestRpcOnThread(unittest.TestCase):
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.p = rpc.JsonProxy(cls.uri)
+        cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
         cls.sync = rpc.JsonProxy(cls.uri, force_sync=True)
         
     @classmethod
