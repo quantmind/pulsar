@@ -339,6 +339,7 @@ request, the ``get(self, request)`` method must be implemented.
         self.routes = []
         for router in routes:
             self.add_child(router)
+        # copy parameters
         self.parameters = AttributeDictionary(self.parameters)
         for name, rule_method in self.rule_methods.items():
             rule, method, params, _, _ = rule_method
@@ -350,10 +351,10 @@ request, the ``get(self, request)`` method must be implemented.
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
-            if hasattr(value, '__call__'):
-                setattr(self, name, value)
-            else:
+            if name in self.parameters:
                 self.parameters[name] = value
+            else:
+                setattr(self, name, value)
     
     @property
     def name(self):
@@ -444,13 +445,14 @@ the best match.'''
         if response_content_types:
             return request.content_types.best_match(response_content_types)
     
-    def accept_content_type(self, *content_types):
-        '''Check if content_types are accepted by this :class:`Router`.
+    def accept_content_type(self, content_type):
+        '''Check if ``content_type`` is accepted by this :class:`Router`.
         
-        Return the best mach or ``None``.'''
+        Return the best mach or ``None`` if not accepted.'''
         response_content_types = self.response_content_types
         if response_content_types:
-            return ContentAccept(*values).best_match(response_content_types)
+            return ContentAccept([(content_type, 1)]).best_match(
+                                                response_content_types)
     
     def __repr__(self):
         return self.route.__repr__()

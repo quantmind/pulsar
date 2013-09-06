@@ -1,6 +1,6 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import pulsar
-from pulsar.apps.wsgi import Router, route
+from pulsar.apps.wsgi import Router, RouterParam, route
 from pulsar.apps.test import unittest
 
 from examples.httpbin.manage import HttpBin
@@ -39,7 +39,9 @@ class TestRouter(unittest.TestCase):
     
     def router(self, path='/'):
         class testRouter(Router):
-            
+            response_content_types = RouterParam(('text/html',
+                                                  'text/plain',
+                                                  'application/json'))
             def get(self, request):
                 return 'Hello World!'
             
@@ -107,3 +109,15 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(all3.index('new'), 1)
         self.assertTrue(all3.index('_post') < all.index('_post'))
         
+    def test_accept(self):
+        router = self.router()
+        self.assertEqual(router.accept_content_type('text/html'), 'text/html')
+        self.assertEqual(router.accept_content_type('text/*'), 'text/html')
+        self.assertEqual(router.accept_content_type('text/plain'), 'text/plain')
+        self.assertEqual(router.accept_content_type('*/*'), 'text/html')
+        self.assertEqual(router.accept_content_type('application/*'),
+                         'application/json')
+        self.assertEqual(router.accept_content_type('application/json'),
+                         'application/json')
+        self.assertEqual(router.accept_content_type('application/javascript'),
+                         None)
