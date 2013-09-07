@@ -66,7 +66,19 @@ class TestHttpClientBase:
         
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-   
+    
+    def test_request_object(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        request = response.current_request
+        self.assertTrue(request.headers)
+        self.assertTrue(request.has_header('Connection'))
+        self.assertTrue(request.has_header('Accept-Encoding'))
+        self.assertTrue(request.has_header('User-Agent'))
+        self.assertFalse(request.has_header('foo'))
+        self.assertEqual(request.headers.kind, 'client')
+        self.assertEqual(request.unredirected_headers.kind, 'client')
+        
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -299,45 +311,35 @@ was passed by the client.'''
                                    wait_continue=True).on_finished
         self.assertEqual(response.status_code, 200)
         
-        
-class a:
-#class CookieAndAuthentication(TestHttpClientBase, unittest.TestCase):
-        
-    def test_Cookie(self):
+    def test_cookie(self):
         http = self.client()
         # First set the cookies
-        r = yield http.get(self.httpbin('cookies', 'set', 'bla', 'foo')).on_finished
+        r = yield http.get(self.httpbin(
+            'cookies', 'set', 'bla', 'foo')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
+        self.assertTrue(http.cookies)
         # Now check if I get them
-        r = make_async(http.get(self.httpbin('cookies')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.current_request.unredirected_headers)
         result = r.content_json()
         self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'],'foo')
         # Try without saving cookies
         http = self.client(store_cookies=False)
-        r = make_async(http.get(self.httpbin('cookies', 'set', 'bla', 'foo')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin(
+            'cookies', 'set', 'bla', 'foo')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        r = make_async(http.get(self.httpbin('cookies')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertFalse(result['cookies'])
-
-    def test_parse_cookie(self):
-        self.assertEqual(httpurl.parse_cookie('invalid key=true'),
-                         {'key':'true'})
-        self.assertEqual(httpurl.parse_cookie('invalid;key=true'),
-                         {'key':'true'})
+        
+class a:
         
     def test_basic_authentication(self):
         http = self.client()

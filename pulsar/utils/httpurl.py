@@ -542,6 +542,7 @@ def parse_dict_header(value):
 
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
+    
 It has a dictionary like interface with few extra functions to facilitate
 the insertion of multiple header values. Header fields are **case insensitive**,
 therefore doing::
@@ -613,6 +614,9 @@ and values."""
         for key, value in mapping_iterator(iterable):
             self[key] = value
 
+    def copy(self):
+        return self.__class__(self, kind=self.kind, strict=self.strict)
+        
     def __contains__(self, key):
         return header_field(key) in self._headers
 
@@ -1305,12 +1309,15 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
 
     :param cookie_dict: Dict of key/values to insert into CookieJar.
     """
-    if cookiejar is None:
-        cookiejar = CookieJar()
-    if cookie_dict is not None:
-        for name in cookie_dict:
-            cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
-    return cookiejar
+    if not isinstance(cookie_dict, CookieJar):
+        if cookiejar is None:
+            cookiejar = CookieJar()
+        if cookie_dict is not None:
+            for name in cookie_dict:
+                cookiejar.set_cookie(create_cookie(name, cookie_dict[name]))
+        return cookiejar
+    else:
+        return cookie_dict
 
 def parse_cookie(cookie):
     '''Parse an `HTTP cookie`_ string and return a dictionary of

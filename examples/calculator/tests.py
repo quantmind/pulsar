@@ -65,8 +65,8 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('calc.divide' in d)
         
     def test_time_it(self):
-        '''Ping server 20 times'''
-        response = self.p.timeit('ping', 20)
+        '''Ping server 5 times'''
+        response = self.p.timeit('ping', 5)
         yield response
         self.assertTrue(response.locked_time > 0)
         self.assertTrue(response.total_time >= response.locked_time)

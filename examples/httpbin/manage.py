@@ -112,7 +112,7 @@ class HttpBin(wsgi.Router):
     
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
-        cookies = {'cookies': request.get('HTTP_COOKIE')}
+        cookies = {'cookies': request.get('http.cookie')}
         return Json(cookies).http_response(request)
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',

@@ -1,10 +1,73 @@
-'''An :class:`HttpClient` for asynchronous HTTP requests. It can also be used
-in synchronous mode by passing ``force_sync`` during initialization::
+'''Pulsar has a :class:`HttpClient` for asynchronous HTTP requests::
 
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
     >>> response = http.get('http://www.bbc.co.uk')
     
+    
+Features
+===========
+* No dependencies
+* Similar API to requests_
+* Cookie support
+* Web socket support
+* Thread safe
+* Can be used in :ref:`synchronous mode <tutorials-synchronous>`
+
+Making requests
+=================
+To make a request is simple::
+    
+    from pulsar.apps import http
+    client = http.HttpClient()
+    resp = client.get('https://github.com/timeline.json')
+    
+``resp`` is a :class:`HttpResponse` object which contains all the information
+about the request and, once finished, the result.
+
+The ``resp`` is finished once the ``on_finished`` attribute
+(a :class:`pulsar.Deferred`) is fired. In a :ref:`coroutine <coroutine>` one
+can obtained a full response by yielding ``on_finished``::
+
+    resp = yield client.get('https://github.com/timeline.json').on_finished
+
+Cookies
+~~~~~~~~~~~~
+
+Cookies are handled by the client by storing cookies received with responses.
+To disable cookie one can pass ``store_cookies=False`` during
+:class:`HttpClient` initialisation.
+
+API
+==========
+
+The main class is the :class:`HttpClient` which is a subclass of
+:class:`pulsar.Client`.
+
+HTTP Client
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpClient
+   :members:
+   :member-order: bysource
+   
+   
+HTTP Request
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpRequest
+   :members:
+   :member-order: bysource
+   
+HTTP Response
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: HttpResponse
+   :members:
+   :member-order: bysource
+
+
+.. _requests: http://docs.python-requests.org/
 .. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme
 '''
 import os
@@ -12,28 +75,28 @@ import platform
 import json
 from copy import copy
 from collections import namedtuple
-from base64 import b64encode, b64decode
+from base64 import b64encode
 
 import pulsar
 from pulsar import is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.websocket import FrameParser, SUPPORTED_VERSIONS
+from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.apps.wsgi import HTTPBasicAuth, HTTPDigestAuth
-from pulsar.utils.httpurl import urlparse, urljoin, DEFAULT_CHARSET,\
-                                    REDIRECT_CODES, http_parser, httpclient,\
-                                    ENCODE_URL_METHODS, parse_qsl,\
-                                    encode_multipart_formdata, urlencode,\
-                                    Headers, urllibr, get_environ_proxies,\
-                                    choose_boundary, urlunparse,\
-                                    host_and_port, responses, is_succesful,\
-                                    HTTPError, URLError, request_host,\
-                                    requote_uri, get_hostport
+from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
+                                  http_parser, ENCODE_URL_METHODS,
+                                  encode_multipart_formdata, urlencode,
+                                  Headers, urllibr, get_environ_proxies,
+                                  choose_boundary, urlunparse, request_host,
+                                  responses, is_succesful, HTTPError, URLError,
+                                  requote_uri, get_hostport, CookieJar,
+                                  cookiejar_from_dict)
 
-from .plugins import *
+from .plugins import WebSocketResponse
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
+
 
 class TooManyRedirects(Exception):
     pass
@@ -42,29 +105,34 @@ class TooManyRedirects(Exception):
 class HttpRequest(pulsar.Request):
     '''An :class:`HttpClient` request for an HTTP resource.
     
-.. attribute:: method
+    .. attribute:: method
 
-    The request method
+        The request method
+        
+    .. attribute:: version
+
+        HTTP version for this request, usually ``HTTP/1.1``
+
+    .. attribute:: history
     
-.. attribute:: version
+        List of past :class:`HttpResponse` (collected during redirects).
+        
+    .. attribute:: wait_continue
 
-    HTTP version for this request, usually ``HTTP/1.1``
-
-.. attribute:: wait_continue
-
-    if ``True``, the :class:`HttpRequest` includes the
-    ``Expect: 100-Continue`` header.
-    
-'''
+        if ``True``, the :class:`HttpRequest` includes the
+        ``Expect: 100-Continue`` header.
+        
+    '''
     full_url = None
     _proxy = None
-    def __init__(self, client, url, method, data=None, files=None,
-                  charset=None, encode_multipart=True, multipart_boundary=None,
-                  timeout=None, hooks=None, history=None, source_address=None,
-                  allow_redirects=False, max_redirects=10, decompress=True,
-                  version=None, wait_continue=False, websocket_handler=None,
-                  **ignored):
+    def __init__(self, client, url, method, headers, data=None, files=None,
+                 charset=None, encode_multipart=True, multipart_boundary=None,
+                 timeout=None, hooks=None, history=None, source_address=None,
+                 allow_redirects=False, max_redirects=10, decompress=True,
+                 version=None, wait_continue=False, websocket_handler=None,
+                 **ignored):
         self.client = client
+        self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
         self.method = method.upper()
         self._scheme, self._netloc, self.path, self.params,\
@@ -88,6 +156,7 @@ class HttpRequest(pulsar.Request):
         self.files = files
         self.source_address = source_address
         self.new_parser()
+        self.headers = client.get_headers(self, headers)
     
     @property
     def address(self):
@@ -105,7 +174,22 @@ class HttpRequest(pulsar.Request):
             return max(self._scheme, self._proxy.scheme)
         else:
             return self._scheme
+    
+    @property
+    def unverifiable(self):
+        '''Unverifiable when a redirect.
         
+        It is a redirect when :attr:`history` has past requests.
+        '''
+        return bool(self.history)
+    
+    @property
+    def origin_req_host(self):
+        if self.history:
+            return self.history[0].current_request.origin_req_host
+        else:
+            return request_host(self)
+    
     @property
     def netloc(self):
         if self._proxy:
@@ -119,8 +203,17 @@ class HttpRequest(pulsar.Request):
     def __str__(self):
         return self.__repr__()
     
+    def get_full_url(self):
+        '''The full url for this request.'''
+        self.full_url = urlunparse((self._scheme, self._netloc, self.path,
+                                    self.params, self.query, self.fragment))
+        return self.full_url
+        
     def first_line(self):
-        url = self._get_url()
+        url = self.get_full_url()
+        if not self._proxy:
+            url = urlunparse(('', '', self.path or '/', self.params,
+                              self.query, self.fragment))
         return '%s %s %s' % (self.method, url, self.version)
     
     def new_parser(self):
@@ -131,9 +224,11 @@ class HttpRequest(pulsar.Request):
         self._proxy = scheme_host(scheme, host)
     
     def encode(self):
-        '''Called by :class:`HttpResponse` when it needs to encode this
-:class:`HttpRequest` before sending it to the HTTP resourse.
-It returns ``bytes``.'''
+        '''The bytes representation of this :class:`HttpRequest`.
+
+        Called by :class:`HttpResponse` when it needs to encode this
+        :class:`HttpRequest` before sending it to the HTTP resourse.
+        '''
         buffer = []
         self.body = body = self.encode_body()
         if body:
@@ -141,17 +236,22 @@ It returns ``bytes``.'''
             if self.wait_continue:
                 self.headers['expect'] = '100-continue'
                 body = None
+        headers = self.headers
+        if self.unredirected_headers:
+            headers = self.unredirected_headers.copy()
+            headers.update(self.headers)
         request = self.first_line()
         buffer.append(request.encode('ascii'))
         buffer.append(b'\r\n')
-        buffer.append(bytes(self.headers))
+        buffer.append(bytes(headers))
         if body:
             buffer.append(body)
         return b''.join(buffer)
         
     def encode_body(self):
         '''Encode body or url if the :attr:`method` does not have body.
-Called by :meth:`encode`.'''
+        
+        Called by :meth:`encode`.'''
         body = None
         if self.method in ENCODE_URL_METHODS:
             self.files = None
@@ -178,7 +278,22 @@ Called by :meth:`encode`.'''
             else:
                 body = json.dumps(self.data).encode(self.charset)
         return body
-         
+    
+    def has_header(self, header_name):
+        return (header_name in self.headers or
+                header_name in self.unredirected_headers)
+
+    def get_header(self, header_name, default=None):
+        return self.headers.get(header_name,
+            self.unredirected_headers.get(header_name, default))
+
+    def remove_header(self, header_name):
+        self.headers.pop(header_name, None)
+        self.unredirected_headers.pop(header_name, None)
+    
+    def add_unredirected_header(self, header_name, header_value):
+        self.unredirected_headers[header_name] = header_value
+        
     def all_params(self):
         d = self.__dict__.copy()
         d.pop('client')
@@ -198,21 +313,13 @@ Called by :meth:`encode`.'''
             self.data = query
             query = urlencode(query)
         self.query = query
-
-    def _get_url(self):
-        self.full_url = urlunparse((self._scheme, self._netloc, self.path,
-                                    self.params, self.query, self.fragment))
-        if not self._proxy:
-            return urlunparse(('', '', self.path or '/', self.params,
-                               self.query, self.fragment))
-        else:
-            return self.full_url
         
         
 class HttpResponse(pulsar.ProtocolConsumer):
     '''A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.
-Initialised by a call to the :class:`HttpClient.request` method.
-'''
+
+    Initialised by a call to the :class:`HttpClient.request` method.
+    '''
     _tunnel_host = None
     _has_proxy = False
     _content = None
@@ -241,11 +348,15 @@ Initialised by a call to the :class:`HttpClient.request` method.
 
     @property
     def status_code(self):
+        '''Numeric status code such as 200, 404 and so forth.'''
         if self.parser:
             return self.parser.get_status_code()
     
     @property
     def response(self):
+        '''The description of the :attr:`status_code`.
+
+        This is the second part of the status string.'''
         if self.status_code:
             return responses.get(self.status_code)
         
@@ -257,6 +368,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
         
     @property
     def url(self):
+        '''The request full url.'''
         if self.current_request is not None:
             return self.current_request.full_url
     
@@ -301,9 +413,11 @@ Initialised by a call to the :class:`HttpClient.request` method.
             else:
                 raise URLError(self.on_finished.result.error)
     
-    def get_origin_req_host(self):
-        response = self.history[-1] if self.history else self
-        return request_host(request)
+    def info(self):
+        '''Required by python CookieJar.
+        
+        Return :attr:`headers`.'''
+        return self.headers
     
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
@@ -315,7 +429,7 @@ Initialised by a call to the :class:`HttpClient.request` method.
         if self.parser.execute(data, len(data)) == len(data):
             if self.parser.is_headers_complete():
                 if not had_headers:
-                    new_response = self.handle_headers()
+                    new_response = self._handle_headers()
                     if new_response:
                         had_headers = False
                         return
@@ -331,12 +445,12 @@ Initialised by a call to the :class:`HttpClient.request` method.
                 return self.new_request(self.next_url)
             return self
         
-    def handle_headers(self):
-        '''The response headers are available. Build the response.'''
+    def _handle_headers(self):
+        #The response headers are available. Build the response.
         request = self.current_request
         headers = self.headers
         client = request.client
-        # store cookies in clinet if needed
+        # store cookies in client if needed
         if client.store_cookies and 'set-cookie' in headers:
             client.cookies.extract_cookies(self, request)
         # check redirect
@@ -370,42 +484,42 @@ Initialised by a call to the :class:`HttpClient.request` method.
     
 
 class HttpClient(pulsar.Client):
-    '''A :class:`pulsar.Client` for HTTP/HTTPS servers which handles
-a pool of asynchronous :class:`pulsar.Connection`.
+    '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
 
-.. attribute:: headers
+    As :class:`pulsar.Client` it handles
+    a pool of asynchronous :class:`pulsar.Connection`.
 
-    Default headers for this :class:`HttpClient`.
+    .. attribute:: headers
 
-    Default: :attr:`DEFAULT_HTTP_HEADERS`.
+        Default headers for this :class:`HttpClient`.
 
-.. attribute:: cookies
+        Default: :attr:`DEFAULT_HTTP_HEADERS`.
 
-    Default cookies for this :class:`HttpClient`
+    .. attribute:: cookies
 
-    Default: ``None``.
+        Default cookies for this :class:`HttpClient`.
 
-.. attribute:: timeout
+    .. attribute:: timeout
 
-    Default timeout for the connecting sockets. If 0 it is an asynchronous
-    client.
+        Default timeout for the connecting sockets. If 0 it is an asynchronous
+        client.
 
-.. attribute:: encode_multipart
+    .. attribute:: encode_multipart
 
-    Flag indicating if body data is encoded using the ``multipart/form-data``
-    encoding by default. It can be overwritten during a :meth:`request`.
+        Flag indicating if body data is encoded using the ``multipart/form-data``
+        encoding by default. It can be overwritten during a :meth:`request`.
 
-    Default: ``True``
+        Default: ``True``
 
-.. attribute:: proxy_info
+    .. attribute:: proxy_info
 
-    Dictionary of proxy servers for this client.
-    
-.. attribute:: DEFAULT_HTTP_HEADERS
+        Dictionary of proxy servers for this client.
+        
+    .. attribute:: DEFAULT_HTTP_HEADERS
 
-    Default headers for this :class:`HttpClient`
-    
-'''
+        Default headers for this :class:`HttpClient`
+        
+    '''
     consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
@@ -435,7 +549,7 @@ a pool of asynchronous :class:`pulsar.Connection`.
               websocket_handler=None):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
-        self.cookies = cookies
+        self.cookies = cookiejar_from_dict(cookies) 
         self.decompress = decompress
         self.version = version or self.version
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
@@ -464,86 +578,80 @@ a pool of asynchronous :class:`pulsar.Connection`.
         return self._websocket_key
     
     def get(self, url, **kwargs):
-        '''Sends a GET request and returns a :class:`HttpResponse`
-object.
+        '''Sends a GET request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
-        '''Sends a OPTIONS request and returns a :class:`HttpResponse`
-object.
+        '''Sends a OPTIONS request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
-        '''Sends a HEAD request and returns a :class:`HttpResponse`
-object.
+        '''Sends a HEAD request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         return self.request('HEAD', url, **kwargs)
 
     def post(self, url, **kwargs):
-        '''Sends a POST request and returns a :class:`HttpResponse`
-object.
+        '''Sends a POST request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
-        '''Sends a PUT request and returns a :class:`HttpResponse`
-object.
+        '''Sends a PUT request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
-        '''Sends a PATCH request and returns a :class:`HttpResponse`
-object.
+        '''Sends a PATCH request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
-        '''Sends a DELETE request and returns a :class:`HttpResponse`
-object.
+        '''Sends a DELETE request and returns a :class:`HttpResponse` object.
 
-:params url: url for the new :class:`HttpRequest` object.
-:param \*\*kwargs: Optional arguments for the :meth:`request` method.
-'''
+        :params url: url for the new :class:`HttpRequest` object.
+        :param \*\*kwargs: Optional arguments for the :meth:`request` method.
+        '''
         return self.request('DELETE', url, **kwargs)
     
     def request(self, method, url, cookies=None, headers=None,
                 response=None, **params):
         '''Constructs and sends a request to a remote server.
-It returns an :class:`HttpResponse` object.
 
-:param method: request method for the :class:`HttpRequest`.
-:param url: URL for the :class:`HttpRequest`.
-:param params: a dictionary which specify all the optional parameters for
-    the :class:`HttpRequest` constructor.
+        It returns an :class:`HttpResponse` object.
 
-:rtype: a :class:`HttpResponse` object.
-'''
+        :param method: request method for the :class:`HttpRequest`.
+        :param url: URL for the :class:`HttpRequest`.
+        :param params: a dictionary which specify all the optional parameters for
+            the :class:`HttpRequest` constructor.
+
+        :rtype: a :class:`HttpResponse` object.
+        '''
         if response:
             rparams = response.current_request.all_params()
-            headers = headers or rparams.pop('headers')
-            headers.pop('Cookie', None)
+            rheaders = rparams.pop('headers')
+            headers = headers or rheaders
             history = copy(rparams['history']) 
             history.append(response.reset_connection())
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
@@ -555,15 +663,12 @@ It returns an :class:`HttpResponse` object.
             params['history'] = history
         else:
             params = self.update_parameters(self.request_parameters, params)
-        request = HttpRequest(self, url, method, **params)
-        request.headers = self.get_headers(request, headers)
+        request = HttpRequest(self, url, method, headers, **params)
         self.set_proxy(request)
         if self.cookies:
             self.cookies.add_cookie_header(request)
         if cookies:
-            if not isinstance(cookies, CookieJar):
-                cookies = cookiejar_from_dict(cookies)
-            cookies.add_cookie_header(request)
+            cookiejar_from_dict(cookies).add_cookie_header(request)
         return self.response(request, response)
     
     def add_basic_authentication(self, username, password):
@@ -574,8 +679,8 @@ It returns an :class:`HttpResponse` object.
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
     def get_headers(self, request, headers):
-        '''Returns a :class:`Header` obtained from combining
-:attr:`headers` with *headers*. It handles websocket requests.'''
+        #Returns a :class:`Header` obtained from combining
+        #:attr:`headers` with *headers*. Can handle websocket requests.
         if request.scheme in ('ws','wss'):
             d = Headers((('Connection', 'Upgrade'),
                          ('Upgrade', 'websocket'),
@@ -597,10 +702,6 @@ It returns an :class:`HttpResponse` object.
                 p = urlparse(self.proxy_info[request.scheme])
                 request.set_proxy(p.scheme, p.netloc)
                 
-    def build_protocol(self, address, timeout):
-        type, address = address[0], address[1:] 
-        return create_connection(address, timeout)
-    
     def can_reuse_connection(self, connection, response):
         # Reuse connection only if the headers has Connection keep-alive
         if response and response.headers:
@@ -616,7 +717,7 @@ It returns an :class:`HttpResponse` object.
         return callable(protocol.connection, protocol)
     
     def upgrade_websocket(self, connection, handshake):
-        '''Upgrade the *protocol* to a websocket response. Invoked
-by the :meth:`upgrade` method.'''
+        #Upgrade the *protocol* to a websocket response. Invoked
+        #by the :meth:`upgrade` method.
         return WebSocketResponse(connection, handshake)
     

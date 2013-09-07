@@ -1,11 +1,12 @@
 Ver. 0.6.1 - Development
 ===========================
+* Cookie support for the :ref:`Http Client <apps-http>`.
 * Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.
 * Ability to add embedded css rules into the :ref:`head <wsgi-html-head>`
   element of an :ref:`Html document <wsgi-html-document>`.
 * Added :class:`Actor.stream` attribute to write messages without using the
   logger.
-* **558 regression tests**, **88% coverage**.
+* **560 regression tests**, **88% coverage**.
 
 Ver. 0.6.0 - 2013-Sep-05
 ===========================

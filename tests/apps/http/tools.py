@@ -3,15 +3,15 @@ import os
 import time
 
 from pulsar.apps.test import unittest
-from pulsar.utils.httpurl import urlencode, Headers,\
-                                 WWWAuthenticate, hexmd5, CacheControl,\
-                                 urlquote, unquote_unreserved, requote_uri,\
-                                 remove_double_slash, appendslash, capfirst,\
-                                 encode_multipart_formdata, http_date,\
-                                 cookiejar_from_dict
+from pulsar.utils.httpurl import (urlencode, Headers, parse_cookie,
+                                  WWWAuthenticate, hexmd5, CacheControl,
+                                  urlquote, unquote_unreserved, requote_uri,
+                                  remove_double_slash, appendslash, capfirst,
+                                  encode_multipart_formdata, http_date,
+                                  cookiejar_from_dict)
 from pulsar.utils.pep import to_bytes, native_str, force_native_str
-from pulsar.apps.wsgi import Auth, HTTPBasicAuth, HTTPDigestAuth,\
-                                parse_authorization_header, basic_auth_str
+from pulsar.apps.wsgi import (Auth, HTTPBasicAuth, HTTPDigestAuth,
+                              parse_authorization_header, basic_auth_str)
         
         
 class TestAuth(unittest.TestCase):
@@ -158,3 +158,8 @@ class TestTools(unittest.TestCase):
         j2 = cookiejar_from_dict({'pippo': 'pluto'}, j)
         self.assertEqual(j, j2)
         
+    def test_parse_cookie(self):
+        self.assertEqual(parse_cookie('invalid key=true'),
+                         {'key':'true'})
+        self.assertEqual(parse_cookie('invalid;key=true'),
+                         {'key':'true'})
