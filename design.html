@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar 0.6.1-beta.1 documentation</title>
+    <title>Design &mdash; pulsar 0.6.1-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.1-beta.1',
+        VERSION:     '0.6.1-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -114,7 +114,7 @@ process based as well as thread based and can perform one or many activities.</p
 <div class="section" id="the-theory">
 <h3>The Theory<a class="headerlink" href="#the-theory" title="Permalink to this headline">¶</a></h3>
 <p>The actor model is the cornerstone of the Erlang programming language.
-Python has very few implementation and all of them seems quite limited in scope.</p>
+Python has very few implementation and all of them seem quite limited in scope.</p>
 <blockquote class="epigraph">
 <div><p>The Actor model in computer science is a mathematical model of concurrent
 computation that treats &#8220;actors&#8221; as the universal primitives of concurrent
@@ -147,7 +147,7 @@ don&#8217;t shares state between them.</li>
 that is to say, there will be a centralised <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> controlling the main
 <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> in the <strong>main thread</strong> of the <strong>master process</strong>.
 The arbiter is a specialised <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>
-which control the life all <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
+which control the life of all <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>.</p>
 <p id="design-arbiter">To access the <a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>, from the main process, one can use the
 <a class="reference internal" href="api/actor.html#pulsar.arbiter" title="pulsar.arbiter"><tt class="xref py py-func docutils literal"><span class="pre">arbiter()</span></tt></a> high level function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.6.1-beta.1 documentation</title>
+    <title>Changelog &mdash; pulsar 0.6.1-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.1-beta.1',
+        VERSION:     '0.6.1-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,8 +67,20 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-6-0-development">
-<h2>Ver. 0.6.0 - Development<a class="headerlink" href="#ver-0-6-0-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-6-1-development">
+<h2>Ver. 0.6.1 - Development<a class="headerlink" href="#ver-0-6-1-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Cookie support for the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>.</li>
+<li>Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>WSGI Router</em></a>.</li>
+<li>Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
+element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</li>
+<li>Added <tt class="xref py py-class docutils literal"><span class="pre">Actor.stream</span></tt> attribute to write messages without using the
+logger.</li>
+<li><strong>560 regression tests</strong>, <strong>88% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-6-0-2013-sep-05">
+<h2>Ver. 0.6.0 - 2013-Sep-05<a class="headerlink" href="#ver-0-6-0-2013-sep-05" title="Permalink to this headline">¶</a></h2>
 <ul>
 <li><p class="first">Several new features, critical bug fixes and increased tests coverage.</p>
 </li>
@@ -149,7 +161,7 @@ via the <a class="reference internal" href="apps/wsgi/handlers.html#wsgi-route-d
 </dd>
 </dl>
 </li>
-<li><p class="first"><strong>559 regression tests</strong>, <strong>88% coverage</strong>.</p>
+<li><p class="first"><strong>558 regression tests</strong>, <strong>88% coverage</strong>.</p>
 </li>
 </ul>
 </div>
@@ -439,7 +451,8 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-6-0-development">Ver. 0.6.0 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-6-1-development">Ver. 0.6.1 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-6-0-2013-sep-05">Ver. 0.6.0 - 2013-Sep-05</a></li>
 <li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>
 <li><a class="reference internal" href="#ver-0-5-0-2013-may-22">Ver. 0.5.0 - 2013-May-22</a></li>

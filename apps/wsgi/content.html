@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Content &mdash; pulsar 0.6.1-beta.1 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.6.1-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.1-beta.1',
+        VERSION:     '0.6.1-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Middleware" href="middleware.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -446,8 +446,8 @@ whole <tt class="docutils literal"><span class="pre">css</span></tt> dictionary 
 </div>
 <div class="section" id="html-document">
 <span id="wsgi-html-document"></span><h2>Html Document<a class="headerlink" href="#html-document" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="document">
-<h3>Document<a class="headerlink" href="#document" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h3>Html Document<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">HtmlDocument</tt><big>(</big><em>title=None</em>, <em>media_path='/media/'</em>, <em>charset=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#HtmlDocument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument" title="Permalink to this definition">¶</a></dt>
@@ -469,22 +469,23 @@ via the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrapp
 
 </div>
 <div class="section" id="head">
-<h3>Head<a class="headerlink" href="#head" title="Permalink to this headline">¶</a></h3>
+<span id="wsgi-html-head"></span><h3>Head<a class="headerlink" href="#head" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Head">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Head</tt><big>(</big><em>media_path=None</em>, <em>title=None</em>, <em>meta=None</em>, <em>charset=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> head tag. It contains <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> handlers for the
-various part of an HTML Head element.</p>
+<dd><p><a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a> <tt class="docutils literal"><span class="pre">head</span></tt> tag element.</p>
+<p>Contains <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> attributes for the various part of an HTML Head element.
+The head element is accessed via the <a class="reference internal" href="#pulsar.apps.wsgi.content.HtmlDocument.head" title="pulsar.apps.wsgi.content.HtmlDocument.head"><tt class="xref py py-attr docutils literal"><span class="pre">HtmlDocument.head</span></tt></a> attribute.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Head.title">
 <tt class="descname">title</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.title" title="Permalink to this definition">¶</a></dt>
-<dd><p>Text in the title tag</p>
+<dd><p>Text in the <tt class="docutils literal"><span class="pre">title</span></tt> tag.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Head.meta">
 <tt class="descname">meta</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Head.meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>A container of <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> meta tags. To add new meta tags use the
+<dd><p>A container of <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> <tt class="docutils literal"><span class="pre">meta</span></tt> tags. To add new meta tags use the
 <a class="reference internal" href="#pulsar.apps.wsgi.content.Head.add_meta" title="pulsar.apps.wsgi.content.Head.add_meta"><tt class="xref py py-meth docutils literal"><span class="pre">add_meta()</span></tt></a> method rather than accessing the <a class="reference internal" href="#pulsar.apps.wsgi.content.Head.meta" title="pulsar.apps.wsgi.content.Head.meta"><tt class="xref py py-attr docutils literal"><span class="pre">meta</span></tt></a>
 attribute directly.</p>
 </dd></dl>
@@ -506,9 +507,16 @@ this attribute. You can add relative paths:</p>
 </pre></div>
 </div>
 <p>as well as absolute paths:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">html</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">html</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">scripts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+    <span class="s">&#39;https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.content.Head.embedded_css">
+<tt class="descname">embedded_css</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.Head.embedded_css" title="Permalink to this definition">¶</a></dt>
+<dd><p>Embedded css rules.</p>
 </dd></dl>
 
 <dl class="method">
@@ -666,7 +674,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 <li><a class="reference internal" href="#asynchronous-json">Asynchronous Json</a></li>
 <li><a class="reference internal" href="#asynchronous-html">Asynchronous Html</a></li>
 <li><a class="reference internal" href="#html-document">Html Document</a><ul>
-<li><a class="reference internal" href="#document">Document</a></li>
+<li><a class="reference internal" href="#id1">Html Document</a></li>
 <li><a class="reference internal" href="#head">Head</a></li>
 <li><a class="reference internal" href="#body">Body</a></li>
 <li><a class="reference internal" href="#media">Media</a></li>
