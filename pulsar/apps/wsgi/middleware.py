@@ -55,7 +55,7 @@ from gzip import GzipFile
 import pulsar
 from pulsar.utils.httpurl import BytesIO, parse_cookie
 
-from .plugins import parse_authorization_header
+from .auth import parse_authorization_header
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
 
@@ -103,10 +103,12 @@ obtained via the :func:`pulsar.utils.httpurl.parse_cookie` function.'''
         environ['http.cookie'] = c
 
 def authorization_middleware(environ, start_response):
-    """Parse the ``HTTP_AUTHORIZATION`` key in the ``environ`` if available
-and set the ``http.authorization`` key in ``environ`` with the result
-obtained from :func:`pulsar.apps.wsgi.plugins.parse_authorization_header`
-function."""
+    '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
+
+    If available, set the ``http.authorization`` key in ``environ`` with
+    the result obtained from
+    :func:`pulsar.apps.wsgi.plugins.parse_authorization_header` function.
+    '''
     key = 'http.authorization'
     c = environ.get(key)
     if c is None:

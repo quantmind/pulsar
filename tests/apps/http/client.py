@@ -4,8 +4,8 @@ from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 from pulsar.utils.events import Listener
 from pulsar.utils.httpurl import to_bytes, urlencode
-from pulsar.apps.http import HttpClient, TooManyRedirects, HttpResponse,\
-                                HTTPError
+from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
+                              HTTPError)
 
 
 class TestHttpClientBase:
@@ -48,6 +48,7 @@ class TestHttpClientBase:
     
     def _check_pool(self, http, response, available=1, processed=1, created=1,
                     pools=1):
+        #Test the connection pool
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
             pool = http.connection_pools[response.current_request.key]
@@ -66,7 +67,7 @@ class TestHttpClientBase:
         
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
+
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -86,7 +87,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
-was passed by the client.'''
+        was passed by the client.
+        '''
         http = self.client(version='HTTP/1.0')
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.0')
@@ -97,7 +99,8 @@ was passed by the client.'''
     
     def test_http11(self):
         '''By default HTTP/1.1 keep alive the connection if no keep-alive header
-was passed by the client.'''
+        was passed by the client.
+        '''
         http = self.client()
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.1')
@@ -338,32 +341,27 @@ was passed by the client.'''
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertFalse(result['cookies'])
-        
-class a:
-        
+    
     def test_basic_authentication(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin('basic-auth/bla/foo')).on_finished
+        #The response MUST include a WWW-Authenticate header field
         self.assertEqual(r.status_code, 401)
         http.add_basic_authentication('bla', 'foo')
-        r = make_async(http.get(self.httpbin('basic-auth/bla/foo')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin('basic-auth/bla/foo')).on_finished
         self.assertEqual(r.status_code, 200)
-        
+
     def test_digest_authentication(self):
         http = self.client()
-        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
-        yield r
-        r = r.result
+        r = yield http.get(self.httpbin(
+            'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 401)
-        http.add_digest_authentication('bla', 'foo')
-        r = make_async(http.get(self.httpbin('digest-auth/auth/bla/foo')))
-        yield r
-        r = r.result
+        http.add_digest_authentication('luca', 'bla')
+        r = yield http.get(self.httpbin(
+            'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 200)
+        
+class a:
     
     #### TO INCLUDE
     def __test_far_expiration(self):

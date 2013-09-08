@@ -4,55 +4,32 @@ import time
 
 from pulsar.apps.test import unittest
 from pulsar.utils.httpurl import (urlencode, Headers, parse_cookie,
-                                  WWWAuthenticate, hexmd5, CacheControl,
+                                  hexmd5, CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
                                   remove_double_slash, appendslash, capfirst,
                                   encode_multipart_formdata, http_date,
                                   cookiejar_from_dict)
 from pulsar.utils.pep import to_bytes, native_str, force_native_str
-from pulsar.apps.wsgi import (Auth, HTTPBasicAuth, HTTPDigestAuth,
-                              parse_authorization_header, basic_auth_str)
+from pulsar.apps.http import (Auth, HTTPBasicAuth, HTTPDigestAuth)
         
         
 class TestAuth(unittest.TestCase):
     
-    def testBase(self):
+    def test_auth(self):
         auth = Auth()
         self.assertRaises(NotImplementedError, auth, None)
-        self.assertFalse(auth.authenticated())
         self.assertEqual(str(auth), repr(auth))
+
+    def test_basic_auth(self):
         auth = HTTPBasicAuth('bla', 'foo')
         self.assertEqual(str(auth), 'Basic: bla')
         
-    def test_WWWAuthenticate_basic(self):
-        auth = WWWAuthenticate.basic('authenticate please')
-        self.assertEqual(auth.type, 'basic')
-        self.assertEqual(len(auth.options), 1)
-        self.assertEqual(str(auth), 'Basic realm="authenticate please"')
-        
-    def test_WWWAuthenticate_digest(self):
-        H = hexmd5
-        nonce = H(to_bytes('%d' % time.time()) + os.urandom(10))
-        auth = WWWAuthenticate.digest('www.mydomain.org', nonce,
-                                    opaque=H(os.urandom(10)),
-                                    qop=('auth', 'auth-int'))
-        self.assertEqual(auth.options['qop'], 'auth, auth-int')
-        
-    def testDigest(self):
+    def test_digest_auth(self):
         auth = HTTPDigestAuth('bla', options={'realm': 'fake realm'})
         self.assertEqual(auth.type, 'digest')
         self.assertEqual(auth.username, 'bla')
         self.assertEqual(auth.password, None)
         self.assertEqual(auth.options['realm'], 'fake realm')
-        
-    def test_parse_authorization_header(self):
-        parse = parse_authorization_header
-        self.assertEqual(parse(''), None)
-        self.assertEqual(parse('csdcds'), None)
-        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
-        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
-        auths = basic_auth_str('pippo', 'pluto')
-        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
         
     def test_CacheControl(self):
         headers = Headers()

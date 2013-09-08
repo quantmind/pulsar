@@ -1138,44 +1138,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
 if not hasextensions:
     setDefaultHttpParser(HttpParser)
-    
-################################################################################
-##    HTTP CLIENT
-################################################################################
 
-class WWWAuthenticate(object):
-    _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])
-    
-    def __init__(self, type, **options):
-        self.type = type
-        self.options = options
-    
-    @classmethod
-    def basic(cls, realm='authentication required'):
-        """Clear the auth info and enable basic auth."""
-        return cls('basic', realm=realm)
-    
-    @classmethod    
-    def digest(cls, realm, nonce, qop=('auth',), opaque=None,
-               algorithm=None, stale=None):
-        options = {}
-        if stale:
-            options['stale'] = 'TRUE'
-        if opaque is not None:
-            options['opaque'] = opaque
-        if algorithm is not None:
-            options['algorithm'] = algorithm
-        return cls('digest', realm=realm, nonce=nonce,
-                   qop=', '.join(qop), **options)
-    
-    def __str__(self):
-        """Convert the stored values into a WWW-Authenticate header."""
-        return '%s %s' % (self.type.title(), ', '.join((
-            '%s=%s' % (key, quote_header_value(value,
-                                allow_token=key not in self._require_quoting))
-            for key, value in iteritems(self.options)
-        )))
-    __repr__ = __str__
         
 ###############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():

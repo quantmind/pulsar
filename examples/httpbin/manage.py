@@ -25,8 +25,7 @@ except ImportError: #pragma    nocover
 
 from pulsar import HttpRedirect, HttpException, version, JAPANESE
 from pulsar.utils.pep import ispy3k, to_bytes
-from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, WWWAuthenticate,
-                                  hexmd5)
+from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, hexmd5)
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi
 from pulsar.apps.wsgi import route, Html, Json
@@ -153,14 +152,10 @@ class HttpBin(wsgi.Router):
            defaults={'username': 'username', 'password': 'password'})
     def challenge_auth(self, request):
         auth = request.get('http.authorization')
-        if auth and auth.type == 'basic':
-            username = request.urlargs['username']
-            password = request.urlargs['password']
-            if auth.authenticated(request.environ, username, password):
-                return Json({'autheinticated': True,
-                             'username': auth.username}).http_response(request)
-        h = ('WWW-Authenticate', str(WWWAuthenticate.basic("Fake Realm")))
-        raise HttpException(status=401, headers=[h])
+        if auth and auth.authenticated(request.environ, **request.urlargs):
+            return Json({'authenticated': True,
+                         'username': auth.username}).http_response(request)
+        raise wsgi.HttpAuthenticate('basic')
         
     @route('digest-auth/<username>/<password>/<qop>',
            title='Challenges HTTP Digest Auth',
@@ -169,16 +164,10 @@ class HttpBin(wsgi.Router):
                      'qop': 'auth'})
     def challenge_digest_auth(self, request):
         auth = request.get('http.authorization')
-        if auth and auth.authenticated(environ, *bits[1:]):
-            data = jsonbytes({'autheinticated': True,
-                              'username': auth.username})
-            return self.info_data_response(request, **data)
-        nonce = hexmd5(to_bytes('%d' % time.time()) + os.urandom(10))
-        digest = WWWAuthenticate.digest("Fake Realm", nonce,
-                                        opaque=hexmd5(os.urandom(10)),
-                                        qop=request.urlargs['qop'])
-        raise HttpException(status=401,
-                            headers=[('WWW-Authenticate', str(digest))])
+        if auth and auth.authenticated(request.environ, **request.urlargs):
+            return Json({'authenticated': True,
+                         'username': auth.username}).http_response(request)
+        raise wsgi.HttpAuthenticate('digest', qop=[request.urlargs['qop']])
         
     @route('stream/<int(min=1):m>/<int(min=1):n>', title='Stream m chunk of data n times',
            defaults={'m': 300, 'n': 20})

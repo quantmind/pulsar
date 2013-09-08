@@ -65,6 +65,15 @@ class WsgiResponseTests(unittest.TestCase):
         response = wsgi.WsgiResponse()
         response.delete_cookie('bla')
         self.assertTrue('bla' in response.cookies)
+
+    def test_parse_authorization_header(self):
+        parse = parse_authorization_header
+        self.assertEqual(parse(''), None)
+        self.assertEqual(parse('csdcds'), None)
+        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
+        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
+        auths = basic_auth_str('pippo', 'pluto')
+        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
         
         
 class testWsgiApplication(unittest.TestCase):

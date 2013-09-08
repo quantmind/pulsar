@@ -57,7 +57,7 @@ from .wrappers import *
 from .server import *
 from .route import *
 from .handlers import *
-from .plugins import *
+from .auth import *
 
 
 class WsgiFactory(object):

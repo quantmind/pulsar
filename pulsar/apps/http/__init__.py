@@ -10,9 +10,13 @@ Features
 * No dependencies
 * Similar API to requests_
 * Cookie support
+* :ref:`Basic and digest authentication <http-authentication>`
+* :ref:`Streaming of course <http-streaming>`
 * Web socket support
+* Automatic decompression
 * Thread safe
 * Can be used in :ref:`synchronous mode <tutorials-synchronous>`
+
 
 Making requests
 =================
@@ -38,11 +42,42 @@ Cookies are handled by the client by storing cookies received with responses.
 To disable cookie one can pass ``store_cookies=False`` during
 :class:`HttpClient` initialisation.
 
+.. _http-authentication:
+
+Authentication
+~~~~~~~~~~~~~~~~~~~~~
+
+Basic authentication can be added by simply invoking the
+:meth:`HttpClient.add_basic_authentication` method, while digest authentication
+via the :meth:`HttpClient.add_digest_authentication` method.
+
+.. _http-streaming:
+
+Streaming
+~~~~~~~~~~~~~~~
+
+This is an event-driven client, therefore streaming is supported as a
+consequence. The ``on_finished`` callback is only fired when the server has
+finished with the response.
+Check the :ref:`proxy server <tutorials-proxy-server>` example for an
+application using the :class:`HttpClient` streaming capabilities.
+
 API
 ==========
 
-The main class is the :class:`HttpClient` which is a subclass of
+The main class here is the :class:`HttpClient` which is a subclass of
 :class:`pulsar.Client`.
+You can use the client as a global singletone::
+
+
+    >>> requests = HttpClient()
+
+and somewhere else
+
+    >>> resp = requests.post('http://bla.foo', body=...)
+
+the same way requests_ works, otherwise use it where you need it.
+
 
 HTTP Client
 ~~~~~~~~~~~~~~~~~~
@@ -82,7 +117,6 @@ from pulsar import is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
-from pulsar.apps.wsgi import HTTPBasicAuth, HTTPDigestAuth
 from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
@@ -93,6 +127,7 @@ from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
                                   cookiejar_from_dict)
 
 from .plugins import WebSocketResponse
+from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -298,6 +333,7 @@ class HttpRequest(pulsar.Request):
         d = self.__dict__.copy()
         d.pop('client')
         d.pop('method')
+        d.pop('_finished', None)
         return d
     
     def _encode_url(self, body):
@@ -404,8 +440,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
         return json.loads(self.content_string(charset), **kwargs)
     
     def raise_for_status(self):
-        """Raises stored :class:`HTTPError` or :class:`URLError`,
- if one occured."""
+        '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
+        '''
         if self.is_error:
             if self.status_code:
                 raise HTTPError(self.url, self.status_code,
@@ -425,16 +461,20 @@ class HttpResponse(pulsar.ProtocolConsumer):
         self.transport.write(self.current_request.encode())
         
     def data_received(self, data):
-        had_headers = self.parser.is_headers_complete()
-        if self.parser.execute(data, len(data)) == len(data):
-            if self.parser.is_headers_complete():
+        request = self.current_request
+        parser = request.parser
+        had_headers = parser.is_headers_complete()
+        if parser.execute(data, len(data)) == len(data):
+            if parser.is_headers_complete():
                 if not had_headers:
                     new_response = self._handle_headers()
                     if new_response:
                         had_headers = False
                         return
-                if self.parser.is_message_complete():
-                    self.finished()
+                if parser.is_message_complete():
+                    self.request_done()
+                    if self.current_request == request:
+                        self.finished()
         else:
             raise pulsar.ProtocolError
         
@@ -475,6 +515,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
             url = url or self.url
             return client.request(request.method, url, response=self)
         elif self.status_code == 100:
+            # reset the parser
             request.new_parser()
             self.transport.write(request.body)
             return True
@@ -523,10 +564,15 @@ class HttpClient(pulsar.Client):
     consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
+    '''Maximum number of redirects.
+
+    It can be overwritten on :meth:`request`.'''
     client_version = 'Python-httpurl'
+    '''String for the ``User-Agent`` header.'''
     version = 'HTTP/1.1' 
-    '''Default HTTP request version for this :class:`HttpClient`. It can be
-    overwritten during a :meth:`request`.'''
+    '''Default HTTP request version for this :class:`HttpClient`.
+
+    It can be overwritten on :meth:`request`.'''
     DEFAULT_HTTP_HEADERS = Headers([
             ('Connection', 'Keep-Alive'),
             ('Accept-Encoding', 'identity'),
@@ -635,7 +681,7 @@ class HttpClient(pulsar.Client):
         '''
         return self.request('DELETE', url, **kwargs)
     
-    def request(self, method, url, cookies=None, headers=None,
+    def request(self, method, url, headers=None, cookies=None,
                 response=None, **params):
         '''Constructs and sends a request to a remote server.
 
@@ -643,17 +689,25 @@ class HttpClient(pulsar.Client):
 
         :param method: request method for the :class:`HttpRequest`.
         :param url: URL for the :class:`HttpRequest`.
-        :param params: a dictionary which specify all the optional parameters for
-            the :class:`HttpRequest` constructor.
+        :param headers: optional list of headers to in clude in the request.
+        :parameter cookies: optional dictionary of cookies to send to the
+            server.
+        :parameter response: optional pre-existing :class:`HttpResponse` which
+            starts a new request (for redirects, digest authentication and
+            so forth).
+        :param params: optional parameters for the :class:`HttpRequest`
+            initialisation.
 
         :rtype: a :class:`HttpResponse` object.
         '''
+        # A response is given. Starts a new request
         if response:
             rparams = response.current_request.all_params()
             rheaders = rparams.pop('headers')
             headers = headers or rheaders
             history = copy(rparams['history']) 
             history.append(response.reset_connection())
+            response._current_request = None
             # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
             if response.status_code is 303:
                 method = 'GET'
@@ -672,10 +726,13 @@ class HttpClient(pulsar.Client):
         return self.response(request, response)
     
     def add_basic_authentication(self, username, password):
-        '''Add a :class:`HTTPBasicAuth` handler to the *pre_requests* hooks.'''
+        '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
+        '''
         self.bind_event('pre_request', HTTPBasicAuth(username, password))
         
     def add_digest_authentication(self, username, password):
+        '''Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.
+        '''
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
     def get_headers(self, request, headers):

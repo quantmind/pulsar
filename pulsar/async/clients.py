@@ -23,6 +23,7 @@ the appropriate :class:`ConnectionPool` for the client request.
     The socket address of the remote server
     
 '''
+    _finished = False
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
@@ -32,6 +33,11 @@ the appropriate :class:`ConnectionPool` for the client request.
         '''Attribute used for selecting the appropriate
 :class:`ConnectionPool`'''
         return (self.address, self.timeout)
+    
+    @property
+    def finished(self):
+        '''Flag indicating if the request is finished.'''
+        return self._finished
     
     def encode(self):
         raise NotImplementedError
@@ -46,7 +52,9 @@ remote server is needed.'''
         
     def _connection_made(self, transport_protocol):
         _, connection = transport_protocol
+        # wait for the connection_made event
         yield connection.event('connection_made')
+        # starts the new request
         connection.current_consumer.new_request(self)
     
     
@@ -170,51 +178,54 @@ of available connections.
 
 class Client(EventHandler):
     '''A client for a remote server which handles one or more
-:class:`ConnectionPool` of asynchronous connections.
-It has the ``finish`` :ref:`one time event <one-time-event>` fired when calling
-the :meth:`close` method.
+    :class:`ConnectionPool` of asynchronous connections.
+    It has the ``finish`` :ref:`one time event <one-time-event>` fired when calling
+    the :meth:`close` method.
 
-in the same way as the :class:`Server` class, :class:`Client` has four
-:ref:`many time events <many-times-event>`:
+    in the same way as the :class:`Server` class, :class:`Client` has four
+    :ref:`many time events <many-times-event>`:
 
-* ``connection_made`` a new connection is made.
-* ``pre_request``, can be used to add information to the request
-  to send to the remote server.
-* ``post_request``, fired when a full response has been received. It can be
-  used to post-process responses.
-* ``connection_lost`` a connection dropped.
+    * ``connection_made`` a new connection is made.
+    * ``pre_request``, can be used to add information to the request
+      to send to the remote server.
+    * ``post_request``, fired when a full response has been received. It can be
+      used to post-process responses.
+    * ``connection_lost`` a connection dropped.
 
-Most initialisation parameters have sensible defaults and don't need to be
-passed for most use-cases. Additionally, they can also be set as class
-attributes to override defaults.
+    Most initialisation parameters have sensible defaults and don't need to be
+    passed for most use-cases. Additionally, they can also be set as class
+    attributes to override defaults.
 
-:param max_connections: set the :attr:`max_connections` attribute.
-:param timeout: set the :attr:`timeout` attribute.
-:param force_sync: set the :attr:`force_sync` attribute.
-:param event_loop: optional :class:`EventLoop` which set the :attr:`event_loop`.
-:param connection_pool: optional factory which set the :attr:`connection_pool`.
-    The :attr:`connection_pool` can also be set at class level.
-:parameter client_version: optional version string for this :class:`Client`.
+    :param max_connections: set the :attr:`max_connections` attribute.
+    :param timeout: set the :attr:`timeout` attribute.
+    :param force_sync: set the :attr:`force_sync` attribute.
+    :param event_loop: optional :class:`EventLoop` which set the :attr:`event_loop`.
+    :param connection_pool: optional factory which set the :attr:`connection_pool`.
+        The :attr:`connection_pool` can also be set at class level.
+    :parameter client_version: optional version string for this :class:`Client`.
 
-.. attribute:: event_loop
+    .. attribute:: event_loop
 
-    The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
-    The preferred way to obtain the event loop is via the :meth:`get_event_loop`
-    method rather than accessing this attribute directly.
-    
-.. attribute:: force_sync
+        The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
+        The preferred way to obtain the event loop is via the :meth:`get_event_loop`
+        method rather than accessing this attribute directly.
+        
+    .. attribute:: force_sync
 
-    Force a :ref:`synchronous client <tutorials-synchronous>`, that is a
-    client which has it own :class:`EventLoop` and blocks until a response
-    is available.
-    
-    Default: `False`
-'''
+        Force a :ref:`synchronous client <tutorials-synchronous>`, that is a
+        client which has it own :class:`EventLoop` and blocks until a response
+        is available.
+        
+        Default: `False`
+    '''
     max_reconnect = 1
     '''Can reconnect on socket error.'''
     connection_pools = None
-    '''Dictionar of :class:`ConnectionPool`. If initialized at class level it
-will remain as a class attribute, otherwise it will be an instance attribute.'''
+    '''Dictionary of :class:`ConnectionPool`.
+
+    If initialized at class level it will remain as a class attribute,
+    otherwise it will be an instance attribute.
+    '''
     connection_pool = None
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
@@ -224,11 +235,15 @@ will remain as a class attribute, otherwise it will be an instance attribute.'''
     client_version = ''
     '''An optional version for this client'''
     timeout = 0
-    '''Optional timeout in seconds for idle connections. This is not the timeout
-    for the sockets (which is always 0, i.e. asynchronous).'''
+    '''Optional timeout in seconds for idle connections.
+
+    This is not the timeout for the sockets (which is always 0).
+    '''
     max_connections = 0
-    '''Maximum number of :attr:`concurrent_connections` allowed. Exceeding this
-    number will result in a :class:`pulsar.utils.exceptions.TooManyConnections`
+    '''Maximum number of :attr:`concurrent_connections` allowed.
+
+    Exceeding this number will result in a
+    :class:`pulsar.utils.exceptions.TooManyConnections`
     error. ``0`` means an unlimited number is allowed.'''
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
@@ -308,33 +323,39 @@ is ``True`` a specialised event loop is created.'''
         return hash((address, timeout))
     
     def request(self, *args, **params):
-        '''Abstract method for creating a :class:`Request` to send to a
-remote server. This method **must be implemented by subclasses** and should
-return a :class:`ProtocolConsumer` via invoking the :meth:`response` method::
+        '''Abstract method for creating a :class:`Request`.
 
-    def request(self, ...):
-        ...
-        request = ...
-        return self.response(request)
-    
-'''
+        The request is sent to a remote server via the :meth:`response` method.
+        This method **must be implemented by subclasses** and should
+        return a :class:`ProtocolConsumer` via invoking the
+        :meth:`response` method::
+
+            def request(self, ...):
+                ...
+                request = ...
+                return self.response(request)
+            
+        '''
         raise NotImplementedError
     
     def response(self, request, response=None, new_connection=True):
-        '''Once a ``request`` object has been constructed, the :meth:`request`
-method can invoke this method to build the :class:`ProtocolConsumer` and
-start the response. There should not be any reason to override this method.
-This method is run on this client event loop (obtained via the
-:meth:`get_event_loop` method) thread.
+        '''Sends a ``request`` to the remote server.
 
-:parameter request: A custom :class:`Request` for the :class:`Client`.
-:parameter response: A :class:`ProtocolConsumer` to reuse, otherwise
-    ``None`` (Default).
-:parameter new_connection: ``True`` if a new connection is required via
-    the :meth:`get_connection` method. Default ``True``.
-:rtype: An :class:`ProtocolConsumer` obtained form
-    :attr:`consumer_factory`.
-'''
+        Once a ``request`` object has been constructed, the :meth:`request`
+        method can invoke this method to build the :class:`ProtocolConsumer` and
+        start the response.
+        There should not be any reason to override this method.
+        This method is run on this client event loop (obtained via the
+        :meth:`get_event_loop` method) thread.
+
+        :parameter request: a custom :class:`Request` for the :class:`Client`.
+        :parameter response: a :class:`ProtocolConsumer` to reuse, otherwise
+            ``None`` (Default).
+        :parameter new_connection: ``True`` if a new connection is required via
+            the :meth:`get_connection` method. Default ``True``.
+        :return: a :class:`ProtocolConsumer` obtained form
+            :attr:`consumer_factory`.
+        '''
         event_loop = self.get_event_loop()
         if response is None:
             response = self.consumer_factory()

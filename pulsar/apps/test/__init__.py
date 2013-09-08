@@ -41,6 +41,14 @@ Type::
     
 For a list different options/parameters which can be used when running tests.
 
+.. note::
+
+    Pulsar test suite help you speed up your tests!
+    Use ``setUpClass`` rather than ``setUp``, use asynchronous tests and if
+    not possible add fire power with more test workers.
+
+    Try with the ``-w 8`` command line input for a laugh.
+
 The next step is to actually write the tests.
 
 Writing a Test Case
@@ -145,7 +153,8 @@ loads
     
 * all tests from modules in the ``test`` directory,
 * all tests from the ``bla`` directory with top level tag ``foo``,
-* all tests from modules which starts with *test* from the ``examples`` directory.
+* all tests from modules which starts with *test* from the ``examples``
+  directory.
      
 All top level modules will be added to the python ``path``.
 
@@ -172,8 +181,8 @@ forces tests to be run in a sequential model, one after the other::
 
     python runtests.py --sequential
     
-Alternatively, if you need to specify a Testcase which always runs its test functions
-in a sequential way, you can use the :func:`sequential` decorator::
+Alternatively, if you need to specify a Testcase which always runs its test
+functions in a sequential way, you can use the :func:`sequential` decorator::
 
     from pulsar.apps.test import unittest, sequential
     
@@ -184,8 +193,8 @@ in a sequential way, you can use the :func:`sequential` decorator::
         
 list labels
 ~~~~~~~~~~~~~~~~~~~
-By passing the ``-l`` or :ref:`--list-labels <setting-list_labels>` flag to the command line, the
-full list of test labels available is displayed::
+By passing the ``-l`` or :ref:`--list-labels <setting-list_labels>` flag
+to the command line, the full list of test labels available is displayed::
 
     python runtests.py -l
     
@@ -297,8 +306,9 @@ This section covers configuration parameters used by the
 :ref:`Asynchronous/Parallel test suite <apps-test>`.'''
 
 def dont_run_with_thread(obj):
-    '''Decorator for disabling test cases when the test suite runs in
-threading, rather than processing, mode.'''
+    '''Decorator for disabling process baaed test cases when the test suite
+    runs in threading, rather than processing, mode.
+    '''
     actor = pulsar.get_actor()
     if actor:
         d = unittest.skipUnless(actor.cfg.concurrency=='process',
@@ -335,10 +345,11 @@ class TestLabels(TestOption):
     name = "labels"
     nargs = '*'
     validator = pulsar.validate_list
-    desc = """Optional test labels to run. If not provided\
- all tests are run.
+    desc = """Optional test labels to run.
 
-To see available labels use the -l option."""
+    If not provided all tests are run.
+    To see available labels use the -l option.
+    """
 
 
 class TestExcludeLabels(TestOption):
@@ -390,30 +401,31 @@ class TestShowLeaks(TestOption):
 pyver = '%s.%s' % (sys.version_info[:2])
 
 class TestSuite(tasks.TaskQueue):
-    '''An asynchronous test suite which works like a task queue where each task
-is a group of tests specified in a test class.
+    '''An asynchronous test suite which works like a task queue.
 
-:parameter modules: An iterable over modules where to look for tests.
-    Alternatively it can be a callable returning the iterable over modules.
-    For example::
+    Each task is a group of test methods in a python TestCase class.
 
-        suite = TestSuite(modules=('regression',
-                                   ('examples','tests'),
-                                   ('apps','test_*')))
-        
-        def get_modules(suite):
-            ...
+    :parameter modules: An iterable over modules where to look for tests.
+        Alternatively it can be a callable returning the iterable over modules.
+        For example::
 
-        suite = TestSuite(modules=get_modules)
+            suite = TestSuite(modules=('regression',
+                                       ('examples','tests'),
+                                       ('apps','test_*')))
+            
+            def get_modules(suite):
+                ...
 
-    If not provided it is set as default to ``["tests"]`` which loads all
-    python module from the tests module in a recursive fashion.
-    Check the the :class:`TestLoader` for detailed information.
+            suite = TestSuite(modules=get_modules)
 
-:parameter result_class: Optional class for collecting test results. By default
-    it used the standard ``unittest.TextTestResult``.
-:parameter plugins: Optional list of :class:`TestPlugin` instances.
-'''
+        If not provided it is set as default to ``["tests"]`` which loads all
+        python module from the tests module in a recursive fashion.
+        Check the the :class:`TestLoader` for detailed information.
+
+    :parameter result_class: Optional class for collecting test results.
+        By default it used the standard ``unittest.TextTestResult``.
+    :parameter plugins: Optional list of :class:`TestPlugin` instances.
+    '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
                         loglevel='none',
@@ -421,8 +433,7 @@ is a group of tests specified in a test class.
                         plugins=())
     @local_property
     def runner(self):
-        '''Instance of :class:`TestRunner` driving the test case
-configuration and plugins.'''
+        '''The :class:`TestRunner` driving the test case.'''
         if unittest is None:
             raise ImportError('python %s requires unittest2 library for pulsar '
                               'test suite application' % pyver)
