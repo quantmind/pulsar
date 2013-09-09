@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pulsar
 from pulsar.utils.httpurl import range, zip
 from pulsar.apps import wsgi
+from pulsar.apps import http
 from pulsar.apps.test import unittest
 
 
@@ -67,12 +68,12 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertTrue('bla' in response.cookies)
 
     def test_parse_authorization_header(self):
-        parse = parse_authorization_header
+        parse = wsgi.parse_authorization_header
         self.assertEqual(parse(''), None)
         self.assertEqual(parse('csdcds'), None)
         self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
         self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
-        auths = basic_auth_str('pippo', 'pluto')
+        auths = http.HTTPBasicAuth('pippo', 'pluto').header()
         self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
         
         

@@ -6,22 +6,12 @@ import hashlib
 import binascii
 from copy import copy
 
-from pulsar.apps.wsgi import Auth
-from pulsar.apps.http import HttpClient
+from pulsar.apps.http import Auth, HttpClient
 from pulsar.utils.httpurl import iri_to_uri
 from pulsar import HTTPError
 
 from .utils import (make_nonce, OAuthSignatureMethod_HMAC_SHA1, OAuthConsumer,
                     OAuthToken)
-
-
-class KeyAuth(Auth):
-    
-    def __init__(self, **params):
-        self.params = params
-        
-    def __call__(self, r):
-        r.data.update(self.params)
         
 
 class OAuthError(HTTPError):

@@ -6,11 +6,10 @@ from base64 import b64encode, b64decode
 from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
 from pulsar.utils.pep import native_str
 
-__all__ = ['Auth', 
+__all__ = ['Auth',
+           'keyAuth',
            'HTTPBasicAuth',
-           'HTTPDigestAuth',
-           'basic_auth_str',
-           'parse_authorization_header']
+           'HTTPDigestAuth']
         
 
 class Auth(object):
@@ -24,6 +23,15 @@ class Auth(object):
         return self.__repr__()
 
 
+class KeyAuth(Auth):
+    
+    def __init__(self, **params):
+        self.params = params
+        
+    def __call__(self, response):
+        response.current_request.data.update(self.params)
+
+
 class HTTPBasicAuth(Auth):
     '''HTTP Basic Authentication handler.'''
     def __init__(self, username, password):
@@ -35,10 +43,12 @@ class HTTPBasicAuth(Auth):
         return 'basic'
 
     def __call__(self, response):
+        response.current_request.headers['Authorization'] = self.header()
+
+    def header(self):
         b64 = b64encode(('%s:%s' % (
             self.username, self.password)).encode('latin1'))
-        s ='Basic %s' % native_str(b64.strip(), 'latin1')
-        response.current_request.headers['Authorization'] = s
+        return 'Basic %s' % native_str(b64.strip(), 'latin1')
 
     def __repr__(self):
         return 'Basic: %s' % self.username
