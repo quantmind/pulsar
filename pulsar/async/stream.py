@@ -47,7 +47,7 @@ advantage of specific capabilities in some transport mechanisms.'''
     def _do_handshake(self):
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
-        
+    
     def pause(self):
         """A :class:`SocketStreamTransport` can be paused and resumed.
 Invoking this method will cause the transport to buffer data coming

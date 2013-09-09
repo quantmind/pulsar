@@ -116,6 +116,7 @@ def authorization_middleware(environ, start_response):
         if code in environ:
             environ[key] = parse_authorization_header(environ[code])
 
+    
 #####################################################    RESPONSE MIDDLEWARE
 class ResponseMiddleware(object):
     '''Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`

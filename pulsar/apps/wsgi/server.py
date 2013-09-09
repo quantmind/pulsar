@@ -208,7 +208,7 @@ the following algorithm:
     '''
         if self._request_headers.has('expect', '100-continue'):
             self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
-    
+        
     @property
     def status(self):
         return self._status

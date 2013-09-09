@@ -87,6 +87,9 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                                             data=stream.getvalue(),
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
+        if method == 'CONNECT':
+            response.connection.bind_event('connection_made',
+                wsgi_response.start_tunneling)
         response.on_finished.add_errback(partial(wsgi_response.error, uri))
         response.bind_event('data_processed', wsgi_response)
         return wsgi_response
@@ -108,7 +111,7 @@ The returned headers will be sent to the target uri.'''
         for middleware in self.headers_middleware:
             middleware(environ, headers)
         return headers
-
+        
 
 class ProxyResponse(object):
     '''Asynchronous wsgi response.'''
@@ -122,7 +125,6 @@ class ProxyResponse(object):
         while not self._done:
             yield self.queue.get()
             
-    @async()
     def __call__(self, response):
         '''Receive data from the requesting HTTP client.'''
         if response.parser.is_headers_complete():
@@ -152,7 +154,21 @@ class ProxyResponse(object):
         for header, value in headers:
             if header.lower() not in wsgi.HOP_HEADERS:
                 yield header, value
-                
+    
+    def start_tunneling(self, connection):
+        '''Tunneling callback.
+        
+        This is a callback fired once a connection with target server is
+        established and this proxy is acting as tunnel for a TSL server.'''
+        self.start_response('200 Connection established', [])
+        response = connection.producer
+        response.bind_event('finish', lambda r: connection.close())
+        # send empty byte so that headers are sent
+        yield self.queue.put(b'')
+    
+    def stop_tunneling(self, response=None):
+        pass
+    
                 
 def server(name='proxy-server', headers_middleware=None, **kwargs):
     if headers_middleware is None:

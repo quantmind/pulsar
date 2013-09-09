@@ -16,6 +16,7 @@ class TestHttpClientBase:
     with_tls = False
     proxy_app = None
     timeout = 10
+    _created_connections = 1
     
     @classmethod
     def setUpClass(cls):
@@ -39,9 +40,7 @@ class TestHttpClientBase:
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
-            outcome = send('arbiter', 'run', s)
-            yield outcome
-            cls.proxy_app = outcome.result
+            cls.proxy_app = yield send('arbiter', 'run', s)
             cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
         
     @classmethod
@@ -54,16 +53,20 @@ class TestHttpClientBase:
     def client(self, timeout=None, **kwargs):
         timeout = timeout or self.timeout
         if self.with_proxy:
-            kwargs['proxy_info'] = {'http': self.proxy_uri}
+            kwargs['proxy_info'] = {'http': self.proxy_uri,
+                                    'https': self.proxy_uri,
+                                    'ws': self.proxy_uri,
+                                    'wss': self.proxy_uri}
         return HttpClient(timeout=timeout, **kwargs)
     
-    def _check_pool(self, http, response, available=1, processed=1, created=1,
-                    pools=1):
+    def _check_pool(self, http, response, available=1, processed=1,
+                    created=None, pools=1):
         #Test the connection pool
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
+            if created is None:
+                created = self._created_connections
             pool = http.connection_pools[response.current_request.key]
-            #self.assertEqual(pool.concurrent_connections, 0)
             self.assertEqual(pool.received, created)
             self.assertEqual(pool.available_connections, available)
             if available == 1:
@@ -78,11 +81,39 @@ class TestHttpClientBase:
         
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-
+    
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(str(response), '200 OK')
+        self.assertTrue('content-length' in response.headers)
+        content = response.get_content()
+        size = response.headers['content-length']
+        self.assertEqual(len(content), int(size))
+
+class f:
+    def test_too_many_redirects(self):
+        http = self.client()
+        response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
+        # do this so that the test suite does not fail on the test
+        try:
+            yield response.on_finished
+        except TooManyRedirects:
+            pass
+        history = response.history
+        self.assertEqual(len(history), 2)
+        self.assertTrue(history[0].url.endswith('/redirect/5'))
+        self.assertTrue(history[1].url.endswith('/redirect/4'))
+
+class d:
+    def test_home_page(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(str(response), '200 OK')
+        self.assertTrue('content-length' in response.headers)
+        content = response.get_content()
+        size = response.headers['content-length']
+        self.assertEqual(len(content), int(size))
 
     def test_request_object(self):
         http = self.client()
@@ -240,9 +271,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = http.post(self.httpbin('post'), encode_multipart=False,
-                             data=data)
-        yield response.on_finished
+        response = yield http.post(self.httpbin('post'), encode_multipart=False,
+                                   data=data).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.response, 'OK')
         result = response.content_json()

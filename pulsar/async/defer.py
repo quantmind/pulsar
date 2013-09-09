@@ -791,7 +791,9 @@ a callable which accept one argument only.'''
         elif event in self.MANY_TIMES_EVENTS:
             self.MANY_TIMES_EVENTS[event].append(callback)
         else:
+            callback = None
             logger().warning('unknown event "%s" for %s', event, self)
+        return callback
         
     def fire_event(self, event, event_data=NOTHING, sender=None):
         """Dispatches ``event_data`` to the ``event`` listeners.
