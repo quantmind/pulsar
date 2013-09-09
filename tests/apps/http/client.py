@@ -1,4 +1,6 @@
 '''Tests asynchronous HttpClient.'''
+import os
+
 from pulsar import send, is_failure, NOT_DONE
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
@@ -11,6 +13,7 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
 class TestHttpClientBase:
     app = None
     with_proxy = False
+    with_tls = False
     proxy_app = None
     timeout = 10
     
@@ -18,13 +21,21 @@ class TestHttpClientBase:
     def setUpClass(cls):
         # Create the HttpBin server by sending this request to the arbiter
         from examples.proxyserver.manage import server as pserver
-        from examples.httpbin.manage import server
+        from examples.httpbin import manage
+        server = manage.server
         concurrency = cls.cfg.concurrency
+        if cls.with_tls:
+            base_path = os.path.abspath(os.path.dirname(manage.__file__))
+            key_file = os.path.join(base_path, 'server.key')
+            cert_file = os.path.join(base_path, 'server.crt')
+        else:
+            key_file, cert_file = None, None
         s = server(bind='127.0.0.1:0', concurrency=concurrency,
                    name='httpbin-%s' % cls.__name__.lower(),
-                   keep_alive=30)
+                   keep_alive=30, key_file=key_file, cert_file=cert_file)
         cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://%s:%s' % cls.app.address
+        bits = ('https' if cls.with_tls else 'http',) + cls.app.address
+        cls.uri = '%s://%s:%s' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
@@ -67,6 +78,11 @@ class TestHttpClientBase:
         
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
+
+    def test_home_page(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        self.assertEqual(str(response), '200 OK')
 
     def test_request_object(self):
         http = self.client()
@@ -360,32 +376,5 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         r = yield http.get(self.httpbin(
             'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 200)
-        
-class a:
-    
-    #### TO INCLUDE
-    def __test_far_expiration(self):
-        "Cookie will expire when an distant expiration time is provided"
-        response = Response(self.environ())
-        response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
-        datetime_cookie = response.cookies['datetime']
-        self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
-
-    def __test_max_age_expiration(self):
-        "Cookie will expire if max_age is provided"
-        response = Response(self.environ())
-        response.set_cookie('max_age', max_age=10)
-        max_age_cookie = response.cookies['max_age']
-        self.assertEqual(max_age_cookie['max-age'], 10)
-        self.assertEqual(max_age_cookie['expires'], http.cookie_date(time.time()+10))
-
-    def __test_httponly_cookie(self):
-        response = Response(self.environ())
-        response.set_cookie('example', httponly=True)
-        example_cookie = response.cookies['example']
-        # A compat cookie may be in use -- check that it has worked
-        # both as an output string, and using the cookie attributes
-        self.assertTrue('; httponly' in str(example_cookie))
-        self.assertTrue(example_cookie['httponly'])
         
     

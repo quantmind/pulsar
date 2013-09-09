@@ -1235,6 +1235,11 @@ def http_date(epoch_seconds=None):
     """
     return formatdate(epoch_seconds, usegmt=True)
 
+def make_nonce(timestamp=None):
+    """Generate pseudorandom number."""
+    timestamp = time.time()
+    return hexmd5(to_bytes('%d' % timestamp) + os.urandom(10))
+
 #################################################################### COOKIE
 def create_cookie(name, value, **kwargs):
     """Make a cookie from underspecified parameters.

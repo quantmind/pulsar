@@ -7,7 +7,7 @@ from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
 from pulsar.utils.pep import native_str
 
 __all__ = ['Auth',
-           'keyAuth',
+           'KeyAuth',
            'HTTPBasicAuth',
            'HTTPDigestAuth']
         

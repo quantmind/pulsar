@@ -114,7 +114,7 @@ from base64 import b64encode
 
 import pulsar
 from pulsar import is_failure
-from pulsar.utils.pep import native_str, is_string, to_bytes
+from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
@@ -202,6 +202,10 @@ class HttpRequest(pulsar.Request):
     def key(self):
         return (self.scheme, self.address, self.timeout)
     
+    @property
+    def ssl(self):
+        return self.scheme in ('https', 'wss')
+
     @property
     def scheme(self):
         '''The `uri scheme`_ of the HTTP resource.'''
@@ -349,6 +353,14 @@ class HttpRequest(pulsar.Request):
             self.data = query
             query = urlencode(query)
         self.query = query
+
+    if not ispy33:  #pragma     nocover
+        # Provide support for python < 3.3
+        def is_unverifiable(self):
+            return self.unverifiable
+
+        def get_origin_req_host(self):
+            return self.origin_req_host
         
         
 class HttpResponse(pulsar.ProtocolConsumer):
@@ -735,6 +747,11 @@ class HttpClient(pulsar.Client):
         '''
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
+    def add_oauth2(self, client_id, client_secret):
+        self.bind_event('pre_request', OAuth2(client_id, client_secret))
+    
+    #    INTERNALS
+    
     def get_headers(self, request, headers):
         #Returns a :class:`Header` obtained from combining
         #:attr:`headers` with *headers*. Can handle websocket requests.

@@ -1,25 +1,38 @@
-from pulsar.utils.httpurl import HttpRedirect, urlencode, to_bytes
+from ouathlib import oauth2
 
-from .oauth1 import OAuth
-from .utils import parse_qs
+from pulsar.utils.httpurl import urlencode, to_bytes
+
+from .oauth1 import OAuth, parse_qs
 
 
 class OAuth2(OAuth):
     '''OAuth version 2. This is a two legs authorisation process with the
-aim to obtain an access token used to sign requests.
+    aim to obtain an access token used to sign requests.
 
-* The client requests authorization from the resource owner. The client
-  receives an authorization grant which is a credential representing the
-  resource owner's authorization.
-* The client requests an access token by authenticating with the
-  authorization server and presenting the authorization grant.
+    * The client requests authorization from the resource owner. The client
+      receives an authorization grant which is a credential representing the
+      resource owner's authorization.
+    * The client requests an access token by authenticating with the
+      authorization server and presenting the authorization grant.
 
-Check oauth2_ for more information.
+    Check oauth2_ for more information.
 
-.. specification: http://tools.ietf.org/html/draft-ietf-oauth-v2
-.. oauth2: http://oauth.net/'''
-    default_scope = ''
-
+    .. specification: http://tools.ietf.org/html/draft-ietf-oauth-v2
+    .. oauth2: http://oauth.net/
+    '''
+    def __init__(self, client):
+        self._client = client
+    
+    @classmethod
+    def client(cls, client_id, **params):
+        client = oauth2.Client(client_id, **params)
+        return cls(client)
+        
+    @classmethod
+    def webclient(cls, client_id, **params):
+        client = oauth2.WebApplicationClient(client_id, **params)
+        return cls(client)
+    
     @property
     def version(self):
         return '2.0'

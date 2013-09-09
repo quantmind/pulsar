@@ -1,12 +1,13 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
-import pickle
+import time
 import sys
 from datetime import datetime, timedelta
 
 import pulsar
-from pulsar.utils.httpurl import range, zip
+from pulsar.utils.pep import range, zip, pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
+from pulsar.apps.wsgi.utils import cookie_date
 from pulsar.apps.test import unittest
 
 
@@ -55,7 +56,17 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertEqual(r.content, ())
         self.assertEqual(list(r), [])
         self.assertRaises(RuntimeError, list, r)
-        
+
+    def test_parse_authorization_header(self):
+        parse = wsgi.parse_authorization_header
+        self.assertEqual(parse(''), None)
+        self.assertEqual(parse('csdcds'), None)
+        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
+        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
+        auths = http.HTTPBasicAuth('pippo', 'pluto').header()
+        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
+    
+    #### TO INCLUDE
     def testCookies(self):
         response = wsgi.WsgiResponse()
         expires = datetime.now() + timedelta(seconds=3600)
@@ -67,14 +78,29 @@ class WsgiResponseTests(unittest.TestCase):
         response.delete_cookie('bla')
         self.assertTrue('bla' in response.cookies)
 
-    def test_parse_authorization_header(self):
-        parse = wsgi.parse_authorization_header
-        self.assertEqual(parse(''), None)
-        self.assertEqual(parse('csdcds'), None)
-        self.assertEqual(parse('csdcds cbsdjchbjsc'), None)
-        self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
-        auths = http.HTTPBasicAuth('pippo', 'pluto').header()
-        self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
+    def test_far_expiration(self):
+        "Cookie will expire when an distant expiration time is provided"
+        response = wsgi.WsgiResponse()
+        response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
+        datetime_cookie = response.cookies['datetime']
+        self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
+
+    def test_max_age_expiration(self):
+        "Cookie will expire if max_age is provided"
+        response = wsgi.WsgiResponse()
+        response.set_cookie('max_age', max_age=10)
+        max_age_cookie = response.cookies['max_age']
+        self.assertEqual(max_age_cookie['max-age'], 10)
+        self.assertEqual(max_age_cookie['expires'], cookie_date(time.time()+10))
+
+    def test_httponly_cookie(self):
+        response = wsgi.WsgiResponse()
+        response.set_cookie('example', httponly=True)
+        example_cookie = response.cookies['example']
+        # A compat cookie may be in use -- check that it has worked
+        # both as an output string, and using the cookie attributes
+        self.assertTrue('; httponly' in str(example_cookie))
+        self.assertTrue(example_cookie['httponly'])
         
         
 class testWsgiApplication(unittest.TestCase):

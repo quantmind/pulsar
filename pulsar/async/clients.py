@@ -39,6 +39,10 @@ the appropriate :class:`ConnectionPool` for the client request.
         '''Flag indicating if the request is finished.'''
         return self._finished
     
+    @property
+    def ssl(self):
+        return False
+    
     def encode(self):
         raise NotImplementedError
     
@@ -47,7 +51,8 @@ the appropriate :class:`ConnectionPool` for the client request.
 remote server is needed.'''
         res = event_loop.create_connection(lambda: connection,
                                            self.address[0],
-                                           self.address[1])
+                                           self.address[1],
+                                           ssl=self.ssl)
         return res.add_callback(self._connection_made)
         
     def _connection_made(self, transport_protocol):
