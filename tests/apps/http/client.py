@@ -36,7 +36,7 @@ class TestHttpClientBase:
                    keep_alive=30, key_file=key_file, cert_file=cert_file)
         cls.app = yield send('arbiter', 'run', s)
         bits = ('https' if cls.with_tls else 'http',) + cls.app.address
-        cls.uri = '%s://%s:%s' % bits
+        cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
@@ -75,7 +75,7 @@ class TestHttpClientBase:
             
     def httpbin(self, *suffix):
         if suffix:
-            return self.uri + '/' + '/'.join(suffix)
+            return self.uri + '/'.join(suffix)
         else:
             return self.uri
         

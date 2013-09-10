@@ -129,6 +129,7 @@ When a new :class:`SocketTransport` is created, it adds a read handler
 to the :attr:`Transport.event_loop` and notifies the :attr:`Transport.protocol`
 that the connection is available via the :meth:`BaseProtocol.connection_made`
 method.'''
+    SocketError = socket.error
     def __init__(self, event_loop, sock, protocol, extra=None,
                  max_buffer_size=None, read_chunk_size=None):
         self._protocol = protocol
@@ -137,7 +138,7 @@ method.'''
         self._sock_fd = sock.fileno()
         self._event_loop = event_loop
         self._closing = False
-        self._extra = extra
+        self._extra = extra or {}
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._conn_lost = 0
@@ -146,10 +147,9 @@ method.'''
         self._do_handshake()
     
     def __repr__(self):
-        sock = self._sock
-        if self._sock:
-            address = sock.getsockname()
-            family = FAMILY_NAME.get(sock.family, 'UNKNOWN')
+        address = self.address
+        if address:
+            family = FAMILY_NAME.get(self._sock.family, 'UNKNOWN')
             return '%s %s' % (family, nice_address(address))
         else:
             return '<closed>'
@@ -187,7 +187,10 @@ method.'''
     @property
     def address(self):
         if self._sock:
-            return self._sock.getsockname()
+            try:
+                return self._sock.getsockname()
+            except (OSError, socket.error):
+                return None
     
     @property
     def event_loop(self):

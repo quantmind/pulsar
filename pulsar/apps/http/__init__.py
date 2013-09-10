@@ -9,6 +9,7 @@ Features
 ===========
 * No dependencies
 * Similar API to requests_
+* TLS/SSL support
 * Cookie support
 * :ref:`Basic and digest authentication <http-authentication>`
 * :ref:`Streaming of course <http-streaming>`
@@ -51,6 +52,21 @@ Basic authentication can be added by simply invoking the
 :meth:`HttpClient.add_basic_authentication` method, while digest authentication
 via the :meth:`HttpClient.add_digest_authentication` method.
 
+TLS/SSL
+~~~~~~~~~~~~~~~~~~~
+Supported out of the box::
+
+    client = HttpClient()
+    client.get('https://github.com/timeline.json')
+
+
+you can include certificate file and key too, either
+to a :class:`HttpClient` or to a specific request:
+
+    client = HttpClient(certkey='public.key')
+    res1 = client.get('https://github.com/timeline.json')
+    res2 = client.get('https://github.com/timeline.json', certkey='another.key')
+    
 .. _http-streaming:
 
 Streaming
@@ -117,7 +133,7 @@ from pulsar import is_failure
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
-from pulsar.utils.internet import CERT_NONE
+from pulsar.utils.internet import CERT_NONE, SSLContext
 from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
@@ -132,6 +148,7 @@ from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
+tls_schemes = ('https', 'wss') 
 
 
 class TooManyRedirects(Exception):
@@ -161,6 +178,8 @@ class HttpRequest(pulsar.Request):
     '''
     full_url = None
     _proxy = None
+    _ssl = None
+    _tunnel = None
     _tunnel_headers = None
     def __init__(self, client, url, method, headers, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
@@ -179,9 +198,7 @@ class HttpRequest(pulsar.Request):
                 # Using this request to create a tunnel (SSL tunneling)
                 self._netloc = self.path
                 self.path = ''
-                if not self._scheme:
-                    self._scheme = 'https'
-        self.host_only, self.port = get_hostport(self._scheme, self._netloc)
+        self.set_proxy(None)
         self.history = history or []
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
@@ -197,28 +214,22 @@ class HttpRequest(pulsar.Request):
         self.source_address = source_address
         self.new_parser()
         self.headers = client.get_headers(self, headers)
+        if self._scheme in tls_schemes:
+            self._ssl = client.ssl_context(**ignored)
     
     @property
     def address(self):
         '''``(host, port)`` tuple of the HTTP resource'''
-        return (self.host_only, int(self.port))
-    
-    @property
-    def key(self):
-        return (self.scheme, self.address, self.timeout)
+        return (self.host, int(self.port))
     
     @property
     def ssl(self):
-        return self.scheme in ('https', 'wss')
+        '''Context for TLS connections.'''
+        return False if self._proxy else self._ssl
 
     @property
-    def scheme(self):
-        '''The `uri scheme`_ of the HTTP resource.'''
-        return self._proxy.scheme if self._proxy else self._scheme
-    
-    @property
-    def tunneling(self):
-        return bool(self._tunnel)
+    def key(self):
+        return (self.scheme, self.address, self.timeout)
     
     @property
     def tunnel_headers(self):
@@ -271,10 +282,24 @@ class HttpRequest(pulsar.Request):
     def new_parser(self):
         self.parser = http_parser(kind=1, decompress=self.decompress)
         
-    def set_proxy(self, scheme, host):
-        self.host_only, self.port = get_hostport(scheme, host)
-        self._proxy = scheme_host(scheme, host)
+    def set_proxy(self, scheme, *host):
+        if not host and scheme is None:
+            self._proxy = None
+            self._set_hostport(self._scheme, self._netloc)
+            self.scheme = self._scheme
+        else:
+            le = 2 + len(host)
+            if not le == 3:
+                raise TypeError(
+                    'set_proxy() takes exactly three arguments (%s given)' % le)
+            self._proxy = scheme_host(scheme, host[0])
+            if not self._ssl:
+                self.scheme = scheme
+            self._set_hostport(scheme, host[0])
     
+    def _set_hostport(self, scheme, host):
+        self.host, self.port = get_hostport(scheme, host)
+        
     def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
 
@@ -346,6 +371,12 @@ class HttpRequest(pulsar.Request):
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
         
+    def copy(self):
+        r = copy(self)
+        r.__dict__.pop('_finished', None)
+        r.new_parser()
+        return r
+
     def all_params(self):
         d = self.__dict__.copy()
         d.pop('client')
@@ -553,7 +584,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
             return True
         elif self.status_code == 101:
             # Upgrading response handler
-            return client.upgrade(self)
+            protocol_factory = partial(WebSocketResponse, self)
+            return client.upgrade(self.connection, protocol_factory)
     
 
 class HttpClient(pulsar.Client):
@@ -621,7 +653,7 @@ class HttpClient(pulsar.Client):
 
     def setup(self, proxy_info=None, cache=None, headers=None,
               encode_multipart=True, multipart_boundary=None,
-              key_file=None, cert_file=None, cert_reqs=CERT_NONE,
+              keyfile=None, certfile=None, cert_reqs=CERT_NONE,
               ca_certs=None, cookies=None, store_cookies=True,
               max_redirects=10, decompress=True, version=None,
               websocket_handler=None):
@@ -643,10 +675,11 @@ class HttpClient(pulsar.Client):
         self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary or choose_boundary()
         self.websocket_handler = websocket_handler
-        self.https_defaults = {'key_file': key_file,
-                               'cert_file': cert_file,
+        self.https_defaults = {'keyfile': keyfile,
+                               'certfile': certfile,
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
+        # Handle Tunneling
         self.bind_event('pre_request', Tunneling())
 
     @property
@@ -789,9 +822,16 @@ class HttpClient(pulsar.Client):
             d.update(headers)
         return d
     
+    def ssl_context(self, **kwargs):
+        params = self.https_defaults.copy()
+        for name in kwargs:
+            if name in params:
+                params[name] = kwargs[name]
+        return SSLContext(**params)
+
     def set_proxy(self, request):
         if request.scheme in self.proxy_info:
-            hostonly = request.host_only
+            hostonly = request.host
             no_proxy = [n for n in self.proxy_info.get('no','').split(',') if n]
             if not any(map(hostonly.endswith, no_proxy)):
                 p = urlparse(self.proxy_info[request.scheme])
@@ -802,17 +842,4 @@ class HttpClient(pulsar.Client):
         if response and response.headers:
             return response.headers.has('connection', 'keep-alive')
         return False
-    
-    def upgrade(self, protocol):
-        '''Upgrade the protocol to another one'''
-        upgrade = protocol.headers['upgrade']
-        callable = getattr(self, 'upgrade_%s' % upgrade, None)
-        if not callable:
-            raise pulsar.ProtocolError
-        return callable(protocol.connection, protocol)
-    
-    def upgrade_websocket(self, connection, handshake):
-        #Upgrade the *protocol* to a websocket response. Invoked
-        #by the :meth:`upgrade` method.
-        return WebSocketResponse(connection, handshake)
     

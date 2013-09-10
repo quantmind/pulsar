@@ -3,8 +3,10 @@ import math
 from functools import partial, reduce
 from threading import Lock
 
+from pulsar import ProtocolError
 from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.internet import is_socket_closed
+
 from .defer import is_failure, multi_async
 
 from .protocols import EventHandler, Producer
@@ -445,16 +447,20 @@ whether the *connection* can be reused in the future or it must be disposed.
         if key:
             self.connection_pools.pop(key)
             
-    def upgrade(self, connection, protocol_factory, result=None):
-        '''Upgrade an existing connection with a new protocol factory.
-Return the upgraded connection only if the :attr:`Connection.current_consumer`
-is available.'''
+    def upgrade(self, connection, protocol_factory=None, result=None):
+        '''Upgrade an existing ``connection`` with a new ``protocol_factory``.
+
+        Return the upgraded connection only if the
+        :attr:`Connection.current_consumer` is available. It makes sure the
+        connection is not released to the connection pool.
+        '''
         protocol = connection.current_consumer
         if protocol:
+            if not protocol_factory:
+                raise ProtocolError
             protocol.release_connection = False
             protocol.finished(result)
             connection.upgrade(protocol_factory)
-            return connection
     
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time

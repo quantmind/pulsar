@@ -2,7 +2,7 @@
 to manipulate the original request headers. If the header middleware is
 an empty list, the proxy passes requests and responses unmodified.
 This is an implementation for a forward-proxy which can be used
-to retrieve from any type of source from the Internet.
+to retrieve any type of source from the Internet.
 
 To run the server::
 
@@ -40,7 +40,7 @@ try:
 except ImportError:
     sys.path.append('../../')
 
-from pulsar import async, HttpException, Queue
+from pulsar import async, HttpException, Queue, logger
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -88,11 +88,14 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
         #
+        # Handle Connect for Tunneling
+        # Get client-server HTTP connection from environ
         if method == 'CONNECT':
             #get the connection from the environment
             client_connection = environ['pulsar.connection']
+            # Make sure the connection is keept alive!
             client_connection.current_consumer.keep_alive = True
-            client_connection.upgrade(partial(TunnelProtocol, response))
+            client_connection.upgrade(partial(DownStreamTunnel, response))
             response.connection.bind_event('connection_made',
                 wsgi_response.start_tunneling)
         response.on_finished.add_errback(partial(wsgi_response.error, uri))
@@ -170,22 +173,43 @@ class ProxyResponse(object):
         # send empty byte so that headers are sent
         yield self.queue.put(b'')
     
-    def stop_tunneling(self, response=None):
-        pass
     
+class DownStreamTunnel(pulsar.ProtocolConsumer):
+    ''':class:`ProtocolConsumer` handling encripted messages from downstream.
     
-class TunnelProtocol(pulsar.ProtocolConsumer):
+    This consumer is created as an upgrade of the standard Http protocol
+    consumer, once encripted data arrives from the downstream client.
     
+    .. attribute:: upstream
+    
+        Connection with the upstream server
+    '''
     def __init__(self, upstream, connection):
-        super(TunnelProtocol, self).__init__(connection)
-        self.upstream = upstream
+        super(DownStreamTunnel, self).__init__(connection)
+        self.upstream = upstream.connection
+        consumer_factory =  partial(UpstreamTunnel, connection)
+        upstream.producer.upgrade(self.upstream, consumer_factory)
         
     def data_received(self, data):
-        pass
+        # Received data from the downstream part of the tunnel.
+        # Send the data to the upstream server
+        self.upstream.transport.write(data)
         
+
+class UpstreamTunnel(pulsar.ProtocolConsumer):
+    headers = None
+    def __init__(self, downstream, connection):
+        self.downstream = downstream
+        super(UpstreamTunnel, self).__init__(connection)
         
+    def data_received(self, data):
+        # Got data from the upstream server.
+        # Send it back to the downstream client
+        self.downstream.transport.write(data)
                 
+
 def server(name='proxy-server', headers_middleware=None, **kwargs):
+    '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
         headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
     wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)

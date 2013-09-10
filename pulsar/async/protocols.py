@@ -72,30 +72,33 @@ class TransportProxy(object):
         
         
 class ProtocolConsumer(EventHandler):
-    '''The protocol consumer is one most important
-:ref:`pulsar primitive <pulsar_primitives>`. It is responsible for receiving
-incoming data from a the :meth:`Protocol.data_received` method implemented
-in :class:`Connection`. It is used to decode and producing responses, i.e.
-writing back to the client or server via
-the :attr:`transport` attribute. The only method to implement should
-be :meth:`Protocol.data_received`.
-
-It has one :ref:`one time events <one-time-event>`:
-
-* ``finish`` fired when this :class:`ProtocolConsumer` has finished consuming
-  data and a response/exception is available. The :attr:`on_finished`
-  attribute is the :class:`Deferred` called back when this event occurs.
-
-and four :ref:`many times events <many-times-event>`:
-
-* ``data_received`` fired each time new data is received by this
-  :class:`ProtocolConsumer` but not yet processed.
-* ``data_processed`` fired each time new data is consumed by
-  this :class:`ProtocolConsumer`.
-* ``pre_request`` fired each time a new request is received (for servers) or
-    sent (for clients).
-* ``post_request`` fired when a request is done.
-'''
+    '''Consume data for a protocol.The protocol consumer is one most important
+    :ref:`pulsar primitive <pulsar_primitives>`.
+    
+    It is responsible for receiving incoming data from a the
+    :meth:`Protocol.data_received` method implemented
+    in :class:`Connection`. It is used to decode and producing responses, i.e.
+    writing back to the client or server via
+    the :attr:`transport` attribute. The only method to implement should
+    be :meth:`Protocol.data_received`.
+    
+    It has one :ref:`one time events <one-time-event>`:
+    
+    * ``finish`` fired when this :class:`ProtocolConsumer` has finished consuming
+      data. The :attr:`on_finished` attribute is the :class:`Deferred` called
+      back when this event occurs.
+    
+    and four :ref:`many times events <many-times-event>`:
+    
+    * ``data_received`` fired when new data is received but not yet processed
+      (before :meth:`data_received` method)
+    * ``data_processed`` fired when new data has been is consumed (after
+      :meth:`data_received` method)
+    * ``pre_request`` fired each time a new request is received (for servers) or
+      sent (for clients). This occurs just before the :meth:`start_request`
+      method.
+    * ``post_request`` fired when a request is done.
+    '''
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('data_received', 'data_processed',
                          'pre_request', 'post_request')
@@ -163,24 +166,25 @@ and four :ref:`many times events <many-times-event>`:
     @property
     def on_finished(self):
         '''A :class:`Deferred` called once the :class:`ProtocolConsumer` has
-        finished consuming protocol. It is called by the
-        :attr:`connection` before disposing of this consumer. It is
-        a proxy of ``self.event('finish')``.'''
+        finished consuming protocol. A shortcut for ``self.event('finish')``.
+        '''
         return self.event('finish')
     
     def start_request(self):
-        '''Invoked by the :meth:`new_request` method to kick start the
-request with remote server. For server :class:`ProtocolConsumer` this
-method is not invoked at all.
-
-**For clients this method should be implemented** and it is critical method
-where errors caused by stale socket connections can arise.
-**This method should not be called directly.** Use :meth:`new_request`
-instead. Tipically one writes some data from the :attr:`current_request`
-into the transport. Something like this::
-
-    self.transport.write(self.current_request.encode())
-'''
+        '''Starts a new request.
+        
+        Invoked by the :meth:`new_request` method to kick start the
+        request with remote server. For server :class:`ProtocolConsumer` this
+        method is not invoked at all.
+        
+        **For clients this method should be implemented** and it is critical
+        method where errors caused by stale socket connections can arise.
+        **This method should not be called directly.** Use :meth:`new_request`
+        instead. Tipically one writes some data from the :attr:`current_request`
+        into the transport. Something like this::
+        
+            self.transport.write(self.current_request.encode())
+        '''
         pass
     
     def new_request(self, request=None):
@@ -323,13 +327,13 @@ class Connection(EventHandler, Protocol, TransportProxy):
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
     MANY_TIMES_EVENTS = ('pre_request', 'post_request')
     #
+    _current_consumer = None
+    _idle_timeout = None
     def __init__(self, session, timeout, consumer_factory, producer):
         super(Connection, self).__init__()
         self._session = session 
         self._processed = 0
         self._timeout = timeout
-        self._idle_timeout = None
-        self._current_consumer = None
         self._consumer_factory = consumer_factory
         self._producer = producer
         
@@ -350,10 +354,11 @@ class Connection(EventHandler, Protocol, TransportProxy):
     
     @property
     def address(self):
-        try:            
-            return self._transport._extra['addr']
-        except Exception:
-            return None
+        if self._transport:
+            addr = self._transport._extra.get('addr')
+            if not addr:
+                addr = self._transport.address
+            return addr
         
     @property
     def logger(self):
@@ -400,9 +405,10 @@ class Connection(EventHandler, Protocol, TransportProxy):
         self._processed += 1
     
     def connection_made(self, transport):
-        '''Override :class:`BaseProtocol.connection_made` by setting
-the transport, firing the ``connection_made`` event and adding a timeout
-for idel connections.'''
+        '''Override :class:`BaseProtocol.connection_made`.
+
+        Sets the transport, fire the ``connection_made`` event and adds
+        a :attr:`timeout` for idle connections.'''
         # Implements protocol connection_made
         self._transport = transport
         # let everyone know we have a connection with endpoint
@@ -447,10 +453,11 @@ It performs these actions in the following order:
                 log_failure(exc)
                              
     def upgrade(self, consumer_factory):
-        '''Update the :attr:`consumer_factory` attribute with a new
-:class:`ProtocolConsumer` factory. This function can be used when the protocol
-specification changes during a response (an example is a WebSocket
-response).'''
+        '''Upgrade the :attr:`consumer_factory` attribute.
+        
+        This function can be used when the protocol specification changes
+        during a response (an example is a WebSocket response, or a HTTP/HTTPS
+        tunneling).'''
         self._consumer_factory = consumer_factory
     
     ############################################################################

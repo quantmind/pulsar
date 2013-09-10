@@ -42,7 +42,6 @@ The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
-    SocketError = socket.error
     
     def _do_handshake(self):
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
@@ -108,7 +107,7 @@ be accumulating data in an internal buffer.'''
         """Write a list (or any iterable) of data bytes to the transport."""
         for data in list_of_data:
             self.write(data)
-    
+
     def _write_continue(self, e):
         return e.args[0] in TRY_WRITE_AGAIN
         
@@ -180,10 +179,11 @@ class SocketStreamSslTransport(SocketStreamTransport):
     SocketError = getattr(ssl, 'SSLError', None)
     
     def __init__(self, event_loop, rawsock, protocol, sslcontext,
-                 server_side=True, **kwargs):
+                 server_side=True, server_hostname=None, **kwargs):
         sslcontext = ssl_context(sslcontext, server_side=server_side)
         sslsock = sslcontext.wrap_socket(rawsock, server_side=server_side,
-                                         do_handshake_on_connect=False)
+                                         do_handshake_on_connect=False,
+                                         server_hostname=server_hostname)
         self._rawsock = rawsock
         self._handshake_reading = False
         self._handshake_writing = False
@@ -482,6 +482,7 @@ def sock_accept(event_loop, sock, future=None):
     return future
 
 def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
+    '''Used by start_serving.'''
     try:
         for i in range(NUMBER_ACCEPTS):
             try:

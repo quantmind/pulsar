@@ -242,9 +242,12 @@ class SSLContext:
     
     def wrap_socket(self, sock, server_side=False, do_handshake_on_connect=True,
                     suppress_ragged_eofs=True, server_hostname=None):
-        server_hostname = self.server_hostname or server_hostname
         if not ssl:
             raise NotImplementedError
+        server_hostname = self.server_hostname or server_hostname
+        if not HAS_SNI:
+            server_hostname = None
+            
         if _SSLContext:
             wrap = self._wrap3k(sock, server_hostname)
         else:
