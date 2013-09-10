@@ -87,7 +87,12 @@ An headers middleware is a callable which accepts two parameters, the wsgi
                                             data=stream.getvalue(),
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
+        #
         if method == 'CONNECT':
+            #get the connection from the environment
+            client_connection = environ['pulsar.connection']
+            client_connection.current_consumer.keep_alive = True
+            client_connection.upgrade(partial(TunnelProtocol, response))
             response.connection.bind_event('connection_made',
                 wsgi_response.start_tunneling)
         response.on_finished.add_errback(partial(wsgi_response.error, uri))
@@ -156,19 +161,29 @@ class ProxyResponse(object):
                 yield header, value
     
     def start_tunneling(self, connection):
-        '''Tunneling callback.
+        '''Start the tunnel.
         
         This is a callback fired once a connection with target server is
         established and this proxy is acting as tunnel for a TSL server.'''
         self.start_response('200 Connection established', [])
-        response = connection.producer
-        response.bind_event('finish', lambda r: connection.close())
+        self._done = True
         # send empty byte so that headers are sent
         yield self.queue.put(b'')
     
     def stop_tunneling(self, response=None):
         pass
     
+    
+class TunnelProtocol(pulsar.ProtocolConsumer):
+    
+    def __init__(self, upstream, connection):
+        super(TunnelProtocol, self).__init__(connection)
+        self.upstream = upstream
+        
+    def data_received(self, data):
+        pass
+        
+        
                 
 def server(name='proxy-server', headers_middleware=None, **kwargs):
     if headers_middleware is None:

@@ -23,23 +23,18 @@ class Tunneling:
     def __call__(self, response):
         # Called before sending the request
         request = response.current_request
-        history = request.history
-        if request._requires_tunneling and history:
-            if history[-1].current_request._requires_tunneling:
-                history.pop()
-                request._requires_tunneling = False
-        if request._requires_tunneling:
-            callback = getattr(response, '_tunneling_callback', None)
-            if not callback:
-                response._tunneling_callback = response.bind_event(
-                    'on_headers', self.on_headers)
+        if request._scheme in ('https', 'wss') and not request.ssl:
+            first_line = 'CONNECT %s HTTP/1.0\r\n' % request._netloc
+            headers = bytes(request.tunnel_headers)
+            response._data_sent = b''.join((first_line.encode('ascii'),
+                                            headers))
+            response.bind_event('on_headers', self.on_headers)
+            response.transport.write(response._data_sent)
             
     def on_headers(self, response):
         '''Called back once the headers are ready.'''
         request = response.current_request
-        if request._requires_tunneling and response.status_code == 200:
-            print(request.full_url)
-            print(request.history)
-            request.client.request(request.method, request.full_url,
-                                   response=response)
+        if response.status_code == 200 and response._data_sent[:7] == 'CONNECT':
+            response._data_sent = request.encode()
+            response.transport.write(response._data_sent)
         

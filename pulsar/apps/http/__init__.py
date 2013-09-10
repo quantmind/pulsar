@@ -162,7 +162,6 @@ class HttpRequest(pulsar.Request):
     full_url = None
     _proxy = None
     _tunnel_headers = None
-    _requires_tunneling = False
     def __init__(self, client, url, method, headers, data=None, files=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  timeout=None, hooks=None, history=None, source_address=None,
@@ -267,8 +266,6 @@ class HttpRequest(pulsar.Request):
         if not self._proxy:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
-        elif self._requires_tunneling:
-            return 'CONNECT %s HTTP/1.0' % self._netloc
         return '%s %s %s' % (self.method, url, self.version)
     
     def new_parser(self):
@@ -277,10 +274,8 @@ class HttpRequest(pulsar.Request):
     def set_proxy(self, scheme, host):
         self.host_only, self.port = get_hostport(scheme, host)
         self._proxy = scheme_host(scheme, host)
-        if self._scheme in ('https', 'wss') and not self.ssl:
-            self._requires_tunneling = True
     
-    def encode(self, response):
+    def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
 
         Called by :class:`HttpResponse` when it needs to encode this
@@ -288,23 +283,18 @@ class HttpRequest(pulsar.Request):
         '''
         if self.method == 'CONNECT':    # this is SSL tunneling
             return b''
-        if self._requires_tunneling:
-            first_line = self.first_line()
-            headers = self.tunnel_headers
-            body = None
-        else:
             # Call body before fist_line in case the query is changes.
-            self.body = body = self.encode_body()
-            first_line = self.first_line()
-            if body:
-                self.headers['content-length'] = str(len(body))
-                if self.wait_continue:
-                    self.headers['expect'] = '100-continue'
-                    body = None
-            headers = self.headers
-            if self.unredirected_headers:
-                headers = self.unredirected_headers.copy()
-                headers.update(self.headers)
+        self.body = body = self.encode_body()
+        first_line = self.first_line()
+        if body:
+            self.headers['content-length'] = str(len(body))
+            if self.wait_continue:
+                self.headers['expect'] = '100-continue'
+                body = None
+        headers = self.headers
+        if self.unredirected_headers:
+            headers = self.unredirected_headers.copy()
+            headers.update(self.headers)
         buffer = [first_line.encode('ascii'), b'\r\n',  bytes(headers)]
         if body:
             buffer.append(body)
@@ -394,7 +384,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _tunnel_host = None
     _has_proxy = False
     _content = None
-
+    _data_sent = None
     MANY_TIMES_EVENTS = ('data_received', 'data_processed', 'on_headers',
                          'pre_request', 'post_request')
     
@@ -496,7 +486,9 @@ class HttpResponse(pulsar.ProtocolConsumer):
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
     def start_request(self):
-        self.transport.write(self.current_request.encode(self))
+        if not self._data_sent:
+            self._data_sent = self.current_request.encode()
+            self.transport.write(self._data_sent)
         
     def data_received(self, data):
         request = self.current_request
