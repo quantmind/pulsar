@@ -214,7 +214,10 @@ class ProtocolConsumer(EventHandler):
             self._current_request = ServerRequest()
     
     def request_done(self, exc=None):
-        '''Call this method when done with the :attr:`current_request`.'''
+        '''Call this method when done with the :attr:`current_request`.
+
+        It is the responsability of a :class:`ProtocolConsumer` to call this
+        method. The :meth:`finished` method always invokes this method.'''
         if self._current_request and not getattr(
             self._current_request, '_finished', False):
             self._current_request._finished = True
@@ -349,11 +352,16 @@ class Connection(EventHandler, Protocol, TransportProxy):
     
     @property
     def session(self):
-        '''Connection session number. Created by the :attr:`producer`.'''
+        '''Connection session number.
+
+        Passed during initialisation by the :attr:`producer`. An integer
+        representing the number of separate connections has created at the
+        moment of creating this :class:`Connection`.'''
         return self._session
     
     @property
     def address(self):
+        '''The address of this connection.'''
         if self._transport:
             addr = self._transport._extra.get('addr')
             if not addr:
@@ -408,9 +416,14 @@ class Connection(EventHandler, Protocol, TransportProxy):
         '''Override :class:`BaseProtocol.connection_made`.
 
         Sets the transport, fire the ``connection_made`` event and adds
-        a :attr:`timeout` for idle connections.'''
-        # Implements protocol connection_made
+        a :attr:`timeout` for idle connections.
+        '''
+        old_transport = self._transport
         self._transport = transport
+        if old_transport is not None:
+            self._cancel_timeout()  
+            if old_transport.sock == getattr(transport, 'rawsock', None):
+                return self._add_idle_timeout()
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
         self._add_idle_timeout()

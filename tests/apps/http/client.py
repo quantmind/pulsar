@@ -72,6 +72,12 @@ class TestHttpClientBase:
             if available == 1:
                 connection = tuple(pool._available_connections)[0]
                 self.assertEqual(connection.processed, processed)
+    
+    def _after(self, method, response):
+        '''Check for a after_%s % method to test the response.'''
+        method = getattr(self, 'after_%s' % method, None)
+        if method:
+            method(response)
             
     def httpbin(self, *suffix):
         if suffix:
@@ -90,30 +96,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         content = response.get_content()
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
-
-class f:
-    def test_too_many_redirects(self):
-        http = self.client()
-        response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
-        # do this so that the test suite does not fail on the test
-        try:
-            yield response.on_finished
-        except TooManyRedirects:
-            pass
-        history = response.history
-        self.assertEqual(len(history), 2)
-        self.assertTrue(history[0].url.endswith('/redirect/5'))
-        self.assertTrue(history[1].url.endswith('/redirect/4'))
-
-class d:
-    def test_home_page(self):
-        http = self.client()
-        response = yield http.get(self.httpbin()).on_finished
-        self.assertEqual(str(response), '200 OK')
-        self.assertTrue('content-length' in response.headers)
-        content = response.get_content()
-        size = response.headers['content-length']
-        self.assertEqual(len(content), int(size))
+        self.assertEqual(response.headers['connection'], 'Keep-Alive')
+        self._after('test_home_page', response)
 
     def test_request_object(self):
         http = self.client()
@@ -127,11 +111,7 @@ class d:
         self.assertEqual(request.headers.kind, 'client')
         self.assertEqual(request.unredirected_headers.kind, 'client')
         
-    def test_home_page(self):
-        http = self.client()
-        response = yield http.get(self.httpbin()).on_finished
-        self.assertEqual(str(response), '200 OK')
-        
+class f:  
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
         was passed by the client.

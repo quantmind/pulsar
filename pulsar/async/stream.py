@@ -190,6 +190,14 @@ class SocketStreamSslTransport(SocketStreamTransport):
         super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
                                                        protocol, **kwargs)
     
+    @property
+    def rawsock(self):
+        '''The raw socket.
+        
+        This is the socket not wrapped by the sslcontext.
+        '''
+        return self._rawsock
+    
     def _write_continue(self, e):
         return e.errno == ssl.SSL_ERROR_WANT_WRITE
         

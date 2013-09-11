@@ -232,6 +232,11 @@ class HttpRequest(pulsar.Request):
         return (self.scheme, self.address, self.timeout)
     
     @property
+    def proxy(self):
+        '''Proxy server for this request.'''
+        return self._proxy
+    
+    @property
     def tunnel_headers(self):
         '''Headers for HTTP CONNECT Tunneling.'''
         if self._tunnel_headers is None:
