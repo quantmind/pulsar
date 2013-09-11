@@ -50,6 +50,7 @@ if platform.is_windows:    #pragma    nocover
     from errno import WSAENETRESET as ENETRESET
     from errno import WSAETIMEDOUT as ETIMEDOUT
     from errno import WSAECONNREFUSED as ECONNREFUSED
+    from errno import WSAESHUTDOWN as ESHUTDOWN
     # No such thing as WSAENFILE, either.
     ENFILE = object()
     # Nor ENOMEM
@@ -59,7 +60,7 @@ else:
     from errno import EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,\
                       ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,\
                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,\
-                      EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED
+                      EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN
 
 ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
 TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
@@ -278,7 +279,9 @@ class SSLContext:
         else:
             return partial(context.wrap_socket, sock)
         
-        
+def is_tls(sock):
+    return hasattr(sock, 'keyfile')
+    
 def ssl_context(context, server_side=False):
     if not ssl:
         raise NotImplementedError

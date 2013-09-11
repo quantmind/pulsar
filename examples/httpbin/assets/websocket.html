@@ -3,7 +3,7 @@
 <head>
 <meta charset='utf-8'>
 <title>Websocket example in pulsar</title>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js"></script>
 <script>
 (function($) {
@@ -11,7 +11,7 @@
         var data = {},
             current_freq=0,
             next,
-            ws = new WebSocket("ws://%(HTTP_HOST)s/data"),
+            ws = new WebSocket("%(address)s"),
             freq = $('#frequency').change(function () {
                 var value = parseInt($(this).val());
                 if (value >= 0) {

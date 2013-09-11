@@ -5,71 +5,12 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
-from .defer import EventHandler, NOTHING, multi_async, log_failure
+from .defer import EventHandler, multi_async, log_failure
 from .internet import Protocol, logger
 
 
 __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer', 'Server']
 
-
-class ServerRequest:
-    _finished = False
-
-
-class TransportProxy(object):
-    '''Provides :class:`Transport` like methods and attributes.'''
-    _transport = None
-    
-    def __repr__(self):
-        if self._transport:
-            return self._transport.__repr__()
-        else:
-            return '<closed>'
-        
-    def __str__(self):
-        return self.__repr__()
-    
-    @property
-    def transport(self):
-        return self._transport
-    
-    @property
-    def event_loop(self):
-        if self._transport:
-            return self._transport.event_loop
-    
-    @property
-    def sock(self):
-        if self._transport:
-            return self._transport.sock
-    
-    @property
-    def address(self):
-        if self._transport:
-            return self._transport.address
-    
-    @property
-    def closing(self):
-        return self._transport.closing if self._transport else True
-    
-    @property
-    def closed(self):
-        return self._transport.closed if self._transport else True
-    
-    def fileno(self):
-        if self._transport:
-            return self._transport.fileno()
-    
-    def is_stale(self):
-        return self._transport.is_stale() if self._transport else True
-    
-    def close(self, async=True, exc=None):
-        if self._transport:
-            self._transport.close(async=async, exc=exc)
-        
-    def abort(self, exc=None):
-        self.close(async=False, exc=exc)
-        
         
 class ProtocolConsumer(EventHandler):
     '''Consume data for a protocol.The protocol consumer is one most important
@@ -79,46 +20,46 @@ class ProtocolConsumer(EventHandler):
     :meth:`Protocol.data_received` method implemented
     in :class:`Connection`. It is used to decode and producing responses, i.e.
     writing back to the client or server via
-    the :attr:`transport` attribute. The only method to implement should
-    be :meth:`Protocol.data_received`.
+    the :attr:`transport` attribute.
+
+    For server consumers, :meth:`data_received` is the only method to implement.
+    For client consumers, :meth:`start_request` should also be implemented.
     
-    It has one :ref:`one time events <one-time-event>`:
+    It has three :ref:`one time events <one-time-event>`:
     
-    * ``finish`` fired when this :class:`ProtocolConsumer` has finished consuming
-      data. The :attr:`on_finished` attribute is the :class:`Deferred` called
-      back when this event occurs.
-    
-    and four :ref:`many times events <many-times-event>`:
-    
-    * ``data_received`` fired when new data is received but not yet processed
-      (before :meth:`data_received` method)
-    * ``data_processed`` fired when new data has been is consumed (after
-      :meth:`data_received` method)
-    * ``pre_request`` fired each time a new request is received (for servers) or
+    * ``pre_request`` fired when the request is received (for servers) or
       sent (for clients). This occurs just before the :meth:`start_request`
       method.
-    * ``post_request`` fired when a request is done.
+    * ``post_request`` fired when the request is done.
+    * ``finish`` fired when this :class:`ProtocolConsumer` has finished
+      consuming data. The :attr:`on_finished` attribute is the
+      :class:`Deferred` called back when this event occurs.
+    
+    and two :ref:`many times events <many-times-event>`:
+    
+    * ``data_received`` fired when new data is received but not yet processed
+      (before :meth:`data_received` method is invoked)
+    * ``data_processed`` fired when new data has been consumed (after
+      :meth:`data_received` method)
     '''
-    ONE_TIME_EVENTS = ('finish',)
-    MANY_TIMES_EVENTS = ('data_received', 'data_processed',
-                         'pre_request', 'post_request')
+    ONE_TIME_EVENTS = ('pre_request', 'post_request', 'finish')
+    MANY_TIMES_EVENTS = ('data_received', 'data_processed')
     
     def __init__(self, connection=None):
         super(ProtocolConsumer, self).__init__()
         self._connection = None
-        self._current_request = None
+        self._request = None
         # this counter is updated by the connection
         self._data_received_count = 0
-        # this counter is updated via the new_request method
-        self._request_processed = 0
         # Number of times the consumer has tried to reconnect (for clients only)
         self._reconnect_retries = 0
+        self.event('finish').add_callback(self._when_finished)
         if connection is not None:
             connection.set_consumer(self)
     
     @property
     def connection(self):
-        '''The :class:`Connection` of this consumer'''
+        '''The :class:`Connection` of this consumer.'''
         return self._connection
     
     @property
@@ -131,21 +72,15 @@ class ProtocolConsumer(EventHandler):
             return self._connection.event_loop
     
     @property
-    def current_request(self):
-        '''Current :class:`Request` instance (used for clients only).'''
-        return self._current_request
+    def request(self):
+        ''':class:`Request` instance (used for clients only).'''
+        return self._request
         
     @property
     def transport(self):
         '''The :class:`Transport` of this consumer'''
         if self._connection:
             return self._connection.transport
-        
-    @property
-    def closed(self):
-        '''The :attr:`transport` is closing or it is already closed.'''
-        transport = self.transport
-        return transport.closing if transport else True
     
     @property
     def address(self):
@@ -169,26 +104,44 @@ class ProtocolConsumer(EventHandler):
         finished consuming protocol. A shortcut for ``self.event('finish')``.
         '''
         return self.event('finish')
-    
+        
+    @property
+    def has_finished(self):
+        '''``True`` if consumer has finished consuming data.'''
+        return self.event('post_request').done()
+
+    def connection_made(self, connection):
+        '''Called by a :class:`Connection` when it starts using this consumer.
+        
+        By default it does nothing.
+        '''
+        
+    def data_received(self, data):
+        '''Called when some data is received.
+
+        **This method must be implemented by subclasses** for both server and
+        client consumers. The argument is a bytes object.'''
+        pass
+
     def start_request(self):
         '''Starts a new request.
         
-        Invoked by the :meth:`new_request` method to kick start the
+        Invoked by the :meth:`start` method to kick start the
         request with remote server. For server :class:`ProtocolConsumer` this
         method is not invoked at all.
         
         **For clients this method should be implemented** and it is critical
         method where errors caused by stale socket connections can arise.
-        **This method should not be called directly.** Use :meth:`new_request`
-        instead. Tipically one writes some data from the :attr:`current_request`
+        **This method should not be called directly.** Use :meth:`start`
+        instead. Typically one writes some data from the :attr:`request`
         into the transport. Something like this::
         
-            self.transport.write(self.current_request.encode())
+            self.transport.write(self.request.encode())
         '''
         pass
     
-    def new_request(self, request=None):
-        '''Starts a new ``request`` for this protocol consumer.
+    def start(self, request=None):
+        '''Starts processing the request for this protocol consumer.
 
         There is no need to override this method,
         implement :meth:`start_request` instead.
@@ -202,58 +155,26 @@ class ProtocolConsumer(EventHandler):
             raise RuntimeError('Cannot start new request. No connection.')
         if  not conn.transport:
             raise RuntimeError('%s has no transport.' % conn)
-        self._request_processed += 1
-        self._current_request = request
+        self._request = request
         self.fire_event('pre_request')
         if request is not None:
             try:
                 self.start_request()
             except Exception:
                 self.finished(sys.exc_info())
-        else:
-            self._current_request = ServerRequest()
     
-    def request_done(self, exc=None):
-        '''Call this method when done with the :attr:`current_request`.
-
-        It is the responsability of a :class:`ProtocolConsumer` to call this
-        method. The :meth:`finished` method always invokes this method.'''
-        if self._current_request and not getattr(
-            self._current_request, '_finished', False):
-            self._current_request._finished = True
-            self.fire_event('post_request')        
-    
-    def data_received(self, data):
-        '''Called when some data is received.
-
-        The argument is a bytes object.'''
-        pass
-        
-    def reset_connection(self):
-        '''Cleanly dispose of the current :attr:`connection`.
-
-        Used by client consumers only.'''
-        if self._connection:
-            conn = self._connection
-            clone = copy(self)
-            conn._current_consumer = clone
-            self._connection = None
-            clone.finished()
-            return clone
-        
-    def finished(self, result=NOTHING):
+    def finished(self, result=None):
         '''Call this method when done with this :class:`ProtocolConsumer`.
         
-        Fire the ``post_request`` and ``finish`` events set :attr:`connection`
-        to ``None``. Return ``result``.
+        Fire the ``post_request`` and ``finish`` events and set
+        the :attr:`connection` to ``None``.
+        Return ``result``.
         '''
         c = self._connection
         if c:
             c._current_consumer = None
-        self.request_done()
+        self.fire_event('post_request', result)
         self.fire_event('finish', result)
-        self._connection = None
-        return result
         
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -288,15 +209,20 @@ class ProtocolConsumer(EventHandler):
         self.fire_event('data_processed')
         return result
         
+    def _when_finished(self, result):
+        if result is not self and isinstance(result, ProtocolConsumer):
+            result = result.on_finished
+        return result
+
         
-class Connection(EventHandler, Protocol, TransportProxy):
+class Connection(EventHandler, Protocol):
     '''A :class:`Protocol` which represents a client or server connection
-    with an end-point. This is not connected until
-    :meth:`connection_made` is called by the :class:`Transport`.
-    This is the bridge between the :class:`Transport`
-    and the :class:`ProtocolConsumer`. It has a :class:`Protocol`
-    interface and it routes data arriving from the :attr:`transport` to
-    the :attr:`current_consumer`, an instance of :class:`ProtocolConsumer`.
+    with an end-point. A :class:`Connection` is not connected until
+    :meth:`connection_made` is called by a :class:`Transport`.
+
+    It is a class which acts as bridge between a :class:`SocketTransport`
+    and a :class:`ProtocolConsumer`. It routes data arriving from the
+    :attr:`transport` to the :attr:`current_consumer`.
 
     A :class:`Connection` is an :class:`EventHandler` which has
     two :ref:`one time events <one-time-event>`:
@@ -309,27 +235,13 @@ class Connection(EventHandler, Protocol, TransportProxy):
     * ``pre_request``
     * ``post_request``
 
-    .. attribute:: producer
-
-        The producer of this :class:`Connection`, It is either a :class:`Server`
-        or a client :class:`Client`.
-        
-    .. attribute:: transport
-
-        The :class:`Transport` of this protocol connection. Initialised once the
-        :meth:`Protocol.connection_made` is called.
-        
-    .. attribute:: processed
-
-        Number of separate :class:`ProtocolConsumer` processed by this connection.
-        
-    .. attribute:: current_consumer
-
-        The :class:`ProtocolConsumer` currently handling incoming data.
+    Both these events are copied to the :class:`ProtocolConsumer` which
+    handle incoming data.
     '''
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
     MANY_TIMES_EVENTS = ('pre_request', 'post_request')
     #
+    _transport = None
     _current_consumer = None
     _idle_timeout = None
     def __init__(self, session, timeout, consumer_factory, producer):
@@ -354,11 +266,24 @@ class Connection(EventHandler, Protocol, TransportProxy):
     def session(self):
         '''Connection session number.
 
-        Passed during initialisation by the :attr:`producer`. An integer
-        representing the number of separate connections has created at the
-        moment of creating this :class:`Connection`.'''
+        Passed during initialisation by the :attr:`producer`. Usually an integer
+        representing the number of separate connections the producer has
+        processed at the time it crated this :class:`Connection`.'''
         return self._session
     
+    @property
+    def transport(self):
+        '''The :class:`SocketTransport` for this connection.
+
+        Available once the :meth:`connection_made` is called.'''
+        return self._transport
+    
+    @property
+    def event_loop(self):
+        '''The :attr:`transport` event loop.'''
+        if self._transport:
+            return self._transport.event_loop
+
     @property
     def address(self):
         '''The address of this connection.'''
@@ -367,7 +292,26 @@ class Connection(EventHandler, Protocol, TransportProxy):
             if not addr:
                 addr = self._transport.address
             return addr
+    
+    @property
+    def closed(self):
+        '''``True`` if the :attr:`transport` is closed.'''
+        return self._transport.closing if self._transport else True
+
+    def is_stale(self):
+        '''Check if this connection is stale.'''
+        return self._transport.is_stale() if self._transport else True
+    
+    def close(self, async=True, exc=None):
+        '''Close by closing the :attr:`transport`.'''
+        if self._transport:
+            self._transport.close(async=async, exc=exc)
         
+    def abort(self, exc=None):
+        '''Abort by aborting the :attr:`transport`.'''
+        if self._transport:
+            self._transport.close(async=False, exc=exc)
+
     @property
     def logger(self):
         '''The python logger for this connection.'''
@@ -375,28 +319,40 @@ class Connection(EventHandler, Protocol, TransportProxy):
     
     @property
     def consumer_factory(self):
-        '''A factory of :class:`ProtocolConsumer` instances for this
-        :class:`Connection`.'''
+        '''A factory of :class:`ProtocolConsumer` instances.'''
         return self._consumer_factory
     
     @property
     def current_consumer(self):
+        '''The :class:`ProtocolConsumer` currently handling incoming data.
+
+        This instance will receive data when this connection get data
+        from the :attr:`transport` via the :meth:`data_received` method.'''
         return self._current_consumer
         
     @property
     def processed(self):
+        '''Number of separate :class:`ProtocolConsumer` processed.
+
+        For connections which are keept alive over several requests.'''
         return self._processed
     
     @property
     def timeout(self):
-        '''Number of seconds to keep alive this connection when an idle.'''
+        '''Number of seconds to keep alive this connection when an idle.
+
+        A value of ``0`` means no timeout.'''
         return self._timeout
     
     @property
     def producer(self):
+        '''The producer of this :class:`Connection`.
+
+        It is either a :class:`Server` or a client :class:`Client`.'''
         return self._producer
     
     def set_timeout(self, timeout):
+        '''Set a new :attr:`timeout` for this connection.'''
         self._cancel_timeout()
         self._timeout = timeout
         self._add_idle_timeout()
@@ -411,6 +367,7 @@ class Connection(EventHandler, Protocol, TransportProxy):
         consumer._connection = self
         consumer.copy_many_times_events(self)
         self._processed += 1
+        consumer.connection_made(self)
     
     def connection_made(self, transport):
         '''Override :class:`BaseProtocol.connection_made`.
@@ -440,7 +397,7 @@ class Connection(EventHandler, Protocol, TransportProxy):
                 # New consumer.
                 # These two lines are used by server connections only.
                 consumer = self._consumer_factory(self)
-                consumer.new_request()
+                consumer.start()
             # Call the consumer _data_received method
             data = consumer._data_received(data)
             if data and self._current_consumer:
@@ -451,13 +408,15 @@ class Connection(EventHandler, Protocol, TransportProxy):
     
     def connection_lost(self, exc):
         '''Implements the :meth:`BaseProtocol.connection_lost` method.
-It performs these actions in the following order:
+        
+        It performs these actions in the following order:
 
-* Fire the ``connection_lost`` :ref:`one time event <one-time-event>`
-  if not fired before, with ``exc`` as event data.
-* Cancel the idle timeout if set.
-* Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
-  :attr:`current_consumer` if available.'''
+        * Fire the ``connection_lost`` :ref:`one time event <one-time-event>`
+          if not fired before, with ``exc`` as event data.
+        * Cancel the idle timeout if set.
+        * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
+          :attr:`current_consumer` if available.
+          '''
         if self.fire_event('connection_lost', exc):
             self._cancel_timeout()
             if self._current_consumer:
@@ -469,8 +428,8 @@ It performs these actions in the following order:
         '''Upgrade the :attr:`consumer_factory` attribute.
         
         This function can be used when the protocol specification changes
-        during a response (an example is a WebSocket response, or a HTTP/HTTPS
-        tunneling).'''
+        during a response (an example is a WebSocket request/response,
+        or a HTTP tunneling).'''
         self._consumer_factory = consumer_factory
     
     ############################################################################
@@ -662,4 +621,4 @@ class Server(Producer):
     def address(self):
         '''Server address, where clients send requests to.'''
         return self._sock.getsockname()
-        
+    

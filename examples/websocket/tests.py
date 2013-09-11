@@ -1,11 +1,23 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
-from pulsar import send
-from pulsar.apps.ws import WebSocket
+from pulsar import send, Queue
+from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 from .manage import server
 
+
+class Echo(WS):
+    
+    def __init__(self):
+        self.queue = Queue()
+    
+    def get(self):
+        return self.queue.get()
+    
+    def on_message(self, ws, message):
+        return self.queue.put(message)
+        
 
 class TestWebSocketThread(unittest.TestCase):
     app = None
@@ -49,13 +61,17 @@ class TestWebSocketThread(unittest.TestCase):
     
     def testUpgrade(self):
         c = HttpClient()
-        response = c.get(self.ws_echo)
-        ws = yield response.on_finished
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_done
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
+        self.assertEqual(ws.connection, response.connection)
+        self.assertEqual(ws.handler, handler)
         # Send a message to the websocket
         ws.write('Hi there!')
+        message = yield handler.get()
+        self.assertEqual(message, 'Hi there!')
         
 
 @dont_run_with_thread

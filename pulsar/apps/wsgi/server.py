@@ -26,7 +26,7 @@ from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser)
                                  
-from pulsar.utils.internet import format_address
+from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 from pulsar.utils import events
 
@@ -38,13 +38,15 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 MAX_CHUNK_SIZE = 65536
 
 
-def test_wsgi_environ(url='/', method=None, headers=None, extra=None):
+def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
+                      secure=False):
     '''An utility function for creating a WSGI environment dictionary
 for testing purposes.
     
 :param url: the resource in the ``PATH_INFO``.
 :param method: the ``REQUEST_METHOD``.
 :param headers: optional request headers
+:params secure: a secure connection?
 :param extra: optional dictionary of additional key-valued parameters to add.
 :return: a valid WSGI environ dictionary.
 '''
@@ -56,11 +58,11 @@ for testing purposes.
     request_headers = headers or []
     headers = Headers()
     return wsgi_environ(parser, ('127.0.0.1', 8060), '777.777.777.777:8080',
-                        request_headers, headers, extra)
+                        request_headers, headers, https=secure, extra=extra)
     
     
 def wsgi_environ(parser, address, client_address, request_headers,
-                 headers, extra=None):
+                 headers, https=False, extra=None):
     protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
     environ = {
             "wsgi.input": BytesIO(parser.recv_body()),
@@ -76,7 +78,7 @@ def wsgi_environ(parser, address, client_address, request_headers,
             "SERVER_PROTOCOL": protocol,
             'CONTENT_TYPE': ''
         }
-    url_scheme = "http"
+    url_scheme = 'https' if https else 'http'
     forward = client_address
     server = format_address(address)
     script_name = os.environ.get("SCRIPT_NAME", "")
@@ -103,6 +105,8 @@ def wsgi_environ(parser, address, client_address, request_headers,
         key = 'HTTP_' + header.upper().replace('-', '_')
         environ[key] = value
     environ['wsgi.url_scheme'] = url_scheme
+    if url_scheme == 'https':
+        environ['HTTPS'] = 'on'
     if is_string(forward):
         # we only took the last one
         # http://en.wikipedia.org/wiki/X-Forwarded-For
@@ -396,10 +400,12 @@ is an HTTP upgrade (websockets)'''
     def wsgi_environ(self):
         #return a the WSGI environ dictionary
         parser = self.parser
+        https = True if is_tls(self.transport.sock) else False
         environ = wsgi_environ(parser, self.transport.address, self.address,
                                self._request_headers, self.headers,
-                               {'pulsar.connection': self.connection,
-                                'pulsar.cfg': self.cfg})
+                               https=https,
+                               extra={'pulsar.connection': self.connection,
+                                      'pulsar.cfg': self.cfg})
         self.keep_alive = keep_alive(self.headers, parser.get_version())
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])

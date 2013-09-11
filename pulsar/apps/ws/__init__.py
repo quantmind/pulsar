@@ -56,6 +56,7 @@ WebSocket protocol
 .. autoclass:: WebSocketProtocol
    :members:
    :member-order: bysource
+
 '''
 from .websocket import WebSocket, WebSocketProtocol
 from .xhr import SocketIO

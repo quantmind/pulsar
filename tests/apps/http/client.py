@@ -102,7 +102,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
-        request = response.current_request
+        request = response.request
         self.assertTrue(request.headers)
         self.assertTrue(request.has_header('Connection'))
         self.assertTrue(request.has_header('Accept-Encoding'))

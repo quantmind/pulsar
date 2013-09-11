@@ -5,6 +5,7 @@ from heapq import heappush, heappop
 from functools import partial
 from collections import deque
 from threading import current_thread
+from inspect import isgenerator
 try:
     import signal
 except ImportError: #pragma    nocover
@@ -19,7 +20,7 @@ from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import thread_local_data, LOGGER
-from .defer import Failure, TimeoutError, maybe_async
+from .defer import Task, Deferred, Failure, TimeoutError
 from .stream import create_connection, start_serving, sock_connect, sock_accept
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
@@ -145,9 +146,7 @@ class LoopingCall(object):
         
     def __call__(self):
         try:
-            result = maybe_async(self.callback(*self.args),
-                                 get_result=False,
-                                 event_loop=self.event_loop)
+            result = self.event_loop.async(self.callback(*self.args))
         except Exception:
             result = Failure(sys.exc_info())
             self.cancel(result)
@@ -186,6 +185,7 @@ event loop is the place where most asynchronous operations are carried out.
     poll_timeout = 0.5
     tid = None
     pid = None
+    task_factory = Task
 
     def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
                  iothreadloop=True):
@@ -471,8 +471,7 @@ exception will be raised.'''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)
-        return maybe_async(res, event_loop=self, timeout=timeout,
-                           get_result=False)
+        return self.async(res, timeout)
     
     def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
@@ -502,14 +501,14 @@ exception will be raised.'''
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
                             family, flags, sock, backlog, reuse_address)
-        return maybe_async(res, event_loop=self, get_result=False)
+        return self.async(res)
     
     def create_datagram_endpoint(self, protocol_factory, local_addr=None,
                                  remote_addr=None, family=socket.AF_UNSPEC,
                                  proto=0, flags=0):
         res = create_datagram_endpoint(self, protocol_factory, local_addr,
                                        remote_addr, family, proto, flags)
-        return maybe_async(res, event_loop=self, get_result=False)
+        return self.async(res)
         
         
     def stop_serving(self, sock):
@@ -523,8 +522,7 @@ will be stopped.'''
         '''Connect ``sock`` to the given ``address``.
         
         Returns a :class:`Deferred` whose result on success will be ``None``.'''
-        res = sock_connect(self, sock, address)
-        return maybe_async(res, event_loop=self, timeout=timeout)
+        return self.async(sock_connect(self, sock, address), timeout)
     
     def sock_accept(self, sock, timeout=None):
         '''Accept a connection from a socket ``sock``.
@@ -534,8 +532,7 @@ will be stopped.'''
         ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
         and ``peer`` is the peer address.'''
         timeout = timeout or DEFAULT_ACCEPT_TIMEOUT
-        res = sock_accept(self, sock)
-        return maybe_async(res, event_loop=self, timeout=timeout)
+        return self.async(sock_accept(self, sock), timeout)
         
     #################################################    NON PEP METHODS
     def wake(self):
@@ -570,6 +567,26 @@ if we are calling from the same thread of execution as this
             return callback in self._scheduled
         else:
             return callback in self._callbacks
+
+    def maybe_async(self, value):
+        '''Run ``value`` in this event loop.
+
+        If ``value`` is a :ref:`coroutine <coroutine>`, it is run immediately
+        in this event loop.'''
+        if isgenerator(value):
+            return self.task_factory(value, event_loop=self)
+        return value
+
+    def async(self, value, timeout=None):
+        '''Same as :meth:`maybe_asyc` but forcing a :class:`Deferred` return.'''
+        value = self.maybe_async(value)
+        if not isinstance(value, Deferred):
+            d = Deferred()
+            d.callback(value)
+            return d
+        elif timeout:
+            value.set_timeout(timeout)
+        return value
 
     #################################################    INTERNALS    
     def _before_run(self):
@@ -641,7 +658,7 @@ if we are calling from the same thread of execution as this
         
     def _call(self, callback, *args):
         try:
-            maybe_async(callback(*args), event_loop=self)
+            self.maybe_async(callback(*args))
         except socket.error as e:
             if self._raise_loop_error(e):
                 Failure(sys.exc_info()).log(

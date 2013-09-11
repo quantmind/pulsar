@@ -11,7 +11,7 @@ from .defer import is_failure, multi_async
 
 from .protocols import EventHandler, Producer
 
-__all__ = ['ConnectionPool', 'Client', 'Request', 'SingleClient']
+__all__ = ['ConnectionPool', 'Client', 'Request']
 
     
 class Request(object):
@@ -62,7 +62,7 @@ remote server is needed.'''
         # wait for the connection_made event
         yield connection.event('connection_made')
         # starts the new request
-        connection.current_consumer.new_request(self)
+        connection.current_consumer.start(self)
     
     
 class ConnectionPool(Producer):
@@ -170,7 +170,7 @@ of available connections.
         conn = self.get_or_create_connection(client)
         # Start the response without firing the events
         conn.set_consumer(consumer)
-        consumer.new_request(consumer.current_request)
+        consumer.start(consumer.request)
                 
     def _remove_connection(self, connection, exc=None):
         with self.lock:
@@ -447,37 +447,47 @@ whether the *connection* can be reused in the future or it must be disposed.
         if key:
             self.connection_pools.pop(key)
             
-    def upgrade(self, connection, protocol_factory=None, result=None):
+    def upgrade(self, connection, protocol_factory=None,
+                release_connection=False):
         '''Upgrade an existing ``connection`` with a new ``protocol_factory``.
 
-        Return the upgraded connection only if the
-        :attr:`Connection.current_consumer` is available. It makes sure the
-        connection is not released to the connection pool.
+        :param connection: connection to upgrade.
+        :param protocol_factory: optional protocol factory.
+        :param release_connection: If ``True`` the connection is not released
+            to the pool.
+        :return: a new :class:`ProtocolConsumer`.
+        
+        The upgrade occurs only if :attr:`Connection.current_consumer` is
+        available.
         '''
         protocol = connection.current_consumer
         if protocol:
+            protocol.release_connection = release_connection
             if not protocol_factory:
-                raise ProtocolError
-            protocol.release_connection = False
-            protocol.finished(result)
-            connection.upgrade(protocol_factory)
+                connection.upgrade(protocol_factory)
+            newproto = connection.consumer_factory()
+            protocol.finished(newproto)
+            if not release_connection:
+                connection.set_consumer(newproto)
+            return newproto
     
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time
-taken to obtain all responses. In the standard implementation
-this method will open ``times`` :class:`Connection` with the remote server.
-Usage::
-
-    client = Client(...)
-    multi = client.timeit(100, ...)
-    response = yield multi
-    multi.total_time
-    
-:return: a :class:`MultiDeferred` which results in the list of results
-  for the individual requests. Its :attr:`MultiDeferred.total_time` attribute
-  indicates the number of seconds taken (once the deferred has been
-  called back).
-'''
+        taken to obtain all responses. In the standard implementation
+        this method will open ``times`` :class:`Connection` with the
+        remote server.
+        Usage::
+        
+            client = Client(...)
+            multi = client.timeit(100, ...)
+            response = yield multi
+            multi.total_time
+            
+        :return: a :class:`MultiDeferred` which results in the list of results
+          for the individual requests. Its :attr:`MultiDeferred.total_time`
+          attribute indicates the number of seconds taken (once the deferred
+          has been called back).
+        '''
         results = []
         for _ in range(times):
             r = self.request(*args, **kwargs)
@@ -501,19 +511,7 @@ Usage::
                 return request.create_connection(
                     event_loop, conn).add_errback(response.finished)
             else:
-                response.new_request(request)
+                response.start(request)
         except Exception as e:
             response.finished(e)
         
-
-class SingleClient(Client):
-    '''A :class:`Client` which handle one connection only.'''
-    def __init__(self, address, **kwargs):
-        super(SingleClient, self).__init__(**kwargs)
-        self.address = address
-        self._consumer = None
-    
-    def response(self, request):
-        resp = super(SingleClient, self).response
-        self._consumer = resp(request, self._consumer, False)
-        return self._consumer

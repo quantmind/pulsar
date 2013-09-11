@@ -9,7 +9,7 @@ from pulsar.utils import events
 from pulsar.utils.pep import raise_error_trace, iteritems, default_timer,\
                              get_event_loop, ispy3k
 
-from .access import get_request_loop, NOTHING, logger
+from .access import get_request_loop, logger
 from .consts import *
 
 
@@ -795,7 +795,7 @@ a callable which accept one argument only.'''
             logger().warning('unknown event "%s" for %s', event, self)
         return callback
         
-    def fire_event(self, event, event_data=NOTHING, sender=None):
+    def fire_event(self, event, event_data=None, sender=None):
         """Dispatches ``event_data`` to the ``event`` listeners.
 * If ``event`` is a one-time event, it makes sure that it was not fired before.
         
@@ -805,7 +805,7 @@ a callable which accept one argument only.'''
     dispatching :ref:`global events <global-events>`.
 :return: boolean indicating if the event was fired or not.
 """
-        event_data = self if event_data is NOTHING else maybe_failure(event_data)
+        event_data = self if event_data is None else maybe_failure(event_data)
         fired = True
         if event in self.ONE_TIME_EVENTS:
             fired = not self.ONE_TIME_EVENTS[event].done()

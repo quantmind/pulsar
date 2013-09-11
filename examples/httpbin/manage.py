@@ -15,7 +15,7 @@ import json
 import sys
 import string
 import time
-from random import choice
+from random import choice, random
 from wsgiref.validate import validator
 try:
     import pulsar
@@ -24,10 +24,10 @@ except ImportError: #pragma    nocover
     import pulsar
 
 from pulsar import HttpRedirect, HttpException, version, JAPANESE
-from pulsar.utils.pep import ispy3k, to_bytes
+from pulsar.utils.pep import ispy3k, to_bytes, range
 from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, hexmd5)
 from pulsar.utils.html import escape
-from pulsar.apps import wsgi
+from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
 from pulsar.utils import events
     
@@ -182,6 +182,17 @@ class HttpBin(wsgi.Router):
         request.response.content = stream
         return request.response
     
+    @route('websocket', title='A web socket graph')
+    def request_websocket(self, request):
+        data = open(os.path.join(os.path.dirname(__file__), 
+                     'assets', 'websocket.html')).read()
+        scheme = 'wss' if request.is_secure else 'ws'
+        host = request.get('HTTP_HOST')
+        data = data % {'address': '%s://%s/graph-data' % (scheme, host)}
+        request.response.content_type = 'text/html'
+        request.response.content = data
+        return request.response
+    
     ############################################################################
     #    INTERNALS
     def info_data_response(self, request, **params):
@@ -209,6 +220,12 @@ class HttpBin(wsgi.Router):
         return dict(headers)
     
 
+class Graph(ws.WS):
+    
+    def on_message(self, websocket, msg):
+        websocket.write(json.dumps([(i,random()) for i in range(100)]))
+        
+        
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
@@ -216,6 +233,7 @@ class Site(wsgi.LazyWsgi):
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
                                  wsgi.MediaRouter('media', ASSET_DIR),
+                                 ws.WebSocket('/graph-data', Graph()),
                                  HttpBin('/')])
         #return validator(app)
     

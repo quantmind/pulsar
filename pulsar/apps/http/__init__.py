@@ -134,7 +134,7 @@ from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
-from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
+from pulsar.utils.httpurl import (urlparse, parse_qsl,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
                                   Headers, urllibr, get_environ_proxies,
@@ -143,16 +143,13 @@ from pulsar.utils.httpurl import (urlparse, urljoin, REDIRECT_CODES, parse_qsl,
                                   requote_uri, get_hostport, CookieJar,
                                   cookiejar_from_dict)
 
-from .plugins import WebSocketResponse, Tunneling
+from .plugins import HandleRedirectAndCookies, Handle100, Handle101, Tunneling
+                      
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss') 
-
-
-class TooManyRedirects(Exception):
-    pass
 
 
 class HttpRequest(pulsar.Request):
@@ -386,7 +383,6 @@ class HttpRequest(pulsar.Request):
         d = self.__dict__.copy()
         d.pop('client')
         d.pop('method')
-        d.pop('_finished', None)
         return d
     
     def _encode_url(self, body):
@@ -421,13 +417,17 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _has_proxy = False
     _content = None
     _data_sent = None
-    MANY_TIMES_EVENTS = ('data_received', 'data_processed', 'on_headers',
-                         'pre_request', 'post_request')
+    _history = None
+    ONE_TIME_EVENTS = (pulsar.ProtocolConsumer.ONE_TIME_EVENTS + 
+                        ('on_headers', 'on_message_complete'))   
+    
+    def connection_made(self, connection):
+        self._history = []
     
     @property
     def parser(self):
-        if self.current_request:
-            return self.current_request.parser
+        if self._request:
+            return self._request.parser
     
     def recv_body(self):
         '''Flush the response body and return it.'''
@@ -469,13 +469,12 @@ class HttpResponse(pulsar.ProtocolConsumer):
     @property
     def url(self):
         '''The request full url.'''
-        if self.current_request is not None:
-            return self.current_request.full_url
+        if self._request is not None:
+            return self._request.full_url
     
     @property
     def history(self):
-        if self.current_request is not None:
-           return self.current_request.history
+        return self._history
     
     @property
     def headers(self):
@@ -522,26 +521,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
     ############################################################################
     ##    PROTOCOL IMPLEMENTATION
     def start_request(self):
-        if not self._data_sent:
-            self._data_sent = self.current_request.encode()
-            self.transport.write(self._data_sent)
+        self.transport.write(self._request.encode())
         
     def data_received(self, data):
-        request = self.current_request
-        parser = request.parser
-        had_headers = parser.is_headers_complete()
-        if parser.execute(data, len(data)) == len(data):
-            if parser.is_headers_complete():
-                if not had_headers:
+        if self._request.parser.execute(data, len(data)) == len(data):
+            if self._request.parser.is_headers_complete():
+                if not self.event('on_headers').done():
                     self.fire_event('on_headers')
-                    if self.current_request != request:
+                    if self.has_finished:
                         return
-                    if self._handle_headers():
-                        had_headers = False
-                        return
-                if parser.is_message_complete():
-                    self.request_done()
-                    if self.current_request == request:
+                if self._request.parser.is_message_complete():
+                    self.fire_event('on_message_complete')
+                    if not self.has_finished:
                         self.finished()
         else:
             raise pulsar.ProtocolError
@@ -552,45 +543,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
             if self.next_url:
                 return self.new_request(self.next_url)
             return self
-        
-    def _handle_headers(self):
-        #The response headers are available. Build the response.
-        request = self.current_request
-        headers = self.headers
-        client = request.client
-        # store cookies in client if needed
-        if client.store_cookies and 'set-cookie' in headers:
-            client.cookies.extract_cookies(self, request)
-        # check redirect
-        if self.status_code in REDIRECT_CODES and 'location' in headers and\
-                request.allow_redirects and self.parser.is_message_complete():
-            # done with current response
-            url = headers.get('location')
-            # Handle redirection without scheme (see: RFC 1808 Section 4)
-            if url.startswith('//'):
-                parsed_rurl = urlparse(request.full_url)
-                url = '%s:%s' % (parsed_rurl.scheme, url)
-            # Facilitate non-RFC2616-compliant 'location' headers
-            # (e.g. '/path/to/resource' instead of
-            # 'http://domain.tld/path/to/resource')
-            if not urlparse(url).netloc:
-                url = urljoin(request.full_url,
-                              # Compliant with RFC3986, we percent
-                              # encode the url.
-                              requote_uri(url))
-            if len(self.history) >= request.max_redirects:
-                raise TooManyRedirects
-            url = url or self.url
-            return client.request(request.method, url, response=self)
-        elif self.status_code == 100:
-            # reset the parser
-            request.new_parser()
-            self.transport.write(request.body)
-            return True
-        elif self.status_code == 101:
-            # Upgrading response handler
-            protocol_factory = partial(WebSocketResponse, self)
-            return client.upgrade(self.connection, protocol_factory)
     
 
 class HttpClient(pulsar.Client):
@@ -630,7 +582,6 @@ class HttpClient(pulsar.Client):
         Default headers for this :class:`HttpClient`
         
     '''
-    consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
     '''Maximum number of redirects.
@@ -662,6 +613,8 @@ class HttpClient(pulsar.Client):
               ca_certs=None, cookies=None, store_cookies=True,
               max_redirects=10, decompress=True, version=None,
               websocket_handler=None):
+        self.on_headers = []
+        self.on_message_complete = []
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookiejar_from_dict(cookies) 
@@ -686,6 +639,8 @@ class HttpClient(pulsar.Client):
                                'ca_certs': ca_certs}
         # Handle Tunneling
         self.bind_event('pre_request', Tunneling())
+        self.on_headers.extend((Handle101(), Handle100()))
+        self.on_message_complete.append(HandleRedirectAndCookies())
 
     @property
     def websocket_key(self):
@@ -809,8 +764,16 @@ class HttpClient(pulsar.Client):
     def add_oauth2(self, client_id, client_secret):
         self.bind_event('pre_request', OAuth2(client_id, client_secret))
     
+    def consumer_factory(self, connection=None):
+        response = HttpResponse(connection)
+        for handler in self.on_headers:
+            response.bind_event('on_headers', handler)
+        for handler in self.on_message_complete:
+            response.bind_event('on_message_complete', handler)
+        return response
+
     #    INTERNALS
-    
+
     def get_headers(self, request, headers):
         #Returns a :class:`Header` obtained from combining
         #:attr:`headers` with *headers*. Can handle websocket requests.

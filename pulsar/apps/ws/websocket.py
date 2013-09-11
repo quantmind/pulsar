@@ -3,7 +3,6 @@ import hashlib
 from functools import partial
 
 from pulsar import HttpException, ProtocolError, ProtocolConsumer
-from pulsar import async
 from pulsar.utils.httpurl import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
@@ -21,18 +20,18 @@ def register_transport(klass):
 
 @register_transport
 class WebSocket(wsgi.Router):
-    """A specialised :ref:`Router <wsgi-router>` middleware for
-handling the websocket handshake at a given route.
-Once the handshake is succesful, the protocol consumer
-is upgraded to :class:`WebSocketProtocol` and messages are handled by
-the :attr:`handle` attribute, an instance of :class:`WS`.
+    """A :ref:`Router <wsgi-router>` for a websocket handshake.
 
-See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
-http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
+    Once the handshake is succesful, the protocol consumer
+    is upgraded to :class:`WebSocketProtocol` and messages are handled by
+    the :attr:`handle` attribute, an instance of :class:`WS`.
 
-.. attribute:: parser_factory
+    See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
+    http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
 
-    A factory of websocket frame parsers
+    .. attribute:: parser_factory
+
+        A factory of websocket frame parsers
     """
     parser_factory = FrameParser
     _name = 'websocket'
@@ -55,13 +54,9 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
         request.response.status_code = 101
         request.response.content = b''
         request.response.headers.update(headers)
-        self.upgrade(request, parser)
-        return request.response
-    
-    def upgrade(self, request, parser):
         upgrade = request.environ['pulsar.connection'].upgrade
-        upgrade(partial(WebSocketServerProtocol, self.handle,
-                        request, parser))
+        upgrade(partial(WebSocketProtocol, request, self.handle, parser))
+        return request.response
         
     def handle_handshake(self, environ):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
@@ -118,66 +113,71 @@ http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
 
 
 class WebSocketProtocol(ProtocolConsumer):
-    '''WebSocket protocol for servers and clients.'''
+    '''WebSocket protocol for servers and clients.
+
+    .. attribute:: handshake
+
+    The handshake response/request
+
+    .. attribute:: handler
+
+    A websocket handler :class:`WS`.
+
+    .. attribute:: parser
+
+    A websocket parser.
+
+    '''
     request = None
-    started = False
-    closed = False
+    _started = False
     
+    def __init__(self, handshake, handler, parser, connection=None):
+        super(WebSocketProtocol, self).__init__(connection)
+        self.bind_event('finish', self._shut_down)
+        self.handshake = handshake
+        self.handler = handler
+        self.parser = parser
+        
+    def connection_made(self, connection):
+        connection.set_timeout(0)
+
     def data_received(self, data):
         frame = self.parser.decode(data)
+        async = self.event_loop.maybe_async
         while frame:
             if frame.is_close:
-                self.close()
-            else:
-                self._handle_frame(frame).add_errback(self.close)
+                # done with this, call finished method.
+                self.finished()
+                break
+            elif not self._started:
+                self._started = True
+                async(self.handler.on_open(self))
+            if frame.is_message:
+                async(self.handler.on_message(self, frame.body))
+            elif frame.is_bytes:
+                async(self.handler.on_bytes(self, frame.body))
+            elif frame.is_ping:
+                async(self.handler.on_ping(self, frame.body))
+            elif frame.is_pong:
+                async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
             
     def write(self, frame):
-        '''Write a new ``frame`` into the wire,
-``frame`` can be:
+        '''Write a new ``frame`` into the wire.
 
-* ``None`` does nothing
-* ``bytes`` - converted to a byte Frame
-* ``string`` - converted to a string Frame
-* a :class:`pulsar.utils.websocket.Frame`
- '''
+        A ``frame`` can be:
+
+        * ``bytes`` - converted to a byte Frame
+        * ``string`` - converted to a string Frame
+        * a :class:`pulsar.utils.websocket.Frame`
+         '''
         if not isinstance(frame, Frame):
             frame = self.parser.encode(frame)
         self.transport.write(frame.msg)
         if frame.is_close:
-            self.close()
-            
-    def close(self, error=None):
-        if not self.closed:
-            self.closed = True
-            self.handler.on_close(self)
-            self.transport.close()
+            self.finish()
 
-    @async()
-    def _handle_frame(self, frame):
-        if not self.started:
-            self.started = True
-            yield self.handler.on_open(self)
-        if frame.is_message:
-            yield self.handler.on_message(self, frame.body)
-        elif frame.is_bytes:
-            yield self.handler.on_bytes(self, frame.body)
-        elif frame.is_ping:
-            yield self.handler.on_ping(self, frame.body)
-        elif frame.is_pong:
-            yield self.handler.on_pong(self, frame.body)
-    
-    
-class WebSocketServerProtocol(WebSocketProtocol):
-    '''The :class:`WebSocketProtocol` for servers, created after a successful
-:class:`WebSocket` handshake.'''
-    def __init__(self, handler, request, parser, connection):
-        super(WebSocketServerProtocol, self).__init__(connection)
-        connection.set_timeout(0)
-        self.handler = handler
-        self.request = request
-        self.parser = parser
-        
-    @property
-    def environ(self):
-        return self.request.environ
+    def _shut_down(self, res):
+        self.handler.on_close(self)
+        if not self.closed:
+            self.connection.close()

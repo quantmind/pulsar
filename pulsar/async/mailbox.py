@@ -50,7 +50,7 @@ from pulsar.utils.security import gen_unique_id
 from .access import get_actor
 from .defer import async, Failure, Deferred, maybe_failure, maybe_async
 from .protocols import ProtocolConsumer
-from .clients import SingleClient, Request
+from .clients import Client, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 
 
@@ -128,8 +128,7 @@ class MailboxConsumer(ProtocolConsumer):
     '''The :class:`pulsar.ProtocolConsumer` for internal message passing
 between actors. Encoding and decoding uses the unmasked websocket
 protocol.'''
-    def __init__(self, *args, **kwargs):
-        super(MailboxConsumer, self).__init__(*args, **kwargs)
+    def connection_made(self, connection):
         self._pending_responses = {}
         self._parser = FrameParser(kind=2)
         actor = get_actor()
@@ -139,7 +138,7 @@ protocol.'''
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
         req = Message.command(command, sender, target, args, kwargs)
-        self.new_request(req)
+        self.start_request(req)
         return req.future
     
     ############################################################################
@@ -155,16 +154,17 @@ protocol.'''
             maybe_async(self._responde(message), event_loop=self.event_loop)
             msg = self._parser.decode()
     
-    def start_request(self):
-        req = self.current_request
-        if req.future and 'ack' in req.data:
-            self._pending_responses[req.data['ack']] = req.future
-            try:
+    def start_request(self, req=None):
+        if req:
+            if req.future and 'ack' in req.data:
+                self._pending_responses[req.data['ack']] = req.future
+                try:
+                    self._write(req)
+                except Exception as e:
+                    req.future.callback(e)
+            else:
                 self._write(req)
-            except Exception as e:
-                req.future.callback(e)
-        else:
-            self._write(req)
+    start = start_request
             
     ############################################################################
     ##    INTERNALS
@@ -208,7 +208,7 @@ protocol.'''
                 result = Failure(sys.exc_info())
             if message.get('ack'):
                 req = Message.callback(result, message['ack'])
-                self.new_request(req)
+                self.start_request(req)
 
     def _callback(self, ack, result):
         if not ack:
@@ -225,17 +225,24 @@ protocol.'''
         self.transport.write(data)
         
     
-class MailboxClient(SingleClient):
+class MailboxClient(Client):
     # mailbox for actors client
     consumer_factory = MailboxConsumer
     max_reconnect = 0
-     
+    
     def __init__(self, address, actor, event_loop):
-        super(MailboxClient, self).__init__(address, event_loop=event_loop)
+        super(MailboxClient, self).__init__(event_loop=event_loop)
+        self.address = address
+        self._consumer = None
         self.name = 'Mailbox for %s' % actor
     
+    def response(self, request):
+        resp = super(MailboxClient, self).response
+        self._consumer = resp(request, self._consumer, False)
+        return self._consumer
+    
     def __repr__(self):
-        return '%s %s' % (self.__class__.__name__, nice_address(self.address))
+        return '%s %s' % (self.name, nice_address(self.address))
     
     def request(self, command, sender, target, args, kwargs):
         # the request method

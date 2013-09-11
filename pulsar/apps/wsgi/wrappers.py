@@ -369,8 +369,7 @@ class WsgiRequest(EnvironMixin):
     
     @property
     def is_secure(self):
-        return 'wsgi.url_scheme' in self.environ \
-            and self.environ['wsgi.url_scheme'] == 'https'
+        return self.environ.get('HTTPS') == 'on'
 
     @property
     def path(self):

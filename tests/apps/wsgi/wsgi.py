@@ -11,6 +11,19 @@ from pulsar.apps.wsgi.utils import cookie_date
 from pulsar.apps.test import unittest
 
 
+class WsgiRequestTests(unittest.TestCase):
+
+    def request(self, **kwargs):
+        environ = wsgi.test_wsgi_environ(**kwargs)
+        return wsgi.WsgiRequest(environ)
+
+    def test_is_secure(self):
+        request = self.request(secure=True)
+        self.assertTrue(request.is_secure)
+        self.assertEqual(request.environ['HTTPS'], 'on')
+        self.assertEqual(request.environ['wsgi.url_scheme'], 'https')
+
+
 class WsgiResponseTests(unittest.TestCase):
     
     def testResponse200(self):
