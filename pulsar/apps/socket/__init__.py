@@ -94,7 +94,7 @@ Check the :meth:`SocketServer.monitor_start` method for implementation details.
 import os
 
 import pulsar
-from pulsar import async, TcpServer
+from pulsar import TcpServer
 from pulsar.utils.internet import parse_address, SSLContext, WrapSocket
 
 
@@ -164,28 +164,32 @@ class CertFile(SocketSetting):
     """
 
 class SocketServer(pulsar.Application):
-    '''A :class:`pulsar.apps.Application` which bind a socket to a given address
-and listen for requests. The request handler is constructed from the
-callable passed during initialisation.
-    
-.. attribute:: address
+    '''A :class:`pulsar.apps.Application` which serve application on a socket.
 
-    The socket address, available once the application has started.
+    It bind a socket to a given address and listen for requests. The request
+    handler is constructed from the callable passed during initialisation.
+    
+    .. attribute:: address
+
+        The socket address, available once the application has started.
     '''
     name = 'socket'
     address = None
     cfg = pulsar.Config(apps=['socket'])
     
     def protocol_consumer(self):
-        '''Returns the factory of :class:`pulsar.ProtocolConsumer` used by
-the server. By default it returns the :attr:`pulsar.apps.Application.callable`
-attribute.'''
+        '''Factory of :class:`pulsar.ProtocolConsumer` used by the server.
+
+        By default it returns the :attr:`pulsar.apps.Application.callable`
+        attribute.'''
         return self.callable
     
-    @async()
     def monitor_start(self, monitor):
-        '''Create the socket listening to the ``bind`` address. if the platform
-does not support multiprocessing sockets set the number of workers to 0.'''
+        '''Create the socket listening to the ``bind`` address.
+
+        If the platform does not support multiprocessing sockets set the
+        number of workers to 0.
+        '''
         cfg = self.cfg
         loop = monitor.event_loop
         if not pulsar.platform.has_multiProcessSocket\
@@ -228,7 +232,8 @@ does not support multiprocessing sockets set the number of workers to 0.'''
                           'read_timeout': server.timeout,
                           'active_connections': server.active_connections,
                           'received_connections': server.received}
-        return data
+
+    #   INTERNALS
 
     def create_server(self, worker, sock, ssl=None):
         '''Create the Server Protocol which will listen for requests. It

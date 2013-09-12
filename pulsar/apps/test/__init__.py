@@ -289,7 +289,6 @@ import sys
 
 import pulsar
 from pulsar.apps import tasks
-from pulsar.utils import events
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
 from pulsar.utils.pep import default_timer
@@ -503,7 +502,7 @@ class TestSuite(tasks.TaskQueue):
             self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
-                events.fire('tests', self, tests=tests)
+                #events.fire('tests', self, tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
                 for tag, testcls in self.local.tests:

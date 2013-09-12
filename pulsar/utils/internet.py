@@ -68,7 +68,7 @@ TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 
 SOCKET_INTERRUPT_ERRORS = (EINTR, ECONNRESET)
 
-
+    
 def parse_address(netloc, default_port=8000):
     '''Parse an internet address ``netloc`` and return a tuple with
 ``host`` and ``port``.'''

@@ -60,24 +60,15 @@ from .handlers import *
 from .auth import *
 
 
-class WsgiFactory(object):
-    
-    def __call__(self):
-        raise NotImplementedError
-
-
 class WSGIServer(SocketServer):
-    '''A specialised :class:`pulsar.apps.socket.SocketServer` for the HTTP
-protocol and WSGI compatible applications.'''
+    '''A wsgi :class:`pulsar.apps.socket.SocketServer`.'''
     name = 'wsgi'
     cfg = pulsar.Config(apps=['socket', 'wsgi'])
 
     def protocol_consumer(self):
-        '''Build the :class:`pulsar.ProtocolConsumer` factory for this
-WSGI server. It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
-protocol consumer and the wsgi callable provided as parameter during
-initialisation.'''
-        callable = self.callable
-        if isinstance(callable, WsgiFactory):
-            callable = callable()
-        return partial(HttpServerResponse, callable, self.cfg)
+        '''Build the :class:`pulsar.ProtocolConsumer` factory.
+
+        It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
+        protocol consumer and the wsgi callable provided as parameter during
+        initialisation.'''
+        return partial(HttpServerResponse, self.callable, self.cfg)

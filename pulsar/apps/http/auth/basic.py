@@ -16,7 +16,7 @@ class Auth(object):
     '''Base class for managing authentication.
     '''
     type = None
-    def __call__(self, response):
+    def __call__(self, response, request):
         raise NotImplementedError
 
     def __str__(self):
@@ -28,8 +28,8 @@ class KeyAuth(Auth):
     def __init__(self, **params):
         self.params = params
         
-    def __call__(self, response):
-        response.current_request.data.update(self.params)
+    def __call__(self, response, request):
+        request.data.update(self.params)
 
 
 class HTTPBasicAuth(Auth):
@@ -42,8 +42,8 @@ class HTTPBasicAuth(Auth):
     def type(self):
         return 'basic'
 
-    def __call__(self, response):
-        response.current_request.headers['Authorization'] = self.header()
+    def __call__(self, response, request):
+        request.headers['Authorization'] = self.header()
 
     def header(self):
         b64 = b64encode(('%s:%s' % (
@@ -67,15 +67,14 @@ class HTTPDigestAuth(Auth):
     def type(self):
         return 'digest'
     
-    def __call__(self, response):
+    def __call__(self, response, request):
         # If we have a saved nonce, skip the 401
-        request = response.current_request
         if self.last_nonce:
             request.headers['Authorization'] =\
                 self.encode(request.method, request.full_url)
         else:
             # add post request handler
-            response.bind_event('post_request', self.handle_401)
+            response.bind_event('on_message_complete', self.handle_401)
 
     def __repr__(self):
         return 'Digest: %s' % self.username
@@ -126,7 +125,7 @@ class HTTPDigestAuth(Auth):
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % (base)
         
-    def handle_401(self, response):
+    def handle_401(self, response, _):
         """Takes the given response and tries digest-auth, if needed."""
         if response.status_code == 401:
             request = response.current_request

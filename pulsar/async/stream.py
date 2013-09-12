@@ -19,18 +19,19 @@ TcpServer
 import os
 import sys
 import socket
+from functools import partial
 
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
-                                   WRITE_BUFFER_MAX_SIZE)
+                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
 from .defer import multi_async, Deferred, Failure
 from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
-    
+
 
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
@@ -171,8 +172,26 @@ be accumulating data in an internal buffer.'''
                     finally:
                         self.close()
                 passes += 1
+        except self.SocketError as e:
+            if self.mute_read_error(e):
+                self.abort()
+            else:
+                self.abort(Failure(sys.exc_info()))
         except Exception:
-            self.abort(Failure(sys.exc_info()))
+            # TODO
+            # For some reason when a non socket failure occurs
+            # there is no logging.
+            # Force it HERE.
+            failure = Failure(sys.exc_info()).log()
+            self.abort(failure)
+            
+    def mute_read_error(self, error):
+        '''Return ``True`` if a socket error from a read operation is muted.
+        
+        This is when the socket cannot send sinse the socket has started shutting
+        down already.
+        '''
+        return error.errno in (ESHUTDOWN,)
     
     
 class SocketStreamSslTransport(SocketStreamTransport):
@@ -249,20 +268,20 @@ class SocketStreamSslTransport(SocketStreamTransport):
 class TcpServer(Server):
     '''A TCP :class:`pulsar.Server`.
     
-.. attribute:: consumer_factory
+    .. attribute:: consumer_factory
 
-    Callable or a :class:`pulsar.ProtocolConsumer` class for producing
-    :class:`ProtocolConsumer` which handle the receiving, decoding and
-    sending of data.
-    
-'''
+        Callable or a :class:`pulsar.ProtocolConsumer` class for producing
+        :class:`ProtocolConsumer` which handle the receiving, decoding and
+        sending of data.
+        
+    '''
     def start_serving(self, backlog=100, sslcontext=None):
         '''Start serving the Tcp socket.
         
-:parameter backlog: Number of maximum connections
-:parameter sslcontext: optional SSLContext object.
-:return: a :class:`pulsar.Deferred` called back when the server is serving
-    the socket.'''
+        :param backlog: Number of maximum connections
+        :param sslcontext: optional SSLContext object.
+        :return: a :class:`pulsar.Deferred` called back when the server is
+            serving the socket.'''
         if not self.event('start').done():
             res = self._event_loop.start_serving(self.protocol_factory,
                                                  host=self._host,
@@ -270,8 +289,8 @@ class TcpServer(Server):
                                                  sock=self._sock,
                                                  backlog=backlog,
                                                  ssl=sslcontext)
-            return res.add_callback(self._got_sockets)\
-                      .add_both(lambda r: self.fire_event('start', r))
+            return res.add_callback(self._got_sockets
+                            ).add_both(partial(self.fire_event, 'start'))
     
     def stop_serving(self):
         '''Stop serving the :class:`pulsar.Server.sock`'''

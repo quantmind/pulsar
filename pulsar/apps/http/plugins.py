@@ -12,75 +12,71 @@ class TooManyRedirects(Exception):
     pass
 
 
-class HandleRedirectAndCookies:
-    
-    def __call__(self, response):
+def handle_redirect_and_cookies(response, _):
+    request = response._request
+    headers = response.headers
+    client = request.client
+    # store cookies in client if needed
+    if client.store_cookies and 'set-cookie' in headers:
+        client.cookies.extract_cookies(response, request)
+    # check redirect
+    if (response.status_code in REDIRECT_CODES and
+        'location' in headers and
+        request.allow_redirects):
+        # done with current response
+        url = headers.get('location')
+        # Handle redirection without scheme (see: RFC 1808 Section 4)
+        if url.startswith('//'):
+            parsed_rurl = urlparse(request.full_url)
+            url = '%s:%s' % (parsed_rurl.scheme, url)
+        # Facilitate non-RFC2616-compliant 'location' headers
+        # (e.g. '/path/to/resource' instead of
+        # 'http://domain.tld/path/to/resource')
+        if not urlparse(url).netloc:
+            url = urljoin(request.full_url,
+                          # Compliant with RFC3986, we percent
+                          # encode the url.
+                          requote_uri(url))
+        history = response._history
+        if history and len(history) >= request.max_redirects:
+            raise TooManyRedirects
+        url = url or request.full_url
+        #
+        new_response = client.upgrade(response.connection,
+                                      new_connection=True)
+        new_response._history = []
+        if history:
+            new_response._history.extend(history)
+        new_response._history.append(response)
+        #
+        params = request.inp_params.copy()
+        method = request.method
+        if response.status_code == 303:
+            method = 'GET'
+            params.pop('data', None)
+            params.pop('files', None)
+        client.request(request.method, url, response=new_response, **params)
+
+
+def handle_100(response, headers):
+    if response.status_code == 100:
+        # reset the parser
         request = response._request
-        headers = response.headers
-        client = request.client
-        # store cookies in client if needed
-        if client.store_cookies and 'set-cookie' in headers:
-            client.cookies.extract_cookies(response, request)
-        # check redirect
-        if (response.status_code in REDIRECT_CODES and
-            'location' in headers and
-            request.allow_redirects):
-            # done with current response
-            url = headers.get('location')
-            # Handle redirection without scheme (see: RFC 1808 Section 4)
-            if url.startswith('//'):
-                parsed_rurl = urlparse(request.full_url)
-                url = '%s:%s' % (parsed_rurl.scheme, url)
-            # Facilitate non-RFC2616-compliant 'location' headers
-            # (e.g. '/path/to/resource' instead of
-            # 'http://domain.tld/path/to/resource')
-            if not urlparse(url).netloc:
-                url = urljoin(request.full_url,
-                              # Compliant with RFC3986, we percent
-                              # encode the url.
-                              requote_uri(url))
-            if len(response.history) >= request.max_redirects:
-                raise TooManyRedirects
-            url = url or request.full_url
-            #
-            new_response = client.upgrade(response.connection,
-                                          release_connection=True)
-            new_response._history = []
-            if response._history:
-                new_response._history.extend(response._history)
-            new_response._history.append(response)
-            #
-            params = request.inp_params.copy()
-            method = request.method
-            if response.status_code == 303:
-                method = 'GET'
-                params.pop('data', None)
-                params.pop('files', None)
-            client.request(request.method, url, response=new_response, **params)
-
-
-class Handle100:
-    
-    def __call__(self, response):
-        if response.status_code == 100:
-            # reset the parser
-            request = response._request
-            request.new_parser()
-            response.transport.write(request.body)
+        request.new_parser()
+        response.transport.write(request.body)
             
 
-class Handle101:
+def handle_101(response, headers):
     '''Websocket upgrade as ``on_headers`` event.'''
-    def __call__(self, response):
-        if response.status_code == 101:
-            client = response.producer
-            request = response._request
-            handler = request.websocket_handler
-            parser = FrameParser(kind=1)
-            if not handler:
-                handler = WS()
-            factory = partial(WebSocketProtocol, response, handler, parser)
-            client.upgrade(response.connection, factory)
+    if response.status_code == 101:
+        client = response.producer
+        request = response._request
+        handler = request.websocket_handler
+        parser = FrameParser(kind=1)
+        if not handler:
+            handler = WS()
+        factory = partial(WebSocketProtocol, response, handler, parser)
+        client.upgrade(response.connection, factory)
 
 
 class TunnelRequest:
@@ -103,7 +99,7 @@ class Tunneling:
     the writing of the actual request until headers from the proxy server
     are received.
     '''
-    def __call__(self, response):
+    def __call__(self, response, _):
         # Called before sending the request
         request = response._request
         if request._proxy and request._ssl:

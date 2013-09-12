@@ -127,6 +127,16 @@ Failure
    :members:
    :member-order: bysource
 
+Events
+============
+
+Event
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Event
+   :members:
+   :member-order: bysource
+
 Events Handler
 ~~~~~~~~~~~~~~~~~~~~
 

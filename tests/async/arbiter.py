@@ -95,7 +95,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.monitors)
         name = list(arbiter.monitors.values())[0].name
-        self.assertRaises(KeyError, arbiter.add_monitor, pulsar.Monitor, name)
+        self.assertRaises(KeyError, arbiter.add_monitor, name)
         
     @run_on_arbiter
     def testTimeout(self):

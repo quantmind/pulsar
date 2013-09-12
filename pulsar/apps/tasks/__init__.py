@@ -198,9 +198,10 @@ task.Tasks and managing scheduling of tasks via a
                                 backlog=self.cfg.concurrent_tasks)
         
     def monitor_task(self, monitor):
-        '''Override the :meth:`pulsar.apps.Application.monitor_task` callback
-to check if the :attr:`scheduler` needs to perform a new run.'''
-        super(TaskQueue, self).monitor_task(monitor)
+        '''Override the :meth:`pulsar.apps.Application.monitor_task` callback.
+
+        Check if the :attr:`scheduler` needs to perform a new run.
+        '''
         if self.backend and monitor.is_running():
             if self.backend.next_run <= datetime.now():
                 self.backend.tick()
@@ -208,23 +209,17 @@ to check if the :attr:`scheduler` needs to perform a new run.'''
     def worker_start(self, worker):
         self.backend.start(worker)
         
-    def worker_stopping(self, worker):
+    def worker_stopping(self, worker, _):
         self.backend.close(worker)
         
     def actorparams(self, monitor, params):
-        # Make sure we invoke super function so that we get the distributed
-        # task queue
-        params = super(TaskQueue, self).actorparams(monitor, params)
-        # workers do not schedule periodic tasks
         params['app'].cfg.set('schedule_periodic', False)
-        return params
     
     def worker_info(self, worker, data):
         be = self.backend
         tasks = {'concurrent': list(be.concurrent_tasks),
                  'processed': be.processed}
         data['tasks'] = tasks
-        return data
      
     
 @command()

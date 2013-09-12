@@ -41,22 +41,6 @@ Get application
 =========================
 
 .. autofunction:: get_application
-
-
-Application Worker
-===============================
-   
-.. autoclass:: Worker
-   :members:
-   :member-order: bysource
-
-
-Application Monitor
-===============================
-   
-.. autoclass:: ApplicationMonitor
-   :members:
-   :member-order: bysource
    
 
 Backend
@@ -72,18 +56,16 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import Actor, Monitor, get_actor, EventHandler, async
+from pulsar import get_actor, EventHandler, async
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import parse_connection_string, get_connection_string
-from pulsar.utils.log import LocalMixin
+from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.importer import import_module
 
 __all__ = ['Application',
            'MultiApp',
            'Backend',
-           'Worker',
-           'ApplicationMonitor',
            'get_application']
     
     
@@ -106,18 +88,46 @@ def _get_app(arbiter, name):
     if monitor:
         return monitor.params.app
 
-@async()
-def monitor_start(self):
+def monitor_start(self, _):
+    app = self.params.app
+    self.app = app
+    self.bind_event('on_params', monitor_params)
+    self.bind_event('on_info', monitor_info)
+    self.bind_event('stop', monitor_stop)
+    self.monitor_task = lambda: app.monitor_task(self)
     yield self.app.monitor_start(self)
     if not self.cfg.workers:
         yield self.app.worker_start(self)
     self.app.fire_event('start')
-        
-def monitor_stop(self):
-    if not self.cfg.workers:
-        self.app.worker_stop(self)
-    self.app.monitor_stop(self)
 
+def monitor_stop(self, _):
+    if not self.cfg.workers:
+        self.app.worker_stop(self, _)
+    self.app.monitor_stop(self, _)
+
+def monitor_info(self, info):
+    if not self.cfg.workers:
+        self.app.worker_info(self, info)
+    else:
+        self.app.monitor_info(self, info)
+
+def monitor_params(self, params):
+    app = self.app
+    if self.cfg.concurrency == 'thread':
+        app = pickle.loads(pickle.dumps(app))
+    params.update({'app': app,
+                   'name': '{0}-worker'.format(app.name),
+                   'start': worker_start})
+    app.actorparams(self, params)
+
+def worker_start(self, _):
+    app = self.params.app
+    self.app = app
+    self.bind_event('on_info', app.worker_info)
+    self.bind_event('stopping', app.worker_stopping)
+    self.bind_event('stop', app.worker_stop)
+    yield app.worker_start(self)
+    
 def arbiter_config(cfg):
     cfg = cfg.copy()
     for setting in list(cfg.settings.values()):
@@ -126,116 +136,59 @@ def arbiter_config(cfg):
         elif not setting.is_global:
             if not getattr(setting, 'inherit', False):
                 setting.set(setting.default)
-    return cfg 
-
-
-class Worker(Actor):
-    '''An :class:`pulsar.Actor` for serving a pulsar :class:`Application`.'''
-    def __init__(self, *args, **kwargs):
-        super(Worker, self).__init__(*args, **kwargs)
-        self.bind_event('start', self.app.worker_start)
-        self.bind_event('stopping', self.app.worker_stopping)
-        self.bind_event('stop', self.app.worker_stop)
-        
-    @property
-    def app(self):
-        '''The :class:`Application` served by this :class:`Worker`.'''
-        return self.params.app
+    return cfg
     
-    def info(self):
-        data = super(Worker, self).info()
-        return self.app.worker_info(self, data)
-    
-
-class ApplicationMonitor(Monitor):
-    '''A :class:`pulsar.Monitor` for managing a pulsar :class:`Application`.'''
-    actor_class = Worker
-    
-    def __init__(self, *args, **kwargs):
-        super(ApplicationMonitor, self).__init__(*args, **kwargs)
-        self.bind_event('start', monitor_start)
-        self.bind_event('stop', monitor_stop)
-        
-    @property
-    def app(self):
-        '''The :class:`Application` served by this
-:class:`ApplicationMonitor`.'''
-        return self.params.app
-        
-    ############################################################################
-    # Delegates Callbacks to the application
-    def monitor_task(self):
-        self.app.monitor_task(self)
-        
-    def actorparams(self):
-        p = Monitor.actorparams(self)
-        app = self.app
-        if self.cfg.concurrency == 'thread':
-            app = pickle.loads(pickle.dumps(app))
-        p.update({'app': app,
-                  'name': '{0}-worker'.format(app.name)})
-        return self.app.actorparams(self, p)
-    
-    def info(self):
-        data = super(ApplicationMonitor, self).info()
-        if not self.cfg.workers:
-            return self.app.worker_info(self, data)
-        else:
-            return self.app.monitor_info(self, data)
-        
-
 
 class AppEvents(EventHandler):
     ONE_TIME_EVENTS = ('ready', 'start', 'stop')
     
 
 class Configurator(object):
-    '''A mixin for configuring and loading the various necessities for any
-given server running on :mod:`pulsar` concurrent framework.
+    '''A mixin for configuring and loading a pulsar server.
 
-:parameter name: to override the class :attr:`name` attribute.
-:parameter description: to override the class :attr:`cfg.description` attribute.
-:parameter epilog: to override the class :attr:`cfg.epilog` attribute.
-:parameter version: Optional version of this application, it overrides the
-    class :attr:`cfg.version` attribute.
-:parameter argv: Optional list of command line parameters to parse, if
-    not supplied the :attr:`sys.argv` list will be used. The parameter is
-    only relevant if **parse_console** is ``True``.
-:parameter parse_console: ``True`` (default) if the console parameters needs
-    parsing.
-:parameter script: Optional string which set the :attr:`script` attribute.
-:parameter params: a dictionary of configuration parameters which overrides
-    the defaults and the :attr:`cfg` class attribute. They will be overritten
-    by a :ref:`config file <setting-config>` or command line
-    arguments.   
+    :parameter name: to override the class :attr:`name` attribute.
+    :parameter description: to override the class :attr:`cfg.description` attribute.
+    :parameter epilog: to override the class :attr:`cfg.epilog` attribute.
+    :parameter version: Optional version of this application, it overrides the
+        class :attr:`cfg.version` attribute.
+    :parameter argv: Optional list of command line parameters to parse, if
+        not supplied the :attr:`sys.argv` list will be used. The parameter is
+        only relevant if **parse_console** is ``True``.
+    :parameter parse_console: ``True`` (default) if the console parameters needs
+        parsing.
+    :parameter script: Optional string which set the :attr:`script` attribute.
+    :parameter params: a dictionary of configuration parameters which overrides
+        the defaults and the :attr:`cfg` class attribute. They will be overritten
+        by a :ref:`config file <setting-config>` or command line
+        arguments.   
 
-.. attribute:: name
-    
-    The name is unique if this is an :class:`Application`. In this
-    case it defines the application monitor name as well and can be access in
-    the arbiter domain via the :func:`get_application` function.
-    
-.. attribute:: argv
+    .. attribute:: name
+        
+        The name is unique if this is an :class:`Application`. In this
+        case it defines the application monitor name as well and can be access in
+        the arbiter domain via the :func:`get_application` function.
+        
+    .. attribute:: argv
 
-    Optional list of command line parameters. If not available the
-    :attr:`sys.argv` list will be used when parsing the console.
-    
-.. attribute:: cfg
+        Optional list of command line parameters. If not available the
+        :attr:`sys.argv` list will be used when parsing the console.
+        
+    .. attribute:: cfg
 
-    The :class:`pulsar.utils.config.Config` for this :class:`Configurator`.
-    If set as class attribute it will be replaced during initialisation.
+        The :class:`pulsar.utils.config.Config` for this :class:`Configurator`.
+        If set as class attribute it will be replaced during initialisation.
 
-    Default: ``None``.
+        Default: ``None``.
 
-.. attribute:: parsed_console
+    .. attribute:: parsed_console
 
-    ``True`` if this application parsed the console before starting.
-    
-.. attribute:: script
+        ``True`` if this application parsed the console before starting.
+        
+    .. attribute:: script
 
-    Full path of the script which starts the application or ``None``.
-    Evaluated during initialization via the :meth:`python_path` method.
-'''
+        Full path of the script which starts the application or ``None``.
+        Evaluated during initialization via the :meth:`python_path` method.
+    '''
     name = None
     cfg = None
     
@@ -367,50 +320,38 @@ overriding default values with *params*.'''
     
     
 class Application(Configurator, pulsar.Pulsar):
-    """An application interface for configuring and loading
-the various necessities for any given server or distributed application running
-on :mod:`pulsar` concurrent framework.
-Applications can be of any sorts or forms and the library is shipped with
-several battery included examples in the :mod:`pulsar.apps` framework module.
+    """An application interface.
 
-These are the most important facts about a pulsar :class:`Application`:
+    Applications can be of any sorts or forms and the library is shipped with
+    several battery included examples in the :mod:`pulsar.apps` framework module.
 
-* It derives from :class:`Configurator` so that it has all the functionalities
-  to parse command line arguments and setup the :attr:`Configurator.cfg`.
-* Instances must be picklable. If non-picklable data needs to be add on an
-  :class:`Application` instance, it must be stored on the
-  :attr:`Application.local` dictionary.
-* Instances of an :class:`Application` are callable objects.
-* When an :class:`Application` is called for the first time,
-  a new :class:`ApplicationMonitor` instance is added to the
-  :class:`pulsar.Arbiter`, ready to perform its duties.
+    These are the most important facts about a pulsar :class:`Application`:
 
-:parameter callable: Initialise the :attr:`Application.callable` attribute.
-:parameter load_config: If ``False`` the :meth:`Configurator.load_config`
-    is not invoked. Default ``True``.
-:parameter params: Passed to the :class:`Configurator` initialiser.
+    * It derives from :class:`Configurator` so that it has all the functionalities
+      to parse command line arguments and setup the :attr:`Configurator.cfg`.
+    * Instances must be picklable. If non-picklable data needs to be add on an
+      :class:`Application` instance, it must be stored on the
+      :attr:`Application.local` dictionary.
+    * Instances of an :class:`Application` are callable objects.
+    * When an :class:`Application` is called for the first time,
+      a new :class:`pulsar.Monitor` instance is added to the
+      :class:`pulsar.Arbiter`, ready to perform its duties.
 
-.. attribute:: callable
+    :parameter callable: Initialise the :attr:`Application.callable` attribute.
+    :parameter load_config: If ``False`` the :meth:`Configurator.load_config`
+        is not invoked. Default ``True``.
+    :parameter params: Passed to the :class:`Configurator` initialiser.
 
-    Optional callable serving or configuring your application.
-    If provided, the callable must be picklable, therefore it is either
-    a function or a picklable object.
+    .. attribute:: callable
 
-    Default ``None``
-"""
+        Optional callable serving or configuring your application.
+        If provided, the callable must be picklable, therefore it is either
+        a function or a picklable object.
+
+        Default ``None``
+    """
     def __init__(self, callable=None, load_config=True, **params):
-        '''Initialize a new :class:`Application` and add its
-:class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.
-
-:parameter version: Optional version number of the application.
-
-    Default: ``pulsar.__version__``
-
-:parameter parse_console: flag for parsing console inputs. By default it parse
-    only if the arbiter has not yet started.
-'''
         super(Application, self).__init__(load_config=load_config, **params)
-        self.local.events = AppEvents()
         self.callable = callable
         if load_config:
             self.load_config()
@@ -428,86 +369,75 @@ These are the most important facts about a pulsar :class:`Application`:
             self.fire_event('ready')
             arbiter = pulsar.arbiter(cfg=arbiter_config(self.cfg))
             if self.on_config() is not False:
-                monitor = arbiter.add_monitor(ApplicationMonitor,
-                                              self.name,
-                                              app=self,
-                                              cfg=self.cfg)
+                monitor = arbiter.add_monitor(self.name,
+                    app=self, cfg=self.cfg, start=monitor_start)
                 self.cfg = monitor.cfg
-        return self.event('start')
+        return self.deferred('start')
         
-    @property
-    def app(self):
-        '''Returns ``self``. Implemented so that the :class:`ApplicationMonitor`
-and the :class:`Application` have the same interface.'''
-        return self
-
-    @property
-    def monitor(self):
-        actor = get_actor()
-        if actor:
-            return actor.registered.get(self.name)
-
-    def __setstate__(self, state):
-        super(Application, self).__setstate__(state)
-        self.local.events = AppEvents()
+    @local_property
+    def events(self):
+        '''Events for the application: ``ready```, ``start``, ``stop``.'''
+        return AppEvents()
         
     def fire_event(self, name):
-        return self.local.events.fire_event(name, self)
+        '''Fire event ``name``.'''
+        return self.events.fire_event(name, self)
         
     def bind_event(self, name, callback):
-        return self.local.events.bind_event(name, callback)
+        '''Bind ``callback`` to event ``name``.'''
+        return self.events.bind_event(name, callback)
         
-    def event(self, name):
-        return self.local.events.event(name)
+    def deferred(self, name):
+        '''Return the callback for event ``name``.'''
+        return self.events.deferred(name)
 
-    def add_timeout(self, deadline, callback):
-        self.arbiter.event_loop.add_timeout(deadline, callback)
-    
     # WORKERS CALLBACKS
-    def worker_start(self, worker):
+    def worker_start(self, worker, _):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
     def worker_info(self, worker, info):
         '''Hook to add additional entries to the worker ``info`` dictionary.'''
-        return info
+        pass
     
-    def worker_stopping(self, worker):
+    def worker_stopping(self, worker, exc):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
         pass
     
-    def worker_stop(self, worker):
+    def worker_stop(self, worker, exc):
         '''Added to the ``stop`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
     # MONITOR CALLBACKS
     def actorparams(self, monitor, params):
-        '''A chance to override the dictionary of parameters *params*
-before a new :class:`Worker` is spawned. This method is invoked by
-the :class:`ApplicationMonitor`. By default it does nothing.'''
-        return params
+        '''Hook to add additional entries when the monitor spawn new actors.
+        '''
+        pass
 
     def monitor_start(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` when starting.
-The application is now in the arbiter but has not yet started.'''
+        '''Callback by the monitor when starting.
+        '''
         pass
 
     def monitor_info(self, monitor, data):
-        '''Hook to add additional entries to the monitor ``info`` dictionary.'''
-        return data
+        '''Hook to add additional entries to the monitor ``info`` dictionary.
+        '''
+        pass
     
-    def monitor_stop(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` when stopping'''
+    def monitor_stop(self, monitor, exc):
+        '''Callback by the monitor when stopping.
+        '''
         pass
 
     def monitor_task(self, monitor):
-        '''Callback by :class:`ApplicationMonitor` at each event loop'''
+        '''Callback by the monitor at each event loop.'''
         pass
     
     def start(self):
         '''Start the :class:`pulsar.Arbiter` if it wasn't already started.
-Calling this method when the :class:`pulsar.Arbiter` is already running has
-no effect.'''
+        
+        Calling this method when the :class:`pulsar.Arbiter` is already
+        running has no effect.'''
         arbiter = pulsar.arbiter()
         if arbiter and self.name in arbiter.registered:
             arbiter.start()

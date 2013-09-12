@@ -1,19 +1,22 @@
-'''Pulsar has a :class:`HttpClient` for asynchronous HTTP requests::
+'''Pulsar has an :class:`HttpClient` class for asynchronous HTTP requests::
 
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
     >>> response = http.get('http://www.bbc.co.uk')
     
-    
+
+.. contents::
+    :local:
+
 Features
 ===========
 * No dependencies
 * Similar API to requests_
 * TLS/SSL support
 * Cookie support
-* :ref:`Basic and digest authentication <http-authentication>`
-* :ref:`Streaming of course <http-streaming>`
-* Web socket support
+* Authentication
+* Streaming and Websocket support
+* Follow redirects
 * Automatic decompression
 * Thread safe
 * Can be used in :ref:`synchronous mode <tutorials-synchronous>`
@@ -21,7 +24,7 @@ Features
 
 Making requests
 =================
-To make a request is simple::
+The API is similar to requests_ and therefore to make a request is simple::
     
     from pulsar.apps import http
     client = http.HttpClient()
@@ -36,8 +39,8 @@ can obtained a full response by yielding ``on_finished``::
 
     resp = yield client.get('https://github.com/timeline.json').on_finished
 
-Cookies
-~~~~~~~~~~~~
+Cookie support
+================
 
 Cookies are handled by the client by storing cookies received with responses.
 To disable cookie one can pass ``store_cookies=False`` during
@@ -46,14 +49,19 @@ To disable cookie one can pass ``store_cookies=False`` during
 .. _http-authentication:
 
 Authentication
-~~~~~~~~~~~~~~~~~~~~~
+======================
 
-Basic authentication can be added by simply invoking the
-:meth:`HttpClient.add_basic_authentication` method, while digest authentication
-via the :meth:`HttpClient.add_digest_authentication` method.
+Headers authentication, either ``basic`` or ``digest``, can be added to a
+client by invoking
+
+* :meth:`HttpClient.add_basic_authentication` method
+* :meth:`HttpClient.add_digest_authentication` method
+
+In either case the authentication is handled by adding additional headers
+to your requests.
 
 TLS/SSL
-~~~~~~~~~~~~~~~~~~~
+=================
 Supported out of the box::
 
     client = HttpClient()
@@ -70,7 +78,7 @@ to a :class:`HttpClient` or to a specific request:
 .. _http-streaming:
 
 Streaming
-~~~~~~~~~~~~~~~
+====================
 
 This is an event-driven client, therefore streaming is supported as a
 consequence. The ``on_finished`` callback is only fired when the server has
@@ -143,8 +151,8 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl,
                                   get_hostport, CookieJar,
                                   cookiejar_from_dict)
 
-from .plugins import (HandleRedirectAndCookies, Handle100, Handle101, Tunneling,
-                      TooManyRedirects)
+from .plugins import (handle_redirect_and_cookies, handle_100, handle_101,
+                      Tunneling, TooManyRedirects)
                       
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
@@ -420,10 +428,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _data_sent = None
     _history = None
     ONE_TIME_EVENTS = (pulsar.ProtocolConsumer.ONE_TIME_EVENTS + 
-                        ('on_headers', 'on_message_complete'))   
-    
-    def connection_made(self, connection):
-        self._history = []
+                        ('on_headers', 'on_message_complete'))
     
     @property
     def parser(self):
@@ -528,7 +533,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if self._request.parser.execute(data, len(data)) == len(data):
             if self._request.parser.is_headers_complete():
                 if not self.event('on_headers').done():
-                    self.fire_event('on_headers')
+                    self.fire_event('on_headers', self.headers)
                     if self.has_finished:
                         return
                 if self._request.parser.is_message_complete():
@@ -640,8 +645,8 @@ class HttpClient(pulsar.Client):
                                'ca_certs': ca_certs}
         # Handle Tunneling
         self.bind_event('pre_request', Tunneling())
-        self.on_headers.extend((Handle101(), Handle100()))
-        self.on_message_complete.append(HandleRedirectAndCookies())
+        self.on_headers.extend((handle_101, handle_100))
+        self.on_message_complete.append(handle_redirect_and_cookies)
 
     @property
     def websocket_key(self):

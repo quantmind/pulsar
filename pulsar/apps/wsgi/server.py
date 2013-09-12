@@ -28,7 +28,6 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                  
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
-from pulsar.utils import events
 
 from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
 
@@ -174,6 +173,7 @@ class HttpServerResponse(ProtocolConsumer):
     _request_headers = None
     max_empty_consecutive = 20
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
+    ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
     
     def __init__(self, wsgi_callable, cfg, connection):
         super(HttpServerResponse, self).__init__(connection)
@@ -296,7 +296,7 @@ method as required by the WSGI specification.
 '''
         if not self._headers_sent:
             tosend = self.get_headers()
-            events.fire('http-headers', self, headers=tosend)
+            self.fire_event('on_headers', tosend)
             self._headers_sent = tosend.flat(self.version, self.status)
             self.transport.write(self._headers_sent)
         if data:

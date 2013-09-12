@@ -108,9 +108,14 @@ during its life time.
         return _spawn_actor(actor_class, self, **params)
 
     def actorparams(self):
-        '''Return a dictionary of parameters to be passed to the
-spawn method when creating new actors.'''
-        return dict(self.params)
+        '''Returns a dictionary of parameters for spawning actors.
+
+        The disctionary is passed to the spawn method when creating new
+        actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
+        '''
+        data = dict(self.params)
+        self.fire_event('on_params', data)
+        return data
 
     def _remove_actor(self, actor, log=True):
         if log:
@@ -202,25 +207,28 @@ as required."""
     
     
 class Monitor(PoolMixin):
-    '''A monitor is a **very** special :class:`Actor` and :class:`PoolMixin`
-which shares the same :class:`EventLoop` with the :class:`Arbiter` and
-therefore lives in the main thread of the  process domain.
-The Arbiter manages monitors which in turn manage a set of :class:`Actor`
-performing similar tasks.
+    '''A monitor is a **very** special :class:`Actor`.
 
-In other words, you may have a monitor managing actors for serving HTTP
-requests on a given port, another monitor managing actors consuming tasks
-from a task queue and so forth. You can think of :class:`Monitor` as
-managers of pools of :class:`Actor`.
+    it is a :class:`PoolMixin` which shares the same :class:`EventLoop`
+    with the :class:`Arbiter` and therefore lives in the main thread
+    of the master process domain.
+    
+    The Arbiter manages monitors which in turn manage a set of :class:`Actor`
+    performing similar tasks.
 
-Monitors are created by invoking the :meth:`Arbiter.add_monitor`
-functions and not by directly invoking the constructor. Therefore
-adding a new monitor to the arbiter follows the pattern::
+    In other words, you may have a monitor managing actors for serving HTTP
+    requests on a given port, another monitor managing actors consuming tasks
+    from a task queue and so forth. You can think of :class:`Monitor` as
+    managers of pools of :class:`Actor`.
 
-    import pulsar
+    Monitors are created by invoking the :meth:`Arbiter.add_monitor`
+    functions and not by directly invoking the constructor. Therefore
+    adding a new monitor to the arbiter follows the pattern::
 
-    m = pulsar.arbiter().add_monitor(pulsar.Monitor, 'mymonitor')
-'''
+        import pulsar
+
+        m = pulsar.arbiter().add_monitor('mymonitor')
+    '''
     @property
     def arbiter(self):
         return self.monitor

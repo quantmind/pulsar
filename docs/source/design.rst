@@ -259,8 +259,10 @@ Hooks
 ~~~~~~~~~~~~~~~~~~~
 
 An :class:`Actor` exposes three :ref:`one time events <one-time-event>`
-which can be used to customise its behaviour. Hooks are passed as key-valued
-parameters to the :func:`spawn` function.
+which can be used to customise its behaviour and two
+:ref:`many times event <many-times-event>` used when accessing actor
+information and when the actor spawn ather actors.
+Hooks are passed as key-valued parameters to the :func:`spawn` function.
 
 **start**
 
@@ -277,7 +279,7 @@ This snippet spawns a new actor which starts an
     
     from pulsar import spawn, TcpServer
     
-    def create_echo_server(address, actor):
+    def create_echo_server(address, actor, _):
         '''Starts an echo server on a newly spawn actor'''
         server = TcpServer(actor.event_loop, address[0], address[1],
                            EchoServerProtocol)
@@ -293,7 +295,9 @@ The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
 
 .. note::
 
-    Hooks are function receiving as only argument the actor which invokes them.
+    Hooks are function accepting two parameters, the actor which
+    invokes them and optional data. Hooks are
+    :ref:`one time events <one-time-event>` for actors.
     
 **stopping**
 
@@ -303,9 +307,23 @@ Fired when the :class:`Actor` starts stopping.
 
 Fired just before the :class:`Actor` is garbage collected
  
+**on_info**
 
+Fired every time the actor status information is accessed via the
+:ref:`info command <actor_info_command>`::
 
-.. _actor_commands:
+    def extra_info(actor, data):
+        data['message'] = 'Hello'
+        
+    proxy = spawn(on_info=extra_info)
+
+**on_params**
+
+Fired every time an actor is about to spawn another actor. It can be used to
+add additional key-valued parameters passed to the :func:`pulsar.spawn`
+function.
+
+.. _actorparams:
 
 Commands
 ===============

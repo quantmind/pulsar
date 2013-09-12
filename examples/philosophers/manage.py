@@ -211,7 +211,6 @@ action to the monitor.'''
         params.update({'name': name,
                        'number': number,
                        'forks': []})
-        return params
     
 
 if __name__ == '__main__':

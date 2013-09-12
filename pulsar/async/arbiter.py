@@ -9,7 +9,7 @@ from pulsar.utils.pep import itervalues
 from pulsar import HaltServer
 
 from .actor import Actor, ACTOR_STATES
-from .monitor import PoolMixin, _spawn_actor
+from .monitor import PoolMixin, Monitor, _spawn_actor
 from .defer import multi_async
 from .access import get_actor, set_actor
 from . import proxy
@@ -70,7 +70,7 @@ A typical usage::
         return actor.spawn(**kwargs)
 
 
-def stop_arbiter(self):
+def stop_arbiter(self, _):
     p = self.pidfile
     if p is not None:
         self.logger.debug('Removing %s' % p.fname)
@@ -86,7 +86,7 @@ def stop_arbiter(self):
     if exit_code:
         sys.exit(exit_code)
     
-def start_arbiter(self):
+def start_arbiter(self, _):
     if current_process().daemon:
         raise pulsar.PulsarException(
                 'Cannot create the arbiter in a daemon process')
@@ -131,7 +131,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
     ############################################################################
     # ARBITER HIGH LEVEL API
     ############################################################################
-    def add_monitor(self, monitor_class, monitor_name, **params):
+    def add_monitor(self, monitor_name, monitor_class=None, **params):
         '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
 :parameter monitor_class: a :class:`pulsar.Monitor` class.
@@ -141,6 +141,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         if monitor_name in self.registered: 
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
+        monitor_class = monitor_class or Monitor
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
         self.registered[m.name] = m

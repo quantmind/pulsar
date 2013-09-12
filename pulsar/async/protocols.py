@@ -9,8 +9,10 @@ from .defer import EventHandler, multi_async, log_failure
 from .internet import Protocol, logger
 
 
-__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer', 'Server']
+__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer',
+           'ConnectionProducer', 'Server']
 
+BIG = 2**31
         
 class ProtocolConsumer(EventHandler):
     '''The consumer of data for a server or client :class:`Connection`.
@@ -22,7 +24,8 @@ class ProtocolConsumer(EventHandler):
     
     .. note::
     
-        For server consumers, :meth:`data_received` is the only method to implement.
+        For server consumers, :meth:`data_received` is the only method
+        to implement.
         For client consumers, :meth:`start_request` should also be implemented.
     
     It has three :ref:`one time events <one-time-event>`:
@@ -55,7 +58,7 @@ class ProtocolConsumer(EventHandler):
         A useful example on how to use the ``data_received`` event is
         the :ref:`wsgi proxy server <tutorials-proxy-server>`.
     '''
-    _upgraded = False
+    _upgraded_from = False
     ONE_TIME_EVENTS = ('pre_request', 'finish', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
     
@@ -108,17 +111,22 @@ class ProtocolConsumer(EventHandler):
     
     @property
     def on_finished(self):
-        '''A :class:`Deferred` called once the :class:`ProtocolConsumer` has
-        finished consuming protocol. A shortcut for ``self.event('finish')``.
+        '''A :class:`Deferred` when finished.
+
+        This occurs when this :class:`ProtocolConsumer` has finished
+        consuming data.
+
+        It is a shortcut for ``self.deferred('finish')``.
         '''
-        return self.event('finish')
+        return self.deferred('finish')
     
     @property
     def request_done(self):
         '''A :class:`Deferred` called once the request is done.
-        A shortcut for ``self.event('post_request')``.
+        
+        A shortcut for ``self.deferred('post_request')``.
         '''
-        return self.event('post_request')
+        return self.deferred('post_request')
         
     @property
     def has_finished(self):
@@ -128,9 +136,9 @@ class ProtocolConsumer(EventHandler):
         return self.event('finish').done()
     
     @property
-    def upgraded(self):
-        '''``True`` when this consumer has been upgraded.'''
-        return self._upgraded
+    def upgraded_from(self):
+        '''An instance of ``Upgrade`` when this consumer has been upgraded.'''
+        return self._upgraded_from
 
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
@@ -142,8 +150,10 @@ class ProtocolConsumer(EventHandler):
         '''Called when some data is received.
 
         **This method must be implemented by subclasses** for both server and
-        client consumers. The argument is a bytes object.'''
-        pass
+        client consumers.
+        
+        The argument is a bytes object.
+        '''
 
     def start_request(self):
         '''Starts a new request.
@@ -171,14 +181,14 @@ class ProtocolConsumer(EventHandler):
         :class:`RuntimeError` occurs.
 
         For server side consumer, this method simply fires the
-        ``pre_request`` event.'''
+        ``pre_request`` event with ``request`` as data.'''
         conn = self.connection
         if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
         if  not conn.transport:
             raise RuntimeError('%s has no transport.' % conn)
         self._request = request
-        self.fire_event('pre_request')
+        self.fire_event('pre_request', request)
         if request is not None:
             try:
                 self.start_request()
@@ -198,7 +208,7 @@ class ProtocolConsumer(EventHandler):
         if c:
             c._current_consumer = None
         self.fire_event('finish', result)
-        self.fire_event('post_request', result, warning=False)
+        self.fire_event('post_request', result)
         
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -230,10 +240,20 @@ class ProtocolConsumer(EventHandler):
         self._reconnect_retries = 0
         self.fire_event('data_received', data)
         result = self.data_received(data)
-        self.fire_event('data_processed')
+        self.fire_event('data_processed', data)
         return result
 
-        
+
+def new_connection(producer):
+    if producer:
+        return getattr(producer, '_new_connection', False)
+    else:
+        return True
+
+def release_connection(producer):
+    return getattr(producer, '_new_connection', True)
+
+
 class Connection(EventHandler, Protocol):
     '''A :class:`Protocol` which represents a client or server connection
     with an end-point. A :class:`Connection` is not connected until
@@ -249,21 +269,20 @@ class Connection(EventHandler, Protocol):
     * ``connection_made``
     * ``connection_lost``
 
-    and two :ref:`many times events <many-times-event>`:
+    and three :ref:`many times events <many-times-event>` corresponding to the
+    :class:`ProtocolConsumer` one time events:
 
-    * ``pre_request``
-    * ``post_request``
-
-    Both these events are copied to the :class:`ProtocolConsumer` which
-    handle incoming data.
+    * ``pre_request`` Fired when a new request arrives/start
+    * ``finish`` Fired when a protocol consumer has finished consuming data
+    * ``post_request`` fired when a request has finished
     '''
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
-    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
+    MANY_TIMES_EVENTS = ('pre_request', 'finish', 'post_request')
     #
     _transport = None
     _current_consumer = None
     _idle_timeout = None
-    def __init__(self, session, timeout, consumer_factory, producer):
+    def __init__(self, session, consumer_factory, producer, timeout=0):
         super(Connection, self).__init__()
         self._session = session 
         self._processed = 0
@@ -296,6 +315,13 @@ class Connection(EventHandler, Protocol):
 
         Available once the :meth:`connection_made` is called.'''
         return self._transport
+    
+    @property
+    def sock(self):
+        '''The socket of :attr:`transport`.
+        '''
+        if self._transport:
+            return self._transport.sock
     
     @property
     def event_loop(self):
@@ -384,9 +410,7 @@ class Connection(EventHandler, Protocol):
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
-        # If the consumer is an upgrade, skip copying events and don't
-        # increase the processed counter
-        if not consumer._upgraded:
+        if new_connection(consumer.upgraded_from):
             consumer.copy_many_times_events(self)
             self._processed += 1
         consumer.connection_made(self)
@@ -446,19 +470,28 @@ class Connection(EventHandler, Protocol):
             else:
                 log_failure(exc)
                              
-    def upgrade(self, consumer_factory):
+    def upgrade(self, consumer_factory=None, new_connection=False):
         '''Upgrade the :attr:`consumer_factory` attribute.
         
         This function can be used when the protocol specification changes
         during a response (an example is a WebSocket request/response,
-        or a HTTP tunneling).'''
+        or HTTP tunneling).
+
+        :param consumer_factory: optional new consumer factory.
+        :param new_connection: If ``True`` a new connection is needed by
+            the upgrade. Default ``False``.
+        :return: Nothing.
+        '''
         consumer = self._current_consumer
         if consumer and not consumer.event('post_request').done():
             assert consumer.event('pre_request').done(), "pre_request not done"
-            post_request = consumer.pop_event('post_request')
-            consumer_factory = partial(self._upgrade, consumer_factory,
-                                       consumer, post_request)
-        self._consumer_factory = consumer_factory
+            post = consumer.pop_event('post_request')
+            # inject new_connection to the old consumer
+            consumer._new_connection = new_connection
+            factory = consumer_factory or self._consumer_factory
+            consumer_factory = partial(self._upgrade, factory, consumer, post)
+        if consumer_factory:
+            self._consumer_factory = consumer_factory
     
     ############################################################################
     ##    INTERNALS
@@ -477,77 +510,98 @@ class Connection(EventHandler, Protocol):
             self._idle_timeout.cancel()
             self._idle_timeout = None
     
-    def _upgrade(self, consumer_factory, old_consumer, post_request,
+    def _upgrade(self, consumer_factory, old_consumer, post_request_event,
                  connection=None):
+        # A factory of protocol for an upgrade of an existing protocol consumer
+        # which didn't have the post_request event fired.
         consumer = consumer_factory()
-        if not consumer._upgraded:
-            consumer._upgraded = []
-        consumer._upgraded.append(old_consumer)
-        consumer.ONE_TIME_EVENTS['post_request'] = (True, post_request)
+        consumer._upgraded_from = old_consumer
+        consumer.events['post_request'] = post_request_event
+        # important! We set the consumer here rather than passing it in the
+        # consumer_factory function.
+        # This is because we need the post_request_event to be the one
+        # passed as argument.
         if connection:
             connection.set_consumer(consumer)
         return consumer
-         
+
+
 class Producer(EventHandler):
-    '''A Producer of :class:`Connection` with remote servers or clients.
-    It is the base class for both :class:`Server` and :class:`ConnectionPool`.
-    The main method in this class is :meth:`new_connection` where a new
-    :class:`Connection` is created and added to the set of
-    :attr:`concurrent_connections`.
-
-    .. attribute:: connection_factory
-
-        A factory producing the :class:`Connection` from a
-        remote client with this producer.
-        This attribute is used in the :meth:`new_connection` method.
-        There shouldn't be any reason to change the default :class:`Connection`,
-        it is here just in case.
-        
-    .. attribute:: concurrent_connections
-
-        Number of concurrent active connections
-        
-    .. attribute:: received
-
-        Total number of received connections
-        
-    .. attribute:: timeout
-
-        number of seconds to keep alive an idle connection
-        
-    .. attribute:: max_connections
-
-        Maximum number of connections allowed. A value of 0 (default)
-        means no limit.
-    '''
+    '''Abstract base class for all producers of connections.'''
     connection_factory = Connection
-    def __init__(self, max_connections=0, timeout=0, connection_factory=None):
+    '''A callable producing connections.
+
+    The signature of the connection factory must be::
+
+        connection_factory(session, consumer_factory, producer, **params)
+
+    By default it is set to the :class:`Connection` class.
+    '''
+    _timeout = 0
+    _max_connections = 0
+    def __init__(self, connection_factory=None, timeout=None,
+                 max_connections=None):
         super(Producer, self).__init__()
-        self._received = 0
-        self._timeout = timeout
-        self._max_connections = max_connections
-        self._concurrent_connections = set()
         if connection_factory:
             self.connection_factory = connection_factory
-    
+        self._timeout = timeout if timeout is not None else self._timeout
+        self._max_connections = max_connections or self._max_connections or BIG
+
     @property
     def timeout(self):
+        '''Number of seconds to keep alive an idle connection.
+
+        Passed as key-valued parameter to to the :meth:`connection_factory`.
+        '''
         return self._timeout
+
+    @property
+    def max_connections(self):
+        '''Maximum number of connections allowed.
+
+        A value of 0 (default) means no limit.
+        '''
+        return self._max_connections
+    
+    def can_reuse_connection(self, connection, response):
+        '''Check if ``connection`` can be reused.
+
+        By default it returns ``True``.'''
+        return True
+
+    def upgrade(self, connection, protocol_factory=None, **params):
+        '''Upgrade and existing ``connection`` with a new ``protocol_factory``.
+
+        This is an abstract method implemented by subclasses.
+        '''
+        raise NotImplementedError
+
+
+class ConnectionProducer(Producer):
+    '''A Producer of connections with remote servers or clients.
+
+    It is the base class for both :class:`Server` and :class:`ConnectionPool`.
+    The main method in this class is :meth:`new_connection` where a new
+    connection is created and added to the set of
+    :attr:`concurrent_connections`.
+    '''
+    def __init__(self, **kw):
+        super(ConnectionProducer, self).__init__(**kw)
+        self._received = 0
+        self._concurrent_connections = set()
     
     @property
     def received(self):
+        '''Total number of connections created.'''
         return self._received
     
     @property
-    def max_connections(self):
-        return self._max_connections
-    
-    @property
     def concurrent_connections(self):
+        '''Number of concurrent active connections.'''
         return len(self._concurrent_connections)
     
     def new_connection(self, consumer_factory, producer=None):
-        '''Called when a new :class:`Connection` is created.
+        '''Called when a new connection is created.
 
         The ``producer`` is either a :class:`Server` or a :class:`Client`.
         If the number of :attr:`concurrent_connections` is greater or equal
@@ -556,6 +610,14 @@ class Producer(EventHandler):
 
         Once a new connection is created, all the many times events of the
         producer are added to the connection.
+
+        :param consumer_factory: The protocol consumer factory passed to the
+            :meth:`connection_factory` callable as second positional
+            argument.
+        :param producer: The producer of the connection. If not specified it
+            is set to ``self``. Passed as third positional argument to the
+            :meth:`connection_factory` callable.
+        :return: the result of the :meth:`connection_factory` call.
         '''
         if self._max_connections and self._received >= self._max_connections:
             raise TooManyConnections('Too many connections')
@@ -563,34 +625,34 @@ class Producer(EventHandler):
         self._received = session = self._received + 1
         # new connection - not yet connected!
         producer = producer or self
-        conn = self.connection_factory(session, self.timeout,
-                                       consumer_factory, producer)
+        conn = self.connection_factory(session, consumer_factory, producer,
+                                       timeout=self.timeout)
         # When the connection is made, add it to the set of
         # concurrent connections
         conn.bind_event('connection_made', self._add_connection)
         conn.copy_many_times_events(producer)
-        conn.bind_event('connection_lost', partial(self._remove_connection,
-                                                   conn))
+        conn.bind_event('connection_lost', self._remove_connection)
         return conn
     
     def close_connections(self, connection=None, async=True):
-        '''Close ``connection`` if specified, otherwise close all
-active connections. Return a list of :class:`Deferred` called
-back once the connection/s are closed.'''
+        '''Close ``connection`` if specified, otherwise close all connections.
+
+        Return a list of :class:`Deferred` called back once the connection/s
+        are closed.
+        '''
         all = []
         if connection:
-            all.append(connection.event('connection_lost'))
+            all.append(connection.deferred('connection_lost'))
             connection.transport.close(async)
         else:
             for connection in list(self._concurrent_connections):
-                all.append(connection.event('connection_lost'))
+                all.append(connection.deferred('connection_lost'))
                 connection.transport.close(async)
         return multi_async(all)
-                
-    def can_reuse_connection(self, connection, response):
-        return True
-            
-    def _add_connection(self, connection):
+    
+    #   INTERNALS
+
+    def _add_connection(self, connection, exc=None):
         self._concurrent_connections.add(connection)
         
     def _remove_connection(self, connection, exc=None):
@@ -598,7 +660,7 @@ back once the connection/s are closed.'''
         self._concurrent_connections.discard(connection)
     
     
-class Server(Producer):
+class Server(ConnectionProducer):
     '''A base class for Servers listening on a socket.
         
     An instance of this class is a :class:`Producer` of server sockets and has
@@ -610,10 +672,12 @@ class Server(Producer):
       
     In addition it has four :ref:`many times event <many-times-event>`:
 
-    * ``connection_made`` fired every time a new connection is made.
-    * ``pre_request`` fired every time a new request is made on a given connection.
-    * ``post_request`` fired every time a request is finished on a given connection.
-    * ``connection_lost`` fired every time a connection is gone.
+    * ``connection_made`` fired every time a new :class:`Connection` is made.
+    * ``pre_request`` fired every time a new request is made on a
+      given connection.
+    * ``post_request`` fired every time a request is finished on a
+      given connection.
+    * ``connection_lost`` fired every time a :class:`Connection` is gone.
 
     .. attribute:: consumer_factory
 

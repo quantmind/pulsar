@@ -162,6 +162,7 @@ an :class:`ActorProxy`.
 **PUBLIC METHODS**
 '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
+    MANY_TIMES_EVENTS = ('on_info', 'on_params')
     exit_code = None
     mailbox = None
     signal_queue = None
@@ -172,7 +173,7 @@ an :class:`ActorProxy`.
         self.state = ACTOR_STATES.INITIAL
         self._thread_pool = None
         self.__impl = impl
-        for name in self.all_events():
+        for name in self.events:
             hook = impl.params.pop(name, None)
             if hook:
                 self.bind_event(name, hook)
@@ -384,6 +385,7 @@ from another actor.'''
                 'extra': self.extra}
         if isp:
             data['system'] = system.system_info(self.pid)
+        self.fire_event('on_info', data)
         return data
     
     def _run(self, initial=True):

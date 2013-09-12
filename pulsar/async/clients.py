@@ -9,22 +9,23 @@ from pulsar.utils.internet import is_socket_closed
 
 from .defer import is_failure, multi_async
 
-from .protocols import EventHandler, Producer
+from .protocols import (EventHandler, Producer, ConnectionProducer,
+                        release_connection)
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
 
     
 class Request(object):
     '''A :class:`Client` request.
-    
-A request object is hashable an it is used to select
-the appropriate :class:`ConnectionPool` for the client request.
+        
+    A request object is hashable an it is used to select
+    the appropriate :class:`ConnectionPool` for the client request.
 
-.. attribute:: address
+    .. attribute:: address
 
-    The socket address of the remote server
-    
-'''
+        The socket address of the remote server
+        
+    '''
     _finished = False
     def __init__(self, address, timeout=0):
         self.address = address
@@ -49,8 +50,8 @@ the appropriate :class:`ConnectionPool` for the client request.
         raise NotImplementedError
     
     def create_connection(self, event_loop, connection):
-        '''Called by a :class:`Client` when a new connection with
-remote server is needed.'''
+        '''Called by a :class:`Client` when a new connection is needed.
+        '''
         res = event_loop.create_connection(lambda: connection,
                                            self.address[0],
                                            self.address[1],
@@ -60,18 +61,18 @@ remote server is needed.'''
     def _connection_made(self, transport_protocol):
         _, connection = transport_protocol
         # wait for the connection_made event
-        yield connection.event('connection_made')
+        yield connection.deferred('connection_made')
         # starts the new request
         connection.current_consumer.start(self)
     
     
-class ConnectionPool(Producer):
+class ConnectionPool(ConnectionProducer):
     '''A :class:`Producer` of of active connections for client
-protocols. It maintains a live set of connections.
+    protocols. It maintains a live set of connections.
 
-.. attribute:: address
+    .. attribute:: address
 
-    Address to connect to
+        Address to connect to
     '''    
     def __init__(self, request, **params):
         params['timeout'] = request.timeout
@@ -95,14 +96,15 @@ protocols. It maintains a live set of connections.
         return len(self._available_connections)
         
     def release_connection(self, connection, response=None):
-        '''Releases the *connection* back to the pool. This function remove
-the *connection* from the set of concurrent connections and add it to the set
-of available connections.
+        '''Releases the *connection* back to the pool.
 
-:parameter connection: The connection to release
-:parameter response: Optional :class:`ProtocolConsumer` which consumed the
-    connection.
-'''
+        This function remove the ``connection`` from the set of concurrent
+        connections and add it to the set of available connections.
+
+        :parameter connection: The connection to release
+        :parameter response: Optional :class:`ProtocolConsumer` which consumed the
+            connection.
+        '''
         with self.lock:
             self._concurrent_connections.discard(connection)
             if connection.producer.can_reuse_connection(connection, response):
@@ -131,11 +133,11 @@ of available connections.
             # build the new connection
             connection = self.new_connection(client.consumer_factory,
                                              producer=client)
-            # Bind the post request event to the release connection function
-            connection.bind_event('post_request', self._release_response)
-            # Bind the connection_lost to connection to handle dangling connections
-            connection.bind_event('connection_lost',
-                                  partial(self._try_reconnect, connection))
+            # Bind the finish event to the release connection function
+            connection.bind_event('finish', self._release_response)
+            # Bind the connection_lost to connection to handle dangling
+            # connections
+            connection.bind_event('connection_lost', self._try_reconnect)
         return connection
         
     ############################################################################
@@ -146,7 +148,8 @@ of available connections.
             # Have we been here before?
             consumer = connection.current_consumer
             if consumer is None:
-                # No consumer, The address was probably wrong. Connection Refused
+                # No consumer. The address was probably wrong.
+                # Connection Refused
                 return
             client = connection.producer
             # The connection has processed request before and the consumer
@@ -177,17 +180,19 @@ of available connections.
             super(ConnectionPool, self)._remove_connection(connection, exc)
             self._available_connections.discard(connection)
     
-    def _release_response(self, response):
+    def _release_response(self, response, _):
         #proxy to release_connection
-        if getattr(response, 'release_connection', True):
+        if release_connection(response):
             self.release_connection(response.connection, response)
 
 
-class Client(EventHandler):
-    '''A client for a remote server which handles one or more
+class Client(Producer):
+    '''A client for a remote server.
+
+    It is a :class:`Producer` which handles one or more
     :class:`ConnectionPool` of asynchronous connections.
-    It has the ``finish`` :ref:`one time event <one-time-event>` fired when calling
-    the :meth:`close` method.
+    It has the ``finish`` :ref:`one time event <one-time-event>` fired when
+    calling the :meth:`close` method.
 
     in the same way as the :class:`Server` class, :class:`Client` has four
     :ref:`many time events <many-times-event>`:
@@ -203,19 +208,26 @@ class Client(EventHandler):
     passed for most use-cases. Additionally, they can also be set as class
     attributes to override defaults.
 
-    :param max_connections: set the :attr:`max_connections` attribute.
-    :param timeout: set the :attr:`timeout` attribute.
+    :param max_connections: set the :attr:`Producer.max_connections` attribute.
+    :param timeout: set the :attr:`Producer.timeout` attribute.
+    :param connection_factory: set the :attr:`Producer.connection_factory`
+        attribute.
     :param force_sync: set the :attr:`force_sync` attribute.
-    :param event_loop: optional :class:`EventLoop` which set the :attr:`event_loop`.
-    :param connection_pool: optional factory which set the :attr:`connection_pool`.
+    :param event_loop: optional :class:`EventLoop` which set the
+        :attr:`event_loop`.
+    :param connection_pool: optional factory which set the
+        :attr:`connection_pool`.
         The :attr:`connection_pool` can also be set at class level.
+    :param max_reconnect: set the :attr:`max_reconnect` attribute.
+    :param consumer_factory: set the :meth:`consumer_factory` callable.
     :parameter client_version: optional version string for this :class:`Client`.
 
     .. attribute:: event_loop
 
         The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
-        The preferred way to obtain the event loop is via the :meth:`get_event_loop`
-        method rather than accessing this attribute directly.
+        The preferred way to obtain the event loop is via the
+        :meth:`get_event_loop` method rather than accessing this attribute
+        directly.
         
     .. attribute:: force_sync
 
@@ -237,21 +249,8 @@ class Client(EventHandler):
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
     '''A factory of :class:`ProtocolConsumer` for sending and consuming data.'''
-    connection_factory = None
-    '''A factory of :class:`Connection`.'''
     client_version = ''
     '''An optional version for this client'''
-    timeout = 0
-    '''Optional timeout in seconds for idle connections.
-
-    This is not the timeout for the sockets (which is always 0).
-    '''
-    max_connections = 0
-    '''Maximum number of :attr:`concurrent_connections` allowed.
-
-    Exceeding this number will result in a
-    :class:`pulsar.utils.exceptions.TooManyConnections`
-    error. ``0`` means an unlimited number is allowed.'''
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
     
@@ -260,21 +259,21 @@ class Client(EventHandler):
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
                          'connection_lost')
     
-    def __init__(self, max_connections=None, timeout=None, client_version=None,
-                 trust_env=True, consumer_factory=None, max_reconnect=None,
-                 force_sync=False, event_loop=None, connection_pool=None,
-                 **params):
-        super(Client, self).__init__()
+    def __init__(self, connection_factory=None, timeout=None,
+                 client_version=None, connection_pool=None, trust_env=True,
+                 max_connections=None, consumer_factory=None, event_loop=None,
+                 max_reconnect=None, force_sync=False, **params):
+        super(Client, self).__init__(connection_factory=connection_factory,
+                                     timeout=timeout,
+                                     max_connections=max_connections)
         self.lock = Lock()
         self._closed = False
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
-        self.timeout = timeout if timeout is not None else self.timeout
         self.connection_pool = (connection_pool or self.connection_pool or
                                 ConnectionPool)
         if consumer_factory:
             self.consumer_factory = consumer_factory
-        self.max_connections = max_connections or self.max_connections or 2**31
         if self.connection_pools is None:
             self.connection_pools = {}
         if max_reconnect:
@@ -304,20 +303,25 @@ class Client(EventHandler):
     @property
     def closed(self):
         '''``True`` if the :meth:`close` was invoked on this :class:`Client`.
-A closed :class:`Client` cannot send :meth:`request` to remote servers.'''
+        
+        A closed :class:`Client` cannot send :meth:`request` to remote
+        servers.
+        '''
         return self._closed
         
     def setup(self, **params):
         '''Setup the client.
 
-Invoked at the end of initialisation with the additional parameters passed.
-By default it does nothing.'''
+        Invoked at the end of initialisation with the additional parameters
+        passed. By default it does nothing.'''
         pass
     
     def get_event_loop(self):
         '''Return the :class:`EventLoop` used by this :class:`Client`.
-The event loop can be set during initialisation. If :attr:`force_sync`
-is ``True`` a specialised event loop is created.'''
+        
+        The event loop can be set during initialisation. If :attr:`force_sync`
+        is ``True`` a specialised event loop is created.
+        '''
         if self.event_loop:
             return self.event_loop
         elif self.force_sync:
@@ -373,11 +377,18 @@ is ``True`` a specialised event loop is created.'''
         return response
     
     def get_connection(self, request):
-        '''Get a suitable :class:`Connection` for ``request`` by first checking
-if an available open connection can be used. Alternatively it creates
-a new connection. This method invoks the
-:meth:`ConnectionPool.get_or_create_connection` on the appropiate
-connection pool.'''
+        '''Returns a suitable :class:`Connection` for ``request``.
+
+        First checks if an available open connection can be used.
+        Alternatively it creates a new connection by invoking the
+        :meth:`ConnectionPool.get_or_create_connection` method on the
+        appropiate connection pool.
+
+        If a new connection is created, the connection won't be yet
+        ``connected`` with end-point.
+
+        Thread safe.
+        '''
         with self.lock:
             pool = self.connection_pools.get(request.key)
             if pool is None:
@@ -389,8 +400,13 @@ connection pool.'''
         return pool.get_or_create_connection(self)
         
     def update_parameters(self, parameter_list, params):
-        '''Update *param* with attributes of this :class:`Client` defined
-in :attr:`request_parameters` tuple.'''
+        '''Update *param* with attributes from this :class:`Client`.
+
+        :param parameter_list` an iterable over parameter names to add to
+            ``params`` if ``params`` does not already have them.
+        :param params: dictionary of parameters uo update.
+        :return: an updated copy of params.
+        '''
         nparams = params.copy()
         for name in parameter_list:
             if name not in params:
@@ -400,41 +416,33 @@ in :attr:`request_parameters` tuple.'''
     def close_connections(self, async=True):
         '''Close all connections in each :attr:`connection_pools`.
         
-:parameter async: if ``True`` flush the write buffer before closing (same
-    as :class:`SocketTransport.close` method).
-:return: a :class:`Deferred` called back once all connections are closed.'''
+        :param async: if ``True`` flush the write buffer before closing (same
+            as :class:`SocketTransport.close` method).
+        :return: a :class:`Deferred` called back once all connections are
+            closed.
+        '''
         all = []
         for p in self.connection_pools.values():
             all.append(p.close_connections(async=async))
         return multi_async(all)
             
     def close(self, async=True, timeout=5):
-        '''Close all connections and fire the ``finish``
-:ref:`one time event <one-time-event>`. Return the :class:`Deferred`
-fired by the ``finish`` event.'''
+        '''Close all connections.
+
+        Fire the ``finish`` :ref:`one time event <one-time-event>` once done.
+        Return the :class:`Deferred` fired by the ``finish`` event.
+        '''
         if not self.closed:
             self._closed = True
             event = self.close_connections(async)
-            event.add_callback(lambda r: self.fire_event('finish'),
-                               lambda f: self.fire_event('finish', f))
+            event.add_both(partial(self.fire_event, 'finish'))
             event.set_timeout(timeout, self.get_event_loop())
-        return self.event('finish')
+        return self.deferred('finish')
         
     def abort(self):
         ''':meth:`close` all connections without waiting for active connections
         to finish.'''
         self.close(async=False)
-
-    def can_reuse_connection(self, connection, response):
-        '''Invoked by the :meth:`ConnectionPool.release_connection`, it checks
-whether the *connection* can be reused in the future or it must be disposed.
-
-:param connection: the :class:`Connection` to check.
-:param response: the :class:`ProtocolConsumer` which last consumed the incoming
-    data from the connection (it can be ``None``).
-:return: ``True`` or ``False``.
-'''
-        return True
     
     def reconnect_time_lag(self, lag):
         lag = self.reconnect_time_lag*(math.log(lag) + 1)
@@ -448,14 +456,15 @@ whether the *connection* can be reused in the future or it must be disposed.
         if key:
             self.connection_pools.pop(key)
             
-    def upgrade(self, connection, protocol_factory=None,
-                release_connection=False):
+    def upgrade(self, connection, protocol_factory=None, new_connection=False):
         '''Upgrade an existing ``connection`` with a new ``protocol_factory``.
+
+        This implements the :meth:`Producer.upgrade` abstract method.
 
         :param connection: connection to upgrade.
         :param protocol_factory: optional protocol factory.
-        :param release_connection: If ``True`` the connection is not released
-            to the pool.
+        :param new_connection: If ``True`` the connection is released
+            to the pool. Default ``False``.
         :return: a new :class:`ProtocolConsumer`.
         
         The upgrade occurs only if :attr:`Connection.current_consumer` is
@@ -463,13 +472,11 @@ whether the *connection* can be reused in the future or it must be disposed.
         '''
         protocol = connection.current_consumer
         if protocol:
-            protocol.release_connection = release_connection
-            if protocol_factory:
-                connection.upgrade(protocol_factory)
+            connection.upgrade(protocol_factory, new_connection)
             newproto = connection.consumer_factory()
             protocol.finished(newproto)
-            # set the connection last, important!
-            if not release_connection:
+            # set the connection if no new connection required
+            if not new_connection:
                 connection.set_consumer(newproto)
             return newproto
     
@@ -498,6 +505,8 @@ whether the *connection* can be reused in the future or it must be disposed.
             results.append(r)
         return multi_async(results)
     
+    #   INTERNALS
+
     def _response(self, event_loop, response, request, new_connection,
                   result=None):
         # Actually execute the request. This method is always called on the

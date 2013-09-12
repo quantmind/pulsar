@@ -1,5 +1,9 @@
 Ver. 0.6.1 - Development
 ===========================
+* Removed the specialised Application worker and monitor classes.
+  Use standard actor and monitor with a specialised
+  :ref:`start hook <actor-hooks>` instead. 
+* Removed global event dispatcher. No longer used.
 * Protocol consumer to handle one request only. Better upgrade method for connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
 * Cookie support for the :ref:`Http Client <apps-http>`.

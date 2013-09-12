@@ -4,7 +4,6 @@ import os
 from pulsar import send, is_failure, NOT_DONE
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
-from pulsar.utils.events import Listener
 from pulsar.utils.httpurl import to_bytes, urlencode
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
@@ -85,18 +84,9 @@ class TestHttpClientBase:
         else:
             return self.uri
         
-    
+
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
-    def test_redirect(self):
-        http = self.client()
-        response = yield http.get(self.httpbin('redirect', '1')).request_done
-        self.assertEqual(response.status_code, 200)
-        history = response.history
-        self.assertEqual(len(history), 1)
-        self.assertTrue(history[0].url.endswith('/redirect/1'))
-        
-class f:
+
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -124,6 +114,19 @@ class f:
         r = HttpResponse(None)
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
+    
+    def test_redirect_2(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('redirect', '1')).request_done
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
+        self._after('test_redirect_2', response)
+    def after_test_redirect_2(self, response):
+        redirect = response.history[0]
+        self.assertEqual(redirect.connection, response.connection)
+        self.assertEqual(response.connection.processed, 2)
         
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
@@ -183,11 +186,7 @@ class f:
     def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()
-        listener = Listener('post_request', 'connection_lost')
-        self.assertFalse(listener['post_request'])
         response = yield http.get(self.httpbin('status', '400')).on_finished
-        N = len(listener['post_request'])
-        self.assertTrue(N)
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.response, 'Bad Request')
@@ -195,7 +194,6 @@ class f:
         self.assertRaises(HTTPError, response.raise_for_status)
         # Make sure we only have one connection after a valid request
         response = yield http.get(self.httpbin('get')).on_finished
-        self.assertTrue(len(listener['post_request']) > N)
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, created=2)
         

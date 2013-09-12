@@ -29,7 +29,6 @@ from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, hexmd5)
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
-from pulsar.utils import events
     
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -48,6 +47,10 @@ def template():
 
 class HttpBin(wsgi.Router):
     
+    def bind_server_event(self, request, event, handler):
+        server = request.environ['pulsar.connection'].current_consumer
+        server.bind_event(event, handler)
+
     def get(self, request):
         '''The home page of this router'''
         ul = Html('ul')
@@ -134,7 +137,7 @@ class HttpBin(wsgi.Router):
     def response_headers(self, request):
         class Gen:
             headers = None
-            def __call__(self, headers=None, **kwargs):
+            def __call__(self, server, headers):
                 self.headers = headers
             def generate(self):
                 #yield a byte so that headers are sent
@@ -143,7 +146,7 @@ class HttpBin(wsgi.Router):
                 headers = json.dumps(dict(self.headers))
                 yield headers[1:]
         gen = Gen()
-        events.bind('http-headers', gen)
+        self.bind_server_event(request, 'on_headers', gen)
         request.response.content = gen.generate()
         request.response.content_type = 'application/json'
         return request.response
