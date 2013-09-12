@@ -54,9 +54,13 @@ class WebSocket(wsgi.Router):
         request.response.status_code = 101
         request.response.content = b''
         request.response.headers.update(headers)
-        upgrade = request.environ['pulsar.connection'].upgrade
-        upgrade(partial(WebSocketProtocol, request, self.handle, parser))
+        connection = request.environ['pulsar.connection']
+        factory = partial(WebSocketProtocol, request, self.handle, parser)
+        connection.upgrade(factory)
         return request.response
+        
+    def upgrade(self, connection,):
+        connection.upgrade.current_consumer
         
     def handle_handshake(self, environ):
         connections = environ.get("HTTP_CONNECTION", '').lower()\
@@ -179,5 +183,6 @@ class WebSocketProtocol(ProtocolConsumer):
 
     def _shut_down(self, res):
         self.handler.on_close(self)
-        if not self.closed:
-            self.connection.close()
+        connection = self._connection
+        if connection:
+            connection.close()

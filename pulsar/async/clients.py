@@ -391,10 +391,11 @@ connection pool.'''
     def update_parameters(self, parameter_list, params):
         '''Update *param* with attributes of this :class:`Client` defined
 in :attr:`request_parameters` tuple.'''
+        nparams = params.copy()
         for name in parameter_list:
             if name not in params:
-                params[name] = getattr(self, name)
-        return params
+                nparams[name] = getattr(self, name)
+        return nparams
         
     def close_connections(self, async=True):
         '''Close all connections in each :attr:`connection_pools`.
@@ -463,10 +464,11 @@ whether the *connection* can be reused in the future or it must be disposed.
         protocol = connection.current_consumer
         if protocol:
             protocol.release_connection = release_connection
-            if not protocol_factory:
+            if protocol_factory:
                 connection.upgrade(protocol_factory)
             newproto = connection.consumer_factory()
             protocol.finished(newproto)
+            # set the connection last, important!
             if not release_connection:
                 connection.set_consumer(newproto)
             return newproto

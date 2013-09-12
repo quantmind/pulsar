@@ -1,5 +1,6 @@
 Ver. 0.6.1 - Development
 ===========================
+* Protocol consumer to handle one request only. Better upgrade method for connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
 * Cookie support for the :ref:`Http Client <apps-http>`.
 * Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.

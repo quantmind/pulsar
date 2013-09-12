@@ -59,15 +59,17 @@ class TestWebSocketThread(unittest.TestCase):
                         headers=[('Sec-Websocket-version', 'xxx')]).on_finished
         self.assertEqual(response.status_code, 400)
     
-    def testUpgrade(self):
+    def test_upgrade(self):
         c = HttpClient()
         handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_done
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_finished
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
         self.assertEqual(ws.connection, response.connection)
         self.assertEqual(ws.handler, handler)
+        self.assertEqual(response, ws.upgraded[0])
+        self.assertFalse(ws.request_done.done())
         # Send a message to the websocket
         ws.write('Hi there!')
         message = yield handler.get()

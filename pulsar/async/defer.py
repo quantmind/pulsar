@@ -761,16 +761,17 @@ for scheduling connections and requests.'''
 of callables.'''
     
     def __init__(self):
-        o = dict(((e, Deferred()) for e in self.ONE_TIME_EVENTS))
+        o = dict(((e, (True, Deferred())) for e in self.ONE_TIME_EVENTS))
         m = dict(((e, []) for e in self.MANY_TIMES_EVENTS))
         self.ONE_TIME_EVENTS = o
         self.MANY_TIMES_EVENTS = m
         
     def __copy__(self):
+        #TODO: why do I need this?
         d = self.__dict__.copy()
         cls = self.__class__
         obj = cls.__new__(cls)
-        o = dict(((e, Deferred()) for e in self.ONE_TIME_EVENTS))
+        o = dict(((e, (True, Deferred())) for e in self.ONE_TIME_EVENTS))
         d['ONE_TIME_EVENTS'] = o
         obj.__dict__ = d
         return obj
@@ -778,16 +779,23 @@ of callables.'''
     def event(self, name):
         '''Return the handler for event *name*.'''
         if name in self.ONE_TIME_EVENTS:
-            return self.ONE_TIME_EVENTS[name]
+            return self.ONE_TIME_EVENTS[name][1]
         else:
             return self.MANY_TIMES_EVENTS[name]
+        
+    def pop_event(self, name):
+        '''Mute one time event ``name`` and return the handler.'''
+        if name in self.ONE_TIME_EVENTS:
+            _, event = self.ONE_TIME_EVENTS.pop(name)
+            self.ONE_TIME_EVENTS[name] = (False, event)
+            return event
     
     def bind_event(self, event, callback):
         '''Register a *callback* with *event*. The callback must be
 a callable which accept one argument only.'''
         callback = self.safe_callback(event, callback)
         if event in self.ONE_TIME_EVENTS:
-            self.ONE_TIME_EVENTS[event].add_both(callback)
+            self.ONE_TIME_EVENTS[event][1].add_both(callback)
         elif event in self.MANY_TIMES_EVENTS:
             self.MANY_TIMES_EVENTS[event].append(callback)
         else:
@@ -795,7 +803,7 @@ a callable which accept one argument only.'''
             logger().warning('unknown event "%s" for %s', event, self)
         return callback
         
-    def fire_event(self, event, event_data=None, sender=None):
+    def fire_event(self, event, event_data=None, sender=None, warning=True):
         """Dispatches ``event_data`` to the ``event`` listeners.
 * If ``event`` is a one-time event, it makes sure that it was not fired before.
         
@@ -808,17 +816,22 @@ a callable which accept one argument only.'''
         event_data = self if event_data is None else maybe_failure(event_data)
         fired = True
         if event in self.ONE_TIME_EVENTS:
-            fired = not self.ONE_TIME_EVENTS[event].done()
-            if fired:
-                self.ONE_TIME_EVENTS[event].callback(event_data)
-            else:
-                logger().warning('Event "%s" already fired for %s', event, self)
+            active, hnd = self.ONE_TIME_EVENTS[event]
+            fired = not active
+            if active:
+                fired = not hnd.done()
+                if fired:
+                    hnd.callback(event_data)
+                else:
+                    logger().warning('Event "%s" already fired for %s',
+                                     hnd, self)
         elif event in self.MANY_TIMES_EVENTS:
             for callback in self.MANY_TIMES_EVENTS[event]:
                 callback(event_data)
         else:
             fired = False
-            logger().warning('unknown event "%s" for %s', event, self)
+            if warning:
+                logger().warning('unknown event "%s" for %s', event, self)
         if fired:
             if sender is None:
                 sender = getattr(event_data, '__class__', event_data) 
@@ -826,6 +839,7 @@ a callable which accept one argument only.'''
         return fired
         
     def all_events(self):
+        '''An iterator over all event names.'''
         return chain(self.ONE_TIME_EVENTS, self.MANY_TIMES_EVENTS)
     
     def copy_many_times_events(self, other, *names):
@@ -836,7 +850,7 @@ a callable which accept one argument only.'''
                 if name in self.MANY_TIMES_EVENTS:
                     self.MANY_TIMES_EVENTS[name].extend(many[name])
                 elif name in self.ONE_TIME_EVENTS:
-                    d = self.ONE_TIME_EVENTS[name]
+                    _, d = self.ONE_TIME_EVENTS[name]
                     for callback in many[name]:
                         d.add_callback(callback)
     

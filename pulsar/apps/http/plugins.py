@@ -3,7 +3,7 @@ from functools import partial
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import FrameParser
 from pulsar.async.stream import SocketStreamSslTransport
-from pulsar.utils.httpurl import REDIRECT_CODES, urlparse, urljoin
+from pulsar.utils.httpurl import REDIRECT_CODES, urlparse, urljoin, requote_uri
 
 from pulsar import get_actor
 
@@ -24,8 +24,7 @@ class HandleRedirectAndCookies:
         # check redirect
         if (response.status_code in REDIRECT_CODES and
             'location' in headers and
-            request.allow_redirects and
-            request.parser.is_message_complete()):
+            request.allow_redirects):
             # done with current response
             url = headers.get('location')
             # Handle redirection without scheme (see: RFC 1808 Section 4)
@@ -46,17 +45,18 @@ class HandleRedirectAndCookies:
             #
             new_response = client.upgrade(response.connection,
                                           release_connection=True)
-            new_response.history.extend(response.history)
-            new_response.append(response)
+            new_response._history = []
+            if response._history:
+                new_response._history.extend(response._history)
+            new_response._history.append(response)
             #
-            rparams = request.all_params()
+            params = request.inp_params.copy()
             method = request.method
             if response.status_code == 303:
                 method = 'GET'
-                rparams.pop('data')
-                rparams.pop('files')
-            rparams['response'] = new_response
-            client.request(request.method, url, rparams)
+                params.pop('data', None)
+                params.pop('files', None)
+            client.request(request.method, url, response=new_response, **params)
 
 
 class Handle100:
@@ -70,11 +70,11 @@ class Handle100:
             
 
 class Handle101:
-
+    '''Websocket upgrade as ``on_headers`` event.'''
     def __call__(self, response):
         if response.status_code == 101:
             client = response.producer
-            request = response.current_request
+            request = response._request
             handler = request.websocket_handler
             parser = FrameParser(kind=1)
             if not handler:

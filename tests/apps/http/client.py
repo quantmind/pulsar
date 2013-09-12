@@ -66,7 +66,7 @@ class TestHttpClientBase:
         if pools:
             if created is None:
                 created = self._created_connections
-            pool = http.connection_pools[response.current_request.key]
+            pool = http.connection_pools[response.request.key]
             self.assertEqual(pool.received, created)
             self.assertEqual(pool.available_connections, available)
             if available == 1:
@@ -88,6 +88,15 @@ class TestHttpClientBase:
     
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     
+    def test_redirect(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('redirect', '1')).request_done
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
+        
+class f:
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -110,8 +119,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertFalse(request.has_header('foo'))
         self.assertEqual(request.headers.kind, 'client')
         self.assertEqual(request.unredirected_headers.kind, 'client')
+    
+    def test_HttpResponse(self):
+        r = HttpResponse(None)
+        self.assertEqual(r.request, None)
+        self.assertEqual(str(r), '<None>')
         
-class f:  
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
         was passed by the client.
@@ -134,8 +147,16 @@ class f:
         response = yield http.get(self.httpbin()).on_finished
         self.assertEqual(response.headers['connection'], 'keep-alive')
         self._check_pool(http, response)
-  
-    def testClient(self):
+
+    def test_http11_close(self):
+        http = self.client()
+        self.assertEqual(http.version, 'HTTP/1.1')
+        response = yield http.get(self.httpbin(),
+            headers=[('connection', 'close')]).on_finished
+        self.assertEqual(response.headers['connection'], 'close')
+        self._check_pool(http, response, available=0)
+        
+    def test_client(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)
         self.assertEqual(http.timeout, 33)
@@ -158,11 +179,6 @@ class f:
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
-        
-    def test_HttpResponse(self):
-        r = HttpResponse(None)
-        self.assertEqual(r.current_request, None)
-        self.assertEqual(str(r), '<None>')
         
     def test_400_and_get(self):
         '''Bad request 400'''
@@ -191,14 +207,6 @@ class f:
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
-       
-    def test_redirect(self):
-        http = self.client()
-        response = yield http.get(self.httpbin('redirect', '1')).on_finished
-        self.assertEqual(response.status_code, 200)
-        history = response.history
-        self.assertEqual(len(history), 1)
-        self.assertTrue(history[0].url.endswith('/redirect/1'))
     
     def test_too_many_redirects(self):
         http = self.client()

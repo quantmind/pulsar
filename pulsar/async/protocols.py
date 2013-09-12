@@ -13,27 +13,35 @@ __all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer', 'Server']
 
         
 class ProtocolConsumer(EventHandler):
-    '''Consume data for a protocol.The protocol consumer is one most important
-    :ref:`pulsar primitive <pulsar_primitives>`.
+    '''The consumer of data for a server or client :class:`Connection`.
     
-    It is responsible for receiving incoming data from a the
-    :meth:`Protocol.data_received` method implemented
-    in :class:`Connection`. It is used to decode and producing responses, i.e.
-    writing back to the client or server via
+    It is responsible for receiving incoming data from an end point via the
+    :meth:`Connection.data_received` method, decoding (parsing) and,
+    possibly, writing back to the client or server via
     the :attr:`transport` attribute.
-
-    For server consumers, :meth:`data_received` is the only method to implement.
-    For client consumers, :meth:`start_request` should also be implemented.
+    
+    .. note::
+    
+        For server consumers, :meth:`data_received` is the only method to implement.
+        For client consumers, :meth:`start_request` should also be implemented.
     
     It has three :ref:`one time events <one-time-event>`:
     
     * ``pre_request`` fired when the request is received (for servers) or
-      sent (for clients). This occurs just before the :meth:`start_request`
-      method.
-    * ``post_request`` fired when the request is done.
+      just before is sent (for clients).
+      This occurs just before the :meth:`start_request` method.
     * ``finish`` fired when this :class:`ProtocolConsumer` has finished
       consuming data. The :attr:`on_finished` attribute is the
       :class:`Deferred` called back when this event occurs.
+    * ``post_request`` fired when the request is done. The
+      :attr:`request_done` attribute is the
+      :class:`Deferred` called back when this event occurs.
+    
+    .. note::
+    
+        For most cases the ``post_request`` is fired just after the ``finish``
+        event. The only exception occurs when a consumer has been ``upgraded``
+        via the :class:`Connection.upgrade`  method.
     
     and two :ref:`many times events <many-times-event>`:
     
@@ -41,8 +49,14 @@ class ProtocolConsumer(EventHandler):
       (before :meth:`data_received` method is invoked)
     * ``data_processed`` fired when new data has been consumed (after
       :meth:`data_received` method)
+      
+    .. note::
+    
+        A useful example on how to use the ``data_received`` event is
+        the :ref:`wsgi proxy server <tutorials-proxy-server>`.
     '''
-    ONE_TIME_EVENTS = ('pre_request', 'post_request', 'finish')
+    _upgraded = False
+    ONE_TIME_EVENTS = ('pre_request', 'finish', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
     
     def __init__(self, connection=None):
@@ -53,7 +67,6 @@ class ProtocolConsumer(EventHandler):
         self._data_received_count = 0
         # Number of times the consumer has tried to reconnect (for clients only)
         self._reconnect_retries = 0
-        self.event('finish').add_callback(self._when_finished)
         if connection is not None:
             connection.set_consumer(self)
     
@@ -94,21 +107,30 @@ class ProtocolConsumer(EventHandler):
             return self._connection.producer
     
     @property
-    def request_processed(self):
-        '''The number of requests processed by this consumer.'''
-        return self._request_processed
-    
-    @property
     def on_finished(self):
         '''A :class:`Deferred` called once the :class:`ProtocolConsumer` has
         finished consuming protocol. A shortcut for ``self.event('finish')``.
         '''
         return self.event('finish')
+    
+    @property
+    def request_done(self):
+        '''A :class:`Deferred` called once the request is done.
+        A shortcut for ``self.event('post_request')``.
+        '''
+        return self.event('post_request')
         
     @property
     def has_finished(self):
-        '''``True`` if consumer has finished consuming data.'''
-        return self.event('post_request').done()
+        '''``True`` if consumer has finished consuming data.
+        
+        This is when the ``finish`` event has been fired.'''
+        return self.event('finish').done()
+    
+    @property
+    def upgraded(self):
+        '''``True`` when this consumer has been upgraded.'''
+        return self._upgraded
 
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
@@ -148,8 +170,8 @@ class ProtocolConsumer(EventHandler):
         If either :attr:`connection` or :attr:`transport` are missing, a
         :class:`RuntimeError` occurs.
 
-        For server side consumer, this method simply add to the
-        :attr:`request_processed` count and fire the ``pre_request`` event.'''
+        For server side consumer, this method simply fires the
+        ``pre_request`` event.'''
         conn = self.connection
         if not conn:
             raise RuntimeError('Cannot start new request. No connection.')
@@ -166,15 +188,17 @@ class ProtocolConsumer(EventHandler):
     def finished(self, result=None):
         '''Call this method when done with this :class:`ProtocolConsumer`.
         
-        Fire the ``post_request`` and ``finish`` events and set
-        the :attr:`connection` to ``None``.
-        Return ``result``.
+        Fire the ``finish`` and``post_request`` events and set this
+        connection current consumer to ``None``.
+        
+        If this :class:`ProtocolConsumer` was upgraded via
+        :meth:`Connection.upgrade`, the ``post_request`` event won't fire.
         '''
         c = self._connection
         if c:
             c._current_consumer = None
-        self.fire_event('post_request', result)
         self.fire_event('finish', result)
+        self.fire_event('post_request', result, warning=False)
         
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -207,11 +231,6 @@ class ProtocolConsumer(EventHandler):
         self.fire_event('data_received', data)
         result = self.data_received(data)
         self.fire_event('data_processed')
-        return result
-        
-    def _when_finished(self, result):
-        if result is not self and isinstance(result, ProtocolConsumer):
-            result = result.on_finished
         return result
 
         
@@ -365,8 +384,11 @@ class Connection(EventHandler, Protocol):
         assert self._current_consumer is None, 'Consumer is not None'
         self._current_consumer = consumer
         consumer._connection = self
-        consumer.copy_many_times_events(self)
-        self._processed += 1
+        # If the consumer is an upgrade, skip copying events and don't
+        # increase the processed counter
+        if not consumer._upgraded:
+            consumer.copy_many_times_events(self)
+            self._processed += 1
         consumer.connection_made(self)
     
     def connection_made(self, transport):
@@ -430,6 +452,12 @@ class Connection(EventHandler, Protocol):
         This function can be used when the protocol specification changes
         during a response (an example is a WebSocket request/response,
         or a HTTP tunneling).'''
+        consumer = self._current_consumer
+        if consumer and not consumer.event('post_request').done():
+            assert consumer.event('pre_request').done(), "pre_request not done"
+            post_request = consumer.pop_event('post_request')
+            consumer_factory = partial(self._upgrade, consumer_factory,
+                                       consumer, post_request)
         self._consumer_factory = consumer_factory
     
     ############################################################################
@@ -448,7 +476,17 @@ class Connection(EventHandler, Protocol):
         if self._idle_timeout:
             self._idle_timeout.cancel()
             self._idle_timeout = None
-         
+    
+    def _upgrade(self, consumer_factory, old_consumer, post_request,
+                 connection=None):
+        consumer = consumer_factory()
+        if not consumer._upgraded:
+            consumer._upgraded = []
+        consumer._upgraded.append(old_consumer)
+        consumer.ONE_TIME_EVENTS['post_request'] = (True, post_request)
+        if connection:
+            connection.set_consumer(consumer)
+        return consumer
          
 class Producer(EventHandler):
     '''A Producer of :class:`Connection` with remote servers or clients.

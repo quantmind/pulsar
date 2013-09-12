@@ -140,10 +140,11 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl,
                                   Headers, urllibr, get_environ_proxies,
                                   choose_boundary, urlunparse, request_host,
                                   responses, is_succesful, HTTPError, URLError,
-                                  requote_uri, get_hostport, CookieJar,
+                                  get_hostport, CookieJar,
                                   cookiejar_from_dict)
 
-from .plugins import HandleRedirectAndCookies, Handle100, Handle101, Tunneling
+from .plugins import (HandleRedirectAndCookies, Handle100, Handle101, Tunneling,
+                      TooManyRedirects)
                       
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
@@ -178,13 +179,14 @@ class HttpRequest(pulsar.Request):
     _ssl = None
     _tunnel = None
     _tunnel_headers = None
-    def __init__(self, client, url, method, headers, data=None, files=None,
+    def __init__(self, client, url, method, inp_params, headers=None,
+                 data=None, files=None, timeout=None, hooks=None, history=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
-                 timeout=None, hooks=None, history=None, source_address=None,
-                 allow_redirects=False, max_redirects=10, decompress=True,
-                 version=None, wait_continue=False, websocket_handler=None,
-                 **ignored):
+                 source_address=None, allow_redirects=False, max_redirects=10,
+                 decompress=True, version=None, wait_continue=False,
+                 websocket_handler=None, cookies=None, **ignored):
         self.client = client
+        self.inp_params = inp_params
         self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
         self.method = method.upper()
@@ -196,7 +198,7 @@ class HttpRequest(pulsar.Request):
                 self._netloc = self.path
                 self.path = ''
         self.set_proxy(None)
-        self.history = history or []
+        self.history = history
         self.wait_continue = wait_continue
         self.max_redirects = max_redirects
         self.allow_redirects = allow_redirects
@@ -213,6 +215,11 @@ class HttpRequest(pulsar.Request):
         self.headers = client.get_headers(self, headers)
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
+        client.set_proxy(self)
+        if client.cookies:
+            client.cookies.add_cookie_header(self)
+        if cookies:
+            cookiejar_from_dict(cookies).add_cookie_header(self)
     
     @property
     def address(self):
@@ -378,12 +385,6 @@ class HttpRequest(pulsar.Request):
         r.__dict__.pop('_finished', None)
         r.new_parser()
         return r
-
-    def all_params(self):
-        d = self.__dict__.copy()
-        d.pop('client')
-        d.pop('method')
-        return d
     
     def _encode_url(self, body):
         query = self.query
@@ -707,17 +708,13 @@ class HttpClient(pulsar.Client):
         '''
         return self.request('DELETE', url, **kwargs)
     
-    def request(self, method, url, headers=None, cookies=None,
-                response=None, **params):
+    def request(self, method, url, response=None, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns an :class:`HttpResponse` object.
 
         :param method: request method for the :class:`HttpRequest`.
         :param url: URL for the :class:`HttpRequest`.
-        :param headers: optional list of headers to in clude in the request.
-        :parameter cookies: optional dictionary of cookies to send to the
-            server.
         :parameter response: optional pre-existing :class:`HttpResponse` which
             starts a new request (for redirects, digest authentication and
             so forth).
@@ -727,28 +724,10 @@ class HttpClient(pulsar.Client):
         :rtype: a :class:`HttpResponse` object.
         '''
         # A response is given. Starts a new request
+        nparams = self.update_parameters(self.request_parameters, params)
         if response:
-            rparams = response.current_request.all_params()
-            rheaders = rparams.pop('headers')
-            headers = headers or rheaders
-            history = copy(rparams['history']) 
-            history.append(response.reset_connection())
-            response._current_request = None
-            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
-            if response.status_code is 303:
-                method = 'GET'
-                rparams.pop('data')
-                rparams.pop('files')
-            params.update(rparams)
-            params['history'] = history
-        else:
-            params = self.update_parameters(self.request_parameters, params)
-        request = HttpRequest(self, url, method, headers, **params)
-        self.set_proxy(request)
-        if self.cookies:
-            self.cookies.add_cookie_header(request)
-        if cookies:
-            cookiejar_from_dict(cookies).add_cookie_header(request)
+            nparams['history'] = response.history
+        request = HttpRequest(self, url, method, params, **nparams)
         return self.response(request, response)
     
     def add_basic_authentication(self, username, password):
