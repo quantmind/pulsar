@@ -5,11 +5,13 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.async.stream import SocketStreamSslTransport
 from pulsar.utils.httpurl import REDIRECT_CODES, urlparse, urljoin, requote_uri
 
-from pulsar import get_actor
+from pulsar import get_actor, PulsarException
 
 
-class TooManyRedirects(Exception):
-    pass
+class TooManyRedirects(PulsarException):
+    
+    def __init__(self, response):
+        self.response = response
 
 
 def handle_redirect_and_cookies(response, _):
@@ -39,7 +41,7 @@ def handle_redirect_and_cookies(response, _):
                           requote_uri(url))
         history = response._history
         if history and len(history) >= request.max_redirects:
-            raise TooManyRedirects
+            raise TooManyRedirects(response)
         url = url or request.full_url
         #
         new_response = client.upgrade(response.connection,

@@ -86,7 +86,7 @@ class TestHttpClientBase:
         
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-
+    
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -127,6 +127,19 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection.processed, 2)
+    
+    def test_redirect_6(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('redirect', '6')).request_done
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 6)
+        self.assertTrue(history[0].url.endswith('/redirect/6'))
+        self._after('test_redirect_6', response)
+    def after_test_redirect_6(self, response):
+        redirect = response.history[-1]
+        self.assertEqual(redirect.connection, response.connection)
+        self.assertEqual(response.connection.processed, 7)
         
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
@@ -211,9 +224,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
         # do this so that the test suite does not fail on the test
         try:
-            yield response.on_finished
-        except TooManyRedirects:
-            pass
+            yield response.request_done
+        except TooManyRedirects as e:
+            response = e.response
         history = response.history
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))
@@ -321,16 +334,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         parser = response.parser
         self.assertTrue(parser.is_chunked())
         
-    def test_large_response(self):
-        http = self.client(timeout=60)
-        response = http.get(self.httpbin('getsize/600000'))
-        yield response.on_finished
-        self.assertEqual(response.status_code, 200)
-        data = response.content_json()
-        self.assertEqual(data['size'], 600000)
-        self.assertEqual(len(data['data']), 600000)
-        self.assertFalse(response.parser.is_chunked())
-        
     def test_stream_response(self):
         http = self.client()
         response = http.get(self.httpbin('stream/3000/20'))
@@ -350,13 +353,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         # First set the cookies
         r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo')).on_finished
+            'cookies', 'set', 'bla', 'foo')).request_done
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
         self.assertTrue(http.cookies)
         # Now check if I get them
-        r = yield http.get(self.httpbin('cookies')).on_finished
+        r = yield http.get(self.httpbin('cookies')).request_done
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.current_request.unredirected_headers)
         result = r.content_json()
@@ -365,11 +368,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         # Try without saving cookies
         http = self.client(store_cookies=False)
         r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo')).on_finished
+            'cookies', 'set', 'bla', 'foo')).request_done
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        r = yield http.get(self.httpbin('cookies')).on_finished
+        r = yield http.get(self.httpbin('cookies')).request_done
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertFalse(result['cookies'])
@@ -386,11 +389,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_digest_authentication(self):
         http = self.client()
         r = yield http.get(self.httpbin(
-            'digest-auth/luca/bla/auth')).on_finished
+            'digest-auth/luca/bla/auth')).request_done
         self.assertEqual(r.status_code, 401)
         http.add_digest_authentication('luca', 'bla')
         r = yield http.get(self.httpbin(
-            'digest-auth/luca/bla/auth')).on_finished
+            'digest-auth/luca/bla/auth')).request_done
         self.assertEqual(r.status_code, 200)
         
     

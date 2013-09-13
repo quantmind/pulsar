@@ -5,6 +5,7 @@ from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, istraceback
 
+from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.pep import (raise_error_trace, iteritems, default_timer,
                               get_event_loop, ispy3k, itervalues)
 
@@ -589,6 +590,15 @@ it does nothing.
     def running(self):
         '''pep-3156_ API method, always returns ``False``.'''
         return False
+    
+    def get_result(self):
+        '''Retrieve the result is ready.
+        
+        If not raise ``InvalidStateError``.'''
+        if self._state != _PENDING:
+            return self.result
+        else:
+            raise InvalidStateError('Result is not ready.')
         
     def add_done_callback(self, fn):
         '''pep-3156_ API method, Add a callback to be run when the
@@ -795,8 +805,12 @@ class Event:
                 try:
                     g = hnd(caller, arg)
                 except Exception:
-                    logger().exception('Unhandled exception while firing "%s" '
-                        'event for %s', self._name, caller)
+                    if d:
+                        result = Failure(sys.exc_info())
+                        break
+                    else:
+                        logger().exception('Exception while firing "%s" '
+                                           'event for %s', self._name, caller)
                 else:
                     if isgenerator(g):
                         # Add it to the event loop
@@ -853,6 +867,11 @@ class EventHandler(object):
             self._events[name] = Event(name, event._deferred, False)
         return event
     
+    def result(self, name):
+        event = self._events.get(name)
+        if event._deferred:
+            return event._deferred.get_result()
+        
     def bind_event(self, event, callback):
         '''Register a ``callback`` with ``event``.
 

@@ -539,7 +539,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 if self._request.parser.is_message_complete():
                     self.fire_event('on_message_complete')
                     if not self.has_finished:
-                        self.finished()
+                        self.finished(self.result('on_message_complete'))
         else:
             raise pulsar.ProtocolError
         

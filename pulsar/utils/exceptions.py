@@ -20,24 +20,20 @@ class CommandNotFound(CommandError):
     def __init__(self, name):
         super(CommandNotFound, self).__init__(
                             'Command "%s" not available' % name)
+ 
         
-class ProtocolError(Exception):
+class ProtocolError(PulsarException):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''
 
 
-class TooManyConnections(RuntimeError):
+class TooManyConnections(PulsarException):
     '''Raised when there are too many concurrent connections.'''
     
     
-class EventAlreadyRegistered(RuntimeError):
+class EventAlreadyRegistered(PulsarException):
     pass
     
-
-class ConnectionError(Exception):
-    pass
-
-
 
 class StopEventLoop(BaseException):
     ''':class:`BaseException` raised to cleanly stop a
@@ -54,22 +50,16 @@ class HaltServer(BaseException):
         self.exit_code = exit_code
 
 
-class CannotCallBackError(PulsarException):
-    pass
-
-
-class NotRegisteredWithServer(PulsarException):
-    pass
-
-
 ##################################################################### HTTP
 class HTTPError(PulsarException):
     "Base for all HTTP related errors."
     pass
 
+
 class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
     pass
+
 
 class HttpException(HTTPError):
     '''The base class of all ``HTTP`` server exceptions
