@@ -132,12 +132,11 @@ class WebSocketProtocol(ProtocolConsumer):
     A websocket parser.
 
     '''
-    request = None
     _started = False
     
-    def __init__(self, handshake, handler, parser, connection=None):
-        super(WebSocketProtocol, self).__init__(connection)
-        self.bind_event('finish', self._shut_down)
+    def __init__(self, handshake, handler, parser):
+        super(WebSocketProtocol, self).__init__()
+        self.bind_event('post_request', self._shut_down)
         self.handshake = handshake
         self.handler = handler
         self.parser = parser
@@ -181,8 +180,10 @@ class WebSocketProtocol(ProtocolConsumer):
         if frame.is_close:
             self.finish()
 
-    def _shut_down(self, res):
+    def _shut_down(self, result):
+        # Callback for _post_request. Must return the result
         self.handler.on_close(self)
         connection = self._connection
         if connection:
             connection.close()
+        return result

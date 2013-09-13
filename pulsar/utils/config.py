@@ -44,7 +44,6 @@ from .importer import import_system_file
 __all__ = ['Config',
            'SimpleSetting',
            'Setting',
-           #'defaults',
            'ordered_settings',
            'validate_string',
            'validate_callable',
@@ -56,21 +55,6 @@ __all__ = ['Config',
 
 LOGGER = logging.getLogger('pulsar.config')
 
-class DefaultSettings:
-
-    def __init__(self):
-        # port for serving a socket
-        self.PORT = 8060
-        # timeout for asynchronous Input/Output
-        self.IO_TIMEOUT = None
-        # Maximum number of concurrenct clients
-        self.BACKLOG = 2048
-        # Actors timeout
-        self.TIMEOUT = 30
-        # mailbox clients blocking
-        self.message_timeout = 3
-
-defaults = DefaultSettings()
 section_docs = {}
 KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []

@@ -7,18 +7,16 @@ from inspect import isgenerator, istraceback
 
 from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.pep import (raise_error_trace, iteritems, default_timer,
-                              get_event_loop, ispy3k, itervalues)
+                              get_event_loop, ispy3k)
 
 from .access import get_request_loop, logger
 from .consts import *
 
 
 __all__ = ['Deferred',
-           'EventHandler',
            'MultiDeferred',
            'Task',
            'Error',
-           'Event',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
@@ -507,6 +505,7 @@ which will be put off until later. It conforms with the
     _suppressAlreadyCalled = False
     _timeout = None
     _callbacks = None
+    _chained_to = None
 
     def __init__(self, canceller=None, timeout=None, event_loop=None):
         self._canceller = canceller
@@ -678,47 +677,62 @@ the result is a :class:`Failure`'''
 :attr:`result` is a :class:`Failure`.'''
         if self.done() and isinstance(self.result, Failure):
             self.result.log(**kwargs)
-            
+    
+    def chain(self, deferred):
+        '''Chain another ``deferred`` to this :class:`Deferred` callbacks.
+        
+        This method adds callbacks to this :class:`Deferred` to call
+        ``deferred``'s callback or errback, as appropriate.
+        
+        :param deferred: a :class:`Deferred` which will partecipate in the
+            callback chain of this :class:`Deferred`.
+        :return: this :class:`Deferred`
+        '''
+        deferred._chained_to = self
+        return self.add_both(deferred.callback, deferred.callback)
+        
     def then(self, deferred=None):
         '''Add another ``deferred`` to this :class:`Deferred` callbacks.
 
-:parameter deferred: Optional :class:`Deferred` to call back when this
-    :class:`Deferred` receives the result or the exception. If not supplied
-    a new :class:`Deferred` is created.
-:return: The ``deferred`` passed as parameter or the new deferred created.
-
-This method adds callbacks to this :class:`Deferred` to call ``deferred``'s
-callback or errback, as appropriate. It is a shorthand way
-of performing the following::
-
-    def cbk(result):
-        deferred.callback(result)
-        return result
+        :parameter deferred: Optional :class:`Deferred` to call back when this
+            :class:`Deferred` receives the result or the exception.
+            If not supplied a new :class:`Deferred` is created.
+        :return: The ``deferred`` passed as parameter or the new deferred
+            created.
         
-    self.add_both(cbk)
-   
-When you use ``then`` on deferred ``d1``::
-
-    d2 = d1.then()
-    
-you obtains a new deferred ``d2`` which receives the callback when ``d1``
-has received the callback, with the following properties:
-
-* Any event that fires ``d1`` will also fire ``d2``.
-* The converse is not true; if ``d2`` is fired ``d1`` will not be affected.
-* The callbacks of ``d2`` won't affect ``d1`` result.
-
-This method can be used instead of :meth:`add_callback` if a bright new
-deferred is required::
-
-    d2 = d1.then().add_callback(...)
-'''
+        This method adds callbacks to this :class:`Deferred` to call
+        ``deferred``'s callback or errback, as appropriate.
+        It is a shorthand way of performing the following::
+        
+            def cbk(result):
+                deferred.callback(result)
+                return result
+                
+            self.add_both(cbk)
+           
+        When you use ``then`` on deferred ``d1``::
+        
+            d2 = d1.then()
+            
+        you obtains a new deferred ``d2`` which receives the callback when
+        ``d1`` has received the callback, with the following properties:
+        
+        * Any event that fires ``d1`` will also fire ``d2``.
+        * The converse is not true; if ``d2`` is fired ``d1`` will not be
+          affected.
+        * The callbacks of ``d2`` won't affect ``d1`` result.
+        
+        This method can be used instead of :meth:`add_callback` if a bright new
+        deferred is required::
+        
+            d2 = d1.then().add_callback(...)
+        '''
         if deferred is None:
             deferred = Deferred(event_loop=self._event_loop)
         def cbk(result):
             deferred.callback(result)
             return result
-        self.add_both(cbk)
+        self.add_callback(cbk, cbk)
         return deferred
 
     ##################################################    INTERNAL METHODS
@@ -759,171 +773,7 @@ deferred is required::
         self._unpause()
         return self.result
 
-
-class Event:
-    '''An event managed by an :class:`EventHandler` class.'''
-    def __init__(self, name, deferred=None, active=True):
-        self._name = name
-        self._deferred = deferred
-        self._handlers = []
-        self.active = active
-    
-    def __repr__(self):
-        if self._deferred:
-            return repr(self._deferred)
-        else:
-            return repr(self._handlers)
-    __str__ = __repr__
-    
-    @property
-    def name(self):
-        '''Event name.'''
-        return self._name
-
-    @property
-    def one_time(self):
-        '''``True`` if this is a :ref:`one time event <one-time-event>`.'''
-        return bool(self._deferred)
-
-    def done(self):
-        '''Check if this event has fired.
-
-        This only make sens for one time events.
-        '''
-        return self._deferred.done() if self._deferred else True
-
-    def fire(self, caller, arg, warning):
-        if not self.active:
-            return False
-        d = self._deferred
-        if not d or not d.done():
-            if arg is None:
-                result = caller
-            else:
-                result = arg = maybe_failure(arg)
-            for hnd in self._handlers:
-                try:
-                    g = hnd(caller, arg)
-                except Exception:
-                    if d:
-                        result = Failure(sys.exc_info())
-                        break
-                    else:
-                        logger().exception('Exception while firing "%s" '
-                                           'event for %s', self._name, caller)
-                else:
-                    if isgenerator(g):
-                        # Add it to the event loop
-                        maybe_async(g)
-            if d:
-                d.callback(result)
-        elif warning:
-            logger().warning('Event "%s" already fired for %s',
-                self._name, caller)
-        return False
-
-
-class EventHandler(object):
-    '''A Mixin for handling events.
-
-    It handles one time events and events that occur several
-    times. This mixin is used in :class:`Protocol` and :class:`Producer`
-    for scheduling connections and requests.
-    '''
-    ONE_TIME_EVENTS = ()
-    '''Event names which occur once only.'''
-    MANY_TIMES_EVENTS = ()
-    '''Event names which occur several times.'''
-    def __init__(self):
-        events = dict(((e, Event(e, Deferred())) for e in self.ONE_TIME_EVENTS))
-        events.update(((e, Event(e)) for e in self.MANY_TIMES_EVENTS))
-        self._events = events
-
-    @property
-    def events(self):
-        return self._events
-        
-    def __copy__(self):
-        raise NotImplementedError
-        
-    def event(self, name):
-        '''Return the :class:`Event` for ``name``.'''
-        return self._events.get(name)
-    
-    def deferred(self, name):
-        '''Return the deferred for :class:`Event` ``name``.
-
-        If the event at ``name`` is a many times event, this method
-        returns nothing.
-        '''
-        event = self._events.get(name)
-        return event._deferred if event else None
-
-    def pop_event(self, name):
-        '''Mute event ``name`` and return the handler.'''
-        event = self._events.pop(name)
-        if event:
-            # replace it with a non active one
-            self._events[name] = Event(name, event._deferred, False)
-        return event
-    
-    def result(self, name):
-        event = self._events.get(name)
-        if event._deferred:
-            return event._deferred.get_result()
-        
-    def bind_event(self, event, callback):
-        '''Register a ``callback`` with ``event``.
-
-        **The callback must be a callable which accept two parameters**,
-        the first is the instance firing the event and the second the
-        ``event_data`` passed to the :meth:`fire_event` method.
-
-        :param event: the event name. If the event is not available a warning
-            message is logged.
-        :param callback: a callable receiving two positional parameters.
-        :return: the callback if it was added.
-        '''
-        if event in self._events:
-            self._events[event]._handlers.append(callback)
-        else:
-            callback = None
-            logger().warning('unknown event "%s" for %s', event, self)
-        return callback
-        
-    def fire_event(self, event, event_data=None, warning=True):
-        """Dispatches ``self`` and ``event_data`` to the ``event`` listeners.
-
-        * If ``event`` is a one-time event, it makes sure that it was not
-          fired before.
-        
-        :param event_data: optional argument passed as second parameter to the
-            event handler.
-        :param warning: If ``False`` suppress warning messages.
-            Default ``True``.
-        :return: boolean indicating if the event was fired or not.
-        """
-        if event in self._events:
-            return self._events[event].fire(self, event_data, warning)
-        elif warning:
-            logger().warning('unknown event "%s" for %s', event, self)
-        return False
-    
-    def copy_many_times_events(self, other):
-        '''Copy :ref:`many times events <many-times-event>` from  ``other``.
-        
-        All many times events of ``other`` are copied to this handler
-        provided the events handlers already exist.
-        '''
-        if isinstance(other, EventHandler):
-            events = self._events
-            for event in itervalues(other._events):
-                if not event._deferred:
-                    ev = events.get(event._name)
-                    if ev:
-                        ev._handlers.extend(event._handlers)
-            
-                    
+     
 class Task(Deferred):
     '''A :class:`Task` is a :class:`Deferred` which consumes a
 :ref:`coroutine <coroutine>`.

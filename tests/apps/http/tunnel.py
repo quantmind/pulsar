@@ -6,12 +6,12 @@ class TestTlsHttpClientWithProxy(client.TestHttpClient):
     _created_connections = 2
     
     def after_test_home_page(self, response):
-        request = response.current_request
+        request = response.request
         self.assertEqual(request.scheme, 'https')
         self.assertEqual(request.proxy, None)
         # Only one connection pool,
         # even though the proxy and the connection are for different addresses
         http = response.producer
         self.assertEqual(len(http.connection_pools), 1)
-        pool = http.connection_pools[response.current_request.key]
+        pool = http.connection_pools[response.request.key]
         self.assertEqual(pool.received, 1)

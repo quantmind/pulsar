@@ -1,4 +1,5 @@
 import socket
+import sys
 import math
 from functools import partial, reduce
 from threading import Lock
@@ -26,7 +27,8 @@ class Request(object):
         The socket address of the remote server
         
     '''
-    _finished = False
+    inp_params = None
+
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
@@ -36,11 +38,6 @@ class Request(object):
         '''Attribute used for selecting the appropriate
 :class:`ConnectionPool`'''
         return (self.address, self.timeout)
-    
-    @property
-    def finished(self):
-        '''Flag indicating if the request is finished.'''
-        return self._finished
     
     @property
     def ssl(self):
@@ -61,7 +58,7 @@ class Request(object):
     def _connection_made(self, transport_protocol):
         _, connection = transport_protocol
         # wait for the connection_made event
-        yield connection.deferred('connection_made')
+        yield connection.event('connection_made')
         # starts the new request
         connection.current_consumer.start(self)
     
@@ -134,7 +131,7 @@ class ConnectionPool(ConnectionProducer):
             connection = self.new_connection(client.consumer_factory,
                                              producer=client)
             # Bind the finish event to the release connection function
-            connection.bind_event('finish', self._release_response)
+            connection.bind_event('post_request', self._release_response)
             # Bind the connection_lost to connection to handle dangling
             # connections
             connection.bind_event('connection_lost', self._try_reconnect)
@@ -184,6 +181,21 @@ class ConnectionPool(ConnectionProducer):
         #proxy to release_connection
         if release_connection(response):
             self.release_connection(response.connection, response)
+
+
+def release_response_connection(response, result):
+    '''Added as a post_request callback to release the connection.'''
+    connection = response.connection
+    if connection:
+        connection.set_consumer(None)
+        key = response.request.key
+        pool = response.producer.connection_pools.get(key)
+        if not pool:
+            connection.logger.error(
+                'Could not fined connection pool to release %s', connection)
+        else:
+            pool.release_connection(connection, response)
+    return response
 
 
 class Client(Producer):
@@ -331,8 +343,16 @@ class Client(Producer):
             return get_event_loop()
     
     def hash(self, address, timeout, request):
+        #TODO: What is this?
         return hash((address, timeout))
     
+    def build_consumer(self, connection=None):
+        '''Build a protocol consumer for a new request.'''
+        response = self.consumer_factory()
+        response.copy_many_times_events(self)
+        response.bind_event('post_request', release_response_connection)
+        return response
+        
     def request(self, *args, **params):
         '''Abstract method for creating a :class:`Request`.
 
@@ -369,7 +389,10 @@ class Client(Producer):
         '''
         event_loop = self.get_event_loop()
         if response is None:
-            response = self.consumer_factory()
+            response = self.build_consumer()
+        inp_params = request.inp_params
+        if isinstance(inp_params, dict):
+            self.bind_events(**inp_params)
         event_loop.call_now_threadsafe(self._response, event_loop,
                                        response, request, new_connection)
         if self.force_sync: # synchronous response
@@ -437,7 +460,7 @@ class Client(Producer):
             event = self.close_connections(async)
             event.add_both(partial(self.fire_event, 'finish'))
             event.set_timeout(timeout, self.get_event_loop())
-        return self.deferred('finish')
+        return self.event('finish')
         
     def abort(self):
         ''':meth:`close` all connections without waiting for active connections
@@ -455,30 +478,26 @@ class Client(Producer):
                 break
         if key:
             self.connection_pools.pop(key)
-            
-    def upgrade(self, connection, protocol_factory=None, new_connection=False):
-        '''Upgrade an existing ``connection`` with a new ``protocol_factory``.
+        
+    def upgrade(self, connection, consumer_factory=None):
+        '''Upgrade an existing ``connection`` with a new ``consumer_factory``.
 
         This implements the :meth:`Producer.upgrade` abstract method.
 
         :param connection: connection to upgrade.
-        :param protocol_factory: optional protocol factory.
-        :param new_connection: If ``True`` the connection is released
-            to the pool. Default ``False``.
+        :param consumer_factory: optional protocol consumer factory.
         :return: a new :class:`ProtocolConsumer`.
         
         The upgrade occurs only if :attr:`Connection.current_consumer` is
         available.
         '''
-        protocol = connection.current_consumer
-        if protocol:
-            connection.upgrade(protocol_factory, new_connection)
-            newproto = connection.consumer_factory()
-            protocol.finished(newproto)
-            # set the connection if no new connection required
-            if not new_connection:
-                connection.set_consumer(newproto)
-            return newproto
+        consumer = connection.current_consumer
+        if consumer:
+            connection.upgrade(consumer_factory)
+            new_consumer = connection.consumer_factory()
+            connection._current_consumer = None
+            connection.set_consumer(new_consumer)
+            return new_consumer
     
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time
@@ -523,6 +542,6 @@ class Client(Producer):
                     event_loop, conn).add_errback(response.finished)
             else:
                 response.start(request)
-        except Exception as e:
-            response.finished(e)
+        except Exception:
+            response.finished(sys.exc_info())
         

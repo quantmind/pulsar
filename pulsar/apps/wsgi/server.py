@@ -175,8 +175,8 @@ class HttpServerResponse(ProtocolConsumer):
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
     
-    def __init__(self, wsgi_callable, cfg, connection):
-        super(HttpServerResponse, self).__init__(connection)
+    def __init__(self, wsgi_callable, cfg):
+        super(HttpServerResponse, self).__init__()
         self.wsgi_callable = wsgi_callable
         self.cfg = cfg
         self.parser = http_parser(kind=0)

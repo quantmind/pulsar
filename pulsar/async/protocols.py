@@ -5,7 +5,8 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address
 
-from .defer import EventHandler, multi_async, log_failure
+from .defer import Deferred, multi_async, log_failure
+from .events import EventHandler
 from .internet import Protocol, logger
 
 
@@ -33,18 +34,9 @@ class ProtocolConsumer(EventHandler):
     * ``pre_request`` fired when the request is received (for servers) or
       just before is sent (for clients).
       This occurs just before the :meth:`start_request` method.
-    * ``finish`` fired when this :class:`ProtocolConsumer` has finished
-      consuming data. The :attr:`on_finished` attribute is the
-      :class:`Deferred` called back when this event occurs.
     * ``post_request`` fired when the request is done. The
-      :attr:`request_done` attribute is the
+      :attr:`on_finished` attribute is the
       :class:`Deferred` called back when this event occurs.
-    
-    .. note::
-    
-        For most cases the ``post_request`` is fired just after the ``finish``
-        event. The only exception occurs when a consumer has been ``upgraded``
-        via the :class:`Connection.upgrade`  method.
     
     and two :ref:`many times events <many-times-event>`:
     
@@ -59,19 +51,16 @@ class ProtocolConsumer(EventHandler):
         the :ref:`wsgi proxy server <tutorials-proxy-server>`.
     '''
     _upgraded_from = False
-    ONE_TIME_EVENTS = ('pre_request', 'finish', 'post_request')
+    _connection = None
+    _request = None
+    #
+    ONE_TIME_EVENTS = ('pre_request', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
     
-    def __init__(self, connection=None):
+    def __init__(self):
         super(ProtocolConsumer, self).__init__()
-        self._connection = None
-        self._request = None
-        # this counter is updated by the connection
         self._data_received_count = 0
-        # Number of times the consumer has tried to reconnect (for clients only)
         self._reconnect_retries = 0
-        if connection is not None:
-            connection.set_consumer(self)
     
     @property
     def connection(self):
@@ -111,35 +100,32 @@ class ProtocolConsumer(EventHandler):
     
     @property
     def on_finished(self):
-        '''A :class:`Deferred` when finished.
-
-        This occurs when this :class:`ProtocolConsumer` has finished
-        consuming data.
-
-        It is a shortcut for ``self.deferred('finish')``.
-        '''
-        return self.deferred('finish')
-    
-    @property
-    def request_done(self):
         '''A :class:`Deferred` called once the request is done.
         
-        A shortcut for ``self.deferred('post_request')``.
+        A shortcut for ``self.event('post_request')``.
         '''
-        return self.deferred('post_request')
+        return self.event('post_request')
         
     @property
     def has_finished(self):
         '''``True`` if consumer has finished consuming data.
         
         This is when the ``finish`` event has been fired.'''
-        return self.event('finish').done()
+        return self.event('post_request').has_fired()
     
     @property
     def upgraded_from(self):
         '''An instance of ``Upgrade`` when this consumer has been upgraded.'''
         return self._upgraded_from
 
+    @property
+    def recconnect_retries(self):
+        ''''Number of times the consumer has tried to reconnect.
+        
+        For clients consumer only.
+        '''
+        return self._reconnect_retries
+    
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
         
@@ -198,17 +184,13 @@ class ProtocolConsumer(EventHandler):
     def finished(self, result=None):
         '''Call this method when done with this :class:`ProtocolConsumer`.
         
-        Fire the ``finish`` and``post_request`` events and set this
-        connection current consumer to ``None``.
-        
-        If this :class:`ProtocolConsumer` was upgraded via
-        :meth:`Connection.upgrade`, the ``post_request`` event won't fire.
+        fires the ``post_request`` event and removes ``self`` from the
+        :attr:`connection`.
         '''
-        c = self._connection
-        if c:
-            c._current_consumer = None
-        self.fire_event('finish', result)
         self.fire_event('post_request', result)
+        c = self._connection
+        if c and c._current_consumer is self:
+            c._current_consumer = None
         
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -268,16 +250,8 @@ class Connection(EventHandler, Protocol):
 
     * ``connection_made``
     * ``connection_lost``
-
-    and three :ref:`many times events <many-times-event>` corresponding to the
-    :class:`ProtocolConsumer` one time events:
-
-    * ``pre_request`` Fired when a new request arrives/start
-    * ``finish`` Fired when a protocol consumer has finished consuming data
-    * ``post_request`` fired when a request has finished
     '''
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
-    MANY_TIMES_EVENTS = ('pre_request', 'finish', 'post_request')
     #
     _transport = None
     _current_consumer = None
@@ -407,13 +381,15 @@ class Connection(EventHandler, Protocol):
         
         If the :attr:`current_consumer` is not ``None`` an exception occurs.
         '''
-        assert self._current_consumer is None, 'Consumer is not None'
-        self._current_consumer = consumer
-        consumer._connection = self
-        if new_connection(consumer.upgraded_from):
-            consumer.copy_many_times_events(self)
-            self._processed += 1
-        consumer.connection_made(self)
+        if consumer is None:
+            self._current_consumer = None
+        else:
+            assert self._current_consumer is None, 'Consumer is not None'
+            self._current_consumer = consumer
+            consumer._connection = self
+            if not consumer._upgraded_from:
+                self._processed += 1
+            consumer.connection_made(self)
     
     def connection_made(self, transport):
         '''Override :class:`BaseProtocol.connection_made`.
@@ -435,14 +411,15 @@ class Connection(EventHandler, Protocol):
         '''Implements the :meth:`Protocol.data_received` method.
         
         Delegates handling of data to the :attr:`current_consumer`. Once done
-        set a timeout for idle connctions (when a :attr:`timeout` is given).'''
+        set a timeout for idle connctions (when a :attr:`timeout` is given).
+        '''
         self._cancel_timeout()
         while data:
             consumer = self._current_consumer
             if consumer is None:
                 # New consumer.
-                # These two lines are used by server connections only.
-                consumer = self._consumer_factory(self)
+                consumer = self._consumer_factory()
+                self.set_consumer(consumer)
                 consumer.start()
             # Call the consumer _data_received method
             data = consumer._data_received(data)
@@ -470,28 +447,25 @@ class Connection(EventHandler, Protocol):
             else:
                 log_failure(exc)
                              
-    def upgrade(self, consumer_factory=None, new_connection=False):
+    def upgrade(self, consumer_factory):
         '''Upgrade the :attr:`consumer_factory` attribute.
         
         This function can be used when the protocol specification changes
         during a response (an example is a WebSocket request/response,
-        or HTTP tunneling).
+        or HTTP tunneling). For the upgrade to be successful, the
+        ``post_request`` event of the protocol consumer should not have
+        been fired already.
 
-        :param consumer_factory: optional new consumer factory.
-        :param new_connection: If ``True`` a new connection is needed by
-            the upgrade. Default ``False``.
+        :param consumer_factory: the new consumer factory.
         :return: Nothing.
         '''
         consumer = self._current_consumer
         if consumer and not consumer.event('post_request').done():
             assert consumer.event('pre_request').done(), "pre_request not done"
-            post = consumer.pop_event('post_request')
-            # inject new_connection to the old consumer
-            consumer._new_connection = new_connection
-            factory = consumer_factory or self._consumer_factory
-            consumer_factory = partial(self._upgrade, factory, consumer, post)
-        if consumer_factory:
-            self._consumer_factory = consumer_factory
+            consumer.pause_event('post_request')
+            #consumer._new_connection = False
+            self._consumer_factory = partial(self._upgrade, consumer_factory,
+                                             consumer)
     
     ############################################################################
     ##    INTERNALS
@@ -510,24 +484,21 @@ class Connection(EventHandler, Protocol):
             self._idle_timeout.cancel()
             self._idle_timeout = None
     
-    def _upgrade(self, consumer_factory, old_consumer, post_request_event,
-                 connection=None):
+    def _upgrade(self, consumer_factory, old_consumer, connection=None):
         # A factory of protocol for an upgrade of an existing protocol consumer
         # which didn't have the post_request event fired.
         consumer = consumer_factory()
         consumer._upgraded_from = old_consumer
-        consumer.events['post_request'] = post_request_event
-        # important! We set the consumer here rather than passing it in the
-        # consumer_factory function.
-        # This is because we need the post_request_event to be the one
-        # passed as argument.
+        consumer.chain_event(old_consumer, 'post_request')
         if connection:
             connection.set_consumer(consumer)
         return consumer
 
 
 class Producer(EventHandler):
-    '''Abstract base class for all producers of connections.'''
+    '''An Abstract :class:`EventHandler` class for all producers of
+    connections.
+    '''
     connection_factory = Connection
     '''A callable producing connections.
 
@@ -569,8 +540,15 @@ class Producer(EventHandler):
         By default it returns ``True``.'''
         return True
 
-    def upgrade(self, connection, protocol_factory=None, **params):
-        '''Upgrade and existing ``connection`` with a new ``protocol_factory``.
+    def build_consumer(self):
+        '''Build a consumer for a connection.
+        
+        **Must be implemented by subclasses.
+        '''
+        raise NotImplementedError
+        
+    def upgrade(self, connection, consumer_factory=None):
+        '''Upgrade and existing ``connection`` with a new ``consumer_factory``.
 
         This is an abstract method implemented by subclasses.
         '''
@@ -642,11 +620,11 @@ class ConnectionProducer(Producer):
         '''
         all = []
         if connection:
-            all.append(connection.deferred('connection_lost'))
+            all.append(connection.event('connection_lost'))
             connection.transport.close(async)
         else:
             for connection in list(self._concurrent_connections):
-                all.append(connection.deferred('connection_lost'))
+                all.append(connection.event('connection_lost'))
                 connection.transport.close(async)
         return multi_async(all)
     
@@ -707,7 +685,20 @@ class Server(ConnectionProducer):
         raise NotImplementedError
     
     def protocol_factory(self):
-        return self.new_connection(self.consumer_factory)
+        '''The protocol factory for a server.'''
+        return self.new_connection(self.build_consumer)
+        
+    def build_consumer(self):
+        '''Build a protocol consumer.
+        
+        Uses the :meth:`consumer_factory` to build the consumer and add
+        events from the many-times events of this producer.
+        
+        :return: a protocol consumer.
+        '''
+        consumer = self.consumer_factory()
+        consumer.copy_many_times_events(self)
+        return consumer
         
     @property
     def event_loop(self):

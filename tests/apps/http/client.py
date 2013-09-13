@@ -9,6 +9,10 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 
+def dodgyhook(*args):
+    raise ValueError
+
+
 class TestHttpClientBase:
     app = None
     with_proxy = False
@@ -98,6 +102,17 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
+class g:
+    
+    def test_dodgy_on_header_event(self):
+        client = HttpClient()
+        response = client.get(self.httpbin(), on_headers=dodgyhook)
+        try:
+            response = response.on_finished
+        except ValueError:
+            pass
+        self.assertTrue(response.headers)
+        
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -115,22 +130,22 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
     
-    def test_redirect_2(self):
+    def test_redirect_1(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '1')).request_done
+        response = yield http.get(self.httpbin('redirect', '1')).on_finished
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 1)
         self.assertTrue(history[0].url.endswith('/redirect/1'))
-        self._after('test_redirect_2', response)
-    def after_test_redirect_2(self, response):
+        self._after('test_redirect_1', response)
+    def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection.processed, 2)
     
     def test_redirect_6(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '6')).request_done
+        response = yield http.get(self.httpbin('redirect', '6')).on_finished
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 6)
@@ -224,7 +239,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
         # do this so that the test suite does not fail on the test
         try:
-            yield response.request_done
+            yield response.on_finished
         except TooManyRedirects as e:
             response = e.response
         history = response.history
@@ -353,13 +368,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         # First set the cookies
         r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo')).request_done
+            'cookies', 'set', 'bla', 'foo')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
         self.assertTrue(http.cookies)
         # Now check if I get them
-        r = yield http.get(self.httpbin('cookies')).request_done
+        r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.current_request.unredirected_headers)
         result = r.content_json()
@@ -368,11 +383,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         # Try without saving cookies
         http = self.client(store_cookies=False)
         r = yield http.get(self.httpbin(
-            'cookies', 'set', 'bla', 'foo')).request_done
+            'cookies', 'set', 'bla', 'foo')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.history)
         self.assertTrue(r.history[0].headers['set-cookie'])
-        r = yield http.get(self.httpbin('cookies')).request_done
+        r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertFalse(result['cookies'])
@@ -389,11 +404,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_digest_authentication(self):
         http = self.client()
         r = yield http.get(self.httpbin(
-            'digest-auth/luca/bla/auth')).request_done
+            'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 401)
         http.add_digest_authentication('luca', 'bla')
         r = yield http.get(self.httpbin(
-            'digest-auth/luca/bla/auth')).request_done
+            'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 200)
         
     

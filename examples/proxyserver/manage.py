@@ -133,7 +133,7 @@ class ProxyResponse(object):
         while not self._done:
             yield self.queue.get()
             
-    def __call__(self, response):
+    def __call__(self, response, data):
         '''Receive data from the requesting HTTP client.'''
         if response.parser.is_headers_complete():
             if self.headers is None:
@@ -163,7 +163,7 @@ class ProxyResponse(object):
             if header.lower() not in wsgi.HOP_HEADERS:
                 yield header, value
     
-    def start_tunneling(self, connection):
+    def start_tunneling(self, connection, _):
         '''Start the tunnel.
         
         This is a callback fired once a connection with target server is

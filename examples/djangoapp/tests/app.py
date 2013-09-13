@@ -17,7 +17,7 @@ def start_server(actor, name, argv):
     actor.params.django_pulsar_name = name
     manage.execute_from_command_line(argv)
     app = yield get_application(name)
-    yield app.deferred('start')
+    yield app.event('start')
 
 
 class MessageHandler(ws.WS):

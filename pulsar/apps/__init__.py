@@ -139,10 +139,6 @@ def arbiter_config(cfg):
     return cfg
     
 
-class AppEvents(EventHandler):
-    ONE_TIME_EVENTS = ('ready', 'start', 'stop')
-    
-
 class Configurator(object):
     '''A mixin for configuring and loading a pulsar server.
 
@@ -372,12 +368,12 @@ class Application(Configurator, pulsar.Pulsar):
                 monitor = arbiter.add_monitor(self.name,
                     app=self, cfg=self.cfg, start=monitor_start)
                 self.cfg = monitor.cfg
-        return self.deferred('start')
+        return self.event('start')
         
     @local_property
     def events(self):
         '''Events for the application: ``ready```, ``start``, ``stop``.'''
-        return AppEvents()
+        return EventHandler(one_time_events=('ready', 'start', 'stop'))
         
     def fire_event(self, name):
         '''Fire event ``name``.'''
@@ -387,9 +383,9 @@ class Application(Configurator, pulsar.Pulsar):
         '''Bind ``callback`` to event ``name``.'''
         return self.events.bind_event(name, callback)
         
-    def deferred(self, name):
-        '''Return the callback for event ``name``.'''
-        return self.events.deferred(name)
+    def event(self, name):
+        '''Return the event ``name``.'''
+        return self.events.event(name)
 
     # WORKERS CALLBACKS
     def worker_start(self, worker, _):

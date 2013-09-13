@@ -74,7 +74,7 @@ class HTTPDigestAuth(Auth):
                 self.encode(request.method, request.full_url)
         else:
             # add post request handler
-            response.bind_event('on_message_complete', self.handle_401)
+            response.bind_event('post_request', self.handle_401)
 
     def __repr__(self):
         return 'Digest: %s' % self.username
@@ -135,8 +135,7 @@ class HTTPDigestAuth(Auth):
                 self.options = parse_dict_header(s_auth.replace('Digest ', ''))
                 #
                 client = response.producer
-                new_response = client.upgrade(response.connection,
-                                              new_connection=True)
+                new_response = client.upgrade(response.connection)
                 params = request.inp_params.copy()
                 headers = params.pop('headers', [])
                 headers.append(('authorization', self.encode(

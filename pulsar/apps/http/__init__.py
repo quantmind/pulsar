@@ -3,28 +3,13 @@
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
     >>> response = http.get('http://www.bbc.co.uk')
-    
 
 .. contents::
     :local:
 
-Features
-===========
-* No dependencies
-* Similar API to requests_
-* TLS/SSL support
-* Cookie support
-* Authentication
-* Streaming and Websocket support
-* Follow redirects
-* Automatic decompression
-* Thread safe
-* Can be used in :ref:`synchronous mode <tutorials-synchronous>`
-
-
 Making requests
 =================
-The API is similar to requests_ and therefore to make a request is simple::
+Pulsar HTTP client has no dependencies and an API similar to requests_::
     
     from pulsar.apps import http
     client = http.HttpClient()
@@ -77,14 +62,55 @@ to a :class:`HttpClient` or to a specific request:
     
 .. _http-streaming:
 
-Streaming
-====================
+Streaming & WebSocket
+=========================
 
 This is an event-driven client, therefore streaming is supported as a
 consequence. The ``on_finished`` callback is only fired when the server has
 finished with the response.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
 application using the :class:`HttpClient` streaming capabilities.
+
+
+Redirects & Decompression
+=============================
+
+Synchronous Mode
+=====================
+
+* Thread safe
+* Can be used in :ref:`synchronous mode <tutorials-synchronous>`
+
+Events
+==============
+Events are used to customise the behaviour of the Http client when certain
+headers or responses occurs. There are three
+:ref:`one time events <one-time-event>` associated with an
+:class:`HttpResponse` object:
+
+* ``pre_request``, fired before the request is sent to the server. Callbacks
+  receive the *response* and *request* arguments.
+* ``on_headers``, fired when response headers are available. Callbacks
+  receive the *response* and response *headers* arguments.
+* ``post_request``, fired when the response is done. Callbacks
+  receive the *response* and another argument, usually *None*.
+
+Adding event handlers can be done at client level::
+
+    def myheader_handler(response, request):
+        pass
+
+    client.bind_event('on_headers', myheader_handler)
+
+or at request level::
+
+    response = client.get(..., on_headers=myheader_handler)
+
+By default, the :class:`HttpClient` has one ``pre_request`` callback for
+handling `HTTP tunneling`_, three ``on_headers`` callbacks for
+handling *100 Continue*, *websocket upgrade* and *cookies*, and one
+``post_request`` callback for handling redirects.
+
 
 API
 ==========
@@ -128,6 +154,7 @@ HTTP Response
 
 .. _requests: http://docs.python-requests.org/
 .. _`uri scheme`: http://en.wikipedia.org/wiki/URI_scheme
+.. _`HTTP tunneling`: http://en.wikipedia.org/wiki/HTTP_tunnel
 '''
 import os
 import platform
@@ -151,7 +178,7 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl,
                                   get_hostport, CookieJar,
                                   cookiejar_from_dict)
 
-from .plugins import (handle_redirect_and_cookies, handle_100, handle_101,
+from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
                       
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
@@ -188,7 +215,7 @@ class HttpRequest(pulsar.Request):
     _tunnel = None
     _tunnel_headers = None
     def __init__(self, client, url, method, inp_params, headers=None,
-                 data=None, files=None, timeout=None, hooks=None, history=None,
+                 data=None, files=None, timeout=None, history=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
                  source_address=None, allow_redirects=False, max_redirects=10,
                  decompress=True, version=None, wait_continue=False,
@@ -388,12 +415,6 @@ class HttpRequest(pulsar.Request):
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
         
-    def copy(self):
-        r = copy(self)
-        r.__dict__.pop('_finished', None)
-        r.new_parser()
-        return r
-    
     def _encode_url(self, body):
         query = self.query
         if body:
@@ -421,6 +442,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
     '''A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
+    
+    There are two events you can yield in a coroutine:
+    
+    .. attribute:: on_headers
+    
+        fired once the response headers are received.
+        
+    .. attribute:: on_finished
+    
+        Fired once the whole request has finished
+        
+    Public API:
     '''
     _tunnel_host = None
     _has_proxy = False
@@ -435,17 +468,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if self._request:
             return self._request.parser
     
-    def recv_body(self):
-        '''Flush the response body and return it.'''
-        return self.parser.recv_body()
-    
-    def get_content(self):
-        '''Retrieve the body without flushing'''
-        b = self.parser.recv_body()
-        if b or self._content is None:
-            self._content = self._content + b if self._content else b
-        return self._content
-    
     def __str__(self):
         return self.status or '<None>'
 
@@ -454,7 +476,9 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
     @property
     def status_code(self):
-        '''Numeric status code such as 200, 404 and so forth.'''
+        '''Numeric status code such as 200, 404 and so forth.
+        
+        Available once the :attr:`on_headers` has fired.'''
         if self.parser:
             return self.parser.get_status_code()
     
@@ -498,6 +522,21 @@ class HttpResponse(pulsar.ProtocolConsumer):
         else:
             return False
     
+    @property
+    def on_headers(self):
+        return self.event('on_headers')
+    
+    def recv_body(self):
+        '''Flush the response body and return it.'''
+        return self.parser.recv_body()
+    
+    def get_content(self):
+        '''Retrieve the body without flushing'''
+        b = self.parser.recv_body()
+        if b or self._content is None:
+            self._content = self._content + b if self._content else b
+        return self._content
+    
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
         data = self.get_content()
@@ -537,9 +576,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
                     if self.has_finished:
                         return
                 if self._request.parser.is_message_complete():
-                    self.fire_event('on_message_complete')
-                    if not self.has_finished:
-                        self.finished(self.result('on_message_complete'))
+                    self.finished()
         else:
             raise pulsar.ProtocolError
         
@@ -588,6 +625,8 @@ class HttpClient(pulsar.Client):
         Default headers for this :class:`HttpClient`
         
     '''
+    MANY_TIMES_EVENTS = pulsar.Client.MANY_TIMES_EVENTS + ('on_headers',)
+    consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
     '''Maximum number of redirects.
@@ -619,8 +658,6 @@ class HttpClient(pulsar.Client):
               ca_certs=None, cookies=None, store_cookies=True,
               max_redirects=10, decompress=True, version=None,
               websocket_handler=None):
-        self.on_headers = []
-        self.on_message_complete = []
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookiejar_from_dict(cookies) 
@@ -643,10 +680,12 @@ class HttpClient(pulsar.Client):
                                'certfile': certfile,
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
-        # Handle Tunneling
+        # Hooks Events
         self.bind_event('pre_request', Tunneling())
-        self.on_headers.extend((handle_101, handle_100))
-        self.on_message_complete.append(handle_redirect_and_cookies)
+        self.bind_event('on_headers', handle_101)
+        self.bind_event('on_headers', handle_100)
+        self.bind_event('on_headers', handle_cookies)
+        self.bind_event('post_request', handle_redirect)
 
     @property
     def websocket_key(self):
@@ -728,13 +767,35 @@ class HttpClient(pulsar.Client):
 
         :rtype: a :class:`HttpResponse` object.
         '''
-        # A response is given. Starts a new request
-        nparams = self.update_parameters(self.request_parameters, params)
-        if response:
-            nparams['history'] = response.history
-        request = HttpRequest(self, url, method, params, **nparams)
+        request = self._build_request(method, url, response, params)
         return self.response(request, response)
     
+    def again(self, response, method=None, url=None, params=None,
+              history=False, request=None):
+        '''Create a new request from ``response``.
+        
+        The input ``response`` must be done.
+        '''
+        assert response.has_finished, 'response has not finished'
+        new_response = self.build_consumer()
+        new_response.chain_event(response, 'post_request')
+        if history:
+            new_response._history = []
+            new_response._history.extend(response._history or ())
+            new_response._history.append(response)
+        #
+        if not request:
+            request = response.request
+            if params is None:
+                params = request.inp_params.copy()
+            if not method:
+                method = request.method
+            if not url:
+                url = request.full_url
+            request = self._build_request(method, url, new_response, params)
+        #
+        return self.response(request, new_response)
+        
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
         '''
@@ -747,16 +808,14 @@ class HttpClient(pulsar.Client):
 
     def add_oauth2(self, client_id, client_secret):
         self.bind_event('pre_request', OAuth2(client_id, client_secret))
-    
-    def consumer_factory(self, connection=None):
-        response = HttpResponse(connection)
-        for handler in self.on_headers:
-            response.bind_event('on_headers', handler)
-        for handler in self.on_message_complete:
-            response.bind_event('on_message_complete', handler)
-        return response
 
     #    INTERNALS
+    
+    def _build_request(self, method, url, response, params):
+        nparams = self.update_parameters(self.request_parameters, params)
+        if response:
+            nparams['history'] = response.history
+        return HttpRequest(self, url, method, params, **nparams)
 
     def get_headers(self, request, headers):
         #Returns a :class:`Header` obtained from combining

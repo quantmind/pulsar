@@ -184,7 +184,7 @@ with the acknowledgement from the monitor.'''
             #Remove itself from the actors dictionary
             remove_actor(actor)
             actor.fire_event('stop')
-        return actor.deferred('stop')
+        return actor.event('stop')
         
     def _stop_actor(self, actor):
         '''Exit from the :class:`Actor` domain.'''
