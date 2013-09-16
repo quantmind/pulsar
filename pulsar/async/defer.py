@@ -60,6 +60,7 @@ EMPTY_EXC_INFO = (None, None, None)
 
 remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
+log_exc_info = ('error', 'critical')
 
 pass_through = lambda result: result
 
@@ -415,9 +416,9 @@ back to perform logging and propagate the failure. For example::
             self.logged = True
             msg = msg or self._msg
             log = log or logger()
-            if level:
-                getattr(log, level)(msg)
-            else:
+            level = level or 'error'
+            handler = getattr(log, level)
+            if level in log_exc_info:
                 exc_info = self.exc_info
                 if exc_info[2]:
                     c = '\n'
@@ -426,7 +427,7 @@ back to perform logging and propagate the failure. For example::
                     c = ': '
                     emsg = str(exc_info[1])
                 msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
-                log.error(msg)
+            handler(msg)
         return self
     
     def mute(self):

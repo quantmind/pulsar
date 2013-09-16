@@ -460,8 +460,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _content = None
     _data_sent = None
     _history = None
-    ONE_TIME_EVENTS = (pulsar.ProtocolConsumer.ONE_TIME_EVENTS + 
-                        ('on_headers', 'on_message_complete'))
+    ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
     
     @property
     def parser(self):
@@ -586,7 +585,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     
     def _continue(self, result):
         if not self.has_finished and self._request.parser.is_message_complete():
-            self.finished()
+            return self.finished(result)
         return result
     
     def _on_headers_error(self, failure):

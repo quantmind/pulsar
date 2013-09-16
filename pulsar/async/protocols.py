@@ -186,7 +186,7 @@ class ProtocolConsumer(EventHandler):
         :attr:`connection`.
         '''
         self.fire_event('post_request', result)
-        self.cancel_one_time_events()
+        self.cancel_one_time_events(exclude=('post_request',))
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None

@@ -222,7 +222,13 @@ protocol.'''
     def _write(self, req):
         obj = pickle.dumps(req.data, protocol=2)
         data = self._parser.encode(obj, opcode=0x2).msg
-        self.transport.write(data)
+        try:
+            self.transport.write(data)
+        except IOError:
+            actor = get_actor()
+            if actor.is_running():
+                raise
+            
         
     
 class MailboxClient(Client):

@@ -137,8 +137,8 @@ class HttpBin(wsgi.Router):
     def response_headers(self, request):
         class Gen:
             headers = None
-            def __call__(self, server, headers):
-                self.headers = headers
+            def __call__(self, server):
+                self.headers = server.headers
             def generate(self):
                 #yield a byte so that headers are sent
                 yield '{'

@@ -32,21 +32,31 @@ Optionally, it is possible to pass one additional parameter::
 	
 Adding event handlers is done via the :meth:`EventHandler.bind_event`
 method. The method accept two parameters, the event name and a callable
-accepting two parameters, the caller which fires the event and
-optional data::
+accepting one parameters, the caller which fires the event or the
+optional positional parameter passed to the :meth:`EventHandler.fire_event`
+method mentioned above::
 
-    def start_handler(caller, data):
+    def start_handler(result):
         ...
         
     o.bind_event('start', start_handler)
     
-    
+   
 .. _one-time-event:
 
 One time event
 =====================
 As the name says, they can be fired once only. Firing these events multiple
 times won't have any effect other than a warning message from the logger.
+
+For one time events it is possible to pass an optional
+function called if the result passed to the :meth:`EventHandler.fire_event`
+is a :class:`pulsar.Failure`::
+ 
+    def error_handler(failure):
+        ...
+        
+    o.bind_event('start', start_handler, error_handler)
 
 .. _many-times-event:
 
