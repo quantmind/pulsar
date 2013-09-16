@@ -226,9 +226,9 @@ class SocketServer(pulsar.Application):
             server = self.create_server(worker, sock.sock)
             servers.append(server)
     
-    def on_info(self, worker, data):
+    def on_info(self, worker, info=None):
         server = worker.socket_server
-        data['socket'] = {'listen_on': server.address,
+        info['socket'] = {'listen_on': server.address,
                           'read_timeout': server.timeout,
                           'active_connections': server.active_connections,
                           'received_connections': server.received}

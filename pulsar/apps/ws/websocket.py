@@ -16,7 +16,7 @@ TRANSPORTS = {}
 def register_transport(klass):
     TRANSPORTS[klass.name] = klass
     return klass
-        
+
 
 @register_transport
 class WebSocket(wsgi.Router):
@@ -54,9 +54,8 @@ class WebSocket(wsgi.Router):
         request.response.status_code = 101
         request.response.content = b''
         request.response.headers.update(headers)
-        connection = request.environ['pulsar.connection']
         factory = partial(WebSocketProtocol, request, self.handle, parser)
-        connection.upgrade(factory)
+        request.environ['pulsar.connection'].upgrade(factory)
         return request.response
         
     def upgrade(self, connection,):

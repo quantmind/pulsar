@@ -368,7 +368,7 @@ from another actor.'''
                 'extra': self.extra}
         if isp:
             data['system'] = system.system_info(self.pid)
-        self.fire_event('on_info', data)
+        self.fire_event('on_info', info=data)
         return data
     
     def _run(self, initial=True):

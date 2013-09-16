@@ -296,7 +296,7 @@ method as required by the WSGI specification.
 '''
         if not self._headers_sent:
             tosend = self.get_headers()
-            self.fire_event('on_headers', tosend)
+            self.fire_event('on_headers')
             self._headers_sent = tosend.flat(self.version, self.status)
             self.transport.write(self._headers_sent)
         if data:

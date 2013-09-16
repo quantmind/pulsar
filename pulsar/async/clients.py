@@ -71,7 +71,8 @@ class ConnectionPool(ConnectionProducer):
 
         Address to connect to
     '''    
-    def __init__(self, request, **params):
+    def __init__(self, client, request, **params):
+        self.client = client
         params['timeout'] = request.timeout
         self.lock = Lock()
         super(ConnectionPool, self).__init__(**params)
@@ -131,7 +132,7 @@ class ConnectionPool(ConnectionProducer):
             connection = self.new_connection(client.consumer_factory,
                                              producer=client)
             # Bind the finish event to the release connection function
-            connection.bind_event('post_request', self._release_response)
+            # connection.bind_event('post_request', self._release_response)
             # Bind the connection_lost to connection to handle dangling
             # connections
             connection.bind_event('connection_lost', self._try_reconnect)
@@ -139,7 +140,7 @@ class ConnectionPool(ConnectionProducer):
         
     ############################################################################
     ##    INTERNALS
-    def _try_reconnect(self, connection, exc):
+    def _try_reconnect(self, exc):
         # handle Read Exception on the transport
         if is_failure(exc, socket.timeout, socket.error):
             # Have we been here before?
@@ -181,9 +182,9 @@ class ConnectionPool(ConnectionProducer):
         #proxy to release_connection
         if release_connection(response):
             self.release_connection(response.connection, response)
+            
 
-
-def release_response_connection(response, result):
+def release_response_connection(response):
     '''Added as a post_request callback to release the connection.'''
     connection = response.connection
     if connection:
@@ -416,6 +417,7 @@ class Client(Producer):
             pool = self.connection_pools.get(request.key)
             if pool is None:
                 pool = self.connection_pool(
+                                self,
                                 request,
                                 max_connections=self.max_connections,
                                 connection_factory=self.connection_factory)
@@ -478,26 +480,6 @@ class Client(Producer):
                 break
         if key:
             self.connection_pools.pop(key)
-        
-    def upgrade(self, connection, consumer_factory=None):
-        '''Upgrade an existing ``connection`` with a new ``consumer_factory``.
-
-        This implements the :meth:`Producer.upgrade` abstract method.
-
-        :param connection: connection to upgrade.
-        :param consumer_factory: optional protocol consumer factory.
-        :return: a new :class:`ProtocolConsumer`.
-        
-        The upgrade occurs only if :attr:`Connection.current_consumer` is
-        available.
-        '''
-        consumer = connection.current_consumer
-        if consumer:
-            connection.upgrade(consumer_factory)
-            new_consumer = connection.consumer_factory()
-            connection._current_consumer = None
-            connection.set_consumer(new_consumer)
-            return new_consumer
     
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time

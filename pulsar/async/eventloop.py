@@ -448,26 +448,28 @@ default signal handler ``signal.SIG_DFL``.'''
                           local_addr=None, timeout=None):
         '''Creates a stream connection to a given internet host and port.
         
-It is the asynchronous equivalent of ``socket.create_connection``.
-
-:parameter protocol_factory: The callable to create the :class:`Protocol`
-    which handle the connection.
-:parameter host: If host is an empty string or None all interfaces are assumed
-    and a list of multiple sockets will be returned (most likely
-    one for IPv4 and another one for IPv6)
-:parameter port:
-:parameter ssl:
-:parameter family:
-:parameter proto:
-:parameter flags:
-:parameter sock:
-:parameter local_addr: if supplied, it must be a 2-tuple ``(host, port)`` for
-    the socket to bind to as its source address before connecting.
-:return: a :class:`Deferred` and its result on success is the
-    ``(transport, protocol)`` pair.
-    
-If a failure prevents the creation of a successful connection, an appropriate
-exception will be raised.'''
+        It is the asynchronous equivalent of ``socket.create_connection``.
+        
+        :parameter protocol_factory: The callable to create the
+            :class:`Protocol` which handle the connection.
+        :parameter host: If host is an empty string or None all interfaces are
+            assumed and a list of multiple sockets will be returned (most
+            likely one for IPv4 and another one for IPv6)
+        :parameter port:
+        :parameter ssl:
+        :parameter family:
+        :parameter proto:
+        :parameter flags:
+        :parameter sock:
+        :parameter local_addr: if supplied, it must be a 2-tuple
+            ``(host, port)`` for the socket to bind to as its source address
+            before connecting.
+        :return: a :class:`Deferred` and its result on success is the
+            ``(transport, protocol)`` pair.
+            
+        If a failure prevents the creation of a successful connection, an
+        appropriate exception will be raised.
+        '''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)

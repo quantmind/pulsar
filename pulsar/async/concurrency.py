@@ -130,7 +130,7 @@ implemented by subclasses.'''
         set_actor(actor)
         client = MailboxClient(actor.monitor.address, actor, event_loop)
         client.event_loop.call_soon_threadsafe(self.hand_shake, actor)
-        client.bind_event('finish', lambda *args: event_loop.stop())
+        client.bind_event('finish', lambda result: event_loop.stop())
         return client
 
     def periodic_task(self, actor):
@@ -190,6 +190,7 @@ with the acknowledgement from the monitor.'''
         '''Exit from the :class:`Actor` domain.'''
         actor.state = ACTOR_STATES.CLOSE
         if actor.event_loop.is_running():
+            actor.logger.debug('Closing mailbox')
             actor.mailbox.close()
         else:
             actor.exit_code = 1
@@ -323,8 +324,8 @@ mailbox server.'''
                             consumer_factory=MailboxConsumer,
                             name='mailbox')
         # when the mailbox stop, close the event loop too
-        mailbox.bind_event('stop', lambda *args: event_loop.stop())
-        mailbox.bind_event('start', lambda *args: \
+        mailbox.bind_event('stop', lambda _: event_loop.stop())
+        mailbox.bind_event('start', lambda _: \
             event_loop.call_soon_threadsafe(self.hand_shake, actor))
         mailbox.start_serving()
         return mailbox
@@ -353,7 +354,7 @@ mailbox server.'''
         if actor.event_loop.running:
             self._exit_arbiter(actor)
         else:
-            actor.logger.debug('Restarts event loop to removing actors')
+            actor.logger.debug('Restarts event loop to stop actors')
             actor.event_loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
         

@@ -50,7 +50,6 @@ class ProtocolConsumer(EventHandler):
         A useful example on how to use the ``data_received`` event is
         the :ref:`wsgi proxy server <tutorials-proxy-server>`.
     '''
-    _upgraded_from = False
     _connection = None
     _request = None
     #
@@ -114,11 +113,6 @@ class ProtocolConsumer(EventHandler):
         return self.event('post_request').has_fired()
     
     @property
-    def upgraded_from(self):
-        '''An instance of ``Upgrade`` when this consumer has been upgraded.'''
-        return self._upgraded_from
-
-    @property
     def recconnect_retries(self):
         ''''Number of times the consumer has tried to reconnect.
         
@@ -174,8 +168,11 @@ class ProtocolConsumer(EventHandler):
         if  not conn.transport:
             raise RuntimeError('%s has no transport.' % conn)
         self._request = request
-        self.fire_event('pre_request', request)
-        if request is not None:
+        self.fire_event('pre_request', callback=self._start,
+                        errback=self.finished)
+        
+    def _start(self, _):
+        if self._request is not None:
             try:
                 self.start_request()
             except Exception:
@@ -387,8 +384,7 @@ class Connection(EventHandler, Protocol):
             assert self._current_consumer is None, 'Consumer is not None'
             self._current_consumer = consumer
             consumer._connection = self
-            if not consumer._upgraded_from:
-                self._processed += 1
+            self._processed += 1
             consumer.connection_made(self)
     
     def connection_made(self, transport):
@@ -447,7 +443,7 @@ class Connection(EventHandler, Protocol):
             else:
                 log_failure(exc)
                              
-    def upgrade(self, consumer_factory):
+    def upgrade(self, consumer_factory, build_consumer=False):
         '''Upgrade the :attr:`consumer_factory` attribute.
         
         This function can be used when the protocol specification changes
@@ -457,15 +453,23 @@ class Connection(EventHandler, Protocol):
         been fired already.
 
         :param consumer_factory: the new consumer factory.
-        :return: Nothing.
+        :param build_consumer: if ``True`` build the new consumer.
+            Default ``False``.
+        :return: the new consumer if ``build_consumer`` is ``True``.
         '''
         consumer = self._current_consumer
         if consumer and not consumer.event('post_request').done():
             assert consumer.event('pre_request').done(), "pre_request not done"
+            # so that post request won't be fired when the consumer finishes
             consumer.pause_event('post_request')
-            #consumer._new_connection = False
+            self._processed -= 1
             self._consumer_factory = partial(self._upgrade, consumer_factory,
                                              consumer)
+            if build_consumer:
+                consumer.finished()
+                new_consumer = self._consumer_factory()
+                self.set_consumer(new_consumer)
+                return new_consumer
     
     ############################################################################
     ##    INTERNALS
@@ -483,17 +487,14 @@ class Connection(EventHandler, Protocol):
         if self._idle_timeout:
             self._idle_timeout.cancel()
             self._idle_timeout = None
-    
-    def _upgrade(self, consumer_factory, old_consumer, connection=None):
+            
+    def _upgrade(self, consumer_factory, old_consumer):
         # A factory of protocol for an upgrade of an existing protocol consumer
         # which didn't have the post_request event fired.
         consumer = consumer_factory()
-        consumer._upgraded_from = old_consumer
         consumer.chain_event(old_consumer, 'post_request')
-        if connection:
-            connection.set_consumer(consumer)
         return consumer
-
+    
 
 class Producer(EventHandler):
     '''An Abstract :class:`EventHandler` class for all producers of
@@ -544,13 +545,6 @@ class Producer(EventHandler):
         '''Build a consumer for a connection.
         
         **Must be implemented by subclasses.
-        '''
-        raise NotImplementedError
-        
-    def upgrade(self, connection, consumer_factory=None):
-        '''Upgrade and existing ``connection`` with a new ``consumer_factory``.
-
-        This is an abstract method implemented by subclasses.
         '''
         raise NotImplementedError
 
@@ -607,9 +601,10 @@ class ConnectionProducer(Producer):
                                        timeout=self.timeout)
         # When the connection is made, add it to the set of
         # concurrent connections
-        conn.bind_event('connection_made', self._add_connection)
+        conn.bind_event('connection_made', partial(self._connection_made, conn))
         conn.copy_many_times_events(producer)
-        conn.bind_event('connection_lost', self._remove_connection)
+        close = partial(self._connection_lost, conn)
+        conn.bind_event('connection_lost', close, close)
         return conn
     
     def close_connections(self, connection=None, async=True):
@@ -630,12 +625,14 @@ class ConnectionProducer(Producer):
     
     #   INTERNALS
 
-    def _add_connection(self, connection, exc=None):
+    def _connection_made(self, connection, _):
         self._concurrent_connections.add(connection)
+        return _
         
-    def _remove_connection(self, connection, exc=None):
+    def _connection_lost(self, connection, exc):
         # Called when the connection is lost
         self._concurrent_connections.discard(connection)
+        return exc
     
     
 class Server(ConnectionProducer):

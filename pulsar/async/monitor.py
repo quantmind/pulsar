@@ -114,7 +114,7 @@ during its life time.
         actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
         '''
         data = dict(self.params)
-        self.fire_event('on_params', data)
+        self.fire_event('on_params', params=data)
         return data
 
     def _remove_actor(self, actor, log=True):

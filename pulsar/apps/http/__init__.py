@@ -572,11 +572,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if self._request.parser.execute(data, len(data)) == len(data):
             if self._request.parser.is_headers_complete():
                 if not self.event('on_headers').done():
-                    self.fire_event('on_headers', self.headers)
-                    if self.has_finished:
-                        return
-                if self._request.parser.is_message_complete():
-                    self.finished()
+                    self.fire_event('on_headers', callback=self._continue)
         else:
             raise pulsar.ProtocolError
         
@@ -587,6 +583,10 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 return self.new_request(self.next_url)
             return self
     
+    def _continue(self, result):
+        if not self.has_finished and self._request.parser.is_message_complete():
+            self.finished()
+        return result
 
 class HttpClient(pulsar.Client):
     '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
@@ -845,7 +845,10 @@ class HttpClient(pulsar.Client):
             hostonly = request.host
             no_proxy = [n for n in self.proxy_info.get('no','').split(',') if n]
             if not any(map(hostonly.endswith, no_proxy)):
-                p = urlparse(self.proxy_info[request.scheme])
+                url = self.proxy_info[request.scheme]
+                p = urlparse(url)
+                if not p.scheme:
+                    raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
                 
     def can_reuse_connection(self, connection, response):

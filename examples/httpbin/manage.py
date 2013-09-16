@@ -232,6 +232,9 @@ class Graph(ws.WS):
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
+        from pulsar.utils.pep import get_event_loop
+        loop = get_event_loop()
+        loop.call_repeatedly(2, check_failures)
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
@@ -240,6 +243,16 @@ class Site(wsgi.LazyWsgi):
                                  HttpBin('/')])
         #return validator(app)
     
+
+def check_failures():
+    from pulsar.async.defer import failure_refs
+    import gc
+    for obj in failure_refs._refs.values():
+        print(obj)
+        rs = gc.get_referrers(obj)
+        print('Num referres %d' % len(rs))
+    if failure_refs._refs:
+        print('Failures %s' % len(failure_refs._refs))
     
 def server(description=None, **kwargs):
     description = description or 'Pulsar HttpBin'

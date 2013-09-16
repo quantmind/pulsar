@@ -111,13 +111,12 @@ class DiningPhilosophers(pulsar.Application):
     def worker_start(self, philosopher):
         self.take_action(philosopher)
         
-    def worker_info(self, philosopher, info):
+    def worker_info(self, philosopher, info=None):
         '''Override :meth:`pulsar.Application.worker_info` to provide
 information about the philosopher.'''
         params = philosopher.params
         info['philosopher'] = {'number': params.number,
                                'eaten': params.eaten}
-        return info
     
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:

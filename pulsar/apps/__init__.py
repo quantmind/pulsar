@@ -88,7 +88,7 @@ def _get_app(arbiter, name):
     if monitor:
         return monitor.params.app
 
-def monitor_start(self, _):
+def monitor_start(self):
     app = self.params.app
     self.app = app
     self.bind_event('on_params', monitor_params)
@@ -100,18 +100,19 @@ def monitor_start(self, _):
         yield self.app.worker_start(self)
     self.app.fire_event('start')
 
-def monitor_stop(self, _):
+def monitor_stop(self):
     if not self.cfg.workers:
-        self.app.worker_stop(self, _)
-    self.app.monitor_stop(self, _)
+        self.app.worker_stop(self)
+    self.app.monitor_stop(self)
+    return self
 
-def monitor_info(self, info):
+def monitor_info(self, info=None):
     if not self.cfg.workers:
         self.app.worker_info(self, info)
     else:
         self.app.monitor_info(self, info)
 
-def monitor_params(self, params):
+def monitor_params(self, params=None):
     app = self.app
     if self.cfg.concurrency == 'thread':
         app = pickle.loads(pickle.dumps(app))
@@ -120,13 +121,13 @@ def monitor_params(self, params):
                    'start': worker_start})
     app.actorparams(self, params)
 
-def worker_start(self, _):
+def worker_start(self):
     app = self.params.app
     self.app = app
     self.bind_event('on_info', app.worker_info)
     self.bind_event('stopping', app.worker_stopping)
     self.bind_event('stop', app.worker_stop)
-    yield app.worker_start(self)
+    return app.worker_start(self)
     
 def arbiter_config(cfg):
     cfg = cfg.copy()
@@ -388,24 +389,24 @@ class Application(Configurator, pulsar.Pulsar):
         return self.events.event(name)
 
     # WORKERS CALLBACKS
-    def worker_start(self, worker, _):
+    def worker_start(self, worker):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_info(self, worker, info):
+    def worker_info(self, worker, info=None):
         '''Hook to add additional entries to the worker ``info`` dictionary.'''
         pass
     
-    def worker_stopping(self, worker, exc):
+    def worker_stopping(self, worker):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
         pass
     
-    def worker_stop(self, worker, exc):
+    def worker_stop(self, worker):
         '''Added to the ``stop`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
     # MONITOR CALLBACKS
-    def actorparams(self, monitor, params):
+    def actorparams(self, monitor, params=None):
         '''Hook to add additional entries when the monitor spawn new actors.
         '''
         pass
@@ -415,12 +416,12 @@ class Application(Configurator, pulsar.Pulsar):
         '''
         pass
 
-    def monitor_info(self, monitor, data):
+    def monitor_info(self, monitor, info=None):
         '''Hook to add additional entries to the monitor ``info`` dictionary.
         '''
         pass
     
-    def monitor_stop(self, monitor, exc):
+    def monitor_stop(self, monitor):
         '''Callback by the monitor when stopping.
         '''
         pass

@@ -246,14 +246,14 @@ Return a :class:`Deferred` fired when all threads have exited.'''
         self._maintain()
             
     def _join_exited_workers(self):
-        """Cleanup after any worker processes which have exited due to reaching
-        their specified lifetime.  Returns True if any workers were cleaned up.
-        """
+        #Cleanup after any worker processes which have exited due to reaching
+        #their specified lifetime.  Returns True if any workers were cleaned up.
+        #
         cleaned = []
         for worker in self._pool:
             if worker.exitcode is not None:
                 # worker exited
-                self._actor.logger.debug('Cleaning up %s', worker)
+                self._actor.logger.debug('Joining %s', worker)
                 worker.join()
                 cleaned.append(worker)
         if cleaned:

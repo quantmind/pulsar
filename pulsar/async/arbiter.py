@@ -28,7 +28,7 @@ context domain, otherwise it returns ``None``.'''
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
-#TODO: why cfg is set to None?
+# TODO: why cfg is set to None?
 def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
 This method can be used from any :class:`Actor`.
@@ -70,7 +70,7 @@ A typical usage::
         return actor.spawn(**kwargs)
 
 
-def stop_arbiter(self, _):
+def stop_arbiter(self):
     p = self.pidfile
     if p is not None:
         self.logger.debug('Removing %s' % p.fname)
@@ -86,7 +86,7 @@ def stop_arbiter(self, _):
     if exit_code:
         sys.exit(exit_code)
     
-def start_arbiter(self, _):
+def start_arbiter(self):
     if current_process().daemon:
         raise pulsar.PulsarException(
                 'Cannot create the arbiter in a daemon process')
@@ -99,6 +99,7 @@ def start_arbiter(self, _):
         except RuntimeError as e:
             raise HaltServer('ERROR. %s' % str(e), exit_code=3)
         self.pidfile = p
+    return self
     
     
 class Arbiter(PoolMixin):
@@ -157,13 +158,13 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
         '''Given an actor unique id return the actor proxy.'''
         a = super(Arbiter, self).get_actor(aid)
         if a is None:
-            if aid in self.monitors:    # Check in monitors aid
+            if aid in self.monitors:  # Check in monitors aid
                 return self.monitors[aid]
             elif aid in self.managed_actors:
                 return self.managed_actors[aid]
             elif aid in self.registered:
                 return self.registered[aid]
-            else:    # Finally check in workers in monitors
+            else:  # Finally check in workers in monitors
                 for m in itervalues(self.monitors):
                     if aid in m.managed_actors:
                         return m.managed_actors[aid]

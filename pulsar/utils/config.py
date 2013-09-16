@@ -67,9 +67,6 @@ It does nothing and it is used as default by
 :ref:`Application Hooks <setting-section-application-hooks>`.'''
     pass
 
-def pass_through2(arg1, arg2):
-    pass
-
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
@@ -924,54 +921,54 @@ class WhenExit(Setting):
 class ConnectionMade(Setting):
     name = "connection_made"
     section = "Application Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(pass_through2)
+    default = staticmethod(pass_through)
     desc = """\
         Called after a new connection is made.
 
-        The callable needs to accept two parameters for the
-        connection instance and optional data,
+        The callable needs to accept one parameter for the
+        connection instance.
         """
 
 
 class ConnectionLost(Setting):
     name = "connection_lost"
     section = "Application Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(pass_through2)
+    default = staticmethod(pass_through)
     desc = """
         Called after a connection is lost.
 
-        The callable needs to accept two parameters for the
-        connection instance and optional data.
+        The callable needs to accept one parameter for the
+        connection instance.
         """
 
 
 class PreRequest(Setting):
     name = "pre_request"
     section = "Application Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(pass_through2)
+    default = staticmethod(pass_through)
     desc = """\
         Called just before an application server processes a request.
 
-        The callable needs to accept two parameters for the
-        consumer and optional data.
+        The callable needs to accept one parameters for the
+        consumer.
         """
 
 
 class PostRequest(Setting):
     name = "post_request"
     section = "Application Hooks"
-    validator = validate_callable(2)
+    validator = validate_callable(1)
     type = "callable"
-    default = staticmethod(pass_through2)
+    default = staticmethod(pass_through)
     desc = """\
         Called after an application server processes a request.
 
-        The callable needs to accept two parameters for the
-        consumer and optional data.
+        The callable needs to accept one parameter for the
+        consumer.
         """

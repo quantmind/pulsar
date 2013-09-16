@@ -209,17 +209,17 @@ task.Tasks and managing scheduling of tasks via a
     def worker_start(self, worker):
         self.backend.start(worker)
         
-    def worker_stopping(self, worker, _):
+    def worker_stopping(self, worker):
         self.backend.close(worker)
         
     def actorparams(self, monitor, params):
         params['app'].cfg.set('schedule_periodic', False)
     
-    def worker_info(self, worker, data):
+    def worker_info(self, worker, info=None):
         be = self.backend
         tasks = {'concurrent': list(be.concurrent_tasks),
                  'processed': be.processed}
-        data['tasks'] = tasks
+        info['tasks'] = tasks
      
     
 @command()

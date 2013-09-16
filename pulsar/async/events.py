@@ -13,7 +13,7 @@ class Event(object):
     _pause_counter = 0
     
     def bind(self, caller, callback):
-        '''Bind a ``callback`` for ``caller`` to this event.'''
+        '''Bind a ``callback`` for ``caller`` to this :class:`Event`.'''
         pass
     
     def has_fired(self):
@@ -23,9 +23,9 @@ class Event(object):
         '''
         return True
     
-    def fire(self, name, caller, arg):
+    def fire(self, name, caller, arg, kwargs):
         '''Fire this event'''
-        pass
+        raise NotImplementedError
     
     def chain(self, name, caller, event):
         '''Chain another ``event`` with this event.'''
@@ -47,18 +47,17 @@ class ManyEvent(Event):
         return repr(self._handlers)
     __str__ = __repr__
     
-    def bind(self, caller, callback):
+    def bind(self, callback, errback):
+        assert errback == None, 'errback not supported in many-times events'
         self._handlers.append(callback)
     
-    def fire(self, name, caller, arg):
+    def fire(self, name, caller, arg, callback, errback, kwargs):
         if self._pause_counter:
             self._pause_counter -= 1
             return
-        if arg is None:
-            result = caller
         for hnd in self._handlers:
             try:
-                g = hnd(caller, arg)
+                g = hnd(arg, **kwargs)
             except Exception:
                 logger().exception('Exception while firing "%s" '
                                    'event for %s', name, caller)
@@ -81,21 +80,23 @@ class OneTime(Deferred, Event):
         super(OneTime, self).__init__()
         self._events = Deferred()
         
-    def bind(self, caller, callback):
-        self._events.add_callback(partial(callback, caller))
+    def bind(self, callback, errback):
+        self._events.add_callback(callback, errback)
     
     def has_fired(self):
         return self._events.done()
         
-    def fire(self, name, caller, arg):
+    def fire(self, name, caller, arg, callback, errback, kwargs):
         if self._pause_counter:
             self._pause_counter -= 1
             return
         if self._events.done():
             logger().error('Event "%s" already fired by %s', name, caller)
         else:
-            if arg is None:
-                arg = caller
+            assert not kwargs, ("One time events can don't support key-value "
+                                "parameters")
+            if callback:
+                self.add_callback(callback, errback)
             result = self._events.callback(arg)
             if isinstance(result, Deferred):
                 # a deferred, add a check at the end of the callback pile
@@ -154,21 +155,21 @@ class EventHandler(object):
         '''Return the :class:`Event` for ``name``.'''
         return self._events.get(name)
         
-    def bind_event(self, event, callback):
+    def bind_event(self, event, callback, errback=None):
         '''Register a ``callback`` with ``event``.
 
-        **The callback must be a callable which accept two parameters**,
-        the first is the instance firing the event and the second the
-        ``event_data`` passed to the :meth:`fire_event` method.
+        **The callback must be a callable which accept one parameter**,
+        the instance firing the event or the first positional argument
+        passed to the :meth:`fire_event` method.
 
         :param event: the event name. If the event is not available a warning
             message is logged.
         :param callback: a callable receiving two positional parameters.
         '''
         if event in self._events:
-            self._events[event].bind(self, callback)
+            self._events[event].bind(callback, errback)
         else:
-            logger().warning('unknown event "%s" for %s', event, self)
+            logger().warning('Unknown event "%s" for %s', event, self)
     
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
@@ -177,8 +178,9 @@ class EventHandler(object):
             if name in events:
                 self.bind_event(name, events[name])
     
-    def fire_event(self, name, event_data=None):
-        """Dispatches ``self`` and ``event_data`` to event ``name`` listeners.
+    def fire_event(self, name, event_data=None, callback=None,
+                   errback=None, **kwargs):
+        """Dispatches ``event_data`` or ``self`` to event ``name`` listeners.
 
         * If event at ``name`` is a one-time event, it makes sure that it was
           not fired before.
@@ -187,10 +189,15 @@ class EventHandler(object):
             event handler.
         :return: boolean indicating if the event was fired or not.
         """
+        if event_data is None:
+            event_data = self
         if name in self._events:
-            return self._events[name].fire(name, self, event_data)
+            return self._events[name].fire(name, self, event_data, callback,
+                                           errback, kwargs)
         elif warning:
             logger().warning('Unknown event "%s" for %s', name, self)
+            if callback:
+                return callback(event_data)
     
     def pause_event(self, name):
         '''Pause event ``name``.
@@ -228,5 +235,5 @@ class EventHandler(object):
                     # If the event is available add it
                     if ev:
                         for callback in event._handlers:
-                            ev.bind(self, callback)
+                            ev.bind(callback)
         

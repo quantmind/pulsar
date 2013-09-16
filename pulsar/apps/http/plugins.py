@@ -52,32 +52,34 @@ def _do_redirect(response, _):
     else:
         return client.again(response, url=url, history=True)
 
-def handle_cookies(response, headers):
+def handle_cookies(response, _):
+    headers = response.headers
+    request = response.request
     client = request.client
     if client.store_cookies and 'set-cookie' in headers:
-        client.cookies.extract_cookies(response, response.request)
+        client.cookies.extract_cookies(response, request)
     return headers
     
-def handle_100(response, headers):
+def handle_100(response, _):
     if response.status_code == 100:
         # reset the parser
         request = response._request
         request.new_parser()
         response.transport.write(request.body)
-    return headers
+    return response
 
-def handle_101(response, headers):
+def handle_101(response, _):
     '''Websocket upgrade as ``on_headers`` event.'''
     if response.status_code == 101:
-        client = response.producer
+        connection = response.connection
         request = response._request
         handler = request.websocket_handler
         parser = FrameParser(kind=1)
         if not handler:
             handler = WS()
         factory = partial(WebSocketProtocol, response, handler, parser)
-        client.upgrade(response.connection, factory)
-    return headers
+        response = connection.upgrade(factory, True)
+    return response
 
 
 class TunnelRequest:
@@ -89,7 +91,7 @@ class TunnelRequest:
         request.new_parser()
         
     def encode(self):
-        first_line = 'CONNECT %s HTTP/1.0\r\n' % self.request._netloc
+        first_line = 'CONNECT %s HTTP/1.1\r\n' % self.request._netloc
         headers = bytes(self.request.tunnel_headers)
         return b''.join((first_line.encode('ascii'), headers))
     

@@ -6,7 +6,7 @@ from .threads import Empty, Full, Lock
 __all__ = ['Queue']
 
 class Queue:
-    '''Asynchronous FIFO queue'''
+    '''Asynchronous FIFO queue.'''
     def __init__(self, maxsize=0, event_loop=None):
         if event_loop:
             self._event_loop = event_loop
@@ -42,12 +42,13 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
     def put(self, item, timeout=None):
         '''Put an ``item`` in the queue.
 
-If you yield from :meth:`put` and ``timeout`` is ``None`` (the default),
-wait until a item is added to the queue. Otherwise raise ``Full`` if no slots
-is available before ``timeout``.
-        
-:parameter timeout: optional timeout in seconds.
-:return: a :ref:`coroutine <coroutine>` which results in ``None``.'''
+        If you yield from :meth:`put` and ``timeout`` is ``None`` (the default),
+        wait until a item is added to the queue. Otherwise raise ``Full``
+        if no slots is available before ``timeout``.
+                
+        :parameter timeout: optional timeout in seconds.
+        :return: a :ref:`coroutine <coroutine>` which results in ``None``.
+        '''
         future, waiter = None, None
         with self._lock:
             while self._waiting:
@@ -76,13 +77,14 @@ is available before ``timeout``.
     def get(self, timeout=None):
         '''Remove and return an item from the queue.
         
-If you yield from :meth:`get` and ``timeout`` is ``None`` (the default),
-wait until a item is available. Otherwise raise ``Empty`` if no item is
-available before ``timeout``.
-        
-:parameter timeout: optional timeout in seconds.
-:return: a :ref:`coroutine <coroutine>` which results in the item removed
-    form the queue.'''
+        If you yield from :meth:`get` and ``timeout`` is ``None`` (the default),
+        wait until a item is available. Otherwise raise ``Empty`` if no item is
+        available before ``timeout``.
+                
+        :parameter timeout: optional timeout in seconds.
+        :return: a :ref:`coroutine <coroutine>` which results in the item
+            removed form the queue.
+        '''
         with self._lock:
             if self.qsize():
                 while self._putters:
