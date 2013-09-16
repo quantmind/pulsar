@@ -3,32 +3,16 @@ import sys
 import gc
 from functools import partial
 
-from pulsar import Deferred, Failure, FailureRefs, maybe_failure
+from pulsar import Deferred, Failure, maybe_failure
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
 
-class TestFailureRefs(FailureRefs):
-    def __init__(self):
-        super(TestFailureRefs, self).__init__()
-        self.errors = {}
-        
-    def _log_failure(self, ref):
-        exc_info = self._refs.pop(ref)
-        self.errors[exc_info[1]] = 1
-
-
 class TestFailure(unittest.TestCase):
-    
-    def setUp(self):
-        self.failure_refs = TestFailureRefs()
         
     def assertRefDeleted(self, error):
         self.assertEqual(self.failure_refs.errors.get(error), 1)
         
-    def make(self, error):
-        return Failure.make(error, self.failure_refs)
-    
     def failure_log(self, failure, log=None, msg=None, level=None):
         failure.logged = True
         
@@ -46,18 +30,18 @@ class TestFailure(unittest.TestCase):
         return remote
     
     def testRepr(self):
-        failure = self.make(Exception('test'))
+        failure = maybe_failure(Exception('test'))
         val = str(failure)
         self.assertEqual(repr(failure), val)
         self.assertTrue('Exception: test' in val)
         
     def testRemote(self):
-        failure = self.make(Exception('test'))
+        failure = maybe_failure(Exception('test'))
         failure.logged = True
         remote = self.dump(failure)
         
     def testRemoteExcInfo(self):
-        failure = Failure.make(Exception('test'))
+        failure = maybe_failure(Exception('test'))
         remote = self.dump(failure)
         # Now create a failure from the remote.exc_info
         failure = maybe_failure(remote.exc_info)
@@ -66,15 +50,15 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(failure.logged)
         
     def testFailureFromFailure(self):
-        failure = Failure.make(ValueError('test'))
-        failure2 = Failure.make(failure)
+        failure = maybe_failure(ValueError('test'))
+        failure2 = maybe_failure(failure)
         self.assertEqual(failure, failure2)
         self.assertEqual(failure.exc_info, failure2.exc_info)
         failure.logged = True
         self.assertRaises(ValueError, failure.throw)
         
     def testLog(self):
-        failure = self.make(Exception('test'))
+        failure = maybe_failure(Exception('test'))
         error = failure.error
         log = mock.MagicMock(name='log')
         failure.log = log

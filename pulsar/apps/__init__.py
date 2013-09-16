@@ -93,6 +93,7 @@ def monitor_start(self):
     self.app = app
     self.bind_event('on_params', monitor_params)
     self.bind_event('on_info', monitor_info)
+    self.bind_event('stopping', monitor_stopping)
     self.bind_event('stop', monitor_stop)
     self.monitor_task = lambda: app.monitor_task(self)
     yield self.app.monitor_start(self)
@@ -100,11 +101,17 @@ def monitor_start(self):
         yield self.app.worker_start(self)
     self.app.fire_event('start')
 
+def monitor_stopping(self):
+    if not self.cfg.workers:
+        yield self.app.worker_stopping(self)
+    yield self.app.monitor_stopping(self)
+    yield self
+
 def monitor_stop(self):
     if not self.cfg.workers:
-        self.app.worker_stop(self)
-    self.app.monitor_stop(self)
-    return self
+        yield self.app.worker_stop(self)
+    yield self.app.monitor_stop(self)
+    yield self
 
 def monitor_info(self, info=None):
     if not self.cfg.workers:
@@ -421,8 +428,13 @@ class Application(Configurator, pulsar.Pulsar):
         '''
         pass
     
+    def monitor_stopping(self, monitor):
+        '''Callback by the monitor before stopping.
+        '''
+        pass
+    
     def monitor_stop(self, monitor):
-        '''Callback by the monitor when stopping.
+        '''Callback by the monitor on stop.
         '''
         pass
 

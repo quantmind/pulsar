@@ -377,7 +377,7 @@ from another actor.'''
             try:
                 self.cfg.when_ready(self)
             except Exception:
-                pass
+                self.logger.exception('Unhandled exception in when_ready hook')
         try:
             exc = self.__impl.run_actor(self)
         except (Exception, HaltServer):

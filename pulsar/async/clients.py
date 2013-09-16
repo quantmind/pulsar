@@ -8,7 +8,7 @@ from pulsar import ProtocolError
 from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
-from .defer import is_failure, multi_async
+from .defer import Failure, is_failure, multi_async
 
 from .protocols import (EventHandler, Producer, ConnectionProducer,
                         release_connection)
@@ -71,8 +71,7 @@ class ConnectionPool(ConnectionProducer):
 
         Address to connect to
     '''    
-    def __init__(self, client, request, **params):
-        self.client = client
+    def __init__(self, request, **params):
         params['timeout'] = request.timeout
         self.lock = Lock()
         super(ConnectionPool, self).__init__(**params)
@@ -131,16 +130,15 @@ class ConnectionPool(ConnectionProducer):
             # build the new connection
             connection = self.new_connection(client.consumer_factory,
                                              producer=client)
-            # Bind the finish event to the release connection function
-            # connection.bind_event('post_request', self._release_response)
             # Bind the connection_lost to connection to handle dangling
             # connections
-            connection.bind_event('connection_lost', self._try_reconnect)
+            reconnect = partial(self._try_reconnect, connection)
+            connection.bind_event('connection_lost', reconnect, reconnect)
         return connection
         
     ############################################################################
     ##    INTERNALS
-    def _try_reconnect(self, exc):
+    def _try_reconnect(self, connection, exc):
         # handle Read Exception on the transport
         if is_failure(exc, socket.timeout, socket.error):
             # Have we been here before?
@@ -148,7 +146,7 @@ class ConnectionPool(ConnectionProducer):
             if consumer is None:
                 # No consumer. The address was probably wrong.
                 # Connection Refused
-                return
+                return exc
             client = connection.producer
             # The connection has processed request before and the consumer
             # has never received data. If the client allows it, try to
@@ -165,6 +163,9 @@ class ConnectionPool(ConnectionProducer):
                 else:
                     connection.logger.debug('Reconnecting')
                     self._reconnect(client, consumer)
+                return consumer
+        return exc
+                
                     
     def _reconnect(self, client, consumer):
         # get a new connection
@@ -190,12 +191,13 @@ def release_response_connection(response):
     if connection:
         connection.set_consumer(None)
         key = response.request.key
-        pool = response.producer.connection_pools.get(key)
-        if not pool:
-            connection.logger.error(
-                'Could not fined connection pool to release %s', connection)
-        else:
-            pool.release_connection(connection, response)
+        if key: # remove connection only when the request has a valid key
+            pool = response.producer.connection_pools.get(key)
+            if not pool:
+                connection.logger.error(
+                    'Could not fined connection pool to release %s', connection)
+            else:
+                pool.release_connection(connection, response)
     return response
 
 
@@ -389,11 +391,11 @@ class Client(Producer):
             :attr:`consumer_factory`.
         '''
         event_loop = self.get_event_loop()
-        if response is None:
+        if response is None or response.has_finished:
             response = self.build_consumer()
         inp_params = request.inp_params
         if isinstance(inp_params, dict):
-            self.bind_events(**inp_params)
+            response.bind_events(**inp_params)
         event_loop.call_now_threadsafe(self._response, event_loop,
                                        response, request, new_connection)
         if self.force_sync: # synchronous response
@@ -417,7 +419,6 @@ class Client(Producer):
             pool = self.connection_pools.get(request.key)
             if pool is None:
                 pool = self.connection_pool(
-                                self,
                                 request,
                                 max_connections=self.max_connections,
                                 connection_factory=self.connection_factory)
@@ -525,5 +526,5 @@ class Client(Producer):
             else:
                 response.start(request)
         except Exception:
-            response.finished(sys.exc_info())
+            response.finished(Failure(sys.exc_info()).log())
         

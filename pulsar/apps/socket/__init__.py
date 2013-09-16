@@ -1,5 +1,5 @@
 '''Asynchronous application for serving requests
-on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
+on sockets. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
 All is needed by a :class:`SocketServer` is a callable which build a
 :class:`pulsar.ProtocolConsumer` for each new client request received.
 This is an example of a script for an Echo server::
@@ -31,6 +31,10 @@ The :class:`SocketServer` application introduces the additional pulsar settings
 to bind the server to::
 
     python script.py --bind 127.0.0.1:8070
+
+This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::
+
+    python script.py --bind :8080
 
 backlog
 ---------   
@@ -94,8 +98,9 @@ Check the :meth:`SocketServer.monitor_start` method for implementation details.
 import os
 
 import pulsar
-from pulsar import TcpServer
+from pulsar import TcpServer, multi_async
 from pulsar.utils.internet import parse_address, SSLContext, WrapSocket
+from pulsar.utils.config import pass_through
 
 
 class SocketSetting(pulsar.Setting):
@@ -225,7 +230,13 @@ class SocketServer(pulsar.Application):
         for sock in worker.params.sockets:
             server = self.create_server(worker, sock.sock)
             servers.append(server)
-    
+            
+    def worker_stopping(self, worker):
+        all = []
+        for server in worker.servers[self.name]:
+            all.append(server.close_connections())
+        return multi_async(all)
+        
     def on_info(self, worker, info=None):
         server = worker.socket_server
         info['socket'] = {'listen_on': server.address,
@@ -245,10 +256,11 @@ uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
                            max_connections=cfg.max_requests,
                            timeout=cfg.keep_alive,
                            name=self.name)
-        server.bind_event('connection_made', cfg.connection_made)
-        server.bind_event('pre_request', cfg.pre_request)
-        server.bind_event('post_request', cfg.post_request)
-        server.bind_event('connection_lost', cfg.connection_lost)
+        for event in ('connection_made', 'pre_request', 'post_request',
+                      'connection_lost'):
+            callback = getattr(cfg, event)
+            if callback != pass_through:
+                server.bind_event(event, callback)
         server.start_serving(cfg.backlog, sslcontext=worker.params.ssl)
         return server
         

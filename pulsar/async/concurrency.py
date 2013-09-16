@@ -9,7 +9,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, remove_actor, logger
 from .threads import Thread, ThreadQueue, Empty
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
-from .defer import multi_async, maybe_failure, Failure
+from .defer import multi_async, maybe_failure, Failure, Deferred
 from .eventloop import signal
 from .stream import TcpServer
 from .pollers import POLLERS
@@ -176,9 +176,12 @@ with the acknowledgement from the monitor.'''
                 if actor.logger:
                     actor.logger.debug('stopping')
                 actor.exit_code = 0
-            actor.fire_event('stopping')
+            stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
-            self._stop_actor(actor)
+            if isinstance(stopping, Deferred) and actor.event_loop.is_running():
+                stopping.add_both(lambda r: self._stop_actor(actor))
+            else:
+                self._stop_actor(actor)
         elif actor.stopped():
             # The actor has finished the stopping process.
             #Remove itself from the actors dictionary

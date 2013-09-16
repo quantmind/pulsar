@@ -7,7 +7,7 @@ from inspect import isgenerator, istraceback
 
 from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.pep import (raise_error_trace, iteritems, default_timer,
-                              get_event_loop, ispy3k)
+                              get_event_loop, ispy3k, pickle)
 
 from .access import get_request_loop, logger
 from .consts import *
@@ -22,7 +22,6 @@ __all__ = ['Deferred',
            'InvalidStateError',
            'log_failure',
            'Failure',
-           'FailureRefs',
            'maybe_failure',
            'coroutine_return',
            'is_failure',
@@ -68,6 +67,8 @@ def remote_exc_info(exc_info):
     if not isinstance(exc_info, remote_stacktrace):
         exctype, value, tb = exc_info
         tb = traceback.format_exception(exctype, value, tb)
+        value.__traceback__ = None
+        #value = pickle.loads(pickle.dumps(value))
         exc_info = remote_stacktrace(exctype, value, tb)
     return exc_info
 
@@ -108,8 +109,12 @@ are given, it checks if the error is an instance of those classes.'''
     return False
 
 def default_maybe_failure(value):
-    if isinstance(value, Exception):
-        return Failure.make(value)
+    if isinstance(value, BaseException):
+        exc_info = sys.exc_info()
+        if value is not exc_info[1]:
+            value.__traceback__ = None
+            exc_info = remote_stacktrace(type(value), value, [])
+        return Failure(exc_info)
     elif is_exc_info(value):
         return Failure(value)
     else:
@@ -312,37 +317,7 @@ def async_while(timeout, while_clause, *args):
         yield result
     return maybe_async(_(), get_result=False)
 
-
-class FailureRefs(object):
-    '''Avoid the use of ``__del__`` method in the failure class.'''
-    def __init__(self):
-        self._refs = {}
-        
-    def add(self, failure):
-        self._refs[ref(failure, self._log_failure)] = failure.exc_info
     
-    def _log_failure(self, ref):
-        exc_info = self._refs.pop(ref, None)
-        if exc_info:
-            log_exc('Deferred Failure never retrieved', exc_info)
-
-    
-def log_exc(msg, exc_info, log=None, level=None):
-    error = exc_info[1]
-    if not getattr(error, '_failure_logged', False):
-        setattr(error, '_failure_logged', True)
-        log = log or logger()
-        if isinstance(exc_info, remote_stacktrace):
-            msg = msg or ''.join(exc_info[2])
-            exc_info = None
-        if level:
-            getattr(log, level)(msg)
-        else:
-            log.error(msg, exc_info=exc_info)
-        
-        
-failure_refs = FailureRefs()
-
 ############################################################### FAILURE
 class Failure(object):
     '''The asynchronous equivalent of python Exception. It has several useful
@@ -365,26 +340,13 @@ errors.
         failure.logged = True
     
 '''
-    _msg = 'Pulsar asynchronous failure'
+    _msg = 'Pulsar Asynchronous Failure'
     
-    @classmethod
-    def make(cls, error, frefs=None):
-        if isinstance(error, cls):
-            return error
-        elif isinstance(error, BaseException):
-            exc_info = sys.exc_info()
-            if error is not exc_info[1]: 
-                try:
-                    raise error
-                except:
-                    exc_info = sys.exc_info()
-        else:
-            exc_info = error
-        return cls(exc_info, frefs)
-    
-    def __init__(self, exc_info, frefs=None):
-        self.exc_info = exc_info
-        (frefs or failure_refs).add(self)
+    def __init__(self, exc_info):
+        self.exc_info = remote_exc_info(exc_info)
+        
+    def __del__(self):
+        self.log()
          
     def __repr__(self):
         if self.is_remote:
@@ -394,9 +356,6 @@ errors.
         return ''.join(tb)
     __str__ = __repr__
     
-    #def __del__ (self):
-    #    self.log(msg='Deferred Failure never retrieved')
-
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
     def _set_logged(self, value):
@@ -404,7 +363,7 @@ errors.
         if err:
             setattr(err, '_failure_logged', value)
     logged = property(_get_logged, _set_logged)
-    
+     
     @property
     def error(self):
         '''The python :class:`Exception` instance.'''
@@ -421,11 +380,12 @@ errors.
     def throw(self, gen=None):
         '''Raises the exception from the :attr:`exc_info`.
         
-:parameter gen: Optional generator. If provided the exception is throw into
-    the generator via the ``gen.throw`` method.
-    
-Without ``gen``, this method is used when interacting with libraries
-supporting both synchronous and asynchronous flow controls.'''
+        :parameter gen: Optional generator. If provided the exception is throw
+            into the generator via the ``gen.throw`` method.
+            
+        Without ``gen``, this method is used when interacting with libraries
+        supporting both synchronous and asynchronous flow controls.
+        '''
         if gen:
             if self.is_remote:
                 return gen.throw(self.exc_info[0], self.exc_info[1])
@@ -450,20 +410,30 @@ back to perform logging and propagate the failure. For example::
 
     .add_errback(lambda failure: failure.log())
 '''
-        if not getattr(self.error, '_failure_logged', False):
-            if not self.is_remote:
-                msg = msg or self._msg
-            log_exc(msg, self.exc_info, log, level)
+        error = self.error
+        if not self.logged:
+            self.logged = True
+            msg = msg or self._msg
+            log = log or logger()
+            if level:
+                getattr(log, level)(msg)
+            else:
+                exc_info = self.exc_info
+                if exc_info[2]:
+                    c = '\n'
+                    emsg = ''.join(exc_info[2])
+                else:
+                    c = ': '
+                    emsg = str(exc_info[1])
+                msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
+                log.error(msg)
         return self
     
     def mute(self):
         '''Mute logging and return self.'''
         self.logged = True
         return self
-       
-    def __getstate__(self):
-        self.log()
-        return {'exc_info': remote_exc_info(self.exc_info)}
+    
 
 ############################################################### Deferred
 class Deferred(object):
@@ -800,25 +770,21 @@ function when a generator is passed as argument.'''
             
     def _step(self, result, gen):
         try:
+            failure = None
             if isinstance(result, Failure):
                 failure, result = result, None
-                try:
-                    result = failure.throw(gen)
-                except StopIteration:
-                    failure.logged = True
-                    raise
-                else:
-                    failure.logged = True
+                result = failure.throw(gen)
+                failure.mute()
             else:
                 result = gen.send(result)
         except CoroutineReturn as e:
             result = e.value
-            self._conclude(result)
+            self._conclude(result, failure)
         except StopIteration:
-            self._conclude(result)
+            self._conclude(result, failure)
         except Exception as e:
             result = Failure(sys.exc_info())
-            self._conclude(result)
+            self._conclude(result, failure)
         else:
             result = maybe_async(result, event_loop=self.event_loop)
             if isinstance(result, Deferred):
@@ -840,8 +806,22 @@ function when a generator is passed as argument.'''
         # the passed result (which is not asynchronous).
         return result
     
-    def _conclude(self, result):
+    def _restart_error(self, failure):
+        self._waiting = None
+        #restart the coroutine in the same event loop it was started
+        self.event_loop.call_now_threadsafe(self._consume, result)
+        # Important, this is a callback of a deferred, therefore we return
+        # the passed result (which is not asynchronous).
+        return result
+    
+    def _conclude(self, result, failure):
         # Conclude the generator and callback the listeners
+        if failure:
+            if isinstance(result, Failure):
+                if result.error is not failure.error:
+                    failure.mute()
+            else:
+                failure.mute()
         self._gen.close()
         del self._gen
         self.callback(result)

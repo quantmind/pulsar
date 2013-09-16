@@ -3,7 +3,7 @@ from copy import copy
 from functools import partial
 
 from pulsar import TooManyConnections, ProtocolError
-from pulsar.utils.internet import nice_address
+from pulsar.utils.internet import nice_address, format_address
 
 from .defer import Deferred, multi_async, log_failure
 from .events import EventHandler
@@ -170,6 +170,7 @@ class ProtocolConsumer(EventHandler):
         self._request = request
         self.fire_event('pre_request', callback=self._start,
                         errback=self.finished)
+        pass
         
     def _start(self, _):
         if self._request is not None:
@@ -185,9 +186,11 @@ class ProtocolConsumer(EventHandler):
         :attr:`connection`.
         '''
         self.fire_event('post_request', result)
+        self.cancel_one_time_events()
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
+        return result
         
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -618,6 +621,7 @@ class ConnectionProducer(Producer):
             all.append(connection.event('connection_lost'))
             connection.transport.close(async)
         else:
+            logger().info('%s closing all connections', self)
             for connection in list(self._concurrent_connections):
                 all.append(connection.event('connection_lost'))
                 connection.transport.close(async)
@@ -677,6 +681,10 @@ class Server(ConnectionProducer):
         assert hasattr(self.consumer_factory, '__call__'), (
                 'consumer_factory must be a callable')
     
+    def __repr__(self):
+        return '%s %s' % (self.__class__.__name__, format_address(self.address))
+    __str__ = __repr__
+    
     def close(self):
         '''Stop serving and close the listening socket.'''
         raise NotImplementedError
@@ -710,5 +718,8 @@ class Server(ConnectionProducer):
     @property
     def address(self):
         '''Server address, where clients send requests to.'''
-        return self._sock.getsockname()
+        try:
+            return self._sock.getsockname()
+        except Exception:
+            return None
     

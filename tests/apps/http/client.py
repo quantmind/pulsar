@@ -9,7 +9,7 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 
-def dodgyhook(*args):
+def dodgyhook(response):
     raise ValueError
 
 
@@ -91,6 +91,20 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     
+    def test_redirect_1(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('redirect', '1')).on_finished
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 1)
+        self.assertTrue(history[0].url.endswith('/redirect/1'))
+        self._after('test_redirect_1', response)
+    def after_test_redirect_1(self, response):
+        redirect = response.history[0]
+        self.assertEqual(redirect.connection, response.connection)
+        self.assertEqual(response.connection.processed, 2)
+        
+class g:
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -102,13 +116,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
-class g:
-    
     def test_dodgy_on_header_event(self):
         client = HttpClient()
         response = client.get(self.httpbin(), on_headers=dodgyhook)
         try:
-            response = response.on_finished
+            yield response.on_finished
         except ValueError:
             pass
         self.assertTrue(response.headers)

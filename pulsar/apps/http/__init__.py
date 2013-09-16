@@ -279,7 +279,7 @@ class HttpRequest(pulsar.Request):
     def tunnel_headers(self):
         '''Headers for HTTP CONNECT Tunneling.'''
         if self._tunnel_headers is None:
-            self._tunnel_headers = Headers(kind='client')
+            self._tunnel_headers = self.client.get_headers(self)
         return self._tunnel_headers
     
     @property
@@ -293,7 +293,7 @@ class HttpRequest(pulsar.Request):
     @property
     def origin_req_host(self):
         if self.history:
-            return self.history[0].current_request.origin_req_host
+            return self.history[0].request.origin_req_host
         else:
             return request_host(self)
     
@@ -572,7 +572,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if self._request.parser.execute(data, len(data)) == len(data):
             if self._request.parser.is_headers_complete():
                 if not self.event('on_headers').done():
-                    self.fire_event('on_headers', callback=self._continue)
+                    self.fire_event('on_headers', callback=self._continue,
+                                    errback=self._on_headers_error)
         else:
             raise pulsar.ProtocolError
         
@@ -587,6 +588,11 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if not self.has_finished and self._request.parser.is_message_complete():
             self.finished()
         return result
+    
+    def _on_headers_error(self, failure):
+        self.on_headers.add_errback(self.finished)
+        return failure
+        
 
 class HttpClient(pulsar.Client):
     '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
@@ -771,13 +777,14 @@ class HttpClient(pulsar.Client):
         return self.response(request, response)
     
     def again(self, response, method=None, url=None, params=None,
-              history=False, request=None):
+              history=False, new_response=None, request=None):
         '''Create a new request from ``response``.
         
         The input ``response`` must be done.
         '''
         assert response.has_finished, 'response has not finished'
-        new_response = self.build_consumer()
+        if not new_response:
+            new_response = self.build_consumer()
         new_response.chain_event(response, 'post_request')
         if history:
             new_response._history = []
@@ -817,7 +824,7 @@ class HttpClient(pulsar.Client):
             nparams['history'] = response.history
         return HttpRequest(self, url, method, params, **nparams)
 
-    def get_headers(self, request, headers):
+    def get_headers(self, request, headers=None):
         #Returns a :class:`Header` obtained from combining
         #:attr:`headers` with *headers*. Can handle websocket requests.
         if request.scheme in ('ws','wss'):

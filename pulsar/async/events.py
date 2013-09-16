@@ -1,7 +1,7 @@
 from functools import partial
 from inspect import isgenerator
 
-from pulsar.utils.pep import iteritems
+from pulsar.utils.pep import itervalues
 
 from .defer import Deferred, maybe_async
 from .access import logger
@@ -12,7 +12,7 @@ __all__ = ['EventHandler', 'Event']
 class Event(object):
     _pause_counter = 0
     
-    def bind(self, caller, callback):
+    def bind(self, callback, errback=None):
         '''Bind a ``callback`` for ``caller`` to this :class:`Event`.'''
         pass
     
@@ -23,11 +23,11 @@ class Event(object):
         '''
         return True
     
-    def fire(self, name, caller, arg, kwargs):
+    def fire(self, arg, callback=None, errback=None, **kwargs):
         '''Fire this event'''
         raise NotImplementedError
     
-    def chain(self, name, caller, event):
+    def chain(self, event):
         '''Chain another ``event`` with this event.'''
         raise NotImplementedError
     
@@ -40,18 +40,19 @@ class Event(object):
 
 class ManyEvent(Event):
     '''An event managed by an :class:`EventHandler` class.'''
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self._handlers = []
     
     def __repr__(self):
         return repr(self._handlers)
     __str__ = __repr__
     
-    def bind(self, callback, errback):
+    def bind(self, callback, errback=None):
         assert errback == None, 'errback not supported in many-times events'
         self._handlers.append(callback)
     
-    def fire(self, name, caller, arg, callback, errback, kwargs):
+    def fire(self, arg, callback=None, errback=None, **kwargs):
         if self._pause_counter:
             self._pause_counter -= 1
             return
@@ -60,7 +61,7 @@ class ManyEvent(Event):
                 g = hnd(arg, **kwargs)
             except Exception:
                 logger().exception('Exception while firing "%s" '
-                                   'event for %s', name, caller)
+                                   'event for %s', self.name, arg)
             else:
                 if isgenerator(g):
                     # Add it to the event loop
@@ -76,22 +77,23 @@ class ManyEvent(Event):
 
 class OneTime(Deferred, Event):
     
-    def __init__(self):
+    def __init__(self, name):
         super(OneTime, self).__init__()
+        self.name = name
         self._events = Deferred()
         
-    def bind(self, callback, errback):
+    def bind(self, callback, errback=None):
         self._events.add_callback(callback, errback)
     
     def has_fired(self):
         return self._events.done()
         
-    def fire(self, name, caller, arg, callback, errback, kwargs):
+    def fire(self, arg, callback=None, errback=None, **kwargs):
         if self._pause_counter:
             self._pause_counter -= 1
             return
         if self._events.done():
-            logger().error('Event "%s" already fired by %s', name, caller)
+            logger().error('Event "%s" already fired for %s', self.name, arg)
         else:
             assert not kwargs, ("One time events can don't support key-value "
                                 "parameters")
@@ -105,11 +107,11 @@ class OneTime(Deferred, Event):
             elif self._chained_to is None:
                 return self.callback(result)
         
-    def chain(self, name, caller, event):
+    def chain(self, event):
         '''Chain ``event`` to this ``event`.'''
         if isinstance(event, OneTime):
             if not event.has_fired():
-                self.add_callback(lambda arg: event.fire(name, caller, arg))
+                self.add_callback(event.fire, event.fire)
             elif not event.done():
                 super(OneTime, self).chain(event)
     
@@ -139,12 +141,12 @@ class EventHandler(object):
         if one_time_events:
             one = set(one)
             one.update(one_time_events)
-        events = dict(((e, OneTime()) for e in one))
+        events = dict(((e, OneTime(e)) for e in one))
         many = self.MANY_TIMES_EVENTS
         if many_times_events:
             many = set(many)
             many.update(many_times_events)
-        events.update(((e, ManyEvent()) for e in many))
+        events.update(((e, ManyEvent(e)) for e in many))
         self._events = events
 
     @property
@@ -178,26 +180,24 @@ class EventHandler(object):
             if name in events:
                 self.bind_event(name, events[name])
     
-    def fire_event(self, name, event_data=None, callback=None,
+    def fire_event(self, name, arg=None, callback=None,
                    errback=None, **kwargs):
-        """Dispatches ``event_data`` or ``self`` to event ``name`` listeners.
+        """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
 
         * If event at ``name`` is a one-time event, it makes sure that it was
           not fired before.
         
-        :param event_data: optional argument passed as second parameter to the
+        :param arg: optional argument passed as second parameter to the
             event handler.
         :return: boolean indicating if the event was fired or not.
         """
-        if event_data is None:
-            event_data = self
+        if arg is None:
+            arg = self
         if name in self._events:
-            return self._events[name].fire(name, self, event_data, callback,
-                                           errback, kwargs)
+            return self._events[name].fire(arg, callback, errback, **kwargs)
         elif warning:
             logger().warning('Unknown event "%s" for %s', name, self)
-            if callback:
-                return callback(event_data)
+            return callback(arg) if arg else arg
     
     def pause_event(self, name):
         '''Pause event ``name``.
@@ -219,8 +219,14 @@ class EventHandler(object):
         if event and isinstance(other, EventHandler):
             event2 = other._events.get(name)
             if event2:
-                event.chain(name, self, event2)
-            
+                event.chain(event2)
+    
+    def cancel_one_time_events(self):
+        '''Cancel all one time events not already fired.'''
+        for event in itervalues(self._events):
+            if isinstance(event, OneTime):
+                event.cancel()
+        
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
         
@@ -229,9 +235,9 @@ class EventHandler(object):
         '''
         if isinstance(other, EventHandler):
             events = self._events
-            for name, event in iteritems(other._events):
+            for event in itervalues(other._events):
                 if isinstance(event, ManyEvent):
-                    ev = events.get(name)
+                    ev = events.get(event.name)
                     # If the event is available add it
                     if ev:
                         for callback in event._handlers:
