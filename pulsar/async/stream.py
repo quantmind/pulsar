@@ -178,12 +178,7 @@ be accumulating data in an internal buffer.'''
             else:
                 self.abort(Failure(sys.exc_info()))
         except Exception:
-            # TODO
-            # For some reason when a non socket failure occurs
-            # there is no logging.
-            # Force it HERE.
-            failure = Failure(sys.exc_info()).log()
-            self.abort(failure)
+            self.abort(Failure(sys.exc_info()))
             
     def mute_read_error(self, error):
         '''Return ``True`` if a socket error from a read operation is muted.

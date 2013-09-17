@@ -106,14 +106,7 @@ Media
 .. autoclass:: Media
    :members:
    :member-order: bysource
-   
-StreamRenderer
-==================
-
-.. autoclass:: StreamRenderer
-   :members:
-   :member-order: bysource
-   
+      
 Html Factory
 =================
 
@@ -126,7 +119,7 @@ from collections import Mapping
 from functools import partial
 from copy import copy
 
-from pulsar import Deferred, multi_async, maybe_async, is_failure, async
+from pulsar import multi_async, maybe_async, is_failure, safe_async, async
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
@@ -140,25 +133,6 @@ __all__ = ['AsyncString', 'Html',
            'html_factory', 'Media', 'Scripts', 'Css']
 
 
-class StreamRenderer(Deferred):
-    '''A specialised :class:`pulsar.Deferred` returned by the
-:meth:`AsyncString.content` method.'''
-    def __init__(self, stream, renderer, handle_value=None, **params):
-        super(StreamRenderer, self).__init__()
-        handle_value = handle_value or self._handle_value
-        self._m = multi_async(stream, raise_on_error=True,
-                              handle_value=handle_value, **params)
-        self._m.add_callback(renderer).add_both(self.callback)
-
-    def _handle_value(self, value):
-        '''It makes sure that :class:`Content` is unwond.
-Ideally this should not occur since the request object is not available.
-Users should always call the content method before.'''
-        if isinstance(value, AsyncString):
-            return value.content()
-        else:
-            return value
-    
 if ispy3k:
     def stream_to_string(stream):
         for value in stream:
@@ -290,15 +264,13 @@ This is a shortcut for the :meth:`insert` method at index 0.
         return self
     
     def content(self, request=None):
-        '''Return the :class:`StreamRenderer` for this instance.
+        '''Return a :class:`pulsar.Deferred` called once the string is ready.
         
-This method can be called once only since it invokes the :meth:`stream`
-method.'''
-        res = self.stream(request)
-        if isinstance(res, Deferred):
-            return res.add_callback(lambda r: StreamRenderer(r, self.to_string))
-        else:
-            return StreamRenderer(res, self.to_string)
+        This method can be called once only since it invokes the :meth:`stream`
+        method.
+        '''
+        stream = self.stream(request)
+        return multi_async(stream).add_callback(self.to_string)
     
     def stream(self, request):
         '''An iterable over strings or asynchronous elements.
@@ -346,15 +318,14 @@ starts the wsgi response.'''
         yield response
                 
     def to_string(self, stream):
-        '''Once the :class:`StreamRenderer`, returned by :meth:`content`
-method, is ready, meaning it has no more
-asynchronous elements, this method get called to transform the stream into the
-content string. This method can be overwritten by derived classes.
-
-:param stream: a collections containing ``strings/bytes`` used to build the
-    final ``string/bytes``.
-:return: a string or bytes
-'''
+        '''Once the :class:`pulsar.Deferred`, returned by :meth:`content`
+        method, is ready, this method get called to transform the stream into
+        the content string. This method can be overwritten by derived classes.
+        
+        :param stream: a collections containing ``strings/bytes`` used to
+            build the final ``string/bytes``.
+        :return: a string or bytes
+        '''
         return ''.join(stream_to_string(stream))
     
     def render(self, request=None):
@@ -968,9 +939,13 @@ via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
         self.body.append(body)
         return self
         
-    @async()
     def do_stream(self, request):
-        body = yield self.body.content(request)
+        body = safe_async(self.body.content, request)
+        yield  '<!DOCTYPE html>\n'
+        yield '<html%s>\n' % self.flatatt()
+        yield body.add_callback(partial(self._head, request))
+        yield '\n</html>'
+
+    def _head(self, request, body):
         head = yield self.head.content(request)
-        yield  ('<!DOCTYPE html>\n', '<html%s>\n' % self.flatatt(),
-                head, '\n', body, '\n</html>')
+        yield '%s\n%s' % (head, body)

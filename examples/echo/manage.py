@@ -113,9 +113,8 @@ It simply search for the :attr:`separator` and, if found, it invokes the
         if idx >= 0: # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
-            data = self.buffer + data
-            self.buffer = b''
-            self.finished(self.response(data))
+            self.buffer = self.response(self.buffer+data)
+            self.finished()
             return rest
         else:
             self.buffer += data
@@ -123,7 +122,7 @@ It simply search for the :attr:`separator` and, if found, it invokes the
     def start_request(self):
         '''Override :meth:`pulsar.Protocol.start_request` to write
 the message ended by the :attr:`separator` into the transport.'''
-        self.transport.write(self.current_request.message + self.separator)
+        self.transport.write(self.request.message + self.separator)
         
     def response(self, data):
         '''Clients return the message so that the
@@ -139,9 +138,11 @@ class EchoServerProtocol(EchoProtocol):
         '''Override :meth:`EchoProtocol.response` method by writing the
 ``data`` received back to the client.'''
         self.transport.write(data)
+        data = data[:-len(self.separator)]
         # If we get a QUIT message, close the transport. Used by the test suite.
-        if data[:-len(self.separator)] == b'QUIT':
+        if data == b'QUIT':
             self.transport.close()
+        return data
     
     
 class Echo(pulsar.Client):
@@ -171,9 +172,9 @@ which will be called once the server has sent back its response.'''
         if self.full_response:
             return response
         elif response.on_finished.done():
-            return response.on_finished.result
+            return response.buffer
         else:
-            return response.on_finished
+            return response.on_finished.add_callback(lambda r: r.buffer)
             
         
 def server(description=None, **kwargs):

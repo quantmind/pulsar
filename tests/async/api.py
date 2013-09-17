@@ -1,6 +1,6 @@
 '''API design'''
 import sys
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, mute_failure
 from pulsar import NOT_DONE, Failure, maybe_async, Deferred
 
 
@@ -24,7 +24,8 @@ class TestApi(unittest.TestCase):
             yield NOT_DONE
             yield NOT_DONE
             raise ValueError
-        self.assertTrue(c.result)
+        self.assertIsInstance(c.result, Failure)
+        mute_failure(self, c.result)
         
     def test_maybe_async_get_result_false(self):
         a = maybe_async(3, get_result=False)

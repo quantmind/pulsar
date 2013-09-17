@@ -8,7 +8,7 @@ from pulsar import (InvalidStateError, Deferred, NOT_DONE,
                     InvalidStateError, coroutine_return)
 from pulsar.async.defer import is_exc_info
 from pulsar.utils.pep import pickle, default_timer
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, mute_failure
 
 
 class Cbk(Deferred):
@@ -73,12 +73,12 @@ class TestDeferred(unittest.TestCase):
         self.assertFalse(d.done())
         try:
             raise Exception('blabla exception')
-        except Exception as e:
-            trace = sys.exc_info()
-            d.callback(e)
+        except Exception:
+            d.callback(sys.exc_info())
         self.assertTrue(d.done())
         self.assertTrue(cbk.done())
-        self.assertEqual(cbk.result.exc_info, trace)
+        self.assertIsInstance(cbk.result, Failure)
+        mute_failure(self, cbk.result)
         
     def testDeferredCallback(self):
         d = Deferred()
@@ -154,6 +154,7 @@ class TestDeferred(unittest.TestCase):
         yield a
         self.assertTrue(a.done())
         self.assertTrue(is_failure(a.result[0]))
+        mute_failure(self, a.result[0])
         
     def testCancel(self):
         d = Deferred()
@@ -162,6 +163,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(d.done())
         self.assertTrue(d.cancelled())
         self.assertTrue(is_failure(d.result))
+        mute_failure(self, d.result)
         
     def testCancelTask(self):
         d = Deferred()
@@ -175,6 +177,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(is_failure(task.result))
         self.assertTrue(d.cancelled())
         self.assertEqual(str(d), 'Deferred (cancelled)')
+        mute_failure(self, task.result)
         
     def testTimeout(self):
         d = Deferred(timeout=1)
@@ -236,10 +239,11 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(failure.isinstance(CancelledError))
         self.assertEqual(d.callback(3), failure)
         self.assertRaises(InvalidStateError, d.callback, 3)
+        mute_failure(self, d.result)
         
         
 class TestMultiDeferred(unittest.TestCase):
-    
+        
     def testSimple(self):
         d = MultiDeferred()
         self.assertFalse(d.done())
@@ -290,21 +294,6 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d.locked)
         self.assertNotIsInstance(r, Deferred)
         self.assertEqual(r, [[1,2,3,4,5,6,7,8,9,10]])
-        
-    def testNestedhandle(self):
-        handle = lambda value : reduce(lambda x,y: x+y, value)\
-                     if isinstance(value, list) else value 
-        d = MultiDeferred(handle_value=handle)
-        d.append([a for a in range(1,11)])
-        r = maybe_async(d.lock())
-        self.assertNotIsInstance(r, Deferred)
-        self.assertEqual(r, [55])
-        handle = lambda value: 'c'*value
-        d = MultiDeferred(handle_value=handle, raise_on_error=False)
-        d.append([a for a in range(1,11)])
-        r = maybe_async(d.lock())
-        self.assertNotIsInstance(r, Deferred)
-        self.assertTrue(is_failure(r[0]))
     
 
 class TestCoroutine(unittest.TestCase):
@@ -320,7 +309,7 @@ class TestCoroutine(unittest.TestCase):
         result = yield f(10)
         self.assertEqual(result, 'a')
         
-        
+
 class TestFunctions(unittest.TestCase):
     
     def test_is_exc_info(self):
@@ -338,6 +327,7 @@ class TestFunctions(unittest.TestCase):
         self.assertIsInstance(d, Deferred)
         self.assertTrue(d.done())
         self.assertIsInstance(d.result, Failure)
+        d.result.mute()
         
     def test_async_sleep(self):
         start = default_timer()
@@ -353,11 +343,12 @@ class TestFunctions(unittest.TestCase):
         
     def test_safe_async(self):
         def f():
-            raise ValueError
+            raise ValueError('test safe async')
         result = safe_async(f)
         self.assertIsInstance(result, Deferred)
         self.assertTrue(result.done())
         result = result.result
         self.assertIsInstance(result, Failure)
         self.assertIsInstance(result.error, ValueError)
+        mute_failure(self, result)
         

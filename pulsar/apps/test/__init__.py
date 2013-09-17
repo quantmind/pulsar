@@ -316,6 +316,10 @@ def dont_run_with_thread(obj):
     else:
         return obj
 
+def mute_failure(test, failure):
+    #TODO: add test flag to control muting
+    if not test.cfg.log_failures:
+        failure.mute()
 
 class ExitTest(Exception):
     pass
@@ -397,6 +401,20 @@ class TestShowLeaks(TestOption):
     the memory leak report."""
     
 
+class TestLogFailures(TestOption):
+    name = "log_failures"
+    flags = ['--log-failures']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Don't mute exceptions.
+    
+    Tested exception are usually muted via mute_failure function. This
+    flag disable it.
+    
+    To see the exception the log level must be at least error."""
+    
+    
 pyver = '%s.%s' % (sys.version_info[:2])
 
 class TestSuite(tasks.TaskQueue):

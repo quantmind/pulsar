@@ -220,9 +220,9 @@ class ProtocolConsumer(EventHandler):
         # by subclasses
         self._data_received_count += 1 
         self._reconnect_retries = 0
-        self.fire_event('data_received', data)
+        self.fire_event('data_received', data=data)
         result = self.data_received(data)
-        self.fire_event('data_processed', data)
+        self.fire_event('data_processed', data=data)
         return result
 
 
@@ -619,10 +619,11 @@ class ConnectionProducer(Producer):
             all.append(connection.event('connection_lost'))
             connection.transport.close(async)
         else:
-            logger().info('%s closing all connections', self)
             for connection in list(self._concurrent_connections):
                 all.append(connection.event('connection_lost'))
                 connection.transport.close(async)
+        if all:
+            logger().info('%s closing %d connections', self, len(all))
         return multi_async(all)
     
     #   INTERNALS

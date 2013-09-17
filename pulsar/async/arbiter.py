@@ -151,8 +151,7 @@ Users access the arbiter (in the arbiter process domain) by the high level api::
 
     def close_monitors(self):
         '''Close all :class:`Monitor` at once.'''
-        return multi_async([m.stop() for m in list(itervalues(self.monitors))],
-                           log_failure=True)
+        return multi_async((m.stop() for m in list(itervalues(self.monitors))))
 
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''

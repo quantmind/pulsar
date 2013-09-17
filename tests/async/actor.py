@@ -5,7 +5,7 @@ import pulsar
 from pulsar import send, get_actor, CommandNotFound, async_while, TcpServer
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import (unittest, ActorTestMixin, run_on_arbiter,
-                              dont_run_with_thread)
+                              dont_run_with_thread, mute_failure)
 
 from examples.echo.manage import Echo, EchoServerProtocol
 
@@ -28,9 +28,16 @@ class create_echo_server(object):
         yield server.start_serving()
         actor.servers['echo'] = server
         actor.extra['echo-address'] = server.address
+        actor.bind_event('stopping', self._stop_server)
+        yield actor
+        
+    def _stop_server(self, actor):
+        yield actor.servers['echo'].close_connections()
+        yield actor
     
 
-class TestProxy(unittest.TestCase):
+class f:
+#class TestProxy(unittest.TestCase):
     
     def test_get_proxy(self):
         self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
@@ -51,17 +58,33 @@ class TestProxy(unittest.TestCase):
         self.assertEqual(p.callback, None)
         self.assertEqual(str(p), 'actor(%s)' % p.aid)
 
-    def testActorCoverage(self):
+    def test_actor_coverage(self):
         '''test case for coverage'''
         actor = pulsar.get_actor()
-        d = send('sjdcbhjscbhjdbjsj', 'bla')
-        self.assertIsInstance(d.result.error, CommandNotFound)
+        d = self.assertRaises(CommandNotFound, send, 'sjdcbhjscbhjdbjsj', 'bla')
         self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
         
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
-    
+ 
+    def test_start_hook(self):
+        proxy = yield self.spawn(name='echoserver',
+                                 start=create_echo_server(('127.0.0.1', 0)))
+        address = None
+        start = default_timer()
+        while not address:
+            info = yield send(proxy, 'info')
+            address = info['extra'].get('echo-address')
+            if default_timer() - start > 3:
+                break
+        self.assertTrue(address)
+        client = Echo(address)
+        result = yield client.request(b'Hello')
+        self.assertEqual(result, b'Hello')
+        yield self.stop_actors(proxy)
+        
+class f:
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
         proxy = yield self.spawn(name='pippo')

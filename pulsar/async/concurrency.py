@@ -179,6 +179,7 @@ with the acknowledgement from the monitor.'''
             stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
             if isinstance(stopping, Deferred) and actor.event_loop.is_running():
+                actor.logger.debug('async stopping')
                 stopping.add_both(lambda r: self._stop_actor(actor))
             else:
                 self._stop_actor(actor)
@@ -368,8 +369,7 @@ mailbox server.'''
             actor.mailbox.close()
         else:
             actor.logger.debug('Close monitors and actors')
-            active = multi_async((actor.close_monitors(), actor.close_actors()),
-                                 log_failure=True)
+            active = multi_async((actor.close_monitors(), actor.close_actors()))
             active.add_both(partial(self._exit_arbiter, actor))
     
 

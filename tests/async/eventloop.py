@@ -4,7 +4,7 @@ from threading import current_thread
 
 import pulsar
 from pulsar.utils.pep import get_event_loop, new_event_loop
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, mute_failure
 
 
 class TestEventLoop(unittest.TestCase):
@@ -85,7 +85,11 @@ class TestEventLoop(unittest.TestCase):
                 self.c += 1
                 if self.c == self.loops:
                     d.callback(self.c)
-                    raise ValueError()
+                    try:
+                        raise ValueError('test periodic')
+                    except Exception:
+                        mute_failure(Failure(sys.exc_info))
+                        raise
         #
         every = 2
         loops = 2
@@ -123,7 +127,11 @@ class TestEventLoop(unittest.TestCase):
                     self.c += 1
                     if self.c == self.loop:
                         d.callback(self.c)
-                        raise ValueError()
+                        try:
+                            raise ValueError('test call every')
+                        except Exception:
+                            mute_failure(Failure(sys.exc_info))
+                            raise
         #
         loops = 5
         track = p(loops)

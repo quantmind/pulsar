@@ -1,6 +1,6 @@
 '''Deferred and asynchronous tools.'''
 from pulsar import Deferred, maybe_async
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, mute_failure
 
 
 def c_summation(value):
@@ -39,6 +39,7 @@ class TestCoroDeferred(unittest.TestCase):
         d1.callback('bla')
         self.assertIsInstance(a.result.error, TypeError)
         self.assertEqual(d1.result, 'bla')
+        mute_failure(self, a.result)
         
     def test_fail_deferred1(self):
         a = Deferred()
@@ -47,6 +48,7 @@ class TestCoroDeferred(unittest.TestCase):
         d1.callback('bla')
         self.assertIsInstance(a.result.error, TypeError)
         self.assertIsInstance(d1.result.error, TypeError)
+        mute_failure(self, a.result)
         
     def test_fail_then1(self):
         a = Deferred()
@@ -57,3 +59,4 @@ class TestCoroDeferred(unittest.TestCase):
         self.assertIsInstance(a.result.error, TypeError)
         self.assertEqual(d1.result, 'bla')
         self.assertIsInstance(d2.result.error, TypeError)
+        mute_failure(self, a.result)

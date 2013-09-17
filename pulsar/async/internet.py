@@ -120,15 +120,16 @@ bytes to be eventually sent across the wire.
     
 class SocketTransport(Transport):
     '''A :class:`Transport` for sockets.
+        
+    :parameter event_loop: Set the :attr:`Transport.event_loop` attribute.
+    :parameter sock: Set the :attr:`sock` attribute.
+    :parameter protocol: set the :class:`Transport.protocol` attribute.
     
-:parameter event_loop: Set the :attr:`Transport.event_loop` attribute.
-:parameter sock: Set the :attr:`sock` attribute.
-:parameter protocol: set the :class:`Transport.protocol` attribute.
-
-When a new :class:`SocketTransport` is created, it adds a read handler
-to the :attr:`Transport.event_loop` and notifies the :attr:`Transport.protocol`
-that the connection is available via the :meth:`BaseProtocol.connection_made`
-method.'''
+    When a new :class:`SocketTransport` is created, it adds a read handler
+    to the :attr:`Transport.event_loop` and notifies the
+    :attr:`Transport.protocol` that the connection is available via the
+    :meth:`BaseProtocol.connection_made` method.
+    '''
     SocketError = socket.error
     def __init__(self, event_loop, sock, protocol, extra=None,
                  max_buffer_size=None, read_chunk_size=None):

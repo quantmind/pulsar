@@ -138,7 +138,7 @@ class ProxyResponse(object):
         while not self._done:
             yield self.queue.get()
             
-    def data_processed(self, response, data):
+    def data_processed(self, response, **kw):
         '''Receive data from the requesting HTTP client.'''
         if response.parser.is_headers_complete():
             if self.headers is None:

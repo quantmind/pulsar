@@ -1,5 +1,5 @@
 '''Tests the "helloworld" example.'''
-from pulsar import send, SERVER_SOFTWARE, get_application
+from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
 from pulsar import MultiDeferred
 from pulsar.utils.pep import range
 from pulsar.apps.http import HttpClient
@@ -33,8 +33,9 @@ class TestHelloWorldThread(unittest.TestCase):
     def testMeta(self):
         app = yield get_application(self.name())
         self.assertEqual(app.name, self.name())
-        self.assertTrue(app.monitor.is_running())
-        self.assertEqual(app, app.app)
+        monitor = get_actor().get_actor(app.name)
+        self.assertTrue(monitor.is_running())
+        self.assertEqual(app, monitor.app)
         self.assertEqual(str(app), app.name)
         self.assertEqual(app.cfg.bind, '127.0.0.1:0')
         

@@ -58,7 +58,7 @@ _CANCELLED = 'CANCELLED'
 _FINISHED = 'FINISHED'
 EMPTY_EXC_INFO = (None, None, None)
 
-remote_stacktrace = namedtuple('remote_stacktrace', 'error_class error trace')
+async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
 log_exc_info = ('error', 'critical')
 
@@ -94,10 +94,10 @@ def format_exception(exctype, value, tb):
     return tb
     
 def remote_exc_info(exc_info):
-    if not isinstance(exc_info, remote_stacktrace):
+    if not isinstance(exc_info, async_exec_info):
         exctype, value, tb = exc_info
         trace = format_exception(exctype, value, tb)
-        exc_info = remote_stacktrace(exctype, value, trace)
+        exc_info = async_exec_info(exctype, value, trace)
     return exc_info
 
 def coroutine_return(value=None):
@@ -118,7 +118,7 @@ inspect.isgenerator function.'''
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 
 def is_exc_info(exc_info):
-    if isinstance(exc_info, remote_stacktrace):
+    if isinstance(exc_info, async_exec_info):
         return True
     elif isinstance(exc_info, tuple) and len(exc_info) == 3:
         return istraceback(exc_info[2])
@@ -137,11 +137,14 @@ are given, it checks if the error is an instance of those classes.'''
     return False
 
 def default_maybe_failure(value):
+    __skip_traceback__ = True
     if isinstance(value, BaseException):
         exc_info = sys.exc_info()
         if value is not exc_info[1]:
-            value.__traceback__ = None
-            exc_info = remote_stacktrace(type(value), value, [])
+            try:
+                raise value
+            except:
+                exc_info = sys.exc_info()
         return Failure(exc_info)
     elif is_exc_info(value):
         return Failure(value)
@@ -348,26 +351,25 @@ def async_while(timeout, while_clause, *args):
     
 ############################################################### FAILURE
 class Failure(object):
-    '''The asynchronous equivalent of python Exception. It has several useful
-methods and features which facilitates logging, pickling and throwing
-errors.
-
-:parameter error: an ``exc_info`` tuple or a :class:`BaseException` instance.
-
-.. attribute:: exc_info
-
-    The exception as a three elements tuple
-    (``errorType``, ``errvalue``, ``traceback``) occured during
-    the execution of a :class:`Deferred`.
-
-.. attribute:: logged
-
-    Check if the :attr:`error` was logged. It can be used for switching off
-    logging for certain errors by setting::
+    '''The asynchronous equivalent of python Exception.
     
-        failure.logged = True
+    It has several useful methods and features which facilitates logging,
+    and throwing exceptions.
+
+    .. attribute:: exc_info
     
-'''
+        The exception as a three elements tuple
+        (``errorType``, ``errvalue``, ``traceback``) occured during
+        the execution of a :class:`Deferred`.
+    
+    .. attribute:: logged
+    
+        Check if the :attr:`error` was logged. It can be used for switching off
+        logging for certain errors by setting::
+        
+            failure.logged = True
+        
+    '''
     _msg = 'Pulsar Asynchronous Failure'
     
     def __init__(self, exc_info):
@@ -377,11 +379,7 @@ errors.
         self.log()
          
     def __repr__(self):
-        if self.is_remote:
-            tb = self.exc_info[2]
-        else:
-            tb = traceback.format_exception(*self.exc_info)
-        return ''.join(tb)
+        return ''.join(self.exc_info[2])
     __str__ = __repr__
     
     def _get_logged(self):
@@ -397,10 +395,6 @@ errors.
         '''The python :class:`Exception` instance.'''
         return self.exc_info[1]
     
-    @property
-    def is_remote(self):
-        return isinstance(self.exc_info, remote_stacktrace)
-
     def isinstance(self, classes):
         '''Check if :attr:`error` is an instance of exception ``classes``.'''
         return isinstance(self.error, classes)
@@ -414,19 +408,11 @@ errors.
         Without ``gen``, this method is used when interacting with libraries
         supporting both synchronous and asynchronous flow controls.
         '''
-        __skip_traceback__ = True
         if gen:
-            if self.is_remote:
-                return gen.throw(self.exc_info[0], self.exc_info[1])
-            else:
-                return gen.throw(*self.exc_info)
+            __skip_traceback__ = True
+            return gen.throw(self.exc_info[0], self.exc_info[1])
         else:
-            if self.is_remote:
-                raise self.exc_info[1]
-            else:
-                _, error, trace = self.exc_info
-                self.log()
-                raise_error_trace(error, trace)
+            raise self.exc_info[1]
 
     def log(self, log=None, msg=None, level=None):
         '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
@@ -864,33 +850,20 @@ function when a generator is passed as argument.'''
         
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
-    '''A :class:`Deferred` for managing a ``collection`` of independent
-asynchronous objects. The ``collection`` can be either a ``list`` or
-a ``dict``.
-The :class:`MultiDeferred` is recursive on values which are ``generators``,
-``Mapping``, ``lists`` and ``sets``. It is not recursive on immutable
-containers such as tuple and frozenset.
-
-.. attribute:: raise_on_error
-
-    When ``True`` and at least one value of the result collections is a
-    :class:`Failure`, the callback will receive the failure rather than
-    the collection of results.
+    '''A :class:1Deferred` for a ``collection`` of asynchronous objects.
     
-    Default ``True``.
-
-'''
+    The ``collection`` can be either a ``list`` or a ``dict``.
+    '''
     _locked = False
     _time_locked = None
     _time_finished = None
 
     def __init__(self, data=None, type=None, raise_on_error=True,
-                 handle_value=None, log_failure=False, **kwargs):
+                 mute_failures=False, **kwargs):
         self._deferred = {}
         self._failures = []
-        self.log_failure = log_failure
-        self.raise_on_error = raise_on_error
-        self.handle_value = handle_value
+        self._mute_failures = mute_failures
+        self._raise_on_error = raise_on_error
         if not type:
             type = data.__class__ if data is not None else list
         if not issubclass(type, (list, Mapping)):
@@ -901,6 +874,16 @@ containers such as tuple and frozenset.
         if data:
             self.update(data)
 
+    @property
+    def raise_on_error(self):
+        '''When ``True`` and at least one value of the result collections is a
+        :class:`Failure`, the callback will receive the failure rather than
+        the collection of results.
+        
+        Default ``True``.
+        '''
+        return self._raise_on_error
+    
     @property
     def locked(self):
         '''When ``True``, the :meth:`update` or :meth:`append` methods can no
@@ -969,28 +952,11 @@ both ``list`` and ``dict`` :attr:`type`.'''
             raise RuntimeError(self.__class__.__name__ +\
                                ' cannot add a dependent once locked.')
         value = maybe_async(value)
-        if is_generalised_generator(value):
-            value = list(value)
-        if isinstance(value, (Mapping, list, set)):
-            value = self._make(value)    
-        if not isinstance(value, Deferred) and self.handle_value:
-            try:
-                val = self.handle_value(value)
-            except Exception:
-                value = Failure(sys.exc_info())
-            else:
-                if val is not value:
-                    return self._add(key, val)
         self._setitem(key, value)
         # add callback if an asynchronous value
         if isinstance(value, Deferred):
             self._deferred[key] = value
             value.add_both(lambda result: self._deferred_done(key, result))
-
-    def _make(self, value):
-        md = self.__class__(value, raise_on_error=self.raise_on_error,
-                            handle_value=self.handle_value)
-        return maybe_async(md.lock())
 
     def _deferred_done(self, key, result):
         self._deferred.pop(key, None)
@@ -1020,6 +986,6 @@ both ``list`` and ``dict`` :attr:`type`.'''
         else:
             stream[key] = value
         if isinstance(value, Failure):
-            if self.log_failure:
-                value.log()
+            if self._mute_failures:
+                value.mute()
             self._failures.append(value)
