@@ -36,8 +36,7 @@ class create_echo_server(object):
         yield actor
     
 
-class f:
-#class TestProxy(unittest.TestCase):
+class TestProxy(unittest.TestCase):
     
     def test_get_proxy(self):
         self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
@@ -68,23 +67,6 @@ class f:
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
  
-    def test_start_hook(self):
-        proxy = yield self.spawn(name='echoserver',
-                                 start=create_echo_server(('127.0.0.1', 0)))
-        address = None
-        start = default_timer()
-        while not address:
-            info = yield send(proxy, 'info')
-            address = info['extra'].get('echo-address')
-            if default_timer() - start > 3:
-                break
-        self.assertTrue(address)
-        client = Echo(address)
-        result = yield client.request(b'Hello')
-        self.assertEqual(result, b'Hello')
-        yield self.stop_actors(proxy)
-        
-class f:
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
         proxy = yield self.spawn(name='pippo')

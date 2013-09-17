@@ -138,7 +138,8 @@ be accumulating data in an internal buffer.'''
                     else:
                         raise
         except Exception:
-            self.abort(Failure(sys.exc_info()))
+            if not self._closing:
+                self.abort(Failure(sys.exc_info()))
         else:
             if not self.writing:
                 self._event_loop.remove_writer(self._sock_fd)
@@ -173,9 +174,7 @@ be accumulating data in an internal buffer.'''
                         self.close()
                 passes += 1
         except self.SocketError as e:
-            if self.mute_read_error(e):
-                self.abort()
-            else:
+            if not self._closing:
                 self.abort(Failure(sys.exc_info()))
         except Exception:
             self.abort(Failure(sys.exc_info()))

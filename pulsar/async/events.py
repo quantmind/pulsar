@@ -102,7 +102,7 @@ class OneTime(Deferred, Event):
             result = self._events.callback(arg)
             if isinstance(result, Deferred):
                 # a deferred, add a check at the end of the callback pile
-                self._events.add_callback(self._check)
+                self._events.add_callback(self._check, self._check)
                 return self
             elif self._chained_to is None:
                 return self.callback(result)
@@ -116,7 +116,7 @@ class OneTime(Deferred, Event):
                 super(OneTime, self).chain(event)
     
     def _check(self, result):
-        if self._events.callbacks:
+        if self._events._callbacks:
             # other callbacks have been added,
             # put another check at the end of the pile
             self._events.add_callback(self._check)

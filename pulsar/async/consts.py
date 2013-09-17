@@ -40,7 +40,7 @@ ACTOR_STATES.DESCRIPTION = {ACTOR_STATES.INACTIVE: 'inactive',
                             ACTOR_STATES.TERMINATE:'terminated'}
 SPECIAL_ACTORS = ('monitor', 'arbiter')
 #
-ACTOR_ACTION_TIMEOUT = 60
+ACTOR_ACTION_TIMEOUT = 5
 '''Important constant used by :class:`pulsar.Monitor` to kill actors which
 don't respond to the ``stop`` command.'''
 
