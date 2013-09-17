@@ -396,12 +396,10 @@ class Connection(EventHandler, Protocol):
         Sets the transport, fire the ``connection_made`` event and adds
         a :attr:`timeout` for idle connections.
         '''
-        old_transport = self._transport
         self._transport = transport
-        if old_transport is not None:
-            self._cancel_timeout()  
-            if old_transport.sock == getattr(transport, 'rawsock', None):
-                return self._add_idle_timeout()
+        if self._transport is not None:
+            self._cancel_timeout()
+        self._transport = transport
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
         self._add_idle_timeout()

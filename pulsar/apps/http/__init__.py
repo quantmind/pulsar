@@ -480,20 +480,11 @@ class HttpResponse(pulsar.ProtocolConsumer):
         Available once the :attr:`on_headers` has fired.'''
         if self.parser:
             return self.parser.get_status_code()
-    
-    @property
-    def response(self):
-        '''The description of the :attr:`status_code`.
-
-        This is the second part of the status string.'''
-        if self.status_code:
-            return responses.get(self.status_code)
         
     @property
     def status(self):
-        status_code = self.status_code
-        if status_code:
-            return '%s %s' % (status_code, responses.get(status_code))
+        if self.parser:
+            return self.parser.get_status()
         
     @property
     def url(self):

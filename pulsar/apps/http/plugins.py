@@ -84,6 +84,8 @@ def handle_101(response):
 
 class TunnelRequest:
     key = None
+    headers = None
+    first_line = None
     def __init__(self, request):
         self.request = request
         self.parser = request.parser
@@ -94,9 +96,9 @@ class TunnelRequest:
         return self.request.client
     
     def encode(self):
-        first_line = 'CONNECT %s HTTP/1.1\r\n' % self.request._netloc
-        headers = bytes(self.request.tunnel_headers)
-        return b''.join((first_line.encode('ascii'), headers))
+        self.first_line = 'CONNECT %s HTTP/1.1\r\n' % self.request._netloc
+        self.headers = self.request.tunnel_headers
+        return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
     
         
 class Tunneling:
@@ -126,7 +128,7 @@ class Tunneling:
             loop.remove_reader(response.transport.sock.fileno())
             response = request.client.build_consumer()  
             # Wraps the socket at the next iteration loop. Important!
-            loop.call_soon(self.switch_to_ssl, old_response, response)
+            loop.call_soon(self.switch_to_ssl, prev_response, response)
         # make sure to return the response
         return response
         
@@ -136,12 +138,13 @@ class Tunneling:
         request = prev_response._request.request
         connection = prev_response._connection
         client = request.client
-        transport = response.transport
+        transport = connection.transport
         sock = transport.sock
         transport = SocketStreamSslTransport(loop, sock, transport.protocol,
                                              request._ssl, server_side=False,
                                              server_hostname=request._netloc)
         connection._transport = transport
         connection.set_consumer(response)
-        client.again()
+        connection.pause_event('connection_made')
+        client.again(prev_response, new_response=response, request=request)
         
