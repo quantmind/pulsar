@@ -42,8 +42,10 @@ class HTTPBasicAuth(Auth):
     def type(self):
         return 'basic'
 
-    def __call__(self, response, request):
-        request.headers['Authorization'] = self.header()
+    def __call__(self, response):
+        # pre_request event. Must return response instance!
+        response.request.headers['Authorization'] = self.header()
+        return response
 
     def header(self):
         b64 = b64encode(('%s:%s' % (
@@ -67,14 +69,17 @@ class HTTPDigestAuth(Auth):
     def type(self):
         return 'digest'
     
-    def __call__(self, response, request):
+    def __call__(self, response):
+        # pre_request event. Must return response instance!
         # If we have a saved nonce, skip the 401
         if self.last_nonce:
+            request = response.request
             request.headers['Authorization'] =\
                 self.encode(request.method, request.full_url)
         else:
             # add post request handler
             response.bind_event('post_request', self.handle_401)
+        return response
 
     def __repr__(self):
         return 'Digest: %s' % self.username
@@ -125,7 +130,7 @@ class HTTPDigestAuth(Auth):
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % (base)
         
-    def handle_401(self, response, _):
+    def handle_401(self, response):
         """Takes the given response and tries digest-auth, if needed."""
         if response.status_code == 401:
             request = response.request
@@ -133,15 +138,14 @@ class HTTPDigestAuth(Auth):
             s_auth = response.headers.get('www-authenticate', '')
             if 'digest' in s_auth.lower() and response._handle_401 < 2:
                 self.options = parse_dict_header(s_auth.replace('Digest ', ''))
-                #
                 client = response.producer
-                new_response = client.upgrade(response.connection)
                 params = request.inp_params.copy()
                 headers = params.pop('headers', [])
                 headers.append(('authorization', self.encode(
                     request.method, request.full_url)))
-                client.request(request.method, request.full_url,
-                    headers=headers, response=new_response, **params)
+                params['headers'] = headers
+                return client.again(response, params=params)
+        return response
         
     def hex(self, x):
         if self.algorithm == 'MD5':

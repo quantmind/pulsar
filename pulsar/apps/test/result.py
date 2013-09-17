@@ -19,10 +19,12 @@ Test Runner
 
    
 '''
+__skip_traceback__ = True
 import traceback
 from inspect import istraceback
 from copy import deepcopy
 
+from pulsar import Failure
 from pulsar.utils.structures import AttributeDictionary
 
 from .case import unittest, LOGGER
@@ -311,10 +313,11 @@ class TestResult(Plugin):
         """Called when a test was expected to fail, but succeed."""
         self.unexpectedSuccesses.append(self.getDescription(test))
 
-    def _add_error(self, test, err, container):
-        err = self._exc_info_to_string(err, test)
+    def _add_error(self, test, exc_info, container):
+        failure = Failure(exc_info)
+        failure.mute()
         test = self.getDescription(test)
-        container.append((test, err))
+        container.append((test, repr(failure)))
 
     def add(self, result):
         self._count += 1
@@ -328,42 +331,6 @@ class TestResult(Plugin):
     def wasSuccessful(self):
         "Tells whether or not this result was a success"
         return len(self.failures) == len(self.errors) == 0
-
-    def _exc_info_to_string(self, err, test):
-        """Converts a sys.exc_info()-style tuple of values into a string."""
-        exctype, value, tb = err
-        # Skip test runner traceback levels
-        if istraceback(tb):
-            while tb and self._is_relevant_tb_level(tb):
-                tb = tb.tb_next
-
-            if exctype is test.failureException:
-                # Skip assert*() traceback levels
-                length = self._count_relevant_tb_levels(tb)
-                msgLines = traceback.format_exception(exctype, value, tb, length)
-            else:
-                msgLines = traceback.format_exception(exctype, value, tb)
-        else:
-            msgLines = tb
-
-        if not msgLines:
-            if value:
-                msgLines = [repr(value)]
-            else:
-                msgLines = ()
-
-        return ''.join(msgLines)
-
-
-    def _is_relevant_tb_level(self, tb):
-        return '__unittest' in tb.tb_frame.f_globals
-
-    def _count_relevant_tb_levels(self, tb):
-        length = 0
-        while tb and not self._is_relevant_tb_level(tb):
-            length += 1
-            tb = tb.tb_next
-        return length
 
 
 def testsafe(name, return_val=None):
@@ -453,11 +420,11 @@ class TestRunner(TestResultProxy):
     def run_test_function(self, test, func, timeout=None):
         '''Run function ``func`` which belong to ``test``.
     
-:parameter test: test instance or class
-:parameter func: test function belonging to *test*
-:parameter timeout: An optional timeout for asynchronous tests.
-:return: an asynchronous result
-'''
+        :parameter test: test instance or class
+        :parameter func: test function belonging to *test*
+        :parameter timeout: An optional timeout for asynchronous tests.
+        :return: an asynchronous result
+        '''
         if func is None:
             return func
         tfunc = getattr(func, 'testfunction', None)

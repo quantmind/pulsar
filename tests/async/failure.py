@@ -7,8 +7,39 @@ from pulsar import Deferred, Failure, maybe_failure
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
+def raise_some_error():
+    return 'ciao' + 4
 
-class TestFailure(unittest.TestCase):
+def nested_error():
+    yield raise_some_error()
+
+class TestTraceBack(unittest.TestCase):
+    
+    def test_traceback(self):
+        try:
+            yield raise_some_error()
+        except Exception:
+            failure = Failure(sys.exc_info())
+        value = repr(failure)
+        self.assertTrue(("    return 'ciao' + 4\n"
+            "TypeError: Can't convert 'int' object to str implicitly") in value)
+        
+    def test_nested_traceback(self):
+        try:
+            yield raise_some_error()
+        except Exception:
+            failure1 = Failure(sys.exc_info())
+        try:
+            yield nested_error()
+        except Exception:
+            failure2 = Failure(sys.exc_info())
+        self.assertEqual(len(failure1.exc_info[2]), 4)
+        self.assertEqual(len(failure2.exc_info[2]), 6)
+        self.assertEqual(failure1.exc_info[2][2:], failure2.exc_info[2][4:])
+
+
+class f:
+#class TestFailure(unittest.TestCase):
         
     def assertRefDeleted(self, error):
         self.assertEqual(self.failure_refs.errors.get(error), 1)

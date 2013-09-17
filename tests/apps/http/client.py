@@ -90,7 +90,7 @@ class TestHttpClientBase:
         
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
+
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -124,9 +124,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(request.unredirected_headers.kind, 'client')
     
     def test_HttpResponse(self):
-        r = HttpResponse(None)
+        r = HttpResponse()
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
+        self.assertEqual(r.headers, None)
     
     def test_redirect_1(self):
         http = self.client()
@@ -201,7 +202,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(str(response), '200 OK')
         self.assertEqual(repr(response), 'HttpResponse(200 OK)')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         self.assertTrue(response.get_content())
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
@@ -215,7 +216,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('status', '400')).on_finished
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.response, 'Bad Request')
+        self.assertEqual(response.status, '400 Bad Request')
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)
         # Make sure we only have one connection after a valid request
@@ -251,7 +252,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                   data={'bla': 'foo'}).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
@@ -262,7 +263,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('gzip')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         content = response.content_json()
         self.assertTrue(content['gzipped'])
         if 'content-encoding' in response.headers:
@@ -273,7 +274,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.get(self.httpbin('status', '404')).on_finished
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.response, 'Not Found')
+        self.assertEqual(response.status, '404 Not Found')
         self.assertTrue(response.headers.has('connection', 'close'))
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.get_content())
@@ -286,7 +287,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('post'), encode_multipart=False,
                                    data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
@@ -298,7 +299,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = http.post(self.httpbin('post'), data=data)
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
@@ -310,7 +311,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = http.put(self.httpbin('put'), data=data)
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
@@ -322,7 +323,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = http.patch(self.httpbin('patch'), data=data)
         yield response.on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
@@ -333,7 +334,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.delete(self.httpbin('delete'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.response, 'OK')
+        self.assertEqual(response.status, '200 OK')
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
@@ -374,7 +375,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         # Now check if I get them
         r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(r.current_request.unredirected_headers)
+        self.assertTrue(r.request.unredirected_headers)
         result = r.content_json()
         self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'],'foo')

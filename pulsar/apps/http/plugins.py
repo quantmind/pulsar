@@ -61,12 +61,15 @@ def handle_cookies(response):
     return response
     
 def handle_100(response):
-    if response.status_code == 100:
-        # reset the parser
-        request = response._request
-        request.new_parser()
-        response.transport.write(request.body)
+    '''Handle Except: 100-continue'''
+    request = response.request
+    if (request.headers.has('expect', '100-continue') and
+        response.status_code == 100):
+        response.bind_event('on_headers', _write_body)
     return response
+def _write_body(response):
+    response.request.new_parser()
+    response.transport.write(response.request.body)
 
 def handle_101(response):
     '''Websocket upgrade as ``on_headers`` event.'''

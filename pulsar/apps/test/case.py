@@ -1,7 +1,8 @@
+__skip_traceback__ = True
 import sys
 import logging
 
-from pulsar import multi_async, async
+from pulsar import multi_async, async, Failure
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
 
@@ -96,11 +97,12 @@ following algorithm:
     def run_test(self, test, runner, cfg):
         '''Run a ``test`` function using the following algorithm
 
-* Run :meth:`_pre_setup` method if available in :attr:`testcls`.
-* Run :meth:`setUp` method in :attr:`testcls`.
-* Run the test function.
-* Run :meth:`tearDown` method in :attr:`testcls`.
-* Run :meth:`_post_teardown` method if available in :attr:`testcls`.'''
+        * Run :meth:`_pre_setup` method if available in :attr:`testcls`.
+        * Run :meth:`setUp` method in :attr:`testcls`.
+        * Run the test function.
+        * Run :meth:`tearDown` method in :attr:`testcls`.
+        * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
+        '''
         timeout = cfg.test_timeout
         err = None
         try:
@@ -133,6 +135,7 @@ following algorithm:
                 runner.addSuccess(test)
 
     def _run(self, runner, test, method, timeout, previous=None, add_err=True):
+        __skip_traceback__ = True
         method = getattr(test, method, None)
         if method:
             try:
@@ -144,17 +147,17 @@ following algorithm:
         else:
             yield previous
         
-    def add_failure(self, test, runner, error, trace=None, add_err=True):
+    def add_failure(self, test, runner, error, exc_info=None, add_err=True):
         '''Add *failure* to the list of errors if *failure* is indeed a failure.
 Return `True` if *failure* is a failure, otherwise return `False`.'''
-        if not trace:
-            trace = sys.exc_info()
+        if not exc_info:
+            exc_info = sys.exc_info()
         if add_err:
             if isinstance(error, test.failureException):
-                runner.addFailure(test, trace)
+                runner.addFailure(test, exc_info)
             elif isinstance(error, ExpectedFailure):
-                runner.addExpectedFailure(test, trace)
+                runner.addExpectedFailure(test, exc_info)
             else:
-                runner.addError(test, trace)
-        return (error, trace)
+                runner.addError(test, exc_info)
+        return (error, exc_info)
         

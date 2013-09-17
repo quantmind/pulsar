@@ -64,13 +64,40 @@ log_exc_info = ('error', 'critical')
 
 pass_through = lambda result: result
 
+
+def is_relevant_tb(tb):
+    return not ('__skip_traceback__' in tb.tb_frame.f_locals or 
+                '__unittest' in tb.tb_frame.f_globals)
+
+def tb_length(tb):
+    length = 0
+    while tb and is_relevant_tb(tb):
+        length += 1
+        tb = tb.tb_next
+    return length
+    
+def format_exception(exctype, value, tb):
+    trace = getattr(value, '__async_traceback__', None) 
+    while tb and not is_relevant_tb(tb):
+        tb = tb.tb_next
+    length = tb_length(tb)
+    if length or not trace:
+        tb = traceback.format_exception(exctype, value, tb, length)
+    if trace:
+        if tb:
+            tb = tb[:-1]
+            tb.extend(trace[1:])
+        else:
+            tb = trace
+    value.__async_traceback__ = tb
+    value.__traceback__ = None
+    return tb
+    
 def remote_exc_info(exc_info):
     if not isinstance(exc_info, remote_stacktrace):
         exctype, value, tb = exc_info
-        tb = traceback.format_exception(exctype, value, tb)
-        value.__traceback__ = None
-        #value = pickle.loads(pickle.dumps(value))
-        exc_info = remote_stacktrace(exctype, value, tb)
+        trace = format_exception(exctype, value, tb)
+        exc_info = remote_stacktrace(exctype, value, trace)
     return exc_info
 
 def coroutine_return(value=None):
@@ -387,6 +414,7 @@ errors.
         Without ``gen``, this method is used when interacting with libraries
         supporting both synchronous and asynchronous flow controls.
         '''
+        __skip_traceback__ = True
         if gen:
             if self.is_remote:
                 return gen.throw(self.exc_info[0], self.exc_info[1])
@@ -770,6 +798,7 @@ function when a generator is passed as argument.'''
             result, switch = step(result, self._gen)
             
     def _step(self, result, gen):
+        __skip_traceback__ = True
         try:
             failure = None
             if isinstance(result, Failure):

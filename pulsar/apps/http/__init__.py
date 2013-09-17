@@ -564,6 +564,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 if not self.event('on_headers').done():
                     self.fire_event('on_headers', callback=self._continue,
                                     errback=self._on_headers_error)
+                else:
+                    self._continue(self)
         else:
             raise pulsar.ProtocolError
         
