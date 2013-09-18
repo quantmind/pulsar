@@ -93,7 +93,7 @@ def format_exception(exctype, value, tb):
     value.__traceback__ = None
     return tb
     
-def remote_exc_info(exc_info):
+def as_async_exec_info(exc_info):
     if not isinstance(exc_info, async_exec_info):
         exctype, value, tb = exc_info
         trace = format_exception(exctype, value, tb)
@@ -373,7 +373,7 @@ class Failure(object):
     _msg = 'Pulsar Asynchronous Failure'
     
     def __init__(self, exc_info):
-        self.exc_info = remote_exc_info(exc_info)
+        self.exc_info = as_async_exec_info(exc_info)
         
     def __del__(self):
         self.log()

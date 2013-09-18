@@ -21,8 +21,7 @@ class TestFailure(unittest.TestCase):
         except Exception:
             failure = Failure(sys.exc_info())
         value = repr(failure)
-        self.assertTrue(("    return 'ciao' + 4\n"
-            "TypeError: Can't convert 'int' object to str implicitly") in value)
+        self.assertTrue("    return 'ciao' + 4\nTypeError: " in value)
         mute_failure(self, failure)
         
     def test_nested_traceback(self):

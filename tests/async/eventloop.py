@@ -3,6 +3,7 @@ import sys
 from threading import current_thread
 
 import pulsar
+from pulsar import Failure
 from pulsar.utils.pep import get_event_loop, new_event_loop
 from pulsar.apps.test import unittest, mute_failure
 
@@ -74,6 +75,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertTrue(t1 <= t2)
         
     def test_periodic(self):
+        test = self
         ioloop = get_event_loop()
         d = pulsar.Deferred()
         #
@@ -88,7 +90,7 @@ class TestEventLoop(unittest.TestCase):
                     try:
                         raise ValueError('test periodic')
                     except Exception:
-                        mute_failure(Failure(sys.exc_info))
+                        mute_failure(test, Failure(sys.exc_info()))
                         raise
         #
         every = 2
@@ -105,6 +107,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(ioloop.has_callback(periodic.handler))
         
     def test_call_every(self):
+        test = self
         ioloop = get_event_loop()
         thread = current_thread()
         d = pulsar.Deferred()
@@ -130,7 +133,7 @@ class TestEventLoop(unittest.TestCase):
                         try:
                             raise ValueError('test call every')
                         except Exception:
-                            mute_failure(Failure(sys.exc_info))
+                            mute_failure(test, Failure(sys.exc_info()))
                             raise
         #
         loops = 5
