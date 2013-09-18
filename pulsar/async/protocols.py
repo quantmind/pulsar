@@ -113,7 +113,7 @@ class ProtocolConsumer(EventHandler):
         return self.event('post_request').has_fired()
     
     @property
-    def recconnect_retries(self):
+    def reconnect_retries(self):
         ''''Number of times the consumer has tried to reconnect.
         
         For clients consumer only.
@@ -168,15 +168,12 @@ class ProtocolConsumer(EventHandler):
         if  not conn.transport:
             raise RuntimeError('%s has no transport.' % conn)
         self._request = request
-        self.fire_event('pre_request', callback=self._start,
-                        errback=self.finished)
-        pass
-        
-    def _start(self, _):
+        self.fire_event('pre_request')
         if self._request is not None:
             try:
                 self.start_request()
             except Exception:
+                #TODO: should we abort the transport here?
                 self.finished(sys.exc_info())
     
     def finished(self, result=None):

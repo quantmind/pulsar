@@ -1,5 +1,6 @@
 Ver. 0.6.1 - Development
 ===========================
+* Asynchronous redis_ client. Requires redis-py_.
 * Removed the specialised Application worker and monitor classes.
   Use standard actor and monitor with a specialised
   :ref:`start hook <actor-hooks>` instead. 
@@ -298,3 +299,5 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _django: https://www.djangoproject.com/
+.. _redis: http://redis.io/
+.. _redis-py_: https://github.com/andymccurdy/redis-py

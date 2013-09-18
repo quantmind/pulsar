@@ -1,7 +1,4 @@
-from stdnet import getdb
-
-from pulsar import async
-from pulsar.apps import pubsub
+from pulsar.apps import pubsub, redis
 from pulsar.utils.log import local_property
 from pulsar.utils.internet import get_connection_string
 
@@ -17,20 +14,30 @@ class PubSubBackend(pubsub.PubSubBackend):
         
     @local_property
     def redis(self):
-        redis = getdb(self.connection_string, timeout=0).client.pubsub()
-        redis.bind_event('on_message', self.on_message)
-        return redis
+        self._client = redis.RedisClient()
+        client = self._client.from_connection_string(self.connection_string)
+        pubsub = client.pubsub()
+        pubsub.bind_event('on_message', self.on_message)
+        self.namespace = pubsub.extra.get('namespace')
+        return pubsub
     
-    @async()
     def publish(self, channel, message):
-        # make it asynchronous so that errors are logged
-        return self.redis.publish(channel, message)
+        redis = self.redis
+        if self.namespace:
+            channel = '%s%s' % (self.namespace, channel)
+        return redis.publish(channel, message)
        
     def subscribe(self, *channels):
-        return self.redis.subscribe(*channels)
+        redis = self.redis
+        if self.namespace:
+            channels = tuple(('%s%s' % (self.namespace, c) for c in channels))
+        return redis.subscribe(*channels)
     
     def unsubscribe(self, *channels):
-        return self.redis.unsubscribe(*channels)
+        redis = self.redis
+        if self.namespace:
+            channels = tuple(('%s%s' % (self.namespace, c) for c in channels))
+        return redis.unsubscribe(*channels)
     
     def on_message(self, channel_message):
         self.broadcast(*channel_message)

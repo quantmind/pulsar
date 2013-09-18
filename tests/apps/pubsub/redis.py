@@ -1,34 +1,28 @@
 '''pubsub redis backend.'''
 from pulsar.apps.test import unittest
+from pulsar.apps.redis import RedisClient
 from pulsar.utils.internet import parse_connection_string, get_connection_string
 
 from . import local
 
-try:
-    import stdnet
-    stdnet.getdb('redis://')
-except Exception:
-    stdnet = None
-    
-
-@unittest.skipUnless(stdnet, 'Requires python-stdnet')
+@unittest.skipUnless(RedisClient.consumer_factory,
+                     'Requires redis-py installed')
 class pubsubTest(local.pubsubTest):
     
     @classmethod
-    def backend(cls, tag):
-        if tag:
+    def backend(cls, namespace):
+        if namespace:
             backend = cls.cfg.backend_server or 'redis://127.0.0.1:6379'
             scheme, address, params = parse_connection_string(backend)
-            params['tag'] = tag
+            params['namespace'] = namespace
             return get_connection_string(scheme, address, params)
         else:
             return cls.cfg.backend_server
         
-    def test_internal_subscribe(self):
+    def test_backend(self):
         p = self.pubsub()
-        self.assertFalse(p.backend.redis.consumer)
-        result = yield p.subscribe('messages')
-        self.assertTrue(p.backend.redis.consumer)
-        result = yield p.subscribe('foo')
-        clients = yield p.publish('messages', 'Hello world!')
-        self.assertTrue(clients)
+        backend = p.backend
+        self.assertEqual(backend.name, 'arbiter')
+        self.assertTrue('namespace=' in backend.connection_string)
+        self.assertTrue(backend.params['namespace'])
+    

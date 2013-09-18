@@ -312,7 +312,7 @@ when invoked::
         try:
             result = callable(*args, **kwargs)
         except Exception:
-            result = Failure(sys.exc_info())
+            result = sys.exc_info()
         return maybe_async(result, get_result=self.get_result,
                            timeout=self.timeout)
 
@@ -785,6 +785,7 @@ function when a generator is passed as argument.'''
             
     def _step(self, result, gen):
         __skip_traceback__ = True
+        conclude = False
         try:
             failure = None
             if isinstance(result, Failure):
@@ -795,12 +796,12 @@ function when a generator is passed as argument.'''
                 result = gen.send(result)
         except CoroutineReturn as e:
             result = e.value
-            self._conclude(result, failure)
+            conclude = True
         except StopIteration:
-            self._conclude(result, failure)
-        except Exception as e:
-            result = Failure(sys.exc_info())
-            self._conclude(result, failure)
+            conclude = True
+        except Exception:
+            result = sys.exc_info()
+            conclude = True
         else:
             result = maybe_async(result, event_loop=self.event_loop)
             if isinstance(result, Deferred):
@@ -812,6 +813,8 @@ function when a generator is passed as argument.'''
                 # transfer control to the event loop
                 self.event_loop.call_soon(self._consume, None)
                 return None, True
+        if conclude:
+            self._conclude(result, failure)
         return result, False
     
     def _restart(self, result):

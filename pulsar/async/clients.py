@@ -28,6 +28,7 @@ class Request(object):
         
     '''
     inp_params = None
+    release_connection = True
 
     def __init__(self, address, timeout=0):
         self.address = address
@@ -187,8 +188,9 @@ class ConnectionPool(ConnectionProducer):
 
 def release_response_connection(response):
     '''Added as a post_request callback to release the connection.'''
+    request = response.request
     connection = response.connection
-    if connection:
+    if request.release_connection and connection:
         connection.set_consumer(None)
         key = response.request.key
         if key: # remove connection only when the request has a valid key
@@ -396,10 +398,17 @@ class Client(Producer):
         inp_params = request.inp_params
         if isinstance(inp_params, dict):
             response.bind_events(**inp_params)
-        event_loop.call_now_threadsafe(self._response, event_loop,
-                                       response, request, new_connection)
-        if self.force_sync: # synchronous response
-            event_loop.run_until_complete(response.on_finished)
+        if response.event('pre_request').has_fired():
+            # pre request event already fired, this is an updated request
+            # TODO: document this feature.
+            # Used by redis client for example
+            response.pause_event('pre_request')
+            response._request = request
+        else:   # A new request
+            event_loop.call_now_threadsafe(self._response, event_loop,
+                                           response, request, new_connection)
+            if self.force_sync: # synchronous response
+                event_loop.run_until_complete(response.on_finished)
         return response
     
     def get_connection(self, request):
