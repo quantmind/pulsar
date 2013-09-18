@@ -814,6 +814,8 @@ function when a generator is passed as argument.'''
                 self.event_loop.call_soon(self._consume, None)
                 return None, True
         if conclude:
+            # We conclude outside the try/except block so that the __del__
+            # method is not invoked on Failure
             self._conclude(result, failure)
         return result, False
     
