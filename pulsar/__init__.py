@@ -42,10 +42,7 @@ SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
 from .utils.exceptions import *
 from .utils import system
-from .utils.internet import parse_address
-from .utils.pep import to_string, native_str, to_bytes
 platform = system.platform
-
 from .utils.config import *
 from .async import *
 from .apps import *

@@ -56,7 +56,7 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import get_actor, EventHandler, async
+from pulsar import get_actor, EventHandler
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import parse_connection_string, get_connection_string

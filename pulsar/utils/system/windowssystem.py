@@ -2,10 +2,8 @@ import sys
 import signal
 import ctypes
 import ctypes.wintypes
-import errno
 import socket
 import getpass
-from time import sleep
 
 from .winprocess import WINEXE
 from .base import *

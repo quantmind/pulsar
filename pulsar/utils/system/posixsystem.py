@@ -6,7 +6,6 @@ import pwd
 import signal
 import socket
 from multiprocessing import Pipe
-import select
 
 from .base import *
 

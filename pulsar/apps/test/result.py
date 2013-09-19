@@ -19,9 +19,6 @@ Test Runner
 
    
 '''
-__skip_traceback__ = True
-import traceback
-from inspect import istraceback
 from copy import deepcopy
 
 from pulsar import Failure

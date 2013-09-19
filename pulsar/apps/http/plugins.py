@@ -5,7 +5,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.async.stream import SocketStreamSslTransport
 from pulsar.utils.httpurl import REDIRECT_CODES, urlparse, urljoin, requote_uri
 
-from pulsar import get_actor, PulsarException
+from pulsar import PulsarException
 
 
 class TooManyRedirects(PulsarException):

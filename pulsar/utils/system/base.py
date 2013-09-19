@@ -1,12 +1,11 @@
+import os
 import ctypes
-from select import select as _select
+
 try:
     import signal
 except ImportError:
     signal = None
 
-from pulsar.utils.importer import import_module, module_attribute
-from pulsar.utils.pep import iteritems, native_str
 
 __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',

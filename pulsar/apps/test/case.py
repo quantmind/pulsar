@@ -1,8 +1,7 @@
-__skip_traceback__ = True
 import sys
 import logging
 
-from pulsar import multi_async, async, Failure
+from pulsar import multi_async
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
 
@@ -41,8 +40,10 @@ sequentially rather than in an asynchronous fashion.'''
 
     
 class Test(tasks.Job):
-    '''A :ref:`Job <job-callable>` for running tests on a task queue.'''
+    '''A :ref:`Job <job-callable>` for running tests on a task queue.
+    '''
     def __call__(self, consumer, testcls, tag):
+        # The callable method. Return a coroutine.
         suite = consumer.worker.app
         suite.local.pop('runner')
         runner = suite.runner
@@ -58,16 +59,17 @@ class Test(tasks.Job):
         else:
             return runner.result
         
-    @async()
     def run(self, runner, testcls, all_tests, cfg):
-        '''Run all test functions from the :attr:`testcls` using the
-following algorithm:
+        '''Run all test functions from the :attr:`testcls`.
+        
+        It uses the following algorithm:
 
-* Run the class method ``setUpClass`` of :attr:`testcls` if defined, unless
-  the test class should be skipped.
-* Call :meth:`run_test` for each test functions in :attr:`testcls`
-* Run the class method ``tearDownClass`` of :attr:`testcls` if defined, unless
-  the test class should be skipped.'''
+        * Run the class method ``setUpClass`` of :attr:`testcls` if defined,
+          unless the test class should be skipped
+        * Call :meth:`run_test` for each test functions in :attr:`testcls`
+        * Run the class method ``tearDownClass`` of :attr:`testcls` if defined,
+          unless the test class should be skipped.
+        '''
         error = None
         timeout = cfg.test_timeout
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
@@ -148,8 +150,15 @@ following algorithm:
             yield previous
         
     def add_failure(self, test, runner, error, exc_info=None, add_err=True):
-        '''Add *failure* to the list of errors if *failure* is indeed a failure.
-Return `True` if *failure* is a failure, otherwise return `False`.'''
+        '''Add ``error`` to the list of errors.
+        
+        :param test: the test function object where the error occurs
+        :param runner: the test runner
+        :param error: the python exception for the error
+        :param exc_info: optional system exc info
+        :param add_err: if ``True`` the error is added to the list of errors
+        :return: a tuple containing the ``error`` and the ``exc_info``
+        '''
         if not exc_info:
             exc_info = sys.exc_info()
         if add_err:

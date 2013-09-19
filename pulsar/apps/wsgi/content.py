@@ -117,14 +117,14 @@ Html Factory
 import json
 from collections import Mapping
 from functools import partial
-from copy import copy
 
-from pulsar import multi_async, maybe_async, is_failure, safe_async, async
+from pulsar import (multi_async, maybe_async, is_failure, safe_async, async,
+                    Deferred)
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import slugify, INLINE_TAGS, tag_attributes, attr_iter,\
                                 csslink, dump_data_value, child_tag
-from pulsar.utils.httpurl import remove_double_slash, urljoin
+from pulsar.utils.httpurl import remove_double_slash
 
 from .html import html_visitor
 
@@ -154,7 +154,18 @@ else: #pragma nocover
                 yield value
             else:
                 yield str(value)
-    
+
+def stream_mapping(value, request=None):
+    result = {}
+    async = False
+    for key, value in iteritems(value):
+        if isinstance(value, AsyncString):
+            value = value.content(request)
+        value = maybe_async(value)
+        async = async or isinstance(value, Deferred)
+        result[key] = value
+    return multi_async(result) if async else result
+            
 
 class AsyncString(object):
     '''Class for asynchronous strings which can be used with
@@ -291,13 +302,16 @@ This method should not be overwritten, instead one should use the
         return self.do_stream(request)
     
     def do_stream(self, request):
-        '''Perform the actual streaming.
+        '''Returns an iterable over strings or asynchronous components.
         
-It must return an iterable over ``strings`` or
-:ref:`asynchronous elements <tutorials-coroutine>` which result in strings.
+        If :ref:`asynchronous elements <tutorials-coroutine>` are included
+        in the iterable, when called, they must result in strings.
 
-This method can be re-implemented by subclasses and should not be invoked
-directly. Use the :meth:`stream` method instead.'''
+        This method can be re-implemented by subclasses and should not be
+        invoked directly.
+        
+        Use the :meth:`stream` method instead.
+        '''
         if self._children:
             for child in self._children:
                 if isinstance(child, AsyncString):
@@ -367,7 +381,18 @@ is used.'''
     @property
     def content_type(self):
         return 'application/json'
-        
+    
+    def do_stream(self, request):
+        if self._children:
+            for child in self._children:
+                if isinstance(child, AsyncString):
+                    for bit in child.stream(request):
+                        yield bit
+                elif isinstance(child, Mapping):
+                    yield stream_mapping(child, request)
+                else:
+                    yield stream
+                    
     def to_string(self, stream):
         if len(stream) == 1 and not self.as_list:
             return self.json.dumps(stream[0])

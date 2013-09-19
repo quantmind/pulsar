@@ -1,7 +1,7 @@
 import os
 import time
 from hashlib import sha1
-from base64 import b64encode, b64decode
+from base64 import b64encode
 
 from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
 from pulsar.utils.pep import native_str

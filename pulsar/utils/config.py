@@ -31,14 +31,14 @@ import inspect
 import argparse
 import os
 import textwrap
-import types
 import logging
 
-from pulsar import __version__, SERVER_NAME, parse_address
+from pulsar import __version__, SERVER_NAME
 from . import system
-from .httpurl import to_bytes, iteritems, HttpParser as PyHttpParser,\
-                     native_str
+from .internet import parse_address
 from .importer import import_system_file
+from .httpurl import (to_bytes, iteritems, HttpParser as PyHttpParser,
+                      native_str)
 
 
 __all__ = ['Config',
@@ -337,7 +337,7 @@ class SettingMeta(type):
 in the global ``KNOWN_SETTINGS`` list.'''
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
-        parents = [b for b in bases if isinstance(b, SettingMeta)]
+        #parents = [b for b in bases if isinstance(b, SettingMeta)]
         val = attrs.get("validator")
         attrs["validator"] = wrap_method(val) if val else None
         if attrs.pop('virtual', False):

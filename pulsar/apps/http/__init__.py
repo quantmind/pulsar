@@ -159,7 +159,6 @@ HTTP Response
 import os
 import platform
 import json
-from copy import copy
 from collections import namedtuple
 from base64 import b64encode
 
@@ -174,9 +173,8 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl,
                                   encode_multipart_formdata, urlencode,
                                   Headers, urllibr, get_environ_proxies,
                                   choose_boundary, urlunparse, request_host,
-                                  responses, is_succesful, HTTPError, URLError,
-                                  get_hostport, CookieJar,
-                                  cookiejar_from_dict)
+                                  is_succesful, HTTPError, URLError,
+                                  get_hostport, cookiejar_from_dict)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -805,8 +803,8 @@ class HttpClient(pulsar.Client):
         '''
         self.bind_event('pre_request', HTTPDigestAuth(username, password))
 
-    def add_oauth2(self, client_id, client_secret):
-        self.bind_event('pre_request', OAuth2(client_id, client_secret))
+    #def add_oauth2(self, client_id, client_secret):
+    #    self.bind_event('pre_request', OAuth2(client_id, client_secret))
 
     #    INTERNALS
     

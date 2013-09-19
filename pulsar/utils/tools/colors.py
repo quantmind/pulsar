@@ -22,7 +22,9 @@ for that particular invocation, which usually shows up as a bold or brighter
 version of the original color on most terminals.
 """
 import logging
-from pulsar import to_string, platform
+
+from pulsar import platform
+from pulsar.utils.pep import to_string
 
 __all__ = ['ColorFormatter']
 
