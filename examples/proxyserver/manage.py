@@ -127,11 +127,11 @@ class ProxyResponse(object):
         self.headers = None
         self.queue = Queue()
         self._done = False
+        response.on_finished.add_errback(self.error)
         self.setup(response)
         
     def setup(self, response):
         response.bind_event('data_processed', self.data_processed)
-        response.on_finished.add_errback(self.error)
         
     def __iter__(self):
         yield self.queue.get()
@@ -153,16 +153,16 @@ class ProxyResponse(object):
         
     def error(self, failure):
         '''Handle a failure.'''
-        failure.log()
-        uri = self.environ['RAW_URI']
-        msg = 'Oops! Could not find %s' % uri
-        html = wsgi.HtmlDocument(title=msg)
-        html.body.append('<h1>%s</h1>' % msg)
-        data = html.render()
-        resp = wsgi.WsgiResponse(504, data, content_type='text/html')
-        self.start_response(resp.status, resp.get_headers(), failure.exc_info)
-        self._done = True
-        return self.queue.put(resp.content[0])
+        if not self._done:
+            uri = self.environ['RAW_URI']
+            msg = 'Oops! Could not find %s' % uri
+            html = wsgi.HtmlDocument(title=msg)
+            html.body.append('<h1>%s</h1>' % msg)
+            data = html.render()
+            resp = wsgi.WsgiResponse(504, data, content_type='text/html')
+            self.start_response(resp.status, resp.get_headers(), failure.exc_info)
+            self._done = True
+            return self.queue.put(resp.content[0])
     
     def remove_hop_headers(self, headers):
         for header, value in headers:
@@ -173,21 +173,26 @@ class ProxyResponse(object):
 class ProxyTunnel(ProxyResponse):
     
     def setup(self, response):
-        upstream = response.connection
-        downstream = self.environ['pulsar.connection']
-        downstream.upgrade(partial(DownStreamTunnel, upstream))
-        upstream.bind_event('connection_made', self.connection_made)
+        response.connection.bind_event('connection_made', self.connection_made)
         
-    def connection_made(self, connection, _):
+    def connection_made(self, upstream):
         '''Start the tunnel.
         
         This is a callback fired once a connection with target server is
-        established and this proxy is acting as tunnel for a TSL server.'''
+        established and this proxy is acting as tunnel for a TSL server.
+        
+        Write back to the client the 200 Connection established message.
+        After this the downstream connection consumer will upgrade to the
+        DownStreamTunnel.
+        '''
+        # Upgrade downstream protocol consumer
+        downstream = self.environ['pulsar.connection']
+        downstream.upgrade(partial(DownStreamTunnel, upstream))
         self.start_response('200 Connection established', [])
         self._done = True
         # send empty byte so that headers are sent
         yield self.queue.put(b'')
-    
+        
 
 class DownStreamTunnel(pulsar.ProtocolConsumer):
     ''':class:`ProtocolConsumer` handling encrypted messages from

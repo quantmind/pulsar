@@ -61,7 +61,7 @@ class RedisClient(pulsar.Client):
         :param password: optional server password.
         :param timeout: optional timeout for idle connections.
         '''
-        assert Redis, 'To user pulsar redis you need redis-py installed'
+        assert Redis, 'To use pulsar-redis you need redis-py installed'
         timeout = int(timeout or self.timeout)
         info = connection_info(address, db, password, timeout)
         return Redis(self, info, **kw)

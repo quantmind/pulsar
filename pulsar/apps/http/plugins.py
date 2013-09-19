@@ -87,6 +87,8 @@ def handle_101(response):
 
 class TunnelRequest:
     key = None
+    inp_params = None
+    release_connection = False
     headers = None
     first_line = None
     def __init__(self, request):

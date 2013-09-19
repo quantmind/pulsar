@@ -393,7 +393,6 @@ class Connection(EventHandler, Protocol):
         Sets the transport, fire the ``connection_made`` event and adds
         a :attr:`timeout` for idle connections.
         '''
-        self._transport = transport
         if self._transport is not None:
             self._cancel_timeout()
         self._transport = transport

@@ -102,6 +102,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
+class d:
     def test_dodgy_on_header_event(self):
         client = HttpClient()
         response = client.get(self.httpbin(), on_headers=dodgyhook)
@@ -193,7 +194,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(http.version, 'HTTP/1.1')
         self.assertEqual(http.max_redirects, 5)
         if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri})
+            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
+                                               'https': self.proxy_uri,
+                                               'ws': self.proxy_uri,
+                                               'wss': self.proxy_uri})
   
     def test_200_get(self):
         http = self.client()

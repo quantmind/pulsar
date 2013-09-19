@@ -814,9 +814,16 @@ function when a generator is passed as argument.'''
                 self.event_loop.call_soon(self._consume, None)
                 return None, True
         if conclude:
-            # We conclude outside the try/except block so that the __del__
-            # method is not invoked on Failure
-            self._conclude(result, failure)
+            if failure:
+                result = maybe_failure(result)
+                if isinstance(result, Failure):
+                    if result.exc_info[1] is not failure.exc_info[1]:
+                        failure.mute()
+                else:
+                    failure.mute()
+            self._gen.close()
+            del self._gen
+            self.callback(result)
         return result, False
     
     def _restart(self, result):
@@ -834,18 +841,6 @@ function when a generator is passed as argument.'''
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result
-    
-    def _conclude(self, result, failure):
-        # Conclude the generator and callback the listeners
-        if failure:
-            if isinstance(result, Failure):
-                if result.error is not failure.error:
-                    failure.mute()
-            else:
-                failure.mute()
-        self._gen.close()
-        del self._gen
-        self.callback(result)
     
     def cancel(self, msg=''):
         if self._waiting:

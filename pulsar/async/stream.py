@@ -32,6 +32,7 @@ from .defer import multi_async, Deferred, Failure
 from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
 
+SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
 
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
@@ -215,7 +216,8 @@ class SocketStreamSslTransport(SocketStreamTransport):
         return e.errno == ssl.SSL_ERROR_WANT_WRITE
         
     def _read_continue(self, e):
-        return e.errno == ssl.SSL_ERROR_WANT_READ
+        return e.errno in (SSLV3_ALERT_CERTIFICATE_UNKNOWN,
+                           ssl.SSL_ERROR_WANT_READ)
     
     def _do_handshake(self):
         loop = self._event_loop

@@ -678,7 +678,7 @@ class HttpClient(pulsar.Client):
                                'certfile': certfile,
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
-        # Hooks Events
+        # Add hooks
         self.bind_event('pre_request', Tunneling())
         self.bind_event('on_headers', handle_101)
         self.bind_event('on_headers', handle_100)
