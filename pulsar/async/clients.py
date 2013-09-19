@@ -25,7 +25,13 @@ class Request(object):
     .. attribute:: address
 
         The socket address of the remote server
+    
+    .. attribute:: release_connection
+
+        When ``True`` a protocol consumer release the connection back to the
+        :class:`ConnectionPool` once done with the request.
         
+        Default: ``True``
     '''
     inp_params = None
     release_connection = True
@@ -42,6 +48,10 @@ class Request(object):
     
     @property
     def ssl(self):
+        '''A transport layer security context or ``True``.
+        
+        Used to create SSL/TLS connections.
+        '''
         return False
     
     def encode(self):
@@ -65,8 +75,9 @@ class Request(object):
     
     
 class ConnectionPool(ConnectionProducer):
-    '''A :class:`Producer` of of active connections for client
-    protocols. It maintains a live set of connections.
+    '''A :class:`Producer` of of active connections for client protocols.
+    
+    It maintains a live set of :class:`Connection`.
 
     .. attribute:: address
 
@@ -91,40 +102,73 @@ class ConnectionPool(ConnectionProducer):
     
     @property
     def available_connections(self):
+        '''Number of available connection in the pool.
+        
+        Available connections are not currently in-use and therefore they can
+        be selected when the :meth:`get_or_create_connection` method is
+        invoked.
+        '''
         return len(self._available_connections)
         
     def release_connection(self, connection, response=None):
-        '''Releases the *connection* back to the pool.
+        '''Releases the ``connection`` back to the pool.
 
         This function remove the ``connection`` from the set of concurrent
         connections and add it to the set of available connections.
 
         :parameter connection: The connection to release
-        :parameter response: Optional :class:`ProtocolConsumer` which consumed the
-            connection.
+        :parameter response: Optional :class:`ProtocolConsumer` which consumed
+            the connection. It is passed to the
+            :meth:`Client.can_reuse_connection` method to check if the
+            connection can be reused.
         '''
         with self.lock:
             self._concurrent_connections.discard(connection)
             if connection.producer.can_reuse_connection(connection, response):
                 self._available_connections.add(connection)
         
-    def get_or_create_connection(self, client):
-        "Get or create a new connection for *client*"
+    def get_or_create_connection(self, client, connection=None):
+        '''Get or create a new connection for ``client``.
+        
+        If a ``connection`` is given and either
+        
+        * the connection is in the set of available connections
+        * the connection is in the set of concurrent connections but without
+          a protocol consumer
+        
+        then it is chosen ahead of others in the pool.
+        '''
         stale_connections = []
         with self.lock:
-            try:
-                closed = True
-                while closed:
-                    connection = self._available_connections.pop()
+            if connection:
+                if connection in self._available_connections:
+                    self._available_connections.remove(connection)
+                elif not (connection in self._concurrent_connections and
+                          connection.current_consumer is None):
+                    connection = None
+                if connection:
                     sock = connection.sock
                     closed = is_socket_closed(sock)
-                    if closed and sock:
-                        stale_connections.append(connection)
-            except KeyError:
-                connection = None
-            else:
-                # we have a connection, lets added it to the concurrent set
-                self._concurrent_connections.add(connection)
+                    if closed:
+                        connection = None
+                        if sock:
+                            stale_connections.append(connection)
+                    else:
+                        self._concurrent_connections.add(connection)
+            if not connection:
+                try:
+                    closed = True
+                    while closed:
+                        connection = self._available_connections.pop()
+                        sock = connection.sock
+                        closed = is_socket_closed(sock)
+                        if closed and sock:
+                            stale_connections.append(connection)
+                except KeyError:
+                    connection = None
+                else:
+                    # we have a connection, lets added it to the concurrent set
+                    self._concurrent_connections.add(connection)
         for sc in stale_connections:
             sc.transport.close()
         if connection is None:
@@ -166,8 +210,7 @@ class ConnectionPool(ConnectionProducer):
                     self._reconnect(client, consumer)
                 return consumer
         return exc
-                
-                    
+    
     def _reconnect(self, client, consumer):
         # get a new connection
         conn = self.get_or_create_connection(client)
@@ -179,21 +222,24 @@ class ConnectionPool(ConnectionProducer):
         with self.lock:
             super(ConnectionPool, self)._remove_connection(connection, exc)
             self._available_connections.discard(connection)
-    
-    def _release_response(self, response, _):
-        #proxy to release_connection
-        if release_connection(response):
-            self.release_connection(response.connection, response)
             
 
 def release_response_connection(response):
-    '''Added as a post_request callback to release the connection.'''
+    '''Added as a post_request callback to release the connection.
+    
+    :parameter response: the :class:`ProtocolConsumer` calling this function
+    once done with its request.
+    
+    If the :class:`Request` associated with the protocol consumer has
+    the :attr:`Request.release_connection` set to ``False`` the connection
+    is not released to the connection pool.
+    '''
     request = response.request
     connection = response.connection
-    if request.release_connection and connection:
+    if connection:
         connection.set_consumer(None)
-        key = response.request.key
-        if key: # remove connection only when the request has a valid key
+        if request.release_connection:
+            key = response.request.key
             pool = response.producer.connection_pools.get(key)
             if not pool:
                 connection.logger.error(
@@ -204,17 +250,18 @@ def release_response_connection(response):
 
 
 class Client(Producer):
-    '''A client for a remote server.
+    '''A client for several remote servers of the same type.
 
     It is a :class:`Producer` which handles one or more
-    :class:`ConnectionPool` of asynchronous connections.
+    :class:`ConnectionPool` of asynchronous connections to a server.
+    
     It has the ``finish`` :ref:`one time event <one-time-event>` fired when
     calling the :meth:`close` method.
 
-    in the same way as the :class:`Server` class, :class:`Client` has four
+    In the same way as the :class:`Server` class, :class:`Client` has four
     :ref:`many time events <many-times-event>`:
 
-    * ``connection_made`` a new connection is made.
+    * ``connection_made`` a new :class:`Connection` is made.
     * ``pre_request``, can be used to add information to the request
       to send to the remote server.
     * ``post_request``, fired when a full response has been received. It can be
@@ -374,7 +421,8 @@ class Client(Producer):
         '''
         raise NotImplementedError
     
-    def response(self, request, response=None, new_connection=True):
+    def response(self, request, response=None, new_connection=True,
+                 connection=None):
         '''Sends a ``request`` to the remote server.
 
         Once a ``request`` object has been constructed, the :meth:`request`
@@ -406,14 +454,22 @@ class Client(Producer):
             response._request = request
         else:   # A new request
             event_loop.call_now_threadsafe(self._response, event_loop,
-                                           response, request, new_connection)
+                                           response, request, new_connection,
+                                           connection)
             if self.force_sync: # synchronous response
-                event_loop.run_until_complete(response.on_finished)
+                if not event_loop.is_running():
+                    event_loop.run_until_complete(response.on_finished,
+                                                  timeout=request.timeout)
+                    return response.on_finished.get_result()
         return response
     
-    def get_connection(self, request):
+    def get_connection(self, request, connection=None):
         '''Returns a suitable :class:`Connection` for ``request``.
-
+        
+        :param request: a :class:`Request` used to select the appropriate
+            :class:`ConnectionPool` for obtaining the connection.
+        :param connection: optional :class:`Connection` which may be reused.
+            
         First checks if an available open connection can be used.
         Alternatively it creates a new connection by invoking the
         :meth:`ConnectionPool.get_or_create_connection` method on the
@@ -427,12 +483,13 @@ class Client(Producer):
         with self.lock:
             pool = self.connection_pools.get(request.key)
             if pool is None:
+                connection = None
                 pool = self.connection_pool(
                                 request,
                                 max_connections=self.max_connections,
                                 connection_factory=self.connection_factory)
                 self.connection_pools[request.key] = pool
-        return pool.get_or_create_connection(self)
+        return pool.get_or_create_connection(self, connection)
         
     def update_parameters(self, parameter_list, params):
         '''Update *param* with attributes from this :class:`Client`.
@@ -519,14 +576,14 @@ class Client(Producer):
     #   INTERNALS
 
     def _response(self, event_loop, response, request, new_connection,
-                  result=None):
+                  connection):
         # Actually execute the request. This method is always called on the
         # event loop thread
         try:
-            conn = response.connection
+            conn = connection or response.connection
             if new_connection or conn is None:
                 # Get the connection for this request
-                conn = self.get_connection(request)
+                conn = self.get_connection(request, conn)
                 conn.set_consumer(response)
             if conn.transport is None:
                 # There is no transport, we need to connect with server first

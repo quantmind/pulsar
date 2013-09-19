@@ -61,7 +61,7 @@ for testing purposes.
     
     
 def wsgi_environ(parser, address, client_address, request_headers,
-                 headers, https=False, extra=None):
+                 headers, server_software=None, https=False, extra=None):
     protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
     environ = {
             "wsgi.input": BytesIO(parser.recv_body()),
@@ -70,7 +70,7 @@ def wsgi_environ(parser, address, client_address, request_headers,
             "wsgi.run_once": False,
             'wsgi.multithread': False,
             'wsgi.multiprocess': False,
-            "SERVER_SOFTWARE": pulsar.SERVER_SOFTWARE,
+            "SERVER_SOFTWARE": server_software or pulsar.SERVER_SOFTWARE,
             "REQUEST_METHOD": native_str(parser.get_method()),
             "QUERY_STRING": parser.get_query_string(),
             "RAW_URI": parser.get_url(),
@@ -171,17 +171,17 @@ class HttpServerResponse(ProtocolConsumer):
     _status = None
     _headers_sent = None
     _request_headers = None
-    max_empty_consecutive = 20
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
     
-    def __init__(self, wsgi_callable, cfg):
+    def __init__(self, wsgi_callable, cfg, server_software=None):
         super(HttpServerResponse, self).__init__()
         self.wsgi_callable = wsgi_callable
         self.cfg = cfg
         self.parser = http_parser(kind=0)
         self.headers = Headers()
         self.keep_alive = False
+        self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
         
     def data_received(self, data):
         '''Implements :class:`pulsar.Protocol.data_received`. Once we have a
@@ -403,6 +403,7 @@ is an HTTP upgrade (websockets)'''
         https = True if is_tls(self.transport.sock) else False
         environ = wsgi_environ(parser, self.transport.address, self.address,
                                self._request_headers, self.headers,
+                               self.SERVER_SOFTWARE,
                                https=https,
                                extra={'pulsar.connection': self.connection,
                                       'pulsar.cfg': self.cfg})

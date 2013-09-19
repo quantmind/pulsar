@@ -5,7 +5,6 @@ from collections import deque, namedtuple, Mapping
 from itertools import chain
 from inspect import isgenerator, istraceback
 
-from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.pep import (raise_error_trace, iteritems, default_timer,
                               get_event_loop, ispy3k, pickle)
 
@@ -154,6 +153,7 @@ def default_maybe_failure(value):
 def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
     if isgenerator(val):
         event_loop = event_loop or get_request_loop()
+        assert event_loop, 'No event loop available'
         task_factory = getattr(event_loop, 'task_factory', Task)
         val = task_factory(val, event_loop, **kwargs)
     if isinstance(val, Deferred):
@@ -553,7 +553,7 @@ was cancelled.'''
 done, that is it was called or cancelled.'''
         return self._state != _PENDING
     
-    def cancel(self, msg=''):
+    def cancel(self, msg='', mute=False):
         '''pep-3156_ API method, it cancel the deferred and schedule callbacks.
 If the deferred is waiting for another :class:`Deferred`, forward the
 cancellation to that one. If the :class:`Deferred` is already :meth:`done`,
@@ -568,8 +568,10 @@ it does nothing.
                 self._suppressAlreadyCalled = True
             if not self.done():
                 self.callback(CancelledError(msg))
+                if mute and isinstance(self.result, Failure):
+                    self.result.mute()
         elif isinstance(self.result, Deferred):
-            return self.result.cancel(msg)
+            return self.result.cancel(msg, mute)
     
     def running(self):
         '''pep-3156_ API method, always returns ``False``.'''
@@ -724,13 +726,15 @@ the result is a :class:`Failure`'''
     def _run_callbacks(self):
         if not self.done() or self._runningCallbacks or self.paused:
             return
+        event_loop = self.event_loop
         while self._callbacks:
             callbacks = self._callbacks.popleft()
             callback = callbacks[isinstance(self.result, Failure)]
             try:
                 self._runningCallbacks = True
                 try:
-                    self.result = maybe_async(callback(self.result))
+                    self.result = maybe_async(callback(self.result),
+                                              event_loop=event_loop)
                 finally:
                     self._runningCallbacks = False
             except Exception:
@@ -842,11 +846,11 @@ function when a generator is passed as argument.'''
         # the passed result (which is not asynchronous).
         return result
     
-    def cancel(self, msg=''):
+    def cancel(self, msg='', mute=False):
         if self._waiting:
-            self._waiting.cancel(msg)
+            self._waiting.cancel(msg, mute)
         else:
-            super(Task, self).cancel(msg)
+            super(Task, self).cancel(msg, mute)
         
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):

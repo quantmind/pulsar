@@ -22,7 +22,7 @@ def cause_timeout(actor):
 def cause_terminate(actor):
     if actor.next_periodic_task:
         actor.next_periodic_task.cancel()
-        # hay jack the stop method
+        # hayjack the stop method
         actor.stop = lambda exc=None: False
     else:
         actor.event_loop.call_soon(cause_timeout, actor)

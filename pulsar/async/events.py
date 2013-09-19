@@ -226,7 +226,7 @@ class EventHandler(object):
         exclude = exclude or ()
         for event in itervalues(self._events):
             if isinstance(event, OneTime) and event.name not in exclude:
-                event.cancel()
+                event.cancel(mute=True)
         
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.

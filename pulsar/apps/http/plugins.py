@@ -86,22 +86,31 @@ def handle_101(response):
 
 
 class TunnelRequest:
-    key = None
     inp_params = None
+    # Don't release connection when tunneling
     release_connection = False
     headers = None
-    first_line = None
+    first_line = 'Tunnel connection'
     def __init__(self, request):
         self.request = request
         self.parser = request.parser
         request.new_parser()
+    
+    def __repr__(self):
+        return self.first_line 
+    __str__ = __repr__
+            
+    @property
+    def key(self):
+        return self.request.key
     
     @property
     def client(self):
         return self.request.client
     
     def encode(self):
-        self.first_line = 'CONNECT %s HTTP/1.1\r\n' % self.request._netloc
+        address = self.request.target_address
+        self.first_line = 'CONNECT %s:%s HTTP/1.1\r\n' % address
         self.headers = self.request.tunnel_headers
         return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
     
@@ -117,21 +126,26 @@ class Tunneling:
     def __call__(self, response):
         # the pre_request handler
         request = response._request
-        if request._proxy and request._ssl:
-            response._request = TunnelRequest(request)
-            response.bind_event('post_request', self.post_request)
+        tunnel = request._tunnel
+        # 
+        # We Tunnel if a tunnel server is available
+        if tunnel:
+            # and if transport is not SSL already
+            if not isinstance(response.transport, SocketStreamSslTransport):
+                response._request = TunnelRequest(request)
+                response.bind_event('post_request', self.post_request)
         # make sure to return the response
         return response
             
     def post_request(self, response):
         '''Called back once the message is complete.'''
-        if response.status_code == 200:
+        if response.status == '200 Connection established':
             prev_response = response
             request = prev_response._request.request
-            request.set_proxy(None)
             loop = response.event_loop
             loop.remove_reader(response.transport.sock.fileno())
-            response = request.client.build_consumer()  
+            response = request.client.build_consumer()
+            response.chain_event(prev_response, 'post_request')
             # Wraps the socket at the next iteration loop. Important!
             loop.call_soon(self.switch_to_ssl, prev_response, response)
         # make sure to return the response
@@ -149,7 +163,8 @@ class Tunneling:
                                              request._ssl, server_side=False,
                                              server_hostname=request._netloc)
         connection._transport = transport
-        connection.set_consumer(response)
+        # pause connection made since it will be called again when the
+        # ssl handshake occurs
         connection.pause_event('connection_made')
-        client.again(prev_response, new_response=response, request=request)
+        client.response(request, response, connection=connection)
         

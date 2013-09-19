@@ -51,8 +51,9 @@ from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
 
+SERVER_SOFTWARE = 'Pulsar-proxy-server/%s' % pulsar.version
 ENVIRON_HEADERS = ('content-type', 'content-length')
-USER_AGENT = 'Pulsar-Proxy-Server'
+USER_AGENT = SERVER_SOFTWARE
 
 
 def x_forwarded_for(environ, headers):
@@ -188,7 +189,8 @@ class ProxyTunnel(ProxyResponse):
         # Upgrade downstream protocol consumer
         downstream = self.environ['pulsar.connection']
         downstream.upgrade(partial(DownStreamTunnel, upstream))
-        self.start_response('200 Connection established', [])
+        self.start_response('200 Connection established',
+                            [('Content-Length', '0')])
         self._done = True
         # send empty byte so that headers are sent
         yield self.queue.put(b'')
@@ -235,11 +237,13 @@ class UpstreamTunnel(pulsar.ProtocolConsumer):
         self.downstream.transport.write(data)
                 
 
-def server(name='proxy-server', headers_middleware=None, **kwargs):
+def server(name='proxy-server', headers_middleware=None, server_software=None,
+           **kwargs):
     '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
         headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
     wsgi_proxy = ProxyServerWsgiHandler(headers_middleware)
+    kwargs['server_software'] = server_software or SERVER_SOFTWARE
     return wsgi.WSGIServer(wsgi_proxy, name=name, **kwargs)
 
 

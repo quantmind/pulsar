@@ -143,6 +143,7 @@ class SocketTransport(Transport):
         self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
         self._read_buffer = []
         self._conn_lost = 0
+        self._consecutive_writes = 0
         self._write_buffer = deque()
         self.logger = logger(event_loop)
         self._do_handshake()
@@ -163,12 +164,6 @@ class SocketTransport(Transport):
         '''The socket for this :class:`SocketTransport`.'''
         return self._sock
      
-    @property
-    def writing(self):
-        '''The :class:`SocketTransport` has data in the write buffer and it is
-        not :attr:`closed`.'''
-        return self._sock is not None and bool(self._write_buffer)
-    
     @property
     def closing(self):
         '''The transport is about to close. In this state the transport is not
@@ -217,7 +212,7 @@ class SocketTransport(Transport):
             except Exception:
                 pass
             self._event_loop.remove_reader(self._sock_fd)
-            if not async or not self.writing:
+            if not async or not self._write_buffer:
                 self._event_loop.call_soon(self._shutdown, exc)
     
     def abort(self, exc=None):
@@ -236,7 +231,8 @@ class SocketTransport(Transport):
         raise NotImplementedError
     
     def _check_closed(self):
-        if self.closed:
+        address = self.address
+        if not address:
             raise IOError("Transport is closed")
         elif self._closing:
             raise IOError("Transport is closing")

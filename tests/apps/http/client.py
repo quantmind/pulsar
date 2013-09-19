@@ -1,16 +1,21 @@
 '''Tests asynchronous HttpClient.'''
 import os
+import sys
+from functools import partial
 
-from pulsar import send, is_failure, NOT_DONE
-from pulsar.apps.test import unittest
+from pulsar import send, Failure
+from pulsar.apps.test import unittest, mute_failure
 from pulsar.utils import httpurl
-from pulsar.utils.httpurl import to_bytes, urlencode
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 
-def dodgyhook(response):
-    raise ValueError
+def dodgyhook(test, response):
+    try:
+        raise ValueError('Dodgy header hook')
+    except ValueError:
+        mute_failure(test, Failure(sys.exc_info()))
+        raise
 
 
 class TestHttpClientBase:
@@ -19,7 +24,6 @@ class TestHttpClientBase:
     with_tls = False
     proxy_app = None
     timeout = 10
-    _created_connections = 1
     
     @classmethod
     def setUpClass(cls):
@@ -52,7 +56,12 @@ class TestHttpClientBase:
             yield send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
             yield send('arbiter', 'kill_actor', cls.proxy_app.name)
-        
+    
+    @property
+    def tunneling(self):
+        '''When tunneling, the client needs to perform an extra request.'''
+        return int(self.with_proxy and self.with_tls)
+    
     def client(self, timeout=None, **kwargs):
         timeout = timeout or self.timeout
         if self.with_proxy:
@@ -63,12 +72,12 @@ class TestHttpClientBase:
         return HttpClient(timeout=timeout, **kwargs)
     
     def _check_pool(self, http, response, available=1, processed=1,
-                    created=None, pools=1):
+                    created=1, pools=1):
         #Test the connection pool
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
-            if created is None:
-                created = self._created_connections
+            # take into account for tunneling
+            processed += self.tunneling
             pool = http.connection_pools[response.request.key]
             self.assertEqual(pool.received, created)
             self.assertEqual(pool.available_connections, available)
@@ -102,16 +111,17 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
-class d:
     def test_dodgy_on_header_event(self):
         client = HttpClient()
-        response = client.get(self.httpbin(), on_headers=dodgyhook)
+        hook = partial(dodgyhook, self)
+        response = client.get(self.httpbin(), on_headers=hook)
         try:
             yield response.on_finished
         except ValueError:
             pass
         self.assertTrue(response.headers)
-        
+        self.assertIsInstance(response.on_headers.result, Failure)
+                
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -141,7 +151,7 @@ class d:
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 2)
+        self.assertEqual(response.connection.processed, 2+self.tunneling)
     
     def test_redirect_6(self):
         http = self.client()
@@ -154,7 +164,7 @@ class d:
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 7)
+        self.assertEqual(response.connection.processed, 7+self.tunneling)
         
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
@@ -300,8 +310,7 @@ class d:
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = http.post(self.httpbin('post'), data=data)
-        yield response.on_finished
+        response = yield http.post(self.httpbin('post'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.status, '200 OK')
         result = response.content_json()
@@ -312,8 +321,7 @@ class d:
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = http.put(self.httpbin('put'), data=data)
-        yield response.on_finished
+        response = yield http.put(self.httpbin('put'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.status, '200 OK')
         result = response.content_json()
@@ -324,8 +332,8 @@ class d:
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = http.patch(self.httpbin('patch'), data=data)
-        yield response.on_finished
+        response = yield http.patch(self.httpbin('patch'),
+                                    data=data).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.status, '200 OK')
         result = response.content_json()
@@ -354,8 +362,7 @@ class d:
         
     def test_stream_response(self):
         http = self.client()
-        response = http.get(self.httpbin('stream/3000/20'))
-        yield response.on_finished
+        response = yield http.get(self.httpbin('stream/3000/20')).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
         

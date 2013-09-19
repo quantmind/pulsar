@@ -1,16 +1,14 @@
 '''tests the httpurl stand-alone script.'''
-import os
 import time
 
 from pulsar.apps.test import unittest
-from pulsar.utils.httpurl import (urlencode, Headers, parse_cookie,
-                                  hexmd5, CacheControl,
+from pulsar.utils.httpurl import (Headers, parse_cookie, CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
                                   remove_double_slash, appendslash, capfirst,
                                   encode_multipart_formdata, http_date,
                                   cookiejar_from_dict)
 from pulsar.utils.pep import to_bytes, native_str, force_native_str
-from pulsar.apps.http import (Auth, HTTPBasicAuth, HTTPDigestAuth)
+from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
         
         
 class TestAuth(unittest.TestCase):

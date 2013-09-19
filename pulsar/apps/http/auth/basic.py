@@ -16,7 +16,7 @@ class Auth(object):
     '''Base class for managing authentication.
     '''
     type = None
-    def __call__(self, response, request):
+    def __call__(self, response):
         raise NotImplementedError
 
     def __str__(self):
@@ -28,7 +28,7 @@ class KeyAuth(Auth):
     def __init__(self, **params):
         self.params = params
         
-    def __call__(self, response, request):
+    def __call__(self, response):
         request.data.update(self.params)
 
 

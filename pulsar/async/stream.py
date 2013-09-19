@@ -21,6 +21,7 @@ import sys
 import socket
 from functools import partial
 
+from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
@@ -28,11 +29,16 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
-from .defer import multi_async, Deferred, Failure
+from .defer import multi_async, Deferred
 from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
+MAX_CONSECUTIVE_WRITES = 50
+
+class TooManyConsecutiveWrite(PulsarException):
+    '''Raise when too many consecutive writes are attempted.'''
+
 
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
@@ -89,21 +95,29 @@ be accumulating data in an internal buffer.'''
         if not data:
             return
         self._check_closed()
-        writing = self.writing
+        is_writing = bool(self._write_buffer)
         if data:
+            # Add data to the buffer
             assert isinstance(data, bytes)
             if len(data) > WRITE_BUFFER_MAX_SIZE:
                 for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
                     self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
+        if self._paused_writing:
+            return
         # Try to write only when not waiting for write callbacks
-        if not writing and not self._paused_writing:
+        if not is_writing:
+            self._consecutive_writes = 0
             self._ready_write()
-            if self.writing:    # still writing
+            if self._write_buffer:    # still writing
                 self._event_loop.add_writer(self._sock_fd, self._ready_write)
             elif self._closing:
                 self._event_loop.call_soon(self._shutdown)
+        else:
+            self._consecutive_writes += 1
+            if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
+                self.abort(TooManyConsecutiveWrite())
                 
     def writelines(self, list_of_data):
         """Write a list (or any iterable) of data bytes to the transport."""
@@ -115,7 +129,7 @@ be accumulating data in an internal buffer.'''
         
     def _read_continue(self, e):
         return e.args[0] == EWOULDBLOCK
-        
+            
     def _ready_write(self):
         # Do the actual writing
         buffer = self._write_buffer
@@ -127,7 +141,7 @@ be accumulating data in an internal buffer.'''
         try:
             while buffer:
                 try:
-                    sent = self.sock.send(buffer[0])
+                    sent = self._sock.send(buffer[0])
                     if sent == 0:
                         break
                     merge_prefix(buffer, sent)
@@ -139,14 +153,15 @@ be accumulating data in an internal buffer.'''
                     else:
                         raise
         except Exception:
-            if not self._closing:
-                self.abort(Failure(sys.exc_info()))
+            failure = sys.exc_info()
         else:
-            if not self.writing:
+            if not self._write_buffer:
                 self._event_loop.remove_writer(self._sock_fd)
                 if self._closing:
                     self._event_loop.call_soon(self._shutdown)
             return tot_bytes
+        if not self._closing:
+            self.abort(failure)
     
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -174,11 +189,13 @@ be accumulating data in an internal buffer.'''
                     finally:
                         self.close()
                 passes += 1
-        except self.SocketError as e:
-            if not self._closing:
-                self.abort(Failure(sys.exc_info()))
+            return
+        except self.SocketError:
+            failure = None if self._closing else sys.exc_info()
         except Exception:
-            self.abort(Failure(sys.exc_info()))
+            failure = sys.exc_info()
+        if failure:
+            self.abort(failure)
             
     def mute_read_error(self, error):
         '''Return ``True`` if a socket error from a read operation is muted.
@@ -199,7 +216,9 @@ class SocketStreamSslTransport(SocketStreamTransport):
                                          do_handshake_on_connect=False,
                                          server_hostname=server_hostname)
         self._rawsock = rawsock
+        # waiting for reading handshake
         self._handshake_reading = False
+        # waiting for writing handshake
         self._handshake_writing = False
         super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
                                                        protocol, **kwargs)
@@ -211,41 +230,33 @@ class SocketStreamSslTransport(SocketStreamTransport):
         This is the socket not wrapped by the sslcontext.
         '''
         return self._rawsock
-    
+            
     def _write_continue(self, e):
         return e.errno == ssl.SSL_ERROR_WANT_WRITE
         
     def _read_continue(self, e):
         return e.errno in (SSLV3_ALERT_CERTIFICATE_UNKNOWN,
                            ssl.SSL_ERROR_WANT_READ)
-    
+                
     def _do_handshake(self):
         loop = self._event_loop
         try:
             self._sock.do_handshake()
         except self.SocketError as e:
             if self._read_continue(e):
-                self._handshake_reading = True
                 loop.remove_reader(self._sock_fd)
+                self._handshake_reading = True
                 loop.add_reader(self._sock_fd, self._do_handshake)
+                return
             elif self._write_continue(e):
-                self._handshake_writing = True
                 loop.remove_writer(self._sock_fd)
+                self._handshake_writing = True
                 loop.add_writer(self._sock_fd, self._do_handshake)
-            elif e.errno == ssl.SSL_ERROR_SSL:
-                try:
-                    peer = self._sock.getpeername()
-                except Exception:
-                    peer = '(not connected)'
-                failure = Failure(sys.exc_info())
-                failure.log(msg="SSL Error on fd %d %s: %s" % (
-                                                self._sock_fd, peer, e),
-                            log = self.logger, level='warning')
-                self.abort(failure)
+                return
             else:
-                self.abort(Failure(sys.exc_info()))
+                raise
         except Exception:
-            self.abort(Failure(sys.exc_info()))
+            failure = sys.exc_info()
         else:
             loop = self._event_loop
             if self._handshake_reading:
@@ -259,6 +270,8 @@ class SocketStreamSslTransport(SocketStreamTransport):
             self._handshake_reading = False
             self._handshake_writing = False
             self._event_loop.call_soon(self._protocol.connection_made, self)
+            return
+        self.abort(failure)
 
 
 class TcpServer(Server):

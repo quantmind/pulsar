@@ -18,8 +18,8 @@ def _post_request(worker, response):
     pass
     
     
-def when_ready(worker):
-    worker.event_loop.call_repeatedly(5, check_failures)
+#def when_ready(worker):
+#    worker.event_loop.call_repeatedly(5, check_failures)
     
 def check_failures():
     n = 0

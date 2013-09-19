@@ -9,6 +9,12 @@ module.
 Writing the Client
 =========================
 
+There are two classes we need to implement in order to have a flexible client
+for Echo servers. The first class implements the
+:class:`pulsar.ProtocolConsumer` as it is described in the next session, while
+the second class implements the :class:`pulsar.Client` which is a thread safe
+pool of connections to remote servers.
+
 The protocol consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -30,8 +36,9 @@ clients handling multiple requests. Here we subclass the :class:`pulsar.Client`
 and implement the :class:`Echo.request` method. :class:`Echo` is the main
 client class, used in all interactions with the echo server::
 
-    >>> client = Echo(('127,0,0,1', 8080))
-    >>> response = client.request(b'Hello!')
+    >>> pool = Echo()
+    >>> echo = pool.client(('127,0,0,1', 8080))
+    >>> response = echo(b'Hello!')
 
 
 Run The example
@@ -44,14 +51,14 @@ To run the server::
 Open a new shell, in this directory, launch python and type::
 
     >>> from manage import Echo
-    >>> p = Echo('localhost:8060', force_sync=True)
+    >>> echo = Echo(force_sync=True).client(('localhost',8060))
     
 The `force_sync` set to ``True``, force the client to wait for results rather
 than returning a :class:`pulsar.Deferred`.
 Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial
 for further information.
 
-    >>> p.request(b'Hello')
+    >>> echo(b'Hello')
     b'Hello'
     
 Implementation
@@ -84,13 +91,15 @@ Echo Server
 .. autofunction:: server
 
 '''
+from functools import partial
+
 try:
     import pulsar
 except ImportError: #pragma nocover
     import sys
-    sys.path.append('../../')
+    sys.path.append('../../')    
+    import pulsar
     
-import pulsar
 from pulsar.apps.socket import SocketServer
 
 
@@ -100,15 +109,15 @@ The only difference between client and server is the implementation of the
 :meth:`response` method.'''
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
-    
-    def __init__(self, *args, **kwargs):
-        super(EchoProtocol, self).__init__(*args, **kwargs)
-        self.buffer = b''        
+    buffer = b''
+    '''The buffer for long messages'''
     
     def data_received(self, data):
         '''Implements the :meth:`pulsar.Protocol.data_received` method.
-It simply search for the :attr:`separator` and, if found, it invokes the
-:meth:`response` method with the value of the message.'''
+        
+        It simply search for the :attr:`separator` and, if found, it invokes
+        the :meth:`response` method with the value of the message.
+        '''
         idx = data.find(self.separator)
         if idx >= 0: # we have a full message
             idx += len(self.separator)
@@ -117,7 +126,7 @@ It simply search for the :attr:`separator` and, if found, it invokes the
             self.finished()
             return rest
         else:
-            self.buffer += data
+            self.buffer = self.buffer + data
     
     def start_request(self):
         '''Override :meth:`pulsar.Protocol.start_request` to write
@@ -148,25 +157,29 @@ class EchoServerProtocol(EchoProtocol):
 class Echo(pulsar.Client):
     '''Echo :class:`pulsar.Client`.
     
-.. attribute:: full_response
-
-    Flag indicating if the :meth:`request` method should return the
-    :class:`EchoProtocol` handling the request (``True``) or a :class:`Deferred`
-    which will result in the server response message (``False``).
+    .. attribute:: full_response
     
-    Default: ``False``
-'''
+        Flag indicating if the :meth:`request` method should return the
+        :class:`EchoProtocol` handling the request (``True``) or a
+        :class:`Deferred` which will result in the server response message
+        (``False``).
+        
+        Default: ``False``
+    '''
     consumer_factory = EchoProtocol
 
-    def __init__(self, address, full_response=False, **params):
-        super(Echo, self).__init__(**params)
+    def setup(self, full_response=False, **params):
         self.full_response = full_response
-        self.address = address
-
-    def request(self, message):
-        '''Build the client request and return a :class:`pulsar.Deferred`
-which will be called once the server has sent back its response.'''
-        request = pulsar.Request(self.address, self.timeout)
+    
+    def client(self, address):
+        '''Utility for returning a function which interact with one server.
+        '''
+        return partial(self.request, address)
+    
+    def request(self, address, message):
+        '''Build the client request send it to the server.
+        '''
+        request = pulsar.Request(address, self.timeout)
         request.message = message
         response = self.response(request)
         if self.full_response:

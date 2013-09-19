@@ -1,7 +1,6 @@
 '''Tests asynchronous HttpClient.'''
 import socket
 
-from pulsar import is_failure
 from pulsar.apps.test import unittest
 from pulsar.apps.http import HttpClient, URLError
 

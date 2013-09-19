@@ -3,7 +3,6 @@ from . import client
 class TestTlsHttpClientWithProxy(client.TestHttpClient):
     with_proxy = True
     with_tls = True
-    _created_connections = 2
     
     def after_test_home_page(self, response):
         request = response.request

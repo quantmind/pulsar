@@ -28,15 +28,8 @@ LOG_LEVELS = {
     'none': None
 }
 
-def install_new_log_level(level, name):
-    logging.addLevelName(level, name.upper())
-    new_log = lambda self, msg, *args, **kws: self._log(level, msg, args, **kws)
-    name = name.lower()
-    setattr(logging.Logger, name, new_log)
-    LOG_LEVELS[name] = level
-
-install_new_log_level(5, 'subdebug')
-
+def configure_logging(logger='pulsar', **kw):
+    LogginMixin().configure_logging(logger=logger, **kw)
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -241,4 +234,4 @@ process domain).'''
                           'level': level,
                           'handlers': handlers,
                           'config': config}
-        self.local.logger = logging.getLogger(logger)        
+        self.local.logger = logging.getLogger(logger)

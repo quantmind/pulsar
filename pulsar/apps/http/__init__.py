@@ -257,16 +257,25 @@ class HttpRequest(pulsar.Request):
     @property
     def address(self):
         '''``(host, port)`` tuple of the HTTP resource'''
+        return self._tunnel if self._tunnel else (self.host, self.port)
+    
+    @property
+    def target_address(self):
         return (self.host, int(self.port))
     
     @property
     def ssl(self):
-        '''Context for TLS connections.'''
-        return False if self._proxy else self._ssl
+        '''Context for TLS connections.
+        
+        If this is a tunneled request and the tunnel connection is not yet
+        established, it returns ``None``.
+        '''
+        if not self._tunnel:
+            return self._ssl
 
     @property
     def key(self):
-        return (self.scheme, self.address, self.timeout)
+        return (self.scheme, self.host, self.port, self.timeout)
     
     @property
     def proxy(self):
@@ -326,20 +335,23 @@ class HttpRequest(pulsar.Request):
         
     def set_proxy(self, scheme, *host):
         if not host and scheme is None:
-            self._proxy = None
-            self._set_hostport(self._scheme, self._netloc)
             self.scheme = self._scheme
+            self._set_hostport(self._scheme, self._netloc)
         else:
             le = 2 + len(host)
             if not le == 3:
                 raise TypeError(
                     'set_proxy() takes exactly three arguments (%s given)' % le)
-            self._proxy = scheme_host(scheme, host[0])
             if not self._ssl:
                 self.scheme = scheme
-            self._set_hostport(scheme, host[0])
+                self._set_hostport(scheme, host[0])
+                self._proxy = scheme_host(scheme, host[0])
+            else:
+                self._tunnel = get_hostport(scheme, host[0])
     
     def _set_hostport(self, scheme, host):
+        self._tunnel = None
+        self._proxy = None
         self.host, self.port = get_hostport(scheme, host)
         
     def encode(self):
@@ -557,13 +569,17 @@ class HttpResponse(pulsar.ProtocolConsumer):
         self.transport.write(self._request.encode())
         
     def data_received(self, data):
+        if not self._request:
+            print('Got data with no request')
+            print('%s' % data)
+            print(self)
         if self._request.parser.execute(data, len(data)) == len(data):
             if self._request.parser.is_headers_complete():
                 if not self.event('on_headers').done():
-                    self.fire_event('on_headers', callback=self._continue,
-                                    errback=self._on_headers_error)
-                else:
-                    self._continue(self)
+                    self.fire_event('on_headers')
+                if (not self.has_finished and
+                    self._request.parser.is_message_complete()):
+                    return self.finished()
         else:
             raise pulsar.ProtocolError
         
@@ -574,15 +590,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 return self.new_request(self.next_url)
             return self
     
-    def _continue(self, result):
-        if not self.has_finished and self._request.parser.is_message_complete():
-            return self.finished(result)
-        return result
-    
-    def _on_headers_error(self, failure):
-        self.on_headers.add_errback(self.finished)
-        return failure
-        
 
 class HttpClient(pulsar.Client):
     '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
@@ -628,7 +635,7 @@ class HttpClient(pulsar.Client):
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
-    client_version = 'Python-httpurl'
+    client_version = 'pulsar-%s' % pulsar.version
     '''String for the ``User-Agent`` header.'''
     version = 'HTTP/1.1' 
     '''Default HTTP request version for this :class:`HttpClient`.
@@ -791,7 +798,8 @@ class HttpClient(pulsar.Client):
                 url = request.full_url
             request = self._build_request(method, url, new_response, params)
         #
-        return self.response(request, new_response)
+        connection = new_response.connection or response.connection 
+        return self.response(request, new_response, connection=connection)
         
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.

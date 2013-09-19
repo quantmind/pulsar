@@ -281,21 +281,23 @@ loop of the thread where it is run.'''
 Return the future's result, or raise its exception. If timeout is not
 ``None``, run it for at most that long;  if the future is still not done,
 raise TimeoutError (but don't cancel the future).'''
-        self.call_soon(future.add_both, self._raise_stop_event_loop)
-        handler = None
-        if timeout:
-            handler = self.call_later(timeout, self._raise_stop_event_loop)
-        self.run()
-        if handler:
-            if future.done():
-                handler.cancel()
+        if not self.is_running():
+            self.call_soon(future.add_both, self._raise_stop_event_loop)
+            handler = None
+            if timeout:
+                handler = self.call_later(timeout, self._raise_stop_event_loop)
+            self.run()
+            if handler:
+                if future.done():
+                    handler.cancel()
+                else:
+                    raise TimeoutError
+            future.cancel()
+            result = future.result
+            if isinstance(result, Failure):
+                result.throw()
             else:
-                raise TimeoutError
-        result = future.result
-        if isinstance(result, Failure):
-            result.throw()
-        else:
-            return result
+                return result
     
     def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
@@ -603,7 +605,8 @@ if we are calling from the same thread of execution as this
         self.tid = None
         
     def _raise_stop_event_loop(self, exc=None):
-        raise StopEventLoop
+        if self.is_running():
+            raise StopEventLoop
 
     def _check_signal(self, sig):
         """Internal helper to validate a signal.

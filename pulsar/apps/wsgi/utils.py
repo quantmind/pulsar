@@ -15,7 +15,8 @@ from pulsar import Failure, get_actor
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
-                                  parse_qsl, HTTPError, parse_dict_header)
+                                  parse_qsl, HTTPError, parse_dict_header,
+                                  JSON_CONTENT_TYPES)
                                  
 from .structures import Accept, RequestCacheControl
 from .content import Html
@@ -26,6 +27,9 @@ __all__ = ['handle_wsgi_error',
            'wsgi_request',
            'set_wsgi_request_class',
            'HOP_HEADERS']
+
+DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
+                                  ) + JSON_CONTENT_TYPES
 
 HOP_HEADERS = frozenset((
         'connection',
@@ -216,13 +220,13 @@ def handle_wsgi_error(environ, failure):
     else:
         response.status_code = getattr(error, 'status', 500)
         response.headers.update(getattr(error, 'headers', None) or ())
-    path = ' @ path "%s"' % environ.get('PATH_INFO','/')
+    path = '@ path "%s"' % environ.get('PATH_INFO','/')
     status = response.status_code
     if status == 500:
         failure.log(msg='Unhandled exception during WSGI response %s.%s' %
                     (path, dump_environ(environ)), level='critical')
     else:
-        failure.log(msg='WSGI %s status code %s.' % (status, path),
+        failure.log(msg='WSGI %s status code %s' % (status, path),
                     level='warning')
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         content = None
@@ -244,6 +248,9 @@ def render_error(request, exc_info):
     '''Default renderer for errors.''' 
     debug = get_actor().cfg.debug
     response = request.response
+    if not response.content_type:
+         response.content_type = request.content_types.best_match(
+            DEFAULT_RESPONSE_CONTENT_TYPES)
     if response.content_type == 'text/html':
         request.html_document.head.title = response.status
     if debug:
@@ -256,7 +263,7 @@ def render_error(request, exc_info):
                 {0[msg]}
                 <h3>{0[version]}</h3>
             """).format({"reason": response.status, "msg": msg,
-                         "version": pulsar.SERVER_SOFTWARE})
+                         "version": request.environ['SERVER_SOFTWARE']})
     #
     if response.content_type == 'text/html':
         doc = request.html_document

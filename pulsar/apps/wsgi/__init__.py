@@ -63,7 +63,8 @@ from .auth import *
 class WSGIServer(SocketServer):
     '''A wsgi :class:`pulsar.apps.socket.SocketServer`.'''
     name = 'wsgi'
-    cfg = pulsar.Config(apps=['socket', 'wsgi'])
+    cfg = pulsar.Config(apps=['socket', 'wsgi'],
+                        server_software=pulsar.SERVER_SOFTWARE)
 
     def protocol_consumer(self):
         '''Build the :class:`pulsar.ProtocolConsumer` factory.
@@ -71,4 +72,5 @@ class WSGIServer(SocketServer):
         It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
         protocol consumer and the wsgi callable provided as parameter during
         initialisation.'''
-        return partial(HttpServerResponse, self.callable, self.cfg)
+        c = self.cfg
+        return partial(HttpServerResponse, self.callable, c, c.server_software)
