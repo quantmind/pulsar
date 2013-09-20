@@ -93,7 +93,7 @@ class OneTime(Deferred, Event):
             self._pause_counter -= 1
             return
         if self._events.done():
-            logger().error('Event "%s" already fired for %s', self.name, arg)
+            logger().warning('Event "%s" already fired for %s', self.name, arg)
         else:
             assert not kwargs, ("One time events can don't support key-value "
                                 "parameters")

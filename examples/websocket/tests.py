@@ -37,6 +37,23 @@ class TestWebSocketThread(unittest.TestCase):
         if cls.app is not None:
             yield send('arbiter', 'kill_actor', cls.app.name)
     
+    def test_upgrade(self):
+        c = HttpClient()
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        response = ws.handshake 
+        self.assertEqual(response.status_code, 101)
+        self.assertEqual(response.headers['upgrade'], 'websocket')
+        self.assertEqual(ws.connection, response.connection)
+        self.assertEqual(ws.handler, handler)
+        self.assertEqual(response, ws.upgraded[0])
+        self.assertFalse(ws.request_done.done())
+        # Send a message to the websocket
+        ws.write('Hi there!')
+        message = yield handler.get()
+        self.assertEqual(message, 'Hi there!')
+        
+class d:
     def testHyBiKey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
@@ -62,7 +79,7 @@ class TestWebSocketThread(unittest.TestCase):
     def test_upgrade(self):
         c = HttpClient()
         handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_finished
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')

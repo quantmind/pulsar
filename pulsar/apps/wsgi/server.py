@@ -39,16 +39,15 @@ MAX_CHUNK_SIZE = 65536
 
 def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
                       secure=False):
-    '''An utility function for creating a WSGI environment dictionary
-for testing purposes.
-    
-:param url: the resource in the ``PATH_INFO``.
-:param method: the ``REQUEST_METHOD``.
-:param headers: optional request headers
-:params secure: a secure connection?
-:param extra: optional dictionary of additional key-valued parameters to add.
-:return: a valid WSGI environ dictionary.
-'''
+    '''An function to create a WSGI environment dictionary for testing.
+        
+    :param url: the resource in the ``PATH_INFO``.
+    :param method: the ``REQUEST_METHOD``.
+    :param headers: optional request headers
+    :params secure: a secure connection?
+    :param extra: additional dictionary of parameters to add.
+    :return: a valid WSGI environ dictionary.
+    '''
     parser = http_parser(kind=0)
     method = (method or 'GET').upper()
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
@@ -167,7 +166,12 @@ def keep_alive_with_status(status, headers):
     
 
 class HttpServerResponse(ProtocolConsumer):
-    '''Server side HTTP :class:`pulsar.ProtocolConsumer`.'''
+    '''Server side WSGI :class:`pulsar.ProtocolConsumer`.
+
+    .. attribute:: wsgi_callable
+
+        The wsgi callable handling requests.
+    '''
     _status = None
     _headers_sent = None
     _request_headers = None
@@ -184,9 +188,11 @@ class HttpServerResponse(ProtocolConsumer):
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
         
     def data_received(self, data):
-        '''Implements :class:`pulsar.Protocol.data_received`. Once we have a
-full HTTP message, build the wsgi ``environ`` and write the response
-using the :meth:`pulsar.Transport.writelines` method.'''
+        '''Implements :class:`pulsar.ProtocolConsumer.data_received` method.
+
+        Once we have a full HTTP message, build the wsgi ``environ`` and
+        delegate the response to the :func:`wsgi_callable` function.
+        '''
         p = self.parser
         request_headers = self._request_headers
         if p.execute(bytes(data), len(data)) == len(data):
@@ -237,28 +243,29 @@ the following algorithm:
 
     def start_response(self, status, response_headers, exc_info=None):
         '''WSGI compliant ``start_response`` callable, see pep3333_.
-The application may call start_response more than once, if and only
-if the ``exc_info`` argument is provided.
-More precisely, it is a fatal error to call ``start_response`` without the
-``exc_info`` argument if start_response has already been called within
-the current invocation of the application.
 
-:parameter status: an HTTP ``status`` string like ``200 OK`` or
-    ``404 Not Found``.
-:parameter response_headers: a list of ``(header_name, header_value)`` tuples.
-    It must be a Python list. Each header_name must be a valid HTTP header
-    field-name (as defined by RFC 2616_, Section 4.2), without a trailing
-    colon or other punctuation.
-:parameter exc_info: optional python ``sys.exc_info()`` tuple. This argument
-    should be supplied by the application only if start_response is being
-    called by an error handler.
-:return: The :meth:`write` method.
+        The application may call start_response more than once, if and only
+        if the ``exc_info`` argument is provided.
+        More precisely, it is a fatal error to call ``start_response`` without
+        the ``exc_info`` argument if start_response has already been called
+        within the current invocation of the application.
 
-``HOP_HEADERS`` are not considered but no error is raised.
+        :parameter status: an HTTP ``status`` string like ``200 OK`` or
+            ``404 Not Found``.
+        :parameter response_headers: a list of ``(header_name, header_value)``
+            tuples. It must be a Python list. Each header_name must be a valid
+            HTTP header field-name (as defined by RFC 2616_, Section 4.2),
+            without a trailing colon or other punctuation.
+        :parameter exc_info: optional python ``sys.exc_info()`` tuple.
+            This argument should be supplied by the application only if
+            ``start_response`` is being called by an error handler.
+        :return: The :meth:`write` method.
 
-.. _pep3333: http://www.python.org/dev/peps/pep-3333/
-.. _2616: http://www.faqs.org/rfcs/rfc2616.html
-'''
+        ``HOP_HEADERS`` are not considered but no error is raised.
+
+        .. _pep3333: http://www.python.org/dev/peps/pep-3333/
+        .. _2616: http://www.faqs.org/rfcs/rfc2616.html
+        '''
         if exc_info:
             try:
                 if self._headers_sent:
@@ -288,16 +295,17 @@ the current invocation of the application.
         return self.write
 
     def write(self, data, force=False):
-        '''The write function which is returned by the :meth:`start_response`
-method as required by the WSGI specification.
+        '''The write function returned by the :meth:`start_response` method.
 
-:param data: bytes to write
-:param force: Optional flag used internally.
-'''
+        Required by the WSGI specification.
+
+        :param data: bytes to write
+        :param force: Optional flag used internally.
+        '''
         if not self._headers_sent:
             tosend = self.get_headers()
-            self.fire_event('on_headers')
             self._headers_sent = tosend.flat(self.version, self.status)
+            self.fire_event('on_headers')
             self.transport.write(self._headers_sent)
         if data:
             if self.chunked:
@@ -379,8 +387,8 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
             return self.content_length is None
 
     def get_headers(self):
-        '''Get the headers to send only if *force* is ``True`` or this
-is an HTTP upgrade (websockets)'''
+        '''Get the headers to send to the client.
+        '''
         if not self._status:
             # we are sending headers but the start_response was not called
             raise HttpException('Headers not set.')
