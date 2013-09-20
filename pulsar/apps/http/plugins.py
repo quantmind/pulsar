@@ -18,12 +18,15 @@ class WebSocketClient(WebSocketProtocol):
     
     @property
     def request(self):
-        return self.handshake.request
+        return self.handshake._request
     
-    @property
-    def headers(self):
-        return self.handshake.headers
-    
+    def __getattr__(self, name):
+        if not name.startswith('__'):
+            return getattr(self.handshake, name)
+        else:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+            
 
 def handle_redirect(response):
     if (response.status_code in REDIRECT_CODES and
@@ -176,6 +179,6 @@ class Tunneling:
         connection._transport = transport
         # pause connection made since it will be called again when the
         # ssl handshake occurs
-        connection.pause_event('connection_made')
+        connection.silence_event('connection_made')
         client.response(request, response, connection=connection)
         

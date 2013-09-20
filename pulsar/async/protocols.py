@@ -29,20 +29,21 @@ class ProtocolConsumer(EventHandler):
         to implement.
         For client consumers, :meth:`start_request` should also be implemented.
     
-    It has three :ref:`one time events <one-time-event>`:
+    A :class:`ProtocolConsumer` is a subclass of :class:`EventHandler` and it
+    has two default :ref:`one time events <one-time-event>`:
     
     * ``pre_request`` fired when the request is received (for servers) or
       just before is sent (for clients).
       This occurs just before the :meth:`start_request` method.
     * ``post_request`` fired when the request is done. The
       :attr:`on_finished` attribute is the
-      :class:`Deferred` called back when this event occurs.
+      :class:`Deferred` called back once this event occurs.
     
-    and two :ref:`many times events <many-times-event>`:
+    In addition, it has two default :ref:`many times events <many-times-event>`:
     
-    * ``data_received`` fired when new data is received but not yet processed
-      (before :meth:`data_received` method is invoked)
-    * ``data_processed`` fired when new data has been consumed (after
+    * ``data_received`` fired when new data is received from the transport but
+      not yet processed (before the :meth:`data_received` method is invoked)
+    * ``data_processed`` fired just after data has been consumed (after the
       :meth:`data_received` method)
       
     .. note::
@@ -181,9 +182,15 @@ class ProtocolConsumer(EventHandler):
         
         fires the ``post_request`` event and removes ``self`` from the
         :attr:`connection`.
+        
+        :param result: the positional parameter passed to the ``post_request``
+            event handler.
+        :return: whatever is returned by the ``:meth:`EventHandler.fire_event`
+            method (usually ``self`` is the input ``result`` is ``None``,
+            otherwise the input ``result``)
         '''
-        self.fire_event('post_request', result)
-        self.cancel_one_time_events(exclude=('post_request',))
+        result = self.fire_event('post_request', result)
+        #self.cancel_one_time_events(exclude=('post_request',))
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
@@ -441,15 +448,16 @@ class Connection(EventHandler, Protocol):
                 log_failure(exc)
                              
     def upgrade(self, consumer_factory, build_consumer=False):
-        '''Upgrade the :attr:`consumer_factory` attribute.
+        '''Upgrade the :func:`consumer_factory` callable.
         
-        This function can be used when the protocol specification changes
+        This method can be used when the protocol specification changes
         during a response (an example is a WebSocket request/response,
         or HTTP tunneling). For the upgrade to be successful, the
-        ``post_request`` event of the protocol consumer should not have
-        been fired already.
+        ``post_request`` :ref:`event <event-handling>` of the protocol
+        consumer should not have been fired already.
 
-        :param consumer_factory: the new consumer factory.
+        :param consumer_factory: the new consumer factory (a callable accepting
+            no parameters)
         :param build_consumer: if ``True`` build the new consumer.
             Default ``False``.
         :return: the new consumer if ``build_consumer`` is ``True``.
@@ -458,7 +466,7 @@ class Connection(EventHandler, Protocol):
         if consumer and not consumer.event('post_request').done():
             assert consumer.event('pre_request').done(), "pre_request not done"
             # so that post request won't be fired when the consumer finishes
-            consumer.pause_event('post_request')
+            consumer.silence_event('post_request')
             self._processed -= 1
             self._consumer_factory = partial(self._upgrade, consumer_factory,
                                              consumer)
@@ -488,7 +496,7 @@ class Connection(EventHandler, Protocol):
     def _upgrade(self, consumer_factory, old_consumer):
         # A factory of protocol for an upgrade of an existing protocol consumer
         # which didn't have the post_request event fired.
-        consumer = consumer_factory()
+        consumer = self.producer.build_consumer(consumer_factory)
         consumer.chain_event(old_consumer, 'post_request')
         return consumer
     
@@ -538,10 +546,12 @@ class Producer(EventHandler):
         By default it returns ``True``.'''
         return True
 
-    def build_consumer(self):
+    def build_consumer(self, consumer_factory=None):
         '''Build a consumer for a connection.
         
         **Must be implemented by subclasses.
+        
+        :param consumer_factory: optional consumer factory to use.
         '''
         raise NotImplementedError
 
@@ -688,7 +698,7 @@ class Server(ConnectionProducer):
         '''The protocol factory for a server.'''
         return self.new_connection(self.build_consumer)
         
-    def build_consumer(self):
+    def build_consumer(self, consumer_factory=None):
         '''Build a protocol consumer.
         
         Uses the :meth:`consumer_factory` to build the consumer and add
@@ -696,7 +706,8 @@ class Server(ConnectionProducer):
         
         :return: a protocol consumer.
         '''
-        consumer = self.consumer_factory()
+        consumer_factory = consumer_factory or self.consumer_factory
+        consumer = consumer_factory()
         consumer.copy_many_times_events(self)
         return consumer
         

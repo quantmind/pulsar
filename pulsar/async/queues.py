@@ -98,6 +98,9 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 item = Deferred(event_loop=self._event_loop, timeout=timeout)
                 self._waiting.append(item)
         try:
+            empty = False
             yield item
         except CancelledError:
+            empty = True
+        if empty:
             raise Empty

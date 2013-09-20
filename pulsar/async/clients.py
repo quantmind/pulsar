@@ -398,12 +398,17 @@ class Client(Producer):
         #TODO: What is this?
         return hash((address, timeout))
     
-    def build_consumer(self, connection=None):
-        '''Build a protocol consumer for a new request.'''
-        response = self.consumer_factory()
-        response.copy_many_times_events(self)
-        response.bind_event('post_request', release_response_connection)
-        return response
+    def build_consumer(self, consumer_factory=None):
+        '''Override the :meth:`Producer.build_consumer` method.
+        
+        Add a ``post_request`` handler to release the connection back to
+        the connection pool.
+        '''
+        consumer_factory = consumer_factory or self.consumer_factory
+        consumer = consumer_factory()
+        consumer.copy_many_times_events(self)
+        consumer.bind_event('post_request', release_response_connection)
+        return consumer
         
     def request(self, *args, **params):
         '''Abstract method for creating a :class:`Request`.
@@ -450,7 +455,7 @@ class Client(Producer):
             # pre request event already fired, this is an updated request
             # TODO: document this feature.
             # Used by redis client for example
-            response.pause_event('pre_request')
+            response.silence_event('pre_request')
             response._request = request
         else:   # A new request
             event_loop.call_now_threadsafe(self._response, event_loop,

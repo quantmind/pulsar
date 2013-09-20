@@ -178,6 +178,16 @@ class WebSocketProtocol(ProtocolConsumer):
         self.transport.write(frame.msg)
         if frame.is_close:
             self.finish()
+            
+    def ping(self, body=None):
+        '''Write a ping ``frame``.
+        '''
+        self.write(self.parser.ping(body))
+        
+    def pong(self, body=None):
+        '''Write a pong ``frame``.
+        '''
+        self.write(self.parser.pong(body))
 
     def _shut_down(self, result):
         # Callback for _post_request. Must return the result

@@ -9,10 +9,11 @@ The request is a single object serialized using JSON.
 
 The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
+import sys
 import json
 from functools import partial
 
-from pulsar import async, Failure, multi_async
+from pulsar import async, Failure, multi_async, maybe_failure
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import range
@@ -78,19 +79,25 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             #
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
-        except Exception as e:
-            result = Failure.make(e)
+        except Exception:
+            result = sys.exc_info()
         #
+        result = maybe_failure(result)
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if isinstance(result, Failure):
             msg = None
             error = result.error
+            code = getattr(error, 'fault_code', -32603)
             if isinstance(error, TypeError):
                 msg = checkarity(callable, args, kwargs, discount=1)
             msg = msg or str(error) or 'JSON RPC exception'
-            result = {'code': getattr(error, 'fault_code', -32603),
+            if code == -32603:
+                result.log(msg=msg, level='critical')
+            else:
+                result.log(msg=msg, level='warning')
+            result = {'code': code,
                       'message': msg,
-                      'data': getattr(error,'data','')}
+                      'data': getattr(error, 'data','')}
             request.response.status_code = getattr(error, 'status', 500)
             res['error'] = result
         else:

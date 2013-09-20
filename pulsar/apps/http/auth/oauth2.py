@@ -1,85 +1,29 @@
-from ouathlib import oauth2
+from oauthlib import oauth2
 
-from pulsar.utils.httpurl import urlencode, to_bytes
-
-from .oauth1 import OAuth, parse_qs
+from .oauth1 import OAuth
 
 
 class OAuth2(OAuth):
-    '''OAuth version 2. This is a two legs authorisation process with the
-    aim to obtain an access token used to sign requests.
+    '''Construct a new OAuth 2 authorisation object.
 
-    * The client requests authorization from the resource owner. The client
-      receives an authorization grant which is a credential representing the
-      resource owner's authorization.
-    * The client requests an access token by authenticating with the
-      authorization server and presenting the authorization grant.
-
-    Check oauth2_ for more information.
-
-    .. specification: http://tools.ietf.org/html/draft-ietf-oauth-v2
-    .. oauth2: http://oauth.net/
+        :param client_id: Client id obtained during registration
+        :param client: :class:`oauthlib.oauth2.Client` to be used. Default is
+                       WebApplicationClient which is useful for any
+                       hosted application but not mobile or desktop.
+        :param token: Token dictionary, must include access_token
+                      and token_type.
     '''
-    def __init__(self, client):
-        self._client = client
-    
-    @classmethod
-    def client(cls, client_id, **params):
-        client = oauth2.Client(client_id, **params)
-        return cls(client)
-        
-    @classmethod
-    def webclient(cls, client_id, **params):
-        client = oauth2.WebApplicationClient(client_id, **params)
-        return cls(client)
-    
-    @property
-    def version(self):
-        return '2.0'
+    def __init__(self, client_id=None, client=None, token=None):
+        self._client = client or oauth2.WebApplicationClient(client_id,
+                                                             token=token)
+        if token:
+            for k, v in token.items():
+                setattr(self._client, k, v)
 
-    def autheticate(self, callback_url=None, **kwargs):
-        url = self.fetch_authentication_uri(callback_url=callback_url, **kwargs)
-        raise HttpRedirect(url)
-        
-    def authorisation_parameters(self, callback_url=None, state=None,
-                                 response_type=None):
-        '''Parameters used to construct the URI for the authorization request.
-Check *Authorization Request* section 4.1.1'''
-        client = self.consumer
-        p = {'client_id': client.id,
-             'response_type': response_type or 'code',
-             'state': state or ''}
-        p['scope'] = client.scope or self.default_scope
-        if callback_url:
-            p['redirect_uri'] = callback_url
-        return p
-
-    def authorisation_response(self, data, state=None):
-        if state:
-            if data.get('state') != state:
-                raise OAuthError('state parameter in authorisation response'
-                                 ' does not match request')
-        if 'code' in data:
-            code = data['code']
-            data = {'code': data['code'],
-                    'client_id': self.consumer.id,
-                    'client_secret': self.consumer.secret,
-                    'state': state or ''}
-            #data = to_bytes(urlencode(data))
-            response = self.http.post(self.access_token_url, data=data)
-            if response.status_code == 200:
-                self.access_token = response.content_json()['access_token']
-            else:
-                response.raise_for_status()
-
-    def access_token_from_response(self, response):
-        params = parse_qs(response.content_string, keep_blank_values=False)
-        if 'access_token' in params:
-            self.access_token = params['access_token'][0]
-        else:
-            raise OAuthError('Access token not provided by server')
-
-    def __call__(self, request):
-        if self.authorised:
-            request.data['access_token'] = self.access_token
+    def __call__(self, response):
+        request = response.request
+        url, headers, body = self._client.add_token(request.full_url,
+            http_method=request.method, body=request.data,
+            headers=request.headers)
+        return response
 

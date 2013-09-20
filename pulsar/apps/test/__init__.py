@@ -520,7 +520,7 @@ class TestSuite(tasks.TaskQueue):
             self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
-                #events.fire('tests', self, tests=tests)
+                self.fire_event('tests', tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
                 for tag, testcls in self.local.tests:

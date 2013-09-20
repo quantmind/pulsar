@@ -391,7 +391,7 @@ is used.'''
                 elif isinstance(child, Mapping):
                     yield stream_mapping(child, request)
                 else:
-                    yield stream
+                    yield child
                     
     def to_string(self, stream):
         if len(stream) == 1 and not self.as_list:

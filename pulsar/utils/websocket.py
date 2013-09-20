@@ -130,6 +130,12 @@ specification supporting protocol version 13::
         return self.opcode == 0x9
     
     @property
+    def is_pong(self):
+        '''A :class:`Frame` representing a pong.
+        '''
+        return self.opcode == 0xA
+    
+    @property
     def is_close(self):
         '''A :class:`Frame` representing a close request.'''
         return self.opcode == 0x8

@@ -63,15 +63,15 @@ class TestDjangoChat(unittest.TestCase):
         self.assertEqual(result.status_code, 404)
         
     def test_handshake(self):
-        ws = yield self.http.get(self.ws).on_finished
+        ws = yield self.http.get(self.ws).on_headers
         response = ws.handshake 
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
-        self.assertEqual(response.connection, None)
+        self.assertEqual(response.connection, ws.connection)
         self.assertTrue(ws.connection)
         
     def test_websocket(self):
-        ws = yield self.http.get(self.ws).on_finished
+        ws = yield self.http.get(self.ws).on_headers
         self.assertTrue(ws)
         ws.handler = MessageHandler()
         ws.write('Hello there!')

@@ -17,6 +17,13 @@ class Echo(WS):
     
     def on_message(self, ws, message):
         return self.queue.put(message)
+    
+    def on_ping(self, ws, body):
+        super(Echo, self).on_ping(ws, body)
+        return self.queue.put('PING: %s' % body.decode('utf-8'))
+    
+    def on_pong(self, ws, body):
+        return self.queue.put('PONG: %s' % body.decode('utf-8'))
         
 
 class TestWebSocketThread(unittest.TestCase):
@@ -36,24 +43,7 @@ class TestWebSocketThread(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app is not None:
             yield send('arbiter', 'kill_actor', cls.app.name)
-    
-    def test_upgrade(self):
-        c = HttpClient()
-        handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
-        response = ws.handshake 
-        self.assertEqual(response.status_code, 101)
-        self.assertEqual(response.headers['upgrade'], 'websocket')
-        self.assertEqual(ws.connection, response.connection)
-        self.assertEqual(ws.handler, handler)
-        self.assertEqual(response, ws.upgraded[0])
-        self.assertFalse(ws.request_done.done())
-        # Send a message to the websocket
-        ws.write('Hi there!')
-        message = yield handler.get()
-        self.assertEqual(message, 'Hi there!')
         
-class d:
     def testHyBiKey(self):
         w = WebSocket('/', None)
         v = w.challenge_response('dGhlIHNhbXBsZSBub25jZQ==')
@@ -85,12 +75,33 @@ class d:
         self.assertEqual(response.headers['upgrade'], 'websocket')
         self.assertEqual(ws.connection, response.connection)
         self.assertEqual(ws.handler, handler)
-        self.assertEqual(response, ws.upgraded[0])
-        self.assertFalse(ws.request_done.done())
+        #
+        # on_finished
+        self.assertFalse(response.on_finished.done())
+        self.assertFalse(ws.on_finished.done())
         # Send a message to the websocket
         ws.write('Hi there!')
         message = yield handler.get()
         self.assertEqual(message, 'Hi there!')
+        
+    def test_ping(self):
+        c = HttpClient()
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        #
+        # ASK THE SERVER TO SEND A PING FRAME
+        ws.write('send ping TESTING PING')
+        message = yield handler.get()
+        self.assertEqual(message, 'PING: TESTING PING')
+        
+    def test_pong(self):
+        c = HttpClient()
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        #
+        ws.ping('TESTING CLIENT PING')
+        message = yield handler.get()
+        self.assertEqual(message, 'PONG: TESTING CLIENT PING')
         
 
 @dont_run_with_thread

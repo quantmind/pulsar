@@ -12,6 +12,14 @@ from .parser import Parser
 
 RedisParser = lambda : Parser(InvalidResponse, ResponseError)
 
+try:
+    from . import cparser
+    CRedisParser = lambda : cparser.Parser(InvalidResponse, ResponseError)
+    HAS_C_EXTENSIONS = True
+except ImportError:
+    HAS_C_EXTENSIONS = False
+    CRedisParser = RedisParser
+
 NOT_DONE = object()
 
 

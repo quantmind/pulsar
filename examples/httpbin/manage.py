@@ -16,7 +16,7 @@ import sys
 import string
 import time
 from random import choice, random
-from wsgiref.validate import validator
+
 try:
     import pulsar
 except ImportError: #pragma    nocover
@@ -29,6 +29,11 @@ from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, hexmd5)
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
+
+try:
+    from oauthbin import OAuthBin
+except ImportError:
+    OauthBin = None
     
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -232,13 +237,15 @@ class Graph(ws.WS):
 class Site(wsgi.LazyWsgi):
     
     def setup(self):
+        router = HttpBin('/')
+        if OauthBin:
+            router.add_child(OauthBin('oauth2'))
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
                                  wsgi.MediaRouter('media', ASSET_DIR),
                                  ws.WebSocket('/graph-data', Graph()),
-                                 HttpBin('/')])
-        #return validator(app)
+                                 router])
     
     
 def server(description=None, **kwargs):

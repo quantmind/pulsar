@@ -359,7 +359,6 @@ class Application(Configurator, pulsar.Pulsar):
         self.callable = callable
         if load_config:
             self.load_config()
-        self()
         
     def __call__(self, actor=None):
         if actor is None:
@@ -383,9 +382,9 @@ class Application(Configurator, pulsar.Pulsar):
         '''Events for the application: ``ready```, ``start``, ``stop``.'''
         return EventHandler(one_time_events=('ready', 'start', 'stop'))
         
-    def fire_event(self, name):
+    def fire_event(self, name, **kw):
         '''Fire event ``name``.'''
-        return self.events.fire_event(name, self)
+        return self.events.fire_event(name, self, **kw)
         
     def bind_event(self, name, callback):
         '''Bind ``callback`` to event ``name``.'''
@@ -447,6 +446,7 @@ class Application(Configurator, pulsar.Pulsar):
         
         Calling this method when the :class:`pulsar.Arbiter` is already
         running has no effect.'''
+        self()
         arbiter = pulsar.arbiter()
         if arbiter and self.name in arbiter.registered:
             arbiter.start()

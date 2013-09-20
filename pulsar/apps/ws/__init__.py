@@ -90,7 +90,7 @@ This method must be overloaded.'''
     
     def on_ping(self, websocket, body):
         '''Handle incoming ping ``Frame``.'''
-        websocket.write(self.pong(websocket))
+        websocket.pong(body)
         
     def on_pong(self, websocket, body):
         '''Handle incoming pong ``Frame``.'''

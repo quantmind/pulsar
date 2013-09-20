@@ -1,8 +1,15 @@
-'''Pulsar has an :class:`HttpClient` class for asynchronous HTTP requests::
+'''Pulsar has a thread safe :class:`HttpClient` class for multiple asynchronous
+HTTP requests.
+
+To get started, one builds a client::
 
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
+    
+and than makes a request::
+
     >>> response = http.get('http://www.bbc.co.uk')
+
 
 .. contents::
     :local:
@@ -62,15 +69,43 @@ to a :class:`HttpClient` or to a specific request:
     
 .. _http-streaming:
 
-Streaming & WebSocket
+Streaming
 =========================
 
-This is an event-driven client, therefore streaming is supported as a
-consequence. The ``on_finished`` callback is only fired when the server has
-finished with the response.
+This is an event-driven client, therefore streaming support is native.
+
+To stream data received from the client one can use either the ``data_received``
+or ``data_processed`` :ref:`many time events <many-times-event>`. For example::
+
+    def new_data(response, data=None):
+        # response is the http response receiving data
+        # data are bytes
+        
+    response = http.get(..., data_received=new_data)
+    
+The ``on_finished`` callback on a :class:`HttpResponse` is only fired when
+the server has finished with the response.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
 application using the :class:`HttpClient` streaming capabilities.
 
+
+WebSocket
+==============
+
+The http client support websocket upgrades. First you need to have a
+websocket handler::
+
+    from pulsar.apps import ws
+    
+    class Echo(ws.WS):
+        
+        def on_message(self, websocket, message):
+            websocket.write(message)
+            
+The websocket response can is obtained by waiting for the
+:attr:`HttpResponse.on_headers` event::
+
+    ws = yield http.get('ws://...', websocket_handler=Echo()).on_headers
 
 Redirects & Decompression
 =============================
@@ -78,8 +113,9 @@ Redirects & Decompression
 Synchronous Mode
 =====================
 
-* Thread safe
-* Can be used in :ref:`synchronous mode <tutorials-synchronous>`
+Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
+
+    client = HttpClient(force_sync=True)
 
 Events
 ==============
@@ -89,16 +125,17 @@ headers or responses occurs. There are three
 :class:`HttpResponse` object:
 
 * ``pre_request``, fired before the request is sent to the server. Callbacks
-  receive the *response* and *request* arguments.
+  receive the *response* argument.
 * ``on_headers``, fired when response headers are available. Callbacks
-  receive the *response* and response *headers* arguments.
+  receive the *response* argument.
 * ``post_request``, fired when the response is done. Callbacks
-  receive the *response* and another argument, usually *None*.
+  receive the *response* argument.
 
 Adding event handlers can be done at client level::
 
-    def myheader_handler(response, request):
-        pass
+    def myheader_handler(response):
+        ...
+        return response    # !important, must return the response
 
     client.bind_event('on_headers', myheader_handler)
 
@@ -579,7 +616,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
                     self.fire_event('on_headers')
                 if (not self.has_finished and
                     self._request.parser.is_message_complete()):
-                    return self.finished()
+                    self.finished()
         else:
             raise pulsar.ProtocolError
         

@@ -49,14 +49,9 @@ One time event
 As the name says, they can be fired once only. Firing these events multiple
 times won't have any effect other than a warning message from the logger.
 
-For one time events it is possible to pass an optional
-function called if the result passed to the :meth:`EventHandler.fire_event`
-is a :class:`pulsar.Failure`::
- 
-    def error_handler(failure):
-        ...
-        
-    o.bind_event('start', start_handler, error_handler)
+A one time event is a specialised :class:`pulsar.Deferred` and therefore you
+can add callbacks to it and you can yield it in a coroutine to wait for
+when it gets fired.
 
 .. _many-times-event:
 

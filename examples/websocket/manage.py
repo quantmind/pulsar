@@ -29,7 +29,10 @@ class Graph(ws.WS):
 class Echo(ws.WS):
     
     def on_message(self, websocket, msg):
-        websocket.write(msg)
+        if msg.startswith('send ping '):
+            websocket.ping(msg[10:])
+        else:
+            websocket.write(msg)
 
 
 class Site(wsgi.LazyWsgi):

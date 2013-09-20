@@ -9,10 +9,12 @@ module.
 Writing the Client
 =========================
 
-There are two classes we need to implement in order to have a flexible client
-for Echo servers. The first class implements the
-:class:`pulsar.ProtocolConsumer` as it is described in the next session, while
-the second class implements the :class:`pulsar.Client` which is a thread safe
+There are two classes one needs to implement in order to have a flexible client
+for Echo servers, or for any TCP servers.
+
+The first class implements the :class:`pulsar.ProtocolConsumer` as it is
+described in the next session, while the second class implements the
+:class:`pulsar.Client` which is a thread safe
 pool of connections to remote servers.
 
 The protocol consumer

@@ -34,6 +34,7 @@ except ImportError:
     Request = None
 
 
+
 connection_info = namedtuple('connection_info', 'address db password timeout')    
 
 

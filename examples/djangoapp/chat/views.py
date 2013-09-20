@@ -49,7 +49,7 @@ to the set of clients listening for messages.'''
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                user = websocket.environ['django.cache'].user
+                user = websocket.handshake.get('django.cache').user
                 if user.is_authenticated():
                     user = user.username
                 else:
