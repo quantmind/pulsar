@@ -34,32 +34,37 @@ __all__ = ['Deferred',
 
 if ispy3k:
     from concurrent.futures._base import Error, CancelledError, TimeoutError
-else:   #pragma    nocover
+else:   # pragma    nocover
     class Error(Exception):
         '''Raised when no other information is available on a Failure'''
-    
+
+
     class CancelledError(Error):
         pass
-    
+
+
     class TimeoutError(Error):
         pass
 
+
 class InvalidStateError(Error):
     """The operation is not allowed in this state."""
-    
+
+
 class CoroutineReturn(BaseException):
     def __init__(self, value):
         self.value = value
-    
+
+
 # States of Deferred
 _PENDING = 'PENDING'
 _CANCELLED = 'CANCELLED'
 _FINISHED = 'FINISHED'
 EMPTY_EXC_INFO = (None, None, None)
-
 async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
 log_exc_info = ('error', 'critical')
+
 
 pass_through = lambda result: result
 
@@ -68,13 +73,15 @@ def is_relevant_tb(tb):
     return not ('__skip_traceback__' in tb.tb_frame.f_locals or 
                 '__unittest' in tb.tb_frame.f_globals)
 
+
 def tb_length(tb):
     length = 0
     while tb and is_relevant_tb(tb):
         length += 1
         tb = tb.tb_next
     return length
-    
+
+
 def format_exception(exctype, value, tb):
     trace = getattr(value, '__async_traceback__', None) 
     while tb and not is_relevant_tb(tb):
@@ -91,7 +98,8 @@ def format_exception(exctype, value, tb):
     value.__async_traceback__ = tb
     value.__traceback__ = None
     return tb
-    
+
+
 def as_async_exec_info(exc_info):
     if not isinstance(exc_info, async_exec_info):
         exctype, value, tb = exc_info
@@ -99,8 +107,10 @@ def as_async_exec_info(exc_info):
         exc_info = async_exec_info(exctype, value, trace)
     return exc_info
 
+
 def coroutine_return(value=None):
     raise CoroutineReturn(value)
+
 
 def iterdata(stream, start=0):
     '''Iterate over a stream which is either a dictionary or a list. This
@@ -111,10 +121,12 @@ for a list.'''
     else:
         return enumerate(stream, start)
 
+
 def is_generalised_generator(value):
     '''Check if *value* is a generator. This is more general than the
 inspect.isgenerator function.'''
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
+
 
 def is_exc_info(exc_info):
     if isinstance(exc_info, async_exec_info):
@@ -122,11 +134,13 @@ def is_exc_info(exc_info):
     elif isinstance(exc_info, tuple) and len(exc_info) == 3:
         return istraceback(exc_info[2])
     return False
-    
+
+
 def multi_async(iterable, **kwargs):
     '''This is an utility function to convert an *iterable* into a
 :class:`MultiDeferred` element.'''
     return MultiDeferred(iterable, **kwargs).lock()
+
 
 def is_failure(obj, *classes):
     '''Check if ``obj`` is a :class:`Failure`. If optional ``classes``
@@ -134,6 +148,7 @@ are given, it checks if the error is an instance of those classes.'''
     if isinstance(obj, Failure):
         return obj.isinstance(classes) if classes else True
     return False
+
 
 def default_maybe_failure(value):
     __skip_traceback__ = True
@@ -149,6 +164,7 @@ def default_maybe_failure(value):
         return Failure(value)
     else:
         return value
+
 
 def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
     if isgenerator(val):
@@ -167,7 +183,8 @@ def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
         d = Deferred()
         d.callback(val)
         return d
-    
+
+
 def maybe_async(value, canceller=None, event_loop=None, timeout=None,
                 get_result=True):
     '''Return an :ref:`asynchronous instance <tutorials-coroutine>`
@@ -187,7 +204,8 @@ set to ``False``.
     global _maybe_async
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
                         timeout=timeout, get_result=get_result)
-    
+
+
 def log_failure(value):
     value = maybe_failure(value)
     if isinstance(value, Failure):
@@ -198,20 +216,24 @@ def log_failure(value):
             value.log()
     return value
 
+
 def maybe_failure(value):
     '''Convert *value* into a :class:`Failure` if it is a stack trace or an
 exception, otherwise returns *value*.
 
 :parameter value: the value to convert to a :class:`Failure` instance
     if it needs to.
-:parameter msg: Optional message to display in the log if *value* is a failure.
+:parameter msg: Optional message to display in the log if *value* is a
+    failure.
 :return: a :class:`Failure` or the original *value*.
 '''
     global _maybe_failure
     return _maybe_failure(value)
 
+
 _maybe_async = default_maybe_async
 _maybe_failure = default_maybe_failure
+
 
 def set_async(maybe_async_callable, maybe_failure_callable):
     '''Set the asynchronous and failure discovery functions. This can be
@@ -220,7 +242,8 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     global _maybe_async, _maybe_failure
     _maybe_async = maybe_async_callable
     _maybe_failure = maybe_failure_callable
-    
+
+
 def async_sleep(timeout):
     '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
 function within a :ref:`coroutine <coroutine>` when you need to resume
@@ -240,11 +263,12 @@ with the ``timeout`` value.
         else:
             return failure        
     return Deferred(timeout=timeout).add_errback(_cancel)
-    
+
+
 ############################################################### DECORATORS
 class async:
     '''A decorator for :ref:`asynchronous components <tutorials-coroutine>`.
-    
+
 It convert the return value of the callable it decorates into a
 :class:`Deferred` via the :func:`maybe_async` function. The return value is
 **always** a :class:`Deferred` (unless :attr:`get_result` is ``True``),
@@ -262,24 +286,24 @@ Typical usage::
     @async()
     def myfunction(...):
         ...
-        
+
 When invoked, ``myfunction`` it returns a :class:`Deferred`. For example::
 
     @async()
     def simple():
         return 1
-        
+
     @async()
     def simple_error():
         raise ValueError('Kaput!')
-        
+
     @async()
     def simple_coro():
         result = yield ...
         ...
 
 when invoked::
-        
+
     >>> d = simple()
     >>> d
     Deferred (done)
@@ -307,7 +331,7 @@ when invoked::
         _.__doc__ = func.__doc__
         _.async = True
         return _
-    
+
     def call(self, callable, *args, **kwargs):
         try:
             result = callable(*args, **kwargs)
@@ -319,12 +343,13 @@ when invoked::
 
 safe_async = async().call
 
+
 def async_while(timeout, while_clause, *args):
     '''The asynchronous equivalent of ``while while_clause(*args):``
-    
+
     Use this function within a :ref:`coroutine <coroutine>` when you need
     to wait ``while_clause`` to be satisfied.
-    
+
     :parameter timeout: a timeout in seconds after which this function stop.
     :parameter while_clause: while clause callable.
     :parameter args: optional arguments to pass to the ``while_clause``
@@ -348,40 +373,40 @@ def async_while(timeout, while_clause, *args):
         yield result
     return maybe_async(_(), get_result=False)
 
-    
+
 ############################################################### FAILURE
 class Failure(object):
     '''The asynchronous equivalent of python Exception.
-    
+
     It has several useful methods and features which facilitates logging,
     and throwing exceptions.
 
     .. attribute:: exc_info
-    
+
         The exception as a three elements tuple
         (``errorType``, ``errvalue``, ``traceback``) occured during
         the execution of a :class:`Deferred`.
-    
+
     .. attribute:: logged
-    
+
         Check if the :attr:`error` was logged. It can be used for switching off
         logging for certain errors by setting::
-        
+
             failure.logged = True
-        
+
     '''
     _msg = 'Pulsar Asynchronous Failure'
-    
+
     def __init__(self, exc_info):
         self.exc_info = as_async_exec_info(exc_info)
-        
+
     def __del__(self):
         self.log()
-         
+
     def __repr__(self):
         return ''.join(self.exc_info[2])
     __str__ = __repr__
-    
+
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
     def _set_logged(self, value):
@@ -389,22 +414,22 @@ class Failure(object):
         if err:
             setattr(err, '_failure_logged', value)
     logged = property(_get_logged, _set_logged)
-     
+
     @property
     def error(self):
         '''The python :class:`Exception` instance.'''
         return self.exc_info[1]
-    
+
     def isinstance(self, classes):
         '''Check if :attr:`error` is an instance of exception ``classes``.'''
         return isinstance(self.error, classes)
 
     def throw(self, gen=None):
         '''Raises the exception from the :attr:`exc_info`.
-        
+
         :parameter gen: Optional generator. If provided the exception is throw
             into the generator via the ``gen.throw`` method.
-            
+
         Without ``gen``, this method is used when interacting with libraries
         supporting both synchronous and asynchronous flow controls.
         '''
@@ -416,7 +441,7 @@ class Failure(object):
 
     def log(self, log=None, msg=None, level=None):
         '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
-        
+
 Logging for a given failure occurs once only. To suppress logging for
 a given failure set :attr:`logged` to ``True`` of invoke the :meth:`mute`
 method.
@@ -443,12 +468,12 @@ back to perform logging and propagate the failure. For example::
                 msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
             handler(msg)
         return self
-    
+
     def mute(self):
         '''Mute logging and return self.'''
         self.logged = True
         return self
-    
+
 
 ############################################################### Deferred
 class Deferred(object):
@@ -516,13 +541,13 @@ which will be put off until later. It conforms with the
         '''The :class:`EventLoop` associated with this :class:`Deferred`. It
 can be set during initialisation.'''
         return self._event_loop or get_event_loop()
-    
+
     @property
     def timeout(self):
         '''The :class:`TimedCall` which handles the timeout of this
 :class:`Deferred`. Available only when a timeout is set.'''
         return self._timeout
-    
+
     def set_timeout(self, timeout, event_loop=None):
         '''Set a the :attr:`timeout` for this :class:`Deferred`.
 
@@ -542,17 +567,17 @@ can be set during initialisation.'''
             self._timeout = event_loop.call_later(
                 timeout, self.cancel, 'timeout (%s seconds)' % timeout)
         return self
-        
+
     def cancelled(self):
         '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred`
 was cancelled.'''
         return self._state == _CANCELLED
-    
+
     def done(self):
         '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred` is
 done, that is it was called or cancelled.'''
         return self._state != _PENDING
-    
+
     def cancel(self, msg='', mute=False):
         '''pep-3156_ API method, it cancel the deferred and schedule callbacks.
 If the deferred is waiting for another :class:`Deferred`, forward the
@@ -572,44 +597,44 @@ it does nothing.
                     self.result.mute()
         elif isinstance(self.result, Deferred):
             return self.result.cancel(msg, mute)
-    
+
     def running(self):
         '''pep-3156_ API method, always returns ``False``.'''
         return False
-    
+
     def get_result(self):
         '''Retrieve the result is ready.
-        
+
         If not raise ``InvalidStateError``.'''
         if self._state != _PENDING:
             return self.result
         else:
             raise InvalidStateError('Result is not ready.')
-        
+
     def add_done_callback(self, fn):
         '''pep-3156_ API method, Add a callback to be run when the
 :class:`Deferred` becomes done. The callback is called with a single argument,
 the :class:`Deferred` object.'''
         callback = lambda r: fn(self)
         return self.add_callback(callback, callback)
-    
+
     def set_result(self, result):
         '''pep-3156_ API method, same as :meth:`callback`'''
         return self.callback(result)
-        
+
     def set_exception(self, exc):
         '''pep-3156_ API method, same as :meth:`callback`'''
         return self.callback(exc)
-        
+
     def add_callback(self, callback, errback=None, continuation=None):
         '''Add a ``callback``, and an optional ``errback``.
-        
+
         Add the two functions to the list of callbaks. Both of them take at
         most one argument, the result passed to the :meth:`callback` method.
-        
+
         If the ``errback`` callable is provided it will be called when an
         exception occurs.
-        
+
         :return: ``self``
         '''
         errback = errback if errback is not None else pass_through
@@ -658,32 +683,32 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
         if self._callbacks:
             self._run_callbacks()
         return self.result
-        
+
     def throw(self):
         '''raise an exception only if :meth:`done` is ``True`` and
 the result is a :class:`Failure`'''
         if self.done() and isinstance(self.result, Failure):
             self.result.throw()
-            
+
     def log(self, **kwargs):
         '''Log a failure via the :meth:`Failure.log` method if the
 :attr:`result` is a :class:`Failure`.'''
         if self.done() and isinstance(self.result, Failure):
             self.result.log(**kwargs)
-    
+
     def chain(self, deferred):
         '''Chain another ``deferred`` to this :class:`Deferred` callbacks.
-        
+
         This method adds callbacks to this :class:`Deferred` to call
         ``deferred``'s callback or errback, as appropriate.
-        
+
         :param deferred: a :class:`Deferred` which will partecipate in the
             callback chain of this :class:`Deferred`.
         :return: this :class:`Deferred`
         '''
         deferred._chained_to = self
         return self.add_both(deferred.callback, deferred.callback)
-        
+
     def then(self, deferred=None):
         '''Add another ``deferred`` to this :class:`Deferred` callbacks.
 
@@ -692,32 +717,32 @@ the result is a :class:`Failure`'''
             If not supplied a new :class:`Deferred` is created.
         :return: The ``deferred`` passed as parameter or the new deferred
             created.
-        
+
         This method adds callbacks to this :class:`Deferred` to call
         ``deferred``'s callback or errback, as appropriate.
         It is a shorthand way of performing the following::
-        
+
             def cbk(result):
                 deferred.callback(result)
                 return result
-                
+
             self.add_both(cbk)
-           
+
         When you use ``then`` on deferred ``d1``::
-        
+
             d2 = d1.then()
-            
+
         you obtains a new deferred ``d2`` which receives the callback when
         ``d1`` has received the callback, with the following properties:
-        
+
         * Any event that fires ``d1`` will also fire ``d2``.
         * The converse is not true; if ``d2`` is fired ``d1`` will not be
           affected.
         * The callbacks of ``d2`` won't affect ``d1`` result.
-        
+
         This method can be used instead of :meth:`add_callback` if a bright new
         deferred is required::
-        
+
             d2 = d1.then().add_callback(...)
         '''
         if deferred is None:
@@ -768,7 +793,7 @@ the result is a :class:`Failure`'''
         self._unpause()
         return self.result
 
-     
+
 class Task(Deferred):
     '''A :class:`Task` is a :class:`Deferred` which consumes a
 :ref:`coroutine <coroutine>`.
@@ -778,7 +803,7 @@ Instances of :class:`Task` are never
 initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
     _waiting = None
-    
+
     def __init__(self, gen, event_loop, canceller=None, timeout=None):
         self._gen = gen
         self._event_loop = event_loop
@@ -786,13 +811,13 @@ function when a generator is passed as argument.'''
         if timeout:
             self.set_timeout(timeout)
         self._consume(None)
-    
+
     def _consume(self, result):
         step = self._step
         switch = False
         while self._state == _PENDING and not switch:
             result, switch = step(result, self._gen)
-            
+
     def _step(self, result, gen):
         __skip_traceback__ = True
         conclude = False
@@ -835,7 +860,7 @@ function when a generator is passed as argument.'''
             del self._gen
             self.callback(result)
         return result, False
-    
+
     def _restart(self, result):
         self._waiting = None
         #restart the coroutine in the same event loop it was started
@@ -843,7 +868,7 @@ function when a generator is passed as argument.'''
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result
-    
+
     def _restart_error(self, failure):
         self._waiting = None
         #restart the coroutine in the same event loop it was started
@@ -851,17 +876,18 @@ function when a generator is passed as argument.'''
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result
-    
+
     def cancel(self, msg='', mute=False):
         if self._waiting:
             self._waiting.cancel(msg, mute)
         else:
             super(Task, self).cancel(msg, mute)
-        
+
+
 ############################################################### MultiDeferred
 class MultiDeferred(Deferred):
     '''A :class:1Deferred` for a ``collection`` of asynchronous objects.
-    
+
     The ``collection`` can be either a ``list`` or a ``dict``.
     '''
     _locked = False
@@ -893,34 +919,34 @@ class MultiDeferred(Deferred):
         Default ``True``.
         '''
         return self._raise_on_error
-    
+
     @property
     def locked(self):
         '''When ``True``, the :meth:`update` or :meth:`append` methods can no
 longer be used.'''
         return self._locked
-        
+
     @property
     def type(self):
         '''The type of multi-deferred. Either a ``list`` or a ``Mapping``.'''
         return self._stream.__class__.__name__
-    
+
     @property
     def total_time(self):
         '''Total number of seconds taken to obtain the result.'''
         if self._time_finished:
             return self._time_finished - self._time_start
-        
+
     @property
     def locked_time(self):
         '''Number of econds taken to obtain the result once :class:`locked`.'''
         if self._time_finished:
             return self._time_finished - self._time_locked
-        
+
     @property
     def num_failures(self):
         return len(self._failures)
-    
+
     @property
     def failures(self):
         return self._failures
@@ -956,7 +982,7 @@ both ``list`` and ``dict`` :attr:`type`.'''
                                'multideferred')
 
     ###    INTERNALS
-    
+
     def _add(self, key, value):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +\

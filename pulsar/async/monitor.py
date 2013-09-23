@@ -123,7 +123,7 @@ during its life time.
         self.managed_actors.pop(actor.aid, None)
         if self.monitor:
             self.monitor._remove_actor(actor, False)
-                
+
     def manage_actors(self, stop=False):
         '''Remove :class:`Actor` which are not alive from the
 :class:`PoolMixin.managed_actors` and return the number of actors still alive.
@@ -200,19 +200,19 @@ as required."""
                     if age < kage:
                         w, kage = w, age
                 self.manage_actor(w, True)
-    
+
     def close_actors(self):
         '''Close all managed :class:`Actor`.'''
         return async_while(2*ACTOR_ACTION_TIMEOUT, self.manage_actors, True)
-    
-    
+
+
 class Monitor(PoolMixin):
     '''A monitor is a **very** special :class:`Actor`.
 
     it is a :class:`PoolMixin` which shares the same :class:`EventLoop`
     with the :class:`Arbiter` and therefore lives in the main thread
     of the master process domain.
-    
+
     The Arbiter manages monitors which in turn manage a set of :class:`Actor`
     performing similar tasks.
 
@@ -248,7 +248,7 @@ By default it does nothing. Override if you need to.'''
     @property
     def multiprocess(self):
         return self.cfg.concurrency == 'process'
-    
+
     @property
     def requestloop(self):
         return self.monitor.requestloop

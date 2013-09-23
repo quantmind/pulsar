@@ -6,6 +6,7 @@ from pulsar.utils.pep import itervalues
 from .defer import Deferred, maybe_async
 from .access import logger
 
+
 __all__ = ['EventHandler', 'Event']
 
 
@@ -21,28 +22,28 @@ class Event(object):
         method.
         '''
         return self._silenced
-    
+
     def bind(self, callback, errback=None):
         '''Bind a ``callback`` for ``caller`` to this :class:`Event`.'''
         pass
-    
+
     def has_fired(self):
         '''Check if this event has fired.
 
         This only make sense for one time events.
         '''
         return True
-    
+
     def fire(self, arg, **kwargs):
         '''Fire this event.
 
         This method is called by the :meth:`EventHandler.fire_event` method.
         '''
         raise NotImplementedError
-    
+
     def silence(self):
         '''Silence this event.
-        
+
         A silenced event won't fire when the :meth:`fire` method is called.
         '''
         self._silenced = True
@@ -52,19 +53,19 @@ class Event(object):
 
 
 class ManyEvent(Event):
-    
+
     def __init__(self, name):
         self.name = name
         self._handlers = []
-    
+
     def __repr__(self):
         return repr(self._handlers)
     __str__ = __repr__
-    
+
     def bind(self, callback, errback=None):
         assert errback == None, 'errback not supported in many-times events'
         self._handlers.append(callback)
-    
+
     def fire(self, arg, **kwargs):
         if not self._silenced:
             for hnd in self._handlers:
@@ -80,18 +81,18 @@ class ManyEvent(Event):
 
 
 class OneTime(Deferred, Event):
-    
+
     def __init__(self, name):
         super(OneTime, self).__init__()
         self.name = name
         self._events = Deferred()
-        
+
     def bind(self, callback, errback=None):
         self._events.add_callback(callback, errback)
-    
+
     def has_fired(self):
         return self._events.done()
-        
+
     def fire(self, arg, **kwargs):
         if not self._silenced:
             if self._events.done():
@@ -106,7 +107,7 @@ class OneTime(Deferred, Event):
                     return self._events.add_callback(self._check, self._check)
                 elif not self._chained_to:
                     return self.callback(result)
-        
+
     def _check(self, result):
         if self._events._callbacks:
             # other callbacks have been added,
@@ -114,8 +115,8 @@ class OneTime(Deferred, Event):
             return self._events.add_callback(self._check, self._check)
         elif not self._chained_to:
             return self.callback(result)
-            
-            
+
+
 class EventHandler(object):
     '''A Mixin for handling events.
 
@@ -145,14 +146,14 @@ class EventHandler(object):
         '''The dictionary of all events.
         '''
         return self._events
-        
+
     def event(self, name):
         '''Return the :class:`Event` for ``name``.
-        
+
         If no event is registered returns nothing.
         '''
         return self._events.get(name)
-        
+
     def bind_event(self, event, callback, errback=None):
         '''Register a ``callback`` with ``event``.
 
@@ -168,20 +169,20 @@ class EventHandler(object):
         if event not in self._events:
             self._events[event] = ManyEvent(event)
         self._events[event].bind(callback, errback)
-    
+
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
         for name in self._events:
             if name in events:
                 self.bind_event(name, events[name])
-    
+
     def fire_event(self, name, arg=None, **kwargs):
         """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
 
         * If event at ``name`` is a one-time event, it makes sure that it was
           not fired before.
-        
+
         :param arg: optional argument passed as positional parameter to the
             event handler.
         :param kwargs: optional key-valued parameters to pass to the event
@@ -197,20 +198,20 @@ class EventHandler(object):
         else:
             logger().warning('Unknown event "%s" for %s', name, self)
             return arg
-    
+
     def silence_event(self, name):
         '''Silence event ``name``.
-        
+
         This causes the event not to fire at the :meth:`fire_event` method
         is invoked with the event ``name``.
         '''
         event = self._events.get(name)
         if event:
             event.silence()
-    
+
     def chain_event(self, other, name):
         '''Chain the event ``name`` from ``other``.
-        
+
         :param other: an :class:`EventHandler` to chain to.
         :param name: event name to chain.
         '''
@@ -219,17 +220,17 @@ class EventHandler(object):
             event2 = other._events.get(name)
             if event2:
                 event.chain(event2)
-    
+
     def cancel_one_time_events(self, exclude=None):
         '''Cancel all one time events not already fired.'''
         exclude = exclude or ()
         for event in itervalues(self._events):
             if isinstance(event, OneTime) and event.name not in exclude:
                 event.cancel(mute=True)
-        
+
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
-        
+
         All many times events of ``other`` are copied to this handler
         provided the events handlers already exist.
         '''
@@ -242,4 +243,3 @@ class EventHandler(object):
                     if ev:
                         for callback in event._handlers:
                             ev.bind(callback)
-        

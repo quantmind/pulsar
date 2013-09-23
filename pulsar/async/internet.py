@@ -9,14 +9,14 @@ from .access import logger
 __all__ = ['BaseProtocol', 'Protocol', 'DatagramProtocol',
            'Transport', 'SocketTransport']
 
-AF_INET6 = getattr(socket, 'AF_INET6', 0)
 
+AF_INET6 = getattr(socket, 'AF_INET6', 0)
 FAMILY_NAME = {socket.AF_INET: 'TCP'}
 if AF_INET6:
     FAMILY_NAME[socket.AF_INET6] = 'TCP6'
 if hasattr(socket, 'AF_UNIX'):
     FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
-    
+
 
 class BaseProtocol:
     """ABC for base protocol class.
@@ -27,7 +27,6 @@ class BaseProtocol:
     The only case when BaseProtocol should be implemented directly is
     write-only transport like write pipe
     """
-
     def connection_made(self, transport):
         """Called when a connection is made.
 
@@ -91,40 +90,41 @@ class DatagramProtocol(BaseProtocol):
 
     def connection_refused(self, exc):
         """Connection is refused."""
-    
-    
+
+
 class Transport(object):
-    '''Base class for transports. Design to conform with pep-3156_ as
-close as possible until it is finalised. A transport is an abstraction on top
-of a socket or something similar.
-Form pep-3153_:
-
-Transports talk to two things: the other side of the
-connection on one hand, and a :attr:`protocol` on the other. It's a bridge
-between the specific underlying transfer mechanism and the protocol.
-Its job can be described as allowing the protocol to just send and
-receive bytes, taking care of all of the magic that needs to happen to those
-bytes to be eventually sent across the wire.
-
-.. attribute:: event_loop
-
-    The :class:`EventLoop` for this :class:`Transport`.
+    '''Base class for transports.
     
-.. attribute:: protocol
+    Design to conform with pep-3156_ as close as possible until it is
+    finalised. A transport is an abstraction on top of a socket or
+    something similar. Form pep-3153_:
 
-    The :class:`Protocol` for this :class:`Transport`.
-'''
+    Transports talk to two things: the other side of the
+    connection on one hand, and a :attr:`protocol` on the other. It's a bridge
+    between the specific underlying transfer mechanism and the protocol.
+    Its job can be described as allowing the protocol to just send and
+    receive bytes, taking care of all of the magic that needs to happen to
+    those bytes to be eventually sent across the wire.
+    
+    .. attribute:: event_loop
+    
+        The :class:`EventLoop` for this :class:`Transport`.
+        
+    .. attribute:: protocol
+    
+        The :class:`Protocol` for this :class:`Transport`.
+    '''
     def get_extra_info(name, default=None):
         return None
-        
-    
+
+
 class SocketTransport(Transport):
     '''A :class:`Transport` for sockets.
-        
+
     :parameter event_loop: Set the :attr:`Transport.event_loop` attribute.
     :parameter sock: Set the :attr:`sock` attribute.
     :parameter protocol: set the :class:`Transport.protocol` attribute.
-    
+
     When a new :class:`SocketTransport` is created, it adds a read handler
     to the :attr:`Transport.event_loop` and notifies the
     :attr:`Transport.protocol` that the connection is available via the
@@ -147,7 +147,7 @@ class SocketTransport(Transport):
         self._write_buffer = deque()
         self.logger = logger(event_loop)
         self._do_handshake()
-    
+
     def __repr__(self):
         address = self.address
         if address:
@@ -155,31 +155,31 @@ class SocketTransport(Transport):
             return '%s %s' % (family, nice_address(address))
         else:
             return '<closed>'
-        
+
     def __str__(self):
         return self.__repr__()
-    
+
     @property
     def sock(self):
         '''The socket for this :class:`SocketTransport`.'''
         return self._sock
-     
+
     @property
     def closing(self):
         '''The transport is about to close. In this state the transport is not
         listening for ``read`` events but it may still be writing, unless it
         is :attr:`closed`.'''
         return bool(self._closing)
-    
+
     @property
     def closed(self):
         '''The transport is closed. No read/write operation available.'''
         return self._sock is None
-    
+
     @property
     def protocol(self):
         return self._protocol
-    
+
     @property
     def address(self):
         if self._sock:
@@ -187,15 +187,15 @@ class SocketTransport(Transport):
                 return self._sock.getsockname()
             except (OSError, socket.error):
                 return None
-    
+
     @property
     def event_loop(self):
         return self._event_loop
-    
+
     def fileno(self):
         if self._sock:
             return self._sock.fileno()
-                
+
     def close(self, async=True, exc=None):
         """Closes the transport.
 
@@ -214,7 +214,7 @@ class SocketTransport(Transport):
             self._event_loop.remove_reader(self._sock_fd)
             if not async or not self._write_buffer:
                 self._event_loop.call_soon(self._shutdown, exc)
-    
+
     def abort(self, exc=None):
         """Closes the transport immediately.
 
@@ -223,20 +223,20 @@ class SocketTransport(Transport):
         called with ``None`` as its argument.
         """
         self.close(async=False, exc=exc)
-    
+
     def _do_handshake(self):
         pass
-    
+
     def _read_ready(self):
         raise NotImplementedError
-    
+
     def _check_closed(self):
         address = self.address
         if not address:
             raise IOError("Transport is closed")
         elif self._closing:
             raise IOError("Transport is closing")
-        
+
     def _shutdown(self, exc=None):
         if self._sock is not None:
             self._write_buffer = deque()

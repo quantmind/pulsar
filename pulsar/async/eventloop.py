@@ -538,7 +538,7 @@ will be stopped.'''
 
     def sock_accept(self, sock, timeout=None):
         '''Accept a connection from a socket ``sock``.
-        
+
         The socket must be in listening mode and bound to an address.
         Returns a :class:`Deferred` whose result on success will be a tuple
         ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
