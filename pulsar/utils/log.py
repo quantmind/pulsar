@@ -5,6 +5,8 @@ import logging
 from threading import Lock
 from multiprocessing import current_process
 
+win32 = sys.platform == "win32"
+
 if sys.version_info < (2,7):    #pragma    nocover
     from .fallbacks._dictconfig import dictConfig
     
@@ -40,12 +42,6 @@ LOGGING_CONFIG = {
                       ' [%(levelname)s] [%(name)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
-        'verbose_color': {
-            '()': 'pulsar.utils.tools.ColorFormatter',
-            'format': '%(asctime)s [p=%(process)s,t=%(thread)s]'
-                      ' [%(levelname)s] [%(name)s] %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S'
-        },
         'simple': {
             'format': '%(asctime)s %(levelname)s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
@@ -58,11 +54,11 @@ LOGGING_CONFIG = {
         },
         'console': {
             'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose_color'
+            'class': 'pulsar.utils.log.ColoredStream',
+            'formatter': 'verbose'
         },
         'console_message': {
-            'class': 'logging.StreamHandler',
+            'class': 'pulsar.utils.log.ColoredStream',
             'formatter': 'message'
         }
     },
@@ -170,8 +166,10 @@ class Silence(logging.Handler):
     
 
 class LogginMixin(LocalMixin):
-    '''A Mixin used throught the library. It provides built in logging object
-and utilities for pickle.'''    
+    '''A Mixin used throught the library.
+
+    It provides built in logging object and utilities for pickle.
+    '''
     @property
     def logger(self):
         return self.local.logger
@@ -183,9 +181,11 @@ and utilities for pickle.'''
     
     def configure_logging(self, logger=None, config=None, level=None,
                           handlers=None):
-        '''Configure logging. This function is invoked every time an
-instance of this class is un-serialised (possibly in a different
-process domain).'''
+        '''Configure logging.
+
+        This function is invoked every time an instance of this class is
+        un-serialised (possibly in a different process domain).
+        '''
         logconfig = original = process_global('_config_logging')
         # if the logger was not configured, do so.
         if not logconfig:
@@ -235,3 +235,112 @@ process domain).'''
                           'handlers': handlers,
                           'config': config}
         self.local.logger = logging.getLogger(logger)
+        
+        
+WHITE = 37
+COLOURS = {'red': 31,
+           'green': 32,
+           'yellow': 33,
+           'blue': 34,
+           'magenta': 35,
+           'cyan': 36,
+           'white': WHITE}
+
+class ColoredStream(logging.StreamHandler):
+    COLORS = {"DEBUG": "cyan",
+              "WARNING": "yellow",
+              "ERROR": "red",
+              "CRITICAL": "red",
+              "INFO": "green"}
+    
+    def __init__(self, stream=None):
+        if not stream:
+            stream = sys.stdout
+        logging.StreamHandler.__init__(self, stream)
+        
+    def emit(self, record):
+        try:
+            self.color(record)
+            self.flush()
+        except (KeyboardInterrupt, SystemExit): #pragma: no cover
+            raise
+        except:
+            self.handleError(record)
+    
+    def color(self, record):
+        text = self.format(record)
+        file = self.stream
+        if file.isatty() or True:
+            colour = self.COLORS.get(record.levelname)
+            code = COLOURS.get(colour, WHITE)
+            if win32:
+                handle = GetStdHandle(-11)
+                oldcolors = GetConsoleInfo(handle).wAttributes
+                code |= (oldcolors & 0x00F0)
+                SetConsoleTextAttribute(handle, code)
+                while len(text) > 32768:
+                    file.write(text[:32768])
+                    text = text[32768:]
+                if text:
+                    file.write(text)
+                file.write(self.terminator)
+                self.flush()
+                SetConsoleTextAttribute(handle, oldcolors)
+            else:
+                text = '\x1b[%sm%s\x1b[0m' % (code, msg)
+                file.write(text)
+                file.write(self.terminator)
+                self.flush()
+        else:
+            file.write(text)
+            file.write(self.terminator)
+            self.flush()
+
+
+if win32:
+    import ctypes
+    from ctypes import wintypes
+    
+    SHORT = ctypes.c_short
+    class COORD(ctypes.Structure):
+        _fields_ = [('X', SHORT),
+                    ('Y', SHORT)]
+    class SMALL_RECT(ctypes.Structure):
+        _fields_ = [('Left', SHORT),
+                    ('Top', SHORT),
+                    ('Right', SHORT),
+                    ('Bottom', SHORT)]
+    class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+        _fields_ = [('dwSize', COORD),
+                    ('dwCursorPosition', COORD),
+                    ('wAttributes', wintypes.WORD),
+                    ('srWindow', SMALL_RECT),
+                    ('dwMaximumWindowSize', COORD)]
+    
+    WHITE = 0x0007
+    COLOURS = {'red': 0x0004 ,
+               'green': 0x0002,
+               'yellow': 0x0006,
+               'blue': 0x0001,
+               'magenta': 0x0005,
+               'cyan': 0x0003,
+               'white': WHITE}
+    
+    GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+    GetStdHandle.argtypes = [wintypes.DWORD]
+    GetStdHandle.restype = wintypes.HANDLE
+    
+    SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
+    SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
+    SetConsoleTextAttribute.restype = wintypes.BOOL
+    
+    _GetConsoleScreenBufferInfo = \
+        ctypes.windll.kernel32.GetConsoleScreenBufferInfo
+    _GetConsoleScreenBufferInfo.argtypes = [wintypes.HANDLE,
+                                ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO)]
+    _GetConsoleScreenBufferInfo.restype = wintypes.BOOL
+    def GetConsoleInfo(handle):
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
+        return info
+    

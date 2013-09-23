@@ -134,9 +134,6 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(convert_bytes(1024**7), '1.0ZB')
         self.assertEqual(convert_bytes(1024**8), '1.0YB')
         
-
-class testNiceNumber(unittest.TestCase):
-    
     def test_nice_number(self):
         self.assertEqual(nice_number(0), 'zero')
         self.assertEqual(nice_number(1), 'one')
@@ -152,3 +149,5 @@ class testNiceNumber(unittest.TestCase):
         self.assertEqual(nice_number(51345618),
                 'fifty one million, three hundred forty five thousand, '
                 'six hundred and eighteen')
+
+        

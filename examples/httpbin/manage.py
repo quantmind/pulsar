@@ -9,23 +9,20 @@ Implementation
    :members:
    :member-order: bysource
 '''
-import re
 import os
 import json
 import sys
 import string
-import time
 from random import choice, random
 
 try:
-    import pulsar
+    from pulsar.utils.pep import ispy3k, range
 except ImportError: #pragma    nocover
     sys.path.append('../../')
-    import pulsar
+    from pulsar.utils.pep import ispy3k, range
 
 from pulsar import HttpRedirect, HttpException, version, JAPANESE
-from pulsar.utils.pep import ispy3k, to_bytes, range
-from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS, hexmd5)
+from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
