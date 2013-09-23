@@ -90,6 +90,6 @@ class plocal(object):
 
 
 class ProcessLocal(object):
-        
+
     def local(self):
         return plocal()

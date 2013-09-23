@@ -31,7 +31,7 @@ def get_stream(cfg):
 
 def send(target, action, *args, **params):
     '''Send a :ref:`message <api-remote_commands>` to ``target``
-    
+
     The message is to perform a given ``action``. The actor sending the
     message is obtained via the :func:`get_actor` function.
 
@@ -45,9 +45,9 @@ def send(target, action, *args, **params):
         :ref:`remote command <api-remote_commands>` ``action``.
     :return: a :class:`Deferred` if the action acknowledge the caller or
         `None`.
-    
+
     Typical example::
-    
+
         >>> a = spawn()
         >>> r = a.add_callback(lambda p: send(p,'ping'))
         >>> r.result
@@ -57,18 +57,18 @@ def send(target, action, *args, **params):
 
 
 class Pulsar(LogginMixin):
-    
+
     def configure_logging(self, **kwargs):
         configure_logging = super(Pulsar, self).configure_logging
         configure_logging(logger='pulsar',
                           config=self.cfg.logconfig,
                           level=self.cfg.loglevel,
-                          handlers=self.cfg.loghandlers) 
+                          handlers=self.cfg.loghandlers)
         configure_logging(logger='pulsar.%s' % self.name,
                           config=self.cfg.logconfig,
                           level=self.cfg.loglevel,
                           handlers=self.cfg.loghandlers)
-        
+
 
 class Actor(EventHandler, Pulsar, ActorIdentity):
     '''The base class for parallel execution in pulsar. In computer science,
@@ -97,15 +97,15 @@ an :class:`ActorProxy`.
 .. attribute:: name
 
     The name of this :class:`Actor`.
-    
+
 .. attribute:: aid
 
     Unique ID for this :class:`Actor`.
-    
+
 .. attribute:: impl
 
     The :class:`Concurrency` implementation for this :class:`Actor`.
-    
+
 .. attribute:: event_loop
 
     An instance of :class:`EventLoop` which listen for input/output events
@@ -116,11 +116,11 @@ an :class:`ActorProxy`.
 .. attribute:: mailbox
 
     Used to send and receive :ref:`actor messages <tutorials-messages>`.
-    
+
 .. attribute:: address
 
     The socket address for this :attr:`Actor.mailbox`.
-    
+
 .. attribute:: proxy
 
     Instance of a :class:`ActorProxy` holding a reference
@@ -131,7 +131,7 @@ an :class:`ActorProxy`.
 .. attribute:: state
 
     The actor :ref:`numeric state <actor-states>`.
-    
+
 .. attribute:: thread_pool
 
     A :class:`ThreadPool` associated with this :class:`Actor`. This attribute
@@ -142,7 +142,7 @@ an :class:`ActorProxy`.
 
     A :class:`pulsar.utils.structures.AttributeDictionary` which contains
     parameters which are passed to actors spawned by this actor.
-    
+
 .. attribute:: extra
 
     A dictionary which can be populated with extra parameters useful
@@ -150,21 +150,22 @@ an :class:`ActorProxy`.
     returned by the :meth:`info` method.
     Check the :ref:`info command <actor_info_command>` for how to obtain
     information about an actor.
-    
+
 .. attribute:: info_state
 
     Current state description string. One of ``initial``, ``running``,
     ``stopping``, ``closed`` and ``terminated``.
-    
+
 .. attribute:: next_periodic_task
 
     The :class:`TimedCall` for the next
     :ref:`actor periodic task <actor-periodic-task>`.
-    
+
 .. attribute:: stream
 
-    A ``stream`` handler to write information messages without using the logger.
- 
+    A ``stream`` handler to write information messages without using the
+    logger.
+
 **PUBLIC METHODS**
 '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
@@ -173,7 +174,7 @@ an :class:`ActorProxy`.
     mailbox = None
     signal_queue = None
     next_periodic_task = None
-    
+
     def __init__(self, impl):
         super(Actor, self).__init__()
         self.state = ACTOR_STATES.INITIAL
@@ -187,7 +188,7 @@ an :class:`ActorProxy`.
         self.params = AttributeDictionary(**impl.params)
         self.servers = {}
         self.extra = {}
-        self.stream = get_stream(self.cfg) 
+        self.stream = get_stream(self.cfg)
         del impl.params
         setid(self)
         try:
@@ -197,10 +198,10 @@ an :class:`ActorProxy`.
 
     def __repr__(self):
         return self.impl.unique_name
-    
+
     def __str__(self):
         return self.__repr__()
-    
+
     ############################################################### PROPERTIES
     @property
     def name(self):
@@ -209,15 +210,15 @@ an :class:`ActorProxy`.
     @property
     def aid(self):
         return self.__impl.aid
-    
+
     @property
     def impl(self):
         return self.__impl
-    
+
     @property
     def cfg(self):
         return self.__impl.cfg
-    
+
     @property
     def proxy(self):
         return ActorProxy(self)
@@ -229,7 +230,7 @@ an :class:`ActorProxy`.
     @property
     def event_loop(self):
         return self.mailbox.event_loop
-    
+
     @property
     def thread_pool(self):
         return self._thread_pool
@@ -238,9 +239,9 @@ an :class:`ActorProxy`.
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
 
-    ############################################################################
+    #######################################################################
     ##    HIGH LEVEL API METHODS
-    ############################################################################
+    #######################################################################
     def start(self):
         '''Called after forking to start the actor's life. This is where
 logging is configured, the :attr:`Actor.mailbox` is registered and the
@@ -248,7 +249,7 @@ logging is configured, the :attr:`Actor.mailbox` is registered and the
 more than once does nothing.'''
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
-            self._started = time() 
+            self._started = time()
             self.configure_logging()
             self.__impl.setup_event_loop(self)
             self.state = ACTOR_STATES.STARTING
@@ -259,17 +260,17 @@ more than once does nothing.'''
 positional ``args`` and key-valued ``kwargs``.
 Always return a :class:`Deferred`.'''
         return self.event_loop.async(self._send(target, action, *args, **kw))
-    
+
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
-    
+
     def stop(self, exc=None):
         '''Gracefully stop the :class:`Actor`.
-        
+
         Implemented by the :meth:`Concurrency.stop` method of the :attr:`impl`
         attribute.'''
         return self.__impl.stop(self, exc)
-    
+
     def create_thread_pool(self, workers=None):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
 if not already present.
@@ -282,7 +283,7 @@ if not already present.
             workers = workers or self.cfg.thread_workers
             self._thread_pool = ThreadPool(self, threads=workers)
         return self._thread_pool
-    
+
     def close_thread_pool(self):
         '''Close the :attr:`thread_pool`.'''
         if self._thread_pool:
@@ -293,14 +294,14 @@ if not already present.
             self._thread_pool.join()
             self.logger.debug('Thread pool %s' % self._thread_pool.status)
             self._thread_pool = None
-            
+
     ###############################################################  STATES
     def is_running(self):
         '''``True`` if actor is running, that is when the :attr:`state`
 is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
 running.'''
         return self.state == ACTOR_STATES.RUN and self.event_loop.is_running()
-    
+
     def started(self):
         '''``True`` if actor has started. It does not necessarily
 mean it is running. Its state is greater or equal
@@ -330,12 +331,12 @@ or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
         return self.__impl.is_process()
 
     def __reduce__(self):
-        raise pickle.PicklingError('{0} - Cannot pickle Actor instances'\
+        raise pickle.PicklingError('{0} - Cannot pickle Actor instances'
                                    .format(self))
-    
-    ############################################################################
+
+    #######################################################################
     #    INTERNALS
-    ############################################################################   
+    #######################################################################
     def get_actor(self, aid):
         '''Given an actor unique id return the actor proxy.'''
         if aid == self.aid:
@@ -349,12 +350,14 @@ status and performance. The dictionary contains the following entries:
 
 * ``actor`` a dictionary containing information regarding the type of actor
   and its status.
-* ``events`` a dictionary of information about the event loop running the actor.
+* ``events`` a dictionary of information about the event loop running the
+  actor.
 * ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
 * ``system`` system info.
 
-This method is invoked when you run the :ref:`info command <actor_info_command>`
-from another actor.'''
+This method is invoked when you run the
+:ref:`info command <actor_info_command>` from another actor.
+'''
         if not self.started():
             return
         isp = self.is_process()
@@ -375,7 +378,7 @@ from another actor.'''
             data['system'] = system.system_info(self.pid)
         self.fire_event('on_info', info=data)
         return data
-    
+
     def _run(self, initial=True):
         exc = None
         if initial:
@@ -394,7 +397,7 @@ from another actor.'''
         finally:
             if exc != -1:
                 self.stop(exc)
-            
+
     def _send(self, target, action, *args, **kwargs):
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox

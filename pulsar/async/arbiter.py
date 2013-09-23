@@ -143,8 +143,7 @@ api::
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
         if monitor_name in self.registered:
-            raise KeyError('Monitor "{0}" already available'\
-                           .format(monitor_name))
+            raise KeyError('Monitor "%s" already available' % monitor_name)
         monitor_class = monitor_class or Monitor
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
