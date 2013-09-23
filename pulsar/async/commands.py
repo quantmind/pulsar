@@ -89,7 +89,7 @@ arbiter, therefore a valid sintax is only::
 
 Return 'killed abc` if successful, otherwise it returns ``None``.
 '''
-    arb = request.actor 
+    arb = request.actor
     if arb.is_arbiter():
         arb.send(aid, 'stop')
         proxy = yield async_while(timeout, arb.get_actor, aid)

@@ -3,7 +3,8 @@ from pulsar.apps.test import unittest
 
 
 
-class TestTunnel(unittest.TestCase):
+class f:
+#class TestTunnel(unittest.TestCase):
     
     def test_get(self):
         client = http.HttpClient()

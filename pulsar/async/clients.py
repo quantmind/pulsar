@@ -25,7 +25,7 @@ class Request(object):
     .. attribute:: address
 
         The socket address of the remote server
-    
+
     .. attribute:: release_connection
 
         When ``True`` a protocol consumer release the connection back to the
@@ -322,7 +322,7 @@ class Client(Producer):
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
     ONE_TIME_EVENTS = ('finish',)
-    MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
+    MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
                          'connection_lost')
 
     def __init__(self, connection_factory=None, timeout=None,
@@ -357,19 +357,19 @@ class Client(Producer):
     @property
     def concurrent_connections(self):
         '''Total number of concurrent connections.'''
-        return reduce(lambda x,y: x + y, (p.concurrent_connections for p in\
-                                          itervalues(self.connection_pools)), 0)
+        return reduce(lambda x, y: x + y, (p.concurrent_connections for p in
+            itervalues(self.connection_pools)), 0)
 
     @property
     def available_connections(self):
         '''Total number of available connections.'''
-        return reduce(lambda x,y: x + y, (p.available_connections for p in\
-                                          itervalues(self.connection_pools)), 0)
+        return reduce(lambda x, y: x + y, (p.available_connections for p in
+            itervalues(self.connection_pools)), 0)
 
     @property
     def closed(self):
         '''``True`` if the :meth:`close` was invoked on this :class:`Client`.
-        
+
         A closed :class:`Client` cannot send :meth:`request` to remote
         servers.
         '''
@@ -384,7 +384,7 @@ class Client(Producer):
 
     def get_event_loop(self):
         '''Return the :class:`EventLoop` used by this :class:`Client`.
-        
+
         The event loop can be set during initialisation. If :attr:`force_sync`
         is ``True`` a specialised event loop is created.
         '''
@@ -402,7 +402,7 @@ class Client(Producer):
 
     def build_consumer(self, consumer_factory=None):
         '''Override the :meth:`Producer.build_consumer` method.
-        
+
         Add a ``post_request`` handler to release the connection back to
         the connection pool.
         '''
@@ -424,7 +424,7 @@ class Client(Producer):
                 ...
                 request = ...
                 return self.response(request)
-            
+
         '''
         raise NotImplementedError
 
@@ -514,7 +514,7 @@ class Client(Producer):
 
     def close_connections(self, async=True):
         '''Close all connections in each :attr:`connection_pools`.
-        
+
         :param async: if ``True`` flush the write buffer before closing (same
             as :class:`SocketTransport.close` method).
         :return: a :class:`Deferred` called back once all connections are
@@ -561,7 +561,7 @@ class Client(Producer):
         this method will open ``times`` :class:`Connection` with the
         remote server.
         Usage::
-        
+
             client = Client(...)
             multi = client.timeit(100, ...)
             response = yield multi
