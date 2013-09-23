@@ -12,7 +12,7 @@ It is now developed in python 3.3 while keeping backward compatibility.
 
 Flexibility
 -------------------
-Pulsar's codebase is relatively small, at about 15,000 lines of code. The source code is
+Pulsar's codebase is relatively small, at about 20,000 lines of code. The source code is
 open and it has a very :ref:`liberal license <license>`.
 You can :ref:`fork the code <contributing>` add feature you need and send us your patch.
 

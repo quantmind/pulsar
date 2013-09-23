@@ -290,7 +290,7 @@ class ColoredStream(logging.StreamHandler):
                 self.flush()
                 SetConsoleTextAttribute(handle, oldcolors)
             else:
-                text = '\x1b[%sm%s\x1b[0m' % (code, msg)
+                text = '\x1b[%sm%s\x1b[0m' % (code, text)
                 file.write(text)
                 file.write(self.terminator)
                 self.flush()
