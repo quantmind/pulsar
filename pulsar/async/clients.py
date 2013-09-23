@@ -150,9 +150,9 @@ class ConnectionPool(ConnectionProducer):
                     sock = connection.sock
                     closed = is_socket_closed(sock)
                     if closed:
-                        connection = None
                         if sock:
                             stale_connections.append(connection)
+                        connection = None
                     else:
                         self._concurrent_connections.add(connection)
             if not connection:

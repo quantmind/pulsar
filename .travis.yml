@@ -13,7 +13,7 @@ install:
   - python setup.py install
   - sudo rm -rf pulsar
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-script: python -m runtests -w 2 --concurrent-tasks 10 --test-timeout 60
+script: python -m runtests -w 2 --concurrent-tasks 10 --test-timeout 60 --verbosity 2
 
 branches:
   only:
