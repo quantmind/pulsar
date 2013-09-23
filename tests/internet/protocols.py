@@ -18,7 +18,7 @@ class TestPulsarStreams(unittest.TestCase):
         cls.server = yield pulsar.send('arbiter', 'run', s)
         
     def client(self, **params):
-        return Echo(self.server.address, **params)
+        return Echo(**params)
         
     @classmethod
     def tearDownClass(cls):
@@ -36,7 +36,7 @@ class TestPulsarStreams(unittest.TestCase):
         client = self.client(full_response=True)
         self.assertFalse(client.concurrent_connections)
         self.assertFalse(client.available_connections)
-        response = client.request(b'Test First request')
+        response = client.request(self.server.address, b'Test First request')
         result = yield response.on_finished
         self.assertEqual(result, b'Test First request')
         self.assertTrue(response.current_request)

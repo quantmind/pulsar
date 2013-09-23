@@ -288,6 +288,7 @@ Utilities
 import sys
 
 import pulsar
+from pulsar import EventHandler
 from pulsar.apps import tasks
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
@@ -535,7 +536,13 @@ class TestSuite(tasks.TaskQueue):
             self.logger.critical('Error occurred before starting tests',
                                  exc_info=True)
             monitor.arbiter.stop()
-
+    
+    @local_property
+    def events(self):
+        '''Events for the application: ``ready```, ``start``, ``stop``.'''
+        return EventHandler(one_time_events=('ready', 'start', 'stop'),
+                            many_times_events=('tests',))
+    
     @classmethod
     def create_config(cls, *args, **kwargs):
         cfg = super(TestSuite, cls).create_config(*args, **kwargs)

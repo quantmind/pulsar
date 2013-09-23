@@ -1,4 +1,7 @@
+from itertools import starmap
+
 cimport common
+
 
 cdef class RedisParser:
     '''Cython wrapper for Hiredis protocol parser.'''
@@ -34,10 +37,11 @@ cdef class RedisParser:
     def on_disconnect(self):
         pass
 
-
-cdef class RedisManager:
-
-    def _pack_command(self, *args):
+    def pack_command(self, *args):
         return common.pack_command(args)
+    
+    def pack_pipeline(self, commands):
+        pack = lambda *args: self.pack_command(*args)
+        return b''.join(starmap(pack, (args for args, _ in commands)))
 
         

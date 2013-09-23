@@ -505,7 +505,9 @@ The list is lazily loaded from the :meth:`build` method.'''
                     new_settings[setting.name] = setting
                 cfg.settings = new_settings
                 kwargs.update({'name': name, 'cfg': cfg, 'callable': callable})
-                self._apps.append(App(**kwargs))
+                app = App(**kwargs)
+                app()
+                self._apps.append(app)
         return self._apps
     
     def new_app(self, App, prefix=None, callable=None, **params):

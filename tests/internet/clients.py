@@ -20,35 +20,31 @@ def safe(callable, done):
 class TestClients(unittest.TestCase):
     
     def test_event_loop(self):
-        address = ('127.0.0.1', 9099)
-        client = Echo(address)
-        self.assertEqual(client.address, address)
+        client = Echo()
         self.assertFalse(client.event_loop)
         self.assertTrue(client.get_event_loop())
         self.assertEqual(client.get_event_loop(), get_event_loop())
         
     def test_has_event_loop(self):
-        address = ('127.0.0.1', 9099)
         loop = get_event_loop()
-        client = Echo(address, event_loop=loop)
-        self.assertEqual(client.address, address)
+        client = Echo(event_loop=loop)
         self.assertTrue(client.event_loop)
         self.assertEqual(client.event_loop, loop)
         self.assertEqual(client.get_event_loop(), loop)
         
     def test_bad_request(self):
         address = ('127.0.0.1', 9099)
-        client = Echo(address)
+        client = Echo()
         try:
-            result = yield client.request(b'Hello!')
+            result = yield client.request(address, b'Hello!')
         except socket.error as e:
             pass
         self.assertEqual(len(client.connection_pools), 1)
         
     def test_bad_request_full_response(self):
         address = ('127.0.0.1', 9099)
-        client = Echo(address, full_response=True)
-        result = client.request(b'Hello!')
+        client = Echo(full_response=True)
+        result = client.request(address, b'Hello!')
         self.assertFalse(result.connection)
         try:
             yield result.on_finished
@@ -58,10 +54,10 @@ class TestClients(unittest.TestCase):
         
     def test_bad_request_in_thread(self):
         address = ('127.0.0.1', 9099)
-        client = Echo(address, full_response=True)
+        client = Echo(full_response=True)
         done = Deferred()
         def _test():
-            result = client.request(b'Hello!')
+            result = client.request(address, b'Hello!')
             connection = result.connection
             self.assertTrue(connection)
             self.assertEqual(connection.session, 1)

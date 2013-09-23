@@ -12,6 +12,12 @@ package_fullname = package_name
 root_dir      = os.path.split(os.path.abspath(__file__))[0]
 package_dir   = os.path.join(root_dir, package_name)
 
+# Try to import lib build
+try:
+    from extensions.setup import libparams, BuildFailed
+except ImportError:
+    libparams = None
+
 class osx_install_data(install_data):
 
     def finalize_options(self):
@@ -109,17 +115,21 @@ def status_msgs(*msgs):
     
 run_setup()
 
-# NOT USED AT THE MOMENT
-def _():
+if libparams is None:
+    status_msgs('WARNING: C extensions could not be compiled, '
+                'Cython is not installed.')
+    run_setup()
+    status_msgs("Plain-Python build succeeded.")
+else:
     try:
-        run_setup(True)
+        run_setup(libparams)
     except BuildFailed as exc:
         status_msgs(
                 exc.msg,
-                "WARNING: The C extension could not be compiled, " +
+                "WARNING: C extensions could not be compiled, " +
                     "speedups are not enabled.",
                 "Failure information, if any, is above.",
-                "Retrying the build without the C extension now."
+                "Retrying the build without C extensions now."
             )
-    
-        run_setup(False)
+        run_setup()
+        status_msgs("Plain-Python build succeeded.")

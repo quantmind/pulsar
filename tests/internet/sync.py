@@ -17,7 +17,7 @@ class TestSyncClient(unittest.TestCase):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    concurrency=get_actor().cfg.concurrency)
         cls.server = yield pulsar.send('arbiter', 'run', s)
-        cls.client = Echo(cls.server.address, force_sync=True)
+        cls.client = Echo(force_sync=True)
         
     @classmethod
     def tearDownClass(cls):
@@ -28,13 +28,13 @@ class TestSyncClient(unittest.TestCase):
         self.assertTrue(self.client.force_sync)
     
     def test_echo(self):
-        self.assertEqual(self.client.request(b'ciao!'), b'ciao!')
-        self.assertEqual(self.client.request(b'fooooooooooooo!'),
-                         b'fooooooooooooo!')
+        echo = self.client.client(self.server.address)
+        self.assertEqual(echo(b'ciao!'), b'ciao!')
+        self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
     
     def test_close(self):
-        client = Echo(self.server.address, force_sync=True)
-        self.assertEqual(client.request(b'ciao!'), b'ciao!')
-        self.assertEqual(client.request(b'QUIT'), b'QUIT')
+        echo = self.client.client(self.server.address)
+        self.assertEqual(echo(b'ciao!'), b'ciao!')
+        self.assertEqual(echo(b'QUIT'), b'QUIT')
         yield async_sleep(1)
-        self.assertEqual(client.request(b'ciao!'), b'ciao!')
+        self.assertEqual(echo(b'ciao!'), b'ciao!')

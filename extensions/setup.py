@@ -63,7 +63,7 @@ extra_compile_args = []
 #    extra_compile_args.append('-std=gnu++0x')
     
 
-extension = Extension('stdnet.backends.redisb.cparser',
+extension = Extension('pulsar.apps.redis.cparser',
                       [os.path.join(lib_path, 'src', 'cparser.pyx')],
                       language='c++',
                       #extra_compile_args=extra_compile_args,
