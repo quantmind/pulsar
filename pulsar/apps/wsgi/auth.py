@@ -29,7 +29,7 @@ _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])
 class HttpAuthenticate(HttpException):
     '''Exception when ``basic`` or ``digest`` authentication is required.
 
-    This HttpException is raised with statsu code ``401`` and the extra
+    This HttpException is raised with status code ``401`` and the extra
     ``WWW_Authenticate`` header if ``type`` is either ``basic`` or ``digest``.
     '''
     def __init__(self, type, realm=None, **options):
@@ -62,7 +62,6 @@ class HttpAuthenticate(HttpException):
         return self._auth_header('digest', realm=realm, nonce=nonce,
                                  qop=', '.join(qop), **options)
     
-
     def _auth_header(self, type, **options):
         """Convert the stored values into a WWW-Authenticate header."""
         return '%s %s' % (type.title(), ', '.join((
@@ -139,12 +138,12 @@ digest_parameters=frozenset(('username', 'realm', 'nonce', 'uri', 'nc',
                              'cnonce',  'response'))
 
 def parse_authorization_header(value, charset='utf-8'):
-    """Parse an HTTP basic/digest authorization header transmitted by the web
-browser.  The return value is either `None` if the header was invalid or
-not given, otherwise an :class:`Auth` object.
-
-:param value: the authorization header to parse.
-:return: a :class:`Auth` or `None`."""
+    '''Parse an HTTP basic/digest authorisation header.
+    
+    :param value: the authorisation header to parse.
+    :return: either `None` if the header was invalid or
+        not given, otherwise an :class:`Auth` object.
+    '''
     if not value:
         return
     try:

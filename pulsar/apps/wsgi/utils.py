@@ -9,7 +9,6 @@ from inspect import istraceback
 from email.utils import formatdate
 
 
-import pulsar
 from pulsar.utils.structures import MultiValueDict
 from pulsar import Failure, get_actor
 from pulsar.utils.html import escape

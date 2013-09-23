@@ -2,9 +2,9 @@
 from pulsar.apps.test import unittest
 from pulsar.apps.redis import RedisClient
 
+available = bool(RedisClient.consumer_factory)
 
-@unittest.skipUnless(RedisClient.consumer_factory,
-                     'Requires redis-py installed')
+@unittest.skipUnless(available, 'Requires redis-py installed')
 class RedisTest(unittest.TestCase):
     
     @classmethod
@@ -52,12 +52,13 @@ class TestRedisPool(RedisTest):
         if client.connection_info.db == db:
             db = 12
         client = self.client(db=db, full_response=True)
+        password = int(bool(client.connection_info.password))
         response = yield client.echo('Hello!').on_finished
         self.assertEqual(response.result, b'Hello!')
         connection = response.connection
-        self.assertEqual(connection.processed, 3)
+        self.assertEqual(connection.processed, 2+password)
         response = yield client.echo('Ciao!').on_finished
         self.assertEqual(response.result, b'Ciao!')
         self.assertEqual(connection, response.connection)
-        self.assertEqual(connection.processed, 4)
+        self.assertEqual(connection.processed, 3+password)
         

@@ -2,13 +2,26 @@ import sys
 from collections import deque
 
 import redis
-from redis.exceptions import NoScriptError, InvalidResponse, ResponseError
+from redis.exceptions import NoScriptError, InvalidResponse
 from redis.client import BasePipeline
+from redis.connection import PythonParser as _p
 
 import pulsar
 from pulsar import multi_async, Deferred, ProtocolError
 
 from .parser import Parser
+
+EXCEPTION_CLASSES = _p.EXCEPTION_CLASSES
+
+def ResponseError(response):
+    "Parse an error response"
+    response = response.split(' ')
+    error_code = response[0]
+    if error_code not in EXCEPTION_CLASSES:
+        error_code = 'ERR'
+    response = ' '.join(response[1:])
+    return EXCEPTION_CLASSES[error_code](response)
+
 
 RedisParser = lambda : Parser(InvalidResponse, ResponseError)
 

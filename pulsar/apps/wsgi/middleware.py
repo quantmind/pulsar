@@ -1,4 +1,17 @@
-'''This module implements several WSGI middleware which does not
+'''
+Middleware are functions or callable objects similar to
+:ref:`WSGI application handlers <wsgi-handlers>`
+with the only difference that they can return ``None``. Middleware can be used
+in conjunction with a :class:`WsgiHandler` or any other handler which iterate
+through a list of middleware in a similar way (for example django wsgi handler).
+
+Here we introduce the :class:`Router` and :class:`MediaRouter` to handle
+requests on given urls. Pulsar is shipped with
+:ref:`additional wsgi middleware <wsgi-additional-middleware>` for manipulating
+the environment before a client response is returned.
+
+
+This module implements several WSGI middleware which does not
 serve request but instead perform initialization and sanity checks.
 It also introduces the **Response middlewares** implemented as a subclass of 
 :class:`ResponseMiddleware`. Response middlewares are used by the
@@ -107,7 +120,7 @@ def authorization_middleware(environ, start_response):
 
     If available, set the ``http.authorization`` key in ``environ`` with
     the result obtained from
-    :func:`pulsar.apps.wsgi.plugins.parse_authorization_header` function.
+    :func:`pulsar.apps.wsgi.auth.parse_authorization_header` function.
     '''
     key = 'http.authorization'
     c = environ.get(key)

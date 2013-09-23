@@ -1,5 +1,5 @@
 '''
-Asynchronous Redis client, requires redis-py_
+Asynchronous Redis client, requires redis-py_.
 
 Usage
 =============
@@ -16,7 +16,7 @@ To create a new redis client::
 
     client = redis_pool.client(('localhost',6379), db=7)
     
-.. redis-py_: https://github.com/andymccurdy/redis-py
+.. redis-py: https://github.com/andymccurdy/redis-py
 '''
 from collections import namedtuple
 from functools import partial

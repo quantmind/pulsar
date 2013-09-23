@@ -2,9 +2,7 @@
 Pulsar
 ================
 
-A concurrent framework for Python. **Concurrent** here stands for asynchronous
-(event driven) and parallel execution. Tested in Windows and Linux,
-it requires python 2.6 up to python 3.3 in a single code base.
+Concurrent framework for Python.
 
 
 .. toctree::
@@ -21,13 +19,11 @@ it requires python 2.6 up to python 3.3 in a single code base.
 
 .. _apps-framework:
 
-Application Framework
+Applications
 =========================
 
-Pulsar application framework is built on top of :mod:`pulsar` concurrent
-framework. It is designed to facilitate the development of both server-side
-applications such as web servers, task queues as well as asynchronous
-clients.
+Pulsar applications are built on top of :mod:`pulsar` concurrent
+framework:
 
 .. toctree::
    :maxdepth: 1
@@ -40,6 +36,7 @@ clients.
    apps/rpc
    apps/websockets
    apps/http
+   apps/redis
    apps/pubsub
    apps/twisted
    apps/pulse

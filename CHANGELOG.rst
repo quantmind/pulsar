@@ -1,10 +1,10 @@
-Ver. 0.6.1 - Development
+Ver. 0.7.0 - Development
 ===========================
-* Asynchronous redis_ client. Requires redis-py_.
-* Removed the specialised Application worker and monitor classes.
-  Use standard actor and monitor with a specialised
-  :ref:`start hook <actor-hooks>` instead. 
-* Removed global event dispatcher. No longer used.
+* Asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
+* Removed the specialised application worker and monitor classes.
+  Use standard actor and monitor with specialised
+  :ref:`start hooks <actor-hooks>` instead. 
+* Removed the global event dispatcher. No longer used. Less global variables the better.
 * Protocol consumer to handle one request only. Better upgrade method for connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
 * Cookie support for the :ref:`Http Client <apps-http>`.
@@ -13,7 +13,7 @@ Ver. 0.6.1 - Development
   element of an :ref:`Html document <wsgi-html-document>`.
 * Added :class:`pulsar.Actor.stream` attribute to write messages without using
   the logger.
-* **588 regression tests**, **88% coverage**.
+* **649 regression tests**, **88% coverage**.
 
 Ver. 0.6.0 - 2013-Sep-05
 ===========================
@@ -300,4 +300,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _django: https://www.djangoproject.com/
 .. _redis: http://redis.io/
-.. _redis-py_: https://github.com/andymccurdy/redis-py
+.. _redis-py: https://github.com/andymccurdy/redis-py

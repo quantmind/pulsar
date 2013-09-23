@@ -15,7 +15,7 @@ development of server side asynchronous web applications.
    
    intro
    async
-   handlers
+   routing
    wrappers
    content
    middleware
