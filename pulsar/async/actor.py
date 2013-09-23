@@ -21,33 +21,38 @@ __all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'get_stream']
 def is_actor(obj):
     return isinstance(obj, Actor)
 
+
 def get_stream(cfg):
-    '''Obtain the python stream handler given a config dictionary.'''
+    '''Obtain the python stream handler given a config dictionary.
+    '''
     stream = sys.stderr
     return WritelnDecorator(stream)
 
+
 def send(target, action, *args, **params):
-    '''Send a :ref:`message <api-remote_commands>` to ``target`` to perform
-a given ``action``. The actor sending the message is obtained via the
-:func:`get_actor` function.
+    '''Send a :ref:`message <api-remote_commands>` to ``target``
+    
+    The message is to perform a given ``action``. The actor sending the
+    message is obtained via the :func:`get_actor` function.
 
-:parameter target: the :class:`Actor` id or an :class:`ActorProxy` or name of
-    the target actor which will receive the message.
-:parameter action: the name of the :ref:`remote command <api-remote_commands>`
-    to perform in the *target* :class:`Actor`.
-:parameter args: positional arguments to pass to the
-    :ref:`remote command <api-remote_commands>` *action*.
-:parameter params: dictionary of parameters to pass to
-    :ref:`remote command <api-remote_commands>` *action*.
-:rtype: a :class:`Deferred` if the action acknowledge the caller or `None`.
-
-Typical example::
-
-    >>> a = spawn()
-    >>> r = a.add_callback(lambda p: send(p,'ping'))
-    >>> r.result
-    'pong'
-'''
+    :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or
+        name of the target actor which will receive the message.
+    :parameter action: the :ref:`remote command <api-remote_commands>`
+        to perform in the ``target`` :class:`Actor`.
+    :parameter args: positional arguments to pass to the
+        :ref:`remote command <api-remote_commands>` ``action``.
+    :parameter params: dictionary of parameters to pass to
+        :ref:`remote command <api-remote_commands>` ``action``.
+    :return: a :class:`Deferred` if the action acknowledge the caller or
+        `None`.
+    
+    Typical example::
+    
+        >>> a = spawn()
+        >>> r = a.add_callback(lambda p: send(p,'ping'))
+        >>> r.result
+        'pong'
+    '''
     return get_actor().send(target, action, *args, **params)
 
 

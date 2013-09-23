@@ -248,6 +248,7 @@ COLOURS = {'red': 31,
 
 class ColoredStream(logging.StreamHandler):
     bold = True
+    terminator = '\n'
     COLORS = {"DEBUG": "cyan",
               "WARNING": "magenta",
               "ERROR": "red",
@@ -330,9 +331,11 @@ if win32:
                'cyan': 0x0003,
                'white': WHITE}
     
-    GetStdHandle = ctypes.windll.kernel32.GetStdHandle
-    GetStdHandle.argtypes = [wintypes.DWORD]
-    GetStdHandle.restype = wintypes.HANDLE
+    _GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+    _GetStdHandle.argtypes = [wintypes.DWORD]
+    _GetStdHandle.restype = wintypes.HANDLE
+    def GetStdHandle(kind):
+        return _GetStdHandle(kind)
     
     SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
     SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
@@ -345,6 +348,6 @@ if win32:
     _GetConsoleScreenBufferInfo.restype = wintypes.BOOL
     def GetConsoleInfo(handle):
         info = CONSOLE_SCREEN_BUFFER_INFO()
-        _GetConsoleScreenBufferInfo(handle, ctypes.byref(info))
+        _GetConsoleScreenBufferInfo(handle, info)
         return info
     

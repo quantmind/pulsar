@@ -292,13 +292,13 @@ class Client(Producer):
         The preferred way to obtain the event loop is via the
         :meth:`get_event_loop` method rather than accessing this attribute
         directly.
-        
+
     .. attribute:: force_sync
 
         Force a :ref:`synchronous client <tutorials-synchronous>`, that is a
         client which has it own :class:`EventLoop` and blocks until a response
         is available.
-        
+
         Default: `False`
     '''
     max_reconnect = 1
@@ -317,12 +317,10 @@ class Client(Producer):
     '''An optional version for this client'''
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
-    
-    
     ONE_TIME_EVENTS = ('finish',)
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request','post_request',
                          'connection_lost')
-    
+
     def __init__(self, connection_factory=None, timeout=None,
                  client_version=None, connection_pool=None, trust_env=True,
                  max_connections=None, consumer_factory=None, event_loop=None,
@@ -345,25 +343,25 @@ class Client(Producer):
         self.force_sync = force_sync
         self.event_loop = event_loop
         self.setup(**params)
-    
+
     def __str__(self):
         return self.__repr__()
-    
+
     def __repr__(self):
         return self.__class__.__name__
-    
+
     @property
     def concurrent_connections(self):
         '''Total number of concurrent connections.'''
         return reduce(lambda x,y: x + y, (p.concurrent_connections for p in\
                                           itervalues(self.connection_pools)), 0)
-    
+
     @property
     def available_connections(self):
         '''Total number of available connections.'''
         return reduce(lambda x,y: x + y, (p.available_connections for p in\
                                           itervalues(self.connection_pools)), 0)
-        
+
     @property
     def closed(self):
         '''``True`` if the :meth:`close` was invoked on this :class:`Client`.
@@ -372,14 +370,14 @@ class Client(Producer):
         servers.
         '''
         return self._closed
-        
+
     def setup(self, **params):
         '''Setup the client.
 
         Invoked at the end of initialisation with the additional parameters
         passed. By default it does nothing.'''
         pass
-    
+
     def get_event_loop(self):
         '''Return the :class:`EventLoop` used by this :class:`Client`.
         
@@ -393,11 +391,11 @@ class Client(Producer):
             return self.event_loop
         else:
             return get_event_loop()
-    
+
     def hash(self, address, timeout, request):
         #TODO: What is this?
         return hash((address, timeout))
-    
+
     def build_consumer(self, consumer_factory=None):
         '''Override the :meth:`Producer.build_consumer` method.
         
@@ -409,12 +407,12 @@ class Client(Producer):
         consumer.copy_many_times_events(self)
         consumer.bind_event('post_request', release_response_connection)
         return consumer
-        
+
     def request(self, *args, **params):
         '''Abstract method for creating a :class:`Request`.
 
-        The request is sent to a remote server via the :meth:`response` method.
-        This method **must be implemented by subclasses** and should
+        The request is sent to a remote server via the :meth:`response`
+        method. This method **must be implemented by subclasses** and should
         return a :class:`ProtocolConsumer` via invoking the
         :meth:`response` method::
 
@@ -425,14 +423,14 @@ class Client(Producer):
             
         '''
         raise NotImplementedError
-    
+
     def response(self, request, response=None, new_connection=True,
                  connection=None):
         '''Sends a ``request`` to the remote server.
 
         Once a ``request`` object has been constructed, the :meth:`request`
-        method can invoke this method to build the :class:`ProtocolConsumer` and
-        start the response.
+        method can invoke this method to build the :class:`ProtocolConsumer`
+        and start the response.
         There should not be any reason to override this method.
         This method is run on this client event loop (obtained via the
         :meth:`get_event_loop` method) thread.
@@ -440,8 +438,8 @@ class Client(Producer):
         :parameter request: a custom :class:`Request` for the :class:`Client`.
         :parameter response: a :class:`ProtocolConsumer` to reuse, otherwise
             ``None`` (Default).
-        :parameter new_connection: ``True`` if a new connection is required via
-            the :meth:`get_connection` method. Default ``True``.
+        :parameter new_connection: ``True`` if a new connection is required
+            via the :meth:`get_connection` method. Default ``True``.
         :return: a :class:`ProtocolConsumer` obtained form
             :attr:`consumer_factory`.
         '''
@@ -461,20 +459,20 @@ class Client(Producer):
             event_loop.call_now_threadsafe(self._response, event_loop,
                                            response, request, new_connection,
                                            connection)
-            if self.force_sync: # synchronous response
+            if self.force_sync:  # synchronous response
                 if not event_loop.is_running():
                     event_loop.run_until_complete(response.on_finished,
                                                   timeout=request.timeout)
                     return response.on_finished.get_result()
         return response
-    
+
     def get_connection(self, request, connection=None):
         '''Returns a suitable :class:`Connection` for ``request``.
-        
+
         :param request: a :class:`Request` used to select the appropriate
             :class:`ConnectionPool` for obtaining the connection.
         :param connection: optional :class:`Connection` which may be reused.
-            
+
         First checks if an available open connection can be used.
         Alternatively it creates a new connection by invoking the
         :meth:`ConnectionPool.get_or_create_connection` method on the
@@ -490,12 +488,12 @@ class Client(Producer):
             if pool is None:
                 connection = None
                 pool = self.connection_pool(
-                                request,
-                                max_connections=self.max_connections,
-                                connection_factory=self.connection_factory)
+                    request,
+                    max_connections=self.max_connections,
+                    connection_factory=self.connection_factory)
                 self.connection_pools[request.key] = pool
         return pool.get_or_create_connection(self, connection)
-        
+
     def update_parameters(self, parameter_list, params):
         '''Update *param* with attributes from this :class:`Client`.
 
@@ -509,7 +507,7 @@ class Client(Producer):
             if name not in params:
                 nparams[name] = getattr(self, name)
         return nparams
-        
+
     def close_connections(self, async=True):
         '''Close all connections in each :attr:`connection_pools`.
         
@@ -522,7 +520,7 @@ class Client(Producer):
         for p in self.connection_pools.values():
             all.append(p.close_connections(async=async))
         return multi_async(all)
-            
+
     def close(self, async=True, timeout=5):
         '''Close all connections.
 
@@ -535,16 +533,16 @@ class Client(Producer):
             event.add_both(partial(self.fire_event, 'finish'))
             event.set_timeout(timeout, self.get_event_loop())
         return self.event('finish')
-        
+
     def abort(self):
         ''':meth:`close` all connections without waiting for active connections
         to finish.'''
         self.close(async=False)
-    
+
     def reconnect_time_lag(self, lag):
         lag = self.reconnect_time_lag*(math.log(lag) + 1)
         return round(lag, 1)
-    
+
     def remove_pool(self, pool):
         key = None
         for key, p in self.connection_pools.items():
@@ -552,7 +550,7 @@ class Client(Producer):
                 break
         if key:
             self.connection_pools.pop(key)
-    
+
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time
         taken to obtain all responses. In the standard implementation
@@ -564,7 +562,7 @@ class Client(Producer):
             multi = client.timeit(100, ...)
             response = yield multi
             multi.total_time
-            
+
         :return: a :class:`MultiDeferred` which results in the list of results
           for the individual requests. Its :attr:`MultiDeferred.total_time`
           attribute indicates the number of seconds taken (once the deferred
@@ -577,7 +575,7 @@ class Client(Producer):
                 r = r.on_finished
             results.append(r)
         return multi_async(results)
-    
+
     #   INTERNALS
 
     def _response(self, event_loop, response, request, new_connection,
@@ -598,4 +596,3 @@ class Client(Producer):
                 response.start(request)
         except Exception:
             response.finished(Failure(sys.exc_info()).log())
-        

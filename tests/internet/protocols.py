@@ -36,15 +36,13 @@ class TestPulsarStreams(unittest.TestCase):
         client = self.client(full_response=True)
         self.assertFalse(client.concurrent_connections)
         self.assertFalse(client.available_connections)
-        response = client.request(self.server.address, b'Test First request')
-        result = yield response.on_finished
-        self.assertEqual(result, b'Test First request')
-        self.assertTrue(response.current_request)
-        self.assertFalse(response.connection)
+        response = yield client.request(self.server.address,
+            b'Test First request').on_finished
+        self.assertEqual(response.buffer, b'Test First request')
+        self.assertTrue(response.request)
         self.assertFalse(client.concurrent_connections)
         self.assertEqual(client.available_connections, 1)
-        self.assertEqual(response.request_processed, 1)
-        connection = client.get_connection(response.current_request)
+        connection = client.get_connection(response.request)
         self.assertEqual(client.concurrent_connections, 1)
         self.assertFalse(client.available_connections)
         self.assertEqual(connection.session, 1)

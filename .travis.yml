@@ -8,9 +8,8 @@ python:
   - "pypy"
 
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi 
-  - pip install --use-mirrors cython
-  - pip install --use-mirrors http-parser
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi
+  - pip install -r requirements_dev.txt --use-mirrors
   - python setup.py install
   - sudo rm -rf pulsar
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm

@@ -28,6 +28,7 @@ context domain, otherwise it returns ``None``.'''
     elif isinstance(arbiter, Actor) and arbiter.is_arbiter():
         return arbiter
 
+
 # TODO: why cfg is set to None?
 def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
@@ -43,7 +44,7 @@ These optional parameters are:
     * *aid* the actor id
     * *commands_set* the set of :ref:`remote commands <api-remote_commands>`
       the :class:`Actor` can respond to.
-    
+
 :rtype: an :class:`ActorProxyDeferred`.
 
 A typical usage::
@@ -85,11 +86,11 @@ def stop_arbiter(self):
         pass
     if exit_code:
         sys.exit(exit_code)
-    
+
 def start_arbiter(self):
     if current_process().daemon:
         raise pulsar.PulsarException(
-                'Cannot create the arbiter in a daemon process')
+            'Cannot create the arbiter in a daemon process')
     os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
     pidfile = self.cfg.pidfile
     if pidfile is not None:
@@ -100,8 +101,8 @@ def start_arbiter(self):
             raise HaltServer('ERROR. %s' % str(e), exit_code=3)
         self.pidfile = p
     return self
-    
-    
+
+
 class Arbiter(PoolMixin):
     '''The Arbiter is the most important a :class:`Actor`
 and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
@@ -110,7 +111,8 @@ It runs the main :class:`EventLoop` of your concurrent application.
 It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
 and the tornado_ eventloop.
 
-Users access the arbiter (in the arbiter process domain) by the high level api::
+Users access the arbiter (in the arbiter process domain) by the high level
+api::
 
     import pulsar
 
