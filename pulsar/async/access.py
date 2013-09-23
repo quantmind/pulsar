@@ -16,6 +16,7 @@ __all__ = ['get_request_loop',
 LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
 
+
 def is_mainthread(thread=None):
     '''Check if thread is the main thread. If ``thread`` is not supplied check
 the current thread.'''
@@ -44,7 +45,7 @@ dictionary.'''
     else:
         return loc
 
-            
+
 def thread_local_data(name, value=NOTHING, ct=None):
     '''Set or retrieve an attribute *name* from the curren thread. If *value*
 is None, it will get the value otherwise it will set the value.'''
@@ -60,7 +61,7 @@ is None, it will get the value otherwise it will set the value.'''
         if hasattr(loc, name):
             if getattr(loc, name) is not value:
                 raise RuntimeError(
-                            '%s is already available on this thread' % name)
+                    '%s is already available on this thread' % name)
         else:
             setattr(loc, name, value)
     return getattr(loc, name, None)
@@ -82,15 +83,13 @@ def remove_actor(actor):
     if actor.impl.kind == 'thread':
         LOGGER.debug('Removing threaded actor %s' % actor)
         #process_local_data('thread_actors').pop(actor.aid, None)
-        
-        
+
+
 class plocal(object):
     pass
 
-        
+
 class ProcessLocal(object):
-    #def __init__(self):
-    #    self.thread_actors = {}
         
     def local(self):
         return plocal()

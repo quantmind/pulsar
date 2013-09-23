@@ -87,6 +87,7 @@ def stop_arbiter(self):
     if exit_code:
         sys.exit(exit_code)
 
+
 def start_arbiter(self):
     if current_process().daemon:
         raise pulsar.PulsarException(
@@ -123,7 +124,7 @@ api::
 .. _tornado: http://www.tornadoweb.org/
 '''
     pidfile = None
-    
+
     def __init__(self, impl):
         super(Arbiter, self).__init__(impl)
         self.monitors = {}
@@ -131,9 +132,9 @@ api::
         self.bind_event('start', start_arbiter)
         self.bind_event('stop', stop_arbiter)
 
-    ############################################################################
+    ########################################################################
     # ARBITER HIGH LEVEL API
-    ############################################################################
+    ########################################################################
     def add_monitor(self, monitor_name, monitor_class=None, **params):
         '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
@@ -141,7 +142,7 @@ api::
 :parameter monitor_name: a unique name for the monitor.
 :parameter kwargs: dictionary of key-valued parameters for the monitor.
 :rtype: an instance of a :class:`pulsar.Monitor`.'''
-        if monitor_name in self.registered: 
+        if monitor_name in self.registered:
             raise KeyError('Monitor "{0}" already available'\
                            .format(monitor_name))
         monitor_class = monitor_class or Monitor
@@ -171,7 +172,7 @@ api::
                         return m.managed_actors[aid]
         else:
             return a
-    
+
     def info(self):
         data = super(Arbiter, self).info()
         monitors = {}
@@ -192,16 +193,14 @@ api::
         data['workers'] = [a.info for a in itervalues(self.managed_actors)]
         data['monitors'] = monitors
         return data
-    
+
     def identity(self):
         return self.name
-    
-    ############################################################################
+
+    ########################################################################
     # INTERNALS
-    ############################################################################
+    ########################################################################
     def _remove_actor(self, actor, log=True):
         super(Arbiter, self)._remove_actor(actor, log)
         self.registered.pop(actor.name, None)
         self.monitors.pop(actor.aid, None)
-        
-    

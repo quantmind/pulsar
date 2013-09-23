@@ -15,10 +15,10 @@ from .protocols import (EventHandler, Producer, ConnectionProducer,
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
 
-    
+
 class Request(object):
     '''A :class:`Client` request.
-        
+
     A request object is hashable an it is used to select
     the appropriate :class:`ConnectionPool` for the client request.
 
@@ -30,7 +30,7 @@ class Request(object):
 
         When ``True`` a protocol consumer release the connection back to the
         :class:`ConnectionPool` once done with the request.
-        
+
         Default: ``True``
     '''
     inp_params = None
@@ -39,24 +39,24 @@ class Request(object):
     def __init__(self, address, timeout=0):
         self.address = address
         self.timeout = timeout
-        
+
     @property
     def key(self):
         '''Attribute used for selecting the appropriate
 :class:`ConnectionPool`'''
         return (self.address, self.timeout)
-    
+
     @property
     def ssl(self):
         '''A transport layer security context or ``True``.
-        
+
         Used to create SSL/TLS connections.
         '''
         return False
-    
+
     def encode(self):
         raise NotImplementedError
-    
+
     def create_connection(self, event_loop, connection):
         '''Called by a :class:`Client` when a new connection is needed.
         '''
@@ -65,51 +65,51 @@ class Request(object):
                                            self.address[1],
                                            ssl=self.ssl)
         return res.add_callback(self._connection_made)
-        
+
     def _connection_made(self, transport_protocol):
         _, connection = transport_protocol
         # wait for the connection_made event
         yield connection.event('connection_made')
         # starts the new request
         connection.current_consumer.start(self)
-    
-    
+
+
 class ConnectionPool(ConnectionProducer):
     '''A :class:`Producer` of of active connections for client protocols.
-    
+
     It maintains a live set of :class:`Connection`.
 
     .. attribute:: address
 
         Address to connect to
-    '''    
+    '''
     def __init__(self, request, **params):
         params['timeout'] = request.timeout
         self.lock = Lock()
         super(ConnectionPool, self).__init__(**params)
         self._address = request.address
         self._available_connections = set()
-    
+
     def __repr__(self):
         return repr(self.address)
-    
+
     def __str__(self):
         return self.__repr__()
-        
+
     @property
     def address(self):
         return self._address
-    
+
     @property
     def available_connections(self):
         '''Number of available connection in the pool.
-        
+
         Available connections are not currently in-use and therefore they can
         be selected when the :meth:`get_or_create_connection` method is
         invoked.
         '''
         return len(self._available_connections)
-        
+
     def release_connection(self, connection, response=None):
         '''Releases the ``connection`` back to the pool.
 
@@ -126,16 +126,16 @@ class ConnectionPool(ConnectionProducer):
             self._concurrent_connections.discard(connection)
             if connection.producer.can_reuse_connection(connection, response):
                 self._available_connections.add(connection)
-        
+
     def get_or_create_connection(self, client, connection=None):
         '''Get or create a new connection for ``client``.
-        
+
         If a ``connection`` is given and either
-        
+
         * the connection is in the set of available connections
         * the connection is in the set of concurrent connections but without
           a protocol consumer
-        
+
         then it is chosen ahead of others in the pool.
         '''
         stale_connections = []
@@ -180,8 +180,8 @@ class ConnectionPool(ConnectionProducer):
             reconnect = partial(self._try_reconnect, connection)
             connection.bind_event('connection_lost', reconnect, reconnect)
         return connection
-        
-    ############################################################################
+
+    #########################################################################
     ##    INTERNALS
     def _try_reconnect(self, connection, exc):
         # handle Read Exception on the transport
@@ -210,26 +210,26 @@ class ConnectionPool(ConnectionProducer):
                     self._reconnect(client, consumer)
                 return consumer
         return exc
-    
+
     def _reconnect(self, client, consumer):
         # get a new connection
         conn = self.get_or_create_connection(client)
         # Start the response without firing the events
         conn.set_consumer(consumer)
         consumer.start(consumer.request)
-                
+
     def _remove_connection(self, connection, exc=None):
         with self.lock:
             super(ConnectionPool, self)._remove_connection(connection, exc)
             self._available_connections.discard(connection)
-            
+
 
 def release_response_connection(response):
     '''Added as a post_request callback to release the connection.
-    
+
     :parameter response: the :class:`ProtocolConsumer` calling this function
     once done with its request.
-    
+
     If the :class:`Request` associated with the protocol consumer has
     the :attr:`Request.release_connection` set to ``False`` the connection
     is not released to the connection pool.
@@ -243,7 +243,8 @@ def release_response_connection(response):
             pool = response.producer.connection_pools.get(key)
             if not pool:
                 connection.logger.error(
-                    'Could not fined connection pool to release %s', connection)
+                    'Could not fined connection pool to release %s',
+                    connection)
             else:
                 pool.release_connection(connection, response)
     return response
@@ -254,7 +255,7 @@ class Client(Producer):
 
     It is a :class:`Producer` which handles one or more
     :class:`ConnectionPool` of asynchronous connections to a server.
-    
+
     It has the ``finish`` :ref:`one time event <one-time-event>` fired when
     calling the :meth:`close` method.
 
@@ -284,7 +285,8 @@ class Client(Producer):
         The :attr:`connection_pool` can also be set at class level.
     :param max_reconnect: set the :attr:`max_reconnect` attribute.
     :param consumer_factory: set the :meth:`consumer_factory` callable.
-    :parameter client_version: optional version string for this :class:`Client`.
+    :parameter client_version: optional version string for this
+        :class:`Client`.
 
     .. attribute:: event_loop
 
@@ -312,9 +314,11 @@ class Client(Producer):
     connection_pool = None
     '''Factory of :class:`ConnectionPool`.'''
     consumer_factory = None
-    '''A factory of :class:`ProtocolConsumer` for sending and consuming data.'''
+    '''A factory of :class:`ProtocolConsumer` for sending and consuming
+    data.
+    '''
     client_version = ''
-    '''An optional version for this client'''
+    '''An optional version for this client.'''
     reconnecting_gap = 2
     '''Reconnecting gap in seconds.'''
     ONE_TIME_EVENTS = ('finish',)

@@ -10,10 +10,12 @@ from .proxy import command, ActorProxyMonitor
 def ping(request):
     return 'pong'
 
+
 @command()
 def echo(request, message):
     '''Returns *message*'''
     return message
+
 
 @command()
 def config(request, setget, name, *values):
@@ -29,16 +31,19 @@ def config(request, setget, name, *values):
     else:
         raise CommandError('config must be followed by set or get')
 
+
 @command()
 def run(request, callable, *args, **kwargs):
     '''Execute a python *callable*.'''
     return callable(request.actor, *args, **kwargs)
 
+
 @command(ack=False)
 def stop(request):
     '''Stop the actor from running.'''
     return request.actor.stop()
-    
+
+
 @command()
 def notify(request, info):
     '''The actor notify itself with a dictionary of information.
@@ -61,17 +66,20 @@ The command perform the following actions:
             remote_actor.callback = None
             callback.callback(remote_actor)
     return t
-    
+
+
 @command()
 def spawn(request, **kwargs):
     '''Spawn a new actor.'''
     return request.actor.spawn(**kwargs)
 
+
 @command()
 def info(request):
     ''' Returns information and statistics about the server as a json string'''
     return request.actor.info()
-     
+
+
 @command()
 def kill_actor(request, aid, timeout=5):
     '''Kill an actor with id ``aid``. This command can only be executed by the
