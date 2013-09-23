@@ -205,7 +205,7 @@ from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
-from pulsar.utils.httpurl import (urlparse, parse_qsl,
+from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
                                   Headers, urllibr, get_environ_proxies,
@@ -515,7 +515,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
             return self._request.parser
     
     def __str__(self):
-        return self.status or '<None>'
+        return '%s' % (self.status_code or '<None>')
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
@@ -527,11 +527,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
         Available once the :attr:`on_headers` has fired.'''
         if self.parser:
             return self.parser.get_status_code()
-        
-    @property
-    def status(self):
-        if self.parser:
-            return self.parser.get_status()
         
     @property
     def url(self):
@@ -567,6 +562,11 @@ class HttpResponse(pulsar.ProtocolConsumer):
         '''Flush the response body and return it.'''
         return self.parser.recv_body()
     
+    def get_status(self):
+        code = self.status_code
+        if code:
+            return '%d %s' % (code, responses.get(code, 'Unknown'))
+        
     def get_content(self):
         '''Retrieve the body without flushing'''
         b = self.parser.recv_body()

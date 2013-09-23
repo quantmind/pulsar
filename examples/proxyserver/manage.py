@@ -146,7 +146,7 @@ class ProxyResponse(object):
                 headers = self.remove_hop_headers(response.headers)
                 self.headers = Headers(headers, kind='server')
                 # start the response
-                self.start_response(response.status, list(self.headers))
+                self.start_response(response.get_status(), list(self.headers))
             body = response.recv_body()
             if response.parser.is_message_complete():
                 self._done = True
@@ -161,7 +161,8 @@ class ProxyResponse(object):
             html.body.append('<h1>%s</h1>' % msg)
             data = html.render()
             resp = wsgi.WsgiResponse(504, data, content_type='text/html')
-            self.start_response(resp.status, resp.get_headers(), failure.exc_info)
+            self.start_response(resp.status, resp.get_headers(),
+                                failure.exc_info)
             self._done = True
             return self.queue.put(resp.content[0])
     

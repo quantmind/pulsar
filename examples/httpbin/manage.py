@@ -33,7 +33,7 @@ from pulsar.apps.wsgi import route, Html, Json
 try:
     from oauthbin import OAuthBin
 except ImportError:
-    OauthBin = None
+    OAuthBin = None
     
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -238,8 +238,8 @@ class Site(wsgi.LazyWsgi):
     
     def setup(self):
         router = HttpBin('/')
-        if OauthBin:
-            router.add_child(OauthBin('oauth2'))
+        if OAuthBin:
+            router.add_child(OAuthBin('oauth2'))
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,

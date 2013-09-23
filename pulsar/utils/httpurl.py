@@ -849,9 +849,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     def get_status_code(self):
         return self._status_code
-    
-    def get_status(self):
-        return self._status
 
     def get_url(self):
         return self._url

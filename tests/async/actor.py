@@ -115,8 +115,8 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
             if default_timer() - start > 3:
                 break
         self.assertTrue(address)
-        client = Echo(address)
-        result = yield client.request(b'Hello')
+        echo = Echo().client(address)
+        result = yield echo(b'Hello')
         self.assertEqual(result, b'Hello')
         yield self.stop_actors(proxy)
 

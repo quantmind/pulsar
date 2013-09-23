@@ -153,7 +153,7 @@ class Tunneling:
             
     def post_request(self, response):
         '''Called back once the message is complete.'''
-        if response.status == '200 Connection established':
+        if response.status_code == 200:
             prev_response = response
             request = prev_response._request.request
             loop = response.event_loop
