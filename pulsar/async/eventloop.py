@@ -8,7 +8,7 @@ from threading import current_thread
 from inspect import isgenerator
 try:
     import signal
-except ImportError:     #pragma    nocover
+except ImportError:     # pragma    nocover
     signal = None
 
 from pulsar.utils.system import close_on_exec
@@ -45,7 +45,7 @@ def setid(self):
 
 STOP_LOOP = (KeyboardInterrupt, )
 
-    
+
 class EventLoopPolicy(BaseEventLoopPolicy):
     '''Pulsar event loop policy'''
     def get_event_loop(self):
@@ -325,7 +325,8 @@ that can be used to cancel the call.'''
             return self.call_soon(callback, *args)
 
     def call_later(self, seconds, callback, *args):
-        '''Arrange for a ``callback`` to be called at a given time in the future.
+        '''Arrange for a ``callback`` to be called at a given time.
+
 Returns a :class:`TimedCall` with a :meth:`TimedCall.cancel` method
 that can be used to cancel the call. The delay can be an int or float,
 expressed in ``seconds``. It is always a relative time.
@@ -348,7 +349,7 @@ the callback when it is called.'''
             return timeout
         else:
             return self.call_soon(callback, *args)
-        
+
     def call_soon(self, callback, *args):
         '''Equivalent to ``self.call_later(0, callback, *args)``.'''
         timeout = TimedCall(None, callback, args)
@@ -369,7 +370,7 @@ to transfer control from other threads to the EventLoop's thread.'''
 
     def run_in_executor(self, executor, callback, *args):
         '''Arrange to call ``callback(*args)`` in an ``executor``.
-        
+
         Return a :class:`Deferred` called once the callback has finished.'''
         executor = executor or self._default_executor
         if executor is None:
@@ -426,9 +427,12 @@ descriptor.'''
 
     #################################################    SIGNAL CALLBACKS
     def add_signal_handler(self, sig, callback, *args):
-        '''Whenever signal ``sig`` is received, arrange for `callback(*args)` to
-be called. Returns a :class:`TimedCall` handler which can be used to cancel
-the signal callback.'''
+        '''Add a signal handler.
+
+        Whenever signal ``sig`` is received, arrange for `callback(*args)` to
+        be called. Returns a :class:`TimedCall` handler which can be used to
+        cancel the signal callback.
+        '''
         self._check_signal(sig)
         handler = TimedCall(None, callback, args)
         prev = signal.signal(sig, handler)
@@ -447,14 +451,14 @@ default signal handler ``signal.SIG_DFL``.'''
         else:
             return False
 
-    #################################################    SOCKET METHODS        
+    #################################################    SOCKET METHODS
     def create_connection(self, protocol_factory, host=None, port=None,
                           ssl=None, family=0, proto=0, flags=0, sock=None,
                           local_addr=None, timeout=None):
         '''Creates a stream connection to a given internet host and port.
-        
+
         It is the asynchronous equivalent of ``socket.create_connection``.
-        
+
         :parameter protocol_factory: The callable to create the
             :class:`Protocol` which handle the connection.
         :parameter host: If host is an empty string or None all interfaces are
@@ -471,7 +475,7 @@ default signal handler ``signal.SIG_DFL``.'''
             before connecting.
         :return: a :class:`Deferred` and its result on success is the
             ``(transport, protocol)`` pair.
-            
+
         If a failure prevents the creation of a successful connection, an
         appropriate exception will be raised.
         '''
@@ -484,8 +488,9 @@ default signal handler ``signal.SIG_DFL``.'''
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
                       sock=None, backlog=100, reuse_address=None):
         """Creates a TCP server bound to ``host`` and ``port``.
-        
-:parameter protocol_factory: The :class:`Protocol` which handle server requests.
+
+:parameter protocol_factory: The :class:`Protocol` which handle server
+    requests.
 :parameter host: If host is an empty string or None all interfaces are assumed
     and a list of multiple sockets will be returned (most likely
     one for IPv4 and another one for IPv6).
@@ -526,8 +531,9 @@ will be stopped.'''
 
     def sock_connect(self, sock, address, timeout=None):
         '''Connect ``sock`` to the given ``address``.
-        
-        Returns a :class:`Deferred` whose result on success will be ``None``.'''
+
+        Returns a :class:`Deferred` whose result on success will be ``None``.
+        '''
         return self.async(sock_connect(self, sock, address), timeout)
 
     def sock_accept(self, sock, timeout=None):
@@ -596,7 +602,7 @@ if we are calling from the same thread of execution as this
             value.set_timeout(timeout)
         return value
 
-    #################################################    INTERNALS    
+    #################################################    INTERNALS
     def _before_run(self):
         ct = setid(self)
         self._name = ct.name

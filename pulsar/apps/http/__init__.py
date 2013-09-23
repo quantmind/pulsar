@@ -262,11 +262,9 @@ class HttpRequest(pulsar.Request):
         self.method = method.upper()
         self._scheme, self._netloc, self.path, self.params,\
         self.query, self.fragment = urlparse(url)
-        if not self._netloc:
-            if self.method == 'CONNECT':
-                # Using this request to create a tunnel (SSL tunneling)
-                self._netloc = self.path
-                self.path = ''
+        if not self._netloc and self.method == 'CONNECT':
+            self._scheme, self._netloc, self.path, self.params,\
+            self.query, self.fragment = urlparse('http://%s' % url)
         self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue

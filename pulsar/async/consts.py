@@ -21,8 +21,8 @@ Actor States
 Actor state constants are access via::
 
     from pulsar import ACTOR_STATES
-    
-They are:  
+
+They are:
 
 * ``ACTOR_STATES.INITIAL = 0`` when an actor is just created, before the
   :class:`pulsar.Actor.start` method is called.

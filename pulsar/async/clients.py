@@ -358,13 +358,15 @@ class Client(Producer):
     def concurrent_connections(self):
         '''Total number of concurrent connections.'''
         return reduce(lambda x, y: x + y, (p.concurrent_connections for p in
-            itervalues(self.connection_pools)), 0)
+                                           itervalues(self.connection_pools)),
+                      0)
 
     @property
     def available_connections(self):
         '''Total number of available connections.'''
         return reduce(lambda x, y: x + y, (p.available_connections for p in
-            itervalues(self.connection_pools)), 0)
+                                           itervalues(self.connection_pools)),
+                      0)
 
     @property
     def closed(self):
