@@ -18,3 +18,5 @@ examples/webmail/config.py
 .htmlprof
 examples/djangoapp/test.db
 test.pid
+pulsar.egg-info
+extensions/src/cparser.cpp

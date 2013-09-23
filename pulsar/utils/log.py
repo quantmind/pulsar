@@ -247,8 +247,9 @@ COLOURS = {'red': 31,
            'white': WHITE}
 
 class ColoredStream(logging.StreamHandler):
+    bold = True
     COLORS = {"DEBUG": "cyan",
-              "WARNING": "yellow",
+              "WARNING": "magenta",
               "ERROR": "red",
               "CRITICAL": "red",
               "INFO": "green"}
@@ -277,6 +278,8 @@ class ColoredStream(logging.StreamHandler):
                 handle = GetStdHandle(-11)
                 oldcolors = GetConsoleInfo(handle).wAttributes
                 code |= (oldcolors & 0x00F0)
+                if self.bold:
+                    code |= FOREGROUND_INTENSITY
                 SetConsoleTextAttribute(handle, code)
                 while len(text) > 32768:
                     file.write(text[:32768])
@@ -318,6 +321,7 @@ if win32:
                     ('dwMaximumWindowSize', COORD)]
     
     WHITE = 0x0007
+    FOREGROUND_INTENSITY = 0x0008
     COLOURS = {'red': 0x0004 ,
                'green': 0x0002,
                'yellow': 0x0006,
