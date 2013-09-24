@@ -4,19 +4,35 @@ Asynchronous Redis client, requires redis-py_.
 Usage
 =============
 
-The main class for the asynchronous redis client is :class:`RedisClientPool`
+The main class for the asynchronous redis client is :class:`RedisPool`
 which is a pool of different redis clients. An instance of this class can be
 created as a singleton somewhere in your code::
 
-    from pulsar.apps.redis import RedisClientPool
+    from pulsar.apps.redis import RedisPool
 
-    redis_pool = RedisClientPool()
+    pool = RedisPool()
 
 To create a new redis client::
 
-    client = redis_pool.client(('localhost',6379), db=7)
+    >>> client = pool.redis(('localhost', 6379), db=7)
+    >>> d = client.echo('Hello')
 
-.. redis-py: https://github.com/andymccurdy/redis-py
+API
+======
+
+RedisPool
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: RedisPool
+   :members:
+   :member-order: bysource
+
+Clients
+==============
+
+.. automodule:: pulsar.apps.redis.client
+
+.. _redis-py: https://github.com/andymccurdy/redis-py
 '''
 from collections import namedtuple
 from functools import partial
@@ -37,18 +53,21 @@ except ImportError:
 connection_info = namedtuple('connection_info', 'address db password timeout')
 
 
-class RedisClient(pulsar.Client):
-    '''A :class:`pulsar.Client` for managing redis clients.
+class RedisPool(pulsar.Client):
+    '''A :class:`pulsar.Client` to manage clients for several redis servers.
 
-    This class manage redis clients to several redis servers.
+    :param encoding: default charset encoding for this pool of clients. If
+        not provided ``utf-8`` is used.
+    :param parser: optional parser factory for this redis pool.
+
+    A :class:`RedisPool`
     '''
-    connection_pools = {}
     consumer_factory = RedisProtocol
 
     def __init__(self, encoding=None, parser=None, encoding_errors='strict',
                  **kwargs):
-        super(RedisClient, self).__init__(**kwargs)
-        self.parser = parser or RedisParser()
+        super(RedisPool, self).__init__(**kwargs)
+        self.parser = parser or RedisParser
         self.encoding = encoding or 'utf-8'
         self.encoding_errors = encoding_errors or 'strict'
         self.bind_event('pre_request', self._authenticate)
@@ -57,9 +76,10 @@ class RedisClient(pulsar.Client):
         '''Return a :class:`Redis` client.
 
         :param address: the address of the server.
-        :param address: server database number.
+        :param db: optional server database number.
         :param password: optional server password.
         :param timeout: optional timeout for idle connections.
+        :return: a redis-py_ client.
         '''
         assert Redis, 'To use pulsar-redis you need redis-py installed'
         timeout = int(timeout or self.timeout)
@@ -73,9 +93,6 @@ class RedisClient(pulsar.Client):
             return self.redis(address, **params)
         else:
             raise ValueError('Use "redis" as connection string schema')
-
-    def pubsub(self, shard_hint=None):
-        return PubSub(self, shard_hint)
 
     def request(self, client, command_name, args, options=None, response=None,
                 new_connection=False, **inp_params):
@@ -98,7 +115,12 @@ class RedisClient(pulsar.Client):
         request = Request(pipeline, '', commands,
                           raise_on_error=raise_on_error)
         response = self.response(request)
-        return response if pipeline.full_response else response.on_finished
+        if not pipeline.full_response:
+            on_finished = response.on_finished
+            on_finished.add_callback(lambda r: r.result)
+            return on_finished
+        else:
+            return response
 
     def _next(self, consumer, next_request, result):
         consumer.new_request(next_request)

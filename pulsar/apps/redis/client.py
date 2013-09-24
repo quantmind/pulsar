@@ -1,13 +1,29 @@
+'''
+Redis
+~~~~~~~~~~~~~~~
+
+.. autoclass:: Redis
+   :members:
+   :member-order: bysource
+
+Pub/Sub
+~~~~~~~~~~~~~~~
+
+.. autoclass:: PubSub
+   :members:
+   :member-order: bysource
+'''
 import sys
 from collections import deque
 
 import redis
 from redis.exceptions import NoScriptError, InvalidResponse
-from redis.client import BasePipeline
+from redis.client import BasePipeline as _BasePipeline
 from redis.connection import PythonParser as _p
 
 import pulsar
 from pulsar import multi_async, Deferred, ProtocolError
+from pulsar.utils.pep import zip
 
 from .parser import Parser
 
@@ -45,12 +61,11 @@ class Request(pulsar.Request):
                  **inp_params):
         pool = client.connection_pool
         self.client = client
-        self.parser = pool.parser
+        self.parser = pool.parser()
         self.command_name = command_name.upper()
         self.raise_on_error = raise_on_error
         self.release_connection = release_connection
         self.args = args
-        self.last_response = False
         self.inp_params = inp_params
         if not command_name:
             self.response = []
@@ -87,10 +102,6 @@ class Request(pulsar.Request):
             return '%s%s' % (self.command_name, self.args)
     __str__ = __repr__
 
-    def read_response(self):
-        # For compatibility with redis-py
-        return self.last_response
-
     def feed(self, data):
         self.parser.feed(data)
         response = self.parser.get()
@@ -99,22 +110,22 @@ class Request(pulsar.Request):
         if self.command_name:
             result = NOT_DONE
             while response is not False:
-                self.last_response = result = response
+                result = response
                 if not isinstance(response, Exception):
                     if self.options:
-                        result = parse(self, self.command_name, **self.options)
+                        result = parse(result, self.command_name,
+                                       **self.options)
                     else:
-                        result = parse(self, self.command_name)
+                        result = parse(result, self.command_name)
                 elif self.raise_on_error:
                     raise response
                 response = self.parser.get()
             return result
         else:
             while response is not False:
-                self.last_response = response
                 args, opts = self.args_options.popleft()
                 if not isinstance(response, Exception):
-                    response = parse(self, args[0], **opts)
+                    response = parse(response, args[0], **opts)
                 self.response.append(response)
                 response = self.parser.get()
             if not self.args_options:
@@ -153,6 +164,10 @@ class Redis(redis.StrictRedis):
         self.extra = kw
         self.response_callbacks = self.__class__.RESPONSE_CALLBACKS.copy()
 
+    @property
+    def encoding(self):
+        return self.connection_pool.encoding
+
     def execute_command(self, command, *args, **options):
         "Execute a ``command`` and return a parsed response"
         try:
@@ -169,7 +184,7 @@ class Redis(redis.StrictRedis):
         atomic, pipelines are useful for reducing the back-and-forth overhead
         between the client and server.
         """
-        return PipeLine(self, self.response_callbacks, transaction, shard_hint)
+        return Pipeline(self, self.response_callbacks, transaction, shard_hint)
 
     def pubsub(self, shard_hint=None):
         '''Return a Publish/Subscribe object.
@@ -180,9 +195,19 @@ class Redis(redis.StrictRedis):
         return PubSub(self.connection_pool, self.connection_info, shard_hint,
                       self.extra)
 
+    def register_script(self, script):
+        raise NotImplementedError
 
-class PipeLine(BasePipeline, Redis):
+    def parse_response(self, response, command_name, **options):
+        "Parses a response from the Redis server."
+        if command_name in self.response_callbacks:
+            return self.response_callbacks[command_name](response, **options)
+        return response
 
+
+class BasePipeline(_BasePipeline):
+    '''Asynchronous equivalent of the BasePipeline.
+    '''
     def __init__(self, client, response_callbacks, transaction, shard_hint):
         self.client = client
         self.response_callbacks = response_callbacks
@@ -207,6 +232,35 @@ class PipeLine(BasePipeline, Redis):
     def execute(self, raise_on_error=True):
         return self.connection_pool.request_pipeline(
             self, raise_on_error=raise_on_error)
+
+    def parse_response(self, response, command_name, **options):
+        if self.transaction:
+            if command_name != 'EXEC':
+                return response
+            else:
+                data = []
+                callbacks = self.response_callbacks
+                for r, cmd in zip(response, self.command_stack):
+                    if not isinstance(r, Exception):
+                        args, opt = cmd
+                        command_name = args[0]
+                        if command_name in callbacks:
+                            r = callbacks[command_name](r, **opt)
+                    data.append(r)
+                return data
+        else:
+            callbacks = self.response_callbacks
+            if command_name in callbacks:
+                response = callbacks[command_name](response, **options)
+            if command_name in self.UNWATCH_COMMANDS:
+                self.watching = False
+            elif command_name == 'WATCH':
+                self.watching = True
+            return result
+
+
+class Pipeline(BasePipeline, Redis):
+    pass
 
 
 class PubSub(pulsar.ProtocolConsumer):

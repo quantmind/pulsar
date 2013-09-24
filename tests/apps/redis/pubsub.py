@@ -11,7 +11,7 @@ class Listener(pulsar.Deferred):
         self.channel = channel
         self.size = size
         self.messages = []
-        
+
     def on_message(self, channel_message):
         channel, message = channel_message
         channel = channel.decode('utf-8')
@@ -19,10 +19,10 @@ class Listener(pulsar.Deferred):
             self.messages.append(message)
             if len(self.messages) == self.size:
                 self.callback(self.messages)
-            
+
 
 class TestRedisPubSub(RedisTest):
-    
+
     def test_subscribe_one(self):
         client = self.client()
         pubsub = client.pubsub()
@@ -35,7 +35,7 @@ class TestRedisPubSub(RedisTest):
         self.assertEqual(channels, 1)
         channels = yield pubsub.subscribe('foooo', 'jhkjhkjhkh')
         self.assertEqual(channels, 3)
-    
+
     def test_subscribe_many(self):
         client = self.client()
         pubsub = client.pubsub()
@@ -48,7 +48,7 @@ class TestRedisPubSub(RedisTest):
         self.assertEqual(channels, 2)
         channels = yield pubsub.unsubscribe()
         self.assertEqual(channels, 0)
-       
+
     def test_unsubscribe(self):
         client = self.client()
         pubsub = client.pubsub()
@@ -64,14 +64,14 @@ class TestRedisPubSub(RedisTest):
         self.assertEqual(channels, 2)
         channels = yield pubsub.unsubscribe()
         self.assertEqual(channels, 0)
-    
+
     def test_publish(self):
         client = self.client()
         pubsub = client.pubsub()
         pubsub.subscribe('bla')
         result = yield pubsub.publish('bla', 'Hello')
         self.assertTrue(result>=0)
-        
+
     def test_count_messages(self):
         client = self.client()
         pubsub = client.pubsub()
@@ -85,7 +85,7 @@ class TestRedisPubSub(RedisTest):
         result = yield listener
         self.assertEqual(len(result), 2)
         self.assertEqual(set(result), set((b'Hello', b'done')))
-        
+
     def test_count_messages4(self):
         client = self.client()
         pubsub = client.pubsub()

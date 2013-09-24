@@ -7,7 +7,7 @@ Concurrent framework for Python.
 
 .. toctree::
    :maxdepth: 1
-   
+
    overview
    design
    faq
@@ -22,12 +22,12 @@ Concurrent framework for Python.
 Applications
 =========================
 
-Pulsar applications are built on top of :mod:`pulsar` concurrent
-framework:
+Pulsar applications are built on top of pulsar concurrent framework and are
+located in the :mod:`pulsar.apps` module.
 
 .. toctree::
    :maxdepth: 1
-   
+
    apps/socket
    apps/wsgi/index
    apps/tasks/index
@@ -41,7 +41,7 @@ framework:
    apps/twisted
    apps/pulse
    apps/green
-   
+
 
 Indices and tables
 ==================

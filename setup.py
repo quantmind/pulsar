@@ -7,10 +7,10 @@ from distutils.command.install import INSTALL_SCHEMES
 
 #from lib.setup import libparams, BuildFailed
 
-package_name  = 'pulsar'
+package_name = 'pulsar'
 package_fullname = package_name
-root_dir      = os.path.split(os.path.abspath(__file__))[0]
-package_dir   = os.path.join(root_dir, package_name)
+root_dir = os.path.split(os.path.abspath(__file__))[0]
+package_dir = os.path.join(root_dir, package_name)
 
 # Try to import lib build
 try:
@@ -18,24 +18,30 @@ try:
 except ImportError:
     libparams = None
 
+
 class osx_install_data(install_data):
 
     def finalize_options(self):
         self.set_undefined_options('install', ('install_lib', 'install_dir'))
         install_data.finalize_options(self)
 
+
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
 
+
 def get_module():
     if root_dir not in sys.path:
-        sys.path.insert(0,root_dir)
+        sys.path.insert(0, root_dir)
     return __import__(package_name)
+
 
 mod = get_module()
 
+
 def read(fname):
     return open(os.path.join(root_dir, fname)).read()
+
 
 def fullsplit(path, result=None):
     """
@@ -51,15 +57,16 @@ def fullsplit(path, result=None):
         return result
     return fullsplit(head, [tail] + result)
 
+
 # Compile the list of packages available, because distutils doesn't have
 # an easy way to do this.
-def get_rel_dir(d,base,res=''):
+def get_rel_dir(d, base, res=''):
     if d == base:
         return res
-    br,r = os.path.split(d)
+    br, r = os.path.split(d)
     if res:
-        r = os.path.join(r,res)
-    return get_rel_dir(br,base,r)
+        r = os.path.join(r, res)
+    return get_rel_dir(br, base, r)
 
 
 packages, data_files = [], []
@@ -91,7 +98,7 @@ def run_setup(with_cext=False, argv=None):
     else:
         params['cmdclass']['install_data'] = install_data
     argv = argv if argv is not None else sys.argv
-    if len(argv) > 1 and sys.version_info >= (3,0):
+    if len(argv) > 1 and sys.version_info >= (3, 0):
         try:
             packages.remove('pulsar.utils.fallbacks.py2')
         except ValueError:
@@ -108,14 +115,14 @@ def run_setup(with_cext=False, argv=None):
                    'package_data': {package_name: data_files},
                    'classifiers':  mod.CLASSIFIERS})
     setup(**params)
-    
+
+
 def status_msgs(*msgs):
     print('*' * 75)
     for msg in msgs:
         print(msg)
     print('*' * 75)
-    
-run_setup()
+
 
 if libparams is None:
     status_msgs('WARNING: C extensions could not be compiled, '
@@ -127,11 +134,10 @@ else:
         run_setup(libparams)
     except BuildFailed as exc:
         status_msgs(
-                exc.msg,
-                "WARNING: C extensions could not be compiled, " +
-                    "speedups are not enabled.",
-                "Failure information, if any, is above.",
-                "Retrying the build without C extensions now."
-            )
+            exc.msg,
+            "WARNING: C extensions could not be compiled, "
+            "speedups are not enabled.",
+            "Failure information, if any, is above.",
+            "Retrying the build without C extensions now.")
         run_setup()
         status_msgs("Plain-Python build succeeded.")

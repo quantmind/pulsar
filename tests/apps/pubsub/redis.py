@@ -1,14 +1,14 @@
 '''pubsub redis backend.'''
 from pulsar.apps.test import unittest
-from pulsar.apps.redis import RedisClient
+from pulsar.apps.redis import RedisPool
 from pulsar.utils.internet import parse_connection_string, get_connection_string
 
 from . import local
 
-@unittest.skipUnless(RedisClient.consumer_factory,
+@unittest.skipUnless(RedisPool.consumer_factory,
                      'Requires redis-py installed')
 class pubsubTest(local.pubsubTest):
-    
+
     @classmethod
     def backend(cls, namespace):
         if namespace:
@@ -18,11 +18,10 @@ class pubsubTest(local.pubsubTest):
             return get_connection_string(scheme, address, params)
         else:
             return cls.cfg.backend_server
-        
+
     def test_backend(self):
         p = self.pubsub()
         backend = p.backend
         self.assertEqual(backend.name, 'arbiter')
         self.assertTrue('namespace=' in backend.connection_string)
         self.assertTrue(backend.params['namespace'])
-    
