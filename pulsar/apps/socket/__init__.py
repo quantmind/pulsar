@@ -6,13 +6,13 @@ This is an example of a script for an Echo server::
 
     import pulsar
     from pulsar.apps.socket import SocketServer
-    
+
     class EchoServerProtocol(pulsar.ProtocolConsumer):
         ...
-        
+
     if __name__ == '__main__':
         SocketServer(EchoServerProtocol).start()
-        
+
 Check the :ref:`echo server example <tutorials-writing-clients>` for detailed
 implementation of the ``EchoServerProtocol`` class.
 
@@ -37,12 +37,12 @@ This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::
     python script.py --bind :8080
 
 backlog
----------   
+---------
 To control the concurrency of the server you can use the
 :ref:`backlog <setting-backlog>` settings. For example::
 
     python script.py --backlog 1000
-    
+
 will serve a maximum of 1000 clients per :class:`pulsar.Worker` concurrently.
 
 keep_alive
@@ -52,7 +52,7 @@ last read from the remote client, one can use the
 :ref:`keep-alive <setting-keep_alive>` setting::
 
     python script.py --keep-alive 10
-    
+
 will close client connections which have been idle for 10 seconds.
 
 .. _socket-server-ssl:
@@ -64,7 +64,7 @@ the :ref:`cert-file <setting-cert_file>` and :ref:`key-file <setting-key_file>`
 settings::
 
     python script.py --cert-file server.crt --key-file server.key
-    
+
 
 .. _socket-server-concurrency:
 
@@ -80,19 +80,20 @@ This is how, pre-forking servers operate.
 When running a :class:`SocketServer` in threading mode::
 
     python script.py --concurrency thread
- 
-the number of :class:`pulsar.apps.Worker` serving the application is set to ``0``
-so that the application is actually served by the :class:`pulsar.Arbiter`
-event-loop (we refer this to a single process server).
+
+the number of :class:`pulsar.apps.Worker` serving the application is set
+to ``0`` so that the application is actually served by the
+:class:`pulsar.Arbiter` event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
 load servers.
 
-In addition, a :class:`SocketServer` in multi-process mode is only available for:
-    
+In addition, a :class:`SocketServer` in multi-process mode is only available
+for:
+
 * Posix systems.
 * Windows running python 3.2 or above (python 2 on windows does not support
   the creation of sockets from file descriptors).
-  
+
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
@@ -107,7 +108,7 @@ class SocketSetting(pulsar.Setting):
     virtual = True
     app = 'socket'
     section = "Socket Servers"
-    
+
 
 class Bind(SocketSetting):
     name = "bind"
@@ -116,11 +117,12 @@ class Bind(SocketSetting):
     default = "127.0.0.1:{0}".format(pulsar.DEFAULT_PORT)
     desc = """\
         The socket to bind.
-        
+
         A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.
         An IP is a valid HOST.
         """
-        
+
+
 class KeepAlive(SocketSetting):
     name = "keep_alive"
     flags = ["--keep-alive"]
@@ -140,7 +142,7 @@ class Backlog(SocketSetting):
     default = 2048
     desc = """\
         The maximum number of queued connections in a socket.
-        
+
         This refers to the number of clients that can be waiting to be served.
         Exceeding this number results in the client getting an error when
         attempting to connect. It should only affect servers under significant
@@ -168,12 +170,13 @@ class CertFile(SocketSetting):
     SSL certificate file
     """
 
+
 class SocketServer(pulsar.Application):
     '''A :class:`pulsar.apps.Application` which serve application on a socket.
 
     It bind a socket to a given address and listen for requests. The request
     handler is constructed from the callable passed during initialisation.
-    
+
     .. attribute:: address
 
         The socket address, available once the application has started.
@@ -181,14 +184,14 @@ class SocketServer(pulsar.Application):
     name = 'socket'
     address = None
     cfg = pulsar.Config(apps=['socket'])
-    
+
     def protocol_consumer(self):
         '''Factory of :class:`pulsar.ProtocolConsumer` used by the server.
 
         By default it returns the :attr:`pulsar.apps.Application.callable`
         attribute.'''
         return self.callable
-    
+
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
 
@@ -197,14 +200,14 @@ class SocketServer(pulsar.Application):
         '''
         cfg = self.cfg
         loop = monitor.event_loop
-        if not pulsar.platform.has_multiProcessSocket\
-            or cfg.concurrency == 'thread':
+        if (not pulsar.platform.has_multiProcessSocket
+                or cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         if not cfg.address:
             raise pulsar.ImproperlyConfigured('Could not open a socket. '
                                               'No address to bind to')
         ssl = None
-        if cfg.cert_file or cfg.key_file: 
+        if cfg.cert_file or cfg.key_file:
             if cfg.cert_file and not os.path.exists(cfg.cert_file):
                 raise ValueError('cert_file "%s" does not exist' %
                                  cfg.cert_file)
@@ -217,26 +220,26 @@ class SocketServer(pulsar.Application):
         addresses = []
         for sock in sockets:
             assert loop.remove_reader(sock.fileno()), (
-                        "Could not remove reader")
+                "Could not remove reader")
             addresses.append(sock.getsockname())
         monitor.params.sockets = [WrapSocket(s) for s in sockets]
         monitor.params.ssl = ssl
         self.addresses = addresses
         self.address = addresses[0]
-    
+
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''
         worker.servers[self.name] = servers = []
         for sock in worker.params.sockets:
             server = self.create_server(worker, sock.sock)
             servers.append(server)
-            
+
     def worker_stopping(self, worker):
         all = []
         for server in worker.servers[self.name]:
             all.append(server.close_connections())
         return multi_async(all)
-        
+
     def on_info(self, worker, info=None):
         server = worker.socket_server
         info['socket'] = {'listen_on': server.address,
@@ -263,4 +266,3 @@ uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
                 server.bind_event(event, callback)
         server.start_serving(cfg.backlog, sslcontext=worker.params.ssl)
         return server
-        

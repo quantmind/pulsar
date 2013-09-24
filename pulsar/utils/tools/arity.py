@@ -25,7 +25,7 @@ a error message if the check did not pass, otherwise it returns ``None``.
         maxlen = None
         if not minlen:
             return
-    
+
     if not spec.defaults and maxlen:
         start = '"{0}" takes'.format(func.__name__)
     else:
@@ -33,12 +33,12 @@ a error message if the check did not pass, otherwise it returns ``None``.
             start = '"{0}" takes at most'.format(func.__name__)
         else:
             start = '"{0}" takes at least'.format(func.__name__)
-        
+
     if totlen < minlen:
-        return '{0} {1} parameters. {2} given.'.format(start,minlen,totlen)
+        return '{0} {1} parameters. {2} given.'.format(start, minlen, totlen)
     elif maxlen and totlen > maxlen:
-        return '{0} {1} parameters. {2} given.'.format(start,maxlen,totlen)
-    
+        return '{0} {1} parameters. {2} given.'.format(start, maxlen, totlen)
+
     # Length of parameter OK, check names
     if len_args_input < len_args:
         l = minlen - len_args_input
@@ -46,28 +46,23 @@ a error message if the check did not pass, otherwise it returns ``None``.
             if args:
                 args.pop(0)
             else:
-                if l>0:
+                if l > 0:
                     if defaults:
                         defaults.pop(0)
                     elif arg not in kwargs:
-                        return '"{0}" has missing "{1}" parameter.'\
-                                    .format(func.__name__,arg)
-                kwargs.pop(arg,None)
+                        return ('"{0}" has missing "{1}" parameter.'
+                                .format(func.__name__, arg))
+                kwargs.pop(arg, None)
             l -= 1
         if kwargs and maxlen:
             s = ''
             if len(kwargs) > 1:
                 s = 's'
             p = ', '.join('"{0}"'.format(p) for p in kwargs)
-            return '"{0}" does not accept {1} parameter{2}.'\
-                            .format(func.__name__,p,s)
+            return ('"{0}" does not accept {1} parameter{2}.'
+                    .format(func.__name__, p, s))
     elif len_args_input > len_args + len_defaults:
         n = len_args + len_defaults
         start = '"{0}" takes'.format(func.__name__)
-        return '{0} {1} positional parameters. {2} given.'\
-                        .format(start,n,len_args_input)
-
-                
-        
-        
-        
+        return ('{0} {1} positional parameters. {2} given.'
+                .format(start, n, len_args_input))

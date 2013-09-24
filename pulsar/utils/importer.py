@@ -13,7 +13,8 @@ def expand_star(mod_name):
     there.
     """
     expanded = []
-    mod_dir  = os.path.dirname(__import__(mod_name[:-2], {}, {}, ['']).__file__)
+    mod_dir = os.path.dirname(
+        __import__(mod_name[:-2], {}, {}, ['']).__file__)
     for f in glob.glob1(mod_dir, "[!_]*.py"):
         expanded.append('%s.%s' % (mod_name[:-2], f[:-3]))
     return expanded
@@ -34,7 +35,8 @@ def import_modules(modules):
             except ImportError as e:
                 pass
     return all
-            
+
+
 def module_attribute(dotpath, default=None, safe=False):
     '''Load an attribute from a module. If the module or the attribute
 is not available, return the default argument if *safe* is `True`.'''
@@ -42,7 +44,7 @@ is not available, return the default argument if *safe* is `True`.'''
         bits = str(dotpath).split('.')
         try:
             module = import_module('.'.join(bits[:-1]))
-            return getattr(module,bits[-1],default)
+            return getattr(module, bits[-1], default)
         except Exception as e:
             if not safe:
                 raise
@@ -52,6 +54,7 @@ is not available, return the default argument if *safe* is `True`.'''
             raise ImportError()
         return default
 
+
 def py_file(name):
     if name.endswith('.py'):
         return name[:-3]
@@ -59,7 +62,8 @@ def py_file(name):
         return name[:-4]
     else:
         return name
-    
+
+
 def import_system_file(mod, add_to_path=True):
     if os.path.isfile(mod):
         # it is a file in the system path

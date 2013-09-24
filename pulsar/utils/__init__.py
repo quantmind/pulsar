@@ -8,7 +8,6 @@ HTTP
 
 .. automodule:: pulsar.utils.httpurl
 
-   
 
 .. _tools-ws-parser:
 
@@ -23,16 +22,16 @@ Frame
 .. autoclass:: Frame
    :members:
    :member-order: bysource
-   
-   
+
+
 Frame Parser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: FrameParser
    :members:
    :member-order: bysource
-   
-   
+
+
 .. _api-config:
 
 Configuration
@@ -41,7 +40,6 @@ Configuration
 .. automodule:: pulsar.utils.config
 
 
-     
 .. _socket_address:
 
 Socket and addresses
@@ -53,14 +51,12 @@ Socket and addresses
 Internals
 =======================
 
-
 .. module:: pulsar.utils.system
 
 System info
 ~~~~~~~~~~~~~~~~~
 
 .. autofunction:: system_info
-
 
 
 .. module:: pulsar.utils.tools
@@ -82,14 +78,14 @@ HTML & Text
 
 .. automodule:: pulsar.utils.html
    :members:
-   
+
 Logging
 ==================
 
 .. automodule:: pulsar.utils.log
    :members:
-   
-   
+
+
 Path
 ==================
 

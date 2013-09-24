@@ -5,11 +5,11 @@ from functools import partial
 
 try:
     from select import poll, POLLIN
-except ImportError: #pragma    nocover
+except ImportError:  # pragma    nocover
     poll = False
     try:
         from select import select
-    except ImportError: #pragma    nocover
+    except ImportError:  # pragma    nocover
         select = False
 
 try:
@@ -32,7 +32,7 @@ from .exceptions import SSLError
 
 WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
 
-if platform.is_windows:    #pragma    nocover
+if platform.is_windows:    # pragma    nocover
     EPERM = object()
     from errno import WSAEINVAL as EINVAL
     from errno import WSAEWOULDBLOCK as EWOULDBLOCK
@@ -57,10 +57,10 @@ if platform.is_windows:    #pragma    nocover
     ENOMEM = object()
     EAGAIN = EWOULDBLOCK
 else:
-    from errno import EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,\
-                      ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,\
-                      ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,\
-                      EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN
+    from errno import (EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,
+                       ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,
+                       ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,
+                       EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN)
 
 ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
 TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
@@ -68,7 +68,7 @@ TRY_READ_AGAIN = (EWOULDBLOCK, EAGAIN)
 
 SOCKET_INTERRUPT_ERRORS = (EINTR, ECONNRESET)
 
-    
+
 def parse_address(netloc, default_port=8000):
     '''Parse an internet address ``netloc`` and return a tuple with
 ``host`` and ``port``.'''
@@ -97,8 +97,9 @@ def parse_address(netloc, default_port=8000):
             raise RuntimeError("%r is not a valid port number." % port)
         port = int(port)
     else:
-        port = default_port 
+        port = default_port
     return (host, port)
+
 
 def parse_connection_string(connection_string, default_port=8000):
     """Converts the ``connection_string`` into a three elements tuple
@@ -111,7 +112,7 @@ For example::
 
     >>> parse_connection_string('http://127.0.0.1:9080')
     ('http', ('127.0.0.1', 9080), {})
-    
+
 and this example::
 
     >>> parse_connection_string('redis://127.0.0.1:6379?db=3&password=bla')
@@ -139,11 +140,13 @@ and this example::
         scheme = ''
     return scheme, parse_address(host, default_port), params
 
+
 def get_connection_string(scheme, address, params):
     address = ':'.join((str(b) for b in address))
     if params:
         address += '?' + urlencode(params)
     return scheme + '://' + address
+
 
 def is_socket_closed(sock):
     """Check if socket ``sock`` is closed."""
@@ -166,7 +169,8 @@ def is_socket_closed(sock):
                 return True
     except Exception:
         return True
-    
+
+
 def close_socket(sock):
     '''Shutdown and close the socket.'''
     if sock:
@@ -178,7 +182,8 @@ def close_socket(sock):
             sock.close()
         except Exception:
             pass
-        
+
+
 def create_socket(bindto=None, local_addr=None, family=socket.AF_INET,
                   type=socket.SOCK_STREAM, backlog=100, reuse_address=None):
     sock = socket.socket(family=family, type=type)
@@ -194,7 +199,8 @@ def create_socket(bindto=None, local_addr=None, family=socket.AF_INET,
     if local_addr:
         self.bind(local_addr)
     return sock
-    
+
+
 def nice_address(address, family=None):
     if isinstance(address, tuple):
         return ':'.join((str(s) for s in address[:2]))
@@ -202,7 +208,8 @@ def nice_address(address, family=None):
         return '%s:%s' % (family, address)
     else:
         return address
-    
+
+
 def format_address(address):
     if isinstance(address, tuple):
         if len(address) == 2:
@@ -213,13 +220,13 @@ def format_address(address):
             raise ValueError('Could not format address %s' % str(address))
     else:
         return str(address)
-    
+
 
 class WrapSocket:
-    
+
     def __init__(self, sock):
         self.sock = sock
-        
+
     def __getstate__(self):
         s = self.sock
         return {'sock': (s.fileno(), s.family, s.type, s.proto)}
@@ -227,10 +234,10 @@ class WrapSocket:
     def __setstate__(self, state):
         values = state.pop('sock')
         self.sock = socket.fromfd(*values)
-        
-    
+
+
 class SSLContext:
-    
+
     def __init__(self, keyfile=None, certfile=None, cert_reqs=CERT_NONE,
                  ca_certs=None, server_hostname=None,
                  protocol=PROTOCOL_SSLv23):
@@ -240,15 +247,16 @@ class SSLContext:
         self.ca_certs = ca_certs
         self.server_hostname = server_hostname
         self.protocol = protocol
-    
-    def wrap_socket(self, sock, server_side=False, do_handshake_on_connect=True,
+
+    def wrap_socket(self, sock, server_side=False,
+                    do_handshake_on_connect=True,
                     suppress_ragged_eofs=True, server_hostname=None):
         if not ssl:
             raise NotImplementedError
         server_hostname = self.server_hostname or server_hostname
         if not HAS_SNI:
             server_hostname = None
-            
+
         if _SSLContext:
             wrap = self._wrap3k(sock, server_hostname)
         else:
@@ -258,7 +266,7 @@ class SSLContext:
         return wrap(server_side=server_side,
                     do_handshake_on_connect=do_handshake_on_connect,
                     suppress_ragged_eofs=suppress_ragged_eofs)
-    
+
     def _wrap3k(self, sock, server_hostname):
         context = _SSLContext(self.protocol)
         if self.cert_reqs:
@@ -278,10 +286,12 @@ class SSLContext:
                            server_hostname=server_hostname)
         else:
             return partial(context.wrap_socket, sock)
-        
+
+
 def is_tls(sock):
     return hasattr(sock, 'keyfile')
-    
+
+
 def ssl_context(context, server_side=False):
     if not ssl:
         raise NotImplementedError

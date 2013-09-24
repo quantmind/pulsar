@@ -27,6 +27,7 @@ _timeFunctions = {
     'win': time.time,
     }
 
+
 class Platform(object):
     """Gives us information about the platform we're running on"""
 
@@ -36,13 +37,14 @@ class Platform(object):
 
     def __str__(self):
         return '{0} - {1}'.format(self.type, self.name)
-    
+
     def __repr__(self):
         return '{0}: {1}'.format(self.__class__.__name__, self)
-    
+
     def isKnown(self):
-        """Do we know about this platform?"""
-        return self.type != None
+        """Do we know about this platform?
+        """
+        return self.type is not None
 
     def getType(self):
         """Return ``posix``, ``win`` or ``java``"""
@@ -51,7 +53,7 @@ class Platform(object):
     @property
     def is_posix(self):
         return self.type == 'posix'
-    
+
     @property
     def isMacOSX(self):
         """Return if we are runnng on Mac OS X."""
@@ -63,8 +65,9 @@ class Platform(object):
         if self.getType() == 'win':
             import _winreg
             try:
-                k=_winreg.OpenKeyEx(_winreg.HKEY_LOCAL_MACHINE,
-                                    r'Software\Microsoft\Windows NT\CurrentVersion')
+                k = _winreg.OpenKeyEx(
+                    _winreg.HKEY_LOCAL_MACHINE,
+                    r'Software\Microsoft\Windows NT\CurrentVersion')
                 _winreg.QueryValueEx(k, 'SystemRoot')
                 return True
             except WindowsError:

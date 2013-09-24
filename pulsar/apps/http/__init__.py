@@ -5,7 +5,7 @@ To get started, one builds a client::
 
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
-    
+
 and than makes a request::
 
     >>> response = http.get('http://www.bbc.co.uk')
@@ -17,11 +17,11 @@ and than makes a request::
 Making requests
 =================
 Pulsar HTTP client has no dependencies and an API similar to requests_::
-    
+
     from pulsar.apps import http
     client = http.HttpClient()
     resp = client.get('https://github.com/timeline.json')
-    
+
 ``resp`` is a :class:`HttpResponse` object which contains all the information
 about the request and, once finished, the result.
 
@@ -65,8 +65,9 @@ to a :class:`HttpClient` or to a specific request:
 
     client = HttpClient(certkey='public.key')
     res1 = client.get('https://github.com/timeline.json')
-    res2 = client.get('https://github.com/timeline.json', certkey='another.key')
-    
+    res2 = client.get('https://github.com/timeline.json',
+                      certkey='another.key')
+
 .. _http-streaming:
 
 Streaming
@@ -74,15 +75,16 @@ Streaming
 
 This is an event-driven client, therefore streaming support is native.
 
-To stream data received from the client one can use either the ``data_received``
-or ``data_processed`` :ref:`many time events <many-times-event>`. For example::
+To stream data received from the client one can use either the
+``data_received`` or ``data_processed``
+:ref:`many time events <many-times-event>`. For example::
 
     def new_data(response, data=None):
         # response is the http response receiving data
         # data are bytes
-        
+
     response = http.get(..., data_received=new_data)
-    
+
 The ``on_finished`` callback on a :class:`HttpResponse` is only fired when
 the server has finished with the response.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
@@ -96,12 +98,12 @@ The http client support websocket upgrades. First you need to have a
 websocket handler::
 
     from pulsar.apps import ws
-    
+
     class Echo(ws.WS):
-        
+
         def on_message(self, websocket, message):
             websocket.write(message)
-            
+
 The websocket response can is obtained by waiting for the
 :attr:`HttpResponse.on_headers` event::
 
@@ -172,15 +174,15 @@ HTTP Client
 .. autoclass:: HttpClient
    :members:
    :member-order: bysource
-   
-   
+
+
 HTTP Request
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HttpRequest
    :members:
    :member-order: bysource
-   
+
 HTTP Response
 ~~~~~~~~~~~~~~~~~~
 
@@ -215,40 +217,41 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
-                      
+
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
-tls_schemes = ('https', 'wss') 
+tls_schemes = ('https', 'wss')
 
 
 class HttpRequest(pulsar.Request):
     '''An :class:`HttpClient` request for an HTTP resource.
-    
+
     .. attribute:: method
 
         The request method
-        
+
     .. attribute:: version
 
         HTTP version for this request, usually ``HTTP/1.1``
 
     .. attribute:: history
-    
+
         List of past :class:`HttpResponse` (collected during redirects).
-        
+
     .. attribute:: wait_continue
 
         if ``True``, the :class:`HttpRequest` includes the
         ``Expect: 100-Continue`` header.
-        
+
     '''
     full_url = None
     _proxy = None
     _ssl = None
     _tunnel = None
     _tunnel_headers = None
+
     def __init__(self, client, url, method, inp_params, headers=None,
                  data=None, files=None, timeout=None, history=None,
                  charset=None, encode_multipart=True, multipart_boundary=None,
@@ -261,10 +264,10 @@ class HttpRequest(pulsar.Request):
         self.timeout = timeout
         self.method = method.upper()
         self._scheme, self._netloc, self.path, self.params,\
-        self.query, self.fragment = urlparse(url)
+            self.query, self.fragment = urlparse(url)
         if not self._netloc and self.method == 'CONNECT':
             self._scheme, self._netloc, self.path, self.params,\
-            self.query, self.fragment = urlparse('http://%s' % url)
+                self.query, self.fragment = urlparse('http://%s' % url)
         self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue
@@ -273,7 +276,7 @@ class HttpRequest(pulsar.Request):
         self.charset = charset or 'utf-8'
         self.version = version
         self.decompress = decompress
-        self.encode_multipart = encode_multipart 
+        self.encode_multipart = encode_multipart
         self.multipart_boundary = multipart_boundary
         self.websocket_handler = websocket_handler
         self.data = data if data is not None else {}
@@ -288,20 +291,20 @@ class HttpRequest(pulsar.Request):
             client.cookies.add_cookie_header(self)
         if cookies:
             cookiejar_from_dict(cookies).add_cookie_header(self)
-    
+
     @property
     def address(self):
         '''``(host, port)`` tuple of the HTTP resource'''
         return self._tunnel if self._tunnel else (self.host, self.port)
-    
+
     @property
     def target_address(self):
         return (self.host, int(self.port))
-    
+
     @property
     def ssl(self):
         '''Context for TLS connections.
-        
+
         If this is a tunneled request and the tunnel connection is not yet
         established, it returns ``None``.
         '''
@@ -311,63 +314,63 @@ class HttpRequest(pulsar.Request):
     @property
     def key(self):
         return (self.scheme, self.host, self.port, self.timeout)
-    
+
     @property
     def proxy(self):
         '''Proxy server for this request.'''
         return self._proxy
-    
+
     @property
     def tunnel_headers(self):
         '''Headers for HTTP CONNECT Tunneling.'''
         if self._tunnel_headers is None:
             self._tunnel_headers = self.client.get_headers(self)
         return self._tunnel_headers
-    
+
     @property
     def unverifiable(self):
         '''Unverifiable when a redirect.
-        
+
         It is a redirect when :attr:`history` has past requests.
         '''
         return bool(self.history)
-    
+
     @property
     def origin_req_host(self):
         if self.history:
             return self.history[0].request.origin_req_host
         else:
             return request_host(self)
-    
+
     @property
     def netloc(self):
         if self._proxy:
             return self._proxy.netloc
         else:
             return self._netloc
-        
+
     def __repr__(self):
         return self.first_line()
-    
+
     def __str__(self):
         return self.__repr__()
-    
+
     def get_full_url(self):
         '''The full url for this request.'''
         self.full_url = urlunparse((self._scheme, self._netloc, self.path,
                                     self.params, self.query, self.fragment))
         return self.full_url
-        
+
     def first_line(self):
         url = self.get_full_url()
         if not self._proxy:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
         return '%s %s %s' % (self.method, url, self.version)
-    
+
     def new_parser(self):
         self.parser = http_parser(kind=1, decompress=self.decompress)
-        
+
     def set_proxy(self, scheme, *host):
         if not host and scheme is None:
             self.scheme = self._scheme
@@ -376,19 +379,20 @@ class HttpRequest(pulsar.Request):
             le = 2 + len(host)
             if not le == 3:
                 raise TypeError(
-                    'set_proxy() takes exactly three arguments (%s given)' % le)
+                    'set_proxy() takes exactly three arguments (%s given)'
+                    % le)
             if not self._ssl:
                 self.scheme = scheme
                 self._set_hostport(scheme, host[0])
                 self._proxy = scheme_host(scheme, host[0])
             else:
                 self._tunnel = get_hostport(scheme, host[0])
-    
+
     def _set_hostport(self, scheme, host):
         self._tunnel = None
         self._proxy = None
         self.host, self.port = get_hostport(scheme, host)
-        
+
     def encode(self):
         '''The bytes representation of this :class:`HttpRequest`.
 
@@ -413,10 +417,10 @@ class HttpRequest(pulsar.Request):
         if body:
             buffer.append(body)
         return b''.join(buffer)
-        
+
     def encode_body(self):
         '''Encode body or url if the :attr:`method` does not have body.
-        
+
         Called by :meth:`encode`.'''
         body = None
         if self.method in ENCODE_URL_METHODS:
@@ -433,9 +437,8 @@ class HttpRequest(pulsar.Request):
                 content_type = 'application/x-www-form-urlencoded'
                 if self.encode_multipart:
                     body, content_type = encode_multipart_formdata(
-                                            self.data,
-                                            boundary=self.multipart_boundary,
-                                            charset=self.charset)
+                        self.data, boundary=self.multipart_boundary,
+                        charset=self.charset)
                 else:
                     body = urlencode(self.data).encode(self.charset)
                 self.headers['Content-Type'] = content_type
@@ -444,22 +447,22 @@ class HttpRequest(pulsar.Request):
             else:
                 body = json.dumps(self.data).encode(self.charset)
         return body
-    
+
     def has_header(self, header_name):
         return (header_name in self.headers or
                 header_name in self.unredirected_headers)
 
     def get_header(self, header_name, default=None):
-        return self.headers.get(header_name,
-            self.unredirected_headers.get(header_name, default))
+        return self.headers.get(
+            header_name, self.unredirected_headers.get(header_name, default))
 
     def remove_header(self, header_name):
         self.headers.pop(header_name, None)
         self.unredirected_headers.pop(header_name, None)
-    
+
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
-        
+
     def _encode_url(self, body):
         query = self.query
         if body:
@@ -474,30 +477,30 @@ class HttpRequest(pulsar.Request):
             query = urlencode(query)
         self.query = query
 
-    if not ispy33:  #pragma     nocover
+    if not ispy33:  # pragma     nocover
         # Provide support for python < 3.3
         def is_unverifiable(self):
             return self.unverifiable
 
         def get_origin_req_host(self):
             return self.origin_req_host
-        
-        
+
+
 class HttpResponse(pulsar.ProtocolConsumer):
     '''A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
-    
+
     There are two events you can yield in a coroutine:
-    
+
     .. attribute:: on_headers
-    
+
         fired once the response headers are received.
-        
+
     .. attribute:: on_finished
-    
+
         Fired once the whole request has finished
-        
+
     Public API:
     '''
     _tunnel_host = None
@@ -506,12 +509,12 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _data_sent = None
     _history = None
     ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
-    
+
     @property
     def parser(self):
         if self._request:
             return self._request.parser
-    
+
     def __str__(self):
         return '%s' % (self.status_code or '<None>')
 
@@ -521,28 +524,28 @@ class HttpResponse(pulsar.ProtocolConsumer):
     @property
     def status_code(self):
         '''Numeric status code such as 200, 404 and so forth.
-        
+
         Available once the :attr:`on_headers` has fired.'''
         if self.parser:
             return self.parser.get_status_code()
-        
+
     @property
     def url(self):
         '''The request full url.'''
         if self._request is not None:
             return self._request.full_url
-    
+
     @property
     def history(self):
         return self._history
-    
+
     @property
     def headers(self):
         if not hasattr(self, '_headers'):
             if self.parser and self.parser.is_headers_complete():
                 self._headers = Headers(self.parser.get_headers())
         return getattr(self, '_headers', None)
-    
+
     @property
     def is_error(self):
         if self.status_code:
@@ -551,27 +554,27 @@ class HttpResponse(pulsar.ProtocolConsumer):
             return is_failure(self.on_finished.result)
         else:
             return False
-    
+
     @property
     def on_headers(self):
         return self.event('on_headers')
-    
+
     def recv_body(self):
         '''Flush the response body and return it.'''
         return self.parser.recv_body()
-    
+
     def get_status(self):
         code = self.status_code
         if code:
             return '%d %s' % (code, responses.get(code, 'Unknown'))
-        
+
     def get_content(self):
         '''Retrieve the body without flushing'''
         b = self.parser.recv_body()
         if b or self._content is None:
             self._content = self._content + b if self._content else b
         return self._content
-    
+
     def content_string(self, charset=None, errors=None):
         '''Decode content as a string.'''
         data = self.get_content()
@@ -581,7 +584,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     def content_json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
-    
+
     def raise_for_status(self):
         '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.
         '''
@@ -591,18 +594,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
                                 self.content_string(), self.headers, None)
             else:
                 raise URLError(self.on_finished.result.error)
-    
+
     def info(self):
         '''Required by python CookieJar.
-        
+
         Return :attr:`headers`.'''
         return self.headers
-    
-    ############################################################################
+
+    #######################################################################
     ##    PROTOCOL IMPLEMENTATION
     def start_request(self):
         self.transport.write(self._request.encode())
-        
+
     def data_received(self, data):
         if not self._request:
             print('Got data with no request')
@@ -613,18 +616,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 if not self.event('on_headers').done():
                     self.fire_event('on_headers')
                 if (not self.has_finished and
-                    self._request.parser.is_message_complete()):
+                        self._request.parser.is_message_complete()):
                     self.finished()
         else:
             raise pulsar.ProtocolError
-        
+
     def close(self):
         if self.parser.is_message_complete():
             self.finished()
             if self.next_url:
                 return self.new_request(self.next_url)
             return self
-    
+
 
 class HttpClient(pulsar.Client):
     '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
@@ -649,19 +652,20 @@ class HttpClient(pulsar.Client):
 
     .. attribute:: encode_multipart
 
-        Flag indicating if body data is encoded using the ``multipart/form-data``
-        encoding by default. It can be overwritten during a :meth:`request`.
+        Flag indicating if body data is encoded using the
+        ``multipart/form-data`` encoding by default.
+        It can be overwritten during a :meth:`request`.
 
         Default: ``True``
 
     .. attribute:: proxy_info
 
         Dictionary of proxy servers for this client.
-        
+
     .. attribute:: DEFAULT_HTTP_HEADERS
 
         Default headers for this :class:`HttpClient`
-        
+
     '''
     MANY_TIMES_EVENTS = pulsar.Client.MANY_TIMES_EVENTS + ('on_headers',)
     consumer_factory = HttpResponse
@@ -672,17 +676,17 @@ class HttpClient(pulsar.Client):
     It can be overwritten on :meth:`request`.'''
     client_version = 'pulsar-%s' % pulsar.version
     '''String for the ``User-Agent`` header.'''
-    version = 'HTTP/1.1' 
+    version = 'HTTP/1.1'
     '''Default HTTP request version for this :class:`HttpClient`.
 
     It can be overwritten on :meth:`request`.'''
     DEFAULT_HTTP_HEADERS = Headers([
-            ('Connection', 'Keep-Alive'),
-            ('Accept-Encoding', 'identity'),
-            ('Accept-Encoding', 'deflate'),
-            ('Accept-Encoding', 'compress'),
-            ('Accept-Encoding', 'gzip')],
-            kind='client')
+        ('Connection', 'Keep-Alive'),
+        ('Accept-Encoding', 'identity'),
+        ('Accept-Encoding', 'deflate'),
+        ('Accept-Encoding', 'compress'),
+        ('Accept-Encoding', 'gzip')],
+        kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
                           'timeout', 'websocket_handler')
@@ -698,7 +702,7 @@ class HttpClient(pulsar.Client):
               websocket_handler=None):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
-        self.cookies = cookiejar_from_dict(cookies) 
+        self.cookies = cookiejar_from_dict(cookies)
         self.decompress = decompress
         self.version = version or self.version
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
@@ -731,7 +735,7 @@ class HttpClient(pulsar.Client):
             self._websocket_key = native_str(b64encode(os.urandom(16)),
                                              'latin-1')
         return self._websocket_key
-    
+
     def get(self, url, **kwargs):
         '''Sends a GET request and returns a :class:`HttpResponse` object.
 
@@ -789,7 +793,7 @@ class HttpClient(pulsar.Client):
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         '''
         return self.request('DELETE', url, **kwargs)
-    
+
     def request(self, method, url, response=None, **params):
         '''Constructs and sends a request to a remote server.
 
@@ -807,11 +811,11 @@ class HttpClient(pulsar.Client):
         '''
         request = self._build_request(method, url, response, params)
         return self.response(request, response)
-    
+
     def again(self, response, method=None, url=None, params=None,
               history=False, new_response=None, request=None):
         '''Create a new request from ``response``.
-        
+
         The input ``response`` must be done.
         '''
         assert response.has_finished, 'response has not finished'
@@ -833,14 +837,14 @@ class HttpClient(pulsar.Client):
                 url = request.full_url
             request = self._build_request(method, url, new_response, params)
         #
-        connection = new_response.connection or response.connection 
+        connection = new_response.connection or response.connection
         return self.response(request, new_response, connection=connection)
-        
+
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
         '''
         self.bind_event('pre_request', HTTPBasicAuth(username, password))
-        
+
     def add_digest_authentication(self, username, password):
         '''Add a :class:`HTTPDigestAuth` handler to the ``pre_requests`` hook.
         '''
@@ -850,7 +854,7 @@ class HttpClient(pulsar.Client):
     #    self.bind_event('pre_request', OAuth2(client_id, client_secret))
 
     #    INTERNALS
-    
+
     def _build_request(self, method, url, response, params):
         nparams = self.update_parameters(self.request_parameters, params)
         if response:
@@ -860,19 +864,20 @@ class HttpClient(pulsar.Client):
     def get_headers(self, request, headers=None):
         #Returns a :class:`Header` obtained from combining
         #:attr:`headers` with *headers*. Can handle websocket requests.
-        if request.scheme in ('ws','wss'):
-            d = Headers((('Connection', 'Upgrade'),
-                         ('Upgrade', 'websocket'),
-                         ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
-                         ('Sec-WebSocket-Key', self.websocket_key),
-                         ('user-agent', self.client_version)),
-                         kind='client')
+        if request.scheme in ('ws', 'wss'):
+            d = Headers((
+                ('Connection', 'Upgrade'),
+                ('Upgrade', 'websocket'),
+                ('Sec-WebSocket-Version', str(max(SUPPORTED_VERSIONS))),
+                ('Sec-WebSocket-Key', self.websocket_key),
+                ('user-agent', self.client_version)
+                ), kind='client')
         else:
             d = self.headers.copy()
         if headers:
             d.update(headers)
         return d
-    
+
     def ssl_context(self, **kwargs):
         params = self.https_defaults.copy()
         for name in kwargs:
@@ -883,17 +888,17 @@ class HttpClient(pulsar.Client):
     def set_proxy(self, request):
         if request.scheme in self.proxy_info:
             hostonly = request.host
-            no_proxy = [n for n in self.proxy_info.get('no','').split(',') if n]
+            no_proxy = [n for n in self.proxy_info.get('no', '').split(',')
+                        if n]
             if not any(map(hostonly.endswith, no_proxy)):
                 url = self.proxy_info[request.scheme]
                 p = urlparse(url)
                 if not p.scheme:
                     raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
-                
+
     def can_reuse_connection(self, connection, response):
         # Reuse connection only if the headers has Connection keep-alive
         if response and response.headers:
             return response.headers.has('connection', 'keep-alive')
         return False
-    

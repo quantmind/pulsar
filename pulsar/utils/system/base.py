@@ -19,6 +19,7 @@ SIG_NAMES = {}
 MAXFD = 1024
 SKIP_SIGNALS = frozenset(('KILL', 'STOP', 'WINCH'))
 
+
 def all_signals():
     if signal:
         for sig in dir(signal):
@@ -30,21 +31,23 @@ def all_signals():
                         SIG_NAMES[val] = name
                         yield name
 
-            
+
 ALL_SIGNALS = tuple(all_signals())
 
 
 try:
     from setproctitle import setproctitle
+
     def set_proctitle(title):
         setproctitle(title)
-        return True 
-except ImportError: #pragma    nocover
+        return True
+except ImportError:  # pragma    nocover
+
     def set_proctitle(title):
         return
 
 
-def set_owner_process(uid,gid):
+def set_owner_process(uid, gid):
     """ set user and group of workers processes """
     if gid:
         try:
@@ -53,7 +56,6 @@ def set_owner_process(uid,gid):
             # versions of python < 2.6.2 don't manage unsigned int for
             # groups like on osx or fedora
             os.setgid(-ctypes.c_int(-gid).value)
-            
+
     if uid:
         os.setuid(uid)
-    

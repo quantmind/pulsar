@@ -20,8 +20,8 @@ HTTP Headers
 .. autoclass:: Headers
    :members:
    :member-order: bysource
-   
-   
+
+
 .. _tools-http-parser:
 
 HTTP Parser
@@ -63,51 +63,54 @@ import zlib
 from collections import deque
 from copy import copy
 
+from .structures import mapping_iterator, OrderedDict
+from .pep import ispy3k, ispy26, iteritems, itervalues
+
 try:
     from http_parser.parser import HttpParser as CHttpParser
     hasextensions = True
     _Http_Parser = CHttpParser
-except ImportError: #pragma    nocover
+except ImportError:  # pragma    nocover
     hasextensions = False
     _Http_Parser = None
+
+try:
+    from select import poll, POLLIN
+except ImportError:   # pragma    nocover
+    poll = False
+    try:
+        from select import select
+    except ImportError:  # pragma    nocover
+        select = False
+
 
 def setDefaultHttpParser(parser):
     global _Http_Parser
     _Http_Parser = parser
-    
+
+
 def http_parser(**kwargs):
     global _Http_Parser
     return _Http_Parser(**kwargs)
 
-from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, ispy26, iteritems, itervalues
 
 create_connection = socket.create_connection
 LOGGER = logging.getLogger('httpurl')
 
-try:
-    from select import poll, POLLIN
-except ImportError: #pragma    nocover
-    poll = False
-    try:
-        from select import select
-    except ImportError: #pragma    nocover
-        select = False
-        
 try:    # Compiled with SSL?
     BaseSSLError = None
     ssl = None
     import ssl
     BaseSSLError = ssl.SSLError
-except (ImportError, AttributeError):   # pragma : no cover 
+except (ImportError, AttributeError):   # pragma : no cover
     pass
 
-if ispy3k: # Python 3
+if ispy3k:  # Python 3
     from urllib import request as urllibr
     from http import client as httpclient
-    from urllib.parse import quote, unquote, urlencode, urlparse, urlsplit,\
-                             parse_qs, parse_qsl, splitport, urlunparse,\
-                             urljoin
+    from urllib.parse import (quote, unquote, urlencode, urlparse, urlsplit,
+                              parse_qs, parse_qsl, splitport, urlunparse,
+                              urljoin)
     from http.client import responses
     from http.cookiejar import CookieJar, Cookie
     from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
@@ -130,7 +133,7 @@ if ispy3k: # Python 3
             else:
                 return s
         else:
-            return ('%s'%s).encode(encoding, errors)
+            return ('%s' % s).encode(encoding, errors)
 
     def to_string(s, encoding=None, errors='strict'):
         """Inverse of to_bytes"""
@@ -156,10 +159,10 @@ if ispy3k: # Python 3
 else:   # pragma : no cover
     import urllib2 as urllibr
     import httplib as httpclient
-    from urllib import quote, unquote, urlencode, getproxies_environment,\
-                        splitport
-    from urlparse import urlparse, urlsplit, parse_qs, urlunparse, urljoin,\
-                         parse_qsl
+    from urllib import (quote, unquote, urlencode, getproxies_environment,
+                        splitport)
+    from urlparse import (urlparse, urlsplit, parse_qs, urlunparse, urljoin,
+                          parse_qsl)
     from httplib import responses
     from cookielib import CookieJar, Cookie
     from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
@@ -197,7 +200,7 @@ else:   # pragma : no cover
                 raise err
             else:
                 raise error("getaddrinfo returns an empty list")
-    
+
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -234,6 +237,7 @@ URLError = urllibr.URLError
 request_host = urllibr.request_host
 parse_http_list = urllibr.parse_http_list
 
+
 class SSLError(HTTPError):
     "Raised when SSL certificate fails in an HTTPS connection."
     pass
@@ -257,6 +261,7 @@ HEADER_TOKEN_CHARS = frozenset("!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 escape = lambda s: quote(s, safe='~')
 urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
+
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
     for n, part in enumerate(force_native_str(uri).split('%')):
@@ -272,11 +277,13 @@ def _gen_unquote(uri):
                     yield '%' + part
             else:
                 yield '%' + part
-                
+
+
 def unquote_unreserved(uri):
     """Un-escape any percent-escape sequences in a URI that are unreserved
 characters. This leaves all reserved, illegal and non-ASCII bytes encoded."""
     return ''.join(_gen_unquote(uri))
+
 
 def requote_uri(uri):
     """Re-quote the given URI.
@@ -289,6 +296,7 @@ def requote_uri(uri):
     # or '%')
     return quote(unquote_unreserved(uri), safe=URI_SAFE_CHARS)
 
+
 def iri_to_uri(iri, kwargs=None):
     '''Convert an Internationalized Resource Identifier (IRI) portion to a URI
 portion that is suitable for inclusion in a URL.
@@ -298,24 +306,29 @@ Returns an ASCII native string containing the encoded result.'''
         return iri
     iri = force_native_str(iri)
     if kwargs:
-        iri = '%s?%s'%(iri,'&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
+        iri = '%s?%s' % (iri, '&'.join(('%s=%s' % kv for kv in
+                                        iteritems(kwargs))))
     return urlquote(unquote_unreserved(iri))
+
 
 def host_and_port(host):
     host, port = splitport(host)
     return host, int(port) if port else None
+
 
 def default_port(scheme):
     if scheme == "http":
         return '80'
     elif scheme == "https":
         return '443'
-    
+
+
 def host_and_port_default(scheme, host):
     host, port = splitport(host)
     if not port:
         port = default_port(scheme)
     return host, port
+
 
 def get_hostport(scheme, full_host):
     host, port = host_and_port(full_host)
@@ -326,11 +339,11 @@ def get_hostport(scheme, full_host):
             try:
                 port = int(host[i+1:])
             except ValueError:
-                if host[i+1:] == "": # http://foo.com:/ == http://foo.com/
+                if host[i+1:] == "":  # http://foo.com:/ == http://foo.com/
                     port = default_port(scheme)
                 else:
                     raise httpclient.InvalidURL("nonnumeric port: '%s'"
-                                                 % host[i+1:])
+                                                % host[i+1:])
             host = host[:i]
         else:
             port = default_port(scheme)
@@ -338,12 +351,14 @@ def get_hostport(scheme, full_host):
             host = host[1:-1]
     return host, int(port)
 
+
 def remove_double_slash(route):
     if '//' in route:
         route = re.sub('/+', '/', route)
     return route
 
-def is_closed(sock):    #pragma nocover
+
+def is_closed(sock):    # pragma nocover
     """Check if socket is connected."""
     if not sock:
         return False
@@ -365,16 +380,17 @@ def is_closed(sock):    #pragma nocover
     except Exception:
         return True
 
+
 ####################################################    CONTENT TYPES
 JSON_CONTENT_TYPES = ('application/json',
                       'application/javascript',
                       'text/json',
                       'text/x-json')
-
 ####################################################    REQUEST METHODS
 ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
 ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
 REDIRECT_CODES = (301, 302, 303, 307)
+
 
 def has_empty_content(status, method=None):
     '''204, 304 and 1xx codes have no content'''
@@ -386,20 +402,23 @@ def has_empty_content(status, method=None):
     else:
         return False
 
+
 def is_succesful(status):
     '''2xx status is succesful'''
     return status >= 200 and status < 300
 
+
 ####################################################    HTTP HEADERS
 WEBSOCKET_VERSION = (8, 13)
 HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
-                                       'Pragma', 'Trailer','Transfer-Encoding',
+                                       'Pragma', 'Trailer',
+                                       'Transfer-Encoding',
                                        'Upgrade', 'Sec-WebSocket-Extensions',
                                        'Sec-WebSocket-Protocol',
-                                       'Via','Warning')),
-                 # The request-header fields allow the client to pass additional
-                 # information about the request, and about the client itself,
-                 # to the server.
+                                       'Via', 'Warning')),
+                 # The request-header fields allow the client to pass
+                 # additional information about the request, and about the
+                 # client to the server.
                  'request': frozenset(('Accept', 'Accept-Charset',
                                        'Accept-Encoding', 'Accept-Language',
                                        'Authorization',
@@ -436,19 +455,20 @@ HEADER_FIELDS = {'general': frozenset(('Cache-Control', 'Connection', 'Date',
                                       'Content-Range', 'Content-Type',
                                       'Expires', 'Last-Modified'))}
 
-CLIENT_HEADER_FIELDS = HEADER_FIELDS['general'].union(HEADER_FIELDS['entity'],
-                                                      HEADER_FIELDS['request'])
-SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(HEADER_FIELDS['entity'],
-                                                      HEADER_FIELDS['response'])
+CLIENT_HEADER_FIELDS = HEADER_FIELDS['general'].union(
+    HEADER_FIELDS['entity'], HEADER_FIELDS['request'])
+SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(
+    HEADER_FIELDS['entity'], HEADER_FIELDS['response'])
 ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
-ALL_HEADER_FIELDS_DICT = dict(((k.lower(),k) for k in ALL_HEADER_FIELDS))
+ALL_HEADER_FIELDS_DICT = dict(((k.lower(), k) for k in ALL_HEADER_FIELDS))
 
 TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
                       'server': SERVER_HEADER_FIELDS,
                       'both': ALL_HEADER_FIELDS}
 
 header_type = {0: 'client', 1: 'server', 2: 'both'}
-header_type_to_int = dict(((v,k) for k,v in header_type.items()))
+header_type_to_int = dict(((v, k) for k, v in header_type.items()))
+
 
 def capfirst(x):
     x = x.strip()
@@ -456,9 +476,11 @@ def capfirst(x):
         return x[0].upper() + x[1:].lower()
     else:
         return x
-    
+
+
 def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
+
 
 def header_field(name, HEADERS_SET=None, strict=False):
     name = name.lower()
@@ -473,6 +495,7 @@ def header_field(name, HEADERS_SET=None, strict=False):
         elif not strict:
             return capheader(name)
 
+
 def quote_header_value(value, extra_chars='', allow_token=True):
     """Quote a header value if necessary.
 
@@ -486,6 +509,7 @@ def quote_header_value(value, extra_chars='', allow_token=True):
         if set(value).issubset(token_chars):
             return value
     return '"%s"' % value.replace('\\', '\\\\').replace('"', '\\"')
+
 
 def unquote_header_value(value, is_filename=False):
     """Unquotes a header value. Reversal of :func:`quote_header_value`.
@@ -506,6 +530,7 @@ using for quoting.
         if not is_filename or value[:2] != '\\\\':
             return value.replace('\\\\', '\\').replace('\\"', '"')
     return value
+
 
 def parse_dict_header(value):
     """Parse lists of key, value pairs as described by RFC 2068 Section 2 and
@@ -542,14 +567,14 @@ def parse_dict_header(value):
 
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
-    
+
 It has a dictionary like interface with few extra functions to facilitate
-the insertion of multiple header values. Header fields are **case insensitive**,
-therefore doing::
+the insertion of multiple header values. Header fields are
+**case insensitive**, therefore doing::
 
     >>> h = Headers()
     >>> h['Content-Length'] = '1050'
-    
+
 is equivalent to
 
     >>> h['content-length'] = '1050'
@@ -563,13 +588,13 @@ http://www.w3.org/Protocols/rfc2616/rfc2616.html:
 
 .. epigraph::
 
-    The order in which header fields with differing field names are received is not
-    significant. However, it is "good practice" to send general-header fields first,
-    followed by request-header or response-header fields, and ending with
-    the entity-header fields.
-    
+    The order in which header fields with differing field names are received
+    is not significant. However, it is "good practice" to send general-header
+    fields first, followed by request-header or response-header fields, and
+    ending with the entity-header fields.
+
     -- rfc2616 section 4.2
-    
+
 The strict parameter is rarely used and it forces the omission on non-standard
 header fields.
 '''
@@ -616,7 +641,7 @@ and values."""
 
     def copy(self):
         return self.__class__(self, kind=self.kind, strict=self.strict)
-        
+
     def __contains__(self, key):
         return header_field(key) in self._headers
 
@@ -642,7 +667,7 @@ string of values. For example::
     >>> h.add_header('accept-encoding', 'gzip')
     >>> h.add_header('accept-encoding', 'deflate')
     >>> h.get('accept-encoding')
-    
+
 results in::
 
     'gzip, deflate'
@@ -662,7 +687,7 @@ For example::
     >>> h.add_header('accept-encoding', 'gzip')
     >>> h.add_header('accept-encoding', 'deflate')
     >>> h.get_all('accept-encoding')
-    
+
 results in::
 
     ['gzip', 'deflate']
@@ -676,13 +701,13 @@ results in::
             if c.lower() == value:
                 return True
         return False
-    
+
     def pop(self, key, *args):
         return self._headers.pop(header_field(key), *args)
 
     def copy(self):
         return self.__class__(self, kind=self.kind)
-    
+
     def clear(self):
         '''Same as :meth:`dict.clear`, it removes all headers.'''
         self._headers.clear()
@@ -703,12 +728,12 @@ append the value to the list.'''
             values = self._headers.get(key, [])
             lower_values = [v.lower() for v in values]
             for value in self.get_values(value):
-                lower_value = value.lower() 
+                lower_value = value.lower()
                 if lower_value not in lower_values:
                     lower_values.append(lower_value)
                     values.append(value)
             self._headers[key] = values
-                
+
     def remove_header(self, key, value=None):
         '''Remove the header at ``key``, If ``value`` is provided, it removes
 only that value if found.'''
@@ -728,13 +753,14 @@ only that value if found.'''
                 return self._headers.pop(key, None)
 
     def flat(self, version, status):
-    	'''Full headers bytes representation'''
-    	vs = version + (status, self)
-    	return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
+        '''Full headers bytes representation'''
+        vs = version + (status, self)
+        return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
 
     def _ordered(self):
         hf = HEADER_FIELDS
-        order = (('general',[]), ('request',[]), ('response',[]), ('entity',[]))
+        order = (('general', []), ('request', []),
+                 ('response', []), ('entity', []))
         headers = self._headers
         for key in headers:
             for name, group in order:
@@ -748,7 +774,7 @@ only that value if found.'''
                 yield "%s: %s" % (k, ', '.join(headers[k]))
         yield ''
         yield ''
-        
+
     ##    INTERNALS
     def get_values(self, value):
         return [v for v in (v.strip() for v in value.split(',')) if v]
@@ -766,6 +792,7 @@ HEADER_RE = re.compile("[\x00-\x1F\x7F()<>@,;:\[\]={} \t\\\\\"]")
 BAD_FIRST_LINE = 0
 INVALID_HEADER = 1
 INVALID_CHUNK = 2
+
 
 class InvalidRequestLine(Exception):
     """ error raised when first line is invalid """
@@ -822,7 +849,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._path = None
         self._query_string = None
         self._kind = kind
-        self._fragment= None
+        self._fragment = None
         self._headers = OrderedDict()
         self._chunked = False
         self._body = []
@@ -908,7 +935,8 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 else:
                     self.__on_firstline = True
                     self._buf.append(data[:idx])
-                    first_line = native_str(b''.join(self._buf),DEFAULT_CHARSET)
+                    first_line = native_str(b''.join(self._buf),
+                                            DEFAULT_CHARSET)
                     rest = data[idx+2:]
                     data = b''
                     if self._parse_firstline(first_line):
@@ -959,10 +987,10 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             return length
         else:
             return length+len(self._buf)
-        
+
     def _parse_firstline(self, line):
         try:
-            if self.kind == 2: # auto detect
+            if self.kind == 2:  # auto detect
                 try:
                     self._parse_request_line(line)
                 except InvalidRequestLine:
@@ -1019,7 +1047,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 
     def _parse_headers(self, data):
         idx = data.find(b'\r\n\r\n')
-        if idx < 0: # we don't have all headers
+        if idx < 0:  # we don't have all headers
             return False
         chunk = native_str(data[:idx], DEFAULT_CHARSET)
         # Split lines on \r\n keeping the \r\n on each line
@@ -1061,9 +1089,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             clen = None
         status = self._status_code
         if status and (status == httpclient.NO_CONTENT or
-            status == httpclient.NOT_MODIFIED or
-            100 <= status < 200 or      # 1xx codes
-            self._method == "HEAD"):
+                       status == httpclient.NOT_MODIFIED or
+                       100 <= status < 200 or      # 1xx codes
+                       self._method == "HEAD"):
             clen = 0
         self._clen_rest = self._clen = clen
         # detect encoding and set decompress object
@@ -1139,7 +1167,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
 if not hasextensions:
     setDefaultHttpParser(HttpParser)
 
-        
+
 ###############################################    UTILITIES, ENCODERS, PARSERS
 def get_environ_proxies():
     """Return a dict of environment proxies. From requests_."""
@@ -1157,11 +1185,13 @@ def get_environ_proxies():
     proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
     return dict([(key, val) for (key, val) in proxies if val])
 
+
 def addslash(url):
     '''Add a slash at the beginning of *url*.'''
     if not url.startswith('/'):
         url = '/%s' % url
     return url
+
 
 def appendslash(url):
     '''Append a slash to *url* if it does not have one.'''
@@ -1169,16 +1199,18 @@ def appendslash(url):
         url = '%s/' % url
     return url
 
+
 def choose_boundary():
     """Our embarassingly-simple replacement for mimetools.choose_boundary."""
     return uuid4().hex
 
+
 def get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
+
 def encode_multipart_formdata(fields, boundary=None, charset=None):
-    """
-    Encode a dictionary of ``fields`` using the multipart/form-data mime format.
+    """Encode a dictionary of ``fields`` using the multipart/form-data format.
 
     :param fields:
         Dictionary of fields or list of (key, value) field tuples.  The key is
@@ -1201,7 +1233,7 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
         if isinstance(value, tuple):
             filename, data = value
             body.write(('Content-Disposition: form-data; name="%s"; '
-                        'filename="%s"\r\n' % (fieldname, filename))\
+                        'filename="%s"\r\n' % (fieldname, filename))
                        .encode(charset))
             body.write(('Content-Type: %s\r\n\r\n' %
                        (get_content_type(filename))).encode(charset))
@@ -1216,11 +1248,14 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
     content_type = 'multipart/form-data; boundary=%s' % boundary
     return body.getvalue(), content_type
 
+
 def hexmd5(x):
     return md5(to_bytes(x)).hexdigest()
 
+
 def hexsha1(x):
     return sha1(to_bytes(x)).hexdigest()
+
 
 def http_date(epoch_seconds=None):
     """
@@ -1235,10 +1270,12 @@ def http_date(epoch_seconds=None):
     """
     return formatdate(epoch_seconds, usegmt=True)
 
+
 def make_nonce(timestamp=None):
     """Generate pseudorandom number."""
     timestamp = time.time()
     return hexmd5(to_bytes('%d' % timestamp) + os.urandom(10))
+
 
 #################################################################### COOKIE
 def create_cookie(name, value, **kwargs):
@@ -1272,6 +1309,7 @@ def create_cookie(name, value, **kwargs):
     result['path_specified'] = bool(result['path'])
     return Cookie(**result)
 
+
 def cookiejar_from_dict(cookie_dict, cookiejar=None):
     """Returns a CookieJar from a key/value dictionary.
 
@@ -1286,6 +1324,7 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
         return cookiejar
     else:
         return cookie_dict
+
 
 def parse_cookie(cookie):
     '''Parse an `HTTP cookie`_ string and return a dictionary of
@@ -1416,4 +1455,3 @@ class CacheControl(object):
                 headers.add_header('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
-

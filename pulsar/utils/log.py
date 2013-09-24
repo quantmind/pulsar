@@ -7,16 +7,16 @@ from multiprocessing import current_process
 
 win32 = sys.platform == "win32"
 
-if sys.version_info < (2,7):    #pragma    nocover
+if sys.version_info < (2, 7):    # pragma    nocover
     from .fallbacks._dictconfig import dictConfig
-    
+
     class NullHandler(logging.Handler):
         def emit(self, record):
             pass
 else:
     from logging.config import dictConfig
     from logging import NullHandler
-    
+
 from .structures import AttributeDictionary
 
 NOLOG = 100
@@ -30,8 +30,10 @@ LOG_LEVELS = {
     'none': None
 }
 
+
 def configure_logging(logger='pulsar', **kw):
     LogginMixin().configure_logging(logger=logger, **kw)
+
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -73,8 +75,10 @@ def update_config(config, c):
         if name in c:
             config[name].update(c[name])
 
+
 def local_method(f):
     name = f.__name__
+
     def _(self):
         local = self.local
         if name not in local:
@@ -83,8 +87,10 @@ def local_method(f):
     return _
     return property(_, doc=f.__doc__)
 
+
 def local_property(f):
     return property(local_method(f), doc=f.__doc__)
+
 
 def threadsafe(f):
     def _(self, *args, **kwargs):
@@ -93,12 +99,13 @@ def threadsafe(f):
     _.__doc__ = f.__doc__
     _.__name__ = f.__name__
     return _
-    
-    
+
+
 class WritelnDecorator(object):
     """Used to decorate file-like objects with a handy 'writeln' method.
-    taken from python."""
-    def __init__(self,stream):
+    taken from python.
+    """
+    def __init__(self, stream):
         self.stream = stream
 
     def __getattr__(self, attr):
@@ -109,9 +116,9 @@ class WritelnDecorator(object):
     def writeln(self, arg=None):
         if arg:
             self.write(arg)
-        self.write('\n') # text-mode streams translate to \r\n if needed
-    
-    
+        self.write('\n')  # text-mode streams translate to \r\n if needed
+
+
 class LocalMixin(object):
     '''The :class:`LocalMixin` defines "local" attributes which are
 removed when pickling the object'''
@@ -120,24 +127,25 @@ removed when pickling the object'''
         if not hasattr(self, '_local'):
             self._local = AttributeDictionary()
         return self._local
-    
+
     @local_property
     def lock(self):
         '''A local threading.Lock.'''
         return Lock()
-    
+
     def clear_local(self):
         self.__dict__.pop('_local', None)
-        
+
     def __getstate__(self):
         '''Remove the local dictionary.'''
         d = self.__dict__.copy()
         d.pop('_local', None)
         return d
-    
-    
+
+
 def lazymethod(f):
     name = '_lazy_%s' % f.__name__
+
     def _(self):
         if not hasattr(self, name):
             setattr(self, name, f(self))
@@ -145,14 +153,15 @@ def lazymethod(f):
     _.__doc__ = f.__doc__
     return _
 
+
 def lazyproperty(f):
     return property(lazymethod(f), doc=f.__doc__)
-    
-    
+
+
 def process_global(name, val=None, setval=False):
     '''Access and set global variables for the current process.'''
     p = current_process()
-    if not hasattr(p,'_pulsar_globals'):
+    if not hasattr(p, '_pulsar_globals'):
         p._pulsar_globals = {}
     if setval:
         p._pulsar_globals[name] = val
@@ -163,7 +172,7 @@ def process_global(name, val=None, setval=False):
 class Silence(logging.Handler):
     def emit(self, record):
         pass
-    
+
 
 class LogginMixin(LocalMixin):
     '''A Mixin used throught the library.
@@ -173,12 +182,12 @@ class LogginMixin(LocalMixin):
     @property
     def logger(self):
         return self.local.logger
-    
+
     def __setstate__(self, state):
         self.__dict__ = state
         info = getattr(self, '_log_info', {})
         self.configure_logging(**info)
-    
+
     def configure_logging(self, logger=None, config=None, level=None,
                           handlers=None):
         '''Configure logging.
@@ -235,8 +244,8 @@ class LogginMixin(LocalMixin):
                           'handlers': handlers,
                           'config': config}
         self.local.logger = logging.getLogger(logger)
-        
-        
+
+
 WHITE = 37
 COLOURS = {'red': 31,
            'green': 32,
@@ -246,6 +255,7 @@ COLOURS = {'red': 31,
            'cyan': 36,
            'white': WHITE}
 
+
 class ColoredStream(logging.StreamHandler):
     bold = True
     terminator = '\n'
@@ -254,21 +264,21 @@ class ColoredStream(logging.StreamHandler):
               "ERROR": "red",
               "CRITICAL": "red",
               "INFO": "green"}
-    
+
     def __init__(self, stream=None):
         if not stream:
             stream = sys.stdout
         logging.StreamHandler.__init__(self, stream)
-        
+
     def emit(self, record):
         try:
             self.color(record)
             self.flush()
-        except (KeyboardInterrupt, SystemExit): #pragma: no cover
+        except (KeyboardInterrupt, SystemExit):  # pragma: no cover
             raise
         except:
             self.handleError(record)
-    
+
     def color(self, record):
         text = self.format(record)
         file = self.stream
@@ -304,50 +314,54 @@ class ColoredStream(logging.StreamHandler):
 if win32:
     import ctypes
     from ctypes import wintypes
-    
+
     SHORT = ctypes.c_short
+
     class COORD(ctypes.Structure):
         _fields_ = [('X', SHORT),
                     ('Y', SHORT)]
+
     class SMALL_RECT(ctypes.Structure):
         _fields_ = [('Left', SHORT),
                     ('Top', SHORT),
                     ('Right', SHORT),
                     ('Bottom', SHORT)]
+
     class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
         _fields_ = [('dwSize', COORD),
                     ('dwCursorPosition', COORD),
                     ('wAttributes', wintypes.WORD),
                     ('srWindow', SMALL_RECT),
                     ('dwMaximumWindowSize', COORD)]
-    
+
     WHITE = 0x0007
     FOREGROUND_INTENSITY = 0x0008
-    COLOURS = {'red': 0x0004 ,
+    COLOURS = {'red': 0x0004,
                'green': 0x0002,
                'yellow': 0x0006,
                'blue': 0x0001,
                'magenta': 0x0005,
                'cyan': 0x0003,
                'white': WHITE}
-    
+
     _GetStdHandle = ctypes.windll.kernel32.GetStdHandle
     _GetStdHandle.argtypes = [wintypes.DWORD]
     _GetStdHandle.restype = wintypes.HANDLE
+
     def GetStdHandle(kind):
         return _GetStdHandle(kind)
-    
+
     SetConsoleTextAttribute = ctypes.windll.kernel32.SetConsoleTextAttribute
     SetConsoleTextAttribute.argtypes = [wintypes.HANDLE, wintypes.WORD]
     SetConsoleTextAttribute.restype = wintypes.BOOL
-    
+
     _GetConsoleScreenBufferInfo = \
         ctypes.windll.kernel32.GetConsoleScreenBufferInfo
-    _GetConsoleScreenBufferInfo.argtypes = [wintypes.HANDLE,
-                                ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO)]
+    _GetConsoleScreenBufferInfo.argtypes = [
+        wintypes.HANDLE, ctypes.POINTER(CONSOLE_SCREEN_BUFFER_INFO)]
     _GetConsoleScreenBufferInfo.restype = wintypes.BOOL
+
     def GetConsoleInfo(handle):
         info = CONSOLE_SCREEN_BUFFER_INFO()
         _GetConsoleScreenBufferInfo(handle, info)
         return info
-    

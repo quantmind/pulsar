@@ -12,17 +12,18 @@ from .base import *
 
 if platform.type == 'posix':
     from .posixsystem import *
-elif platform.type == 'win':    #pragma nocover
+elif platform.type == 'win':    # pragma nocover
     from .windowssystem import *
 
 
 try:
     import psutil
-except ImportError:    #pragma    nocover
+except ImportError:    # pragma    nocover
     psutil = None
-    
+
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-memory_size = dict(((s,1 << (i+1)*10) for i,s in enumerate(memory_symbols)))
+memory_size = dict(((s, 1 << (i+1)*10) for i, s in enumerate(memory_symbols)))
+
 
 def convert_bytes(b):
     '''Convert a number of bytes into a human readable memory usage, bytes,
@@ -34,15 +35,17 @@ kilo, mega, giga, tera, peta, exa, zetta, yotta'''
             value = float(b) / memory_size[s]
             return '%.1f%sB' % (value, s)
     return "%sB" % b
-    
-def system_info(pid=None):
-    '''Returns a dictionary of system information for the process with id *pid*.
-It uses the psutil_ module for the purpose. If psutil_ is not available
-it returns an empty dictionary.
 
-.. _psutil: http://code.google.com/p/psutil/
-'''
-    if psutil is None:  #pragma    nocover
+
+def system_info(pid=None):
+    '''Returns a dictionary of system information for the process ``pid``.
+
+    It uses the psutil_ module for the purpose. If psutil_ is not available
+    it returns an empty dictionary.
+
+    .. _psutil: http://code.google.com/p/psutil/
+    '''
+    if psutil is None:  # pragma    nocover
         return {}
     pid = pid or os.getpid()
     try:
@@ -57,5 +60,3 @@ it returns an empty dictionary.
                 'cpu_percent': p.get_cpu_percent(),
                 'nice': p.get_nice(),
                 'num_threads': p.get_num_threads()}
-    
-    

@@ -15,7 +15,7 @@ SettingBase
 .. autoclass:: SettingBase
    :members:
    :member-order: bysource
-      
+
 Setting
 ~~~~~~~~~~
 
@@ -62,15 +62,17 @@ KNOWN_SETTINGS_ORDER = []
 
 def pass_through(arg):
     '''A dummy function accepting one parameter only.
-    
+
 It does nothing and it is used as default by
 :ref:`Application Hooks <setting-section-application-hooks>`.'''
     pass
+
 
 def wrap_method(func):
     def _wrapped(instance, *args, **kwargs):
         return func(*args, **kwargs)
     return _wrapped
+
 
 def ordered_settings():
     for name in KNOWN_SETTINGS_ORDER:
@@ -96,14 +98,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
     Dictionary of all :class:`Setting` instances available in this
     :class:`Config` container. Keys are given by the :attr:`SettingBase.name`
     attribute.
-    
+
 .. attribute:: params
 
     Dictionary of additional parameters which cannot be parsed in the
     command line.
 '''
     exclude_from_config = set(('config',))
-    
+
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
@@ -124,20 +126,20 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
         self.update(params)
-        
+
     def __iter__(self):
         return iter(self.settings)
-    
+
     def __len__(self):
         return len(self.settings)
-    
+
     def __contains__(self, name):
         return name in self.settings
-    
+
     def items(self):
         for k, setting in iteritems(self.settings):
             yield k, setting.value
-    
+
     def __getstate__(self):
         return self.__dict__.copy()
 
@@ -159,14 +161,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         if name != "settings" and name in self.settings:
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
-    
+
     def update(self, data):
         '''Update this :attr:`Config` with ``data`` which is either an
 instance of Mapping or :class:`Config`.'''
         for name, value in data.items():
             if value is not None:
                 self.set(name, value)
-            
+
     def get(self, name, default=None):
         '''Get the value at ``name`` for this :class:`Config` container
 following this algorithm:
@@ -189,7 +191,7 @@ also set.'''
             if self.prefix:
                 prefix_name = '%s_%s' % (self.prefix, name)
                 if prefix_name in self.settings:
-                    return # dont set this value
+                    return  # don't set this value
             self.params[name] = value
         else:
             self.settings[name].set(value, default=default)
@@ -216,14 +218,14 @@ settings via the :meth:`Setting.add_argument` method.
         for k in sorted(setts, key=sorter):
             setts[k].add_argument(parser)
         return parser
-        
+
     def import_from_module(self, mod=None):
         if mod:
             self.set('config', mod)
         try:
             mod = import_system_file(self.config)
         except Exception as e:
-            raise RuntimeError('Failed to read config file "%s". %s' %\
+            raise RuntimeError('Failed to read config file "%s". %s' %
                                (self.config, e))
         unknowns = []
         if mod:
@@ -239,7 +241,7 @@ settings via the :meth:`Setting.add_argument` method.
                 else:
                     self.set(kl, val)
         return unknowns
-        
+
     def on_start(self):
         '''Invoked by a :class:`pulsar.Application` just before starting.'''
         for sett in self.settings.values():
@@ -281,7 +283,7 @@ container.'''
             pn = self.settings.get('default_process_name')
             if pn:
                 return pn.get()
-        
+
     def copy(self, name=None, prefix=None):
         '''A deep copy of this :class:`Config` container. If ``prefix``
 is given, it prefixes all non
@@ -300,19 +302,19 @@ is given, it prefixes all non
             me.settings[setting.name] = setting
         me.params = me.params.copy()
         return me
-    
+
     def __copy__(self):
         return self.copy()
-    
+
     def __deepcopy__(self, memo):
         return self.__copy__()
-    
-    ############################################################################
+
+    ########################################################################
     ##    INTERNALS
     def update_settings(self):
         for s in ordered_settings():
             setting = s().copy(name=self.name, prefix=self.prefix)
-            if setting.name in self.settings:  
+            if setting.name in self.settings:
                 continue
             if setting.name not in self.include:
                 if setting.name in self.exclude:
@@ -320,7 +322,7 @@ is given, it prefixes all non
                 if setting.app and setting.app not in self.apps:
                     continue    # the setting is for an app not in the apps set
             self.settings[setting.name] = setting
-            
+
     def _get(self, name, default=None):
         if name not in self.settings:
             if name in KNOWN_SETTINGS:
@@ -329,8 +331,7 @@ is given, it prefixes all non
                 return self.params[name]
             raise KeyError("'%s'" % name)
         return self.settings[name].get()
-    
-            
+
 
 class SettingMeta(type):
     '''A metaclass which collects all setting classes and put them
@@ -366,7 +367,9 @@ in the global ``KNOWN_SETTINGS`` list.'''
 
 class SettingBase(object):
     '''This is the base class of :class:`Settings` and :class:`SimpleSetting`.
-It defines attributes for a given setting parameter.'''
+
+    It defines attributes for a given setting parameter.
+    '''
     name = None
     '''The unique name used to access this setting in the :class:`Config`
     container.'''
@@ -398,7 +401,7 @@ If *default* is ``True`` set also the :attr:`default` value.'''
         '''Called when pulsar server starts. It can be used to perform
 custom initialization for this :class:`Setting`.'''
         pass
-    
+
     def copy(self, name=None, prefix=None):
         '''Copy this :class:`SettingBase`'''
         setting = copy.copy(self)
@@ -406,13 +409,13 @@ custom initialization for this :class:`Setting`.'''
             flags = setting.flags
             if flags and flags[-1].startswith('--'):
                 # Prefix a setting
-                setting.orig_name = setting.name 
+                setting.orig_name = setting.name
                 setting.name = '%s_%s' % (prefix, setting.name)
                 setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
         if name and not setting.is_global:
-            setting.short = '%s application. %s' % (name , setting.short)
+            setting.short = '%s application. %s' % (name, setting.short)
         return setting
-    
+
 
 class SimpleSetting(SettingBase):
 
@@ -431,7 +434,9 @@ on the command line or on a config file.'''
     '''If set to ``True`` the settings won't be loaded and it can be only used
 as base class for other settings.'''
     nargs = None
-    '''For positional arguments. Same usage as python :mod:`argparse` module.'''
+    '''For positional arguments. Same usage as python :mod:`argparse`
+    module.
+    '''
     app = None
     '''Setting for a specific :class:`Application`.'''
     section = None
@@ -493,7 +498,7 @@ as base class for other settings.'''
 python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
 :attr:`nargs` and :attr:`name` are defined.'''
         default = self.default if set_default else None
-        kwargs = {'nargs':self.nargs}
+        kwargs = {'nargs': self.nargs}
         if self.type and self.type != 'string':
             kwargs["type"] = self.type
         if self.choices:
@@ -505,8 +510,8 @@ python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
                            "default": default,
                            "help": "%s [%s]" % (self.short, self.default)})
             if kwargs["action"] != "store":
-                kwargs.pop("type",None)
-                kwargs.pop("nargs",None)
+                kwargs.pop("type", None)
+                kwargs.pop("nargs", None)
         elif self.nargs and self.name:
             args = (self.name,)
             kwargs.update({'metavar': self.meta or None,
@@ -515,7 +520,7 @@ python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
             # Not added to argparser
             return
         parser.add_argument(*args, **kwargs)
-        
+
 
 def validate_bool(val):
     if isinstance(val, bool):
@@ -530,6 +535,7 @@ def validate_bool(val):
     else:
         raise ValueError("Invalid boolean: %s" % val)
 
+
 def validate_pos_int(val):
     if not isinstance(val, int):
         val = int(val, 0)
@@ -540,11 +546,13 @@ def validate_pos_int(val):
         raise ValueError("Value must be positive: %s" % val)
     return val
 
+
 def validate_pos_float(val):
     val = float(val)
     if val < 0:
         raise ValueError("Value must be positive: %s" % val)
     return val
+
 
 def validate_string(val):
     va = native_str(val)
@@ -554,19 +562,22 @@ def validate_string(val):
         raise TypeError("Not a string: %s" % val)
     return va.strip()
 
+
 def validate_list(val):
     if val and not isinstance(val, (list, tuple)):
         raise TypeError("Not a list: %s" % val)
     return list(val)
+
 
 def validate_dict(val):
     if val and not isinstance(val, dict):
         raise TypeError("Not a dictionary: %s" % val)
     return val
 
+
 def validate_callable(arity):
     def _validate_callable(val):
-        if not hasattr(val,'__call__'):
+        if not hasattr(val, '__call__'):
             raise TypeError("Value is not callable: %s" % val)
         if not inspect.isfunction(val):
             cval = val.__call__
@@ -580,25 +591,29 @@ def validate_callable(arity):
     return _validate_callable
 
 
-def make_optparse_options(apps=None, exclude=None, include=None): # pragma nocover
-    '''Create a tuple of optparse options'''
+def make_optparse_options(apps=None, exclude=None,
+                          include=None):  # pragma nocover
+    '''Create a tuple of optparse options.'''
     from optparse import make_option
+
     class AddOptParser(list):
         def add_argument(self, *args, **kwargs):
             self.append(make_option(*args, **kwargs))
+
     config = Config(apps=apps, exclude=None, include=None)
     parser = AddOptParser()
     config.add_to_parser(parser)
     return tuple(parser)
-    
 
-################################################################################
+
+############################################################################
 ##    Global Server Settings
-
 section_docs['Global Server Settings'] = '''
 These settings are global in the sense that they are used by the arbiter
 as well as all pulsar workers. They are server configuration parameters.
 '''
+
+
 class Global(Setting):
     virtual = True
     section = "Global Server Settings"
@@ -616,7 +631,7 @@ class ConfigFile(Global):
         paramaters can be specified.
         """
 
-    
+
 class HttpProxyServer(Global):
     name = "http_proxy"
     flags = ["--http-proxy"]
@@ -624,6 +639,7 @@ class HttpProxyServer(Global):
     desc = """\
         The HTTP proxy server to use with HttpClient.
         """
+
     def on_start(self):
         if self.value:
             os.environ['http_proxy'] = self.value
@@ -641,7 +657,7 @@ class HttpParser(Global):
 
     def on_start(self):
         if self.value:
-            from pulsar.utils.httpurl import setDefaultHttpParser 
+            from pulsar.utils.httpurl import setDefaultHttpParser
             setDefaultHttpParser(PyHttpParser)
 
 
@@ -731,15 +747,16 @@ class Loglevel(Global):
     validator = validate_string
     default = "info"
     desc = """The granularity of log outputs.
-            
+
             Valid level names are:
-            
+
              * debug
              * info
              * warning
              * error
              * critical
              """
+
 
 class LogHandlers(Global):
     name = "loghandlers"
@@ -771,8 +788,8 @@ class Procname(Global):
 
         This affects things like ``ps`` and ``top``. If you're going to be
         running more than one instance of Pulsar you'll probably want to set a
-        name to tell them apart. This requires that you install the setproctitle
-        module.
+        name to tell them apart. This requires that you install the
+        setproctitle module.
 
         It defaults to 'pulsar'.
         """
@@ -786,15 +803,16 @@ class DefaultProcName(Global):
         Internal setting that is adjusted for each type of application.
         """
 
-################################################################################
-##    Worker Processes
 
+############################################################################
+##    Worker Processes
 section_docs['Worker Processes'] = '''
 This group of configuration parameters control the number of actors
 for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
 other actor-specific parameters.
 '''
-    
+
+
 class Workers(Setting):
     name = "workers"
     section = "Worker Processes"
@@ -804,14 +822,15 @@ class Workers(Setting):
     default = 1
     desc = """\
         The number of workers for handling requests.
-        
-If using a multi-process concurrency, a number in the
-the ``2-4 x NUM_CORES`` range should be good. If you are using threads this
-number can be higher."""
+
+        If using a multi-process concurrency, a number in the
+        the ``2-4 x NUM_CORES`` range should be good. If you are using
+        threads this number can be higher.
+        """
 
 
 class Concurrency(Setting):
-    inherit = True # Inherited by the arbiter if an application is first created
+    inherit = True  # Inherited by the arbiter
     name = "concurrency"
     section = "Worker Processes"
     flags = ["--concurrency"]
@@ -839,6 +858,7 @@ class MaxRequests(Setting):
         restarts are disabled.
         """
 
+
 class Timeout(Setting):
     name = "timeout"
     section = "Worker Processes"
@@ -860,15 +880,15 @@ class ThreadWorkers(Setting):
     default = 1
     desc = """\
         The number of threads in an actor thread pool.
-        
-        The thread pool is used by actors to perform CPU intensive calculations.
-        In this way the actor main thread is free to listen to events on file
-        descriptors and process them as quick as possible."""
+
+        The thread pool is used by actors to perform CPU intensive
+        calculations. In this way the actor main thread is free to listen
+        to events on file descriptors and process them as quick as possible.
+        """
 
 
-################################################################################
+############################################################################
 ##    APPLICATION HOOKS
-
 section_docs['Application Hooks'] = '''
 Application hooks are functions which can be specified in a
 :ref:`config <setting-config>` file to perform custom tasks in a pulsar server.
@@ -877,7 +897,8 @@ the various components of a pulsar application.
 
 All application hooks are functions which accept one parameter only, the actor
 invoking the function.'''
-    
+
+
 class Postfork(Setting):
     name = "post_fork"
     section = "Application Hooks"
@@ -889,7 +910,7 @@ class Postfork(Setting):
 
         The event loop is not yet available.
         """
-        
+
 
 class WhenReady(Setting):
     name = "when_ready"
@@ -899,12 +920,12 @@ class WhenReady(Setting):
     default = staticmethod(pass_through)
     desc = """\
         Called just before a worker starts its event loop.
-        
+
         This is a chance to setup :class:`pulsar.EventLoop` callbacks which
         can run periodically, at every loop or when some defined events occur.
         """
-        
-        
+
+
 class WhenExit(Setting):
     name = "when_exit"
     section = "Application Hooks"
@@ -913,7 +934,7 @@ class WhenExit(Setting):
     default = staticmethod(pass_through)
     desc = """\
         Called just before an actor is garbadge collected.
-        
+
         This is a chance to check the actor status if needed.
         """
 

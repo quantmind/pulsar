@@ -19,7 +19,7 @@ __all__ = ['close_on_exec',
 
 # See: http://msdn.microsoft.com/en-us/library/ms724935(VS.85).aspx
 SetHandleInformation = ctypes.windll.kernel32.SetHandleInformation
-SetHandleInformation.argtypes = (ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD,\
+SetHandleInformation.argtypes = (ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD,
                                  ctypes.wintypes.DWORD)
 SetHandleInformation.restype = ctypes.wintypes.BOOL
 
@@ -30,25 +30,29 @@ EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
 if sys.version_info >= (2, 7):
     SIG_NAMES[signal.CTRL_C_EVENT] = 'CTRL C EVENT'
     EXIT_SIGNALS += (signal.CTRL_C_EVENT,)
-    
-    
+
+
 def get_parent_id():
     if ispy32:
         return os.getppid()
     else:
         return None
 
+
 def chown(path, uid, gid):
     pass
+
 
 def close_on_exec(fd):
     if fd:
         success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
         if not success:
             raise ctypes.GetLastError()
-        
+
+
 def _set_non_blocking(fd):
     pass
+
 
 def get_uid(user=None):
     if not user:
@@ -56,17 +60,22 @@ def get_uid(user=None):
     elif user == getpass.getuser():
         return user
 
+
 def get_gid(group=None):
     return None
+
 
 def setpgrp():
     pass
 
+
 def get_maxfd():
     return MAXFD
 
+
 def daemonize():
     pass
+
 
 def socketpair(family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0):
     """A socket pair usable as a self-pipe, for Windows.
@@ -99,19 +108,19 @@ class Waker(object):
         self._reader, self._writer = socketpair()
         self._writer.setblocking(False)
         self._reader.setblocking(False)
-        
+
     def __str__(self):
         return 'Socket waker {0}'.format(self.fileno())
-        
+
     def fileno(self):
         return self._reader.fileno()
-    
+
     def wake(self):
         try:
             self._writer.send(b'x')
         except IOError:
             pass
-        
+
     def consume(self):
         try:
             result = True
@@ -123,4 +132,3 @@ class Waker(object):
     def close(self):
         self.reader.close()
         self.writer.close()
-        

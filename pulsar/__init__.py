@@ -4,33 +4,33 @@ VERSION = (0, 6, 1, 'alpha', 2)
 
 from .utils.version import get_version
 
-__version__   = version = get_version(VERSION)
-__license__   = "BSD"
-__author__    = "Luca Sbardella"
-__contact__   = "luca.sbardella@gmail.com"
-__homepage__  = "https://github.com/quantmind/pulsar"
+__version__ = version = get_version(VERSION)
+__license__ = "BSD"
+__author__ = "Luca Sbardella"
+__contact__ = "luca.sbardella@gmail.com"
+__homepage__ = "https://github.com/quantmind/pulsar"
 __docformat__ = "restructuredtext"
-CLASSIFIERS  = ['Development Status :: 4 - Beta',
-                'Environment :: Web Environment',
-                'Intended Audience :: Developers',
-                'License :: OSI Approved :: BSD License',
-                'Operating System :: OS Independent',
-                'Programming Language :: Python',
-                'Programming Language :: Python :: 2',
-                'Programming Language :: Python :: 2.6',
-                'Programming Language :: Python :: 2.7',
-                'Programming Language :: Python :: 3',
-                'Programming Language :: Python :: 3.2',
-                'Programming Language :: Python :: 3.3',
-                'Programming Language :: Python :: Implementation :: PyPy',
-                'Topic :: Internet',
-                'Topic :: Utilities',
-                'Topic :: System :: Distributed Computing',
-                'Topic :: Software Development :: Libraries :: Python Modules',
-                'Topic :: Internet :: WWW/HTTP',
-                'Topic :: Internet :: WWW/HTTP :: WSGI',
-                'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
-                'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
+CLASSIFIERS = ['Development Status :: 4 - Beta',
+               'Environment :: Web Environment',
+               'Intended Audience :: Developers',
+               'License :: OSI Approved :: BSD License',
+               'Operating System :: OS Independent',
+               'Programming Language :: Python',
+               'Programming Language :: Python :: 2',
+               'Programming Language :: Python :: 2.6',
+               'Programming Language :: Python :: 2.7',
+               'Programming Language :: Python :: 3',
+               'Programming Language :: Python :: 3.2',
+               'Programming Language :: Python :: 3.3',
+               'Programming Language :: Python :: Implementation :: PyPy',
+               'Topic :: Internet',
+               'Topic :: Utilities',
+               'Topic :: System :: Distributed Computing',
+               'Topic :: Software Development :: Libraries :: Python Modules',
+               'Topic :: Internet :: WWW/HTTP',
+               'Topic :: Internet :: WWW/HTTP :: WSGI',
+               'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
+               'Topic :: Internet :: WWW/HTTP :: Dynamic Content']
 
 
 DEFAULT_PORT = 8060

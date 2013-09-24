@@ -2,11 +2,13 @@ from UserDict import DictMixin
 
 __all__ = ['OrderedDict']
 
+
 class OrderedDict(dict, DictMixin):
     '''Drop-in substitute for Py2.7's new collections.OrderedDict.
 The recipe has big-oh performance that matches regular dictionaries
-(amortized O(1) insertion/deletion/lookup and O(n) iteration/repr/copy/equality_testing).
-    
+(amortized O(1) insertion/deletion/lookup and O(n)
+iteration/repr/copy/equality_testing).
+
 From http://code.activestate.com/recipes/576693/'''
 
     def __init__(self, *args, **kwds):
@@ -100,7 +102,7 @@ From http://code.activestate.com/recipes/576693/'''
 
     def __eq__(self, other):
         if isinstance(other, OrderedDict):
-            return len(self)==len(other) and self.items() == other.items()
+            return len(self) == len(other) and self.items() == other.items()
         return dict.__eq__(self, other)
 
     def __ne__(self, other):

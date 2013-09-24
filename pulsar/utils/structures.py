@@ -7,7 +7,7 @@ MultiValueDict
 .. autoclass:: MultiValueDict
    :members:
    :member-order: bysource
-   
+
 
 .. _attribute-dictionary:
 
@@ -17,8 +17,8 @@ AttributeDictionary
 .. autoclass:: AttributeDictionary
    :members:
    :member-order: bysource
-   
-   
+
+
 FrozenDict
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -31,22 +31,24 @@ from collections import *
 
 from .pep import ispy26, ispy3k, iteritems
 
-if ispy26:    #pragma    nocover
+if ispy26:    # pragma    nocover
     from .fallbacks._collections import *
-    
+
 
 def mapping_iterator(iterable):
     if isinstance(iterable, Mapping):
         iterable = iteritems(iterable)
     return iterable
 
+
 def isgenerator(value):
-    return hasattr(value,'__iter__') and not hasattr(value, '__len__')
+    return hasattr(value, '__iter__') and not hasattr(value, '__len__')
+
 
 def aslist(value):
     if isinstance(value, list):
         return value
-    if isgenerator(value) or isinstance(value,(tuple,set,frozenset)):
+    if isgenerator(value) or isinstance(value, (tuple, set, frozenset)):
         return list(value)
     else:
         return [value]
@@ -82,7 +84,7 @@ Raises KeyError if key is not found."""
     def update(self, items):
         if isinstance(items, dict):
             items = iteritems(items)
-        for k,v in items:
+        for k, v in items:
             self[k] = v
 
     def __copy__(self):
@@ -151,63 +153,63 @@ class AttributeDictionary(Mapping):
     def __init__(self, *iterable, **kwargs):
         if iterable:
             if len(iterable) > 1:
-                raise TypeError('%s exceped at most 1 arguments, got %s.' %\
+                raise TypeError('%s exceped at most 1 arguments, got %s.' %
                                 (self.__class__.__name__, len(iterable)))
             self.update(iterable[0])
         if kwargs:
             self.update(kwargs)
-            
+
     def __repr__(self):
         return repr(self.__dict__)
-    
+
     def __str__(self):
         return str(self.__dict__)
-    
+
     def __contains__(self, name):
         return name in self.__dict__
-    
+
     def __len__(self):
         return len(self.__dict__)
-    
+
     def __iter__(self):
         return iter(self.__dict__)
-    
+
     def __getattr__(self, name):
         return self.__dict__.get(name)
-    
+
     def __setattr__(self, name, value):
         self.__dict__[name] = value
-        
+
     def __setitem__(self, name, value):
         self.__dict__[name] = value
-        
+
     def __getitem__(self, name):
         return self.__dict__[name]
-        
+
     def update(self, iterable):
         for name, value in mapping_iterator(iterable):
             setattr(self, name, value)
-    
+
     def all(self):
         return self.__dict__
-    
+
     def pop(self, name, default=None):
         return self.__dict__.pop(name, default)
-    
+
     def values(self):
         return self.__dict__.values()
-    
+
     def items(self):
         return self.__dict__.items()
-    
-    if not ispy3k:   #pragma    nocover
+
+    if not ispy3k:   # pragma    nocover
         def itervalues(self):
             return self.__dict__.itervalues()
-        
+
         def iteritems(self):
             return self.__dict__.iteritems()
-    
-    
+
+
 class FrozenDict(dict):
     '''A dictionary which cannot be changed once initialised.'''
 
@@ -215,36 +217,37 @@ class FrozenDict(dict):
         update = super(FrozenDict, self).update
         if iterable:
             if len(iterable) > 1:
-                raise TypeError('%s exceped at most 1 arguments, got %s.' %\
+                raise TypeError('%s exceped at most 1 arguments, got %s.' %
                                 (self.__class__.__name__, len(iterable)))
             update(iterable[0])
         if kwargs:
             update(kwargs)
 
     def __setitem__(self, key, value):
-        raise TypeError("'%s' object does not support item assignment"\
-                         % self.__class__.__name__)
-        
+        raise TypeError("'%s' object does not support item assignment"
+                        % self.__class__.__name__)
+
     def update(self, iterable):
-        raise TypeError("'%s' object does not support update"\
-                         % self.__class__.__name__)
-        
+        raise TypeError("'%s' object does not support update"
+                        % self.__class__.__name__)
+
     def pop(self, key):
-        raise TypeError("'%s' object does not support pop"\
-                         % self.__class__.__name__)
+        raise TypeError("'%s' object does not support pop"
+                        % self.__class__.__name__)
 
     def __gt__(self, other):
         if hasattr(other, '__len__'):
             return len(self) > len(other)
         else:
             return False
-        
+
     def __lt__(self, other):
         if hasattr(other, '__len__'):
             return len(self) < len(other)
         else:
             return False
-    
+
+
 def merge_prefix(deque, size):
     """Replace the first entries in a deque of bytes with a single
 string of up to *size* bytes."""
@@ -263,7 +266,8 @@ string of up to *size* bytes."""
         deque.appendleft(b''.join(prefix))
     elif not deque:
         deque.appendleft(b'')
-        
+
+
 def recursive_update(target, mapping):
     for key, value in iteritems(mapping):
         if value is not None:
@@ -275,4 +279,3 @@ def recursive_update(target, mapping):
                     target[key] = value
             else:
                 target[key] = value
-                        

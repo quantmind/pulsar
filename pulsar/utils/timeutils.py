@@ -29,6 +29,7 @@ def timedelta_seconds(delta):
         return 0
     return delta.days * 86400 + delta.seconds + (delta.microseconds / 10e5)
 
+
 def delta_resolution(dt, delta):
     """Round a datetime to the resolution of a timedelta.
 
@@ -50,7 +51,8 @@ def delta_resolution(dt, delta):
             return datetime(*args[:res])
     return dt
 
-def remaining(start, ends_in, relative=True, now = None):
+
+def remaining(start, ends_in, relative=True, now=None):
     """Calculate the remaining time for a start date and a timedelta.
 
     E.g. "how many seconds left for 30 seconds after ``start``?"
@@ -58,7 +60,8 @@ def remaining(start, ends_in, relative=True, now = None):
     :param start: Start :class:`datetime.datetime`.
     :param ends_in: The end delta as a :class:`datetime.timedelta`.
     :keyword relative: If set to ``False``, the end time will be calculated
-        using :func:`delta_resolution` (i.e. rounded to the resolution of ``ends_in``).
+        using :func:`delta_resolution` (i.e. rounded to the resolution of
+        ``ends_in``).
     :keyword now: The current time, defaults to :func:`datetime.now`.
 
     """
@@ -68,6 +71,7 @@ def remaining(start, ends_in, relative=True, now = None):
     if not relative:
         end_date = delta_resolution(end_date, ends_in)
     return end_date - now
+
 
 def weekday(name):
     """Return the position of a weekday (0 - 7, where 0 is Sunday).
@@ -84,7 +88,8 @@ def weekday(name):
     except KeyError:
         # Show original day name in exception, instead of abbr.
         raise KeyError(name)
-    
+
+
 def humanize_seconds(secs, prefix=""):
     """Show seconds in human form, e.g. 60 is "1 minute", 7200 is "2
     hours"."""

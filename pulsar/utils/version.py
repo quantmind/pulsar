@@ -2,6 +2,7 @@ import datetime
 import os
 import subprocess
 
+
 def get_version(version):
     assert len(version) == 5
     assert version[3] in ('alpha', 'beta', 'rc', 'final')
@@ -15,6 +16,7 @@ def get_version(version):
         sub = '-%s.%s' % tuple(version[3:])
     return main + sub
 
+
 def get_git_changeset():
     """Returns a numeric identifier of the latest git changeset.
 
@@ -24,8 +26,11 @@ def get_git_changeset():
     """
     repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     git_show = subprocess.Popen('git show --pretty=format:%ct --quiet HEAD',
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            shell=True, cwd=repo_dir, universal_newlines=True)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True,
+                                cwd=repo_dir,
+                                universal_newlines=True)
     timestamp = git_show.communicate()[0].partition('\n')[0]
     try:
         timestamp = datetime.datetime.utcfromtimestamp(int(timestamp))

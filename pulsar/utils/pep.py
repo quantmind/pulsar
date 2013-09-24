@@ -10,11 +10,11 @@ ispy33 = sys.version_info >= (3, 3)
 
 if ispy33:
     default_timer = time.monotonic
-else:   #pragma    nocover
+else:   # pragma    nocover
     default_timer = time.time
-    
-    
-if ispy3k: # Python 3
+
+
+if ispy3k:  # Python 3
     import pickle
     string_type = str
     ascii_letters = string.ascii_letters
@@ -22,8 +22,8 @@ if ispy3k: # Python 3
     map = map
     range = range
     chr = chr
-    iteritems = lambda d : d.items()
-    itervalues = lambda d : d.values()
+    iteritems = lambda d: d.items()
+    itervalues = lambda d: d.values()
     is_string = lambda s: isinstance(s, str)
 
     def to_bytes(s, encoding=None, errors=None):
@@ -62,7 +62,7 @@ if ispy3k: # Python 3
             raise err.with_traceback(traceback)
         else:
             raise err
-        
+
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map
     import cPickle as pickle
@@ -71,10 +71,10 @@ else:   # pragma : no cover
     ascii_letters = string.letters
     range = xrange
     chr = unichr
-    iteritems = lambda d : d.iteritems()
-    itervalues = lambda d : d.itervalues()
+    iteritems = lambda d: d.iteritems()
+    itervalues = lambda d: d.itervalues()
     is_string = lambda s: isinstance(s, basestring)
-    
+
     def to_bytes(s, encoding=None, errors='strict'):
         encoding = encoding or 'utf-8'
         if isinstance(s, bytes):
@@ -105,9 +105,9 @@ else:   # pragma : no cover
             return str(s)
         else:
             return s
-        
-        
-################################################################################
+
+
+############################################################################
 ###    PEP 3156
 ###    These classes will be eventually replaced by the standard lib
 
@@ -115,8 +115,8 @@ class EventLoop(object):
     '''This is just a signature'''
     def run_in_executor(self, executor, callback, *args):
         raise NotImplementedError
-    
-    
+
+
 class EventLoopPolicy:
     """Abstract policy for accessing the event loop."""
 
@@ -139,10 +139,12 @@ class EventLoopPolicy:
 # call to get_event_loop_policy().
 _event_loop_policy = None
 
+
 def get_event_loop_policy():
     """XXX"""
     global _event_loop_policy
     return _event_loop_policy
+
 
 def set_event_loop_policy(policy):
     """XXX"""
@@ -150,13 +152,16 @@ def set_event_loop_policy(policy):
     assert policy is None or isinstance(policy, EventLoopPolicy)
     _event_loop_policy = policy
 
+
 def get_event_loop():
     """XXX"""
     return get_event_loop_policy().get_event_loop()
 
+
 def set_event_loop(event_loop):
     """XXX"""
     get_event_loop_policy().set_event_loop(event_loop)
+
 
 def new_event_loop(**kwargs):
     """XXX"""
