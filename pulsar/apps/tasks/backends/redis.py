@@ -33,35 +33,35 @@ class TaskData(odm.StdModel):
     queue = odm.ListField(class_field=True)
     # Set where TaskData ids under execution are stored
     executing = odm.SetField(class_field=True)
-    
+
     class Meta:
         app_label = 'tasks'
-        
+
     def as_task(self):
         params = dict(self.meta or {})
         for field in self._meta.scalarfields:
             params[field.name] = getattr(self, field.attname, None)
         return backends.Task(self.id, **params)
-    
+
     def __unicode__(self):
         return '%s (%s)' % (self.name, self.status)
 
 
 class TaskBackend(backends.TaskBackend):
-    
+
     @classmethod
     def get_connection_string(cls, scheme, address, params, name):
         '''The ``name`` is used to set the ``namespace`` parameters in the
-        connection string.''' 
+        connection string.'''
         if name:
             params['namespace'] = '%s.' % name
         return get_connection_string(scheme, address, params)
-            
+
     def num_tasks(self):
         '''Retrieve the number of tasks in the task queue.'''
         task_manager = self.task_manager()
         return task_manager.queue.size()
-    
+
     @async()
     def put_task(self, task_id):
         if task_id:
@@ -71,8 +71,8 @@ class TaskBackend(backends.TaskBackend):
                 task_data = yield task_data.save()
                 yield self.task_manager().queue.push_back(task_data.id)
                 yield task_data.id
-    
-    @async()    
+
+    @async()
     def save_task(self, task_id, **params):
         # Called by self when the task need to be saved
         task_manager = self.task_manager()
@@ -88,7 +88,7 @@ class TaskBackend(backends.TaskBackend):
         else:
             task_data = yield task_manager.new(id=task_id, **params)
         yield task_id
-    
+
     def get_task(self, task_id=None, timeout=1):
         task_manager = self.task_manager()
         #
@@ -98,12 +98,12 @@ class TaskBackend(backends.TaskBackend):
             task_data = yield self._get_task(task_id)
             if task_data:
                 yield task_data.as_task()
-        
+
     def get_tasks(self, **filters):
         task_manager = self.task_manager()
         tasks = yield task_manager.filter(**filters).all()
         yield [t.as_task() for t in tasks]
-        
+
     def delete_tasks(self, ids=None):
         deleted = []
         if ids:
@@ -113,18 +113,18 @@ class TaskBackend(backends.TaskBackend):
             for task_data in tasks:
                 deleted.append(task_data.id)
         yield deleted
-        
+
     def flush(self):
         return self.models().flush()
-        
-    ############################################################################
+
+    #######################################################################
     ##    INTERNALS
     @local_method
     def models(self):
         models = odm.Router(self.connection_string)
         models.register(TaskData)
         return models
-        
+
     def task_manager(self):
         return self.models().taskdata
 
@@ -132,4 +132,3 @@ class TaskBackend(backends.TaskBackend):
         tasks = yield self.task_manager().filter(id=task_id).all()
         if tasks:
             yield tasks[0]
-            

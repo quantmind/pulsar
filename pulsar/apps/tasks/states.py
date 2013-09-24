@@ -6,9 +6,8 @@ STARTED = "STARTED"
 RETRY = "RETRY"
 QUEUED = "QUEUED"
 PENDING = "PENDING"
-#: Lower index means higher precedence.
-PRECEDENCE = (
-              (SUCCESS, 1),
+# Lower index means higher precedence.
+PRECEDENCE = ((SUCCESS, 1),
               (FAILURE, 2),
               (UNKNOWN, 3),
               (REVOKED, 4),

@@ -22,8 +22,9 @@ class OAuth2(OAuth):
 
     def __call__(self, response):
         request = response.request
-        url, headers, body = self._client.add_token(request.full_url,
-            http_method=request.method, body=request.data,
+        url, headers, body = self._client.add_token(
+            request.full_url,
+            http_method=request.method,
+            body=request.data,
             headers=request.headers)
         return response
-

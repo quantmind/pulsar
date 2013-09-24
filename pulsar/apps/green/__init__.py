@@ -7,7 +7,7 @@ Implementation
 =====================
 
 Lets assume a generator ``gen``.
-        
+
 
 .. _greenlet: http://greenlet.readthedocs.org
 .. _greentulip: https://github.com/1st1/greentulip
@@ -21,18 +21,19 @@ from pulsar.utils.pep import get_event_loop, ispy3k
 
 try:
     import greenlet
-    
+
     class TaskGreenLet(greenlet.greenlet):
         def send(self, result):
             return self.switch(result)
-        
+
+
 except ImportError:
     greenlet = None
 
 
 class GreenTask(pulsar.Task):
     _greenlet = None
-        
+
     def _consume(self, result):
         step = self._step
         switch = False
@@ -49,11 +50,11 @@ class GreenTask(pulsar.Task):
             result, switch = green.switch(result)
         if switch:
             self._greenlet = green
-         
+
 
 class GreenEventLoop(pulsar.EventLoop):
     task_factory = GreenTask
-    
+
     def _green_run(self, method, args, kwargs):
         if not greenlet:
             raise ImproperlyConfigured('The green eventloop requires greenlet')
@@ -66,12 +67,12 @@ class GreenEventLoop(pulsar.EventLoop):
     def run_forever(self, *args, **kwargs):
         method = super(GreenEventLoop, self).run_forever
         return self._green_run(method, args, kwargs)
-    
+
 
 class Socket(object):
 
     def __init__(self, *args, **kwargs):
-        _from_sock = kwargs.pop('_from_sock', None) 
+        _from_sock = kwargs.pop('_from_sock', None)
         if _from_sock:
             self._sock = _from_sock
         else:

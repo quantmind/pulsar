@@ -557,8 +557,8 @@ can be set during initialisation.'''
             if not event_loop:
                 event_loop = self.event_loop
             elif self._event_loop:
-                assert (event_loop == self._event_loop,
-                        "Incompatible event loop")
+                assert event_loop == self._event_loop,\
+                    "Incompatible event loop"
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
             self._timeout = event_loop.call_later(

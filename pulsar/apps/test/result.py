@@ -8,7 +8,7 @@ Plugin
 .. autoclass:: Plugin
    :members:
    :member-order: bysource
-   
+
 
 Test Runner
 ~~~~~~~~~~~~~~~~~~~
@@ -17,7 +17,7 @@ Test Runner
    :members:
    :member-order: bysource
 
-   
+
 '''
 from copy import deepcopy
 
@@ -57,14 +57,14 @@ it will stop the configuration of all subsequent plugins and quit the test.
 :return: ``None`` unless the tests runner must be stopped.
 '''
         pass
-    
+
     @property
     def name(self):
         return self.__class__.__name__.lower()
 
     def on_start(self):
         '''Called by :ref:`TestSuite <test-suite>` once only at startup.
-        
+
 This callback is invoked once all tests are loaded but but before the test
 suite starts running them.'''
         pass
@@ -77,7 +77,7 @@ suite starts running them.'''
         '''Called just before a ``test_class`` executes all its test
 methods. This is run just before ``setUpClass`` method.'''
         pass
-    
+
     def startTest(self, test):
         '''Called just before a ``test`` function is executed. This is run
 just before ``_pre_setup`` method.'''
@@ -87,12 +87,12 @@ just before ``_pre_setup`` method.'''
         '''Called just after a ``test`` function has finished. This is run just
 after the ``_post_teardown`` method.'''
         pass
-    
+
     def before_test_function_run(self, test, local):
         '''This function can be used by plugins to manipulate the ``test``
 behaviour in the process domain where the test run.'''
         return test
-    
+
     def after_test_function_run(self, test, local, result):
         '''Executed in the ``test`` process domain, after the ``test`` has
 finished.'''
@@ -106,7 +106,7 @@ finished.'''
 
     def addError(self, test, err):
         pass
-    
+
     def addExpectedFailure(self, test, err):
         pass
 
@@ -197,7 +197,7 @@ class TestStream(TestResultProxy):
 
     def addSkip(self, test, reason):
         if self.showAll:
-            self.head(test,"skipped {0!r}".format(reason))
+            self.head(test, "skipped {0!r}".format(reason))
         elif self.dots:
             self.stream.write("s")
             self.stream.flush()
@@ -226,7 +226,7 @@ class TestStream(TestResultProxy):
     def printErrorList(self, flavour, errors):
         for test, err in errors:
             self.stream.writeln(self.separator1)
-            self.stream.writeln("%s: %s" % (flavour,test))
+            self.stream.writeln("%s: %s" % (flavour, test))
             self.stream.writeln(self.separator2)
             self.stream.writeln("%s" % err)
 
@@ -237,7 +237,7 @@ class TestStream(TestResultProxy):
         self.printErrors()
         run = result.testsRun
         stream.writeln("Ran %d test%s in %.3fs" %
-                            (run, run != 1 and "s" or "", timeTaken))
+                       (run, run != 1 and "s" or "", timeTaken))
         stream.writeln()
 
         expectedFails = unexpectedSuccesses = skipped = 0
@@ -333,6 +333,7 @@ class TestResult(Plugin):
 def testsafe(name, return_val=None):
     if not return_val:
         return_val = lambda c: None
+
     def _(self, *args):
         for p in self.plugins:
             try:
@@ -342,9 +343,9 @@ def testsafe(name, return_val=None):
             except Exception:
                 LOGGER.critical('Unhadled error in %s.%s' % (p, name),
                                 exc_info=True)
-    return _                
-            
-    
+    return _
+
+
 class TestRunner(TestResultProxy):
     '''An asynchronous test runner'''
     def __init__(self, plugins, stream, writercls=None, descriptions=True,
@@ -366,10 +367,10 @@ class TestRunner(TestResultProxy):
         self.result = result
         self.loader = unittest.TestLoader()
 
-    configure = testsafe('configure', lambda c: c)        
+    configure = testsafe('configure', lambda c: c)
     on_start = testsafe('on_start')
     on_end = testsafe('on_end')
-    startTest = testsafe('startTest')    
+    startTest = testsafe('startTest')
     stopTest = testsafe('stopTest')
     addSuccess = testsafe('addSuccess')
     addFailure = testsafe('addFailure')
@@ -405,7 +406,7 @@ class TestRunner(TestResultProxy):
             plugins[p.name] = local
             test = p.before_test_function_run(test, local) or test
         return test
-    
+
     def after_test_function_run(self, test, result):
         '''Called before the test starts.'''
         for p in self.plugins:
@@ -413,10 +414,10 @@ class TestRunner(TestResultProxy):
             if local is not None:
                 p.after_test_function_run(test, local, result)
         return result
-            
+
     def run_test_function(self, test, func, timeout=None):
         '''Run function ``func`` which belong to ``test``.
-    
+
         :parameter test: test instance or class
         :parameter func: test function belonging to *test*
         :parameter timeout: An optional timeout for asynchronous tests.

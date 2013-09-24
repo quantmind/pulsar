@@ -9,56 +9,55 @@ from pulsar.apps.pubsub import PubSub
 
 
 class TaskBackend(backends.TaskBackend):
-        
+
     def put_task(self, task_id):
         if task_id:
             return send(self.name, 'put_task', task_id)
-    
+
     def get_task(self, task_id=None):
         return send(self.name, 'get_task', task_id, self.poll_timeout)
-    
+
     def get_tasks(self, **filters):
         return send(self.name, 'get_tasks', **filters)
-        
+
     def save_task(self, task_id, **params):
         return send(self.name, 'save_task', task_id, **params)
-    
+
     def delete_tasks(self, ids=None):
         return send(self.name, 'delete_tasks', ids or ())
-    
+
     def flush(self):
         return send(self.name, 'delete_tasks', None)
-    
+
 
 #########################################################    INTERNALS
-
 class LocalTaskBackend(object):
-    
+
     def __init__(self, name):
         self.pubsub = PubSub(name=name)
         self._init()
-    
+
     def put_task(self, task_id):
         if task_id in self._tasks:
             task = self._tasks[task_id]
-            task.status = states.QUEUED 
+            task.status = states.QUEUED
             yield self.queue.put(task.id)
             yield task.id
 
-    def get_task(self, task_id, timeout):        
+    def get_task(self, task_id, timeout):
         if not task_id:
             try:
                 task_id = yield self.queue.get(timeout)
             except Empty:
                 coroutine_return()
         yield self._tasks.get(task_id)
-        
+
     def save_task(self, task_id, **params):
         task = self._tasks.get(task_id)
         if task:
             for field, value in params.items():
                 setattr(task, field, value)
-        else: # create a new task
+        else:   # create a new task
             task = backends.Task(task_id, **params)
             self._tasks[task.id] = task
         return task.id
@@ -74,7 +73,7 @@ class LocalTaskBackend(object):
                 if task:
                     deleted.append(id)
         return deleted
-    
+
     def get_tasks(self, **filters):
         tasks = []
         if filters:
@@ -94,31 +93,37 @@ class LocalTaskBackend(object):
                 if select:
                     tasks.append(task)
         return tasks
-    
+
     def _init(self):
         self._tasks = {}
         self.queue = Queue()
-    
+
+
 #################################################    TASKQUEUE COMMANDS
 @command()
 def save_task(request, task_id, **params):
     return _get_tasks(request.actor).save_task(task_id, **params)
 
+
 @command()
 def delete_tasks(request, ids):
     return _get_tasks(request.actor).delete_tasks(ids)
+
 
 @command()
 def get_task(request, task_id=None, timeout=1):
     return _get_tasks(request.actor).get_task(task_id, timeout)
 
+
 @command()
 def get_tasks(request, **filters):
     return _get_tasks(request.actor).get_tasks(**filters)
 
+
 @command()
 def put_task(request, task_id):
     return _get_tasks(request.actor).put_task(task_id)
+
 
 def _get_tasks(actor):
     tasks = getattr(actor, '_TASKQUEUE_TASKS', None)

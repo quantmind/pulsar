@@ -13,6 +13,7 @@ WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
 TRANSPORTS = {}
 
+
 def register_transport(klass):
     TRANSPORTS[klass.name] = klass
     return klass
@@ -26,8 +27,9 @@ class WebSocket(wsgi.Router):
     is upgraded to :class:`WebSocketProtocol` and messages are handled by
     the :attr:`handle` attribute, an instance of :class:`WS`.
 
-    See http://tools.ietf.org/html/rfc6455 for the websocket server protocol and
-    http://www.w3.org/TR/websockets/ for details on the JavaScript interface.
+    See http://tools.ietf.org/html/rfc6455 for the websocket server protocol
+    and http://www.w3.org/TR/websockets/ for details on the JavaScript
+    interface.
 
     .. attribute:: parser_factory
 
@@ -35,17 +37,17 @@ class WebSocket(wsgi.Router):
     """
     parser_factory = FrameParser
     _name = 'websocket'
-    
+
     def __init__(self, route, handle, parser_factory=None, **kwargs):
         super(WebSocket, self).__init__(route, **kwargs)
         self.handle = handle
         if parser_factory:
             self.parser_factory = parser_factory
-    
+
     @property
     def name(self):
         return self._name
-    
+
     def get(self, request):
         headers_parser = self.handle_handshake(request.environ)
         if not headers_parser:
@@ -57,13 +59,13 @@ class WebSocket(wsgi.Router):
         factory = partial(WebSocketProtocol, request, self.handle, parser)
         request.environ['pulsar.connection'].upgrade(factory)
         return request.response
-        
+
     def upgrade(self, connection,):
         connection.upgrade.current_consumer
-        
+
     def handle_handshake(self, environ):
-        connections = environ.get("HTTP_CONNECTION", '').lower()\
-                                    .replace(' ','').split(',')
+        connections = environ.get(
+            "HTTP_CONNECTION", '').lower().replace(' ', '').split(',')
         if environ.get("HTTP_UPGRADE", '').lower() != "websocket" or \
            'upgrade' not in connections:
             raise HttpException(status=400)
@@ -97,7 +99,8 @@ class WebSocket(wsgi.Router):
         # Build the frame parser
         version = environ.get('HTTP_SEC_WEBSOCKET_VERSION')
         try:
-            parser = self.parser_factory(version=version, protocols=ws_protocols,
+            parser = self.parser_factory(version=version,
+                                         protocols=ws_protocols,
                                          extensions=ws_extensions)
         except ProtocolError as e:
             raise HttpException(str(e), status=400)
@@ -109,7 +112,7 @@ class WebSocket(wsgi.Router):
             headers.append(('Sec-WebSocket-Extensions',
                             ','.join(parser.extensions)))
         return headers, parser
-        
+
     def challenge_response(self, key):
         sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
         return native_str(base64.b64encode(sha1.digest()))
@@ -132,14 +135,14 @@ class WebSocketProtocol(ProtocolConsumer):
 
     '''
     _started = False
-    
+
     def __init__(self, handshake, handler, parser):
         super(WebSocketProtocol, self).__init__()
         self.bind_event('post_request', self._shut_down)
         self.handshake = handshake
         self.handler = handler
         self.parser = parser
-        
+
     def connection_made(self, connection):
         connection.set_timeout(0)
 
@@ -163,7 +166,7 @@ class WebSocketProtocol(ProtocolConsumer):
             elif frame.is_pong:
                 async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
-            
+
     def write(self, frame):
         '''Write a new ``frame`` into the wire.
 
@@ -178,12 +181,12 @@ class WebSocketProtocol(ProtocolConsumer):
         self.transport.write(frame.msg)
         if frame.is_close:
             self.finish()
-            
+
     def ping(self, body=None):
         '''Write a ping ``frame``.
         '''
         self.write(self.parser.ping(body))
-        
+
     def pong(self, body=None):
         '''Write a pong ``frame``.
         '''

@@ -5,7 +5,7 @@ the ``cProfiler`` from the standard libraries.
 .. autoclass:: Profile
    :members:
    :member-order: bysource
-   
+
 '''
 import os
 import re
@@ -22,20 +22,20 @@ from pulsar.apps import test
 
 if ispy3k:
     from io import StringIO as Stream
-else:   #pragma    nocover
+else:   # pragma    nocover
     from io import BytesIO as Stream
 
 other_filename = 'unknown'
 line_func = re.compile(r'(?P<line>\d+)\((?P<func>\w+)\)')
 template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             'htmlfiles','profile')
+                             'htmlfiles', 'profile')
 headers = (
     ('ncalls',
      'total number of calls'),
     ('primitive calls',
      'Number primitive calls (calls not induced via recursion)'),
     ('tottime',
-     'Total time spent in the given function (excluding time spent '\
+     'Total time spent in the given function (excluding time spent '
      'in calls to sub-functions'),
     ('percall',
      'tottime over ncalls, the time spent by each call'),
@@ -43,14 +43,16 @@ headers = (
      'Total time spent in the given function including all subfunctions'),
     ('percall',
      'cumtime over primitive calls'),
-    ('function',''),
-    ('lineno',''),
-    ('filename','')
+    ('function', ''),
+    ('lineno', ''),
+    ('filename', '')
     )
+
 
 def absolute_file(val):
     dir = os.getcwd()
     return os.path.join(dir, val)
+
 
 def make_stat_table(data):
     yield "<thead>\n<tr>\n"
@@ -63,6 +65,7 @@ def make_stat_table(data):
             yield '<td>{0}</td>'.format(col)
         yield '\n</tr>\n'
     yield '</tbody>'
+
 
 def data_stream(lines, num=None):
     if num:
@@ -91,18 +94,19 @@ def data_stream(lines, num=None):
             if match:
                 lineno, func = match.groups()
                 filename = ':'.join(filenames)
-                filename = filename.replace('\\','/')
+                filename = filename.replace('\\', '/')
                 new_fields.extend((func, lineno, filename))
             else:
                 new_fields.extend(('', '', other_filename))
             yield new_fields
 
+
 def copy_file(filename, target, context=None):
-    with open(os.path.join(template_path,filename),'r') as file:
+    with open(os.path.join(template_path, filename), 'r') as file:
         stream = file.read()
     if context:
         stream = stream.format(context)
-    with open(os.path.join(target,filename),'w') as file:
+    with open(os.path.join(target, filename), 'w') as file:
         file.write(stream)
 
 
@@ -110,10 +114,10 @@ class Profile(test.TestPlugin):
     ''':class:`pulsar.apps.test.TestPlugin` for profiling test cases.'''
     desc = '''Profile tests using the cProfile'''
     profile_stats_path = pulsar.Setting(
-                                flags=['--profile-stats-path'],
-                                default='htmlprof',
-                                desc='''location of profile directory''',
-                                validator=absolute_file)
+        flags=['--profile-stats-path'],
+        default='htmlprof',
+        desc='location of profile directory.',
+        validator=absolute_file)
 
     def configure(self, cfg):
         self.config = cfg
@@ -128,7 +132,7 @@ class Profile(test.TestPlugin):
             local.prof = profiler.Profile()
             local.tmp = tempfile.mktemp(dir=self.profile_temp_path)
             local.prof.enable()
-        
+
     def after_test_function_run(self, test, local, result):
         if self.config.profile:
             local.prof.disable()
@@ -149,7 +153,7 @@ class Profile(test.TestPlugin):
 
     def on_end(self):
         if self.config.profile:
-            files = [os.path.join(self.profile_temp_path,file) for file in\
+            files = [os.path.join(self.profile_temp_path, file) for file in
                      os.listdir(self.profile_temp_path)]
             if not files:
                 return

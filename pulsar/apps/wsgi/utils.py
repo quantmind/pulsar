@@ -16,7 +16,7 @@ from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
                                   parse_qsl, HTTPError, parse_dict_header,
                                   JSON_CONTENT_TYPES)
-                                 
+
 from .structures import Accept, RequestCacheControl
 from .content import Html
 
@@ -29,22 +29,18 @@ __all__ = ['handle_wsgi_error',
 
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
-
-HOP_HEADERS = frozenset((
-        'connection',
-        'keep-alive',
-        'proxy-authenticate',
-        'proxy-authorization',
-        'te',
-        'trailers',
-        'transfer-encoding',
-        'upgrade',
-        'server',
-        'date',
-    ))
-
+HOP_HEADERS = frozenset(('connection',
+                         'keep-alive',
+                         'proxy-authenticate',
+                         'proxy-authorization',
+                         'te',
+                         'trailers',
+                         'transfer-encoding',
+                         'upgrade',
+                         'server',
+                         'date')
+                        )
 LOGGER = logging.getLogger('pulsar.wsgi')
-
 error_css = '''
 .pulsar-error {
     width: 500px;
@@ -54,21 +50,24 @@ error_css = '''
 
 _RequestClass = None
 
+
 def wsgi_request(environ, app_handler=None, urlargs=None):
     global _RequestClass
     return _RequestClass(environ, app_handler=app_handler, urlargs=urlargs)
 
+
 def set_wsgi_request_class(RequestClass):
     global _RequestClass
     _RequestClass = RequestClass
-    
-    
+
+
 def wsgi_iterator(gen, encoding):
     for data in gen:
         if isinstance(data, bytes):
             yield data
         else:
             yield data.encode(encoding)
+
 
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
@@ -85,8 +84,9 @@ def cookie_date(epoch_seconds=None):
     rfcdate = formatdate(epoch_seconds)
     return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
 
+
 def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-                domain=None, secure=False, httponly=False):
+               domain=None, secure=False, httponly=False):
     '''Set a cookie key into the cookies dictionary *cookies*.'''
     cookies[key] = value
     if expires is not None:
@@ -115,15 +115,18 @@ def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
     if httponly:
         cookies[key]['httponly'] = True
 
+
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
+
 
 def parse_accept_header(value, cls=None):
     """Parses an HTTP Accept-* header.  This does not implement a complete
     valid algorithm but one that supports at least value and quality
     extraction.
 
-    Returns a new :class:`Accept` object (basically a list of ``(value, quality)``
-    tuples sorted by the quality with some additional accessor methods).
+    Returns a new :class:`Accept` object (basically a list of
+    ``(value, quality)`` tuples sorted by the quality with some additional
+    accessor methods).
 
     The second parameter can be a subclass of :class:`Accept` that is created
     with the parsed values and returned.
@@ -146,6 +149,7 @@ def parse_accept_header(value, cls=None):
             quality = max(min(float(quality), 1), 0)
         result.append((match.group(1), quality))
     return cls(result)
+
 
 def parse_cache_control_header(value, on_update=None, cls=None):
     """Parse a cache control header.  The RFC differs between response and
@@ -171,20 +175,22 @@ def parse_cache_control_header(value, on_update=None, cls=None):
 def _gen_query(query_string, encoding):
     # keep_blank_values=True
     for key, value in parse_qsl((query_string or ''), True):
-        yield to_string(key, encoding, errors='replace'),\
-              to_string(value, encoding, errors='replace')
+        yield (to_string(key, encoding, errors='replace'),
+               to_string(value, encoding, errors='replace'))
+
 
 def query_dict(query_string, encoding='utf-8'):
     if query_string:
         return dict(MultiValueDict(_gen_query(query_string, encoding)).items())
     else:
         return {}
-    
-    
+
+
 error_messages = {
     500: 'An exception has occurred while evaluating your request.',
     404: 'Cannot find what you are looking for.'
 }
+
 
 def wsgi_error_msg(response, msg):
     if response.content_type == 'application/json':
@@ -192,18 +198,19 @@ def wsgi_error_msg(response, msg):
                            'message': msg})
     else:
         return msg
-    
+
+
 class dump_environ(object):
     __slots__ = ('environ',)
-    
+
     def __init__(self, environ):
         self.environ = environ
-        
+
     def __str__(self):
         env = iteritems(self.environ)
         return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
-    
-    
+
+
 def handle_wsgi_error(environ, failure):
     '''The default handler for errors while serving an Http requests.
 
@@ -219,7 +226,7 @@ def handle_wsgi_error(environ, failure):
     else:
         response.status_code = getattr(error, 'status', 500)
         response.headers.update(getattr(error, 'headers', None) or ())
-    path = '@ path "%s"' % environ.get('PATH_INFO','/')
+    path = '@ path "%s"' % environ.get('PATH_INFO', '/')
     status = response.status_code
     if status == 500:
         failure.log(msg='Unhandled exception during WSGI response %s.%s' %
@@ -242,13 +249,14 @@ def handle_wsgi_error(environ, failure):
             content = None
     response.content = content
     return response
-           
+
+
 def render_error(request, exc_info):
-    '''Default renderer for errors.''' 
+    '''Default renderer for errors.'''
     debug = get_actor().cfg.debug
     response = request.response
     if not response.content_type:
-         response.content_type = request.content_types.best_match(
+        response.content_type = request.content_types.best_match(
             DEFAULT_RESPONSE_CONTENT_TYPES)
     if response.content_type == 'text/html':
         request.html_document.head.title = response.status
@@ -271,6 +279,7 @@ def render_error(request, exc_info):
         return doc.render(request)
     else:
         return wsgi_error_msg(response, msg)
+
 
 def render_error_debug(request, exc_info):
     '''Render the traceback into the content type in *response*.'''
@@ -296,7 +305,7 @@ def render_error_debug(request, exc_info):
                     if is_html:
                         trace = Html('p', escape(trace))
                         if counter:
-                            trace.css({'margin-left':'%spx' % (20*counter)})
+                            trace.css({'margin-left': '%spx' % (20*counter)})
                     error.append(trace)
         if not is_html:
             error = '\n'.join(error)

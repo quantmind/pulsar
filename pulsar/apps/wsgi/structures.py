@@ -17,7 +17,7 @@ def order(values):
     for q in reversed(sorted(same)):
         for v in same[q]:
             yield v, q
-            
+
 
 class Accept(tuple):
     """An :class:`Accept` object is a tuple subclass for tuples of
@@ -222,7 +222,7 @@ class CharsetAccept(Accept):
             except LookupError:
                 return name.lower()
         return item == '*' or _normalize(value) == _normalize(item)
-    
-    
+
+
 class RequestCacheControl(FrozenDict):
     pass

@@ -20,7 +20,7 @@ Integers::
     Route('<int:size>')
     # accept an integer between 1 and 200 only
     Route('<int(min=1,max=200):size>')
-    
+
 
 Paths::
 
@@ -28,7 +28,7 @@ Paths::
     Route('<path:pages>')
     # accept an integer between 1 and 200 only
     Route('<path:pages>/edit')
-    
+
 
 
 .. _wsgi-route-decorator:
@@ -39,7 +39,7 @@ Route decorator
 .. autoclass:: route
    :members:
    :member-order: bysource
-   
+
 .. _apps-wsgi-route:
 
 Route
@@ -48,7 +48,7 @@ Route
 .. autoclass:: Route
    :members:
    :member-order: bysource
-   
+
 '''
 import re
 from collections import namedtuple
@@ -63,14 +63,14 @@ __all__ = ['route', 'Route']
 
 
 class rule_info(namedtuple('rinfo', 'rule method parameters position order')):
-    
+
     def override(self, parent):
         if self.position is None:
             return rule_info(self.rule, self.method, self.parameters,
                              parent.position, parent.order)
         else:
             return self
-        
+
 
 _rule_re = re.compile(r'''
     (?:
@@ -91,7 +91,7 @@ _converter_args_re = re.compile(r'''
         \w+|
         [urUR]?(?P<stringval>"[^"]*?"|'[^']*')
     )\s*,
-''', re.VERBOSE|re.UNICODE)
+''', re.VERBOSE | re.UNICODE)
 
 
 _PYTHON_CONSTANTS = {
@@ -130,18 +130,19 @@ def parse_rule(rule):
 
 
 class route(object):
-    '''Decorator to create a child route from a :ref:`Router <wsgi-router>` method.
-    
+    '''Decorator to create a child route from a :ref:`Router <wsgi-router>`
+    method.
+
 Tipical usage::
 
     from pulsar.apps import wsgi
-    
+
     class View(wsgi.Router):
-    
+
         wsgi.route('/foo')
         def handle_view(self, request):
             ...
-            
+
         wsgi.route('/bla', async=True)
         def asynchronous_handle(self, request):
             result = yield async_function(...)
@@ -169,9 +170,10 @@ for a sample usage.
     the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.
     The ``async=True`` parameter will treat the ``callable`` as an asynchronous
     component.
-                
+
 '''
     creation_count = 0
+
     def __init__(self, rule=None, method=None, defaults=None,
                  position=None, **parameters):
         self.__class__.creation_count += 1
@@ -181,11 +183,11 @@ for a sample usage.
         self.defaults = defaults
         self.method = method
         self.parameters = parameters
-        
+
     @property
     def order(self):
         return self.creation_count if self.position is None else self.position
-        
+
     def __call__(self, callable):
         bits = callable.__name__.split('_')
         method = None
@@ -199,11 +201,11 @@ for a sample usage.
         callable.rule_method = rule_info(rule, method, self.parameters,
                                          self.position, self.order)
         return callable
-        
-    
+
+
 class Route(object):
     '''A Route is a class with a relative :attr:`path`.
-    
+
 :parameter rule: Rule strings basically are just normal URL paths
     with placeholders in the format ``<converter(parameters):name>``
     where both the ``converter`` and the ``parameters`` are optional.
@@ -211,21 +213,21 @@ class Route(object):
     means ``string``. ``name`` is the variable name.
 :parameter defaults: optional dictionary of default values for the rule
     variables.
-    
+
 .. attribute:: is_leaf
 
     If ``True``, the route is equivalent to a file and no sub-routes can be
     added.
-    
+
 .. attribute:: path
 
     The full path for this route including initial ``'/'``.
-    
+
 .. attribute:: variables
 
     a set of  variable names for this route. If the route has no variables, the
     set is empty.
-    
+
 .. _werkzeug: https://github.com/mitsuhiko/werkzeug
 '''
     def __init__(self, rule, defaults=None):
@@ -245,73 +247,76 @@ class Route(object):
                 e = bit[-1]
                 if s == '<' or e == '>':
                     if s + e != '<>':
-                        raise ValueError('malformed rule {0}'.format(self.rule))
+                        raise ValueError(
+                            'malformed rule {0}'.format(self.rule))
                     converter, parameters, variable = parse_rule(bit[1:-1])
                     if variable in self._converters:
-                        raise ValueError('variable name {0} used twice\
- in rule {1}.'.format(variable,self.rule))
+                        raise ValueError('variable name {0} used twice in '
+                                         'rule {1}.'.format(variable,
+                                                            self.rule))
                     convobj = get_converter(converter, parameters)
-                    regex_parts.append('(?P<%s>%s)' % (variable, convobj.regex))
-                    breadcrumbs.append((True,variable))
+                    regex_parts.append('(?P<%s>%s)' % (variable,
+                                                       convobj.regex))
+                    breadcrumbs.append((True, variable))
                     self._converters[variable] = convobj
                     self.variables.add(str(variable))
                 else:
                     variable = bit
                     regex_parts.append(re.escape(variable))
                     breadcrumbs.append((False, variable))
-                    
+
         self.breadcrumbs = tuple(breadcrumbs)
         self._regex_string = '/'.join(regex_parts)
         if self._regex_string and not self.is_leaf:
             self._regex_string += '/'
         self._regex = re.compile(self.regex, re.UNICODE)
-    
+
     @property
     def level(self):
         return len(self.breadcrumbs)
-        
+
     @property
     def path(self):
         return '/' + self.rule
-    
+
     @property
     def regex(self):
         if self.is_leaf:
             return '^' + self._regex_string + '$'
         else:
             return '^' + self._regex_string
-    
+
     @property
     def bits(self):
         return tuple((b[1] for b in self.breadcrumbs))
-    
+
     def ordered_variables(self):
-        return tuple((b for dyn,b in self.breadcrumbs if dyn))
-    
+        return tuple((b for dyn, b in self.breadcrumbs if dyn))
+
     def __hash__(self):
         return hash(self.rule)
-    
+
     def __repr__(self):
         return self.path
-    
+
     def __eq__(self, other):
-        if isinstance(other,self.__class__):
+        if isinstance(other, self.__class__):
             return str(self) == str(other)
         else:
             return False
-        
+
     def __lt__(self, other):
-        if isinstance(other,self.__class__):
+        if isinstance(other, self.__class__):
             return to_string(self) < to_string(other)
         else:
-            raise TypeError('Cannot compare {0} with {1}'.format(self,other))
+            raise TypeError('Cannot compare {0} with {1}'.format(self, other))
 
     def _url_generator(self, values):
         for is_dynamic, val in self.breadcrumbs:
             if is_dynamic:
                 val = self._converters[val].to_url(values[val])
             yield val
-            
+
     def url(self, **urlargs):
         '''Build a *url* from *urlargs* dictionary.'''
         if self.defaults:
@@ -324,7 +329,7 @@ class Route(object):
         else:
             url = '/' + url
             return url if self.is_leaf else url + '/'
-        
+
     def safe_url(self, params=None):
         try:
             if params:
@@ -333,7 +338,7 @@ class Route(object):
                 return self.url()
         except KeyError:
             return None
-    
+
     def match(self, path):
         '''Match a path and return ``None`` if no matching, otherwise
  a dictionary of matched variables with values. If there is more
@@ -353,7 +358,7 @@ class Route(object):
             if remaining:
                 result['__remaining__'] = remaining
             return result
-        
+
     def split(self):
         '''Return a two element tuple containing the parent route and
 the last url bit as route. If this route is the root route, it returns
@@ -362,33 +367,33 @@ the root route and ``None``. '''
         if not self.is_leaf:
             rule = rule[:-1]
         if not rule:
-            return Route('/'),None 
+            return Route('/'), None
         bits = ('/'+rule).split('/')
-        last = Route(bits[-1] if self.is_leaf else bits[-1] + '/')  
+        last = Route(bits[-1] if self.is_leaf else bits[-1] + '/')
         if len(bits) > 1:
-            return Route('/'.join(bits[:-1]) + '/'),last
+            return Route('/'.join(bits[:-1]) + '/'), last
         else:
-            return last,None
-        
+            return last, None
+
     def __add__(self, other):
         if self.is_leaf:
-            raise ValueError('Cannot prepend {0} to {1}. '\
+            raise ValueError('Cannot prepend {0} to {1}. '
                              'It is a leaf.'.format(self, other))
         cls = self.__class__
         defaults = self.defaults.copy()
-        if isinstance(other,cls):
+        if isinstance(other, cls):
             rule = other.rule
             defaults.update(other.defaults)
         else:
             rule = str(other)
         return cls(self.rule + rule, defaults)
-    
+
     def __deepcopy__(self, memo):
         return self.__copy__()
-    
+
     def __copy__(self):
         return self.__class__(self.rule, self.defaults.copy())
-        
+
 
 class BaseConverter(object):
     """Base class for all converters."""
@@ -488,7 +493,7 @@ class NumberConverter(BaseConverter):
         if (self.min is not None and value < self.min) or \
            (self.max is not None and value > self.max):
             raise ValueError()
-        if self.fixed_digits: 
+        if self.fixed_digits:
             value = ('%%0%sd' % self.fixed_digits) % value
         return str(value)
 
@@ -525,7 +530,7 @@ class FloatConverter(NumberConverter):
     num_convert = float
 
     def __init__(self, min=None, max=None):
-        super(FloatConverter,self).__init__(0, min, max)
+        super(FloatConverter, self).__init__(0, min, max)
 
 
 def parse_converter_args(argstr):
@@ -553,11 +558,11 @@ def get_converter(name, parameters):
         raise LookupError('Route converter {0} not available'.format(name))
     if parameters:
         args, kwargs = parse_converter_args(parameters)
-        return c(*args,**kwargs)
+        return c(*args, **kwargs)
     else:
         return c()
 
-    
+
 #: the default converter mapping for the map.
 _CONVERTERS = {
     'default':          StringConverter,

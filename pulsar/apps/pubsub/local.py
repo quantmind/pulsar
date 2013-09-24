@@ -7,11 +7,11 @@ from pulsar.utils.pep import itervalues, iteritems
 
 
 LOGGER = logging.getLogger('pulsar.pubsub')
-        
-        
+
+
 class PubSubBackend(pubsub.PubSubBackend):
     '''Implements :class:`PubSub` in pulsar.
-    
+
 .. attribute:: monitor
 
     The name of :class:`pulsar.Monitor` (application) which broadcast messages
@@ -19,10 +19,10 @@ class PubSubBackend(pubsub.PubSubBackend):
 '''
     def publish(self, channel, message):
         return send(self.name, 'pubsub_publish', self.id, channel, message)
-        
+
     def subscribe(self, *channels):
         return send(self.name, 'pubsub_subscribe', self.id, *channels)
-        
+
     def unsubscribe(self, *channels):
         return send(self.name, 'pubsub_unsubscribe', self.id, *channels)
 
@@ -31,7 +31,8 @@ class PubSubBackend(pubsub.PubSubBackend):
 def pubsub_publish(request, id, channel, message):
     monitor = request.actor
     if not channel or channel == '*':
-        matched = ((c, reg[1]) for c, reg in iteritems(_get_pubsub_channels(monitor)))
+        matched = ((c, reg[1]) for c, reg in
+                   iteritems(_get_pubsub_channels(monitor)))
     else:
         matched = _channel_groups(monitor, channel)
     clients = set()
@@ -43,7 +44,8 @@ def pubsub_publish(request, id, channel, message):
                 clients.add(aid)
                 monitor.send(aid, 'pubsub_broadcast', id, channel, message)
     return len(clients)
-        
+
+
 @command()
 def pubsub_subscribe(request, id, *channels):
     client = (request.caller.aid, id)
@@ -51,7 +53,8 @@ def pubsub_subscribe(request, id, *channels):
         _, group = _get_channel(request.actor, channel)
         group.add(client)
     return _channels_for_client(request.actor, client)
-        
+
+
 @command()
 def pubsub_unsubscribe(request, id, *channels):
     client = (request.caller.aid, id)
@@ -59,12 +62,13 @@ def pubsub_unsubscribe(request, id, *channels):
     channels = channels or list(pubsub_channels)
     for channel in channels:
         if channel in pubsub_channels:
-            _, group =  pubsub_channels[channel]
+            _, group = pubsub_channels[channel]
             group.discard(client)
             if not group:
                 pubsub_channels.pop(channel)
     return _channels_for_client(request.actor, client)
-    
+
+
 @command(ack=False)
 def pubsub_broadcast(request, id, channels, message):
     '''In the actor domain'''
@@ -73,10 +77,11 @@ def pubsub_broadcast(request, id, channels, message):
         pubsub.broadcast(channels, message)
     else:
         LOGGER.warning('Pubsub backend not available in %s', request.actor)
-    
+
+
 def _get_channel(monitor, channel):
     pubsub = _get_pubsub_channels(monitor)
-    if channel not in pubsub:                         
+    if channel not in pubsub:
         if '*' in channel:
             channel_re = re.compile(channel)
         else:
@@ -84,10 +89,12 @@ def _get_channel(monitor, channel):
         pubsub[channel] = (channel_re, set())
     return pubsub[channel]
 
+
 def _get_pubsub_channels(actor):
     if 'pubsub_channels' not in actor.params:
         actor.params.pubsub_channels = {}
     return actor.params.pubsub_channels
+
 
 def _channel_groups(actor, channel):
     for channel_re, group in itervalues(_get_pubsub_channels(actor)):
@@ -97,7 +104,8 @@ def _channel_groups(actor, channel):
                 yield g.group(), group
         elif channel_re == channel:
             yield channel, group
-            
+
+
 def _channels_for_client(monitor, client):
     c = 0
     for _, group in _get_pubsub_channels(monitor).values():

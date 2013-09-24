@@ -8,24 +8,26 @@ __all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
 
 _exceptions = {}
 
+
 def rpc_exception(cls):
     global _exceptions
     code = cls.fault_code
     _exceptions[code] = cls
     return cls
 
+
 @rpc_exception
 class InvalidRequest(HttpException):
     status = 400
     fault_code = -32600
     msg = 'Invalid RPC request'
-    
 
-@rpc_exception    
+
+@rpc_exception
 class ParseExcetion(InvalidRequest):
     fault_code = -32700
     msg = 'Parse error'
-    
+
 
 @rpc_exception
 class NoSuchFunction(InvalidRequest):
@@ -37,8 +39,8 @@ class NoSuchFunction(InvalidRequest):
 class InvalidParams(InvalidRequest):
     fault_code = -32602
     msg = 'Invalid method parameters'
-    
-    
+
+
 @rpc_exception
 class InternalError(InvalidRequest):
     fault_code = -32603
@@ -49,13 +51,16 @@ def exception(code, msg):
     global _exceptions
     cls = _exceptions.get(code, Exception)
     raise cls(msg)
-    
+
+
 def wrap_object_call(fname, namefunc):
-    def _(self,*args,**kwargs):
+
+    def _(self, *args, **kwargs):
         f = getattr(self, fname)
-        return f(*args,**kwargs)
+        return f(*args, **kwargs)
     _.__name__ = namefunc
     return _
+
 
 def rpcerror(func, args, kwargs, discount=0):
     msg = checkarity(func, args, kwargs, discount=discount)
@@ -63,7 +68,8 @@ def rpcerror(func, args, kwargs, discount=0):
         raise InvalidParams('Invalid Parameters. %s' % msg)
     else:
         raise
-    
+
+
 def rpc_method(func, doc=None, format='json', request_handler=None):
     '''A decorator which exposes a function ``func`` as an rpc function.
 
@@ -84,7 +90,7 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
             return func(*args, **kwargs)
         except TypeError:
             rpcerror(func, args, kwargs)
-        
+
     _.__doc__ = doc or func.__doc__
     _.__name__ = func.__name__
     _.FromApi = True
@@ -118,12 +124,12 @@ Add a limited ammount of magic to RPC handlers.'''
                     rpc.update(base.rpc_methods)
             attrs['rpc_methods'] = frozenset(rpc)
         return make(cls, name, bases, attrs)
-    
-    
+
+
 class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
-    serve_as     = 'rpc'
+    serve_as = 'rpc'
     '''Prefix for class methods providing remote services. Default: ``rpc``.'''
-    separator    = '.'
+    separator = '.'
     '''HTTP method allowed by this handler.'''
     virtual = True
 
@@ -133,7 +139,7 @@ class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
         self.title = title or self.__class__.__name__
         self.documentation = documentation or self.__doc__
         if subhandlers:
-            for prefix,handler in subhandlers.items():
+            for prefix, handler in subhandlers.items():
                 if inspect.isclass(handler):
                     handler = handler()
                 self.putSubHandler(prefix, handler)
@@ -152,7 +158,7 @@ is the root handler.'''
 
     def isroot(self):
         '''``True`` if this is the root handler.'''
-        return self._parent == None
+        return self._parent is None
 
     def putSubHandler(self, prefix, handler):
         '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
@@ -202,7 +208,7 @@ is the root handler.'''
             link = '.. _functions-{0}:'.format(name)
             title = name
             under = (2+len(title))*'-'
-            yield '\n'.join((link,'',title,under,'',data['doc'],'\n'))
+            yield '\n'.join((link, '', title, under, '', data['doc'], '\n'))
 
     def docs(self):
         return '\n'.join(self._docs())

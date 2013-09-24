@@ -28,7 +28,7 @@ For more information regarding WSGI check the pep3333_ specification.
 To run the application::
 
     python script.py
-    
+
 For available run options::
 
     python script.py --help
@@ -40,8 +40,8 @@ WSGI Server
 .. autoclass:: WSGIServer
    :members:
    :member-order: bysource
-   
-   
+
+
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 """
 from functools import partial

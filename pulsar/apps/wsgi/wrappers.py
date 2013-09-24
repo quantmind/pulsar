@@ -1,7 +1,8 @@
 '''This section introduces two classes used by pulsar
 :ref:`wsgi application <apps-wsgi>` to pass a request/response state
 during an HTTP request.
-The :class:`WsgiRequest` is a thin wrapper around a WSGI ``environ`` dictionary.
+The :class:`WsgiRequest` is a thin wrapper around a WSGI ``environ``
+dictionary.
 It contains only the ``environ`` as its private data.
 The :class:`WsgiResponse`, which is available in the
 :class:`WsgiRequest.response` attribute, is an iterable over bytestring with
@@ -14,8 +15,8 @@ Environ Mixin
 .. autoclass:: EnvironMixin
    :members:
    :member-order: bysource
-   
-   
+
+
 .. _app-wsgi-request:
 
 Wsgi Request
@@ -24,8 +25,8 @@ Wsgi Request
 .. autoclass:: WsgiRequest
    :members:
    :member-order: bysource
-   
-   
+
+
 .. _wsgi-response:
 
 Wsgi Response
@@ -34,7 +35,7 @@ Wsgi Response
 .. autoclass:: WsgiResponse
    :members:
    :member-order: bysource
-   
+
 .. _WSGI: http://www.wsgi.org
 '''
 import json
@@ -61,13 +62,16 @@ __all__ = ['EnvironMixin', 'WsgiResponse',
 MAX_BUFFER_SIZE = 2**16
 absolute_http_url_re = re.compile(r"^https?://", re.I)
 
+
 def cached_property(f):
     name = f.__name__
+
     def _(self):
         if name not in self.cache:
             self.cache[name] = f(self)
         return self.cache[name]
     return property(_, doc=f.__doc__)
+
 
 def wsgi_encoder(gen, encoding):
     for data in gen:
@@ -76,51 +80,53 @@ def wsgi_encoder(gen, encoding):
         else:
             yield data
 
-    
+
 class WsgiResponse(object):
-    '''A WSGI response wrapper initialized by a
-:ref:`pulsar WSGI application handler <wsgi-handlers>`.
-Instances are callable using the standard WSGI call and, importantly, iterable::
+    '''A WSGI response.
 
-    response = WsgiResponse(200)
+    Instances are callable using the standard WSGI call and, importantly,
+    iterable::
 
-A :class:`WsgiResponse` is an iterable over bytes to send back to the requesting
-client.
+        response = WsgiResponse(200)
 
-.. attribute:: status_code
+    A :class:`WsgiResponse` is an iterable over bytes to send back to the
+    requesting client.
 
-    Integer indicating the HTTP status, (i.e. 200)
+    .. attribute:: status_code
 
-.. attribute:: response
+        Integer indicating the HTTP status, (i.e. 200)
 
-    String indicating the HTTP status (i.e. 'OK')
+    .. attribute:: response
 
-.. attribute:: status
+        String indicating the HTTP status (i.e. 'OK')
 
-    String indicating the HTTP status code and response (i.e. '200 OK')
+    .. attribute:: status
 
-.. attribute:: content_type
+        String indicating the HTTP status code and response (i.e. '200 OK')
 
-    The content type of this response. Can be ``None``.
-    
-.. attribute:: headers
+    .. attribute:: content_type
 
-    The :class:`pulsar.utils.httpurl.Headers` container for this response.
-        
-.. attribute:: environ
+        The content type of this response. Can be ``None``.
 
-    The dictionary of WSGI environment if passed to the constructor.
+    .. attribute:: headers
 
-'''
+        The :class:`pulsar.utils.httpurl.Headers` container for this response.
+
+    .. attribute:: environ
+
+        The dictionary of WSGI environment if passed to the constructor.
+
+    '''
     _started = False
     DEFAULT_STATUS_CODE = 200
+
     def __init__(self, status=None, content=None, response_headers=None,
                  content_type=None, encoding=None, environ=None):
         self.environ = environ
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
-        self.headers = Headers(response_headers, kind='server') 
+        self.headers = Headers(response_headers, kind='server')
         self.content = content
         if content_type is not None:
             self.content_type = content_type
@@ -132,7 +138,7 @@ client.
     @property
     def path(self):
         if self.environ:
-            return self.environ.get('PATH_INFO','')
+            return self.environ.get('PATH_INFO', '')
 
     @property
     def method(self):
@@ -146,14 +152,15 @@ client.
 
     def _get_content(self):
         return self._content
+
     def _set_content(self, content):
         if not self._started:
             if content is None:
                 content = ()
-            elif ispy3k: #what a pain
+            elif ispy3k:
                 if isinstance(content, str):
                     content = content.encode(self.encoding or 'utf-8')
-            else: #pragma    nocover
+            else:   # pragma    nocover
                 if isinstance(content, unicode):
                     content = content.encode(self.encoding or 'utf-8')
             if isinstance(content, bytes):
@@ -162,19 +169,20 @@ client.
         else:
             raise RuntimeError('Cannot set content. Already iterated')
     content = property(_get_content, _set_content)
-    
+
     def _get_content_type(self):
         return self.headers.get('content-type')
+
     def _set_content_type(self, typ):
         if typ:
             self.headers['content-type'] = typ
         else:
             self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
-    
+
     def length(self):
         if not self.is_streamed:
-            return reduce(lambda x,y: x+len(y), self.content, 0)
+            return reduce(lambda x, y: x+len(y), self.content, 0)
 
     @property
     def response(self):
@@ -189,7 +197,7 @@ client.
 
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
-    
+
     def __contains__(self, header):
         return self.has_header(header)
 
@@ -247,17 +255,17 @@ This is usually `True` if a generator is passed to the response object."""
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
-    
+
     def has_header(self, header):
         return header in self.headers
-    
+
     def __setitem__(self, header, value):
         self.headers[header] = value
-        
+
     def __getitem__(self, header):
         return self.headers[header]
-        
-    
+
+
 class EnvironMixin(object):
     '''A wrapper around a WSGI_ environ. Instances of this class
 have the :attr:`environ` attribute as their only private data. Every
@@ -269,7 +277,7 @@ other attribute is stored in the :attr:`environ` itself at the
     WSGI_ environ dictionary
 '''
     slots = ('environ',)
-    
+
     def __init__(self, environ, name=None):
         self.environ = environ
         if 'pulsar.cache' not in environ:
@@ -277,41 +285,41 @@ other attribute is stored in the :attr:`environ` itself at the
             self.cache.mixins = {}
         if name:
             self.cache.mixins[name] = self
-            
+
     @property
     def cache(self):
         '''An :ref:`attribute dictionary <attribute-dictionary>` of
 pulsar-specific data stored in the :attr:`environ` at the wsgi-extension
 key ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
-    
+
     def __getattr__(self, name):
         mixin = self.cache.mixins.get(name)
         if mixin is None:
             raise AttributeError("'%s' object has no attribute '%s'" %
                                  (self.__class__.__name__, name))
         return mixin
-    
+
     def get(self, key, default=None):
         '''Shortcut to the :attr:`environ` get method.'''
         return self.environ.get(key, default)
-    
-    
+
+
 class WsgiRequest(EnvironMixin):
-    '''An :class:`EnvironMixin` for wsgi requests.'''    
+    '''An :class:`EnvironMixin` for wsgi requests.'''
     def __init__(self, environ, app_handler=None, urlargs=None):
         super(WsgiRequest, self).__init__(environ)
         self.cache.cfg = environ.get('pulsar.cfg', {})
         if app_handler:
             self.cache.app_handler = app_handler
             self.cache.urlargs = urlargs
-    
+
     def __repr__(self):
         return self.path
-    
+
     def __str__(self):
         return self.__repr__()
-    
+
     @cached_property
     def content_types(self):
         """List of content types this client supports."""
@@ -345,28 +353,28 @@ class WsgiRequest(EnvironMixin):
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
-        
+
     @property
     def app_handler(self):
         '''The WSGI application handling this request.'''
         return self.cache.app_handler
-    
+
     @property
     def urlargs(self):
         '''Dictionary of url parameters obtained when matching a
 :ref:`router <wsgi-router>` with this request :attr:`path`.'''
         return self.cache.urlargs
-    
+
     @cached_property
     def response(self):
         return WsgiResponse(environ=self.environ)
-    
-    ############################################################################
+
+    #######################################################################
     #    environ shortcuts
     @property
     def is_xhr(self):
         return self.environ.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
-    
+
     @property
     def is_secure(self):
         return self.environ.get('HTTPS') == 'on'
@@ -384,7 +392,7 @@ class WsgiRequest(EnvironMixin):
     @cached_property
     def encoding(self):
         return self.content_type_options[1].get('charset', 'utf-8')
-    
+
     @cached_property
     def content_type_options(self):
         content_type = self.environ.get('CONTENT_TYPE')
@@ -392,7 +400,7 @@ class WsgiRequest(EnvironMixin):
             return parse_options_header(content_type)
         else:
             return None, {}
-    
+
     @cached_property
     def data_and_files(self):
         '''Returns a two-elements tuple of a
@@ -408,14 +416,14 @@ request body, and data from uploaded files.'''
                 return parse_form_data(self.environ, charset)
         else:
             return {}, None
-        
+
     @property
     def body_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing
 data from the request body.'''
         data, _ = self.data_and_files
         return data
-    
+
     @cached_property
     def json_data(self):
         '''Returns the request body data decoded via JSON. If the
@@ -423,20 +431,20 @@ data is not in a JSON format, this method will fail.'''
         if self.method not in ENCODE_URL_METHODS:
             data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
             return json.loads(data.decode(self.encoding))
-        
+
     @cached_property
     def url_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing
 data from the `QUERY_STRING` in :attr:`environ`.'''
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
-    
+
     @cached_property
     def html_document(self):
         '''Return a cached instance of an
 :ref:`Html document <wsgi-html-document>`.'''
         return HtmlDocument()
-    
+
     def get_host(self, use_x_forwarded=True):
         """Returns the HTTP host using the environment or request headers."""
         # We try three options, in order of decreasing preference.
@@ -451,7 +459,7 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
             if server_port != ('443' if self.is_secure else '80'):
                 host = '%s:%s' % (host, server_port)
         return host
-        
+
     def full_path(self, *args, **query):
         '''Return a full path'''
         path = None
@@ -467,7 +475,7 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
         return iri_to_uri(path, **query)
-        
+
     def absolute_uri(self, location=None, scheme=None):
         '''Builds an absolute URI from the ``location`` and the variables
 available in this request. If no location is specified, the relative URI
@@ -482,6 +490,6 @@ is built from :meth:`full_path`.'''
             return iri_to_uri(location)
         else:
             raise ValueError('Absolute location with scheme not valid')
-    
+
 
 set_wsgi_request_class(WsgiRequest)

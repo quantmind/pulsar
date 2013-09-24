@@ -6,16 +6,18 @@ from base64 import b64encode
 from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
 from pulsar.utils.pep import native_str
 
+
 __all__ = ['Auth',
            'KeyAuth',
            'HTTPBasicAuth',
            'HTTPDigestAuth']
-        
+
 
 class Auth(object):
     '''Base class for managing authentication.
     '''
     type = None
+
     def __call__(self, response):
         raise NotImplementedError
 
@@ -24,12 +26,12 @@ class Auth(object):
 
 
 class KeyAuth(Auth):
-    
+
     def __init__(self, **params):
         self.params = params
-        
+
     def __call__(self, response):
-        request.data.update(self.params)
+        response.request.data.update(self.params)
 
 
 class HTTPBasicAuth(Auth):
@@ -37,7 +39,7 @@ class HTTPBasicAuth(Auth):
     def __init__(self, username, password):
         self.username = username
         self.password = password
-        
+
     @property
     def type(self):
         return 'basic'
@@ -64,11 +66,11 @@ class HTTPDigestAuth(Auth):
         self.last_nonce = None
         self.options = options or {}
         self.algorithm = self.options.pop('algorithm', 'MD5')
-    
+
     @property
     def type(self):
         return 'digest'
-    
+
     def __call__(self, response):
         # pre_request event. Must return response instance!
         # If we have a saved nonce, skip the 401
@@ -129,7 +131,7 @@ class HTTPDigestAuth(Auth):
         if qop:
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % (base)
-        
+
     def handle_401(self, response):
         """Takes the given response and tries digest-auth, if needed."""
         if response.status_code == 401:
@@ -146,7 +148,7 @@ class HTTPDigestAuth(Auth):
                 params['headers'] = headers
                 return client.again(response, params=params)
         return response
-        
+
     def hex(self, x):
         if self.algorithm == 'MD5':
             return hexmd5(x)
@@ -154,10 +156,10 @@ class HTTPDigestAuth(Auth):
             return hexsha1(x)
         else:
             raise ValueError('Unknown algorithm %s' % self.algorithm)
-        
+
     def ha1(self, realm, password):
         return self.hex('%s:%s:%s' % (self.username, realm, password))
-    
+
     def ha2(self, qop, method, uri, body=None):
         if qop == "auth" or qop is None:
             return self.hex("%s:%s" % (method, uri))

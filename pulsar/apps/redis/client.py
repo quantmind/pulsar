@@ -13,6 +13,7 @@ from .parser import Parser
 
 EXCEPTION_CLASSES = _p.EXCEPTION_CLASSES
 
+
 def ResponseError(response):
     "Parse an error response"
     response = response.split(' ')
@@ -23,11 +24,12 @@ def ResponseError(response):
     return EXCEPTION_CLASSES[error_code](response)
 
 
-RedisParser = lambda : Parser(InvalidResponse, ResponseError)
+RedisParser = lambda: Parser(InvalidResponse, ResponseError)
+
 
 try:
     from . import cparser
-    CRedisParser = lambda : cparser.Parser(InvalidResponse, ResponseError)
+    CRedisParser = lambda: cparser.Parser(InvalidResponse, ResponseError)
     HAS_C_EXTENSIONS = True
 except ImportError:
     HAS_C_EXTENSIONS = False
@@ -50,45 +52,45 @@ class Request(pulsar.Request):
         self.args = args
         self.last_response = False
         self.inp_params = inp_params
-        if not command_name:            
+        if not command_name:
             self.response = []
             self.command = self.parser.pack_pipeline(args)
             self.args_options = deque(args)
         else:
             self.command = self.parser.pack_command(self.command_name, *args)
             self.options = options
-        
+
     @property
     def key(self):
         return self.client.connection_info
-    
+
     @property
     def address(self):
         return self.client.connection_info.address
-    
+
     @property
     def timeout(self):
         return self.client.connection_info.timeout
-    
+
     @property
     def connection_pool(self):
         return self.client.connection_pool
-    
+
     @property
     def is_pipeline(self):
         return not bool(self.command_name)
-    
+
     def __repr__(self):
         if self.is_pipeline:
             return 'PIPELINE%s' % self.args
         else:
             return '%s%s' % (self.command_name, self.args)
     __str__ = __repr__
-    
+
     def read_response(self):
         # For compatibility with redis-py
         return self.last_response
-    
+
     def feed(self, data):
         self.parser.feed(data)
         response = self.parser.get()
@@ -127,20 +129,20 @@ class Request(pulsar.Request):
                     client.reset()
             else:
                 return NOT_DONE
-        
-    
+
+
 class RedisProtocol(pulsar.ProtocolConsumer):
     '''An asynchronous pulsar protocol for redis.'''
     result = NOT_DONE
-    
+
     def data_received(self, data):
         self.result = self._request.feed(data)
         if self.result is not NOT_DONE:
             self.finished()
-    
+
     def start_request(self):
         self.transport.write(self._request.command)
-        
+
 
 class Redis(redis.StrictRedis):
     '''Override redis-py client handler'''
@@ -150,7 +152,7 @@ class Redis(redis.StrictRedis):
         self.full_response = full_response
         self.extra = kw
         self.response_callbacks = self.__class__.RESPONSE_CALLBACKS.copy()
-        
+
     def execute_command(self, command, *args, **options):
         "Execute a ``command`` and return a parsed response"
         try:
@@ -158,7 +160,7 @@ class Redis(redis.StrictRedis):
         except NoScriptError:
             self.connection_pool.clear_scripts()
             raise
-    
+
     def pipeline(self, transaction=True, shard_hint=None):
         """
         Return a new pipeline object that can queue multiple commands for
@@ -168,19 +170,19 @@ class Redis(redis.StrictRedis):
         between the client and server.
         """
         return PipeLine(self, self.response_callbacks, transaction, shard_hint)
-        
+
     def pubsub(self, shard_hint=None):
         '''Return a Publish/Subscribe object.
-        
+
         With this object, you can subscribe to channels and listen for
         messages that get published to them.
         '''
         return PubSub(self.connection_pool, self.connection_info, shard_hint,
                       self.extra)
-    
-    
+
+
 class PipeLine(BasePipeline, Redis):
-    
+
     def __init__(self, client, response_callbacks, transaction, shard_hint):
         self.client = client
         self.response_callbacks = response_callbacks
@@ -189,39 +191,39 @@ class PipeLine(BasePipeline, Redis):
         self.watching = False
         self.connection = None
         self.reset()
-    
+
     @property
     def connection_pool(self):
         return self.client.connection_pool
-        
+
     @property
     def connection_info(self):
         return self.client.connection_info
-    
+
     @property
     def full_response(self):
         return self.client.full_response
-        
+
     def execute(self, raise_on_error=True):
-        return self.connection_pool.request_pipeline(self,
-                                    raise_on_error=raise_on_error)
-    
-    
+        return self.connection_pool.request_pipeline(
+            self, raise_on_error=raise_on_error)
+
+
 class PubSub(pulsar.ProtocolConsumer):
     '''Asynchronous Publish/Subscriber handler for redis.
-    
+
     To listen for messages you can bind to the ``on_message`` event::
-    
+
         from stdnet import getdb
-        
+
         def handle_messages(channel_message):
             ...
-            
+
         redis = getdb('redis://122.0.0.1:6379?timeout=0').client
         pubsub = redis.pubsub()
         pubsub.bind_event('on_message', handle_messages)
         pubsub.subscribe('mychannel')
-        
+
     You can bind as many handlers to the ``on_message`` event as you like.
     The handlers receive one parameter only, a two-elements tuple
     containing the ``channel`` and the ``message``.
@@ -230,7 +232,7 @@ class PubSub(pulsar.ProtocolConsumer):
     MANY_TIMES_EVENTS = ('data_received', 'data_processed', 'on_message')
     subscribe_commands = frozenset((b'unsubscribe', b'punsubscribe',
                                     b'subscribe', b'psubscribe'))
-    
+
     def __init__(self, connection_pool, connection_info, shard_hint, extra):
         super(PubSub, self).__init__()
         self.connection_pool = connection_pool
@@ -239,40 +241,40 @@ class PubSub(pulsar.ProtocolConsumer):
         self.extra = extra
         self._reset()
         self.bind_event('post_request', self._reset)
-    
+
     @property
     def channels(self):
         '''The set of channels this handler is subscribed to.'''
         return frozenset(self._channels)
-    
+
     @property
     def patterns(self):
         '''The set of patterns this handler is subscribed to.'''
         return frozenset(self._patterns)
-    
+
     @property
     def is_pipeline(self):
         return False
-    
+
     def client(self, full_response=True):
         return Redis(self.connection_pool, self.connection_info,
                      full_response=full_response)
-        
+
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
-        
+
         This method return a pulsar Deferred which results in the number of
         subscribers that will receive the message (the same behaviour as
         redis publish command).
         '''
         return self.client(False).execute_command('PUBLISH', channel, message)
-    
+
     def subscribe(self, *channels):
         '''Subscribe to a list of ``channels`` or ``channel patterns``.
-        
+
         It returns an asynchronous component which results in the number of
         channels this handler is subscribed to.
-        
+
         If this is the first time the method is called by this handler,
         than the :class:`PubSub` starts listening for messages which
         are fired via the ``on_message`` event.
@@ -281,10 +283,10 @@ class PubSub(pulsar.ProtocolConsumer):
         loop = self.connection_pool.get_event_loop()
         loop.call_soon_threadsafe(self._subscribe, channels, d)
         return d
-    
+
     def unsubscribe(self, *channels):
         '''Un-subscribe from a list of ``channels`` or ``channel patterns``.
-        
+
         It returns an asynchronous component which results in the number of
         channels this handler is subscribed to.
         '''
@@ -292,10 +294,10 @@ class PubSub(pulsar.ProtocolConsumer):
         loop = self.connection_pool.get_event_loop()
         loop.call_soon_threadsafe(self._unsubscribe, channels, d)
         return d
-    
+
     def close(self):
         '''Stop listening for messages.
-        
+
         :meth:`unsubscribe` from all :attr:`channels` and :attr:`patterns`
         and close the subscriber connection with redis.
         '''
@@ -303,7 +305,7 @@ class PubSub(pulsar.ProtocolConsumer):
         loop = self.connection_pool.get_event_loop()
         loop.call_soon_threadsafe(self._close, d)
         return d
-    
+
     def data_received(self, data):
         self.parser.feed(data)
         response = self.parser.get()
@@ -324,9 +326,9 @@ class PubSub(pulsar.ProtocolConsumer):
             else:
                 raise ProtocolError
             response = self.parser.get()
-            
+
     #    INTERNALS
-    
+
     def _subscribe(self, channels, d):
         try:
             channels, patterns = self._channel_patterns(channels)
@@ -343,8 +345,7 @@ class PubSub(pulsar.ProtocolConsumer):
             d.callback(self._count_channels())
         except Exception:
             d.callback(sys.exc_info())
-            
-    
+
     def _unsubscribe(self, channels, d):
         try:
             channels, patterns = self._channel_patterns(channels)
@@ -367,7 +368,7 @@ class PubSub(pulsar.ProtocolConsumer):
             d.callback(self._count_channels())
         except Exception:
             d.callback(sys.exc_info())
-            
+
     def _close(self, d):
         if self._connection:
             d = Deferred()
@@ -376,7 +377,7 @@ class PubSub(pulsar.ProtocolConsumer):
                 yield d
             finally:
                 self._connection.close()
-    
+
     def _channel_patterns(self, channels):
         patterns = []
         simples = []
@@ -387,10 +388,10 @@ class PubSub(pulsar.ProtocolConsumer):
             else:
                 simples.append(c)
         return simples, patterns
-    
+
     def _count_channels(self):
         return len(self._channels) + len(self._patterns)
-        
+
     def _execute(self, command, *args):
         if not self._connection:
             client = self.client()
@@ -404,7 +405,7 @@ class PubSub(pulsar.ProtocolConsumer):
             self.fire_event('pre_request')
         d = Deferred()
         yield self._connection_msg(command, args, d)
-            
+
     def _connection_msg(self, command, args, d):
         if not self._request:
             self._request = d
@@ -413,7 +414,7 @@ class PubSub(pulsar.ProtocolConsumer):
         else:
             self.event_loop.call_soon(self._connection_msg, command, args, d)
         return d
-        
+
     def _reset(self, connection=None):
         if self._request:
             self._request.canel()
@@ -422,4 +423,3 @@ class PubSub(pulsar.ProtocolConsumer):
         self._channels = set()
         self._patterns = set()
         return connection
-    

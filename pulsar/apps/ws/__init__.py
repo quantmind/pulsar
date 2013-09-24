@@ -9,13 +9,13 @@ This is a Web Socket handler which echos all received messages
 back to the client::
 
     from pulsar.apps import wsgi, ws
-    
+
     class EchoWS(ws.WS):
-    
+
         def on_message(self, websocket, message):
             websocket.write(message)
-            
-            
+
+
 To create a valid :class:`WebSocket` middleware initialise as follow::
 
     wm = ws.WebSocket('/bla', EchoWS())
@@ -48,7 +48,7 @@ WebSocket handler
 .. autoclass:: WS
    :members:
    :member-order: bysource
-   
+
 
 WebSocket protocol
 ~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +59,6 @@ WebSocket protocol
 
 '''
 from .websocket import WebSocket, WebSocketProtocol
-from .xhr import SocketIO
 
 
 class WS(object):
@@ -67,7 +66,7 @@ class WS(object):
 the asynchronous message passing for a :class:`WebSocketProtocol`.
 On the server, the communication is started by the
 :class:`WebSocket` middleware after a successful handshake.
- 
+
 Override :meth:`on_message` to handle incoming string messages,
 :meth:`on_bytes` to handle incoming ``bytes`` messages
 You can also override :meth:`on_open` and :meth:`on_close` to handle opened
@@ -83,15 +82,15 @@ These methods accept as first parameter the
         '''Handles incoming messages on the WebSocket.
 This method must be overloaded.'''
         pass
-    
+
     def on_bytes(self, websocket, body):
         '''Handles incoming bytes.'''
         pass
-    
+
     def on_ping(self, websocket, body):
         '''Handle incoming ping ``Frame``.'''
         websocket.pong(body)
-        
+
     def on_pong(self, websocket, body):
         '''Handle incoming pong ``Frame``.'''
         pass
@@ -99,12 +98,11 @@ This method must be overloaded.'''
     def on_close(self, websocket):
         """Invoked when the WebSocket is closed."""
         pass
-    
+
     def pong(self, websocket, body=None):
         '''Return a ``pong`` frame.'''
         return websocket.parser.pong(body)
-    
+
     def ping(self, websocket, body=None):
         '''Return a ``ping`` frame.'''
         return websocket.parser.ping(body)
-        

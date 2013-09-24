@@ -13,22 +13,22 @@ def html_visitor(tag):
 
 
 class HtmlType(type):
-    
+
     def __new__(cls, name, bases, attrs):
         abstract = attrs.pop('abstract', False)
-        new_class = super(HtmlType,cls).__new__(cls, name, bases, attrs)
+        new_class = super(HtmlType, cls).__new__(cls, name, bases, attrs)
         if not abstract:
             HTML_VISITORS[name.lower()] = new_class()
         return new_class
-    
-    
+
+
 class HtmlVisitor(HtmlType('HtmlVisitorBase', (object,), {'abstract': True})):
     '''A visitor class for :class:`Html`.'''
     abstract = True
-    
+
     def get_form_value(self, html):
         return html.attr('value')
-    
+
     def set_form_value(self, html, value):
         html.attr('value', value)
 
@@ -40,22 +40,23 @@ class HtmlVisitor(HtmlType('HtmlVisitorBase', (object,), {'abstract': True})):
                 if isinstance(target, Mapping):
                     return recursive_update(target, value)
             data[key] = value
-        
+
 
 base = HtmlVisitor()
-    
+
+
 class Textarea(HtmlVisitor):
-    
+
     def get_form_value(self, html):
         return html.children[0] if html.children else ''
-    
+
     def set_form_value(self, html, value):
         html.remove_all()
         html.append(value)
-        
-        
+
+
 class Select(HtmlVisitor):
-    
+
     def get_form_value(self, html):
         values = []
         for child in html.children:
@@ -65,9 +66,9 @@ class Select(HtmlVisitor):
             return values
         elif values:
             return values[0]
-            
+
         return html.children[0] if html.children else ''
-    
+
     def set_form_value(self, html, value):
         if html.attr('multiple') == 'multiple':
             for child in html.children:
@@ -80,4 +81,3 @@ class Select(HtmlVisitor):
                     child.attr('selected', 'selected')
                 else:
                     child._attr.pop('selected', None)
-    

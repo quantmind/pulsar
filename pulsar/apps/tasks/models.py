@@ -40,7 +40,7 @@ execution::
             response = yield http.request(...)
             content = response.content
             ...
-            
+
 This allows for cooperative task execution on each task thread workers.
 
 .. _job-non-overlap:
@@ -120,10 +120,9 @@ class JobRegistry(dict):
 
     def filter_types(self, type):
         """Return a generator of all tasks of a specific type."""
-        return ((job_name, job)
-                    for job_name, job in iteritems(self)
-                            if job.type == type)
-        
+        return ((job_name, job) for job_name, job in iteritems(self)
+                if job.type == type)
+
     @classmethod
     def load(cls, paths):
         self = cls()
@@ -143,7 +142,6 @@ class JobMetaClass(type):
         logname = '%s.job.%s' % (log_prefix, name)
         attrs['logger'] = logging.getLogger(logname)
         return super(JobMetaClass, cls).__new__(cls, name, bases, attrs)
-
 
 
 class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
@@ -200,7 +198,7 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
         '''The Jobs' task executed by the consumer. This function needs to be
 implemented by subclasses.'''
         raise NotImplementedError("Jobs must define the run method.")
-    
+
     @property
     def type(self):
         '''Type of Job, one of ``regular`` and ``periodic``.'''
@@ -208,7 +206,7 @@ implemented by subclasses.'''
 
     def run_job(self, consumer, jobname, *args, **kwargs):
         '''Run a new task in the task queue.
-        
+
 This utility method can be used from within the
 :ref:`job callable <job-callable>` method and it allows tasks to act
 as tasks factories.
@@ -217,10 +215,12 @@ as tasks factories.
     handling the :ref:`Task <apps-taskqueue-task>`. Must be the same instance
     as the one passed to the :ref:`job callable <job-callable>` method.
 :parameter jobname: The name of the :class:`Job` to run.
-:parameter args: positional argument for the :ref:`job callable <job-callable>`.
+:parameter args: positional argument for the
+    :ref:`job callable <job-callable>`.
 :parameter kwargs: key-valued parameters for the
     :ref:`job callable <job-callable>`.
-:return: a :class:`pulsar.Deferred` called back with the task id of the new job.
+:return: a :class:`pulsar.Deferred` called back with the task id of the
+    new job.
 
 This method invokes the :meth:`pulsar.apps.tasks.backends.TaskBackend.run_job`
 method with the additional ``from_task`` argument equal to the
@@ -244,7 +244,7 @@ Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when creating
 a new task.
 '''
         can_overlap = self.can_overlap
-        if hasattr(can_overlap,'__call__'):
+        if hasattr(can_overlap, '__call__'):
             can_overlap = can_overlap(*args, **kwargs)
         id = create_task_id()
         if can_overlap:
@@ -254,22 +254,22 @@ a new task.
             if args:
                 suffix = ' args(%s)' % ', '.join((str(a) for a in args))
             if kwargs:
-                suffix += ' kwargs(%s)' % ', '.join(('%s=%s' % (k, kwargs[k])\
-                            for k in sorted(kwargs)))
+                suffix += ' kwargs(%s)' % ', '.join(
+                    ('%s=%s' % (k, kwargs[k]) for k in sorted(kwargs)))
             name = '%s%s' % (self.name, suffix)
             return id, sha1(name.encode('utf-8')).hexdigest()[:8]
-        
+
 
 class PeriodicJob(Job):
     '''A periodic :class:`Job` implementation.'''
-    abstract  = True
-    anchor    = None
+    abstract = True
+    anchor = None
     '''If specified it must be a :class:`datetime.datetime` instance.
 It controls when the periodic Job is run.'''
     run_every = None
     '''Periodicity as a :class:`datetime.timedelta` instance.'''
 
-    def __init__(self, run_every = None):
+    def __init__(self, run_every=None):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
             raise NotImplementedError('Periodic Jobs must have\
@@ -278,7 +278,7 @@ It controls when the periodic Job is run.'''
     @property
     def type(self):
         return 'periodic'
-    
+
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
 where next time to run is in seconds. e.g.
@@ -293,11 +293,8 @@ You can override this to decide the interval at runtime.
         return self.run_every.is_due(last_run_at)
 
 
-
 def anchorDate(hour=0, minute=0, second=0):
     '''Create an anchor date.'''
     td = date.today()
     return datetime(year=td.year, month=td.month, day=td.day,
                     hour=hour, minute=minute, second=second)
-
-

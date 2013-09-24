@@ -13,10 +13,10 @@ little setup effort::
 
     if __name__ == '__main__':
         tasks.TaskQueue(tasks_path=['path.to.tasks.*']).start()
-        
+
 Check the :ref:`task queue tutorial <tutorials-taskqueue>` for a running
 example with simple tasks.
-    
+
 To get started, follow the these points:
 
 * Create the script which runs your application, in the
@@ -25,7 +25,7 @@ To get started, follow the these points:
 * Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented. It
   can be a directory containing several submodules as explained in the
   :ref:`task paths parameter <app-tasks_path>`.
-  
+
 
 .. _app-taskqueue-job:
 
@@ -38,29 +38,29 @@ standard :ref:`application settings <settings>`:
 
 * The :ref:`task_paths <setting-task_paths>` parameter specify
   a list of python paths where to collect :class:`models.Job` classes::
-  
+
       task_paths = ['myjobs','another.moduledir.*']
-      
+
   The ``*`` at the end of the second module indicates to collect
   :class:`models.Job` from all submodules of ``another.moduledir``.
-  
+
 * The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
   if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,
   only one running :class:`TaskQueue` application is responsible for
   scheduling tasks while any the other, simply consume tasks.
-  
+
   It can be specified in the command line via the
   ``--schedule-periodic`` flag.
-  
+
   Default: ``False``.
-  
+
 * The :ref:`task_backend <setting-task_backend>` parameter is a url
   type string which specifies the :ref:`task backend <apps-taskqueue-backend>`
   to use.
-  
+
   It can be specified in the command line via the
   ``--task-backend ...`` option.
-  
+
   Default: ``local://``.
 
 * The :ref:`concurrent_tasks <setting-concurrent_tasks>` parameter control
@@ -68,12 +68,12 @@ standard :ref:`application settings <settings>`:
   This parameter is important when tasks are asynchronous, that is when
   they perform some sort of I/O and the :ref:`job callable <job-callable>`
   returns and :ref:`asynchronous component <tutorials-coroutine>`.
-  
+
   It can be specified in the command line via the
   ``--concurrent-tasks ...`` option.
-  
+
   Default: ``5``.
-  
+
 .. _app-taskqueue-app:
 
 Task queue application
@@ -82,7 +82,7 @@ Task queue application
 .. autoclass:: TaskQueue
    :members:
    :member-order: bysource
-   
+
 
 .. _celery: http://celeryproject.org/
 '''
@@ -99,9 +99,9 @@ from .rpc import *
 
 
 section_docs['Task Consumer'] = '''
-This section covers configuration parameters used by CPU bound type applications
-such as the :ref:`distributed task queue <apps-taskqueue>` and the
-:ref:`test suite <apps-test>`.'''
+This section covers configuration parameters used by CPU bound type
+applications such as the :ref:`distributed task queue <apps-taskqueue>` and
+the :ref:`test suite <apps-test>`.'''
 
 
 class TaskSetting(pulsar.Setting):
@@ -118,12 +118,13 @@ class ConcurrentTasks(TaskSetting):
     default = 5
     desc = """\
         The maximum number of concurrent tasks for a worker.
-        
+
         When a task worker reach this number it stops polling for more tasks
         until one or more task finish. It should only affect task queues under
         significant load.
         Must be a positive integer. Generally set in the range of 5-10.
         """
+
 
 class TaskBackendConnection(TaskSetting):
     name = "task_backend"
@@ -140,19 +141,19 @@ class TaskBackendConnection(TaskSetting):
         This parameters is used by :class:`pulsar.apps.tasks.TaskQueue`
         application.'''
 
-    
+
 class TaskPaths(TaskSetting):
     name = "task_paths"
     validator = pulsar.validate_list
     default = []
     desc = """\
         List of python dotted paths where tasks are located.
-        
+
         This parameter can only be specified during initialization or in a
         :ref:`config file <setting-config>`.
         """
-        
-        
+
+
 class SchedulePeriodic(TaskSetting):
     name = 'schedule_periodic'
     flags = ["--schedule-periodic"]
@@ -161,7 +162,7 @@ class SchedulePeriodic(TaskSetting):
     default = False
     desc = '''\
         Enable scheduling of periodic tasks.
-        
+
         If enabled, :class:`pulsar.apps.tasks.PeriodicJob` will produce
         tasks according to their schedule.
         '''
@@ -181,22 +182,22 @@ task.Tasks and managing scheduling of tasks via a
 
     def request_instance(self, request):
         return self.scheduler.get_task(request)
-    
+
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
-        
+
         It calles the :attr:`pulsar.Application.callable` (if available) and
         create the :attr:`backend`.'''
         if self.callable:
             self.callable()
         self.backend = TaskBackend.make(
-                                self.cfg.task_backend,
-                                name=self.name,
-                                task_paths=self.cfg.task_paths,
-                                schedule_periodic=self.cfg.schedule_periodic,
-                                max_tasks=self.cfg.max_requests,
-                                backlog=self.cfg.concurrent_tasks)
-        
+            self.cfg.task_backend,
+            name=self.name,
+            task_paths=self.cfg.task_paths,
+            schedule_periodic=self.cfg.schedule_periodic,
+            max_tasks=self.cfg.max_requests,
+            backlog=self.cfg.concurrent_tasks)
+
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback.
 
@@ -208,20 +209,20 @@ task.Tasks and managing scheduling of tasks via a
 
     def worker_start(self, worker):
         self.backend.start(worker)
-        
+
     def worker_stopping(self, worker):
         self.backend.close(worker)
-        
+
     def actorparams(self, monitor, params):
         params['app'].cfg.set('schedule_periodic', False)
-    
+
     def worker_info(self, worker, info=None):
         be = self.backend
         tasks = {'concurrent': list(be.concurrent_tasks),
                  'processed': be.processed}
         info['tasks'] = tasks
-     
-    
+
+
 @command()
 def next_scheduled(request, jobnames=None):
     actor = request.actor

@@ -12,24 +12,24 @@ RpcHandler
 .. autoclass:: RpcHandler
    :members:
    :member-order: bysource
-   
-   
+
+
 JSON RPC
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: JSONRPC
    :members:
    :member-order: bysource
-   
-   
+
+
 JsonProxy
 ~~~~~~~~~~~~~~~~
 
 .. autoclass:: JsonProxy
    :members:
    :member-order: bysource
-   
-   
+
+
 rpc method decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -41,8 +41,8 @@ Server Commands
 
 .. autoclass:: PulsarServerCommands
    :members:
-   :member-order: bysource  
-   
+   :member-order: bysource
+
 .. _JSON-RPC: http://www.jsonrpc.org/specification
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
 '''

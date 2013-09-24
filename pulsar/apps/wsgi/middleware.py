@@ -3,7 +3,8 @@ Middleware are functions or callable objects similar to
 :ref:`WSGI application handlers <wsgi-handlers>`
 with the only difference that they can return ``None``. Middleware can be used
 in conjunction with a :class:`WsgiHandler` or any other handler which iterate
-through a list of middleware in a similar way (for example django wsgi handler).
+through a list of middleware in a similar way (for example django wsgi
+handler).
 
 Here we introduce the :class:`Router` and :class:`MediaRouter` to handle
 requests on given urls. Pulsar is shipped with
@@ -13,7 +14,7 @@ the environment before a client response is returned.
 
 This module implements several WSGI middleware which does not
 serve request but instead perform initialization and sanity checks.
-It also introduces the **Response middlewares** implemented as a subclass of 
+It also introduces the **Response middlewares** implemented as a subclass of
 :class:`ResponseMiddleware`. Response middlewares are used by the
 :class:`pulsar.apps.wsgi.wrappers.WsgiResponse` to modify/add headers and
 manipulate content.
@@ -23,7 +24,8 @@ manipulate content.
 Additional WSGI Middlewares
 ============================
 
-Several :ref:`wsgi middleware <wsgi-middleware>` useful in several applications.
+Several :ref:`wsgi middleware <wsgi-middleware>` useful in several
+applications.
 
 clean path
 ~~~~~~~~~~~~~~~~~~
@@ -54,13 +56,13 @@ Interface
 .. autoclass:: ResponseMiddleware
    :members:
    :member-order: bysource
-   
+
 GZip Middleware
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: GZipMiddleware
    :members:
    :member-order: bysource
-   
+
 '''
 import re
 from gzip import GzipFile
@@ -88,17 +90,19 @@ def is_streamed(content):
         return True
     return False
 
+
 def clean_path_middleware(environ, start_response):
     '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']
     if path and '//' in path:
-        url = re.sub("/+" , '/', path)
+        url = re.sub("/+", '/', path)
         if not url.startswith('/'):
             url = '/%s' % url
         qs = environ['QUERY_STRING']
         if qs:
             url = '%s?%s' % (url, qs)
         raise pulsar.HttpRedirect(url)
+
 
 def cookies_middleware(environ, start_response):
     '''Parse the ``HTTP_COOKIE`` key in the ``environ`` and set
@@ -115,6 +119,7 @@ obtained via the :func:`pulsar.utils.httpurl.parse_cookie` function.'''
             c = parse_cookie(c)
         environ['http.cookie'] = c
 
+
 def authorization_middleware(environ, start_response):
     '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
 
@@ -129,7 +134,7 @@ def authorization_middleware(environ, start_response):
         if code in environ:
             environ[key] = parse_authorization_header(environ[code])
 
-    
+
 #####################################################    RESPONSE MIDDLEWARE
 class ResponseMiddleware(object):
     '''Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
@@ -195,7 +200,8 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
                 # Avoid gzipping if we've already got a content-encoding.
                 if 'Content-Encoding' in headers:
                     return False
-                # MSIE have issues with gzipped response of various content types.
+                # MSIE have issues with gzipped response of various
+                # content types.
                 if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
                     ctype = headers.get('Content-Type', '').lower()
                     if not ctype.startswith("text/") or "javascript" in ctype:

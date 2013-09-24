@@ -2,7 +2,7 @@
 .. autoclass:: TestLoader
    :members:
    :member-order: bysource
-   
+
 '''
 import os
 import re
@@ -21,12 +21,13 @@ def issubclass_safe(cls, base_cls):
     except TypeError:
         return False
 
+
 class TestLoader(object):
     '''Classes used by the :class:`TestSuite` to aggregate tests
 from a list of paths. The way it works is simple,
 you give a *root* directory and a list of submodules where to look for tests.
 
-:parameter root: root path passed by the :class:`TestSuite`. 
+:parameter root: root path passed by the :class:`TestSuite`.
 :parameter modules: list (or tuple) of entries where to look for tests.
     Check :ref:`loading test documentation <apps-test-loading>` for
     more information.
@@ -80,7 +81,8 @@ you give a *root* directory and a list of submodules where to look for tests.
 
     def testclasses(self, tags=None, exclude_tags=None):
         pt = ', '.join(tags) if tags else 'all'
-        ex = (' excluding %s' % ', '.join(exclude_tags)) if exclude_tags else ''
+        ex = ((' excluding %s' % ', '.join(exclude_tags)) if
+              exclude_tags else '')
         self.logger.info('Load test classes for %s tags%s', pt, ex)
         for tag, mod in self.testmodules(tags, exclude_tags):
             if tags:
@@ -95,24 +97,24 @@ you give a *root* directory and a list of submodules where to look for tests.
                 obj = getattr(mod, name)
                 if issubclass_safe(obj, unittest.TestCase):
                     yield tag, obj
-    
+
     def testmodules(self, tags=None, exclude_tags=None):
         '''Generator of ``tag``, ``modules`` pairs.
-        
+
 :parameter tags: optional list of tags to include, if not available all tags
     will be included.
 :parameter exclude_tags: optional list of tags to exclude. If not provided no
     tags will be excluded.'''
         d = dict(self._testmodules(tags, exclude_tags))
         return [(k, d[k]) for k in sorted(d)]
-    
+
     def _testmodules(self, tags, exclude_tags):
         for name, pattern, tag in self.modules:
             if pattern == '*':
                 pattern = None
             if pattern:
                 pattern = re.compile(pattern.replace('*', '(.*)'))
-            names = name.split('.') if name else () 
+            names = name.split('.') if name else ()
             absolute_path = os.path.join(self.root, *names)
             self.logger.debug('Loading from "%s"', absolute_path)
             if os.path.isdir(absolute_path):
@@ -126,15 +128,16 @@ you give a *root* directory and a list of submodules where to look for tests.
                                                exclude_tags=exclude_tags):
                     yield tag, mod
             elif os.path.isfile(absolute_path + '.py'):
-                include, ntag = self.match(pattern, os.path.basename(absolute_path))
+                include, ntag = self.match(pattern,
+                                           os.path.basename(absolute_path))
                 if include:
                     tag = ntag or tag or name
                     mod = self.import_module(name)
                     if mod:
                         yield tag, mod
             else:
-                raise ValueError('%s cannot be found in %s directory.'\
-                                  % (name, self.root))
+                raise ValueError('%s cannot be found in %s directory.'
+                                 % (name, self.root))
 
     def get_tests(self, path, dotted_path, pattern, import_tags=None,
                   tags=(), exclude_tags=None, parent=None):
@@ -159,10 +162,11 @@ tag,module pairs.
                 else:
                     continue
             include, addtag = self.match(pattern, mod_name)
-            if not include and is_file: # does not match and is a file, skip.
+            if not include and is_file:  # does not match and is a file, skip.
                 continue
             elif include and not is_file and pattern:
-                # All modules under this directory will be included regardless of pattern
+                # All modules under this directory will be included
+                # regardless of pattern
                 pattern = None
             # module dotted path
             if dotted_path:
@@ -211,12 +215,12 @@ tag,module pairs.
                 if getattr(mod, '__test__', True):
                     return self.runner.import_module(mod, parent)
             except ImportError:
-               self.logger.error('Failed to import module %s. Skipping.',
-                                 name, exc_info=True)
-               self.logger.debug('Full python path:\n%s', '\n'.join(sys.path))
+                self.logger.error('Failed to import module %s. Skipping.',
+                                  name, exc_info=True)
+                self.logger.debug('Full python path:\n%s', '\n'.join(sys.path))
             except Exception:
-               self.logger.critical('Failed to import module %s. Skipping.',
-                                    name, exc_info=True)
+                self.logger.critical('Failed to import module %s. Skipping.',
+                                     name, exc_info=True)
 
     def match(self, pattern, name):
         if pattern:
@@ -227,4 +231,3 @@ tag,module pairs.
                 return False, (name,)
         else:
             return True, (name,)
-                

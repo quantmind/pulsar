@@ -9,7 +9,7 @@ from pulsar.apps import tasks
 LOGGER = logging.getLogger('pulsar.apps.test')
 
 
-if ispy26: # pragma nocover
+if ispy26:  # pragma nocover
     try:
         import unittest2 as unittest
         from unittest2.case import _ExpectedFailure as ExpectedFailure
@@ -19,10 +19,10 @@ if ispy26: # pragma nocover
 else:
     import unittest
     from unittest.case import _ExpectedFailure as ExpectedFailure
-    
+
 if ispy33:
     from unittest import mock
-else: # pragma nocover
+else:  # pragma nocover
     try:
         import mock
     except ImportError:
@@ -38,7 +38,7 @@ sequentially rather than in an asynchronous fashion.'''
     cls._sequential_execution = True
     return cls
 
-    
+
 class Test(tasks.Job):
     '''A :ref:`Job <job-callable>` for running tests on a task queue.
     '''
@@ -58,10 +58,10 @@ class Test(tasks.Job):
             return self.run(runner, testcls, all_tests, consumer.worker.cfg)
         else:
             return runner.result
-        
+
     def run(self, runner, testcls, all_tests, cfg):
         '''Run all test functions from the :attr:`testcls`.
-        
+
         It uses the following algorithm:
 
         * Run the class method ``setUpClass`` of :attr:`testcls` if defined,
@@ -95,7 +95,7 @@ class Test(tasks.Job):
             yield self._run(runner, testcls, 'tearDownClass', timeout,
                             add_err=False)
         yield runner.result
-       
+
     def run_test(self, test, runner, cfg):
         '''Run a ``test`` function using the following algorithm
 
@@ -111,7 +111,7 @@ class Test(tasks.Job):
             runner.startTest(test)
             testMethod = getattr(test, test._testMethodName)
             if (getattr(test.__class__, '__unittest_skip__', False) or
-                getattr(testMethod, '__unittest_skip__', False)):
+                    getattr(testMethod, '__unittest_skip__', False)):
                 reason = (getattr(test.__class__,
                                   '__unittest_skip_why__', '') or
                           getattr(testMethod,
@@ -148,10 +148,10 @@ class Test(tasks.Job):
                 yield self.add_failure(test, runner, error, add_err=add_err)
         else:
             yield previous
-        
+
     def add_failure(self, test, runner, error, exc_info=None, add_err=True):
         '''Add ``error`` to the list of errors.
-        
+
         :param test: the test function object where the error occurs
         :param runner: the test runner
         :param error: the python exception for the error
@@ -169,4 +169,3 @@ class Test(tasks.Job):
             else:
                 runner.addError(test, exc_info)
         return (error, exc_info)
-        

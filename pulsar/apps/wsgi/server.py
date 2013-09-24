@@ -5,8 +5,8 @@ HTTP Protocol Consumer
 .. autoclass:: HttpServerResponse
    :members:
    :member-order: bysource
-   
-   
+
+
 Testing WSGI Environ
 =========================
 
@@ -25,7 +25,7 @@ from pulsar import HttpException, ProtocolError, maybe_async, Deferred, Failure
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser)
-                                 
+
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
@@ -34,13 +34,14 @@ from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 
+
 MAX_CHUNK_SIZE = 65536
 
 
 def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
                       secure=False):
     '''An function to create a WSGI environment dictionary for testing.
-        
+
     :param url: the resource in the ``PATH_INFO``.
     :param method: the ``REQUEST_METHOD``.
     :param headers: optional request headers
@@ -57,25 +58,23 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
     headers = Headers()
     return wsgi_environ(parser, ('127.0.0.1', 8060), '777.777.777.777:8080',
                         request_headers, headers, https=secure, extra=extra)
-    
-    
+
+
 def wsgi_environ(parser, address, client_address, request_headers,
                  headers, server_software=None, https=False, extra=None):
     protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
-    environ = {
-            "wsgi.input": BytesIO(parser.recv_body()),
-            "wsgi.errors": sys.stderr,
-            "wsgi.version": (1, 0),
-            "wsgi.run_once": False,
-            'wsgi.multithread': False,
-            'wsgi.multiprocess': False,
-            "SERVER_SOFTWARE": server_software or pulsar.SERVER_SOFTWARE,
-            "REQUEST_METHOD": native_str(parser.get_method()),
-            "QUERY_STRING": parser.get_query_string(),
-            "RAW_URI": parser.get_url(),
-            "SERVER_PROTOCOL": protocol,
-            'CONTENT_TYPE': ''
-        }
+    environ = {"wsgi.input": BytesIO(parser.recv_body()),
+               "wsgi.errors": sys.stderr,
+               "wsgi.version": (1, 0),
+               "wsgi.run_once": False,
+               "wsgi.multithread": False,
+               "wsgi.multiprocess": False,
+               "SERVER_SOFTWARE": server_software or pulsar.SERVER_SOFTWARE,
+               "REQUEST_METHOD": native_str(parser.get_method()),
+               "QUERY_STRING": parser.get_query_string(),
+               "RAW_URI": parser.get_url(),
+               "SERVER_PROTOCOL": protocol,
+               "CONTENT_TYPE": ''}
     url_scheme = 'https' if https else 'http'
     forward = client_address
     server = format_address(address)
@@ -117,7 +116,7 @@ def wsgi_environ(parser, address, client_address, request_headers,
         remote = forward
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
-    server =  host_and_port_default(url_scheme, server)
+    server = host_and_port_default(url_scheme, server)
     environ['SERVER_NAME'] = socket.getfqdn(server[0])
     environ['SERVER_PORT'] = server[1]
     path_info = parser.get_path()
@@ -129,18 +128,19 @@ def wsgi_environ(parser, address, client_address, request_headers,
     if extra:
         environ.update(extra)
     return environ
-    
-    
+
+
 def chunk_encoding(chunk):
     '''Write a chunk::
 
     chunk-size(hex) CRLF
     chunk-data CRLF
-    
+
 If the size is 0, this is the last chunk, and an extra CRLF is appended.
 '''
     head = ("%X\r\n" % len(chunk)).encode('utf-8')
     return head + chunk + b'\r\n'
+
 
 def keep_alive(headers, version):
         """ return True if the connection should be kept alive"""
@@ -157,13 +157,14 @@ def keep_alive(headers, version):
             return True
         else:
             return False
-        
+
+
 def keep_alive_with_status(status, headers):
     code = int(status.split()[0])
     if code >= 400:
         return False
     return True
-    
+
 
 class HttpServerResponse(ProtocolConsumer):
     '''Server side WSGI :class:`pulsar.ProtocolConsumer`.
@@ -177,7 +178,7 @@ class HttpServerResponse(ProtocolConsumer):
     _request_headers = None
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
-    
+
     def __init__(self, wsgi_callable, cfg, server_software=None):
         super(HttpServerResponse, self).__init__()
         self.wsgi_callable = wsgi_callable
@@ -186,7 +187,7 @@ class HttpServerResponse(ProtocolConsumer):
         self.headers = Headers()
         self.keep_alive = False
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
-        
+
     def data_received(self, data):
         '''Implements :class:`pulsar.ProtocolConsumer.data_received` method.
 
@@ -201,13 +202,13 @@ class HttpServerResponse(ProtocolConsumer):
                 self._request_headers = Headers(p.get_headers(), kind='client')
                 if not done:
                     self.expect_continue()
-            if done: # message is done
+            if done:  # message is done
                 self.generate(self.wsgi_environ())
         else:
             # This is a parsing error, the client must have sent
             # bogus data
             raise ProtocolError
-    
+
     def expect_continue(self):
         '''Handle the expect=100-continue header if available, according to
 the following algorithm:
@@ -218,7 +219,7 @@ the following algorithm:
     '''
         if self._request_headers.has('expect', '100-continue'):
             self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
-        
+
     @property
     def status(self):
         return self._status
@@ -337,15 +338,15 @@ the following algorithm:
         result = maybe_async(result, get_result=False)
         err_handler = self.generate if failure is None else self.catastrofic
         result.add_errback(partial(err_handler, environ))
-        
+
     def async_wsgi(self, wsgi_iter):
         '''Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_
 when the ``wsgi_iter`` yields bytes only.'''
-        if isinstance(wsgi_iter, Deferred): # handle asynchronous wsgi response
-            wsgi_iter = yield wsgi_iter 
+        if isinstance(wsgi_iter, Deferred):
+            wsgi_iter = yield wsgi_iter
         try:
             for b in wsgi_iter:
-                chunk = yield b # handle asynchronous components
+                chunk = yield b     # handle asynchronous components
                 self.write(chunk)
             # make sure we write headers
             self.write(b'', True)
@@ -356,22 +357,22 @@ when the ``wsgi_iter`` yields bytes only.'''
                 except Exception:
                     LOGGER.exception('Error while closing wsgi iterator')
         self.finish_wsgi()
-        
+
     def handle_wsgi_error(self, environ, failure):
         exc_info = failure.exc_info
         response = handle_wsgi_error(environ, failure)
         self.start_response(response.status, response.get_headers(), exc_info)
         return response
-        
+
     def catastrofic(self, environ, failure):
         self.keep_alive = False
         self.finish_wsgi()
-        
+
     def finish_wsgi(self):
         if not self.keep_alive:
             self.connection.close()
         self.finished()
-            
+
     def is_chunked(self):
         '''Only use chunked responses when the client is
 speaking HTTP/1.1 or newer and there was no Content-Length header set.'''

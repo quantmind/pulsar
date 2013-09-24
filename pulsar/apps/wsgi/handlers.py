@@ -20,7 +20,7 @@ application side.
     A standard WSGI application handler is always a callable, either a function
     or a callable object, which accepts two positional arguments:
     ``environ`` and ``start_response``. When called by the server,
-    the application object must return an iterable yielding zero or more bytes. 
+    the application object must return an iterable yielding zero or more bytes.
 
 
 .. _wsgi-handlers:
@@ -36,7 +36,7 @@ exceptions:
 * If it returns a :class:`pulsar.Deferred`, the deferred, when called, i.e.
   the deferred get its :meth:`pulsar.Deferred.callback` method invoked,
   the result must be an :ref:`asynchronous iterable <wsgi-async-iter>`.
-  
+
 Pulsar is shipped with two WSGI application handlers documented below.
 
 .. _wsgi-async-iter:
@@ -45,7 +45,7 @@ Asynchronous Iterable
 ========================
 
 An asynchronous iterable is an iterable over a combination of ``bytes`` or
-:class:`pulsar.Deferred` which result in ``bytes``.  
+:class:`pulsar.Deferred` which result in ``bytes``.
 For eaxample this could be an asynchronous iterable::
 
     def simple_async():
@@ -68,7 +68,7 @@ in the tutorial. It accepts two iterables, a list of
 .. autoclass:: WsgiHandler
    :members:
    :member-order: bysource
-   
+
 .. _wsgi-lazy-handler:
 
 Lazy Wsgi Handler
@@ -77,7 +77,7 @@ Lazy Wsgi Handler
 .. autoclass:: LazyWsgi
    :members:
    :member-order: bysource
-   
+
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
@@ -89,6 +89,7 @@ from pulsar import Http404, async, Failure, coroutine_return
 
 from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
+
 
 __all__ = ['WsgiHandler', 'LazyWsgi']
 
@@ -111,7 +112,8 @@ class WsgiHandler(object):
             ...
 
     where ``response`` is a :ref:`WsgiResponse <wsgi-response>`.
-    Pulsar contains some :ref:`response middlewares <wsgi-response-middleware>`.
+    Pulsar contains some
+    :ref:`response middlewares <wsgi-response-middleware>`.
 
 '''
     def __init__(self, middleware=None, response_middleware=None, **kwargs):
@@ -128,7 +130,8 @@ class WsgiHandler(object):
             try:
                 resp = yield middleware(environ, start_response)
             except Exception:
-                resp = yield handle_wsgi_error(environ, Failure(sys.exc_info()))
+                resp = yield handle_wsgi_error(environ,
+                                               Failure(sys.exc_info()))
             if resp is not None:
                 break
         if resp is None:
@@ -138,7 +141,7 @@ class WsgiHandler(object):
                 resp = yield middleware(environ, resp)
             start_response(resp.status, resp.get_headers())
         coroutine_return(resp)
-    
+
 
 class LazyWsgi(LocalMixin):
     '''A :ref:`wsgi handler <wsgi-handlers>` which loads the actual
@@ -147,24 +150,24 @@ the :meth:`setup` method.
 Useful when working in multiprocessing mode when the application
 handler must be a ``picklable`` instance. This handler can rebuild
 its wsgi :attr:`handler` every time is pickled and un-pickled without
-causing serialisation issues.'''        
+causing serialisation issues.'''
     def __call__(self, environ, start_response):
         return self.handler(environ, start_response)
-    
+
     @local_property
     def handler(self):
         '''The :ref:`wsgi application handler <wsgi-handlers>` which
 is loaded via the :meth:`setup` method, once only, when first accessed.'''
         return self.setup()
-    
+
     def setup(self):
         '''The setup function for this :class:`LazyWsgi`. Called once only
-the first time this application handler is invoked. This **must** be implemented
-by subclasses and **must** return a
+the first time this application handler is invoked. This **must** be
+implemented by subclasses and **must** return a
 :ref:`wsgi application handler <wsgi-handlers>`.'''
         raise NotImplementedError
-    
-    
+
+
 def get_roule_methods(attrs):
     rule_methods = []
     for code, callable in attrs:
@@ -174,7 +177,7 @@ def get_roule_methods(attrs):
         if isinstance(rule_method, tuple):
             rule_methods.append((code, rule_method))
     return sorted(rule_methods, key=lambda x: x[1].order)
-    
+
 
 class RouterParam(object):
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
@@ -192,8 +195,8 @@ available as ``parameter`` class attribute.
 '''
     def __init__(self, value):
         self.value = value
-        
-        
+
+
 class RouterType(type):
     ''':class:`Router` metaclass.'''
     def __new__(cls, name, bases, attrs):
@@ -216,7 +219,7 @@ class RouterType(type):
                 items = get_roule_methods(g)
             rules = [pair for pair in items if pair[0] not in no_rule]
             base_rules = base_rules + rules
-            
+
         if base_rules:
             all = base_rules + rule_methods
             rule_methods = {}
@@ -229,4 +232,3 @@ class RouterType(type):
         attrs['rule_methods'] = OrderedDict(rule_methods)
         attrs['parameters'] = parameters
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
-    

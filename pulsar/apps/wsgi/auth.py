@@ -7,17 +7,16 @@ HttpAuthenticate
 .. autoclass:: HttpAuthenticate
    :members:
    :member-order: bysource
-   
+
 '''
 import os
 import time
-from hashlib import sha1
 from base64 import b64decode
 
 from pulsar import HttpException
-from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1, urlparse,
-                                  quote_header_value)  
-from pulsar.utils.pep import native_str, iteritems, to_bytes
+from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
+                                  quote_header_value)
+from pulsar.utils.pep import iteritems, to_bytes
 
 
 __all__ = ['HttpAuthenticate', 'parse_authorization_header']
@@ -61,12 +60,12 @@ class HttpAuthenticate(HttpException):
             qop = ('auth',)
         return self._auth_header('digest', realm=realm, nonce=nonce,
                                  qop=', '.join(qop), **options)
-    
+
     def _auth_header(self, type, **options):
         """Convert the stored values into a WWW-Authenticate header."""
         return '%s %s' % (type.title(), ', '.join((
-            '%s=%s' % (key, quote_header_value(value,
-                                allow_token=key not in _require_quoting))
+            '%s=%s' % (key, quote_header_value(
+                value, allow_token=key not in _require_quoting))
             for key, value in iteritems(options)
         )))
 
@@ -77,7 +76,7 @@ class BasicAuth(object):
         self.password = password
 
     def authenticated(self, environ, username=None, password=None, **params):
-        return username==self.username and password==self.password
+        return username == self.username and password == self.password
 
     def __repr__(self):
         return 'Basic: %s' % self.username
@@ -91,7 +90,7 @@ class DigestAuth(object):
         self.last_nonce = None
         self.options = options or {}
         self.algorithm = self.options.pop('algorithm', 'MD5')
-    
+
     def __repr__(self):
         return 'Digest: %s' % self.username
     __str__ = __repr__
@@ -103,7 +102,7 @@ class DigestAuth(object):
         o = self.options
         qop = o.get('qop')
         method = environ['REQUEST_METHOD']
-        uri = environ.get('PATH_INFO','')
+        uri = environ.get('PATH_INFO', '')
         ha1 = self.ha1(o['realm'], password)
         ha2 = self.ha2(qop, method, uri)
         if qop is None:
@@ -114,7 +113,7 @@ class DigestAuth(object):
         else:
             raise ValueError("qop value are wrong")
         return o['response'] == response
-    
+
     def hex(self, x):
         if self.algorithm == 'MD5':
             return hexmd5(x)
@@ -122,10 +121,10 @@ class DigestAuth(object):
             return hexsha1(x)
         else:
             raise ValueError('Unknown algorithm %s' % self.algorithm)
-        
+
     def ha1(self, realm, password):
         return self.hex('%s:%s:%s' % (self.username, realm, password))
-    
+
     def ha2(self, qop, method, uri, body=None):
         if qop == "auth" or qop is None:
             return self.hex("%s:%s" % (method, uri))
@@ -134,12 +133,13 @@ class DigestAuth(object):
         raise ValueError()
 
 
-digest_parameters=frozenset(('username', 'realm', 'nonce', 'uri', 'nc',
-                             'cnonce',  'response'))
+digest_parameters = frozenset(('username', 'realm', 'nonce', 'uri', 'nc',
+                               'cnonce', 'response'))
+
 
 def parse_authorization_header(value, charset='utf-8'):
     '''Parse an HTTP basic/digest authorisation header.
-    
+
     :param value: the authorisation header to parse.
     :return: either `None` if the header was invalid or
         not given, otherwise an :class:`Auth` object.

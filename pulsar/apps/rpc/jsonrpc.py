@@ -7,7 +7,8 @@ It's designed to be simple.
 A remote method is invoked by sending a request to a remote service.
 The request is a single object serialized using JSON.
 
-The specification is at http://groups.google.com/group/json-rpc/web/json-rpc-2-0
+The specification is at
+http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
 import sys
 import json
@@ -50,8 +51,9 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     _json = JsonToolkit
 
     def __call__(self, request):
-        return Json(self._call(request), json=self._json).http_response(request)
-    
+        return Json(self._call(request),
+                    json=self._json).http_response(request)
+
     @async()
     def _call(self, request):
         response = request.response
@@ -63,14 +65,15 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             try:
                 data = request.json_data
             except ValueError:
-                raise InvalidRequest(status=415,
-                                msg='Content-Type must be application/json')
+                raise InvalidRequest(
+                    status=415, msg='Content-Type must be application/json')
             if response.content_type not in JSON_CONTENT_TYPES:
-                raise InvalidRequest(status=415,
-                                msg='Content-Type must be application/json')
+                raise InvalidRequest(
+                    status=415, msg='Content-Type must be application/json')
             if data.get('jsonrpc') != self.version:
                 raise InvalidRequest(
-                    'jsonrpc must be supplied and equal to "%s"' % self.version)
+                    'jsonrpc must be supplied and equal to "%s"' %
+                    self.version)
             params = data.get('params')
             if isinstance(params, dict):
                 args, kwargs = (), params
@@ -97,42 +100,42 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
                 result.log(msg=msg, level='warning')
             result = {'code': code,
                       'message': msg,
-                      'data': getattr(error, 'data','')}
+                      'data': getattr(error, 'data', '')}
             request.response.status_code = getattr(error, 'status', 500)
             res['error'] = result
         else:
             res['result'] = result
         yield res
-    
+
 
 class JsonCall:
-    
+
     dlots = ('_client', '_name')
-    
+
     def __init__(self, client, name):
         self._client = client
         self._name = name
-        
+
     def __repr__(self):
         return self._name
     __str__ = __repr__
-    
+
     @property
     def url(self):
         return self._client.url
-    
+
     @property
     def name(self):
         return self._name
-    
+
     def __getattr__(self, name):
         name = "%s%s%s" % (self._name, self._client.separator, name)
         return self.__class__(self._client, name)
-        
+
     def __call__(self, *args, **kwargs):
         return self._client._call(self._name, *args, **kwargs)
-    
-        
+
+
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
 
@@ -158,13 +161,14 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     'pong'
 
 '''
-    separator  = '.'
-    rawprefix  = 'raw'
+    separator = '.'
+    rawprefix = 'raw'
     default_version = '2.0'
     default_timeout = 30
     _json = JsonToolkit
 
-    def __init__(self, url, version=None, data=None, full_response=False, **kw):
+    def __init__(self, url, version=None, data=None,
+                 full_response=False, **kw):
         self.__url = url
         self.__version = version or self.__class__.default_version
         self._full_response = full_response
@@ -185,7 +189,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     @property
     def http(self):
         return self.local.http
-    
+
     @property
     def version(self):
         return self.__version
@@ -199,7 +203,7 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
 
     def __str__(self):
         return self.__repr__()
-    
+
     def __getattr__(self, name):
         return JsonCall(self, name)
 
@@ -228,7 +232,7 @@ usage is simple::
             return res.result if self.http.force_sync else res
         else:
             return self._end_call(raw, resp)
-        
+
     def _end_call(self, raw, resp):
         content = resp.content_string()
         if resp.is_error:
@@ -241,7 +245,7 @@ usage is simple::
                 return content
             else:
                 return self.loads(content)
-        
+
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()
         fs = func_name.split('_')

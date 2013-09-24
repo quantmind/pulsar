@@ -34,11 +34,11 @@ called ``tests`` in the ``examples`` module.
 To run the test suite::
 
     python runtests.py
-    
+
 Type::
 
     python runtests.py --help
-    
+
 For a list different options/parameters which can be used when running tests.
 
 .. note::
@@ -69,18 +69,18 @@ An example test case::
     # Otherwise it is the same as
     #     import unittest
     from pulsar.apps.test import unittest
-    
+
     class MyTest(unittest.TestCase):
-        
+
         def test_async_test(self):
             result = yield maybe_async_function()
             self.assertEqual(result, ...)
-            
+
         def test_simple_test(self):
             self.assertEqual(1, 1)
 
 .. note::
-    
+
     Test functions are asynchronous, when they return a generator or a
     :class:`pulsar.Deferred`, synchronous, when they return anything else.
 
@@ -97,7 +97,7 @@ initialising the :class:`TestSuite`::
     if __name__ == '__main__':
         TestSuite(modules=('tests',
                           ('examples','tests'))).start()
-                           
+
 The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.
 
 In the context of explaining the rules for loading tests, we refer to
@@ -105,7 +105,7 @@ an ``object`` as
 
 * a ``module`` (including a directory module)
 * a python ``class``.
-    
+
 with this in mind:
 
 * Directories that aren't packages are not inspected. This means that if a
@@ -116,31 +116,31 @@ with this in mind:
 * If an ``object`` defines a ``__test__`` attribute that does not evaluate to
   ``True``, that object will not be collected, nor will any ``objects``
   it contains.
-  
+
 The ``modules`` parameter is a tuple or list of entries where each single
 ``entry`` follows the rules:
 
-* If the ``entry`` is a string, it indicates the **dotted path** relative to the
-  **root** directory (the directory of the script running the tests). For
-  example::
-  
+* If the ``entry`` is a string, it indicates the **dotted path** relative
+  to the **root** directory (the directory of the script running the tests).
+  For example::
+
       modules = ['tests', 'moretests.here']
-  
+
 * If an entry is two elements tuple, than the first element represents
   a **dotted path** relative to the **root** directory and the
   second element a **pattern** which modules (files or directories) must match
   in order to be included in the search. For example::
-  
+
       modules = [...,
                  ('examples', 'test*')
                  ]
-  
+
   load modules, from inside the ``examples`` module, starting with ``test``.
-  
+
 * If an entry is a three elements tuple, it is the same as the *two elements
   tuple* rule with the third element which specifies the top level **tag**
   for all tests in this entry. For example::
-  
+
       modules = [...,
                   ('bla', '*', 'foo')
                 ]
@@ -150,12 +150,12 @@ For example, the following::
     modules = ['test', ('bla', '*', 'foo'), ('examples','test*')]
 
 loads
-    
+
 * all tests from modules in the ``test`` directory,
 * all tests from the ``bla`` directory with top level tag ``foo``,
 * all tests from modules which starts with *test* from the ``examples``
   directory.
-     
+
 All top level modules will be added to the python ``path``.
 
 
@@ -180,24 +180,24 @@ the :class:`TestSuite`
 forces tests to be run in a sequential model, one after the other::
 
     python runtests.py --sequential
-    
+
 Alternatively, if you need to specify a Testcase which always runs its test
 functions in a sequential way, you can use the :func:`sequential` decorator::
 
     from pulsar.apps.test import unittest, sequential
-    
+
     @sequential
     class MyTestCase(unittest.TestCase):
         ...
-        
-        
+
+
 list labels
 ~~~~~~~~~~~~~~~~~~~
 By passing the ``-l`` or :ref:`--list-labels <setting-list_labels>` flag
 to the command line, the full list of test labels available is displayed::
 
     python runtests.py -l
-    
+
 
 test timeout
 ~~~~~~~~~~~~~~~~~~~
@@ -206,7 +206,7 @@ long a test function can wait for results. This is what the
 :ref:`--test-timeout <setting-test_timeout>` command line flag does::
 
     python runtests.py --test-timeout 10
-    
+
 Set the test timeout to 10 seconds.
 
 
@@ -275,7 +275,7 @@ Test Plugin
 .. autoclass:: TestPlugin
    :members:
    :member-order: bysource
-   
+
 .. _unittest2: http://pypi.python.org/pypi/unittest2
 .. _mock: http://pypi.python.org/pypi/mock
 
@@ -305,22 +305,25 @@ section_docs['Test'] = '''
 This section covers configuration parameters used by the
 :ref:`Asynchronous/Parallel test suite <apps-test>`.'''
 
+
 def dont_run_with_thread(obj):
     '''Decorator for disabling process baaed test cases when the test suite
     runs in threading, rather than processing, mode.
     '''
     actor = pulsar.get_actor()
     if actor:
-        d = unittest.skipUnless(actor.cfg.concurrency=='process',
+        d = unittest.skipUnless(actor.cfg.concurrency == 'process',
                                 'Run only when concurrency is process')
         return d(obj)
     else:
         return obj
 
+
 def mute_failure(test, failure):
     #TODO: add test flag to control muting
     if not test.cfg.log_failures:
         failure.mute()
+
 
 class ExitTest(Exception):
     pass
@@ -332,8 +335,8 @@ class TestVerbosity(TestOption):
     type = int
     default = 1
     desc = """Test verbosity, 0, 1, 2, 3"""
-    
-    
+
+
 class TestTimeout(TestOption):
     name = 'test_timeout'
     flags = ['--test-timeout']
@@ -374,12 +377,12 @@ class TestSize(TestOption):
 
 class TestList(TestOption):
     name = "list_labels"
-    flags = ['-l','--list-labels']
+    flags = ['-l', '--list-labels']
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool
     desc = """List all test labels without performing tests."""
-    
+
 
 class TestSequential(TestOption):
     name = "sequential"
@@ -387,9 +390,12 @@ class TestSequential(TestOption):
     action = 'store_true'
     default = False
     validator = pulsar.validate_bool
-    desc = """Run test functions sequentially. Don't run them asynchronously."""
-    
-    
+    desc = """Run test functions sequentially.
+
+    Don't run them asynchronously.
+    """
+
+
 class TestShowLeaks(TestOption):
     name = "show_leaks"
     flags = ['--show-leaks']
@@ -397,10 +403,10 @@ class TestShowLeaks(TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = """Shows memory leaks.
-    
+
     Run the garbadge collector before a process-based actor dies and shows
     the memory leak report."""
-    
+
 
 class TestLogFailures(TestOption):
     name = "log_failures"
@@ -409,14 +415,15 @@ class TestLogFailures(TestOption):
     default = False
     validator = pulsar.validate_bool
     desc = """Don't mute exceptions.
-    
+
     Tested exception are usually muted via mute_failure function. This
     flag disable it.
-    
+
     To see the exception the log level must be at least error."""
-    
-    
+
+
 pyver = '%s.%s' % (sys.version_info[:2])
+
 
 class TestSuite(tasks.TaskQueue):
     '''An asynchronous test suite which works like a task queue.
@@ -430,7 +437,7 @@ class TestSuite(tasks.TaskQueue):
             suite = TestSuite(modules=('regression',
                                        ('examples','tests'),
                                        ('apps','test_*')))
-            
+
             def get_modules(suite):
                 ...
 
@@ -449,12 +456,13 @@ class TestSuite(tasks.TaskQueue):
                         loglevel='none',
                         task_paths=['pulsar.apps.test.case'],
                         plugins=())
+
     @local_property
     def runner(self):
         '''The :class:`TestRunner` driving the test case.'''
         if unittest is None:
-            raise ImportError('python %s requires unittest2 library for pulsar '
-                              'test suite application' % pyver)
+            raise ImportError('python %s requires unittest2 library for '
+                              'pulsar test suite application' % pyver)
         if mock is None:
             raise ImportError('python %s requires mock library for pulsar '
                               'test suite application' % pyver)
@@ -478,7 +486,7 @@ class TestSuite(tasks.TaskQueue):
         if hasattr(modules, '__call__'):
             modules = modules(self)
         return TestLoader(self.root_dir, modules, runner, logger=self.logger)
-    
+
     def on_config(self):
         loader = self.loader
         stream = pulsar.get_actor().stream
@@ -486,10 +494,12 @@ class TestSuite(tasks.TaskQueue):
             tags = self.cfg.labels
             if tags:
                 s = '' if len(tags) == 1 else 's'
-                stream.writeln('\nTest labels for%s %s:' % (s, ', '.join(tags)))
+                stream.writeln('\nTest labels for%s %s:' %
+                               (s, ', '.join(tags)))
             else:
                 stream.writeln('\nAll test labels:')
             stream.writeln('')
+
             def _tags():
                 for tag, mod in loader.testmodules(tags):
                     doc = mod.__doc__
@@ -500,7 +510,7 @@ class TestSuite(tasks.TaskQueue):
                 stream.writeln(tag)
             stream.writeln('')
             return False
-    
+
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         super(TestSuite, self).monitor_start(monitor)
@@ -536,13 +546,13 @@ class TestSuite(tasks.TaskQueue):
             self.logger.critical('Error occurred before starting tests',
                                  exc_info=True)
             monitor.arbiter.stop()
-    
+
     @local_property
     def events(self):
         '''Events for the application: ``ready```, ``start``, ``stop``.'''
         return EventHandler(one_time_events=('ready', 'start', 'stop'),
                             many_times_events=('tests',))
-    
+
     @classmethod
     def create_config(cls, *args, **kwargs):
         cfg = super(TestSuite, cls).create_config(*args, **kwargs)
@@ -551,9 +561,9 @@ class TestSuite(tasks.TaskQueue):
         for plugin in cfg.params['plugins']:
             cfg.settings.update(plugin.config.settings)
         return cfg
-    
+
     def _check_queue(self):
-        runner=  self.runner
+        runner = self.runner
         tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
         if len(tests) == len(self.local.tests):
             self.logger.info('All tests have finished.')
@@ -568,4 +578,3 @@ class TestSuite(tasks.TaskQueue):
             else:
                 exit_code = 0
             raise pulsar.HaltServer(exit_code=exit_code)
-        
