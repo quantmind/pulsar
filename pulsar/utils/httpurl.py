@@ -336,7 +336,7 @@ def get_hostport(scheme, full_host):
             port = default_port(scheme)
         if host and host[0] == '[' and host[-1] == ']':
             host = host[1:-1]
-    return host, port
+    return host, int(port)
 
 def remove_double_slash(route):
     if '//' in route:

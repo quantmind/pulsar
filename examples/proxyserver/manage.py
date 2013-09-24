@@ -124,12 +124,12 @@ The returned headers will be sent to the target uri.'''
 class ProxyResponse(object):
     '''Asynchronous wsgi response.
     '''
+    _headers = None
+    _done = False
     def __init__(self, environ, start_response, response):
         self.environ = environ
         self.start_response = start_response
-        self.headers = None
         self.queue = Queue()
-        self._done = False
         response.on_finished.add_errback(self.error)
         self.setup(response)
 
@@ -144,11 +144,11 @@ class ProxyResponse(object):
     def data_processed(self, response, **kw):
         '''Receive data from the requesting HTTP client.'''
         if response.parser.is_headers_complete():
-            if self.headers is None:
+            if self._headers is None:
                 headers = self.remove_hop_headers(response.headers)
-                self.headers = Headers(headers, kind='server')
+                self._headers = Headers(headers, kind='server')
                 # start the response
-                self.start_response(response.get_status(), list(self.headers))
+                self.start_response(response.get_status(), list(self._headers))
             body = response.recv_body()
             if response.parser.is_message_complete():
                 self._done = True

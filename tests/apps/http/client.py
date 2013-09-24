@@ -20,6 +20,7 @@ def dodgyhook(test, response):
 
 class TestHttpClientBase:
     app = None
+    with_httpbin = True
     with_proxy = False
     with_tls = False
     proxy_app = None
@@ -30,20 +31,21 @@ class TestHttpClientBase:
         # Create the HttpBin server by sending this request to the arbiter
         from examples.proxyserver.manage import server as pserver
         from examples.httpbin import manage
-        server = manage.server
         concurrency = cls.cfg.concurrency
-        if cls.with_tls:
-            base_path = os.path.abspath(os.path.dirname(manage.__file__))
-            key_file = os.path.join(base_path, 'server.key')
-            cert_file = os.path.join(base_path, 'server.crt')
-        else:
-            key_file, cert_file = None, None
-        s = server(bind='127.0.0.1:0', concurrency=concurrency,
-                   name='httpbin-%s' % cls.__name__.lower(),
-                   keep_alive=30, key_file=key_file, cert_file=cert_file)
-        cls.app = yield send('arbiter', 'run', s)
-        bits = ('https' if cls.with_tls else 'http',) + cls.app.address
-        cls.uri = '%s://%s:%s/' % bits
+        if cls.with_httpbin:
+            server = manage.server
+            if cls.with_tls:
+                base_path = os.path.abspath(os.path.dirname(manage.__file__))
+                key_file = os.path.join(base_path, 'server.key')
+                cert_file = os.path.join(base_path, 'server.crt')
+            else:
+                key_file, cert_file = None, None
+            s = server(bind='127.0.0.1:0', concurrency=concurrency,
+                       name='httpbin-%s' % cls.__name__.lower(),
+                       keep_alive=30, key_file=key_file, cert_file=cert_file)
+            cls.app = yield send('arbiter', 'run', s)
+            bits = ('https' if cls.with_tls else 'http',) + cls.app.address
+            cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
                         name='proxyserver-%s' % cls.__name__.lower())
