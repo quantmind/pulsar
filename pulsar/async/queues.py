@@ -5,8 +5,10 @@ from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
 
+
 class Queue:
-    '''Asynchronous FIFO queue.'''
+    '''Asynchronous FIFO queue.
+    '''
     def __init__(self, maxsize=0, event_loop=None):
         if event_loop:
             self._event_loop = event_loop
@@ -17,7 +19,7 @@ class Queue:
         self._queue = deque()
         self._waiting = deque()
         self._putters = deque()
-        
+
     @property
     def maxsize(self):
         '''Integer representing the upper bound limit on the number of items
@@ -25,27 +27,27 @@ that can be placed in the queue.
 
 If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
         return self._maxsize
-    
+
     @property
     def event_loop(self):
         '''The event loop running the queue'''
         return self._event_loop
-        
+
     def qsize(self):
         '''Size of the queue.'''
         return len(self._queue)
-    
+
     def full(self):
         '''Return True if there are :attr:`maxsize` items in the queue.'''
         return self._maxsize and self.qsize() == self._maxsize
-    
+
     def put(self, item, timeout=None):
         '''Put an ``item`` in the queue.
 
-        If you yield from :meth:`put` and ``timeout`` is ``None`` (the default),
-        wait until a item is added to the queue. Otherwise raise ``Full``
-        if no slots is available before ``timeout``.
-                
+        If you yield from :meth:`put` and ``timeout`` is ``None``
+        (the default), wait until a item is added to the queue. Otherwise
+        raise ``Full`` if no slots is available before ``timeout``.
+
         :parameter timeout: optional timeout in seconds.
         :return: a :ref:`coroutine <coroutine>` which results in ``None``.
         '''
@@ -73,14 +75,14 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 yield waiter
             except CancelledError:
                 raise Full
-        
+
     def get(self, timeout=None):
         '''Remove and return an item from the queue.
-        
-        If you yield from :meth:`get` and ``timeout`` is ``None`` (the default),
-        wait until a item is available. Otherwise raise ``Empty`` if no item is
-        available before ``timeout``.
-                
+
+        If you yield from :meth:`get` and ``timeout`` is ``None``
+        (the default), wait until a item is available. Otherwise raise
+        ``Empty`` if no item is available before ``timeout``.
+
         :parameter timeout: optional timeout in seconds.
         :return: a :ref:`coroutine <coroutine>` which results in the item
             removed form the queue.
@@ -89,7 +91,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
             if self.qsize():
                 while self._putters:
                     new_item, putter = self._putters.popleft()
-                    if not putter.done():        
+                    if not putter.done():
                         assert self.full(), 'queue non-full with putters'
                         self._queue.append(new_item)
                         self._event_loop.call_soon(putter.callback, None)

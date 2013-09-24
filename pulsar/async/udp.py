@@ -1,6 +1,6 @@
 import socket
 
-from pulsar.utils.structures import OrderedDict 
+from pulsar.utils.structures import OrderedDict
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ECONNREFUSED, WRITE_BUFFER_MAX_SIZE)
 
@@ -9,23 +9,23 @@ from .consts import LOG_THRESHOLD_FOR_CONNLOST_WRITES
 
 
 class SocketDatagramTransport(SocketTransport):
-    
+
     def __init__(self, event_loop, sock, protocol, address=None, **kwargs):
         self._address = address
-        super(SocketDatagramTransport, self).__init__(
-                                event_loop, sock, protocol, **kwargs)
-    
+        super(SocketDatagramTransport, self).__init__(event_loop, sock,
+                                                      protocol, **kwargs)
+
     def _do_handshake(self):
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
-    
+
     def _check_closed(self):
         if self._conn_lost:
             if self._conn_lost >= LOG_THRESHOLD_FOR_CONNLOST_WRITES:
                 self.logger.warning('socket.send() raised exception.')
             self._conn_lost += 1
         return self._conn_lost
-        
+
     def sendto(self, data, addr=None):
         '''Send chunk of ``data`` to the endpoint.'''
         if not data:
@@ -50,7 +50,7 @@ class SocketDatagramTransport(SocketTransport):
                 self._event_loop.add_writer(self._sock_fd, self._ready_sendto)
             elif self._closing:
                 self._event_loop.call_soon(self._shutdown)
-                
+
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
@@ -73,7 +73,7 @@ class SocketDatagramTransport(SocketTransport):
                 passes += 1
             except Exception as exc:
                 self.abort(exc)
-                
+
     def _ready_sendto(self):
         # Do the actual writing
         buffer = self._write_buffer
@@ -107,8 +107,8 @@ class SocketDatagramTransport(SocketTransport):
                 if self._closing:
                     self._event_loop.call_soon(self._shutdown)
             return tot_bytes
-                
-                
+
+
 def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
                              remote_addr, family, proto, flags):
     if not (local_addr or remote_addr):
@@ -121,10 +121,10 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
         for idx, addr in enumerate((local_addr, remote_addr)):
             if addr is not None:
                 assert isinstance(addr, tuple) and len(addr) == 2, (
-                        '2-tuple is expected')
+                    '2-tuple is expected')
                 infos = yield event_loop.getaddrinfo(
-                        *addr, family=family, type=socket.SOCK_DGRAM,
-                        proto=proto, flags=flags)
+                    *addr, family=family, type=socket.SOCK_DGRAM,
+                    proto=proto, flags=flags)
                 if not infos:
                     raise OSError('getaddrinfo() returned empty list')
                 for fam, _, pro, _, address in infos:
@@ -141,9 +141,7 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
 
         if not addr_pairs_info:
             raise ValueError('can not get address information')
-
     exceptions = []
-
     for ((family, proto),
          (local_address, remote_address)) in addr_pairs_info:
         sock = None
@@ -168,8 +166,7 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
             break
     else:
         raise exceptions[0]
-
     protocol = protocol_factory()
-    transport = SocketDatagramTransport(
-                    event_loop, sock, protocol, r_addr, extra={'addr': l_addr})
+    transport = SocketDatagramTransport(event_loop, sock, protocol, r_addr,
+                                        extra={'addr': l_addr})
     yield transport, protocol

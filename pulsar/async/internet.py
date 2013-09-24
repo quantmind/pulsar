@@ -30,7 +30,8 @@ class BaseProtocol:
     def connection_made(self, transport):
         """Called when a connection is made.
 
-        The argument is the :class:`Transport` representing the pipe connection.
+        The argument is the :class:`Transport` representing the pipe
+        connection.
         When the connection is closed, :meth:`connection_lost` is called.
         """
 
@@ -94,7 +95,7 @@ class DatagramProtocol(BaseProtocol):
 
 class Transport(object):
     '''Base class for transports.
-    
+
     Design to conform with pep-3156_ as close as possible until it is
     finalised. A transport is an abstraction on top of a socket or
     something similar. Form pep-3153_:
@@ -105,13 +106,13 @@ class Transport(object):
     Its job can be described as allowing the protocol to just send and
     receive bytes, taking care of all of the magic that needs to happen to
     those bytes to be eventually sent across the wire.
-    
+
     .. attribute:: event_loop
-    
+
         The :class:`EventLoop` for this :class:`Transport`.
-        
+
     .. attribute:: protocol
-    
+
         The :class:`Protocol` for this :class:`Transport`.
     '''
     def get_extra_info(name, default=None):
@@ -131,6 +132,7 @@ class SocketTransport(Transport):
     :meth:`BaseProtocol.connection_made` method.
     '''
     SocketError = socket.error
+
     def __init__(self, event_loop, sock, protocol, extra=None,
                  max_buffer_size=None, read_chunk_size=None):
         self._protocol = protocol

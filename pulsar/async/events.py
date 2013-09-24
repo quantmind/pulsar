@@ -1,4 +1,3 @@
-from functools import partial
 from inspect import isgenerator
 
 from pulsar.utils.pep import itervalues
@@ -63,7 +62,7 @@ class ManyEvent(Event):
     __str__ = __repr__
 
     def bind(self, callback, errback=None):
-        assert errback == None, 'errback not supported in many-times events'
+        assert errback is None, 'errback not supported in many-times events'
         self._handlers.append(callback)
 
     def fire(self, arg, **kwargs):

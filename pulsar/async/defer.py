@@ -1,12 +1,10 @@
 import sys
 import traceback
-from weakref import ref
 from collections import deque, namedtuple, Mapping
-from itertools import chain
 from inspect import isgenerator, istraceback
 
-from pulsar.utils.pep import (raise_error_trace, iteritems, default_timer,
-                              get_event_loop, ispy3k, pickle)
+from pulsar.utils.pep import (iteritems, default_timer,
+                              get_event_loop, ispy3k)
 
 from .access import get_request_loop, logger
 from .consts import *
@@ -38,10 +36,8 @@ else:   # pragma    nocover
     class Error(Exception):
         '''Raised when no other information is available on a Failure'''
 
-
     class CancelledError(Error):
         pass
-
 
     class TimeoutError(Error):
         pass
@@ -70,7 +66,7 @@ pass_through = lambda result: result
 
 
 def is_relevant_tb(tb):
-    return not ('__skip_traceback__' in tb.tb_frame.f_locals or 
+    return not ('__skip_traceback__' in tb.tb_frame.f_locals or
                 '__unittest' in tb.tb_frame.f_globals)
 
 
@@ -83,7 +79,7 @@ def tb_length(tb):
 
 
 def format_exception(exctype, value, tb):
-    trace = getattr(value, '__async_traceback__', None) 
+    trace = getattr(value, '__async_traceback__', None)
     while tb and not is_relevant_tb(tb):
         tb = tb.tb_next
     length = tb_length(tb)
@@ -252,7 +248,7 @@ the coroutine after ``timeout`` seconds. For example::
     ...
     yield async_sleep(2)
     ...
-    
+
 This function returns a :class:`Deferred` called back in ``timeout`` seconds
 with the ``timeout`` value.
 '''
@@ -261,7 +257,7 @@ with the ``timeout`` value.
             failure.mute()
             return timeout
         else:
-            return failure        
+            return failure
     return Deferred(timeout=timeout).add_errback(_cancel)
 
 
@@ -362,7 +358,7 @@ def async_while(timeout, while_clause, *args):
         interval = 0
         result = while_clause(*args)
         while result:
-            interval = min(interval+di, MAX_ASYNC_WHILE) 
+            interval = min(interval+di, MAX_ASYNC_WHILE)
             try:
                 yield Deferred(timeout=interval)
             except CancelledError:
@@ -409,6 +405,7 @@ class Failure(object):
 
     def _get_logged(self):
         return getattr(self.error, '_failure_logged', False)
+
     def _set_logged(self, value):
         err = self.error
         if err:
@@ -450,7 +447,6 @@ back to perform logging and propagate the failure. For example::
 
     .add_errback(lambda failure: failure.log())
 '''
-        error = self.error
         if not self.logged:
             self.logged = True
             msg = msg or self._msg
@@ -561,7 +557,8 @@ can be set during initialisation.'''
             if not event_loop:
                 event_loop = self.event_loop
             elif self._event_loop:
-                assert event_loop == self._event_loop, "Incompatible event loop"
+                assert (event_loop == self._event_loop,
+                        "Incompatible event loop")
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
             self._timeout = event_loop.call_later(
@@ -574,8 +571,10 @@ was cancelled.'''
         return self._state == _CANCELLED
 
     def done(self):
-        '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred` is
-done, that is it was called or cancelled.'''
+        '''Returns ``True`` if the :class:`Deferred` is done.
+
+        This is the case when it was called or cancelled.
+        '''
         return self._state != _PENDING
 
     def cancel(self, msg='', mute=False):
@@ -656,8 +655,8 @@ the :class:`Deferred` object.'''
         return self.add_callback(callback, callback, continuation)
 
     def add_callback_args(self, callback, *args, **kwargs):
-        return self.add_callback(\
-                lambda result : callback(result, *args, **kwargs))
+        return self.add_callback(
+            lambda result: callback(result, *args, **kwargs))
 
     def callback(self, result=None, state=None):
         '''Run registered callbacks with the given *result*.
@@ -677,8 +676,8 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
             raise InvalidStateError
         self.result = maybe_failure(result)
         if not state:
-            state = _CANCELLED if is_failure(self.result, CancelledError) else\
-                        _FINISHED
+            state = (_CANCELLED if is_failure(self.result, CancelledError)
+                     else _FINISHED)
         self._state = state
         if self._callbacks:
             self._run_callbacks()
@@ -747,9 +746,11 @@ the result is a :class:`Failure`'''
         '''
         if deferred is None:
             deferred = Deferred(event_loop=self._event_loop)
+
         def cbk(result):
             deferred.callback(result)
             return result
+
         self.add_callback(cbk, cbk)
         return deferred
 
@@ -843,7 +844,7 @@ function when a generator is passed as argument.'''
                 # async result add callback/errorback and transfer control
                 # to the event loop
                 self._waiting = result.add_both(self._restart)
-                return None, True 
+                return None, True
             elif result == NOT_DONE:
                 # transfer control to the event loop
                 self.event_loop.call_soon(self._consume, None)
@@ -915,7 +916,7 @@ class MultiDeferred(Deferred):
         '''When ``True`` and at least one value of the result collections is a
         :class:`Failure`, the callback will receive the failure rather than
         the collection of results.
-        
+
         Default ``True``.
         '''
         return self._raise_on_error
@@ -955,8 +956,8 @@ longer be used.'''
         '''Lock the :class:`MultiDeferred` so that no new items can be added.
 If it was alread :attr:`locked` a runtime exception occurs.'''
         if self._locked:
-            raise RuntimeError(self.__class__.__name__ +\
-                        ' cannot be locked twice.')
+            raise RuntimeError(self.__class__.__name__ +
+                               ' cannot be locked twice.')
         self._time_locked = default_timer()
         self._locked = True
         if not self._deferred:
@@ -985,7 +986,7 @@ both ``list`` and ``dict`` :attr:`type`.'''
 
     def _add(self, key, value):
         if self._locked:
-            raise RuntimeError(self.__class__.__name__ +\
+            raise RuntimeError(self.__class__.__name__ +
                                ' cannot add a dependent once locked.')
         value = maybe_async(value)
         self._setitem(key, value)
@@ -1003,10 +1004,10 @@ both ``list`` and ``dict`` :attr:`type`.'''
 
     def _finish(self):
         if not self._locked:
-            raise RuntimeError(self.__class__.__name__ +\
+            raise RuntimeError(self.__class__.__name__ +
                                ' cannot finish until completed.')
         if self._deferred:
-            raise RuntimeError(self.__class__.__name__ +\
+            raise RuntimeError(self.__class__.__name__ +
                                ' cannot finish whilst waiting for '
                                'dependents %r' % self._deferred)
         self._time_finished = default_timer()

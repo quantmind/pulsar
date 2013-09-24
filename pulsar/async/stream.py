@@ -8,7 +8,7 @@ SocketStreamTransport
 .. autoclass:: SocketStreamTransport
    :members:
    :member-order: bysource
-   
+
 TcpServer
 ============================
 
@@ -36,13 +36,14 @@ from .protocols import Server, logger
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
 MAX_CONSECUTIVE_WRITES = 50
 
+
 class TooManyConsecutiveWrite(PulsarException):
     '''Raise when too many consecutive writes are attempted.'''
 
 
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
-    
+
 The primary feature of a stream transport is sending bytes to a protocol
 and receiving bytes from the underlying protocol. Writing to the transport
 is done using the :meth:`write` and :meth:`writelines` methods.
@@ -50,11 +51,11 @@ The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
-    
+
     def _do_handshake(self):
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
-    
+
     def pause(self):
         """A :class:`SocketStreamTransport` can be paused and resumed.
 Invoking this method will cause the transport to buffer data coming
@@ -73,7 +74,7 @@ passed to the :meth:`pulsar.Protocol.data_received` method."""
             self._read_buffer = []
             for chunk in buffer:
                 self._data_received(chunk)
-                
+
     def pause_writing(self):
         '''Suspend sending data to the network until a subsequent
 :meth:`resume_writing` call. Between :meth:`pause_writing` and
@@ -89,9 +90,10 @@ be accumulating data in an internal buffer.'''
             if self._write_buffer:
                 self._event_loop.add_writer(self._sock_fd, self._write_ready)
             self._paused_writing = False
-            
+
     def write(self, data):
-        '''Write chunk of ``data`` to the endpoint.'''
+        '''Write chunk of ``data`` to the endpoint.
+        '''
         if not data:
             return
         self._check_closed()
@@ -118,7 +120,7 @@ be accumulating data in an internal buffer.'''
             self._consecutive_writes += 1
             if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
                 self.abort(TooManyConsecutiveWrite())
-                
+
     def writelines(self, list_of_data):
         """Write a list (or any iterable) of data bytes to the transport."""
         for data in list_of_data:
@@ -126,10 +128,10 @@ be accumulating data in an internal buffer.'''
 
     def _write_continue(self, e):
         return e.args[0] in TRY_WRITE_AGAIN
-        
+
     def _read_continue(self, e):
         return e.args[0] == EWOULDBLOCK
-            
+
     def _ready_write(self):
         # Do the actual writing
         buffer = self._write_buffer
@@ -162,7 +164,7 @@ be accumulating data in an internal buffer.'''
             return tot_bytes
         if not self._closing:
             self.abort(failure)
-    
+
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
@@ -196,19 +198,19 @@ be accumulating data in an internal buffer.'''
             failure = sys.exc_info()
         if failure:
             self.abort(failure)
-            
+
     def mute_read_error(self, error):
         '''Return ``True`` if a socket error from a read operation is muted.
-        
-        This is when the socket cannot send sinse the socket has started shutting
-        down already.
+
+        This is when the socket cannot send sinse the socket has started
+        shutting down already.
         '''
         return error.errno in (ESHUTDOWN,)
-    
-    
+
+
 class SocketStreamSslTransport(SocketStreamTransport):
     SocketError = getattr(ssl, 'SSLError', None)
-    
+
     def __init__(self, event_loop, rawsock, protocol, sslcontext,
                  server_side=True, server_hostname=None, **kwargs):
         sslcontext = ssl_context(sslcontext, server_side=server_side)
@@ -222,22 +224,22 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self._handshake_writing = False
         super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
                                                        protocol, **kwargs)
-    
+
     @property
     def rawsock(self):
         '''The raw socket.
-        
+
         This is the socket not wrapped by the sslcontext.
         '''
         return self._rawsock
-            
+
     def _write_continue(self, e):
         return e.errno == ssl.SSL_ERROR_WANT_WRITE
-        
+
     def _read_continue(self, e):
         return e.errno in (SSLV3_ALERT_CERTIFICATE_UNKNOWN,
                            ssl.SSL_ERROR_WANT_READ)
-                
+
     def _do_handshake(self):
         loop = self._event_loop
         try:
@@ -276,17 +278,17 @@ class SocketStreamSslTransport(SocketStreamTransport):
 
 class TcpServer(Server):
     '''A TCP :class:`pulsar.Server`.
-    
+
     .. attribute:: consumer_factory
 
         Callable or a :class:`pulsar.ProtocolConsumer` class for producing
         :class:`ProtocolConsumer` which handle the receiving, decoding and
         sending of data.
-        
+
     '''
     def start_serving(self, backlog=100, sslcontext=None):
         '''Start serving the Tcp socket.
-        
+
         :param backlog: Number of maximum connections
         :param sslcontext: optional SSLContext object.
         :return: a :class:`pulsar.Deferred` called back when the server is
@@ -299,39 +301,39 @@ class TcpServer(Server):
                                                  backlog=backlog,
                                                  ssl=sslcontext)
             return res.add_callback(self._got_sockets
-                            ).add_both(partial(self.fire_event, 'start'))
-    
+                                    ).add_both(partial(self.fire_event,
+                                                       'start'))
+
     def stop_serving(self):
         '''Stop serving the :class:`pulsar.Server.sock`'''
         if self._sock:
             sock, self._sock = self._sock, None
             self._event_loop.call_now_threadsafe(self._stop_serving, sock)
-    
+
     def close(self):
         '''Same as :meth:`stop_serving` method.'''
         self.stop_serving()
-            
+
     def _got_sockets(self, sockets):
         self._sock = sockets[0]
         self.logger.info('%s serving on %s', self._name,
                          format_address(self.address))
         return self
-    
+
     def _stop_serving(self, sock):
         self._event_loop.stop_serving(sock)
         self.fire_event('stop')
-    
-    
+
+
 def create_connection(event_loop, protocol_factory, host, port, ssl,
                       family, proto, flags, sock, local_addr):
     if host is not None or port is not None:
         if sock is not None:
             raise ValueError(
                 'host/port and sock can not be specified at the same time')
-
-        fs = [event_loop.getaddrinfo(
-                host, port, family=family,
-                type=socket.SOCK_STREAM, proto=proto, flags=flags)]
+        fs = [event_loop.getaddrinfo(host, port, family=family,
+                                     type=socket.SOCK_STREAM, proto=proto,
+                                     flags=flags)]
         if local_addr is not None:
             fs.append(event_loop.getaddrinfo(
                 *local_addr, family=family,
@@ -400,7 +402,8 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
     else:
         transport = SocketStreamTransport(event_loop, sock, protocol)
     yield transport, protocol
-    
+
+
 def start_serving(event_loop, protocol_factory, host, port, ssl,
                   family, flags, sock, backlog, reuse_address):
     #Coroutine which starts socket servers
@@ -460,6 +463,7 @@ def start_serving(event_loop, protocol_factory, host, port, ssl,
                               event_loop, protocol_factory, sock, ssl)
     yield sockets
 
+
 def sock_connect(event_loop, sock, address, future=None):
     fd = sock.fileno()
     connect = False
@@ -476,8 +480,8 @@ def sock_connect(event_loop, sock, address, future=None):
                 sock.connect(address)
             except socket.error as e:
                 if e.args[0] in TRY_WRITE_AGAIN:
-                    event_loop.add_connector(fd, sock_connect, event_loop, sock,
-                                             address, future)
+                    event_loop.add_connector(fd, sock_connect, event_loop,
+                                             sock, address, future)
                     return future
                 else:
                     raise
@@ -492,7 +496,8 @@ def sock_connect(event_loop, sock, address, future=None):
             future.callback(None)
     except Exception as exc:
         return future.callback(exc)
-        
+
+
 def sock_accept(event_loop, sock, future=None):
     fd = sock.fileno()
     if future is None:
@@ -506,7 +511,8 @@ def sock_accept(event_loop, sock, future=None):
             future.set_result((conn, address))
         except socket.error as e:
             if e.args[0] in TRY_READ_AGAIN:
-                event_loop.add_reader(fd, sock_accept, event_loop, sock, future)
+                event_loop.add_reader(fd, sock_accept, event_loop, sock,
+                                      future)
             elif e.args[0] == EPERM:
                 # Netfilter on Linux may have rejected the
                 # connection, but we get told to try to accept() anyway.
@@ -516,6 +522,7 @@ def sock_accept(event_loop, sock, future=None):
         except Exception as e:
             future.callback(e)
     return future
+
 
 def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
     '''Used by start_serving.'''

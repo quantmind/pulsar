@@ -31,7 +31,7 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
         params = monitor.actorparams()
         name = params.pop('name', name)
         aid = params.pop('aid', aid)
-    else: # monitor not available, this is the arbiter
+    else:  # monitor not available, this is the arbiter
         if kind != 'monitor':
             raise TypeError('class %s not a valid monitor' % cls)
         kind = 'arbiter'
@@ -48,7 +48,8 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
                 raise TypeError('Class %s not a valid actor.' % cls)
             kind = cfg.concurrency
     if not kind:
-        raise TypeError('Cannot spawn class %s. not a valid concurrency.' % cls)
+        raise TypeError('Cannot spawn class %s. not a valid concurrency.'
+                        % cls)
     actor_proxy = concurrency(kind, cls, monitor, cfg, name=name,
                               aid=aid, **params)
     # Add to the list of managed actors if this is a remote actor
@@ -98,7 +99,7 @@ during its life time.
             return self
         elif aid in self.managed_actors:
             return self.managed_actors[aid]
-        elif self.monitor and aid==self.monitor.aid:
+        elif self.monitor and aid == self.monitor.aid:
             return self.monitor
 
     def spawn(self, actor_class=None, **params):
@@ -165,8 +166,8 @@ the timeout, stop the actor.
                 if not actor.mailbox:
                     self.logger.warning('Terminating %s. No mailbox.', actor)
                 else:
-                    self.logger.warning('Terminating %s. '
-                        'Could not stop after %.2f seconds.', actor, dt)
+                    self.logger.warning('Terminating %s. Could not stop after'
+                                        ' %.2f seconds.', actor, dt)
                 actor.terminate()
                 self.terminated_actors.append(actor)
                 self._remove_actor(actor)
@@ -254,14 +255,14 @@ By default it does nothing. Override if you need to.'''
         return self.monitor.requestloop
 
     def info(self):
-        data = {'actor': {'actor_class':self.actor_class.__name__,
-                          'concurrency':self.cfg.concurrency,
-                          'name':self.name,
-                          'age':self.impl.age,
+        data = {'actor': {'actor_class': self.actor_class.__name__,
+                          'concurrency': self.cfg.concurrency,
+                          'name': self.name,
+                          'age': self.impl.age,
                           'workers': len(self.managed_actors)}}
         if not self.started():
             return data
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)\
+        data['workers'] = [a.info for a in itervalues(self.managed_actors)
                            if a.info]
         return data
 

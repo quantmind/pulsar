@@ -33,11 +33,11 @@ class Poller(object):
     '''The Poller interface'''
     def __init__(self):
         self._handlers = {}
-        
+
     def handlers(self, fd):
         '''Return the handlers for file descriptor ``fd``.'''
         return self._handlers[fd]
-    
+
     def install_waker(self, event_loop):
         '''Install event loop waker.'''
         waker = Waker()
@@ -56,7 +56,7 @@ class Poller(object):
         except KeyError:
             self._register(fd, READ)
             self._handlers[fd] = (READ, handler, None, None)
-            
+
     def add_writer(self, fd, handler):
         '''Add a writer ``handler`` on file descriptor ``fd``.'''
         try:
@@ -69,7 +69,7 @@ class Poller(object):
         except KeyError:
             self._register(fd, WRITE)
             self._handlers[fd] = (WRITE, None, handler, None)
-            
+
     def add_error(self, fd, handler):
         '''Add a error ``handler`` on file descriptor ``fd``.'''
         try:
@@ -82,7 +82,7 @@ class Poller(object):
         except KeyError:
             self._register(fd, ERROR)
             self._handlers[fd] = (ERROR, None, None, handler)
-    
+
     def remove_reader(self, fd):
         '''Remove the read event on file descriptor ``fd``.'''
         try:
@@ -99,7 +99,7 @@ class Poller(object):
                 return False
         except KeyError:
             return False
-        
+
     def remove_writer(self, fd):
         '''Remove the write event on file descriptor ``fd``.'''
         try:
@@ -116,7 +116,7 @@ class Poller(object):
                 return False
         except KeyError:
             return False
-        
+
     def remove_error(self, fd):
         '''Remove the error event on file descriptor ``fd``.'''
         try:
@@ -133,17 +133,17 @@ class Poller(object):
                 return False
         except KeyError:
             return False
-    
+
     def handle_events(self, loop, fd, events):
         '''Handle ``events`` on file descriptor ``fd``.
-        
+
         This method is called by the event ``loop`` when new events are
         triggered.'''
         if fd in self._handlers:
             mask, reader, writer, error = self._handlers[fd]
         else:
             raise KeyError('Received an event on unregistered file '
-                           'descriptor %s' % fd)    
+                           'descriptor %s' % fd)
         processed = False
         if events & READ:
             processed = True
@@ -168,61 +168,59 @@ class Poller(object):
                                     ' descriptor %s.', fd)
         if not processed:
             loop.logger.warning('Could not handle events %s on %s', events, fd)
-    
+
     def unregister(self, fd):
         '''Unregister file descriptor ``fd`` from the poller.'''
         raise NotImplementedError
-    
+
     def close(self):
         self._handlers.clear()
-    
+
     def fileno(self):
         '''File descriptor for this poller.'''
         return 0
-    
+
     def fromfd(self, fd):
         raise NotImplementedError
-    
+
     def poll(self, timeout=1):
         raise NotImplementedError
-    
+
     def check_stream(self):
         pass
-    
+
     def _register(self, fd, events, old_events=None):
         raise NotImplementedError
 
 
 if hasattr(select, 'epoll'):
-    
+
     class IOepoll(Poller):
-        
+
         def __init__(self):
             super(IOepoll, self).__init__()
             self._epoll = select.epoll()
-            
+
         def poll(self, timeout=0.5):
             return self._epoll.poll(timeout)
-        
+
         def unregister(self, fd):
             if fd in self._handlers:
                 self._handlers.pop(fd)
                 self._epoll.unregister(fd)
             else:
                 raise IOError("fd %d not registered" % fd)
-            
+
         def _register(self, fd, events, old_events=None):
             if old_events is None:
                 self._epoll.register(fd, events)
             else:
                 self._epoll.modify(fd, events)
-            
-            
+
     POLLERS['epoll'] = IOepoll
-    
 
 if hasattr(select, 'kqueue'):
-    
+
     KQ_FILTER_READ = select.KQ_FILTER_READ
     KQ_FILTER_WRITE = select.KQ_FILTER_WRITE
     KQ_FILTER_WRITE = select.KQ_FILTER_WRITE
@@ -231,23 +229,23 @@ if hasattr(select, 'kqueue'):
     KQ_EV_ERROR = select.KQ_EV_ERROR
     KQ_EV_EOF = select.KQ_EV_EOF
     kevent = select.kevent
-    
+
     class IOkqueue(Poller):
-        
+
         def __init__(self):
             super(IOkqueue, self).__init__()
             self._kqueue = select.kqueue()
-        
+
         def fileno(self):
             return self._kqueue.fileno()
-            
+
         def unregister(self, fd):
             if fd in self._handlers:
                 events, _, _, _ = self._handlers.pop(fd)
                 self._control(fd, events, KQ_EV_DELETE)
             else:
                 raise IOError("fd %d not registered" % fd)
-        
+
         def poll(self, timeout):
             kevents = self._kqueue.control(None, 1000, timeout)
             events = {}
@@ -271,12 +269,12 @@ if hasattr(select, 'kqueue'):
                 if kevent.flags & KQ_EV_ERROR:
                     events[fd] = events.get(fd, 0) | ERROR
             return events.items()
-    
+
         def _register(self, fd, events, old_events=None):
             if old_events is not None:
                 self._control(fd, old_events, KQ_EV_DELETE)
             self._control(fd, events, KQ_EV_ADD)
-    
+
         def _control(self, fd, events, flags):
             k = None
             if events & WRITE:
@@ -286,9 +284,9 @@ if hasattr(select, 'kqueue'):
                 # Always read when there is not a write
                 k = kevent(fd, filter=KQ_FILTER_READ, flags=flags)
                 self._kqueue.control([k], 0)
-        
+
     POLLERS['kqueue'] = IOkqueue
-    
+
 
 class IOselect(Poller):
     '''An epoll like select class.'''
@@ -297,7 +295,7 @@ class IOselect(Poller):
         self.read_fds = set()
         self.write_fds = set()
         self.error_fds = set()
-    
+
     def _register(self, fd, events, old_events=None):
         if old_events is not None:
             self.read_fds.discard(fd)
@@ -313,7 +311,7 @@ class IOselect(Poller):
             # but as zero-byte reads by select, so when errors are requested
             # we need to listen for both read and error.
             self.read_fds.add(fd)
-                
+
     def unregister(self, fd):
         if fd in self._handlers:
             self._handlers.pop(fd)
@@ -322,7 +320,7 @@ class IOselect(Poller):
             self.error_fds.discard(fd)
         else:
             raise IOError("fd %d not registered" % fd)
-            
+
     def poll(self, timeout=None):
         readable, writeable, errors = _select(
             self.read_fds, self.write_fds, self.error_fds, timeout)
@@ -335,7 +333,6 @@ class IOselect(Poller):
             events[fd] = events.get(fd, 0) | ERROR
         return list(iteritems(events))
 
-
 POLLERS['select'] = IOselect
 DefaultIO = list(POLLERS.values())[0]
 
@@ -343,8 +340,8 @@ if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':
     default_name = 'epoll on linux, kqueue on mac, select on windows'
 else:
     default_name = tuple(POLLERS)[0]
-    
-    
+
+
 class PollerSetting(Global):
     name = "poller"
     flags = ["--io"]
@@ -352,7 +349,7 @@ class PollerSetting(Global):
     default = default_name
     desc = """\
         Specify the default selector used for I/O event polling.
-        
+
         The default value is the best possible for the system running the
         application.
         """

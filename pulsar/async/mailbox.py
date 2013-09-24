@@ -48,14 +48,13 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .defer import async, Failure, Deferred, maybe_failure, maybe_async
+from .defer import Failure, Deferred, maybe_failure, maybe_async
 from .protocols import ProtocolConsumer
 from .clients import Client, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
-    
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
 
 
@@ -71,6 +70,7 @@ class ProxyMailbox(object):
     '''A proxy for the arbiter :class:`Mailbox`.
     '''
     active_connections = 0
+
     def __init__(self, actor):
         mailbox = actor.monitor.mailbox
         if isinstance(mailbox, ProxyMailbox):
@@ -107,7 +107,7 @@ class Message(Request):
 
     @classmethod
     def command(cls, command, sender, target, args, kwargs, address=None,
-                 timeout=None):
+                timeout=None):
         command = get_command(command)
         data = {'command': command.__name__,
                 'sender': actorid(sender),
@@ -136,7 +136,8 @@ protocol.'''
         self._parser = FrameParser(kind=2)
         actor = get_actor()
         if actor.is_arbiter():
-            self.connection.bind_event('connection_lost', self._connection_lost)
+            self.connection.bind_event('connection_lost',
+                                       self._connection_lost)
 
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
@@ -190,7 +191,8 @@ protocol.'''
                 target = actor.get_actor(message['target'])
                 if target is None:
                     raise CommandError('Cannot execute "%s" in %s. Unknown '
-                            'actor %s' % (command, actor, message['target']))
+                                       'actor %s' % (command, actor,
+                                                     message['target']))
                 # Get the caller proxy without throwing
                 caller = get_proxy(actor.get_actor(message['sender']),
                                    safe=True)

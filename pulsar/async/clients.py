@@ -4,14 +4,12 @@ import math
 from functools import partial, reduce
 from threading import Lock
 
-from pulsar import ProtocolError
 from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
 from .defer import Failure, is_failure, multi_async
 
-from .protocols import (EventHandler, Producer, ConnectionProducer,
-                        release_connection)
+from .protocols import Producer, ConnectionProducer
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
 
