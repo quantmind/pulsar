@@ -3,7 +3,7 @@ import hashlib
 from functools import partial
 
 from pulsar import HttpException, ProtocolError, ProtocolConsumer
-from pulsar.utils.httpurl import to_bytes, native_str
+from pulsar.utils.pep import to_bytes, native_str
 from pulsar.utils.websocket import FrameParser, Frame
 from pulsar.apps import wsgi
 

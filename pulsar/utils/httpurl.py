@@ -59,7 +59,7 @@ import zlib
 from collections import deque
 
 from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, iteritems, itervalues
+from .pep import ispy3k, iteritems, itervalues, to_bytes
 
 try:
     from http_parser.parser import HttpParser as CHttpParser
@@ -108,31 +108,13 @@ if ispy3k:  # Python 3
                               urljoin)
     from http.client import responses
     from http.cookiejar import CookieJar, Cookie
-    from http.cookies import SimpleCookie, BaseCookie, Morsel, CookieError
+    from http.cookies import SimpleCookie, BaseCookie, CookieError
 
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
     ascii_letters = string.ascii_letters
     chr = chr
     is_string = lambda s: isinstance(s, str)
-
-    def to_bytes(s, encoding=None, errors=None):
-        errors = errors or 'strict'
-        encoding = encoding or 'utf-8'
-        if isinstance(s, bytes):
-            if encoding != 'utf-8':
-                return s.decode('utf-8', errors).encode(encoding, errors)
-            else:
-                return s
-        else:
-            return ('%s' % s).encode(encoding, errors)
-
-    def to_string(s, encoding=None, errors='strict'):
-        """Inverse of to_bytes"""
-        if isinstance(s, bytes):
-            return s.decode(encoding or 'utf-8', errors)
-        else:
-            return str(s)
 
     def native_str(s, encoding=None):
         if isinstance(s, bytes):
@@ -157,7 +139,7 @@ else:   # pragma : no cover
                           parse_qsl)
     from httplib import responses
     from cookielib import CookieJar, Cookie
-    from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
+    from Cookie import SimpleCookie, BaseCookie, CookieError
 
     string_type = unicode
     ascii_letters = string.letters
@@ -189,24 +171,7 @@ else:   # pragma : no cover
             if err is not None:
                 raise err
             else:
-                raise error("getaddrinfo returns an empty list")
-
-    def to_bytes(s, encoding=None, errors='strict'):
-        encoding = encoding or 'utf-8'
-        if isinstance(s, bytes):
-            if encoding != 'utf-8':
-                return s.decode('utf-8', errors).encode(encoding, errors)
-            else:
-                return s
-        else:
-            return unicode(s).encode(encoding, errors)
-
-    def to_string(s, encoding=None, errors='strict'):
-        """Inverse of to_bytes"""
-        if isinstance(s, bytes):
-            return s.decode(encoding or 'utf-8', errors)
-        else:
-            return unicode(s)
+                raise Exception("getaddrinfo returns an empty list")
 
     def native_str(s, encoding=None):
         if isinstance(s, unicode):
@@ -348,7 +313,7 @@ def remove_double_slash(route):
     return route
 
 
-def is_closed(sock):    # pragma nocover
+def is_closed(sock):
     """Check if socket is connected."""
     if not sock:
         return False
@@ -710,9 +675,6 @@ results in::
 
     def pop(self, key, *args):
         return self._headers.pop(header_field(key), *args)
-
-    def copy(self):
-        return self.__class__(self, kind=self.kind)
 
     def clear(self):
         '''Same as :meth:`dict.clear`, it removes all headers.'''

@@ -27,7 +27,6 @@ class RedisTest(unittest.TestCase):
         return cls.pool.parser()
 
 
-@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
 class PythonParser(object):
     parser_class = RedisParser
 
@@ -84,5 +83,6 @@ class TestRedisPool(RedisTest):
         self.assertEqual(connection.processed, 3+password)
 
 
+@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
 class TestRedisPoolPythonParser(PythonParser, TestRedisPool):
     pass

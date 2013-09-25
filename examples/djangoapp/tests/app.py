@@ -1,7 +1,7 @@
 '''Tests django chat application.'''
 import json
 
-from pulsar import send, get_application, Deferred
+from pulsar import send, get_application, Queue
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
@@ -23,15 +23,13 @@ def start_server(actor, name, argv):
 class MessageHandler(ws.WS):
 
     def __init__(self):
-        self.new_future()
+        self.queue = Queue()
 
-    def new_future(self):
-        self.future = Deferred()
+    def get(self):
+        return self.queue.get()
 
-    def on_message(self, request, message):
-        future = self.future
-        self.new_future()
-        future.callback(message)
+    def on_message(self, websocket, message):
+        return self.queue.put(message)
 
 
 @unittest.skipUnless(manage, 'Requires django')
@@ -71,11 +69,12 @@ class TestDjangoChat(unittest.TestCase):
         self.assertTrue(ws.connection)
 
     def test_websocket(self):
-        ws = yield self.http.get(self.ws).on_headers
+        ws = yield self.http.get(self.ws, websocket_handler=MessageHandler()
+                                 ).on_headers
         self.assertTrue(ws)
-        ws.handler = MessageHandler()
+        self.assertIsInstance(ws.handler, MessageHandler)
         ws.write('Hello there!')
-        data = yield ws.handler.future
+        data = yield ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hello there!')
 

@@ -37,8 +37,8 @@ from pulsar import __version__, SERVER_NAME
 from . import system
 from .internet import parse_address
 from .importer import import_system_file
-from .httpurl import (to_bytes, iteritems, HttpParser as PyHttpParser,
-                      native_str)
+from .httpurl import HttpParser as PyHttpParser
+from .pep import to_bytes, iteritems, native_str
 
 
 __all__ = ['Config',

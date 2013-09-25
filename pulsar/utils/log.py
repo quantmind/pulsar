@@ -31,10 +31,6 @@ LOG_LEVELS = {
 }
 
 
-def configure_logging(logger='pulsar', **kw):
-    LogginMixin().configure_logging(logger=logger, **kw)
-
-
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -85,20 +81,10 @@ def local_method(f):
             setattr(local, name, f(self))
         return getattr(local, name)
     return _
-    return property(_, doc=f.__doc__)
 
 
 def local_property(f):
     return property(local_method(f), doc=f.__doc__)
-
-
-def threadsafe(f):
-    def _(self, *args, **kwargs):
-        with self.lock:
-            return f(self, *args, **kwargs)
-    _.__doc__ = f.__doc__
-    _.__name__ = f.__name__
-    return _
 
 
 class WritelnDecorator(object):
@@ -316,7 +302,7 @@ class ColoredStream(logging.StreamHandler):
             self.flush()
 
 
-if win32:
+if win32:   # pragma    nocover
     import ctypes
     from ctypes import wintypes
 
