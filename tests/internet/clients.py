@@ -44,13 +44,19 @@ class TestClients(unittest.TestCase):
     def test_bad_request_full_response(self):
         address = ('127.0.0.1', 9099)
         client = Echo(full_response=True)
-        result = client.request(address, b'Hello!')
-        self.assertTrue(result.connection)
-        try:
-            yield result.on_finished
-        except socket.error as e:
-            pass
-        self.assertEqual(len(client.connection_pools), 1)
+
+        def _test_bad_request():
+            # Run on client event loop so we test for the existing connection
+            result = client.request(address, b'Hello!')
+            self.assertTrue(result.connection)
+            try:
+                yield result.on_finished
+            except socket.error as e:
+                pass
+            self.assertFalse(result.connection.transport)
+            self.assertEqual(len(client.connection_pools), 1)
+
+        client.get_event_loop().call_soon(_test_bad_request)
 
     def test_bad_request_in_thread(self):
         address = ('127.0.0.1', 9099)
