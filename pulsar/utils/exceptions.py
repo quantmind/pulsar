@@ -47,7 +47,7 @@ class HaltServer(BaseException):
 
     When ``exit_code`` is greater than 1, it is considered an expected
     failure and therefore the full stack trace is not logged.'''
-    def __init__(self, reason='Exiting server.', exit_code=1):
+    def __init__(self, reason='Exiting server.', exit_code=2):
         super(HaltServer, self).__init__(reason)
         self.exit_code = exit_code
 
