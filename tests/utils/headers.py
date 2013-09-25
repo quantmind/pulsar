@@ -42,6 +42,16 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 2)
         headers = str(h)
         self.assertTrue('Proxy-Connection:' in headers)
+    
+    def test_multiple_entry(self):
+        h = Headers([('Connection', 'Keep-Alive'),
+                     ('Accept-Encoding', 'identity'),
+                     ('Accept-Encoding', 'deflate'),
+                     ('Accept-Encoding', 'compress'),
+                     ('Accept-Encoding', 'gzip')],
+                     kind='client')
+        accept = h['accept-encoding']
+        self.assertEqual(accept, 'identity, deflate, compress, gzip')
         
     def test_accept_content_type(self):
         accept = accept_content_type()

@@ -634,10 +634,12 @@ header fields.
         return header_type_to_int.get(self.kind)
 
     def update(self, iterable):
-        """Extend the headers with a dictionary or an iterable yielding keys
-and values."""
+        """Extend the headers.
+
+        :param iterable: a dictionary or an iterable over keys, vaues tuples.
+        """
         for key, value in mapping_iterator(iterable):
-            self[key] = value
+            self.add_header(key, value)
 
     def copy(self):
         return self.__class__(self, kind=self.kind, strict=self.strict)
@@ -659,19 +661,19 @@ and values."""
             self._headers[key] = value
 
     def get(self, key, default=None):
-        '''Get the value at header field ``key`` as a comma separated
-string of values. For example::
+        '''Get the field value at ``key`` as comma separated values.
+        For example::
 
-    >>> from pulsar.utils.httpurl import Headers
-    >>> h = Headers(kind='client')
-    >>> h.add_header('accept-encoding', 'gzip')
-    >>> h.add_header('accept-encoding', 'deflate')
-    >>> h.get('accept-encoding')
+            >>> from pulsar.utils.httpurl import Headers
+            >>> h = Headers(kind='client')
+            >>> h.add_header('accept-encoding', 'gzip')
+            >>> h.add_header('accept-encoding', 'deflate')
+            >>> h.get('accept-encoding')
 
-results in::
+        results in::
 
-    'gzip, deflate'
-'''
+            'gzip, deflate'
+        '''
         if key in self:
             return self.__getitem__(key)
         else:
@@ -721,8 +723,10 @@ it returns an empty list.'''
         return list(self)
 
     def add_header(self, key, value, **params):
-        '''Add *value* to *key* header. If the header is already available,
-append the value to the list.'''
+        '''Add ``value`` to ``key`` header.
+
+        If the header is already available, append the value to the list.
+        '''
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])

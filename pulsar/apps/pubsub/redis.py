@@ -14,7 +14,7 @@ class PubSubBackend(pubsub.PubSubBackend):
 
     @local_property
     def redis(self):
-        self._client = redis.RedisClient()
+        self._client = redis.RedisPool()
         client = self._client.from_connection_string(self.connection_string)
         pubsub = client.pubsub()
         pubsub.bind_event('on_message', self.on_message)

@@ -283,10 +283,10 @@ class HttpRequest(pulsar.Request):
         self.files = files
         self.source_address = source_address
         self.new_parser()
-        self.headers = client.get_headers(self, headers)
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
         client.set_proxy(self)
+        self.headers = client.get_headers(self, headers)
         if client.cookies:
             client.cookies.add_cookie_header(self)
         if cookies:
@@ -404,6 +404,7 @@ class HttpRequest(pulsar.Request):
             # Call body before fist_line in case the query is changes.
         self.body = body = self.encode_body()
         first_line = self.first_line()
+        self.headers['host'] = request_host(self)
         if body:
             self.headers['content-length'] = str(len(body))
             if self.wait_continue:
@@ -674,7 +675,7 @@ class HttpClient(pulsar.Client):
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
-    client_version = 'pulsar-%s' % pulsar.version
+    client_version = pulsar.SERVER_SOFTWARE
     '''String for the ``User-Agent`` header.'''
     version = 'HTTP/1.1'
     '''Default HTTP request version for this :class:`HttpClient`.
@@ -682,9 +683,8 @@ class HttpClient(pulsar.Client):
     It can be overwritten on :meth:`request`.'''
     DEFAULT_HTTP_HEADERS = Headers([
         ('Connection', 'Keep-Alive'),
-        ('Accept-Encoding', 'identity'),
+        ('Accept', '*/*'),
         ('Accept-Encoding', 'deflate'),
-        ('Accept-Encoding', 'compress'),
         ('Accept-Encoding', 'gzip')],
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
