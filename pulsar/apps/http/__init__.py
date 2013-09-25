@@ -225,8 +225,43 @@ scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
 
-class HttpTunnel(object):
+class RequestBase(object):
     inp_params = None
+    history = None
+    full_url = None
+
+    @property
+    def unverifiable(self):
+        '''Unverifiable when a redirect.
+
+        It is a redirect when :attr:`history` has past requests.
+        '''
+        return bool(self.history)
+
+    @property
+    def origin_req_host(self):
+        if self.history:
+            return self.history[0].request.origin_req_host
+        else:
+            return request_host(self)
+
+
+if not ispy33:  # pragma     nocover
+    _RequestBase = RequestBase
+
+    class RequestBase(_RequestBase):
+
+        def get_full_url(self):
+            return self.full_url
+
+        def is_unverifiable(self):
+            return self.unverifiable
+
+        def get_origin_req_host(self):
+            return self.origin_req_host
+
+
+class HttpTunnel(RequestBase):
     # Don't release connection when tunneling
     release_connection = False
     first_line = None
@@ -264,7 +299,7 @@ class HttpTunnel(object):
         return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
 
 
-class HttpRequest(pulsar.Request):
+class HttpRequest(pulsar.Request, RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
 
     .. attribute:: method
@@ -285,11 +320,9 @@ class HttpRequest(pulsar.Request):
         ``Expect: 100-Continue`` header.
 
     '''
-    full_url = None
     _proxy = None
     _ssl = None
     _tunnel = None
-    _tunnel_headers = None
 
     def __init__(self, client, url, method, inp_params, headers=None,
                  data=None, files=None, timeout=None, history=None,
@@ -360,28 +393,6 @@ class HttpRequest(pulsar.Request):
     def proxy(self):
         '''Proxy server for this request.'''
         return self._proxy
-
-    @property
-    def tunnel_headers(self):
-        '''Headers for HTTP CONNECT Tunneling.'''
-        if self._tunnel_headers is None:
-            self._tunnel_headers = self.client.get_headers(self)
-        return self._tunnel_headers
-
-    @property
-    def unverifiable(self):
-        '''Unverifiable when a redirect.
-
-        It is a redirect when :attr:`history` has past requests.
-        '''
-        return bool(self.history)
-
-    @property
-    def origin_req_host(self):
-        if self.history:
-            return self.history[0].request.origin_req_host
-        else:
-            return request_host(self)
 
     @property
     def netloc(self):
@@ -517,14 +528,6 @@ class HttpRequest(pulsar.Request):
             self.data = query
             query = urlencode(query)
         self.query = query
-
-    if not ispy33:  # pragma     nocover
-        # Provide support for python < 3.3
-        def is_unverifiable(self):
-            return self.unverifiable
-
-        def get_origin_req_host(self):
-            return self.origin_req_host
 
 
 class HttpResponse(pulsar.ProtocolConsumer):
