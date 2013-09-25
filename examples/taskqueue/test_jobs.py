@@ -1,10 +1,10 @@
 '''Tests the "taskqueue" example.'''
-from pulsar.apps.tasks import Task, TaskBackend
+from pulsar.apps.tasks import TaskBackend
 from pulsar.apps.test import unittest
 
 
 class TestTaskClasses(unittest.TestCase):
-    
+
     def testTaskBackend(self):
         b = TaskBackend('dummy', None)
         self.assertRaises(NotImplementedError, b.get_task, 1)

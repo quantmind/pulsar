@@ -45,26 +45,21 @@ parse cookie
 import os
 import sys
 import re
-import io
 import string
 import time
 import mimetypes
 import platform
-import codecs
 import socket
 import logging
-from functools import reduce
 from hashlib import sha1, md5
 from uuid import uuid4
-from datetime import datetime, timedelta
 from email.utils import formatdate
 from io import BytesIO
 import zlib
 from collections import deque
-from copy import copy
 
 from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, ispy26, iteritems, itervalues
+from .pep import ispy3k, iteritems, itervalues
 
 try:
     from http_parser.parser import HttpParser as CHttpParser
@@ -118,9 +113,6 @@ if ispy3k:  # Python 3
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
     ascii_letters = string.ascii_letters
-    zip = zip
-    map = map
-    range = range
     chr = chr
     is_string = lambda s: isinstance(s, str)
 
@@ -166,11 +158,9 @@ else:   # pragma : no cover
     from httplib import responses
     from cookielib import CookieJar, Cookie
     from Cookie import SimpleCookie, BaseCookie, Morsel, CookieError
-    from itertools import izip as zip, imap as map
 
     string_type = unicode
     ascii_letters = string.letters
-    range = xrange
     chr = unichr
     is_string = lambda s: isinstance(s, unicode)
 

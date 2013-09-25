@@ -225,6 +225,45 @@ scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
 
+class HttpTunnel(object):
+    inp_params = None
+    # Don't release connection when tunneling
+    release_connection = False
+    first_line = None
+
+    def __init__(self, request, scheme, host):
+        self.request = request
+        self.scheme = scheme
+        self.host, self.port = get_hostport(scheme, host)
+        self.full_url = '%s://%s:%s' % (scheme, self.host, self.port)
+        self.parser = request.parser
+        request.new_parser()
+        self.headers = request.client.tunnel_headers.copy()
+        self.headers['host'] = request_host(self)
+
+    def __repr__(self):
+        return 'Tunnel %s' % self.full_url
+    __str__ = __repr__
+
+    @property
+    def key(self):
+        return self.request.key
+
+    @property
+    def address(self):
+        return (self.host, self.port)
+
+    @property
+    def client(self):
+        return self.request.client
+
+    def encode(self):
+        req = self.request
+        bits = req.target_address + (req.version,)
+        self.first_line = 'CONNECT %s:%s %s\r\n' % bits
+        return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
+
+
 class HttpRequest(pulsar.Request):
     '''An :class:`HttpClient` request for an HTTP resource.
 
@@ -286,16 +325,18 @@ class HttpRequest(pulsar.Request):
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
         client.set_proxy(self)
+        self.full_url = self.get_full_url()
         self.headers = client.get_headers(self, headers)
         if client.cookies:
             client.cookies.add_cookie_header(self)
         if cookies:
             cookiejar_from_dict(cookies).add_cookie_header(self)
+        self.headers['host'] = request_host(self)
 
     @property
     def address(self):
         '''``(host, port)`` tuple of the HTTP resource'''
-        return self._tunnel if self._tunnel else (self.host, self.port)
+        return self._tunnel.address if self._tunnel else (self.host, self.port)
 
     @property
     def target_address(self):
@@ -386,7 +427,7 @@ class HttpRequest(pulsar.Request):
                 self._set_hostport(scheme, host[0])
                 self._proxy = scheme_host(scheme, host[0])
             else:
-                self._tunnel = get_hostport(scheme, host[0])
+                self._tunnel = HttpTunnel(self, scheme, host[0])
 
     def _set_hostport(self, scheme, host):
         self._tunnel = None
@@ -404,7 +445,6 @@ class HttpRequest(pulsar.Request):
             # Call body before fist_line in case the query is changes.
         self.body = body = self.encode_body()
         first_line = self.first_line()
-        self.headers['host'] = request_host(self)
         if body:
             self.headers['content-length'] = str(len(body))
             if self.wait_continue:
@@ -687,6 +727,10 @@ class HttpClient(pulsar.Client):
         ('Accept-Encoding', 'deflate'),
         ('Accept-Encoding', 'gzip')],
         kind='client')
+    DEFAULT_TUNNEL_HEADERS = Headers([
+        ('Connection', 'Keep-Alive'),
+        ('Accept', 'text/plain, */*; q=0.8')],
+        kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
                           'timeout', 'websocket_handler')
@@ -710,6 +754,8 @@ class HttpClient(pulsar.Client):
         if headers:
             dheaders.update(headers)
         self.headers = dheaders
+        self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
+        self.tunnel_headers['user-agent'] = self.client_version
         self.proxy_info = dict(proxy_info or ())
         if not self.proxy_info and self.trust_env:
             self.proxy_info = get_environ_proxies()

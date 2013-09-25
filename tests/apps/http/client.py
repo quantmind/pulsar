@@ -25,7 +25,7 @@ class TestHttpClientBase:
     with_tls = False
     proxy_app = None
     timeout = 10
-    
+
     @classmethod
     def setUpClass(cls):
         # Create the HttpBin server by sending this request to the arbiter
@@ -51,19 +51,19 @@ class TestHttpClientBase:
                         name='proxyserver-%s' % cls.__name__.lower())
             cls.proxy_app = yield send('arbiter', 'run', s)
             cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
-        
+
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
             yield send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
             yield send('arbiter', 'kill_actor', cls.proxy_app.name)
-    
+
     @property
     def tunneling(self):
         '''When tunneling, the client needs to perform an extra request.'''
         return int(self.with_proxy and self.with_tls)
-    
+
     def client(self, timeout=None, **kwargs):
         timeout = timeout or self.timeout
         if self.with_proxy:
@@ -72,7 +72,7 @@ class TestHttpClientBase:
                                     'ws': self.proxy_uri,
                                     'wss': self.proxy_uri}
         return HttpClient(timeout=timeout, **kwargs)
-    
+
     def _check_pool(self, http, response, available=1, processed=1,
                     created=1, pools=1):
         #Test the connection pool
@@ -86,22 +86,22 @@ class TestHttpClientBase:
             if available == 1:
                 connection = tuple(pool._available_connections)[0]
                 self.assertEqual(connection.processed, processed)
-    
+
     def _after(self, method, response):
         '''Check for a after_%s % method to test the response.'''
         method = getattr(self, 'after_%s' % method, None)
         if method:
             method(response)
-            
+
     def httpbin(self, *suffix):
         if suffix:
             return self.uri + '/'.join(suffix)
         else:
             return self.uri
-        
+
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
-    
+
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -123,7 +123,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             pass
         self.assertTrue(response.headers)
         self.assertIsInstance(response.on_headers.result, Failure)
-                
+
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -135,13 +135,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertFalse(request.has_header('foo'))
         self.assertEqual(request.headers.kind, 'client')
         self.assertEqual(request.unredirected_headers.kind, 'client')
-    
+
     def test_HttpResponse(self):
         r = HttpResponse()
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
         self.assertEqual(r.headers, None)
-    
+
     def test_redirect_1(self):
         http = self.client()
         response = yield http.get(self.httpbin('redirect', '1')).on_finished
@@ -154,7 +154,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection.processed, 2+self.tunneling)
-    
+
     def test_redirect_6(self):
         http = self.client()
         response = yield http.get(self.httpbin('redirect', '6')).on_finished
@@ -167,7 +167,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection.processed, 7+self.tunneling)
-        
+
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
         was passed by the client.
@@ -179,7 +179,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'close')
         self.assertEqual(str(response), '200')
         self._check_pool(http, response, available=0)
-    
+
     def test_http11(self):
         '''By default HTTP/1.1 keep alive the connection if no keep-alive header
         was passed by the client.
@@ -198,7 +198,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             headers=[('connection', 'close')]).on_finished
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
-        
+
     def test_client(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)
@@ -210,7 +210,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                                'https': self.proxy_uri,
                                                'ws': self.proxy_uri,
                                                'wss': self.proxy_uri})
-  
+
     def test_200_get(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
@@ -225,7 +225,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)
-        
+
     def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()
@@ -239,7 +239,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, created=2)
-        
+
     def test_large_response(self):
         http = self.client(timeout=60)
         response = yield http.get(self.httpbin('getsize/600000')).on_finished
@@ -248,7 +248,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
-    
+
     def test_too_many_redirects(self):
         http = self.client()
         response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
@@ -261,7 +261,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))
         self.assertTrue(history[1].url.endswith('/redirect/4'))
-        
+
     def test_200_get_data(self):
         http = self.client()
         response = yield http.get(self.httpbin('get'),
@@ -272,7 +272,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
                 self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
-        
+
     def test_200_gzip(self):
         http = self.client()
         response = yield http.get(self.httpbin('gzip')).on_finished
@@ -292,7 +292,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)
-        
+
     def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -303,7 +303,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
-    
+
     def test_post_multipart(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -313,7 +313,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
-        
+
     def test_put(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -323,7 +323,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
-        
+
     def test_patch(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -334,7 +334,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = response.content_json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
-        
+
     def test_delete(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
@@ -353,13 +353,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
         parser = response.parser
         self.assertTrue(parser.is_chunked())
-        
+
     def test_stream_response(self):
         http = self.client()
         response = yield http.get(self.httpbin('stream/3000/20')).on_finished
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
-        
+
     def test_expect(self):
         http = self.client()
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -367,7 +367,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('post'), data=data,
                                    wait_continue=True).on_finished
         self.assertEqual(response.status_code, 200)
-        
+
     def test_cookie(self):
         http = self.client()
         # First set the cookies
@@ -395,7 +395,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         result = r.content_json()
         self.assertFalse(result['cookies'])
-    
+
     def test_basic_authentication(self):
         http = self.client()
         r = yield http.get(self.httpbin('basic-auth/bla/foo')).on_finished
@@ -414,5 +414,31 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         r = yield http.get(self.httpbin(
             'digest-auth/luca/bla/auth')).on_finished
         self.assertEqual(r.status_code, 200)
-        
-    
+
+    def test_missing_host_400(self):
+        http = self.client()
+
+        def remove_host(response):
+            host = response.request.headers.pop('host')
+            self.assertTrue(host)
+
+        response = yield http.get(self.httpbin(),
+                                  pre_request=remove_host).on_finished
+        if self.with_proxy and not self.tunneling:
+            # When using a proxy, The proxy server obtains the host from
+            # the absolute URI which part of the request.
+            self.assertEqual(response.status_code, 200)
+        else:
+            # In any other request, this should cause a 400 error
+            self.assertEqual(response.status_code, 400)
+
+    def test_missing_host_10(self):
+        http = self.client(version='HTTP/1.0')
+
+        def remove_host(response):
+            host = response.request.headers.pop('host')
+            self.assertTrue(host)
+
+        response = yield http.get(self.httpbin(),
+                                  pre_request=remove_host).on_finished
+        self.assertEqual(response.status_code, 200)

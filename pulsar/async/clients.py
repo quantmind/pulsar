@@ -58,10 +58,9 @@ class Request(object):
     def create_connection(self, event_loop, connection):
         '''Called by a :class:`Client` when a new connection is needed.
         '''
-        res = event_loop.create_connection(lambda: connection,
-                                           self.address[0],
-                                           self.address[1],
-                                           ssl=self.ssl)
+        host, port = self.address
+        res = event_loop.create_connection(
+            lambda: connection, host, port, ssl=self.ssl)
         return res.add_callback(self._connection_made)
 
     def _connection_made(self, transport_protocol):

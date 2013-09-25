@@ -2,7 +2,7 @@ import json
 import time
 
 from pulsar import is_failure
-from pulsar.apps import wsgi, ws, pubsub
+from pulsar.apps import ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import lazyproperty
 
@@ -16,31 +16,34 @@ def home(request):
 
 
 class Client(pubsub.Client):
-    
+
     def __init__(self, connection):
         self.connection = connection
-        
+
     def __call__(self, channel, message):
         if channel == 'webchat':
             self.connection.write(message)
 
 
 class Chat(ws.WS):
-    '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
-application.'''
+    '''The websocket handler managing the chat application.
+    '''
     @lazyproperty
     def pubsub(self):
         p = pubsub.PubSub()
         p.subscribe('webchat')
         return p
-            
+
     def on_open(self, websocket):
-        '''When a new websocket connection is established it add connection
-to the set of clients listening for messages.'''
+        '''A new websocket connection is established.
+
+        Add connection to the set of clients listening for messages.
+        '''
         self.pubsub.add_client(Client(websocket))
-        
+
     def on_message(self, websocket, msg):
-        '''When a new message arrives, it publishes to all listening clients.'''
+        '''When a new message arrives, it publishes to all listening clients.
+        '''
         if msg:
             lines = []
             for l in msg.split('\n'):
@@ -56,13 +59,13 @@ to the set of clients listening for messages.'''
                     user = 'anonymous'
                 msg = {'message': msg, 'user': user, 'time': time.time()}
                 self.pubsub.publish('webchat', json.dumps(msg))
-                
+
 
 class middleware(object):
     '''Middleware for serving the Chat websocket'''
     def __init__(self):
         self._web_socket = ws.WebSocket('/message', Chat())
-        
+
     def process_request(self, request):
         from django.http import HttpResponse
         data = AttributeDictionary(request.__dict__)

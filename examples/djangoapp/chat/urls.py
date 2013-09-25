@@ -6,9 +6,11 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 admin.autodiscover()
 
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^$', 'chat.views.home'),
     url(r'^admin/', include(admin.site.urls))
 )
+
 
 urlpatterns += staticfiles_urlpatterns()

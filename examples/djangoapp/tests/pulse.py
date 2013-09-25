@@ -9,7 +9,7 @@ from pulsar.apps.test import unittest
 
 @unittest.skipUnless(Command, 'Requires django')
 class pulseCommandTest(unittest.TestCase):
-    
+
     def test_pulse(self):
         cmnd = Command()
         hnd = cmnd.handle(dryrun=True)

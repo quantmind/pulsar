@@ -13,7 +13,7 @@ else:
 from unittest import TestSuite
 
 import pulsar
-from pulsar.utils.httpurl import range
+from pulsar.utils.pep import range
 
 from pulsar.apps import test
 

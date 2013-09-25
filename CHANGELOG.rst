@@ -1,9 +1,12 @@
 Ver. 0.7.0 - Development
 ===========================
+* WSGI respondes 400 Bad Request to request with no ``Host`` header if the
+  request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
+  guidelines.
 * Asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
 * Removed the specialised application worker and monitor classes.
   Use standard actor and monitor with specialised
-  :ref:`start hooks <actor-hooks>` instead. 
+  :ref:`start hooks <actor-hooks>` instead.
 * Removed the global event dispatcher. No longer used. Less global variables the better.
 * Protocol consumer to handle one request only. Better upgrade method for connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
@@ -14,6 +17,8 @@ Ver. 0.7.0 - Development
 * Added :class:`pulsar.Actor.stream` attribute to write messages without using
   the logger.
 * **649 regression tests**, **88% coverage**.
+
+.. _`rfc2616 sec 5.2`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
 
 Ver. 0.6.0 - 2013-Sep-05
 ===========================
@@ -36,13 +41,13 @@ Ver. 0.6.0 - 2013-Sep-05
     * 50% Faster :class:`pulsar.Deferred` initialisation.
     * Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
       deferred's callbacks without affecting the result.
-  
+
 * Actors:
     * Added :ref:`--thread_workers <setting-thread_workers>` config option
       for controlling the default number of workers in actor thread pools.
     * New asynchronous :class:`pulsar.ThreadPool` for CPU bound operations.
     * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
-    
+
 * Applications:
     * Added ``flush`` method to the
       :ref:`task queue backend <apps-taskqueue-backend>`.
@@ -63,10 +68,10 @@ Ver. 0.6.0 - 2013-Sep-05
     * Bug fix and enhancement of :ref:`Router <wsgi-router>` metaclass. It
       is now possible to overwrite the relative ``position`` of children routes
       via the :ref:`route decorator <wsgi-route-decorator>`.
-      
+
 * Examples:
     * Proxy server example uses the new :class:`pulsar.Queue`.
-    
+
 * Miscellaneous:
     * Added :mod:`pulsar.utils.exceptions` documentation.
 
@@ -117,7 +122,7 @@ Ver. 0.5.0 - 2013-May-22
      :ref:`asynchronous components <tutorials-coroutine>` tutorial for
      further information.
    * Added :func:`pulsar.async_sleep` function.
-   
+
 * Actors:
    * :class:`pulsar.Actor` internal message passing uses the (unmasked)
      websocket protocol in a bidirectional communication between the
@@ -127,7 +132,7 @@ Ver. 0.5.0 - 2013-May-22
    * Removed the requestloop attribute, the actor event loop is now accessed
      via the :attr:`pulsar.Actor.event_loop` attribute or via the pep-3156_
      function ``get_event_loop``.
-     
+
 * Applications:
     * Added ability to add Websocket sub-protocols and extensions.
     * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket
@@ -211,7 +216,7 @@ Ver. 0.4 - 2012-Nov-19
 * Overall refactoring of API and therefore incompatible with previous versions.
 * Development status set to ``Beta``.
 * Support pypy_ and python 3.3.
-* Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP 
+* Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP
   synchronous and asynchronous clients.
 * Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
   can add separate callbacks for handling errors.
@@ -231,7 +236,7 @@ Ver. 0.3 - 2012-May-03
 * This version brings several bug fixes, more tests, more docs, and improvements
   in the :mod:`pulsar.apps.tasks` application.
 * Added :meth:`pulsar.apps.tasks.Job.send_to_queue` method for allowing
-  :meth:`pulsar.apps.tasks.Task` to create new tasks. 
+  :meth:`pulsar.apps.tasks.Task` to create new tasks.
 * The current :class:`pulsar.Actor` is always available on the current thread
   ``actor`` attribute.
 * Trap errors in :meth:`pulsar.IOLoop.do_loop_tasks` to avoid having monitors
@@ -258,7 +263,7 @@ Ver. 0.2.1 - 2011-Dec-18
 =======================================
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
 * Added new setting for configuring http responses when an unhandled error
-  occurs (Issue #7). 
+  occurs (Issue #7).
 * It is possible to access the actor :attr:`pulsar.Actor.ioloop` form the
   current thread ``ioloop`` attribute.
 * Removed outbox and replaced inbox with :attr:`Actor.mailbox`.

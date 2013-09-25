@@ -17,7 +17,7 @@ Open a new shell and launch python and type::
 
 The ``force_sync`` keyword is used here to force the Json RPC client to
 wait for a full response rather than returning a :class:`pulsar.Deferred`.
-Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial. 
+Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial.
 
 Implementation
 -----------------
@@ -29,7 +29,7 @@ the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.
 .. autoclass:: Calculator
    :members:
    :member-order: bysource
-   
+
 .. autoclass:: Site
    :members:
    :member-order: bysource
@@ -37,14 +37,15 @@ the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.
 '''
 try:
     import pulsar
-except ImportError: #pragma nocover
+except ImportError:  # pragma nocover
     import sys
     sys.path.append('../../')
-    
+
 from random import normalvariate
 
 from pulsar.apps import rpc, wsgi
-from pulsar.utils.httpurl import range, JSON_CONTENT_TYPES
+from pulsar.utils.httpurl import JSON_CONTENT_TYPES
+from pulsar.utils.pep import range
 
 
 def divide(request, a, b):
@@ -52,9 +53,11 @@ def divide(request, a, b):
 :func:`pulsar.apps.rpc.rpc_method` decorator.'''
     return float(a)/float(b)
 
+
 def request_handler(request, format, kwargs):
     '''Dummy request handler'''
     return kwargs
+
 
 def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
     '''Lists of random walks.'''
@@ -70,19 +73,19 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 
 
 class RequestCheck:
-    
+
     def __call__(self, request, name):
         assert(request.json_data['method'] == name)
         return True
 
 
 class Root(rpc.PulsarServerCommands):
-    
+
     def rpc_dodgy_method(self, request):
         '''This method will fails because the return object is not
 json serializable.'''
         return Calculator
-    
+
     rpc_check_request = RequestCheck()
 
 
@@ -115,12 +118,11 @@ class Site(wsgi.LazyWsgi):
         response = [wsgi.GZipMiddleware(200)]
         return wsgi.WsgiHandler(middleware=[middleware],
                                 response_middleware=response)
-    
+
 
 def server(callable=None, **params):
     return wsgi.WSGIServer(Site(), **params)
 
 
-if __name__ == '__main__':  #pragma nocover
+if __name__ == '__main__':  # pragma nocover
     server().start()
-

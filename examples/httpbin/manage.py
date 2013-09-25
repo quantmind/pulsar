@@ -4,7 +4,7 @@
 
 Implementation
 ======================
-    
+
 .. autoclass:: HttpBin
    :members:
    :member-order: bysource
@@ -17,7 +17,7 @@ from random import choice, random
 
 try:
     from pulsar.utils.pep import ispy3k, range
-except ImportError: #pragma    nocover
+except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
@@ -31,7 +31,7 @@ try:
     from oauthbin import OAuthBin
 except ImportError:
     OAuthBin = None
-    
+
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
 
@@ -39,16 +39,16 @@ if ispy3k:  # pragma nocover
     characters = string.ascii_letters + string.digits
 else:   # pragma nocover
     characters = string.letters + string.digits
-    
-    
+
+
 def template():
     name = os.path.join(ASSET_DIR, 'template.html')
-    with open(name,'r') as file:
+    with open(name, 'r') as file:
         return file.read()
 
 
 class HttpBin(wsgi.Router):
-    
+
     def bind_server_event(self, request, event, handler):
         server = request.environ['pulsar.connection'].current_consumer
         server.bind_event(event, handler)
@@ -58,7 +58,7 @@ class HttpBin(wsgi.Router):
         ul = Html('ul')
         for router in sorted(self.routes, key=lambda r: r.creation_count):
             a = router.link(escape(router.route.path))
-            li = Html('li', a, ' %s' % router.parameters.get('title',''))
+            li = Html('li', a, ' %s' % router.parameters.get('title', ''))
             ul.append(li)
         title = 'Pulsar HttpBin'
         html = request.html_document
@@ -71,27 +71,27 @@ class HttpBin(wsgi.Router):
         html.body.append(body)
         #html.meta.append()
         return html.http_response(request)
-        
+
     @route('get', title='Returns GET data')
     def _get(self, request):
         return self.info_data_response(request)
-    
+
     @route('post', method='post', title='Returns POST data')
     def _post(self, request):
         return self.info_data_response(request)
-    
+
     @route('patch', method='patch', title='Returns PATCH data')
     def _patch(self, request):
         return self.info_data_response(request)
-    
+
     @route('put', method='put', title='Returns PUT data')
     def _put(self, request):
         return self.info_data_response(request)
-    
+
     @route('delete', method='delete', title='Returns DELETE data')
     def _delete(self, request):
         return self.info_data_response(request)
-    
+
     @route('redirect/<int(min=1,max=10):times>', defaults={'times': 5},
            title='302 Redirect n times')
     def redirect(self, request):
@@ -100,7 +100,7 @@ class HttpBin(wsgi.Router):
             raise HttpRedirect('/redirect/%s' % num)
         else:
             raise HttpRedirect('/get')
-    
+
     @route('getsize/<int(min=1,max=8388608):size>', defaults={'size': 150000},
            title='Returns a preset size of data (limit at 8MB)')
     def getsize(self, request):
@@ -108,12 +108,12 @@ class HttpBin(wsgi.Router):
         data = {'size': size,
                 'data': ''.join(('d' for n in range(size)))}
         return self.info_data_response(request, **data)
-    
+
     @route('gzip', title='Returns gzip encoded data')
     def gzip(self, request):
         response = yield self.info_data_response(request, gzipped=True)
         yield wsgi.middleware.GZipMiddleware(10)(request.environ, response)
-    
+
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
         cookies = {'cookies': request.get('http.cookie')}
@@ -129,7 +129,8 @@ class HttpBin(wsgi.Router):
         request.response.headers['location'] = '/cookies'
         return request.response
 
-    @route('status/<int(min=100,max=505):status>', title='Returns given HTTP Status code',
+    @route('status/<int(min=100,max=505):status>',
+           title='Returns given HTTP Status code',
            defaults={'status': 418})
     def status(self, request):
         request.response.content_type = 'text/html'
@@ -139,8 +140,10 @@ class HttpBin(wsgi.Router):
     def response_headers(self, request):
         class Gen:
             headers = None
+
             def __call__(self, server):
                 self.headers = server.headers
+
             def generate(self):
                 #yield a byte so that headers are sent
                 yield '{'
@@ -153,7 +156,8 @@ class HttpBin(wsgi.Router):
         request.response.content_type = 'application/json'
         return request.response
 
-    @route('basic-auth/<username>/<password>', title='Challenges HTTPBasic Auth',
+    @route('basic-auth/<username>/<password>',
+           title='Challenges HTTPBasic Auth',
            defaults={'username': 'username', 'password': 'password'})
     def challenge_auth(self, request):
         auth = request.get('http.authorization')
@@ -161,7 +165,7 @@ class HttpBin(wsgi.Router):
             return Json({'authenticated': True,
                          'username': auth.username}).http_response(request)
         raise wsgi.HttpAuthenticate('basic')
-        
+
     @route('digest-auth/<username>/<password>/<qop>',
            title='Challenges HTTP Digest Auth',
            defaults={'username': 'username',
@@ -173,8 +177,9 @@ class HttpBin(wsgi.Router):
             return Json({'authenticated': True,
                          'username': auth.username}).http_response(request)
         raise wsgi.HttpAuthenticate('digest', qop=[request.urlargs['qop']])
-        
-    @route('stream/<int(min=1):m>/<int(min=1):n>', title='Stream m chunk of data n times',
+
+    @route('stream/<int(min=1):m>/<int(min=1):n>',
+           title='Stream m chunk of data n times',
            defaults={'m': 300, 'n': 20})
     def request_stream(self, request):
         m = request.urlargs['m']
@@ -182,28 +187,28 @@ class HttpBin(wsgi.Router):
         if m*n > 8388608:
             # limit at 8 megabytes of total data
             raise HttpException(status=403)
-        stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((choice(characters) for\
-                    _ in range(m)))) for i in range(n))
+        stream = ('Chunk %s\n%s\n\n' % (i+1, ''.join((
+            choice(characters) for _ in range(m)))) for i in range(n))
         request.response.content = stream
         return request.response
-    
+
     @route('websocket', title='A web socket graph')
     def request_websocket(self, request):
-        data = open(os.path.join(os.path.dirname(__file__), 
-                     'assets', 'websocket.html')).read()
+        data = open(os.path.join(os.path.dirname(__file__),
+                                 'assets', 'websocket.html')).read()
         scheme = 'wss' if request.is_secure else 'ws'
         host = request.get('HTTP_HOST')
         data = data % {'address': '%s://%s/graph-data' % (scheme, host)}
         request.response.content_type = 'text/html'
         request.response.content = data
         return request.response
-    
-    ############################################################################
+
+    ########################################################################
     #    INTERNALS
     def info_data_response(self, request, **params):
         data = self.info_data(request, **params)
         return Json(data).http_response(request)
-    
+
     def info_data(self, request, **params):
         headers = self.getheaders(request)
         args = {}
@@ -216,23 +221,23 @@ class HttpBin(wsgi.Router):
                 'args': dict(args)}
         data.update(params)
         return data
-    
+
     def getheaders(self, request):
         headers = Headers(kind='client')
         for k in request.environ:
             if k.startswith('HTTP_'):
-                headers[k[5:].replace('_','-')] = request.environ[k]
+                headers[k[5:].replace('_', '-')] = request.environ[k]
         return dict(headers)
-    
+
 
 class Graph(ws.WS):
-    
+
     def on_message(self, websocket, msg):
-        websocket.write(json.dumps([(i,random()) for i in range(100)]))
-        
-        
+        websocket.write(json.dumps([(i, random()) for i in range(100)]))
+
+
 class Site(wsgi.LazyWsgi):
-    
+
     def setup(self):
         router = HttpBin('/')
         if OAuthBin:
@@ -243,12 +248,12 @@ class Site(wsgi.LazyWsgi):
                                  wsgi.MediaRouter('media', ASSET_DIR),
                                  ws.WebSocket('/graph-data', Graph()),
                                  router])
-    
-    
+
+
 def server(description=None, **kwargs):
     description = description or 'Pulsar HttpBin'
     return wsgi.WSGIServer(Site(), description=description, **kwargs)
 
 
-if __name__ == '__main__':  #pragma    nocover
+if __name__ == '__main__':  # pragma    nocover
     server().start()

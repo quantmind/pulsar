@@ -133,6 +133,10 @@ removed when pickling the object'''
         '''A local threading.Lock.'''
         return Lock()
 
+    @local_property
+    def process_lock(self):
+        return process_global('lock')
+
     def clear_local(self):
         self.__dict__.pop('_local', None)
 
@@ -162,7 +166,7 @@ def process_global(name, val=None, setval=False):
     '''Access and set global variables for the current process.'''
     p = current_process()
     if not hasattr(p, '_pulsar_globals'):
-        p._pulsar_globals = {}
+        p._pulsar_globals = {'lock': Lock()}
     if setval:
         p._pulsar_globals[name] = val
     else:
@@ -195,55 +199,56 @@ class LogginMixin(LocalMixin):
         This function is invoked every time an instance of this class is
         un-serialised (possibly in a different process domain).
         '''
-        logconfig = original = process_global('_config_logging')
-        # if the logger was not configured, do so.
-        if not logconfig:
-            logconfig = deepcopy(LOGGING_CONFIG)
-            if config:
-                update_config(logconfig, config)
-            original = logconfig
-            process_global('_config_logging', logconfig, True)
-        else:
-            logconfig = deepcopy(logconfig)
-            logconfig['disable_existing_loggers'] = False
-            logconfig.pop('loggers', None)
-            logconfig.pop('root', None)
-        if level is None:
-            level = logging.NOTSET
-        else:
-            try:
-                level = int(level)
-            except (ValueError):
-                lv = str(level).upper()
-                if lv in logging._levelNames:
-                    level = logging._levelNames[lv]
-                else:
-                    level = logging.NOTSET
-        # No loggers configured. This means no logconfig setting
-        # parameter was used. Set up the root logger with default
-        # loggers
-        if level == logging.NOTSET:
-            handlers = ['silent']
-        else:
-            handlers = handlers or ['console']
-        level = logging.getLevelName(level)
-        logger = logger or self.__class__.__name__.lower()
-        if logger not in original['loggers']:
-            if 'loggers' not in logconfig:
-                logconfig['loggers'] = {}
-            l = {'level': level, 'handlers': handlers, 'propagate': False}
-            original['loggers'][logger] = l
-            logconfig['loggers'][logger] = l
-        if not original.get('root'):
-            logconfig['root'] = {'handlers': handlers,
-                                 'level': level}
-        if logconfig:
-            dictConfig(logconfig)
-        self._log_info = {'logger': logger,
-                          'level': level,
-                          'handlers': handlers,
-                          'config': config}
-        self.local.logger = logging.getLogger(logger)
+        with self.process_lock:
+            logconfig = original = process_global('_config_logging')
+            # if the logger was not configured, do so.
+            if not logconfig:
+                logconfig = deepcopy(LOGGING_CONFIG)
+                if config:
+                    update_config(logconfig, config)
+                original = logconfig
+                process_global('_config_logging', logconfig, True)
+            else:
+                logconfig = deepcopy(logconfig)
+                logconfig['disable_existing_loggers'] = False
+                logconfig.pop('loggers', None)
+                logconfig.pop('root', None)
+            if level is None:
+                level = logging.NOTSET
+            else:
+                try:
+                    level = int(level)
+                except (ValueError):
+                    lv = str(level).upper()
+                    if lv in logging._levelNames:
+                        level = logging._levelNames[lv]
+                    else:
+                        level = logging.NOTSET
+            # No loggers configured. This means no logconfig setting
+            # parameter was used. Set up the root logger with default
+            # loggers
+            if level == logging.NOTSET:
+                handlers = ['silent']
+            else:
+                handlers = handlers or ['console']
+            level = logging.getLevelName(level)
+            logger = logger or self.__class__.__name__.lower()
+            if logger not in original['loggers']:
+                if 'loggers' not in logconfig:
+                    logconfig['loggers'] = {}
+                l = {'level': level, 'handlers': handlers, 'propagate': False}
+                original['loggers'][logger] = l
+                logconfig['loggers'][logger] = l
+            if not original.get('root'):
+                logconfig['root'] = {'handlers': handlers,
+                                     'level': level}
+            if logconfig:
+                dictConfig(logconfig)
+            self._log_info = {'logger': logger,
+                              'level': level,
+                              'handlers': handlers,
+                              'config': config}
+            self.local.logger = logging.getLogger(logger)
 
 
 WHITE = 37

@@ -1,5 +1,4 @@
 # Django settings for djangotest project.
-
 import platform
 PRODUCTION_MODE = platform.node().startswith('http')
 
@@ -73,7 +72,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 FILE_UPLOAD_HANDLERS = (
-        "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 )
 
 ROOT_URLCONF = 'chat.urls'

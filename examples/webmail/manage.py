@@ -18,7 +18,7 @@ the :mod:`examples.webmail` directory containing::
 And type::
 
     python manage.py
-    
+
 Open a web browser at http://localhost:8060 and you should see the web app.
 
 For information on twised IMAP4 client library check this example:
@@ -31,30 +31,27 @@ Implementation
 .. autoclass:: WsMail
    :members:
    :member-order: bysource
-   
+
 '''
 import os
 import sys
 import json
-from functools import partial
-import time
 try:
     import pulsar
-except ImportError: #pragma nocover
+except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.utils.pep import zip
 from pulsar.apps import ws, wsgi
 try:
     from pulsar.apps.tx import twisted
-    from twisted.internet import protocol, defer, endpoints, reactor
+    from twisted.internet import protocol, endpoints, reactor
     from twisted.mail import imap4
-except ImportError: #pragma    nocover
+except ImportError:  # pragma    nocover
     twisted = None    # This is for when we build docs
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
-    
+
 def mail_client(cfg, timeout=10):
     '''Create a new mail client using twisted IMAP4 library.'''
     endpoint = endpoints.clientFromString(reactor, cfg.mail_incoming)
@@ -80,7 +77,7 @@ sending mail via the twisted IMAP4 library.'''
         request.cache.mailclient = client
         # retrieve the list of mailboxes and them to the client
         yield self._send_mailboxes(websocket)
-        
+
     def on_message(self, websocket, msg):
         request = websocket.request
         client = request.cache.mailclient
@@ -92,7 +89,7 @@ sending mail via the twisted IMAP4 library.'''
 
     def _send_mailboxes(self, websocket):
         request = websocket.request
-        result = yield request.cache.mailclient.list("","*")
+        result = yield request.cache.mailclient.list("", "*")
         result = sorted([e[2] for e in result])
         websocket.write(json.dumps({'list': result}))
 
@@ -109,11 +106,11 @@ class WebMail(wsgi.LazyWsgi):
         request.response.content = data % request.environ
         request.response.content_type = 'text/html'
         return request.response.start()
-    
-    
+
+
 def server(name='webmail', callable=None, **kwargs):
     return wsgi.WSGIServer(name=name, callable=WebMail(), **kwargs)
 
 
-if __name__ == '__main__':  #pragma nocover
+if __name__ == '__main__':  # pragma nocover
     server().start()

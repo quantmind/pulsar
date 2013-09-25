@@ -3,7 +3,7 @@ import json
 
 from pulsar import send, get_application, Deferred
 from pulsar.utils.path import Path
-from pulsar.apps import wsgi, http, ws
+from pulsar.apps import http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
 
 try:
@@ -21,13 +21,13 @@ def start_server(actor, name, argv):
 
 
 class MessageHandler(ws.WS):
-    
+
     def __init__(self):
         self.new_future()
-        
+
     def new_future(self):
         self.future = Deferred()
-        
+
     def on_message(self, request, message):
         future = self.future
         self.new_future()
@@ -38,7 +38,7 @@ class MessageHandler(ws.WS):
 class TestDjangoChat(unittest.TestCase):
     concurrency = 'thread'
     app = None
-    
+
     @classmethod
     def setUpClass(cls):
         name = 'django_' + cls.concurrency
@@ -48,7 +48,7 @@ class TestDjangoChat(unittest.TestCase):
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)
         cls.http = http.HttpClient()
-        
+
     @classmethod
     def tearDownClass(cls):
         if cls.app:
@@ -57,19 +57,19 @@ class TestDjangoChat(unittest.TestCase):
     def test_home(self):
         result = yield self.http.get(self.uri).on_finished
         self.assertEqual(result.status_code, 200)
-        
+
     def test_404(self):
         result = yield self.http.get('%s/bsjdhcbjsdh' % self.uri).on_finished
         self.assertEqual(result.status_code, 404)
-        
+
     def test_handshake(self):
         ws = yield self.http.get(self.ws).on_headers
-        response = ws.handshake 
+        response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
         self.assertEqual(response.connection, ws.connection)
         self.assertTrue(ws.connection)
-        
+
     def test_websocket(self):
         ws = yield self.http.get(self.ws).on_headers
         self.assertTrue(ws)
@@ -78,9 +78,8 @@ class TestDjangoChat(unittest.TestCase):
         data = yield ws.handler.future
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hello there!')
-        
-        
+
+
 @dont_run_with_thread
 class TestDjangoChat_Process(TestDjangoChat):
     concurrency = 'process'
-    

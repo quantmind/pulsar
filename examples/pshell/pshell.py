@@ -5,10 +5,10 @@ Pulsar Python Shell example::
 '''
 try:
     import pulsar
-except ImportError: #pragma nocover
+except ImportError:  # pragma nocover
     import sys
     sys.path.append('../../')
-from pulsar.apps.shell import PulsarShell 
+from pulsar.apps.shell import PulsarShell
 
-if __name__ == '__main__':  #pragma nocover
+if __name__ == '__main__':  # pragma nocover
     PulsarShell().start()

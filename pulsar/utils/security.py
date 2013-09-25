@@ -6,7 +6,8 @@ from uuid import uuid4
 import string
 from random import SystemRandom
 
-from .httpurl import range, ascii_letters
+from .pep import range
+from .httpurl import ascii_letters
 
 SALT_CHARS = ascii_letters + string.digits
 

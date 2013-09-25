@@ -12,7 +12,7 @@ to retrieve any type of source from the Internet.
 To run the server::
 
     python manage.py
-    
+
 An header middleware is a callable which receives the wsgi *environ* and
 the list of request *headers*. By default the example uses:
 
@@ -21,23 +21,22 @@ the list of request *headers*. By default the example uses:
 To run with different headers middleware create a new script and do::
 
     from proxyserver.manage import server
-    
+
     if __name__ == '__main__':
         server(headers_middleware=[...]).start()
-        
+
 Implemenation
 ===========================
 
 .. autoclass:: ProxyServerWsgiHandler
    :members:
    :member-order:
-   
-   
+
+
 .. _`HTTP proxy server`: http://en.wikipedia.org/wiki/Proxy_server
 '''
 import io
 import sys
-from collections import deque
 from functools import partial
 
 try:
@@ -46,7 +45,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import async, HttpException, Queue, logger
+from pulsar import HttpException, Queue
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -109,10 +108,10 @@ The returned headers will be sent to the target uri.'''
         headers = Headers(kind='client')
         for k in environ:
             if k.startswith('HTTP_'):
-                head = k[5:].replace('_','-')
+                head = k[5:].replace('_', '-')
                 headers[head] = environ[k]
         for head in ENVIRON_HEADERS:
-            k = head.replace('-','_').upper()
+            k = head.replace('-', '_').upper()
             v = environ.get(k)
             if v:
                 headers[head] = v
@@ -126,6 +125,7 @@ class ProxyResponse(object):
     '''
     _headers = None
     _done = False
+
     def __init__(self, environ, start_response, response):
         self.environ = environ
         self.start_response = start_response
@@ -230,6 +230,7 @@ class DownStreamTunnel(pulsar.ProtocolConsumer):
 
 class UpstreamTunnel(pulsar.ProtocolConsumer):
     headers = None
+
     def __init__(self, downstream):
         super(UpstreamTunnel, self).__init__()
         self.downstream = downstream

@@ -8,7 +8,7 @@ exposes the task queue functionalities via a :ref:`JSON-RPC api <apps-rpc>`.
 To run the server type::
 
     python manage.py
-    
+
 Open a new shell and launch python and type::
 
     >>> from pulsar.apps import rpc
@@ -25,10 +25,10 @@ Implementation
 .. autoclass:: RpcRoot
    :members:
    :member-order: bysource
-   
+
 .. autoclass:: server
    :members:
-   :member-order: bysource    
+   :member-order: bysource
 '''
 try:
     import pulsar
@@ -48,36 +48,38 @@ TASK_PATHS = ['sampletasks.*']
 class RpcRoot(rpc.PulsarServerCommands, tasks.TaskQueueRpcMixin):
     '''The :class:`pulsar.apps.rpc.JSONRPC` handler which communicates
 with the task queue.'''
-    
+
     def rpc_runpycode(self, request, code=None, **params):
         return self.task_run(request, 'runpycode', code=code, **params)
-        
+
 
 class Rpc(wsgi.LazyWsgi):
-    
+
     def __init__(self, tqname):
         self.tqname = tqname
-        
+
     def setup(self):
         # only post allowed by the JSON RPC handler
         request = [wsgi.Router('/', post=RpcRoot(self.tqname))]
         response = [wsgi.GZipMiddleware(200)]
         return wsgi.WsgiHandler(middleware=request,
                                 response_middleware=response)
-    
-    
+
+
 class server(pulsar.MultiApp):
     '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
-This class shows how to
-use :class:`pulsar.apps.MultiApp` utility for starting several
-:ref:`pulsar applications <apps-framework>` at once.'''
+
+    This class shows how to
+    use :class:`pulsar.apps.MultiApp` utility for starting several
+    :ref:`pulsar applications <apps-framework>` at once.
+    '''
     cfg = pulsar.Config('Taskqueue with JSON-RPC API example')
+
     def build(self):
         yield self.new_app(tasks.TaskQueue, task_paths=TASK_PATHS)
         yield self.new_app(wsgi.WSGIServer, prefix='rpc',
                            callable=Rpc(self.name))
-    
+
 
 if __name__ == '__main__':
     server('taskqueue').start()
-

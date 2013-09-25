@@ -14,12 +14,13 @@ def check_actor(actor, name):
     # put something on a queue, just for coverage.
     actor.put(None)
     assert(actor.name==name)
-    
+
+
 class create_echo_server(object):
     '''partial is not picklable in python 2.6'''
     def __init__(self, address):
         self.address = address
-        
+
     def __call__(self, actor):
         '''Starts an echo server on a newly spawn actor'''
         address = self.address
@@ -30,14 +31,14 @@ class create_echo_server(object):
         actor.extra['echo-address'] = server.address
         actor.bind_event('stopping', self._stop_server)
         yield actor
-        
+
     def _stop_server(self, actor):
         yield actor.servers['echo'].close_connections()
         yield actor
-    
+
 
 class TestProxy(unittest.TestCase):
-    
+
     def test_get_proxy(self):
         self.assertRaises(ValueError, pulsar.get_proxy, 'shcbjsbcjcdcd')
         self.assertEqual(pulsar.get_proxy('shcbjsbcjcdcd', safe=True), None)
@@ -62,11 +63,11 @@ class TestProxy(unittest.TestCase):
         actor = pulsar.get_actor()
         d = self.assertRaises(CommandNotFound, send, 'sjdcbhjscbhjdbjsj', 'bla')
         self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
-        
+
 
 class TestActorThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
- 
+
     def test_spawn_actor(self):
         '''Test spawning from actor domain.'''
         proxy = yield self.spawn(name='pippo')
@@ -79,7 +80,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.async.assertEqual(send(proxy, 'ping'), 'pong')
         yield self.async.assertEqual(send(proxy, 'echo', 'Hello!'), 'Hello!')
         #yield send(proxy, 'run', check_actor, 'pluto')
-        
+
     def test_info(self):
         proxy = yield self.spawn(name='pippo')
         self.assertEqual(proxy.name, 'pippo')
@@ -104,7 +105,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         yield self.stop_actors(proxy)
         is_alive = yield async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
-        
+
     def test_start_hook(self):
         proxy = yield self.spawn(start=create_echo_server(('127.0.0.1', 0)))
         address = None

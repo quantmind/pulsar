@@ -1,9 +1,14 @@
+from pulsar.utils.httpurl import request_host
+
 from . import client
+
+
+#class TestHttpClient(client.TestHttpClientBase, client.unittest.TestCase):
 
 class TestTlsHttpClientWithProxy(client.TestHttpClient):
     with_proxy = True
     with_tls = True
-    
+
     def after_test_home_page(self, response):
         request = response.request
         self.assertEqual(request.scheme, 'https')
@@ -14,3 +19,13 @@ class TestTlsHttpClientWithProxy(client.TestHttpClient):
         self.assertEqual(len(http.connection_pools), 1)
         pool = http.connection_pools[response.request.key]
         self.assertEqual(pool.received, 1)
+
+    def test_tunnel_request_object(self):
+        http = self.client()
+        response = yield http.get(self.httpbin()).on_finished
+        request = response.request
+        tunnel = request._tunnel
+        self.assertEqual(tunnel.request, request)
+        self.assertNotEqual(tunnel.parser, request.parser)
+        self.assertEqual(tunnel.full_url, self.proxy_uri)
+        self.assertEqual(tunnel.headers['host'], '127.0.0.1')

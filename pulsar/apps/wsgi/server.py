@@ -24,7 +24,8 @@ import pulsar
 from pulsar import HttpException, ProtocolError, maybe_async, Deferred, Failure
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
-                                  host_and_port_default, http_parser)
+                                  host_and_port_default, http_parser,
+                                  urlparse)
 
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
@@ -63,6 +64,19 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
 def wsgi_environ(parser, address, client_address, request_headers,
                  headers, server_software=None, https=False, extra=None):
     protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
+    raw_uri = parser.get_url()
+    request_uri = urlparse(raw_uri)
+    #
+    # http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
+    # If Request-URI is an absoluteURI, the host is part of the Request-URI.
+    # Any Host header field value in the request MUST be ignored
+    if request_uri.scheme:
+        url_scheme = request_uri.scheme
+        host = request_uri.netloc
+    else:
+        url_scheme = 'https' if https else 'http'
+        host = None
+    #
     environ = {"wsgi.input": BytesIO(parser.recv_body()),
                "wsgi.errors": sys.stderr,
                "wsgi.version": (1, 0),
@@ -72,12 +86,10 @@ def wsgi_environ(parser, address, client_address, request_headers,
                "SERVER_SOFTWARE": server_software or pulsar.SERVER_SOFTWARE,
                "REQUEST_METHOD": native_str(parser.get_method()),
                "QUERY_STRING": parser.get_query_string(),
-               "RAW_URI": parser.get_url(),
+               "RAW_URI": raw_uri,
                "SERVER_PROTOCOL": protocol,
                "CONTENT_TYPE": ''}
-    url_scheme = 'https' if https else 'http'
     forward = client_address
-    server = format_address(address)
     script_name = os.environ.get("SCRIPT_NAME", "")
     for header, value in request_headers:
         header = header.lower()
@@ -89,8 +101,8 @@ def wsgi_environ(parser, address, client_address, request_headers,
             url_scheme = "https"
         elif header == "x-forwarded-ssl" and value == "on":
             url_scheme = "https"
-        elif header == "host":
-            server = value
+        elif header == "host" and not host:
+            host = value
         elif header == "script_name":
             script_name = value
         elif header == "content-type":
@@ -116,9 +128,12 @@ def wsgi_environ(parser, address, client_address, request_headers,
         remote = forward
     environ['REMOTE_ADDR'] = remote[0]
     environ['REMOTE_PORT'] = str(remote[1])
-    server = host_and_port_default(url_scheme, server)
-    environ['SERVER_NAME'] = socket.getfqdn(server[0])
-    environ['SERVER_PORT'] = server[1]
+    if not host and protocol == 'HTTP/1.0':
+        host = format_address(address)
+    if host:
+        host = host_and_port_default(url_scheme, host)
+        environ['SERVER_NAME'] = socket.getfqdn(host[0])
+        environ['SERVER_PORT'] = host[1]
     path_info = parser.get_path()
     if path_info is not None:
         if script_name:
@@ -203,7 +218,7 @@ class HttpServerResponse(ProtocolConsumer):
                 if not done:
                     self.expect_continue()
             if done:  # message is done
-                self.generate(self.wsgi_environ())
+                self._generate(self.wsgi_environ())
         else:
             # This is a parsing error, the client must have sent
             # bogus data
@@ -320,13 +335,18 @@ the following algorithm:
         elif force and self.chunked:
             self.transport.write(chunk_encoding(data))
 
-    def generate(self, environ, failure=None):
+    ########################################################################
+    ##    INTERNALS
+    def _generate(self, environ, failure=None):
         try:
             if failure:
                 # A failure has occurred, try to handle it with the default
                 # wsgi error handler
                 wsgi_iter = self.handle_wsgi_error(environ, failure)
             else:
+                # No server name. 400 Bad Request
+                if 'SERVER_NAME' not in environ:
+                    raise HttpException(status=400)
                 wsgi_iter = self.wsgi_callable(environ, self.start_response)
         except Exception:
             result = sys.exc_info()
@@ -336,7 +356,7 @@ the following algorithm:
             else:
                 result = wsgi_iter
         result = maybe_async(result, get_result=False)
-        err_handler = self.generate if failure is None else self.catastrofic
+        err_handler = self._generate if failure is None else self.catastrofic
         result.add_errback(partial(err_handler, environ))
 
     def async_wsgi(self, wsgi_iter):

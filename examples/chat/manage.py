@@ -9,7 +9,7 @@
 To run the server::
 
     python manage.py
-    
+
 and open web browsers at http://localhost:8060
 
 To send messages from the JSON RPC open a python shell and::
@@ -18,18 +18,18 @@ To send messages from the JSON RPC open a python shell and::
     >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc', force_sync=True)
     >>> p.message('Hi from rpc')
     'OK'
-    
+
 Implementation
 ===========================
 
 .. autoclass:: Chat
    :members:
    :member-order: bysource
-   
+
 .. autoclass:: Rpc
    :members:
    :member-order: bysource
-   
+
 .. autoclass:: WebChat
    :members:
    :member-order: bysource
@@ -37,11 +37,10 @@ Implementation
 import os
 import sys
 import json
-from random import random
 import time
 try:
     import pulsar
-except ImportError: #pragma nocover
+except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
 from pulsar.utils.path import Path
@@ -58,14 +57,14 @@ if stdnet:
 
 
 class PubSubClient(pubsub.Client):
-    
+
     def __init__(self, connection):
         self.connection = connection
-        
+
     def __call__(self, channel, message):
         if channel == 'webchat':
             self.connection.write(message)
-        
+
 
 ##    Web Socket Chat handler
 class Chat(ws.WS):
@@ -79,15 +78,16 @@ application.
 '''
     def __init__(self, pubsub):
         self.pubsub = pubsub
-        
+
     def on_open(self, websocket):
         '''When a new websocket connection is established it creates a
 :ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
 of clients of the :attr:`pubsub` handler.'''
         self.pubsub.add_client(PubSubClient(websocket))
-        
+
     def on_message(self, websocket, msg):
-        '''When a new message arrives, it publishes to all listening clients.'''
+        '''When a new message arrives, it publishes to all listening clients.
+        '''
         if msg:
             lines = []
             for l in msg.split('\n'):
@@ -101,23 +101,23 @@ of clients of the :attr:`pubsub` handler.'''
 
 ##    RPC MIDDLEWARE To publish messages
 class Rpc(rpc.PulsarServerCommands):
-    
+
     def __init__(self, pubsub, **kwargs):
         self.pubsub = pubsub
         super(Rpc, self).__init__(**kwargs)
-        
+
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
         self.pubsub.publish('webchat', message)
         return 'OK'
-    
-    
+
+
 class WebChat(wsgi.LazyWsgi):
     '''This is the :ref:`wsgi application <wsgi-handlers>` for this
 web-chat example.'''
     def __init__(self, server_name):
         self.name = server_name
-        
+
     def setup(self):
         '''This method is called once only to setup the WSGI application
 handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
@@ -129,13 +129,13 @@ and subscribe it to the ``webchat`` channel.'''
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
                                  ws.WebSocket('/message', Chat(self.pubsub)),
                                  wsgi.Router('/rpc', post=Rpc(self.pubsub))])
-        
+
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
         request.response.content_type = 'text/html'
         request.response.content = data % request.environ
         return request.response
-    
+
     def encode_message(self, message):
         if not isinstance(message, dict):
             message = {'message': message}
@@ -156,5 +156,5 @@ def server(callable=None, name=None, **kwargs):
     return wsgi.WSGIServer(callable=WebChat(name), name=name, **kwargs)
 
 
-if __name__ == '__main__':  #pragma nocover
+if __name__ == '__main__':  # pragma nocover
     server().start()

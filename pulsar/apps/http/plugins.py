@@ -105,37 +105,6 @@ def handle_101(response):
     return response
 
 
-class TunnelRequest:
-    inp_params = None
-    # Don't release connection when tunneling
-    release_connection = False
-    headers = None
-    first_line = 'Tunnel connection'
-
-    def __init__(self, request):
-        self.request = request
-        self.parser = request.parser
-        request.new_parser()
-
-    def __repr__(self):
-        return self.first_line
-    __str__ = __repr__
-
-    @property
-    def key(self):
-        return self.request.key
-
-    @property
-    def client(self):
-        return self.request.client
-
-    def encode(self):
-        address = self.request.target_address
-        self.first_line = 'CONNECT %s:%s HTTP/1.1\r\n' % address
-        self.headers = self.request.tunnel_headers
-        return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
-
-
 class Tunneling:
     '''A callback for handling proxy tunneling.
 
@@ -153,7 +122,7 @@ class Tunneling:
         if tunnel:
             # and if transport is not SSL already
             if not isinstance(response.transport, SocketStreamSslTransport):
-                response._request = TunnelRequest(request)
+                response._request = tunnel
                 response.bind_event('post_request', self.post_request)
         # make sure to return the response
         return response
