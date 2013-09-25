@@ -42,7 +42,7 @@ import pulsar
 from pulsar.utils.internet import parse_connection_string
 
 try:
-    from .client import Redis, RedisProtocol, RedisParser, Request
+    from .client import Redis, RedisProtocol, CRedisParser, Request
 except ImportError:
     RedisProtocol = None
     RedisParser = None
@@ -67,7 +67,7 @@ class RedisPool(pulsar.Client):
     def __init__(self, encoding=None, parser=None, encoding_errors='strict',
                  **kwargs):
         super(RedisPool, self).__init__(**kwargs)
-        self.parser = parser or RedisParser
+        self.parser = parser or CRedisParser
         self.encoding = encoding or 'utf-8'
         self.encoding_errors = encoding_errors or 'strict'
         self.bind_event('pre_request', self._authenticate)

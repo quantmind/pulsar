@@ -24,9 +24,6 @@ return result
 
 class TestParser(client.RedisTest):
 
-    def parser(self):
-        return self.client().connection_pool.parser()
-
     def test_null(self):
         test = b'$-1\r\n'
         p = self.parser()
@@ -104,3 +101,7 @@ class TestParser(client.RedisTest):
         yield client.set('ghghg', '')
         result = yield client.get('ghghg')
         self.assertEqual(result, b'')
+
+
+class TestPythonParser(client.PythonParser, TestParser):
+    pass

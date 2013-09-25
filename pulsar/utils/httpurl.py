@@ -631,6 +631,20 @@ header fields.
         for key, value in mapping_iterator(iterable):
             self.add_header(key, value)
 
+    def override(self, iterable):
+        '''Extend headers by overriding fields form iterable.
+
+        :param iterable: a dictionary or an iterable over keys, vaues tuples.
+        '''
+        seen = set()
+        for key, value in mapping_iterator(iterable):
+            key = key.lower()
+            if key in seen:
+                self.add_header(key, value)
+            else:
+                seen.add(key)
+                self[key] = value
+
     def copy(self):
         return self.__class__(self, kind=self.kind, strict=self.strict)
 

@@ -921,7 +921,7 @@ class HttpClient(pulsar.Client):
         else:
             d = self.headers.copy()
         if headers:
-            d.update(headers)
+            d.override(headers)
         return d
 
     def ssl_context(self, **kwargs):

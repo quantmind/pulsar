@@ -4,16 +4,37 @@ from pulsar.apps.redis import RedisPool
 
 available = bool(RedisPool.consumer_factory)
 
+if available:
+    from pulsar.apps.redis.client import HAS_C_EXTENSIONS, RedisParser
+else:
+    HAS_C_EXTENSIONS = False
+    RedisParser = None
+
+
 @unittest.skipUnless(available, 'Requires redis-py installed')
 class RedisTest(unittest.TestCase):
+    parser_class = None
 
     @classmethod
     def setUpClass(cls):
-        cls.pool = RedisPool(timeout=30)
+        cls.pool = RedisPool(timeout=30, parser=cls.parser_class)
 
     def client(self, **kw):
         backend = self.cfg.backend_server or 'redis://127.0.0.1:6379'
         return self.pool.from_connection_string(backend, **kw)
+
+    def parser(cls):
+        return cls.pool.parser()
+
+
+@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
+class PythonParser(object):
+    parser_class = RedisParser
+
+    def test_redis_parser(self):
+        parser = self.parser()
+        self.assertTrue(hasattr(parser, '_current'))
+        self.assertTrue(hasattr(parser, '_inbuffer'))
 
 
 class TestRedisPool(RedisTest):
@@ -61,3 +82,7 @@ class TestRedisPool(RedisTest):
         self.assertEqual(response.result, b'Ciao!')
         self.assertEqual(connection, response.connection)
         self.assertEqual(connection.processed, 3+password)
+
+
+class TestRedisPoolPythonParser(PythonParser, TestRedisPool):
+    pass

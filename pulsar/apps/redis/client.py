@@ -41,13 +41,12 @@ def ResponseError(response):
 
 
 RedisParser = lambda: Parser(InvalidResponse, ResponseError)
-
+HAS_C_EXTENSIONS = True
 
 try:
     from . import cparser
-    CRedisParser = lambda: cparser.Parser(InvalidResponse, ResponseError)
-    HAS_C_EXTENSIONS = True
-except ImportError:
+    CRedisParser = lambda: cparser.RedisParser(InvalidResponse, ResponseError)
+except ImportError:     # pragma    nocover
     HAS_C_EXTENSIONS = False
     CRedisParser = RedisParser
 

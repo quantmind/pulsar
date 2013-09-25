@@ -7,8 +7,10 @@ Ver. 0.7.0 - Development
 * Removed the specialised application worker and monitor classes.
   Use standard actor and monitor with specialised
   :ref:`start hooks <actor-hooks>` instead.
-* Removed the global event dispatcher. No longer used. Less global variables the better.
-* Protocol consumer to handle one request only. Better upgrade method for connections.
+* Removed the global event dispatcher. No longer used. Less global variables
+  the better.
+* Protocol consumer to handle one request only. Better upgrade method for
+  connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
 * Cookie support for the :ref:`Http Client <apps-http>`.
 * Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.
@@ -16,7 +18,7 @@ Ver. 0.7.0 - Development
   element of an :ref:`Html document <wsgi-html-document>`.
 * Added :class:`pulsar.Actor.stream` attribute to write messages without using
   the logger.
-* **649 regression tests**, **88% coverage**.
+* **662 regression tests**, **88% coverage**.
 
 .. _`rfc2616 sec 5.2`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
 
