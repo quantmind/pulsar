@@ -436,7 +436,7 @@ data from the request body.'''
                 content_type, options = self.content_type_options
                 charset = options.get('charset', 'utf-8')
                 if content_type in JSON_CONTENT_TYPES:
-                    data = json.loads(data.decode(charset))
+                    data = json.loads(chunk.decode(charset))
                     result = data, None
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)

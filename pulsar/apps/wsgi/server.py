@@ -55,9 +55,10 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
     data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
     data = data.encode('utf-8')
     parser.execute(data, len(data))
-    request_headers = headers or []
+    request_headers = Headers(headers)
     headers = Headers()
-    return wsgi_environ(parser, ('127.0.0.1', 8060), '777.777.777.777:8080',
+    stream = StreamReader(request_headers, parser)
+    return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
                         request_headers, headers, https=secure, extra=extra)
 
 

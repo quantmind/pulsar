@@ -63,7 +63,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             response.content_type = 'application/json'
         try:
             try:
-                data = request.json_data
+                data = yield request.body_data()
             except ValueError:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')

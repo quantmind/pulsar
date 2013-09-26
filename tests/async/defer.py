@@ -19,15 +19,15 @@ class Cbk(Deferred):
             self.r = (r,)
         else:
             self.r = ()
-            
+
     def add(self, result):
         self.r += (result,)
         return self
-        
+
     def set_result(self, result):
         self.add(result)
         self.callback(self.r)
-    
+
 
 @async()
 def simple_error():
@@ -37,10 +37,10 @@ def async_pair():
     c = Deferred()
     d = Deferred().add_both(c.callback)
     return d, c
-    
-    
+
+
 class TestDeferred(unittest.TestCase):
-    
+
     def testSimple(self):
         d = Deferred()
         self.assertFalse(d.done())
@@ -51,12 +51,12 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(' (done)' in str(d))
         self.assertEqual(d.result, 'ciao')
         self.assertRaises(InvalidStateError, d.callback, 'bla')
-        
+
     def testBadCallback(self):
         d = Deferred()
         self.assertRaises(TypeError, d.add_callback, 3)
         self.assertRaises(TypeError, d.add_callback, lambda r: r, 4)
-        
+
     def testWrongOperations(self):
         d = Deferred()
         self.assertRaises(RuntimeError, d.callback, Deferred())
@@ -67,7 +67,7 @@ class TestDeferred(unittest.TestCase):
         d.callback('ciao')
         self.assertTrue(d.done())
         self.assertEqual(cbk.result, 'ciao')
-        
+
     def testError(self):
         d, cbk = async_pair()
         self.assertFalse(d.done())
@@ -79,7 +79,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(cbk.done())
         self.assertIsInstance(cbk.result, Failure)
         mute_failure(self, cbk.result)
-        
+
     def testDeferredCallback(self):
         d = Deferred()
         d.add_callback(lambda r : Cbk(r))
@@ -94,7 +94,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(result.done())
         self.assertEqual(result.result,('ciao','luca'))
         self.assertEqual(d.paused,0)
-        
+
     def testDeferredCallbackInGenerator(self):
         d = Deferred()
         # Add a callback which returns a deferred
@@ -127,7 +127,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(a.done())
         self.assertFalse(d.paused)
         self.assertEqual(d.result,('ciao', 'luca', 'second'))
-        
+
     def testDeferredErrorbackInGenerator(self):
         d = Deferred()
         # Add a callback which returns a deferred
@@ -155,7 +155,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(a.done())
         self.assertTrue(is_failure(a.result[0]))
         mute_failure(self, a.result[0])
-        
+
     def testCancel(self):
         d = Deferred()
         self.assertFalse(d.timeout)
@@ -164,7 +164,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(d.cancelled())
         self.assertTrue(is_failure(d.result))
         mute_failure(self, d.result)
-        
+
     def testCancelTask(self):
         d = Deferred()
         def gen():
@@ -172,13 +172,17 @@ class TestDeferred(unittest.TestCase):
         task = maybe_async(gen())
         self.assertNotEqual(task, d)
         task.cancel('timeout')
+        try:
+            yield task
+        except CancelledError:
+            pass
         self.assertTrue(task.done())
         self.assertTrue(task.cancelled())
         self.assertTrue(is_failure(task.result))
         self.assertTrue(d.cancelled())
         self.assertEqual(str(d), 'Deferred (cancelled)')
         mute_failure(self, task.result)
-        
+
     def testTimeout(self):
         d = Deferred(timeout=1)
         self.assertTrue(d.timeout)
@@ -195,7 +199,7 @@ class TestDeferred(unittest.TestCase):
                 yield 'OK'
         result = yield gen()
         self.assertEqual(result, 'OK')
-            
+
     def test_embedded_timeout(self):
         '''Embed an never ending coroutine into a deferred with timeout'''
         def gen(r):
@@ -210,7 +214,7 @@ class TestDeferred(unittest.TestCase):
             yield res
         except Exception as e:
             self.assertIsInstance(e, CancelledError)
-        
+
     def test_then(self):
         d1 = Deferred()
         d2 = d1.then()
@@ -219,7 +223,7 @@ class TestDeferred(unittest.TestCase):
         d1.callback(1)
         self.assertEqual(d1.result, 1)
         self.assertEqual(d2.result, 2)
-        
+
     def test_throw(self):
         d = Deferred()
         d.throw()
@@ -230,7 +234,7 @@ class TestDeferred(unittest.TestCase):
         d.result.mute()
         self.assertRaises(ValueError, d.throw)
         self.assertTrue(d.result.logged)
-        
+
     def test_cancellation(self):
         d = Deferred()
         d.cancel()
@@ -240,10 +244,10 @@ class TestDeferred(unittest.TestCase):
         self.assertEqual(d.callback(3), failure)
         self.assertRaises(InvalidStateError, d.callback, 3)
         mute_failure(self, d.result)
-        
-        
+
+
 class TestMultiDeferred(unittest.TestCase):
-        
+
     def testSimple(self):
         d = MultiDeferred()
         self.assertFalse(d.done())
@@ -256,7 +260,7 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertEqual(d.result,[])
         self.assertRaises(RuntimeError, d.lock)
         self.assertRaises(InvalidStateError, d._finish)
-        
+
     def testMulti(self):
         d = MultiDeferred()
         d1 = Deferred()
@@ -275,7 +279,7 @@ class TestMultiDeferred(unittest.TestCase):
         d1.callback('second')
         self.assertTrue(d.done())
         self.assertEqual(d.result,['second', 'first', 'bla'])
-        
+
     def testUpdate(self):
         d1 = Deferred()
         d2 = Deferred()
@@ -285,7 +289,7 @@ class TestMultiDeferred(unittest.TestCase):
         d2.callback('second')
         self.assertTrue(d.done())
         self.assertEqual(d.result,['first','second'])
-        
+
     def testNested(self):
         d = MultiDeferred()
         # add a generator
@@ -294,10 +298,10 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d.locked)
         self.assertNotIsInstance(r, Deferred)
         self.assertEqual(r, [[1,2,3,4,5,6,7,8,9,10]])
-    
+
 
 class TestCoroutine(unittest.TestCase):
-    
+
     def test_coroutine_return(self):
         def f(count=0):
             yield -1
@@ -308,10 +312,10 @@ class TestCoroutine(unittest.TestCase):
         self.assertEqual(result, 'a')
         result = yield f(10)
         self.assertEqual(result, 'a')
-        
+
 
 class TestFunctions(unittest.TestCase):
-    
+
     def test_is_exc_info(self):
         self.assertFalse(is_exc_info(None))
         self.assertFalse(is_exc_info((1,2)))
@@ -321,26 +325,26 @@ class TestFunctions(unittest.TestCase):
             raise ValueError
         except:
             self.assertTrue(is_exc_info(sys.exc_info()))
-            
+
     def test_async_error(self):
         d = simple_error()
         self.assertIsInstance(d, Deferred)
         self.assertTrue(d.done())
         self.assertIsInstance(d.result, Failure)
         d.result.mute()
-        
+
     def test_async_sleep(self):
         start = default_timer()
         result = yield async_sleep(2.1)
         self.assertEqual(result, 2.1)
         self.assertTrue(default_timer() - start > 2.1)
-        
+
     def test_async_sleep_callback(self):
         start = default_timer()
         result = yield async_sleep(1.1).add_callback(async_sleep)
         self.assertTrue(default_timer() - start >= 2.2)
         self.assertEqual(result, 1.1)
-        
+
     def test_safe_async(self):
         def f():
             raise ValueError('test safe async')
@@ -351,4 +355,3 @@ class TestFunctions(unittest.TestCase):
         self.assertIsInstance(result, Failure)
         self.assertIsInstance(result.error, ValueError)
         mute_failure(self, result)
-        

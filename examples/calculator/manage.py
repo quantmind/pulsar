@@ -43,6 +43,7 @@ except ImportError:  # pragma nocover
 
 from random import normalvariate
 
+from pulsar import async
 from pulsar.apps import rpc, wsgi
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 from pulsar.utils.pep import range
@@ -74,9 +75,11 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 
 class RequestCheck:
 
+    #async()
     def __call__(self, request, name):
-        assert(request.json_data['method'] == name)
-        return True
+        data = yield request.body_data()
+        assert(data['method'] == name)
+        yield True
 
 
 class Root(rpc.PulsarServerCommands):
