@@ -135,6 +135,17 @@ def authorization_middleware(environ, start_response):
             environ[key] = parse_authorization_header(environ[code])
 
 
+def wait_for_body_middleware(environ, start_response):
+    '''Use this middleware to wait for the full body.
+
+    This middleware wait for the full body to be received before letting
+    other middleware to be processed.
+
+    Useful when using synchronous web-frameworks.
+    '''
+    return environ['stream'].on_message_complete.add_callback(lambda s: None)
+
+
 #####################################################    RESPONSE MIDDLEWARE
 class ResponseMiddleware(object):
     '''Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`

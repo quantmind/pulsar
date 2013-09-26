@@ -552,6 +552,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _content = None
     _data_sent = None
     _history = None
+    _status_code = None
     ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     @property
@@ -570,8 +571,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         '''Numeric status code such as 200, 404 and so forth.
 
         Available once the :attr:`on_headers` has fired.'''
-        if self.parser:
-            return self.parser.get_status_code()
+        return self._status_code
 
     @property
     def url(self):
@@ -651,16 +651,16 @@ class HttpResponse(pulsar.ProtocolConsumer):
         self.transport.write(self._request.encode())
 
     def data_received(self, data):
-        if not self._request:
-            print('Got data with no request')
-            print('%s' % data)
-            print(self)
-        if self._request.parser.execute(data, len(data)) == len(data):
-            if self._request.parser.is_headers_complete():
+        request = self._request
+        # request.parser my change (100-continue)
+        # Always invoke it via request
+        if request.parser.execute(data, len(data)) == len(data):
+            if request.parser.is_headers_complete():
+                self._status_code = request.parser.get_status_code()
                 if not self.event('on_headers').done():
                     self.fire_event('on_headers')
                 if (not self.has_finished and
-                        self._request.parser.is_message_complete()):
+                        request.parser.is_message_complete()):
                     self.finished()
         else:
             raise pulsar.ProtocolError

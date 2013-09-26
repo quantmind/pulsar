@@ -41,7 +41,9 @@ Wsgi Response
 import json
 import re
 from functools import reduce
+from io import BytesIO
 
+from pulsar import async
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
@@ -401,36 +403,50 @@ class WsgiRequest(EnvironMixin):
         else:
             return None, {}
 
-    @cached_property
     def data_and_files(self):
-        '''Returns a two-elements tuple of a
-:class:`pulsar.utils.structures.MultiValueDict` containing data from the
-request body, and data from uploaded files.'''
-        if self.method not in ENCODE_URL_METHODS:
-            content_type, options = self.content_type_options
-            charset = options.get('charset', 'utf-8')
-            if content_type in JSON_CONTENT_TYPES:
-                data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
-                return json.loads(data.decode(charset))
-            else:
-                return parse_form_data(self.environ, charset)
-        else:
-            return {}, None
+        '''Retrieve body data.
 
-    @property
+        Returns a two-elements tuple of a
+        :class:`pulsar.utils.structures.MultiValueDict` containing data from the
+        request body, and data from uploaded files.
+
+        If the body data is not ready, return a :class:`pulsar.Deferred`
+        which results in the tuple.
+
+        The result is cached.
+        '''
+        if not hasattr(self, '_cached_data_and_files'):
+            return self._data_and_files()
+        else:
+            return self._cached_data_and_files
+
+    @async()
     def body_data(self):
         '''A :class:`pulsar.utils.structures.MultiValueDict` containing
 data from the request body.'''
-        data, _ = self.data_and_files
-        return data
+        data, _ = yield self.data_and_files()
+        yield data
 
-    @cached_property
-    def json_data(self):
-        '''Returns the request body data decoded via JSON. If the
-data is not in a JSON format, this method will fail.'''
+    @async()
+    def _data_and_files(self):
         if self.method not in ENCODE_URL_METHODS:
-            data = self.environ['wsgi.input'].read(MAX_BUFFER_SIZE)
-            return json.loads(data.decode(self.encoding))
+            stream = self.environ.get('wsgi.input')
+            if stream:
+                chunk = yield stream.read()
+                content_type, options = self.content_type_options
+                charset = options.get('charset', 'utf-8')
+                if content_type in JSON_CONTENT_TYPES:
+                    data = json.loads(data.decode(charset))
+                    result = data, None
+                else:
+                    self.environ['wsgi.input'] = BytesIO(chunk)
+                    result = parse_form_data(self.environ, charset)
+            else:
+                result = {}, None
+        else:
+            result = {}, None
+        self._cached_data_and_files = result
+        yield result
 
     @cached_property
     def url_data(self):

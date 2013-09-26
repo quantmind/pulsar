@@ -34,7 +34,7 @@ from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
-MAX_CONSECUTIVE_WRITES = 50
+MAX_CONSECUTIVE_WRITES = 500
 
 
 class TooManyConsecutiveWrite(PulsarException):

@@ -268,12 +268,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.get(self.httpbin('get'),
                                   data={'bla': 'foo'}).on_finished
-        self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response)
         result = response.content_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'], 'application/json')
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
                 self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
+        self._check_pool(http, response)
 
     def test_200_gzip(self):
         http = self.client()
@@ -369,6 +370,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('post'), data=data,
                                    wait_continue=True).on_finished
         self.assertEqual(response.status_code, 200)
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
 
     def test_cookie(self):
         http = self.client()
@@ -444,3 +448,25 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin(),
                                   pre_request=remove_host).on_finished
         self.assertEqual(response.status_code, 200)
+
+    def test_expect_fail(self):
+        '''This is an important test for the proxy server example.
+        The expect-continue must be handled by the upstream server which in
+        this case refuses the continue.'''
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield http.post(self.httpbin('expect'), data=data,
+                                   wait_continue=True).on_finished
+        self.assertEqual(response.status_code, 417)
+
+    def test_expect_fail_no_waiting(self):
+        http = self.client()
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield http.post(self.httpbin('expect'), data=data
+                                   ).on_finished
+        self.assertEqual(response.status_code, 200)
+        result = response.content_json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])

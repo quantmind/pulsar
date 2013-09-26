@@ -45,7 +45,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import HttpException, Queue
+from pulsar import HttpException, Queue, Empty, Deferred
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -85,14 +85,25 @@ An headers middleware is a callable which accepts two parameters, the wsgi
 
     def __call__(self, environ, start_response):
         # The WSGI thing
+        if environ.get('HTTP_EXPECT') == '100-continue':
+            return self._call(environ, start_response)
+        stream = environ.get('wsgi.input') or io.BytesIO()
+        data = stream.read()
+        # handle asynchronous body data
+        if isinstance(data, Deferred):
+            return data.add_callback(partial(self._call, environ,
+                                             start_response))
+        else:
+            return self._call(environ, start_response, data)
+
+    def _call(self, environ, start_response, data=None):
         uri = environ['RAW_URI']
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
-        stream = environ.get('wsgi.input') or io.BytesIO()
         response = self.http_client.request(method, uri,
-                                            data=stream.getvalue(),
+                                            data=data,
                                             headers=request_headers,
                                             version=environ['SERVER_PROTOCOL'])
         #
@@ -137,22 +148,29 @@ class ProxyResponse(object):
         response.bind_event('data_processed', self.data_processed)
 
     def __iter__(self):
-        yield self.queue.get()
-        while not self._done:
-            yield self.queue.get()
+        while True:
+            try:
+                yield self.queue.get(wait=not self._done)
+            except Empty:
+                break
 
     def data_processed(self, response, **kw):
         '''Receive data from the requesting HTTP client.'''
+        status = response.get_status()
+        if status == '100 Continue':
+            stream = self.environ.get('wsgi.input') or io.BytesIO()
+            body = yield stream.read()
+            response.transport.write(body)
         if response.parser.is_headers_complete():
             if self._headers is None:
                 headers = self.remove_hop_headers(response.headers)
                 self._headers = Headers(headers, kind='server')
                 # start the response
-                self.start_response(response.get_status(), list(self._headers))
+                self.start_response(status, list(self._headers))
             body = response.recv_body()
+            yield self.queue.put(body)
             if response.parser.is_message_complete():
                 self._done = True
-            yield self.queue.put(body)
 
     def error(self, failure):
         '''Handle a failure.'''
@@ -165,8 +183,8 @@ class ProxyResponse(object):
             resp = wsgi.WsgiResponse(504, data, content_type='text/html')
             self.start_response(resp.status, resp.get_headers(),
                                 failure.exc_info)
+            yield self.queue.put(resp.content[0])
             self._done = True
-            return self.queue.put(resp.content[0])
 
     def remove_hop_headers(self, headers):
         for header, value in headers:
@@ -194,9 +212,9 @@ class ProxyTunnel(ProxyResponse):
         downstream.upgrade(partial(DownStreamTunnel, upstream))
         self.start_response('200 Connection established',
                             [('Content-Length', '0')])
-        self._done = True
         # send empty byte so that headers are sent
         yield self.queue.put(b'')
+        self._done = True
 
 
 class DownStreamTunnel(pulsar.ProtocolConsumer):

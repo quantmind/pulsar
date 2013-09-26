@@ -25,7 +25,7 @@ from pulsar import HttpException, ProtocolError, maybe_async, Deferred, Failure
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
-                                  urlparse)
+                                  urlparse, DEFAULT_CHARSET)
 
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
@@ -61,9 +61,99 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
                         request_headers, headers, https=secure, extra=extra)
 
 
-def wsgi_environ(parser, address, client_address, request_headers,
+class StreamReader:
+    _expect_sent = None
+    _waiting = None
+    def __init__(self, headers, parser, transport=None):
+        self.headers = headers
+        self.parser = parser
+        self.transport = transport
+        self.buffer = b''
+        self.on_message_complete = Deferred()
+
+    def __repr__(self):
+        return repr(self.transport)
+    __str__ = __repr__
+
+    def done(self):
+        '''``True`` when the full HTTP message has been read.
+        '''
+        return self.on_message_complete.done()
+
+    def protocol(self):
+        version = self.parser.get_version()
+        return "HTTP/%s" % ".".join(('%s' % v for v in version))
+
+    def waiting_expect(self):
+        '''``True`` when the client is waiting for 100 Continue.
+        '''
+        if self._expect_sent is None:
+            if (not self.parser.is_message_complete() and
+                    self.headers.has('expect', '100-continue')):
+                return True
+            self._expect_sent = ''
+        return False
+
+    def recv(self):
+        '''Read bytes in the buffer.
+        '''
+        if self.waiting_expect():
+            if self.parser.get_version() < (1,1):
+                raise HttpException(status=417)
+            else:
+                msg = '%s 100 Continue\r\n\r\n' % self.protocol()
+                self._expect_sent = msg
+                self.transport.write(msg.encode(DEFAULT_CHARSET))
+        return self.parser.recv_body()
+
+    def read(self, maxbuf=None):
+        '''Return bytes in the buffer.
+
+        If the stream is not yet ready, return a :class:`pulsar.Deferred`
+        which results in the bytes read.
+        '''
+        if not self._waiting:
+            body = self.recv()
+            if self.done():
+                return self._getvalue(body, maxbuf)
+            else:
+                self._waiting = self.on_message_complete.then()
+                return self._waiting.add_callback(
+                    lambda r: self._getvalue(body, maxbuf))
+        else:
+            return self._waiting
+
+    def fail(self):
+        if self.waiting_expect():
+            raise HttpException(status=417)
+
+    ##    INTERNALS
+    def _expectation_failed(self):
+        raise
+        msg = '%s 417 Expectation Failed\r\n\r\n' % self.protocol()
+        self._expect_sent = msg
+        self.transport.write(msg.encode(DEFAULT_CHARSET))
+        self.transport.close()
+        self.on_message_complete.callback(None)
+
+    def _getvalue(self, body, maxbuf):
+        if self.buffer:
+            body = self.buffer + body
+        body = body + self.recv()
+        if maxbuf and len(body) > maxbuf:
+            body, self.buffer = body[:maxbuf], body[maxbuf:]
+        return body
+
+    def data_processed(self, protocol, data=None):
+        '''Callback by the protocol when new body data is received.'''
+        if self.parser.is_message_complete():
+            self.on_message_complete.callback(None)
+
+
+def wsgi_environ(stream, address, client_address, request_headers,
                  headers, server_software=None, https=False, extra=None):
-    protocol = "HTTP/%s" % ".".join(('%s' % v for v in parser.get_version()))
+    protocol = stream.protocol()
+    parser = stream.parser
     raw_uri = parser.get_url()
     request_uri = urlparse(raw_uri)
     #
@@ -77,7 +167,7 @@ def wsgi_environ(parser, address, client_address, request_headers,
         url_scheme = 'https' if https else 'http'
         host = None
     #
-    environ = {"wsgi.input": BytesIO(parser.recv_body()),
+    environ = {"wsgi.input": stream,
                "wsgi.errors": sys.stderr,
                "wsgi.version": (1, 0),
                "wsgi.run_once": False,
@@ -210,30 +300,16 @@ class HttpServerResponse(ProtocolConsumer):
         delegate the response to the :func:`wsgi_callable` function.
         '''
         p = self.parser
-        request_headers = self._request_headers
         if p.execute(bytes(data), len(data)) == len(data):
-            done = p.is_message_complete()
-            if request_headers is None and p.is_headers_complete():
+            if self._request_headers is None and p.is_headers_complete():
                 self._request_headers = Headers(p.get_headers(), kind='client')
-                if not done:
-                    self.expect_continue()
-            if done:  # message is done
-                self._generate(self.wsgi_environ())
+                stream = StreamReader(self._request_headers, p, self.transport)
+                self.bind_event('data_processed', stream.data_processed)
+                self._generate(self.wsgi_environ(stream))
         else:
             # This is a parsing error, the client must have sent
             # bogus data
             raise ProtocolError
-
-    def expect_continue(self):
-        '''Handle the expect=100-continue header if available, according to
-the following algorithm:
-
-* Send the 100 Continue response before waiting for the body.
-* Omit the 100 (Continue) response if it has already received some or all of
-  the request body for the corresponding request.
-    '''
-        if self._request_headers.has('expect', '100-continue'):
-            self.transport.write(b'HTTP/1.1 100 Continue\r\n\r\n')
 
     @property
     def status(self):
@@ -426,11 +502,11 @@ speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
             headers['connection'] = 'close'
         return headers
 
-    def wsgi_environ(self):
+    def wsgi_environ(self, stream):
         #return a the WSGI environ dictionary
         parser = self.parser
         https = True if is_tls(self.transport.sock) else False
-        environ = wsgi_environ(parser, self.transport.address, self.address,
+        environ = wsgi_environ(stream, self.transport.address, self.address,
                                self._request_headers, self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,

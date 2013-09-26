@@ -183,20 +183,24 @@ def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
 
 def maybe_async(value, canceller=None, event_loop=None, timeout=None,
                 get_result=True):
-    '''Return an :ref:`asynchronous instance <tutorials-coroutine>`
-only if ``value`` is a generator, a :class:`Deferred` or ``get_result`` is
-set to ``False``.
+    '''Handle a possible asynchronous ``value``.
 
-:parameter value: the value to convert to an asynchronous instance
-    if it needs to.
-:parameter canceller: optional canceller (see :attr:`Deferred.canceller`).
-:parameter event_loop: optional :class:`EventLoop`.
-:parameter timeout: optional timeout after which any asynchronous element get
-    a cancellation.
-:parameter get_result: optional flag indicating if to get the result in case
-    the return value is a :class:`Deferred` already done. Default: ``True``.
-:return: a :class:`Deferred` or  a :class:`Failure` or a synchronous value.
-'''
+    Return an :ref:`asynchronous instance <tutorials-coroutine>`
+    only if ``value`` is a generator, a :class:`Deferred` or ``get_result``
+    is set to ``False``.
+
+    :parameter value: the value to convert to an asynchronous instance
+        if it needs to.
+    :parameter canceller: optional canceller (see :attr:`Deferred.canceller`).
+    :parameter event_loop: optional :class:`EventLoop`.
+    :parameter timeout: optional timeout after which any asynchronous element
+        get a cancellation.
+    :parameter get_result: optional flag indicating if to get the result in
+        case the return value is a :class:`Deferred` already done.
+        Default: ``True``.
+    :return: a :class:`Deferred` or  a :class:`Failure` or a synchronous
+    value.
+    '''
     global _maybe_async
     return _maybe_async(value, canceller=canceller, event_loop=event_loop,
                         timeout=timeout, get_result=get_result)
@@ -839,7 +843,7 @@ function when a generator is passed as argument.'''
             result = sys.exc_info()
             conclude = True
         else:
-            result = maybe_async(result, event_loop=self.event_loop)
+            result = maybe_async(result, event_loop=self._event_loop)
             if isinstance(result, Deferred):
                 # async result add callback/errorback and transfer control
                 # to the event loop
@@ -847,7 +851,7 @@ function when a generator is passed as argument.'''
                 return None, True
             elif result == NOT_DONE:
                 # transfer control to the event loop
-                self.event_loop.call_soon(self._consume, None)
+                self._event_loop.call_soon(self._consume, None)
                 return None, True
         if conclude:
             if failure:
@@ -865,15 +869,8 @@ function when a generator is passed as argument.'''
     def _restart(self, result):
         self._waiting = None
         #restart the coroutine in the same event loop it was started
-        self.event_loop.call_now_threadsafe(self._consume, result)
-        # Important, this is a callback of a deferred, therefore we return
-        # the passed result (which is not asynchronous).
-        return result
-
-    def _restart_error(self, failure):
-        self._waiting = None
-        #restart the coroutine in the same event loop it was started
-        self.event_loop.call_now_threadsafe(self._consume, result)
+        #self._event_loop.call_now_threadsafe(self._consume, result)
+        self._event_loop.call_soon_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is not asynchronous).
         return result

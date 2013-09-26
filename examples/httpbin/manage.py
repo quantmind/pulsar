@@ -21,16 +21,11 @@ except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
-from pulsar import HttpRedirect, HttpException, version, JAPANESE
+from pulsar import HttpRedirect, HttpException, version, async, JAPANESE
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
-
-try:
-    from oauthbin import OAuthBin
-except ImportError:
-    OAuthBin = None
 
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -203,24 +198,31 @@ class HttpBin(wsgi.Router):
         request.response.content = data
         return request.response
 
+    @route('expect', method='post', title='Expectation Failed')
+    def expectation_failure(self, request):
+        stream = request.get('wsgi.input')
+        stream.fail()
+        return self.info_data_response(request)
+
     ########################################################################
     #    INTERNALS
     def info_data_response(self, request, **params):
         data = self.info_data(request, **params)
         return Json(data).http_response(request)
 
+    @async()
     def info_data(self, request, **params):
         headers = self.getheaders(request)
         args = {}
         if request.method in ENCODE_URL_METHODS:
             args = request.url_data
         else:
-            args = request.body_data
+            args = yield request.body_data()
         data = {'method': request.method,
                 'headers': headers,
                 'args': dict(args)}
         data.update(params)
-        return data
+        yield data
 
     def getheaders(self, request):
         headers = Headers(kind='client')
@@ -240,8 +242,6 @@ class Site(wsgi.LazyWsgi):
 
     def setup(self):
         router = HttpBin('/')
-        if OAuthBin:
-            router.add_child(OAuthBin('oauth2'))
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
