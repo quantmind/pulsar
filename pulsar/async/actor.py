@@ -12,6 +12,7 @@ from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
 from .access import get_actor
+from .cov import Coverage
 from .consts import *
 
 
@@ -70,7 +71,7 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
 
 
-class Actor(EventHandler, Pulsar, ActorIdentity):
+class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     '''The base class for parallel execution in pulsar. In computer science,
 the **Actor model** is a mathematical model of concurrent computation that
 treats *actors* as the universal primitives of computation.

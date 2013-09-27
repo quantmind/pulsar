@@ -8,7 +8,7 @@ import sys
 
 from pulsar.utils.path import Path
 from pulsar.apps.test import TestSuite
-from pulsar.apps.test.plugins import bench, profile, cov
+from pulsar.apps.test.plugins import bench, profile
 import pulsar.utils.settings.backend
 
 Path(__file__).add2python('stdnet', 1, down=['python-stdnet'],
@@ -21,6 +21,5 @@ if __name__ == '__main__':
                        ('examples', 'tests'),
                        ('examples', 'test_*')),
               plugins=(bench.BenchMark(),
-                       profile.Profile(),
-                       cov.Coverage()),
+                       profile.Profile()),
               pidfile='test.pid').start()

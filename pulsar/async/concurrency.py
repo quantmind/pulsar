@@ -1,3 +1,4 @@
+import tempfile
 from functools import partial
 from multiprocessing import Process, current_process
 
@@ -38,7 +39,9 @@ which handle the contruction and the lif of an :class:`Actor`.
 
 
 class Concurrency(object):
-    '''Actor :class:`Concurrency` is responsible for the actual spawning of
+    '''Actor :class:`Concurrency`.
+
+    Responsible for the actual spawning of
 actors according to a concurrency implementation. Instances are picklable
 and are shared between the :class:`Actor` and its
 :class:`ActorProxyMonitor`.
@@ -211,6 +214,7 @@ class ProcessMixin(object):
         return True
 
     def setup_event_loop(self, actor):
+        actor.start_coverage()
         event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                                     poll_timeout=actor.params.poll_timeout)
         actor.mailbox = self.create_mailbox(actor, event_loop)
@@ -320,14 +324,20 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def is_arbiter(self):
         return True
 
-    def before_start(self, actor):
-        '''Daemonise the system if required.'''
-        if actor.cfg.daemon:  # pragma    nocover
+    def before_start(self, actor):  # pragma    nocover
+        '''Daemonise the system if required.
+
+        Create coverage directory if required.
+        '''
+        if actor.cfg.daemon:
             system.daemonize()
+        if actor.cfg.coverage:  # create the coverage directory
+            actor.params.coverage_directory = tempfile.mkdtemp()
 
     def create_mailbox(self, actor, event_loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
-mailbox server.'''
+        mailbox server.
+        '''
         mailbox = TcpServer(event_loop, '127.0.0.1', 0,
                             consumer_factory=MailboxConsumer,
                             name='mailbox')

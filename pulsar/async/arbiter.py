@@ -19,8 +19,11 @@ __all__ = ['arbiter', 'spawn', 'Arbiter']
 
 
 def arbiter(commands_set=None, **params):
-    '''Obtain the :class:`Arbiter` instance if we are on the arbiter
-context domain, otherwise it returns ``None``.'''
+    '''Obtain the :class:`Arbiter`.
+
+    It returns the arbiter instance only if we are on the arbiter
+    context domain, otherwise it returns nothing.
+    '''
     arbiter = get_actor()
     if arbiter is None:
         # Create the arbiter
@@ -32,31 +35,33 @@ context domain, otherwise it returns ``None``.'''
 # TODO: why cfg is set to None?
 def spawn(cfg=None, **kwargs):
     '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
-This method can be used from any :class:`Actor`.
-If not in the :class:`Arbiter` domain,
-the method send a request to the :class:`Arbiter` to spawn a new actor. Once
-the arbiter creates the actor it returns the proxy to the original caller.
 
-**Parameter kwargs**
+    This method can be used from any :class:`Actor`.
+    If not in the :class:`Arbiter` domain, the method sends a request
+    to the :class:`Arbiter` to spawn a new actor.
+    Once the arbiter creates the actor it returns the proxy to the
+    original caller.
 
-These optional parameters are:
+    **Parameter kwargs**
+
+    These optional parameters are:
     * *actor_class* a custom :class:`Actor` subclass.
     * *aid* the actor id
     * *commands_set* the set of :ref:`remote commands <api-remote_commands>`
       the :class:`Actor` can respond to.
 
-:rtype: an :class:`ActorProxyDeferred`.
+    :return: an :class:`ActorProxyDeferred`.
 
-A typical usage::
+    A typical usage::
 
-    >>> a = spawn()
-    >>> a.aid
-    'ba42b02b'
-    >>> a.called
-    True
-    >>> p = a.result
-    >>> p.address
-    ('127.0.0.1', 46691)
+        >>> a = spawn()
+        >>> a.aid
+        'ba42b02b'
+        >>> a.called
+        True
+        >>> p = a.result
+        >>> p.address
+        ('127.0.0.1', 46691)
     '''
     aid = gen_unique_id()[:8]
     kwargs['aid'] = aid
@@ -71,13 +76,14 @@ A typical usage::
         return actor.spawn(**kwargs)
 
 
-def stop_arbiter(self):
+def stop_arbiter(self):     # pragma    nocover
     p = self.pidfile
     if p is not None:
         self.logger.debug('Removing %s' % p.fname)
         p.unlink()
     if self.managed_actors:
         self.state = ACTOR_STATES.TERMINATE
+    self.collect_coverage()
     exit_code = self.exit_code or 0
     self.stream.writeln("Bye (exit code = %s)" % exit_code)
     try:
@@ -105,24 +111,26 @@ def start_arbiter(self):
 
 
 class Arbiter(PoolMixin):
-    '''The Arbiter is the most important a :class:`Actor`
-and :class:`PoolMixin` in pulsar concurrent framework. It is used as singleton
-in the main process and it manages one or more :class:`Monitor`.
-It runs the main :class:`EventLoop` of your concurrent application.
-It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
-and the tornado_ eventloop.
+    '''The Arbiter drives pulsar servers.
 
-Users access the arbiter (in the arbiter process domain) by the high level
-api::
+    It is the most important a :class:`Actor` and :class:`PoolMixin` in
+    pulsar concurrent framework. It is used as singleton
+    in the main process and it manages one or more :class:`Monitor`.
+    It runs the main :class:`EventLoop` of your concurrent application.
+    It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
+    and the tornado_ eventloop.
 
-    import pulsar
+    Users access the arbiter (in the arbiter process domain) by the
+    high level api::
 
-    arbiter = pulsar.arbiter()
+        import pulsar
 
-.. _gunicorn: http://gunicorn.org/
-.. _twisted: http://twistedmatrix.com/trac/
-.. _tornado: http://www.tornadoweb.org/
-'''
+        arbiter = pulsar.arbiter()
+
+    .. _gunicorn: http://gunicorn.org/
+    .. _twisted: http://twistedmatrix.com/trac/
+    .. _tornado: http://www.tornadoweb.org/
+    '''
     pidfile = None
 
     def __init__(self, impl):
@@ -138,13 +146,15 @@ api::
     def add_monitor(self, monitor_name, monitor_class=None, **params):
         '''Add a new :class:`Monitor` to the :class:`Arbiter`.
 
-:parameter monitor_class: a :class:`pulsar.Monitor` class.
-:parameter monitor_name: a unique name for the monitor.
-:parameter kwargs: dictionary of key-valued parameters for the monitor.
-:rtype: an instance of a :class:`pulsar.Monitor`.'''
+        :param monitor_class: a :class:`pulsar.Monitor` class.
+        :param monitor_name: a unique name for the monitor.
+        :param kwargs: dictionary of key-valued parameters for the monitor.
+        :return: the :class:`pulsar.Monitor` added.
+        '''
         if monitor_name in self.registered:
             raise KeyError('Monitor "%s" already available' % monitor_name)
         monitor_class = monitor_class or Monitor
+        params.update(self.params)
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
         self.registered[m.name] = m
@@ -152,7 +162,8 @@ api::
         return m
 
     def close_monitors(self):
-        '''Close all :class:`Monitor` at once.'''
+        '''Close all :class:`Monitor` at once.
+        '''
         return multi_async((m.stop() for m in list(itervalues(self.monitors))))
 
     def get_actor(self, aid):

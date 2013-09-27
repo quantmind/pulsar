@@ -75,7 +75,7 @@ When running a :class:`SocketServer` in multi-process mode (default),
 the application, create a listening socket in the parent (Arbiter) process
 and then spawn several process-based actors which listen on the
 same shared socket.
-This is how, pre-forking servers operate.
+This is how pre-forking servers operate.
 
 When running a :class:`SocketServer` in threading mode::
 

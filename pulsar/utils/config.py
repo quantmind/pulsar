@@ -804,6 +804,17 @@ class DefaultProcName(Global):
         """
 
 
+class Coverage(Global):
+    name = "coverage"
+    flags = ["--coverage"]
+    validator = validate_bool
+    action = "store_true"
+    default = False
+    desc = """\
+        Collect code coverage from all spawn actors.
+        """
+
+
 ############################################################################
 ##    Worker Processes
 section_docs['Worker Processes'] = '''
