@@ -70,6 +70,7 @@ class Test(tasks.Job):
         * Run the class method ``tearDownClass`` of :attr:`testcls` if defined,
           unless the test class should be skipped.
         '''
+        runner.startTestClass(testcls)
         error = None
         timeout = cfg.test_timeout
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
@@ -95,6 +96,7 @@ class Test(tasks.Job):
             yield self._run(runner, testcls, 'tearDownClass', timeout,
                             add_err=False)
         yield runner.result
+        runner.stopTestClass(testcls)
 
     def run_test(self, test, runner, cfg):
         '''Run a ``test`` function using the following algorithm

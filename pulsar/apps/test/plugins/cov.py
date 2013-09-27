@@ -1,5 +1,6 @@
 import os
 import logging
+from shutil import rmtree
 
 try:
     import coverage
@@ -28,20 +29,28 @@ class Coverage(test.TestPlugin):
                             desc='''location of coverage directory''',
                             validator=absolute_file)
     coverage = None
+    dirname = 'cfiles'
 
     def on_start(self):
         if coverage and self.config.coverage:
+            if os.path.isdir(self.dirname):
+                rmtree(self.dirname)
+            os.mkdir(self.dirname)
+
+    def startTestClass(self, testcls):
+        if coverage and self.config.coverage:
             cps = self.config.coverage_config
+            name = '%s/.%s.%s' % (self.dirname, testcls.__module__,
+                                  testcls.__name__)
             os.environ['COVERAGE_PROCESS_START'] = cps
-            self.coverage = coverage.coverage(config_file=cps, auto_data=True)
-            self.coverage.atexit_registered = True
+            self.coverage = coverage.coverage(data_file=name, config_file=cps)
+            #self.coverage.atexit_registered = True
             self.coverage.start()
 
-    def on_end(self):
+    def stopTestClass(self, testcls):
         if self.coverage:
-            LOGGER.info('Save coverage files')
-            self.coverage.save()
             self.coverage.stop()
-            self.coverage.html_report(directory=self.config.coverage_path)
-            LOGGER.info('Coverage html report at %s',
-                        self.config.coverage_path)
+            self.coverage.save()
+            #self.coverage.html_report(directory=self.config.coverage_path)
+            #LOGGER.info('Coverage html report at %s',
+            #            self.config.coverage_path)

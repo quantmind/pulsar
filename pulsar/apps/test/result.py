@@ -73,9 +73,18 @@ suite starts running them.'''
         '''Called by :ref:`TestSuite <test-suite>` just before it stops.'''
         pass
 
-    def loadTestsFromTestCase(self, test_class):
-        '''Called just before a ``test_class`` executes all its test
-methods. This is run just before ``setUpClass`` method.'''
+    def loadTestsFromTestCase(self, testcls):
+        '''Called when loading tests form ``testcls``.
+
+        Can be used to modify the number of test functions loaded.'''
+        pass
+
+    def startTestClass(self, testcls):
+        '''Called just before a ``testcls`` runs its tests.'''
+        pass
+
+    def stopTestClass(self, testcls):
+        '''Called just after a ``testcls`` has run its tests.'''
         pass
 
     def startTest(self, test):
@@ -341,8 +350,7 @@ def testsafe(name, return_val=None):
                 if c is not None:
                     return return_val(c)
             except Exception:
-                LOGGER.critical('Unhadled error in %s.%s' % (p, name),
-                                exc_info=True)
+                LOGGER.exception('Unhadled error in %s.%s' % (p, name))
     return _
 
 
@@ -370,6 +378,8 @@ class TestRunner(TestResultProxy):
     configure = testsafe('configure', lambda c: c)
     on_start = testsafe('on_start')
     on_end = testsafe('on_end')
+    startTestClass = testsafe('startTestClass')
+    stopTestClass = testsafe('stopTestClass')
     startTest = testsafe('startTest')
     stopTest = testsafe('stopTest')
     addSuccess = testsafe('addSuccess')
