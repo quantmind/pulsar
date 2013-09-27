@@ -10,7 +10,7 @@ from .client import TestHttpClientBase
 
 @unittest.skipUnless(get_actor().cfg.http_proxy=='',
                     'Requires no external proxy')
-class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
+class Test_HttpClient_NoProxy_External(TestHttpClientBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
     with_httpbin = False
@@ -40,7 +40,7 @@ class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
 
 @unittest.skipUnless(get_actor().cfg.http_proxy=='',
                      'Requires no external proxy')
-class TestHttpClientProxyExternal(TestHttpClientBase, unittest.TestCase):
+class Test_HttpClient_Proxy_ExternalTarget(TestHttpClientBase, unittest.TestCase):
     with_proxy = True
     with_httpbin = False
     concurrency = 'thread'
@@ -50,15 +50,16 @@ class TestHttpClientProxyExternal(TestHttpClientBase, unittest.TestCase):
         response = client.get('https://github.com/trending')
         r1 = yield response.on_headers
         self.assertEqual(r1.status_code, 200)
-        headers = r1.headers
+        headers1 = r1.headers
         r2 = yield response.on_finished
         self.assertEqual(r2.status_code, 200)
         headers2 = r2.headers
-        self.assertNotEqual(len(r1), len(r2))
+        self.assertNotEqual(len(headers1), len(headers2))
 
 
 @unittest.skipUnless(get_actor().cfg.http_proxy, 'Requires external proxy')
-class TestHttpClientExternalProxy(TestHttpClientBase, unittest.TestCase):
+class Test_HttpClient_ExternalProxy_External(TestHttpClientBase,
+                                             unittest.TestCase):
     with_httpbin = False
 
     def test_get_httpbin(self):
