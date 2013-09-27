@@ -213,7 +213,8 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   Headers, urllibr, get_environ_proxies,
                                   choose_boundary, urlunparse, request_host,
                                   is_succesful, HTTPError, URLError,
-                                  get_hostport, cookiejar_from_dict)
+                                  get_hostport, cookiejar_from_dict,
+                                  host_no_default_port)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -262,8 +263,6 @@ if not ispy33:  # pragma     nocover
 
 
 class HttpTunnel(RequestBase):
-    # Don't release connection when tunneling
-    release_connection = False
     first_line = None
 
     def __init__(self, request, scheme, host):
@@ -274,7 +273,7 @@ class HttpTunnel(RequestBase):
         self.parser = request.parser
         request.new_parser()
         self.headers = request.client.tunnel_headers.copy()
-        self.headers['host'] = request_host(self)
+        self.headers['host'] = request.headers['host']
 
     def __repr__(self):
         return 'Tunnel %s' % self.full_url
@@ -357,14 +356,13 @@ class HttpRequest(pulsar.Request, RequestBase):
         self.new_parser()
         if self._scheme in tls_schemes:
             self._ssl = client.ssl_context(**ignored)
-        client.set_proxy(self)
-        self.full_url = self.get_full_url()
         self.headers = client.get_headers(self, headers)
         if client.cookies:
             client.cookies.add_cookie_header(self)
         if cookies:
             cookiejar_from_dict(cookies).add_cookie_header(self)
-        self.headers['host'] = request_host(self)
+        self.headers['host'] = host_no_default_port(self._scheme, self._netloc)
+        client.set_proxy(self)
 
     @property
     def address(self):
@@ -732,6 +730,7 @@ class HttpClient(pulsar.Client):
         kind='client')
     DEFAULT_TUNNEL_HEADERS = Headers([
         ('Connection', 'Keep-Alive'),
+        ('Proxy-Connection', 'Keep-Alive'),
         ('Accept', 'text/plain, */*; q=0.8')],
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',

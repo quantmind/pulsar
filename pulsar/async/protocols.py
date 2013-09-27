@@ -451,7 +451,7 @@ class Connection(EventHandler, Protocol):
             else:
                 log_failure(exc)
 
-    def upgrade(self, consumer_factory, build_consumer=False):
+    def upgrade(self, consumer_factory=None, build_consumer=False):
         '''Upgrade the :func:`consumer_factory` callable.
 
         This method can be used when the protocol specification changes
@@ -460,8 +460,8 @@ class Connection(EventHandler, Protocol):
         ``post_request`` :ref:`event <event-handling>` of the protocol
         consumer should not have been fired already.
 
-        :param consumer_factory: the new consumer factory (a callable accepting
-            no parameters)
+        :param consumer_factory: the new consumer factory (a callable
+            accepting no parameters)
         :param build_consumer: if ``True`` build the new consumer.
             Default ``False``.
         :return: the new consumer if ``build_consumer`` is ``True``.
@@ -472,6 +472,7 @@ class Connection(EventHandler, Protocol):
             # so that post request won't be fired when the consumer finishes
             consumer.silence_event('post_request')
             self._processed -= 1
+            consumer_factory = consumer_factory or self._consumer_factory
             self._consumer_factory = partial(self._upgrade, consumer_factory,
                                              consumer)
             if build_consumer:

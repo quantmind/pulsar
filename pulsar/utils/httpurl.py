@@ -272,9 +272,9 @@ def host_and_port(host):
 
 
 def default_port(scheme):
-    if scheme == "http":
+    if scheme in ("http", "ws"):
         return '80'
-    elif scheme == "https":
+    elif scheme in ("https", "wss"):
         return '443'
 
 
@@ -283,6 +283,14 @@ def host_and_port_default(scheme, host):
     if not port:
         port = default_port(scheme)
     return host, port
+
+
+def host_no_default_port(scheme, netloc):
+    host, port = splitport(netloc)
+    if port and port == default_port(scheme):
+        return host
+    else:
+        return netloc
 
 
 def get_hostport(scheme, full_host):
@@ -892,7 +900,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
     def execute(self, data, length):
         # end of body can be passed manually by putting a length of 0
         if length == 0:
-            return self.close(length)
+            self.__on_message_complete = True
+            return length
+        #
         data = bytes(data)
         # start to parse
         nb_parsed = 0
@@ -922,9 +932,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     to_parse = b''.join(self._buf)
                     ret = self._parse_headers(to_parse)
                     if ret is False:
-                        if to_parse == b'\r\n':
-                            self._buf = []
-                            return self.close(length)
                         return length
                     nb_parsed = nb_parsed + (len(to_parse) - ret)
                 except InvalidHeader as e:
@@ -948,15 +955,6 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                     nb_parsed = max(length, ret)
             else:
                 return 0
-
-    def close(self, length):
-        self.__on_message_begin = True
-        self.__on_message_complete = True
-        if not self._buf and self.__on_firstline:
-            self.__on_headers_complete = True
-            return length
-        else:
-            return length+len(self._buf)
 
     def _parse_firstline(self, line):
         try:
@@ -1016,6 +1014,10 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         self._version = (int(match.group(1)), int(match.group(2)))
 
     def _parse_headers(self, data):
+        if data == b'\r\n':
+            self.__on_headers_complete = True
+            self._buf = []
+            return 0
         idx = data.find(b'\r\n\r\n')
         if idx < 0:  # we don't have all headers
             return False
@@ -1047,7 +1049,14 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         clen = self._headers.get('content-length')
         te = self._headers.get('transfer-encoding', '').lower()
         self._chunked = (te == 'chunked')
-        if clen and not self._chunked:
+        #
+        status = self._status_code
+        if status and (status == httpclient.NO_CONTENT or
+                       status == httpclient.NOT_MODIFIED or
+                       100 <= status < 200 or      # 1xx codes
+                       self._method == "HEAD"):
+            clen = 0
+        elif clen is not None:
             try:
                 clen = int(clen)
             except ValueError:
@@ -1055,15 +1064,12 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             else:
                 if clen < 0:  # ignore nonsensical negative lengths
                     clen = None
+        #
+        if clen is None:
+            self._clen_rest = sys.maxsize
         else:
-            clen = None
-        status = self._status_code
-        if status and (status == httpclient.NO_CONTENT or
-                       status == httpclient.NOT_MODIFIED or
-                       100 <= status < 200 or      # 1xx codes
-                       self._method == "HEAD"):
-            clen = 0
-        self._clen_rest = self._clen = clen
+            self._clen_rest = self._clen = clen
+        #
         # detect encoding and set decompress object
         if self.decompress:
             encoding = self._headers.get('content-encoding')
@@ -1074,22 +1080,30 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         rest = data[idx+4:]
         self._buf = [rest]
         self.__on_headers_complete = True
+        self.__on_message_begin = True
         return len(rest)
 
     def _parse_body(self):
         data = b''.join(self._buf)
+        #
         if not self._chunked:
-            if self._clen_rest is not None:
-                self._clen_rest -= len(data)
-            # maybe decompress
-            if self.__decompress_obj is not None:
-                data = self.__decompress_obj.decompress(data)
-            self._partial_body = True
-            if data:
-                self._body.append(data)
-            self._buf = []
-            if self._clen_rest is None or self._clen_rest <= 0:
-                self.__on_message_complete = True
+            #
+            if not data and self._clen is None:
+                if not self._status: # message complete only for servers
+                    self.__on_message_complete = True
+            else:
+                if self._clen_rest is not None:
+                    self._clen_rest -= len(data)
+                # maybe decompress
+                if self.__decompress_obj is not None:
+                    data = self.__decompress_obj.decompress(data)
+                self._partial_body = True
+                if data:
+                    self._body.append(data)
+                self._buf = []
+                if self._clen_rest <= 0:
+                    self.__on_message_complete = True
+            return
         else:
             try:
                 size, rest = self._parse_chunk_size(data)

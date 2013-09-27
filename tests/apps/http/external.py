@@ -8,9 +8,10 @@ from pulsar.apps.http import URLError
 from .client import TestHttpClientBase
 
 
-# class d:
-@unittest.skipUnless(get_actor().cfg.http_proxy=='', 'No proxy')
-class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
+class d:
+#@unittest.skipUnless(get_actor().cfg.http_proxy=='',
+#                    'Requires no external proxy')
+#class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
     with_httpbin = False
@@ -38,13 +39,14 @@ class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
         self.assertRaises(URLError, response.raise_for_status)
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy=='', 'No proxy')
+@unittest.skipUnless(get_actor().cfg.http_proxy=='',
+                     'Requires no external proxy')
 class TestHttpClientProxyExternal(TestHttpClientBase, unittest.TestCase):
     with_proxy = True
     with_httpbin = False
     concurrency = 'thread'
 
-    def test_get(self):
+    def test_get_https(self):
         client = self.client()
         response = client.get('https://github.com/trending')
         r1 = yield response.on_headers
@@ -63,6 +65,19 @@ class TestHttpClientExternalProxy(TestHttpClientBase, unittest.TestCase):
 
     def test_get_httpbin(self):
         client = self.client()
-        response = yield client.get('http://httpbin.org/').on_finished
+        response = yield client.get('http://httpbin.org/get').on_finished
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'], 'application/json')
         self.assertTrue(response.request.proxy)
+
+    def test_get_https(self):
+        '''Tunnel with an external proxy server.'''
+        client = self.client()
+        response = client.get('https://github.com/trending')
+        r1 = yield response.on_headers
+        self.assertEqual(r1.status_code, 200)
+        headers1 = r1.headers
+        r2 = yield response.on_finished
+        self.assertEqual(r2.status_code, 200)
+        headers2 = r2.headers
+        self.assertNotEqual(len(headers1), len(headers2))

@@ -407,8 +407,8 @@ class WsgiRequest(EnvironMixin):
         '''Retrieve body data.
 
         Returns a two-elements tuple of a
-        :class:`pulsar.utils.structures.MultiValueDict` containing data from the
-        request body, and data from uploaded files.
+        :class:`pulsar.utils.structures.MultiValueDict` containing data from
+        the request body, and data from uploaded files.
 
         If the body data is not ready, return a :class:`pulsar.Deferred`
         which results in the tuple.

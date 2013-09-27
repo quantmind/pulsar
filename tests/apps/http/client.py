@@ -80,8 +80,6 @@ class TestHttpClientBase:
         #Test the connection pool
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
-            # take into account for tunneling
-            processed += self.tunneling
             pool = http.connection_pools[response.request.key]
             self.assertEqual(pool.received, created)
             self.assertEqual(pool.available_connections, available)
@@ -155,7 +153,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 2+self.tunneling)
+        self.assertEqual(response.connection.processed, 2)
 
     def test_redirect_6(self):
         http = self.client()
@@ -168,7 +166,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 7+self.tunneling)
+        self.assertEqual(response.connection.processed, 7)
 
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
@@ -241,8 +239,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('get')).on_finished
         self.assertEqual(response.status_code, 200)
         # for tunneling this fails sometimes
-        if not self.tunneling:
-            self._check_pool(http, response, created=2)
+        self._check_pool(http, response, created=2)
 
     def test_large_response(self):
         http = self.client(timeout=60)

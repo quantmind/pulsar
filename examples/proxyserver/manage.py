@@ -168,7 +168,7 @@ class ProxyResponse(object):
                 # start the response
                 self.start_response(status, list(self._headers))
             body = response.recv_body()
-            yield self.queue.put(body)
+            self.queue.put(body)
             if response.parser.is_message_complete():
                 self._done = True
 
@@ -210,11 +210,10 @@ class ProxyTunnel(ProxyResponse):
         # Upgrade downstream protocol consumer
         downstream = self.environ['pulsar.connection']
         downstream.upgrade(partial(DownStreamTunnel, upstream))
-        self.start_response('200 Connection established',
-                            [('Content-Length', '0')])
-        # send empty byte so that headers are sent
-        yield self.queue.put(b'')
+        self.start_response('200 Connection established', [])
         self._done = True
+        # send empty byte so that headers are sent
+        self.queue.put(b'')
 
 
 class DownStreamTunnel(pulsar.ProtocolConsumer):
@@ -248,6 +247,7 @@ class DownStreamTunnel(pulsar.ProtocolConsumer):
 
 class UpstreamTunnel(pulsar.ProtocolConsumer):
     headers = None
+    status_code = None
 
     def __init__(self, downstream):
         super(UpstreamTunnel, self).__init__()

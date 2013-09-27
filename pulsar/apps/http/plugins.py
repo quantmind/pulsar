@@ -131,38 +131,33 @@ class Tunneling:
             # and if transport is not SSL already
             if not isinstance(response.transport, SocketStreamSslTransport):
                 response._request = tunnel
-                response.bind_event('post_request', self.post_request)
+                response.bind_event('on_headers', self.on_headers)
         # make sure to return the response
         return response
 
-    def post_request(self, response):
-        '''Called back once the message is complete.'''
+    def on_headers(self, response):
+        '''Called back once the headers have arrived.'''
         if response.status_code == 200:
-            prev_response = response
-            request = prev_response._request.request
             loop = response.event_loop
             loop.remove_reader(response.transport.sock.fileno())
-            response = request.client.build_consumer()
-            response.chain_event(prev_response, 'post_request')
             # Wraps the socket at the next iteration loop. Important!
-            loop.call_soon_threadsafe(
-                self.switch_to_ssl, prev_response, response)
+            loop.call_soon_threadsafe(self.switch_to_ssl, response)
         # make sure to return the response
         return response
 
-    def switch_to_ssl(self, prev_response, response):
+    def switch_to_ssl(self, prev_response):
         '''Wrap the transport for SSL communication.'''
         loop = prev_response.event_loop
         request = prev_response._request.request
         connection = prev_response._connection
-        client = request.client
+        response = connection.upgrade(build_consumer=True)
         transport = connection.transport
         sock = transport.sock
         transport = SocketStreamSslTransport(loop, sock, transport.protocol,
                                              request._ssl, server_side=False,
                                              server_hostname=request._netloc)
         connection._transport = transport
-        # pause connection made since it will be called again when the
-        # ssl handshake occurs
+        # silnce connection made since it will be called again when the
+        # ssl handshake occurs. This is just to avoid unwanted logging.
         connection.silence_event('connection_made')
-        client.response(request, response, connection=connection)
+        response.start(request)

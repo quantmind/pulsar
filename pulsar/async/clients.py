@@ -235,7 +235,7 @@ def release_response_connection(response):
     connection = response.connection
     if connection:
         connection.set_consumer(None)
-        if request.release_connection:
+        if getattr(request, 'release_connection', False):
             key = response.request.key
             pool = response.producer.connection_pools.get(key)
             if not pool:

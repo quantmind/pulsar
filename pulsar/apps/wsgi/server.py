@@ -65,6 +65,7 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
 class StreamReader:
     _expect_sent = None
     _waiting = None
+
     def __init__(self, headers, parser, transport=None):
         self.headers = headers
         self.parser = parser
@@ -99,7 +100,7 @@ class StreamReader:
         '''Read bytes in the buffer.
         '''
         if self.waiting_expect():
-            if self.parser.get_version() < (1,1):
+            if self.parser.get_version() < (1, 1):
                 raise HttpException(status=417)
             else:
                 msg = '%s 100 Continue\r\n\r\n' % self.protocol()
@@ -429,16 +430,14 @@ class HttpServerResponse(ProtocolConsumer):
             result = sys.exc_info()
         else:
             if not isinstance(wsgi_iter, Failure):
-                result = self.async_wsgi(wsgi_iter)
+                result = self._async_wsgi(wsgi_iter)
             else:
                 result = wsgi_iter
         result = maybe_async(result, get_result=False)
         err_handler = self._generate if failure is None else self.catastrofic
         result.add_errback(partial(err_handler, environ))
 
-    def async_wsgi(self, wsgi_iter):
-        '''Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_
-when the ``wsgi_iter`` yields bytes only.'''
+    def _async_wsgi(self, wsgi_iter):
         if isinstance(wsgi_iter, Deferred):
             wsgi_iter = yield wsgi_iter
         try:
@@ -471,13 +470,14 @@ when the ``wsgi_iter`` yields bytes only.'''
         self.finished()
 
     def is_chunked(self):
-        '''Only use chunked responses when the client is
-speaking HTTP/1.1 or newer and there was no Content-Length header set.'''
-        if self.version <= (1, 0):
-            return False
-        elif has_empty_content(int(self.status[:3])):
-            # Do not use chunked responses when the response
-            # is guaranteed to not have a response body.
+        '''Check if the response uses chunked transfer encoding.
+
+        Only use chunked responses when the client is speaking HTTP/1.1
+        or newer and there was no Content-Length header set.
+        '''
+        if (self.version <= (1, 0) or
+                self._status == '200 Connection established' or
+                has_empty_content(int(self.status[:3]))):
             return False
         elif self.headers.get('Transfer-Encoding') == 'chunked':
             return True

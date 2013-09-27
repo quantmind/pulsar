@@ -1,4 +1,4 @@
-from pulsar.utils.httpurl import request_host
+from pulsar.utils.httpurl import urlparse
 
 from . import client
 
@@ -28,4 +28,4 @@ class TestTlsHttpClientWithProxy(client.TestHttpClient):
         self.assertEqual(tunnel.request, request)
         self.assertNotEqual(tunnel.parser, request.parser)
         self.assertEqual(tunnel.full_url, self.proxy_uri)
-        self.assertEqual(tunnel.headers['host'], '127.0.0.1')
+        self.assertEqual(tunnel.headers['host'], urlparse(self.uri).netloc)

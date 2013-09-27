@@ -34,6 +34,8 @@ from .internet import SocketTransport, AF_INET6
 from .protocols import Server, logger
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
+# Got this error on pypy
+SSL3_WRITE_PENDING = 1
 MAX_CONSECUTIVE_WRITES = 500
 
 
@@ -234,7 +236,8 @@ class SocketStreamSslTransport(SocketStreamTransport):
         return self._rawsock
 
     def _write_continue(self, e):
-        return e.errno == ssl.SSL_ERROR_WANT_WRITE
+        return e.errno in (ssl.SSL_ERROR_WANT_WRITE,
+                           SSL3_WRITE_PENDING)
 
     def _read_continue(self, e):
         return e.errno in (SSLV3_ALERT_CERTIFICATE_UNKNOWN,

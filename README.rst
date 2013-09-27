@@ -4,8 +4,8 @@ With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
 :PyPI: |pypi_version| |pypi_downloads|
-:Master CI: |master-build|_ 
-:Dev CI: |dev-build|_ 
+:Master CI: |master-build|_
+:Dev CI: |dev-build|_
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -28,9 +28,9 @@ activities in different threads and/or processes.
 An example of a web server written with ``pulsar`` application
 framework which responds with "Hello World!" for every request::
 
-    
+
     from pulsar.apps import wsgi
-    
+
     def hello(environ, start_response):
         '''Pulsar HTTP "Hello World!" application'''
         data = b'Hello World!\n'
@@ -41,12 +41,12 @@ framework which responds with "Hello World!" for every request::
         ]
         start_response(status, response_headers)
         return [data]
-    
-    
+
+
     if __name__ == '__main__':
         wsgi.WSGIServer(callable=hello).start()
-    
-    
+
+
 Pulsar's goal is to provide an easy way to build scalable network programs.
 In the "Hello world!" web server example above, many client
 connections can be handled concurrently.
@@ -63,7 +63,7 @@ Installing
 Pulsar is a stand alone python library and it can be installed via `pip`::
 
     pip install pulsar
-    
+
 `easy_install` or downloading the tarball from pypi_.
 
 
@@ -88,8 +88,8 @@ the following:
 
 Examples
 =============
-Check out the ``examples`` directory for various working applications created using
-pulsar alone. It includes:
+Check out the ``examples`` directory for various working applications created
+using pulsar alone. It includes:
 
 * Hello world! wsgi example.
 * An Httpbin wsgi application (similar to http://httpbin.org/).
@@ -106,8 +106,8 @@ pulsar alone. It includes:
 
 Design
 =============
-Pulsar internals are based on `actors primitive`_. ``Actors`` are the *atoms* of 
-pulsar's concurrent computation, they do not share state between them,
+Pulsar internals are based on `actors primitive`_. ``Actors`` are the *atoms*
+of pulsar's concurrent computation, they do not share state between them,
 communication is achieved via asynchronous inter-process message passing,
 implemented using the standard python socket library.
 
@@ -117,7 +117,7 @@ The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.
 
-More information about design and philosophy in the documentation.  
+More information about design and philosophy in the documentation.
 
 
 Add-ons
@@ -126,10 +126,10 @@ Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities.
 
 * http-parser_: upgrade the HTTP parser to a faster C version.
-* setproctitle_: if installed, pulsar can use it to change the processes names of
-  the running application.  
-* psutil_: if installed, a ``system`` key is available in the dictionary returned by
-  Actor info method.
+* setproctitle_: if installed, pulsar can use it to change the processes names
+  of the running application.
+* psutil_: if installed, a ``system`` key is available in the dictionary
+  returned by Actor info method.
 * Twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
   with twisted protocols.
 
@@ -144,7 +144,7 @@ library is also needed. To run tests::
 For options and help type::
 
     python runtests.py -h
-    
+
 For full coverage run tests with the following flags::
 
     python runtests.py --concurrency thread --profile --benchmark --http-py-parser --verbosity 2

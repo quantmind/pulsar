@@ -2,12 +2,30 @@ from pulsar.utils.httpurl import hasextensions
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 
-class TestHttpParser(unittest.TestCase):
-    
+class TestPythonHttpParser(unittest.TestCase):
+
     def parser(self, **kwargs):
         return httpurl.HttpParser(**kwargs)
-    
-    def testSimple(self):
+
+    def test_client_connect(self):
+        p = self.parser()
+        data = b'HTTP/1.1 200 Connection established\r\n\r\n'
+        self.assertEqual(p.execute(data, len(data)), len(data))
+        self.assertTrue(p.is_headers_complete())
+        self.assertTrue(p.is_message_begin())
+        self.assertFalse(p.is_partial_body())
+        self.assertFalse(p.is_message_complete())
+
+    def test_client_200_OK_no_headers(self):
+        p = self.parser()
+        data = b'HTTP/1.1 200 OK\r\n\r\n'
+        self.assertEqual(p.execute(data, len(data)), len(data))
+        self.assertTrue(p.is_headers_complete())
+        self.assertTrue(p.is_message_begin())
+        self.assertFalse(p.is_partial_body())
+        self.assertFalse(p.is_message_complete())
+
+    def test_simple_server_message(self):
         p = self.parser()
         self.assertFalse(p.is_headers_complete())
         data = b'GET /forum/bla?page=1#post1 HTTP/1.1\r\n\r\n'
@@ -17,7 +35,36 @@ class TestHttpParser(unittest.TestCase):
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_complete())
         self.assertFalse(p.get_headers())
-        
+
+    def test_bad_combinations(self):
+        p = self.parser()
+        # body with no headers not valid
+        data = b'GET /get HTTP/1.1\r\nciao'
+        self.assertEqual(p.execute(data, len(data)), len(data))
+        self.assertFalse(p.is_headers_complete())
+        #self.assertTrue(p.is_message_begin())
+        self.assertFalse(p.is_message_complete())
+        self.assertEqual(p.execute(b'x', 1), 1)
+
+    def test_client_connect(self):
+        p = self.parser()
+        data = b'HTTP/1.1 200 Connection established\r\n\r\n'
+        self.assertEqual(p.execute(data, len(data)), len(data))
+        self.assertTrue(p.is_headers_complete())
+        self.assertTrue(p.is_message_begin())
+        self.assertFalse(p.is_partial_body())
+        self.assertFalse(p.is_message_complete())
+
+    def test_client_no_body(self):
+        p = self.parser()
+        data = (b'HTTP/1.1 200 OK\r\n'
+                b'Connection: keep-alive\r\n\r\n')
+        self.assertEqual(p.execute(data, len(data)), len(data))
+        self.assertTrue(p.is_headers_complete())
+        self.assertTrue(p.is_message_begin())
+        self.assertFalse(p.is_partial_body())
+        self.assertFalse(p.is_message_complete())
+
     def testBadFirstLine(self):
         p = self.parser()
         self.assertFalse(p.is_headers_complete())
@@ -32,7 +79,7 @@ class TestHttpParser(unittest.TestCase):
         p = self.parser()
         data = b'GET get/ HTTP/1-x\r\n'
         self.assertNotEqual(p.execute(data, len(data)), len(data))
-        
+
     def testPartialFirstLine(self):
         p = self.parser()
         data = b'GET /get H'
@@ -43,17 +90,7 @@ class TestHttpParser(unittest.TestCase):
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_complete())
         self.assertFalse(p.get_headers())
-        
-    def testBadCombinations(self):
-        p = self.parser()
-        # body with no headers not valid
-        data = b'GET /get HTTP/1.1\r\nciao'
-        self.assertEqual(p.execute(data, len(data)), len(data))
-        self.assertNotEqual(p.execute(b'', 0), 0)
-        p = self.parser()
-        data = b'GET HTTP/1.1\r\n\r\n'
-        self.assertNotEqual(p.execute(data, len(data)), len(data))
-        
+
     def testBadHeader(self):
         p = self.parser()
         data = b'GET /get HTTP/1.1\r\nbla\0: bar\r\n\r\n'
@@ -67,7 +104,7 @@ class TestHttpParser(unittest.TestCase):
         self.assertTrue(p.is_message_complete())
         headers = p.get_headers()
         self.assertEqual(len(headers), 0)
-        
+
     def testHeaderOnly(self):
         p = self.parser()
         data = b'GET /test HTTP/1.1\r\nHost: 0.0.0.0=5000\r\n\r\n'
@@ -75,7 +112,7 @@ class TestHttpParser(unittest.TestCase):
         self.assertTrue(p.is_headers_complete())
         self.assertTrue(p.is_message_begin())
         self.assertTrue(p.is_message_complete())
-        
+
     def testContentLength(self):
         p = self.parser()
         data = b'GET /test HTTP/1.1\r\n'
@@ -92,7 +129,7 @@ class TestHttpParser(unittest.TestCase):
         data = b'o'
         p.execute(data, len(data))
         self.assertTrue(p.is_message_complete())
-        
+
     def testDoubleHeader(self):
         p = self.parser()
         data = b'GET /test HTTP/1.1\r\n'
@@ -107,11 +144,14 @@ class TestHttpParser(unittest.TestCase):
         headers = p.get_headers()
         self.assertEqual(len(headers), 1)
         self.assertEqual(headers.get('accept'), '*/*, jpeg')
-        
-        
+
+    def test_connect(self):
+        p = self.parser()
+        data = b'HTTP/1.1 200 Connection established\r\n\r\n'
+        self.assertEqual(p.execute(data, len(data)), len(data))
+
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
-class TestCHttpParser(TestHttpParser):
-    
+class TestCHttpParser(TestPythonHttpParser):
+
     def parser(self, **kwargs):
         return httpurl.CHttpParser(**kwargs)
-        
