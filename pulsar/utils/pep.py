@@ -13,6 +13,11 @@ if ispy33:
 else:   # pragma    nocover
     default_timer = time.time
 
+try:
+    pypy = True
+    import __pypy__
+except ImportError:
+    pypy = False
 
 if ispy3k:  # Python 3
     import pickle
