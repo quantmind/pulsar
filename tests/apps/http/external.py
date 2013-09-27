@@ -8,10 +8,9 @@ from pulsar.apps.http import URLError
 from .client import TestHttpClientBase
 
 
-class d:
-#@unittest.skipUnless(get_actor().cfg.http_proxy=='',
-#                    'Requires no external proxy')
-#class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
+@unittest.skipUnless(get_actor().cfg.http_proxy=='',
+                    'Requires no external proxy')
+class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
     with_httpbin = False
@@ -52,7 +51,6 @@ class TestHttpClientProxyExternal(TestHttpClientBase, unittest.TestCase):
         r1 = yield response.on_headers
         self.assertEqual(r1.status_code, 200)
         headers = r1.headers
-        self.assertEqual(headers['content-length'], '0')
         r2 = yield response.on_finished
         self.assertEqual(r2.status_code, 200)
         headers2 = r2.headers
