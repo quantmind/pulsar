@@ -8,12 +8,12 @@ from pulsar.apps.http import URLError
 from .client import TestHttpClientBase
 
 
+# class d:
 @unittest.skipUnless(get_actor().cfg.http_proxy=='', 'No proxy')
-class TestHttpClientBaseNoProxy(TestHttpClientBase, unittest.TestCase):
+class TestHttpClientNoProxyExternal(TestHttpClientBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
     with_httpbin = False
-    concurrency = 'thread'
 
     def test_http_get(self):
         client = self.client()
@@ -38,17 +38,23 @@ class TestHttpClientBaseNoProxy(TestHttpClientBase, unittest.TestCase):
         self.assertRaises(URLError, response.raise_for_status)
 
 
-class d:
-#class TestTunnelExternal(TestHttpClientBaseNoProxy):
+@unittest.skipUnless(get_actor().cfg.http_proxy=='', 'No proxy')
+class TestHttpClientProxyExternal(TestHttpClientBase, unittest.TestCase):
     with_proxy = True
+    with_httpbin = False
+    concurrency = 'thread'
 
     def test_get(self):
         client = self.client()
         response = client.get('https://github.com/trending')
         r1 = yield response.on_headers
         self.assertEqual(r1.status_code, 200)
+        headers = r1.headers
+        self.assertEqual(headers['content-length'], '0')
         r2 = yield response.on_finished
         self.assertEqual(r2.status_code, 200)
+        headers2 = r2.headers
+        self.assertNotEqual(len(r1), len(r2))
 
 
 @unittest.skipUnless(get_actor().cfg.http_proxy, 'Requires external proxy')

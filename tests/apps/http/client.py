@@ -24,6 +24,8 @@ class TestHttpClientBase:
     with_proxy = False
     with_tls = False
     proxy_app = None
+    # concurrency is set by the config object unless you set it here
+    concurrency = None
     timeout = 10
 
     @classmethod
@@ -31,7 +33,7 @@ class TestHttpClientBase:
         # Create the HttpBin server by sending this request to the arbiter
         from examples.proxyserver.manage import server as pserver
         from examples.httpbin import manage
-        concurrency = cls.cfg.concurrency
+        concurrency = cls.concurrency or cls.cfg.concurrency
         if cls.with_httpbin:
             server = manage.server
             if cls.with_tls:

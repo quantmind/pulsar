@@ -145,7 +145,8 @@ class Tunneling:
             response = request.client.build_consumer()
             response.chain_event(prev_response, 'post_request')
             # Wraps the socket at the next iteration loop. Important!
-            loop.call_soon(self.switch_to_ssl, prev_response, response)
+            loop.call_soon_threadsafe(
+                self.switch_to_ssl, prev_response, response)
         # make sure to return the response
         return response
 

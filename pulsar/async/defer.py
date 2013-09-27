@@ -869,10 +869,10 @@ function when a generator is passed as argument.'''
     def _restart(self, result):
         self._waiting = None
         #restart the coroutine in the same event loop it was started
-        #self._event_loop.call_now_threadsafe(self._consume, result)
-        self._event_loop.call_soon_threadsafe(self._consume, result)
+        self._event_loop.call_now_threadsafe(self._consume, result)
+        #self._event_loop.call_soon_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
-        # the passed result (which is not asynchronous).
+        # the passed result (which is synchronous).
         return result
 
     def cancel(self, msg='', mute=False):
