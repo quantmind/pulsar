@@ -1,5 +1,4 @@
-Event driven concurrent framework for python. Tested in Windows and Linux,
-it requires python 2.6, 2.7, 3.2, 3.3 or pypy_.
+Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
@@ -9,8 +8,9 @@ activities in different threads and/or processes.
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
+:Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
-    task queue, wsgi, websocket, json-rpc
+    task queue, wsgi, websocket, redis, json-rpc
 
 
 .. |master-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=master

@@ -72,103 +72,103 @@ class Pulsar(LogginMixin):
 
 
 class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
-    '''The base class for parallel execution in pulsar. In computer science,
-the **Actor model** is a mathematical model of concurrent computation that
-treats *actors* as the universal primitives of computation.
-In response to a message that it receives, an actor can make local decisions,
-create more actors, send more messages, and determine how to respond to
-the next message received.
+    '''The base class for parallel execution in pulsar.
 
-The current implementation allows for actors to perform specific tasks such
-as listening to a socket, acting as http server, consuming
-a task queue and so forth.
+    In computer science, the **Actor model** is a mathematical model
+    of concurrent computation that treats *actors* as the universal primitives
+    of computation.
+    In response to a message that it receives, an actor can make local
+    decisions, create more actors, send more messages, and determine how
+    to respond to the next message received.
 
-To spawn a new actor::
+    The current implementation allows for actors to perform specific tasks
+    such as listening to a socket, acting as http server, consuming
+    a task queue and so forth.
 
-    >>> from pulsar import spawn
-    >>> a = spawn()
-    >>> a.is_alive()
-    True
+    To spawn a new actor::
 
-Here ``a`` is actually a reference to the remote actor, it is
-an :class:`ActorProxy`.
+        >>> from pulsar import spawn
+        >>> a = spawn()
+        >>> a.is_alive()
+        True
 
-**ATTRIBUTES**
+    Here ``a`` is actually a reference to the remote actor, it is
+    an :class:`ActorProxy`.
 
-.. attribute:: name
+    **ATTRIBUTES**
 
-    The name of this :class:`Actor`.
+    .. attribute:: name
 
-.. attribute:: aid
+        The name of this :class:`Actor`.
 
-    Unique ID for this :class:`Actor`.
+    .. attribute:: aid
 
-.. attribute:: impl
+        Unique ID for this :class:`Actor`.
 
-    The :class:`Concurrency` implementation for this :class:`Actor`.
+    .. attribute:: impl
 
-.. attribute:: event_loop
+        The :class:`Concurrency` implementation for this :class:`Actor`.
 
-    An instance of :class:`EventLoop` which listen for input/output events
-    on sockets or socket-like :class:`Transport`. It is the driver of the
-    :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
-    running and goes out of scope.
+    .. attribute:: event_loop
 
-.. attribute:: mailbox
+        An instance of :class:`EventLoop` which listen for input/output events
+        on sockets or socket-like :class:`Transport`. It is the driver of the
+        :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
+        running and goes out of scope.
 
-    Used to send and receive :ref:`actor messages <tutorials-messages>`.
+    .. attribute:: mailbox
 
-.. attribute:: address
+        Used to send and receive :ref:`actor messages <tutorials-messages>`.
 
-    The socket address for this :attr:`Actor.mailbox`.
+    .. attribute:: address
 
-.. attribute:: proxy
+        The socket address for this :attr:`Actor.mailbox`.
 
-    Instance of a :class:`ActorProxy` holding a reference
-    to this :class:`Actor`. The proxy is a lightweight representation
-    of the actor which can be shared across different processes
-    (i.e. it is picklable).
+    .. attribute:: proxy
 
-.. attribute:: state
+        Instance of a :class:`ActorProxy` holding a reference
+        to this :class:`Actor`. The proxy is a lightweight representation
+        of the actor which can be shared across different processes
+        (i.e. it is picklable).
 
-    The actor :ref:`numeric state <actor-states>`.
+    .. attribute:: state
 
-.. attribute:: thread_pool
+        The actor :ref:`numeric state <actor-states>`.
 
-    A :class:`ThreadPool` associated with this :class:`Actor`. This attribute
-    is ``None`` unless one is created via the :meth:`create_thread_pool`
-    method.
+    .. attribute:: thread_pool
 
-.. attribute:: params
+        A :class:`ThreadPool` associated with this :class:`Actor`.
+        This attribute is ``None`` unless one is created via the
+        :meth:`create_thread_pool` method.
 
-    A :class:`pulsar.utils.structures.AttributeDictionary` which contains
-    parameters which are passed to actors spawned by this actor.
+    .. attribute:: params
 
-.. attribute:: extra
+        A :class:`pulsar.utils.structures.AttributeDictionary` which contains
+        parameters which are passed to actors spawned by this actor.
 
-    A dictionary which can be populated with extra parameters useful
-    for other actors. This dictionary is included in the dictionary
-    returned by the :meth:`info` method.
-    Check the :ref:`info command <actor_info_command>` for how to obtain
-    information about an actor.
+    .. attribute:: extra
 
-.. attribute:: info_state
+        A dictionary which can be populated with extra parameters useful
+        for other actors. This dictionary is included in the dictionary
+        returned by the :meth:`info` method.
+        Check the :ref:`info command <actor_info_command>` for how to obtain
+        information about an actor.
 
-    Current state description string. One of ``initial``, ``running``,
-    ``stopping``, ``closed`` and ``terminated``.
+    .. attribute:: info_state
 
-.. attribute:: next_periodic_task
+        Current state description string. One of ``initial``, ``running``,
+        ``stopping``, ``closed`` and ``terminated``.
 
-    The :class:`TimedCall` for the next
-    :ref:`actor periodic task <actor-periodic-task>`.
+    .. attribute:: next_periodic_task
 
-.. attribute:: stream
+        The :class:`TimedCall` for the next
+        :ref:`actor periodic task <actor-periodic-task>`.
 
-    A ``stream`` handler to write information messages without using the
-    logger.
+    .. attribute:: stream
 
-**PUBLIC METHODS**
-'''
+        A ``stream`` handler to write information messages without using
+        the :attr:`logger`.
+    '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
     MANY_TIMES_EVENTS = ('on_info', 'on_params')
     exit_code = None
@@ -244,10 +244,12 @@ an :class:`ActorProxy`.
     ##    HIGH LEVEL API METHODS
     #######################################################################
     def start(self):
-        '''Called after forking to start the actor's life. This is where
-logging is configured, the :attr:`Actor.mailbox` is registered and the
-:attr:`Actor.event_loop` is initialised and started. Calling this method
-more than once does nothing.'''
+        '''Called after forking to start the actor's life.
+
+        This is where logging is configured, the :attr:`Actor.mailbox` is
+        registered and the :attr:`Actor.event_loop` is initialised and
+        started. Calling this method more than once does nothing.
+        '''
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
             self._started = time()
@@ -274,12 +276,13 @@ Always return a :class:`Deferred`.'''
 
     def create_thread_pool(self, workers=None):
         '''Create a :class:`ThreadPool` for this :class:`Actor`
-if not already present.
+        if not already present.
 
-:param workers: number of threads to use in the :class:`ThreadPool`. If not
-    supplied, the value in the :ref:`setting-thread_workers` setting is used.
-:return: a :class:`ThreadPool`.
-'''
+        :param workers: number of threads to use in the :class:`ThreadPool`.
+            If not supplied, the value in the :ref:`setting-thread_workers`
+            setting is used.
+        :return: a :class:`ThreadPool`.
+        '''
         if self._thread_pool is None:
             workers = workers or self.cfg.thread_workers
             self._thread_pool = ThreadPool(self, threads=workers)
@@ -310,13 +313,18 @@ mean it is running. Its state is greater or equal
         return self.state >= ACTOR_STATES.RUN
 
     def closed(self):
-        '''``True`` if actor has exited in an clean fashion. It :attr:`state`
-is equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
+        '''``True`` if actor has exited in an clean fashion.
+
+        Its :attr:`state` is :ref:`ACTOR_STATES.CLOSE <actor-states>`.
+        '''
         return self.state == ACTOR_STATES.CLOSE
 
     def stopped(self):
-        '''``True`` if actor has exited so that it :attr:`state` is greater
-or equal to :ref:`ACTOR_STATES.CLOSE <actor-states>`.'''
+        '''``True`` if actor has exited.
+
+        Its :attr:`state` is greater or equal to
+        :ref:`ACTOR_STATES.CLOSE <actor-states>`.
+        '''
         return self.state >= ACTOR_STATES.CLOSE
 
     def is_arbiter(self):

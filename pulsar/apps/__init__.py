@@ -163,24 +163,26 @@ class Configurator(object):
     :parameter description: to override the class :attr:`cfg.description`
         attribute.
     :parameter epilog: to override the class :attr:`cfg.epilog` attribute.
-    :parameter version: Optional version of this application, it overrides the
-        class :attr:`cfg.version` attribute.
+    :parameter version: Optional version of this application, it overrides
+        the class :attr:`cfg.version` attribute.
     :parameter argv: Optional list of command line parameters to parse, if
-        not supplied the :attr:`sys.argv` list will be used. The parameter is
-        only relevant if **parse_console** is ``True``.
+        not supplied the :attr:`sys.argv` list will be used. The parameter
+        is only relevant if **parse_console** is ``True``.
     :parameter parse_console: ``True`` (default) if the console parameters
         needs parsing.
-    :parameter script: Optional string which set the :attr:`script` attribute.
+    :parameter script: Optional string which set the :attr:`script`
+        attribute.
     :parameter params: a dictionary of configuration parameters which
         overrides the defaults and the :attr:`cfg` class attribute.
-        They will be overritten by a :ref:`config file <setting-config>` or
-        command line arguments.
+        They will be overritten by a :ref:`config file <setting-config>`
+        or command line arguments.
 
     .. attribute:: name
 
         The name is unique if this is an :class:`Application`. In this
-        case it defines the application monitor name as well and can be access
-        in the arbiter domain via the :func:`get_application` function.
+        case it defines the application monitor name as well and can be
+        access in the arbiter domain via the :func:`get_application`
+        function.
 
     .. attribute:: argv
 
@@ -238,8 +240,10 @@ class Configurator(object):
 
     @property
     def root_dir(self):
-        '''Root directory of this :class:`Configurator`. Evaluated from the
-:attr:`script` attribute.'''
+        '''Root directory of this :class:`Configurator`.
+
+        Evaluated from the :attr:`script` attribute.
+        '''
         if self.script:
             return os.path.dirname(self.script)
 
@@ -321,8 +325,9 @@ The parameters overriding order is the following:
 
     @classmethod
     def create_config(cls, params, prefix=None, name=None):
-        '''Create a new :class:`pulsar.utils.config.Config` container by
-overriding default values with *params*.'''
+        '''Create a new :class:`pulsar.utils.config.Config` container.
+
+        Overrides defaults with ``params``.'''
         if cls.cfg:
             cfg = cls.cfg.copy(name=name, prefix=prefix)
             # update with latest settings
@@ -384,9 +389,12 @@ class Application(Configurator, pulsar.Pulsar):
             self.fire_event('ready')
             arbiter = pulsar.arbiter(cfg=arbiter_config(self.cfg))
             if self.on_config() is not False:
-                monitor = arbiter.add_monitor(
-                    self.name, app=self, cfg=self.cfg, start=monitor_start)
-                self.cfg = monitor.cfg
+                if arbiter.started():
+                    self._add_to_arbiter(arbiter)
+                else:   # the arbiter has not yet started.
+                    arbiter.bind_event('start', self._add_to_arbiter)
+            else:
+                return
         return self.event('start')
 
     @local_property
@@ -412,7 +420,8 @@ class Application(Configurator, pulsar.Pulsar):
         pass
 
     def worker_info(self, worker, info=None):
-        '''Hook to add additional entries to the worker ``info`` dictionary.'''
+        '''Hook to add additional entries to the worker ``info`` dictionary.
+        '''
         pass
 
     def worker_stopping(self, worker):
@@ -457,12 +466,21 @@ class Application(Configurator, pulsar.Pulsar):
         '''Start the :class:`pulsar.Arbiter` if it wasn't already started.
 
         Calling this method when the :class:`pulsar.Arbiter` is already
-        running has no effect.'''
-        self()
+        running has no effect.
+        '''
+        on_start = self()
         arbiter = pulsar.arbiter()
-        if arbiter and self.name in arbiter.registered:
+        if arbiter and on_start:
             arbiter.start()
         return self
+
+    #   INTERNALS
+    def _add_to_arbiter(self, arbiter):
+        monitor = arbiter.add_monitor(
+            self.name, app=self, cfg=self.cfg, start=monitor_start)
+        self.cfg = monitor.cfg
+        return arbiter
+
 
 
 class MultiApp(Configurator):

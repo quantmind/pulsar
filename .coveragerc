@@ -1,3 +1,3 @@
 [run]
 source=pulsar,examples
-omit=pulsar/utils/_py2.py,pulsar/utils/fallbacks/*,pulsar/utils/system/winservice.py,pulsar/utils/system/windowssystem.py,pulsar/utils/system/winprocess.py,examples/httpbin/config.py,examples/philosophers/config.py,pshell,examples/taskqueue/winservice.py,examples/pshell/*,examples/philosophers/*
+omit=pulsar/utils/_py2.py,pulsar/utils/fallbacks/*,pulsar/utils/system/winservice.py,pulsar/utils/system/windowssystem.py,pulsar/utils/system/winprocess.py,examples/httpbin/config.py,examples/philosophers/config.py,pshell,examples/taskqueue/winservice.py,examples/pshell/*,examples/philosophers/*,pulsar/apps/test/plugins/bench.py,pulsar/apps/taskqueue/backends/redis.py,examples/taskqueue/test_redis.py

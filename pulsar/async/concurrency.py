@@ -1,4 +1,3 @@
-import tempfile
 from functools import partial
 from multiprocessing import Process, current_process
 
@@ -331,8 +330,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''
         if actor.cfg.daemon:
             system.daemonize()
-        if actor.cfg.coverage:  # create the coverage directory
-            actor.params.coverage_directory = tempfile.mkdtemp()
+        actor.setup_coverage()
 
     def create_mailbox(self, actor, event_loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
@@ -398,6 +396,7 @@ def run_actor(self):
         except Exception:
             pass
         log = actor.logger or logger()
+        self.stop_coverage(actor)
         log.info('Bye from "%s"', actor)
 
 
@@ -406,6 +405,9 @@ class ActorProcess(ProcessMixin, Concurrency, Process):
 python multiprocessing module.'''
     def run(self):
         run_actor(self)
+
+    def stop_coverage(self, actor):
+        actor.stop_coverage()
 
 
 class TerminateActorThread(Exception):
@@ -418,6 +420,9 @@ class ActorThread(Concurrency, Thread):
 
     def run(self):
         run_actor(self)
+
+    def stop_coverage(self, actor):
+        pass
 
     def loop(self):
         if self._actor:

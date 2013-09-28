@@ -154,7 +154,7 @@ class Arbiter(PoolMixin):
         if monitor_name in self.registered:
             raise KeyError('Monitor "%s" already available' % monitor_name)
         monitor_class = monitor_class or Monitor
-        params.update(self.params)
+        params.update(self.actorparams())
         params['name'] = monitor_name
         m = self.spawn(monitor_class, **params)
         self.registered[m.name] = m

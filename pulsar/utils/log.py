@@ -247,7 +247,7 @@ COLOURS = {'red': 31,
            'white': WHITE}
 
 
-class ColoredStream(logging.StreamHandler):
+class ColoredStream(logging.StreamHandler):   # pragma    nocover
     bold = True
     terminator = '\n'
     COLORS = {"DEBUG": "cyan",
