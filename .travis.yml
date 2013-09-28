@@ -14,7 +14,7 @@ install:
   - sudo rm -rf pulsar
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 script:
-  coverage run -p runtests -w 2 --test-timeout 60 --coverage --profile
+  coverage run -p runtests.py -w 2 --test-timeout 60 --coverage --profile
 
 after_success:
   coverage combine
