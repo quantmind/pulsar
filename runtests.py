@@ -14,7 +14,7 @@ import pulsar.utils.settings.backend
 Path(__file__).add2python('stdnet', 1, down=['python-stdnet'],
                           must_exist=False)
 
-if __name__ == '__main__':
+def run(**params):
     print(sys.version)
     TestSuite(description='Pulsar Asynchronous test suite',
               modules=('tests',
@@ -22,4 +22,8 @@ if __name__ == '__main__':
                        ('examples', 'test_*')),
               plugins=(bench.BenchMark(),
                        profile.Profile()),
-              pidfile='test.pid').start()
+              pidfile='test.pid',
+              **params).start()
+
+if __name__ == '__main__':
+    run()

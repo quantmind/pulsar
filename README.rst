@@ -5,6 +5,7 @@ activities in different threads and/or processes.
 :PyPI: |pypi_version| |pypi_downloads|
 :Master CI: |master-build|_
 :Dev CI: |dev-build|_
+:Coverage: |coverage|
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -23,6 +24,8 @@ activities in different threads and/or processes.
 .. |pypi_downloads| image:: https://pypip.in/d/pulsar/badge.png
     :target: https://crate.io/packages/pulsar/
     :alt: Number of PyPI downloads
+.. |coverage| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master
+  :target: https://coveralls.io/r/quantmind/pulsar?branch=master
 
 
 An example of a web server written with ``pulsar`` application

@@ -1,5 +1,6 @@
 '''Tests the test suite loader.'''
 import os
+import sys
 import time
 from threading import current_thread
 
@@ -8,16 +9,16 @@ from pulsar.apps.test import unittest, TestLoader
 
 
 class TestTestLoader(unittest.TestCase):
-    
+
     def test_testsuite(self):
         app = pulsar.get_actor().app
         self.assertTrue(app.script)
-        self.assertEqual(os.path.basename(app.script), 'runtests.py')
+        self.assertEqual(os.path.basename(app.script), sys.argv[0])
         self.assertEqual(os.path.dirname(app.script), app.root_dir)
         self.assertEqual(app.cfg.modules, ('tests',
                                           ('examples', 'tests'),
                                           ('examples', 'test_*')))
-        
+
     def test_load_pulsar_tests(self):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
@@ -33,7 +34,7 @@ class TestTestLoader(unittest.TestCase):
         self.assertTrue('djangoapp.pulse' in modules)
         self.assertTrue('async' in modules)
         self.assertTrue('suite.single' in modules)
-        
+
     def test_sorted_tags(self):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
@@ -47,7 +48,7 @@ class TestTestLoader(unittest.TestCase):
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
         self.assertEqual(len(modules), 7)
-        
+
     def test_load_exclude(self):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
@@ -57,7 +58,7 @@ class TestTestLoader(unittest.TestCase):
         for module in modules:
             self.assertTrue('taskqueue' not in module)
             self.assertTrue('apps.pubsub' not in module)
-                
+
     def __test_djangoapp_tags(self):
         #TODO Fix this
         app = pulsar.get_actor().app
