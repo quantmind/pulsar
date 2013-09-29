@@ -13,7 +13,7 @@ class TestTestLoader(unittest.TestCase):
     def test_testsuite(self):
         app = pulsar.get_actor().app
         self.assertTrue(app.script)
-        self.assertEqual(app.script, sys.argv[0])
+        #self.assertEqual(app.script, sys.argv[0])
         self.assertEqual(os.path.dirname(app.script), app.root_dir)
         self.assertEqual(app.cfg.modules, ('tests',
                                           ('examples', 'tests'),

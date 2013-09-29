@@ -3,9 +3,8 @@ With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.
 
 :PyPI: |pypi_version| |pypi_downloads|
-:Master CI: |master-build|_
-:Dev CI: |dev-build|_
-:Coverage: |coverage|
+:Master CI: |master-build|_ |coverage-master|
+:Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://packages.python.org/pulsar/
 :Dowloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -24,8 +23,10 @@ activities in different threads and/or processes.
 .. |pypi_downloads| image:: https://pypip.in/d/pulsar/badge.png
     :target: https://crate.io/packages/pulsar/
     :alt: Number of PyPI downloads
-.. |coverage| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master
+.. |coverage-master| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master
   :target: https://coveralls.io/r/quantmind/pulsar?branch=master
+.. |coverage-dev| image:: https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=dev
+  :target: https://coveralls.io/r/quantmind/pulsar?branch=dev
 
 
 An example of a web server written with ``pulsar`` application
