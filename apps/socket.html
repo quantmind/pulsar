@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Socket Servers &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -68,7 +68,7 @@
   <div class="section" id="module-pulsar.apps.socket">
 <span id="socket-servers"></span><span id="apps-socket"></span><h1>Socket Servers<a class="headerlink" href="#module-pulsar.apps.socket" title="Permalink to this headline">¶</a></h1>
 <p>Asynchronous application for serving requests
-on a socket. This is the base class of <a class="reference internal" href="wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.WSGIServer</span></tt></a>.
+on sockets. This is the base class of <a class="reference internal" href="wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.WSGIServer</span></tt></a>.
 All is needed by a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> is a callable which build a
 <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for each new client request received.
 This is an example of a script for an Echo server:</p>
@@ -77,7 +77,7 @@ This is an example of a script for an Echo server:</p>
 
 <span class="k">class</span> <span class="nc">EchoServerProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
     <span class="o">...</span>
-    
+
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">SocketServer</span><span class="p">(</span><span class="n">EchoServerProtocol</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
@@ -95,6 +95,9 @@ specific to sockets and can be used to fine tune your application:</p>
 <a class="reference internal" href="../settings.html#setting-bind"><em>bind</em></a> which is used to specify the address
 to bind the server to:</p>
 <div class="highlight-python"><pre>python script.py --bind 127.0.0.1:8070</pre>
+</div>
+<p>This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080:</p>
+<div class="highlight-python"><pre>python script.py --bind :8080</pre>
 </div>
 </div>
 <div class="section" id="backlog">
@@ -129,16 +132,17 @@ settings:</p>
 the application, create a listening socket in the parent (Arbiter) process
 and then spawn several process-based actors which listen on the
 same shared socket.
-This is how, pre-forking servers operate.</p>
+This is how pre-forking servers operate.</p>
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
 <div class="highlight-python"><pre>python script.py --concurrency thread</pre>
 </div>
-<p>the number of <a class="reference internal" href="../api/application.html#pulsar.apps.Worker" title="pulsar.apps.Worker"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt></a> serving the application is set to <tt class="docutils literal"><span class="pre">0</span></tt>
-so that the application is actually served by the <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a>
-event-loop (we refer this to a single process server).
+<p>the number of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt> serving the application is set
+to <tt class="docutils literal"><span class="pre">0</span></tt> so that the application is actually served by the
+<a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
 load servers.</p>
-<p>In addition, a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in multi-process mode is only available for:</p>
+<p>In addition, a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in multi-process mode is only available
+for:</p>
 <ul class="simple">
 <li>Posix systems.</li>
 <li>Windows running python 3.2 or above (python 2 on windows does not support
@@ -153,9 +157,9 @@ the creation of sockets from file descriptors).</li>
 <dl class="class">
 <dt id="pulsar.apps.socket.SocketServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> which bind a socket to a given address
-and listen for requests. The request handler is constructed from the
-callable passed during initialisation.</p>
+<dd><p>A <a class="reference internal" href="../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> which serve application on a socket.</p>
+<p>It bind a socket to a given address and listen for requests. The request
+handler is constructed from the callable passed during initialisation.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.socket.SocketServer.address">
 <tt class="descname">address</tt><a class="headerlink" href="#pulsar.apps.socket.SocketServer.address" title="Permalink to this definition">¶</a></dt>
@@ -165,16 +169,17 @@ callable passed during initialisation.</p>
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.protocol_consumer">
 <tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the factory of <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> used by
-the server. By default it returns the <a class="reference internal" href="../api/application.html#pulsar.apps.Application.callable" title="pulsar.apps.Application.callable"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.Application.callable</span></tt></a>
+<dd><p>Factory of <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> used by the server.</p>
+<p>By default it returns the <a class="reference internal" href="../api/application.html#pulsar.apps.Application.callable" title="pulsar.apps.Application.callable"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.Application.callable</span></tt></a>
 attribute.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.monitor_start">
-<tt class="descname">monitor_start</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.monitor_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the socket listening to the <tt class="docutils literal"><span class="pre">bind</span></tt> address. if the platform
-does not support multiprocessing sockets set the number of workers to 0.</p>
+<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the socket listening to the <tt class="docutils literal"><span class="pre">bind</span></tt> address.</p>
+<p>If the platform does not support multiprocessing sockets set the
+number of workers to 0.</p>
 </dd></dl>
 
 <dl class="method">

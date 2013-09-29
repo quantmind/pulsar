@@ -20,7 +20,7 @@ To check if the C parser is the default parser::
 Authentication
 =================
 
-.. automodule:: pulsar.apps.wsgi.plugins
+.. automodule:: pulsar.apps.auth.plugins
 
 
 Structures

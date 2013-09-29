@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tcp Stream API &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Tcp Stream API &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Applications API" href="application.html" />
     <link rel="prev" title="Protocols/Transports API" href="protocols.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="protocols.html" title="Protocols/Transports API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -82,12 +82,6 @@ and receiving bytes from the underlying protocol. Writing to the transport
 is done using the <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.write" title="pulsar.async.stream.SocketStreamTransport.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> and <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.writelines" title="pulsar.async.stream.SocketStreamTransport.writelines"><tt class="xref py py-meth docutils literal"><span class="pre">writelines()</span></tt></a> methods.
 The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.</p>
-<dl class="attribute">
-<dt id="pulsar.async.stream.SocketStreamTransport.SocketError">
-<tt class="descname">SocketError</tt><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.SocketError" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">OSError</span></tt></p>
-</dd></dl>
-
 <dl class="method">
 <dt id="pulsar.async.stream.SocketStreamTransport.pause">
 <tt class="descname">pause</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.pause"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.pause" title="Permalink to this definition">¶</a></dt>
@@ -132,6 +126,14 @@ be accumulating data in an internal buffer.</p>
 <dd><p>Write a list (or any iterable) of data bytes to the transport.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pulsar.async.stream.SocketStreamTransport.mute_read_error">
+<tt class="descname">mute_read_error</tt><big>(</big><em>error</em><big>)</big><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.mute_read_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <tt class="docutils literal"><span class="pre">True</span></tt> if a socket error from a read operation is muted.</p>
+<p>This is when the socket cannot send sinse the socket has started
+shutting down already.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -163,8 +165,8 @@ sending of data.</p>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> called back when the server is serving
-the socket.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> called back when the server is
+serving the socket.</p>
 </td>
 </tr>
 </tbody>

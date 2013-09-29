@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Getting Started &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Getting Started &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="Jobs" href="jobs.html" />
     <link rel="prev" title="Distributed Task Queue" href="index.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="index.html" title="Distributed Task Queue"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -148,7 +148,7 @@ task.Tasks and managing scheduling of tasks via a
 <dd><p>The <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>TaskBackend</em></a> for this task queue.
 This picklable attribute is available once the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> has
 started (that is when the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue.monitor_start" title="pulsar.apps.tasks.TaskQueue.monitor_start"><tt class="xref py py-meth docutils literal"><span class="pre">monitor_start()</span></tt></a> method is invoked by the
-<a class="reference internal" href="../../api/application.html#pulsar.apps.ApplicationMonitor" title="pulsar.apps.ApplicationMonitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ApplicationMonitor</span></tt></a> running it).</p>
+<tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ApplicationMonitor</span></tt> running it).</p>
 </dd></dl>
 
 <dl class="method">
@@ -162,8 +162,8 @@ create the <a class="reference internal" href="#pulsar.apps.tasks.TaskQueue.back
 <dl class="method">
 <dt id="pulsar.apps.tasks.TaskQueue.monitor_task">
 <tt class="descname">monitor_task</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/tasks.html#TaskQueue.monitor_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.TaskQueue.monitor_task" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override the <a class="reference internal" href="../../api/application.html#pulsar.apps.Application.monitor_task" title="pulsar.apps.Application.monitor_task"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.Application.monitor_task()</span></tt></a> callback
-to check if the <tt class="xref py py-attr docutils literal"><span class="pre">scheduler</span></tt> needs to perform a new run.</p>
+<dd><p>Override the <a class="reference internal" href="../../api/application.html#pulsar.apps.Application.monitor_task" title="pulsar.apps.Application.monitor_task"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.Application.monitor_task()</span></tt></a> callback.</p>
+<p>Check if the <tt class="xref py py-attr docutils literal"><span class="pre">scheduler</span></tt> needs to perform a new run.</p>
 </dd></dl>
 
 </dd></dl>

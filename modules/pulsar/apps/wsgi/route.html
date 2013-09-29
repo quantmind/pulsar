@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -194,7 +194,7 @@
     <span class="k">return</span> <span class="n">converter</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;variable&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Decorator to create a child route from a :ref:`Router &lt;wsgi-router&gt;` method.</span>
 <span class="sd">    </span>
 <span class="sd">Tipical usage::</span>
@@ -266,7 +266,7 @@
         <span class="k">return</span> <span class="nb">callable</span>
         
     </div>
-<div class="viewcode-block" id="Route"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route">[docs]</a><span class="k">class</span> <span class="nc">Route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route">[docs]</a><span class="k">class</span> <span class="nc">Route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A Route is a class with a relative :attr:`path`.</span>
 <span class="sd">    </span>
 <span class="sd">:parameter rule: Rule strings basically are just normal URL paths</span>
@@ -336,7 +336,7 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span><span class="p">)</span>
         
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Route.path"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Route.path"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span>
     </div>
     <span class="nd">@property</span>
@@ -377,7 +377,7 @@
                 <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">[</span><span class="n">val</span><span class="p">]</span><span class="o">.</span><span class="n">to_url</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">val</span><span class="p">])</span>
             <span class="k">yield</span> <span class="n">val</span>
             
-<div class="viewcode-block" id="Route.url"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">urlargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Route.url"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">urlargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Build a *url* from *urlargs* dictionary.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
             <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -399,7 +399,7 @@
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
     
-<div class="viewcode-block" id="Route.match"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<div class="viewcode-block" id="Route.match"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Match a path and return ``None`` if no matching, otherwise</span>
 <span class="sd"> a dictionary of matched variables with values. If there is more</span>
 <span class="sd"> to be match in the path, the remaining string is placed in the</span>
@@ -419,7 +419,7 @@
                 <span class="n">result</span><span class="p">[</span><span class="s">&#39;__remaining__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">remaining</span>
             <span class="k">return</span> <span class="n">result</span>
         </div>
-<div class="viewcode-block" id="Route.split"><a class="viewcode-back" href="../../../../apps/wsgi/handlers.html#pulsar.apps.wsgi.route.Route.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Route.split"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a two element tuple containing the parent route and</span>
 <span class="sd">the last url bit as route. If this route is the root route, it returns</span>
 <span class="sd">the root route and ``None``. &#39;&#39;&#39;</span>

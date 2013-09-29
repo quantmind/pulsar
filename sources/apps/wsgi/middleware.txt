@@ -1,4 +1,4 @@
-.. _apps-wsgi-middleware:
+.. _wsgi-middleware:
 
 ===============================
 Middleware

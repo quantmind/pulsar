@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>WSGI &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
     <link rel="next" title="WSGI Server" href="intro.html" />
     <link rel="prev" title="Socket Servers" href="../socket.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../socket.html" title="Socket Servers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -68,7 +68,7 @@
   <div class="section" id="wsgi">
 <span id="apps-wsgi"></span><h1>WSGI<a class="headerlink" href="#wsgi" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference internal" href="intro.html#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> module implements a <a class="reference internal" href="intro.html#wsgi-server"><em>web server</em></a>
-and several web <a class="reference internal" href="handlers.html#wsgi-handlers"><em>application handlers</em></a> which
+and several web <a class="reference internal" href="async.html#wsgi-handlers"><em>application handlers</em></a> which
 conform with pulsar <a class="reference internal" href="async.html#wsgi-async"><em>WSGI asynchronous specification</em></a>.
 In addition, the module contains several utilities which facilitate the
 development of server side asynchronous web applications.</p>
@@ -84,22 +84,15 @@ development of server side asynchronous web applications.</p>
 <li class="toctree-l2"><a class="reference internal" href="async.html#introduction">Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html#application-handlers">Application handlers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html#asynchronous-iterable">Asynchronous Iterable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#wsgihandler">WsgiHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#lazy-wsgi-handler">Lazy Wsgi Handler</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="handlers.html">WSGI application handlers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#wsgihandler">WsgiHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#lazy-wsgi-handler">Lazy Wsgi Handler</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="handlers.html#wsgi-middleware">WSGI Middleware</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#router">Router</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#media-router">Media Router</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#routerparam">RouterParam</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="handlers.html#module-pulsar.apps.wsgi.route">Route rules</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#route-decorator">Route decorator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handlers.html#route">Route</a></li>
+<li class="toctree-l1"><a class="reference internal" href="routing.html">Routing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="routing.html#router">Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="routing.html#media-router">Media Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="routing.html#routerparam">RouterParam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="routing.html#module-pulsar.apps.wsgi.route">Route rules</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="wrappers.html">WSGI Wrappers</a><ul>
@@ -113,7 +106,6 @@ development of server side asynchronous web applications.</p>
 <li class="toctree-l2"><a class="reference internal" href="content.html#asynchronous-json">Asynchronous Json</a></li>
 <li class="toctree-l2"><a class="reference internal" href="content.html#asynchronous-html">Asynchronous Html</a></li>
 <li class="toctree-l2"><a class="reference internal" href="content.html#html-document">Html Document</a></li>
-<li class="toctree-l2"><a class="reference internal" href="content.html#streamrenderer">StreamRenderer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="content.html#html-factory">Html Factory</a></li>
 </ul>
 </li>
@@ -124,7 +116,7 @@ development of server side asynchronous web applications.</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tools.html">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#http-parsers">HTTP Parsers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tools.html#module-pulsar.apps.wsgi.plugins">Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tools.html#authentication">Authentication</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tools.html#module-pulsar.apps.wsgi.structures">Structures</a></li>
 </ul>
 </li>

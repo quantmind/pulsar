@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Changelog &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,16 +67,30 @@
             
   <div class="section" id="changelog">
 <span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-6-1-development">
-<h2>Ver. 0.6.1 - Development<a class="headerlink" href="#ver-0-6-1-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-7-0-development">
+<h2>Ver. 0.7.0 - Development<a class="headerlink" href="#ver-0-7-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Coverage option is global not just for tests. Coverage can be turned
+on by using the <tt class="docutils literal"><span class="pre">--coverage</span></tt> option.</li>
+<li>WSGI respondes 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
+request URI is not an absolute URI. Follows the <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2">rfc2616 sec 5.2</a>
+guidelines.</li>
+<li>Asynchronous <a class="reference internal" href="apps/redis.html#redis-client"><em>redis client</em></a>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</li>
+<li>Removed the specialised application worker and monitor classes.
+Use standard actor and monitor with specialised
+<a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</li>
+<li>Removed the global event dispatcher. No longer used. Less global variables
+the better.</li>
+<li>Protocol consumer to handle one request only. Better upgrade method for
+connections.</li>
+<li>Proper handling of secure connections in <a class="reference internal" href="apps/wsgi/index.html#apps-wsgi"><em>wsgi applications</em></a>.</li>
 <li>Cookie support for the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>.</li>
-<li>Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>WSGI Router</em></a>.</li>
+<li>Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>WSGI Router</em></a>.</li>
 <li>Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
 element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</li>
-<li>Added <tt class="xref py py-class docutils literal"><span class="pre">Actor.stream</span></tt> attribute to write messages without using the
-logger.</li>
-<li><strong>560 regression tests</strong>, <strong>88% coverage</strong>.</li>
+<li>Added <a class="reference internal" href="api/actor.html#pulsar.Actor.stream" title="pulsar.Actor.stream"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.stream</span></tt></a> attribute to write messages without using
+the logger.</li>
+<li><strong>687 regression tests</strong>, <strong>88% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-6-0-2013-sep-05">
@@ -138,9 +152,9 @@ for showing a memory leak report after a test run.</li>
 for excluding labels in a test run.</li>
 <li>Several fixes in the test application.</li>
 <li>Critical bug fix in python Http parser (<a class="reference external" href="https://github.com/quantmind/pulsar/commit/4bd8a540c4cb7887b65e409fa0f61a36a29590dc">4bd8a54</a>).</li>
-<li>Bug fix and enhancement of <a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>Router</em></a> metaclass. It
+<li>Bug fix and enhancement of <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>Router</em></a> metaclass. It
 is now possible to overwrite the relative <tt class="docutils literal"><span class="pre">position</span></tt> of children routes
-via the <a class="reference internal" href="apps/wsgi/handlers.html#wsgi-route-decorator"><em>route decorator</em></a>.</li>
+via the <a class="reference internal" href="apps/wsgi/routing.html#wsgi-route-decorator"><em>route decorator</em></a>.</li>
 </ul>
 </dd>
 </dl>
@@ -189,7 +203,7 @@ and asynchronous callables.</li>
 <tt class="docutils literal"><span class="pre">default</span></tt> value if the setting key is not available.</li>
 <li>Improved <tt class="docutils literal"><span class="pre">setup.py</span></tt> so that it does not log a python 2 module syntax error
 when installing for python 3.</li>
-<li><a class="reference internal" href="apps/wsgi/handlers.html#wsgi-router"><em>Wsgi Router</em></a> makes sure that the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> key in
+<li><a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>Wsgi Router</em></a> makes sure that the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> key in
 the <tt class="docutils literal"><span class="pre">environ</span></tt> does not contain asynchronous data before invoking the
 callable serving the request.</li>
 <li><strong>443 regression tests</strong>, <strong>87% coverage</strong>.</li>
@@ -451,7 +465,7 @@ asynchronous test suite and asynchronous shell.</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-6-1-development">Ver. 0.6.1 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-7-0-development">Ver. 0.7.0 - Development</a></li>
 <li><a class="reference internal" href="#ver-0-6-0-2013-sep-05">Ver. 0.6.0 - 2013-Sep-05</a></li>
 <li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>

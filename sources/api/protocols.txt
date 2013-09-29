@@ -70,13 +70,31 @@ Protocol Consumer
 .. autoclass:: ProtocolConsumer
    :members:
    :member-order: bysource      
-   
-Producer
+
+
+Producers
 ==========================
+
+Producers are factory of connections with end-points. They are used by
+both servers and clients classes.
+
+Producer
+~~~~~~~~~~~~~~~~~
 .. autoclass:: Producer
    :members:
    :member-order: bysource
 
+Connection Producer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ConnectionProducer
+   :members:
+   :member-order: bysource
+
+Server
+~~~~~~~~~~~~~~~~
+.. autoclass:: Server
+   :members:
+   :member-order: bysource
 
 .. _clients-api:
 
@@ -107,13 +125,5 @@ Request
    :members:
    :member-order: bysource
    
-Server
-==================
-
-.. autoclass:: Server
-   :members:
-   :member-order: bysource
-
-
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

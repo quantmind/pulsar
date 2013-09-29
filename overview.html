@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Overview &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,8 +67,7 @@
             
   <div class="section" id="overview">
 <span id="intro-overview"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
-<p>Event driven concurrent framework for python. Tested in Windows and Linux,
-it requires python 2.6, 2.7, 3.2, 3.3 or <a class="reference external" href="http://pypy.org/">pypy</a>.
+<p>Event driven concurrent framework for python.
 With pulsar you can write asynchronous servers performing one or several
 activities in different threads and/or processes.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -77,9 +76,9 @@ activities in different threads and/or processes.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">PyPI:</th><td class="field-body"><a class="reference external" href="https://crate.io/packages/pulsar/"><img alt="Latest PyPI version" src="https://pypip.in/v/pulsar/badge.png" /></a> <a class="reference external" href="https://crate.io/packages/pulsar/"><img alt="Number of PyPI downloads" src="https://pypip.in/d/pulsar/badge.png" /></a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=master" /></a></td>
+<tr class="field-even field"><th class="field-name">Master CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="master-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=master" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=master"><img alt="coverage-master" src="https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=master" /></a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=dev" /></a></td>
+<tr class="field-odd field"><th class="field-name">Dev CI:</th><td class="field-body"><a class="reference external" href="http://travis-ci.org/quantmind/pulsar"><img alt="dev-build" src="https://api.travis-ci.org/quantmind/pulsar.png?branch=dev" /></a> <a class="reference external" href="https://coveralls.io/r/quantmind/pulsar?branch=dev"><img alt="coverage-dev" src="https://coveralls.io/repos/quantmind/pulsar/badge.png?branch=dev" /></a></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://packages.python.org/pulsar/">http://packages.python.org/pulsar/</a></td>
 </tr>
@@ -87,8 +86,10 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
-task queue, wsgi, websocket, json-rpc</td>
+<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, <a class="reference external" href="http://pypy.org/">pypy</a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
+task queue, wsgi, websocket, redis, json-rpc</td>
 </tr>
 </tbody>
 </table>
@@ -147,8 +148,8 @@ the following:</p>
 </div>
 <div class="section" id="examples">
 <span id="id1"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications created using
-pulsar alone. It includes:</p>
+<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications created
+using pulsar alone. It includes:</p>
 <ul class="simple">
 <li>Hello world! wsgi example.</li>
 <li>An Httpbin wsgi application (similar to <a class="reference external" href="http://httpbin.org/">http://httpbin.org/</a>).</li>
@@ -165,8 +166,8 @@ pulsar alone. It includes:</p>
 </div>
 <div class="section" id="design">
 <h2>Design<a class="headerlink" href="#design" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar internals are based on <a class="reference external" href="http://en.wikipedia.org/wiki/Actor_model">actors primitive</a>. <tt class="docutils literal"><span class="pre">Actors</span></tt> are the <em>atoms</em> of
-pulsar&#8217;s concurrent computation, they do not share state between them,
+<p>Pulsar internals are based on <a class="reference external" href="http://en.wikipedia.org/wiki/Actor_model">actors primitive</a>. <tt class="docutils literal"><span class="pre">Actors</span></tt> are the <em>atoms</em>
+of pulsar&#8217;s concurrent computation, they do not share state between them,
 communication is achieved via asynchronous inter-process message passing,
 implemented using the standard python socket library.</p>
 <p>Two special classes of actors are the <tt class="docutils literal"><span class="pre">Arbiter</span></tt>, used as a <a class="reference external" href="http://en.wikipedia.org/wiki/Singleton_pattern">singleton</a>,
@@ -182,10 +183,10 @@ of them as a pool of actors.</p>
 uses them to add additional functionalities.</p>
 <ul class="simple">
 <li><a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a>: upgrade the HTTP parser to a faster C version.</li>
-<li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names of
-the running application.</li>
-<li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary returned by
-Actor info method.</li>
+<li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names
+of the running application.</li>
+<li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary
+returned by Actor info method.</li>
 <li><a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.tx</span></tt> application when using pulsar
 with twisted protocols.</li>
 </ul>

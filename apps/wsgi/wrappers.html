@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WSGI Wrappers &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +24,10 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Content" href="content.html" />
-    <link rel="prev" title="WSGI application handlers" href="handlers.html" /> 
+    <link rel="prev" title="Routing" href="routing.html" /> 
   </head>
   <body>
 
@@ -44,9 +44,9 @@
           <a href="content.html" title="Asynchronous Content"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="handlers.html" title="WSGI application handlers"
+          <a href="routing.html" title="Routing"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -72,7 +72,8 @@
 <p>This section introduces two classes used by pulsar
 <a class="reference internal" href="index.html#apps-wsgi"><em>wsgi application</em></a> to pass a request/response state
 during an HTTP request.
-The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></tt></a> is a thin wrapper around a WSGI <tt class="docutils literal"><span class="pre">environ</span></tt> dictionary.
+The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" title="pulsar.apps.wsgi.wrappers.WsgiRequest"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest</span></tt></a> is a thin wrapper around a WSGI <tt class="docutils literal"><span class="pre">environ</span></tt>
+dictionary.
 It contains only the <tt class="docutils literal"><span class="pre">environ</span></tt> as its private data.
 The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a>, which is available in the
 <tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></tt> attribute, is an iterable over bytestring with
@@ -153,7 +154,7 @@ are compression encodings such as gzip.  For charsets have a look at
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs">
 <tt class="descname">urlargs</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.urlargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.urlargs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of url parameters obtained when matching a
-<a class="reference internal" href="handlers.html#wsgi-router"><em>router</em></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a>.</p>
+<a class="reference internal" href="routing.html#wsgi-router"><em>router</em></a> with this request <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.path"><tt class="xref py py-attr docutils literal"><span class="pre">path</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -168,26 +169,23 @@ are compression encodings such as gzip.  For charsets have a look at
 <dd><p>The request method (uppercase).</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">
-<tt class="descname">data_and_files</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a two-elements tuple of a
-<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing data from the
-request body, and data from uploaded files.</p>
+<tt class="descname">data_and_files</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve body data.</p>
+<p>Returns a two-elements tuple of a
+<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing data from
+the request body, and data from uploaded files.</p>
+<p>If the body data is not ready, return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+which results in the tuple.</p>
+<p>The result is cached.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">
-<tt class="descname">body_data</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.body_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">body_data</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.body_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing
 data from the request body.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.json_data">
-<tt class="descname">json_data</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.json_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.json_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the request body data decoded via JSON. If the
-data is not in a JSON format, this method will fail.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -232,14 +230,14 @@ is built from <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.Wsg
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>A WSGI response wrapper initialized by a
-<a class="reference internal" href="handlers.html#wsgi-handlers"><em>pulsar WSGI application handler</em></a>.
-Instances are callable using the standard WSGI call and, importantly, iterable:</p>
+<dd><p>A WSGI response.</p>
+<p>Instances are callable using the standard WSGI call and, importantly,
+iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">response</span> <span class="o">=</span> <span class="n">WsgiResponse</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>A <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> is an iterable over bytes to send back to the requesting
-client.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> is an iterable over bytes to send back to the
+requesting client.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.status_code">
 <tt class="descname">status_code</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.status_code" title="Permalink to this definition">¶</a></dt>
@@ -320,8 +318,8 @@ object then <tt class="docutils literal"><span class="pre">max_age</span></tt> w
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="handlers.html"
-                        title="previous chapter">WSGI application handlers</a></p>
+  <p class="topless"><a href="routing.html"
+                        title="previous chapter">Routing</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="content.html"
                         title="next chapter">Asynchronous Content</a></p>

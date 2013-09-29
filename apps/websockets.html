@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WebSockets &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>WebSockets &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../index.html" />
-    <link rel="next" title="Publish/Subscribe" href="pubsub.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
+    <link rel="next" title="Asynchronous HTTP client" href="http.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
   </head>
   <body>
@@ -40,12 +40,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pubsub.html" title="Publish/Subscribe"
+          <a href="http.html" title="Asynchronous HTTP client"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -96,13 +96,13 @@ back to the client:</p>
 <dl class="class">
 <dt id="pulsar.apps.ws.WebSocket">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocket</tt><big>(</big><em>route</em>, <em>handle</em>, <em>parser_factory=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocket" title="Permalink to this definition">¶</a></dt>
-<dd><p>A specialised <a class="reference internal" href="wsgi/handlers.html#wsgi-router"><em>Router</em></a> middleware for
-handling the websocket handshake at a given route.
-Once the handshake is succesful, the protocol consumer
+<dd><p>A <a class="reference internal" href="wsgi/routing.html#wsgi-router"><em>Router</em></a> for a websocket handshake.</p>
+<p>Once the handshake is succesful, the protocol consumer
 is upgraded to <a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a> and messages are handled by
 the <tt class="xref py py-attr docutils literal"><span class="pre">handle</span></tt> attribute, an instance of <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>.</p>
-<p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol and
-<a class="reference external" href="http://www.w3.org/TR/websockets/">http://www.w3.org/TR/websockets/</a> for details on the JavaScript interface.</p>
+<p>See <a class="reference external" href="http://tools.ietf.org/html/rfc6455">http://tools.ietf.org/html/rfc6455</a> for the websocket server protocol
+and <a class="reference external" href="http://www.w3.org/TR/websockets/">http://www.w3.org/TR/websockets/</a> for details on the JavaScript
+interface.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.ws.WebSocket.parser_factory">
 <tt class="descname">parser_factory</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocket.parser_factory" title="Permalink to this definition">¶</a></dt>
@@ -189,19 +189,48 @@ This method must be overloaded.</p>
 <h3>WebSocket protocol<a class="headerlink" href="#websocket-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.ws.WebSocketProtocol">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocketProtocol</tt><big>(</big><em>connection=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WebSocketProtocol</tt><big>(</big><em>handshake</em>, <em>handler</em>, <em>parser</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>WebSocket protocol for servers and clients.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.ws.WebSocketProtocol.handshake">
+<tt class="descname">handshake</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.handshake" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>The handshake response/request</p>
+<dl class="attribute">
+<dt id="pulsar.apps.ws.WebSocketProtocol.handler">
+<tt class="descname">handler</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.handler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>A websocket handler <a class="reference internal" href="#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.ws.WebSocketProtocol.parser">
+<tt class="descname">parser</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p>A websocket parser.</p>
 <dl class="method">
 <dt id="pulsar.apps.ws.WebSocketProtocol.write">
 <tt class="descname">write</tt><big>(</big><em>frame</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write a new <tt class="docutils literal"><span class="pre">frame</span></tt> into the wire,
-<tt class="docutils literal"><span class="pre">frame</span></tt> can be:</p>
+<dd><p>Write a new <tt class="docutils literal"><span class="pre">frame</span></tt> into the wire.</p>
+<p>A <tt class="docutils literal"><span class="pre">frame</span></tt> can be:</p>
 <ul class="simple">
-<li><tt class="docutils literal"><span class="pre">None</span></tt> does nothing</li>
 <li><tt class="docutils literal"><span class="pre">bytes</span></tt> - converted to a byte Frame</li>
 <li><tt class="docutils literal"><span class="pre">string</span></tt> - converted to a string Frame</li>
 <li>a <a class="reference internal" href="../api/utilities.html#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.websocket.Frame</span></tt></a></li>
 </ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WebSocketProtocol.ping">
+<tt class="descname">ping</tt><big>(</big><em>body=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.ping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a ping <tt class="docutils literal"><span class="pre">frame</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.ws.WebSocketProtocol.pong">
+<tt class="descname">pong</tt><big>(</big><em>body=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.pong" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a pong <tt class="docutils literal"><span class="pre">frame</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -237,8 +266,8 @@ This method must be overloaded.</p>
   <p class="topless"><a href="rpc.html"
                         title="previous chapter">JSON-RPC</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="pubsub.html"
-                        title="next chapter">Publish/Subscribe</a></p>
+  <p class="topless"><a href="http.html"
+                        title="next chapter">Asynchronous HTTP client</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/apps/websockets.txt"

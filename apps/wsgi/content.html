@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Content &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Middleware" href="middleware.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -82,7 +82,7 @@ It is a smart way for concatenating asynchronous strings:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
 <span class="go">&#39;Hello&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
-<span class="gp">... </span> 
+<span class="gp">...</span>
 <span class="go">RuntimeError: AsyncString already streamed</span>
 </pre></div>
 </div>
@@ -95,10 +95,10 @@ It is a smart way for concatenating asynchronous strings:</p>
 <span class="go">StreamRenderer</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">value</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
 <span class="go">False</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
-<p>The <a class="reference internal" href="#pulsar.apps.wsgi.content.StreamRenderer" title="pulsar.apps.wsgi.content.StreamRenderer"><tt class="xref py py-class docutils literal"><span class="pre">StreamRenderer</span></tt></a> is a specialised <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which
+<p>The <tt class="xref py py-class docutils literal"><span class="pre">StreamRenderer</span></tt> is a specialised <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which
 results in a string.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="s">&#39;World!&#39;</span><span class="p">)</span>
 <span class="go">&#39;World!&#39;</span>
@@ -226,7 +226,7 @@ If <tt class="docutils literal"><span class="pre">child</span></tt> is <tt class
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.content">
 <tt class="descname">content</tt><big>(</big><em>request=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.content" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the <a class="reference internal" href="#pulsar.apps.wsgi.content.StreamRenderer" title="pulsar.apps.wsgi.content.StreamRenderer"><tt class="xref py py-class docutils literal"><span class="pre">StreamRenderer</span></tt></a> for this instance.</p>
+<dd><p>Return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> called once the string is ready.</p>
 <p>This method can be called once only since it invokes the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.stream" title="pulsar.apps.wsgi.content.AsyncString.stream"><tt class="xref py py-meth docutils literal"><span class="pre">stream()</span></tt></a>
 method.</p>
 </dd></dl>
@@ -249,11 +249,12 @@ strings. This method can be called <strong>once only</strong>, otherwise a
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.do_stream">
 <tt class="descname">do_stream</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.do_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.do_stream" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform the actual streaming.</p>
-<p>It must return an iterable over <tt class="docutils literal"><span class="pre">strings</span></tt> or
-<a class="reference internal" href="../../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous elements</em></a> which result in strings.</p>
-<p>This method can be re-implemented by subclasses and should not be invoked
-directly. Use the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.stream" title="pulsar.apps.wsgi.content.AsyncString.stream"><tt class="xref py py-meth docutils literal"><span class="pre">stream()</span></tt></a> method instead.</p>
+<dd><p>Returns an iterable over strings or asynchronous components.</p>
+<p>If <a class="reference internal" href="../../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous elements</em></a> are included
+in the iterable, when called, they must result in strings.</p>
+<p>This method can be re-implemented by subclasses and should not be
+invoked directly.</p>
+<p>Use the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.stream" title="pulsar.apps.wsgi.content.AsyncString.stream"><tt class="xref py py-meth docutils literal"><span class="pre">stream()</span></tt></a> method instead.</p>
 </dd></dl>
 
 <dl class="method">
@@ -267,16 +268,15 @@ starts the wsgi response.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.to_string">
 <tt class="descname">to_string</tt><big>(</big><em>stream</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.to_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.to_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Once the <a class="reference internal" href="#pulsar.apps.wsgi.content.StreamRenderer" title="pulsar.apps.wsgi.content.StreamRenderer"><tt class="xref py py-class docutils literal"><span class="pre">StreamRenderer</span></tt></a>, returned by <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">content()</span></tt></a>
-method, is ready, meaning it has no more
-asynchronous elements, this method get called to transform the stream into the
-content string. This method can be overwritten by derived classes.</p>
+<dd><p>Once the <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, returned by <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">content()</span></tt></a>
+method, is ready, this method get called to transform the stream into
+the content string. This method can be overwritten by derived classes.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stream</strong> &#8211; a collections containing <tt class="docutils literal"><span class="pre">strings/bytes</span></tt> used to build the
-final <tt class="docutils literal"><span class="pre">string/bytes</span></tt>.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>stream</strong> &#8211; a collections containing <tt class="docutils literal"><span class="pre">strings/bytes</span></tt> used to
+build the final <tt class="docutils literal"><span class="pre">string/bytes</span></tt>.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a string or bytes</td>
 </tr>
@@ -614,7 +614,7 @@ in the following way:</p>
 <ul class="simple">
 <li>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is an entry in the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="pulsar.apps.wsgi.content.Media.known_libraries"><tt class="xref py py-attr docutils literal"><span class="pre">known_libraries</span></tt></a> dictionary. In
 this case replace <tt class="docutils literal"><span class="pre">path</span></tt> with <tt class="docutils literal"><span class="pre">known_libraries[path]</span></tt>.</li>
-<li>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending the 
+<li>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending the
 <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">media_path</span></tt></a> attribute.</li>
 </ul>
 <table class="docutils field-list" frame="void" rules="none">
@@ -630,16 +630,6 @@ this case replace <tt class="docutils literal"><span class="pre">path</span></tt
 </dd></dl>
 
 </div>
-</div>
-<div class="section" id="streamrenderer">
-<h2>StreamRenderer<a class="headerlink" href="#streamrenderer" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="pulsar.apps.wsgi.content.StreamRenderer">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">StreamRenderer</tt><big>(</big><em>stream</em>, <em>renderer</em>, <em>handle_value=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#StreamRenderer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.StreamRenderer" title="Permalink to this definition">¶</a></dt>
-<dd><p>A specialised <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> returned by the
-<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">AsyncString.content()</span></tt></a> method.</p>
-</dd></dl>
-
 </div>
 <div class="section" id="html-factory">
 <h2>Html Factory<a class="headerlink" href="#html-factory" title="Permalink to this headline">¶</a></h2>
@@ -680,7 +670,6 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 <li><a class="reference internal" href="#media">Media</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#streamrenderer">StreamRenderer</a></li>
 <li><a class="reference internal" href="#html-factory">Html Factory</a></li>
 </ul>
 </li>

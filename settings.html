@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Settings &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
     <link rel="prev" title="Changelog" href="changelog.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -180,14 +180,20 @@ the worker processes group.</p>
 <p>A base to use with setproctitle for process naming.</p>
 <p>This affects things like <tt class="docutils literal"><span class="pre">ps</span></tt> and <tt class="docutils literal"><span class="pre">top</span></tt>. If you&#8217;re going to be
 running more than one instance of Pulsar you&#8217;ll probably want to set a
-name to tell them apart. This requires that you install the setproctitle
-module.</p>
+name to tell them apart. This requires that you install the
+setproctitle module.</p>
 <p>It defaults to &#8216;pulsar&#8217;.</p>
 </div>
 <div class="section" id="default-process-name">
 <span id="setting-default-process-name"></span><h3>default_process_name<a class="headerlink" href="#default-process-name" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">pulsar</span></tt></p>
 <p>Internal setting that is adjusted for each type of application.</p>
+</div>
+<div class="section" id="coverage">
+<span id="setting-coverage"></span><h3>coverage<a class="headerlink" href="#coverage" title="Permalink to this headline">¶</a></h3>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--coverage</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Collect code coverage from all spawn actors.</p>
 </div>
 <div class="section" id="poller">
 <span id="setting-poller"></span><h3>poller<a class="headerlink" href="#poller" title="Permalink to this headline">¶</a></h3>
@@ -209,8 +215,8 @@ other actor-specific parameters.</p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
 <p>The number of workers for handling requests.</p>
 <p>If using a multi-process concurrency, a number in the
-the <tt class="docutils literal"><span class="pre">2-4</span> <span class="pre">x</span> <span class="pre">NUM_CORES</span></tt> range should be good. If you are using threads this
-number can be higher.</p>
+the <tt class="docutils literal"><span class="pre">2-4</span> <span class="pre">x</span> <span class="pre">NUM_CORES</span></tt> range should be good. If you are using
+threads this number can be higher.</p>
 </div>
 <div class="section" id="concurrency">
 <span id="setting-concurrency"></span><h3>concurrency<a class="headerlink" href="#concurrency" title="Permalink to this headline">¶</a></h3>
@@ -241,9 +247,9 @@ killed and restarted.</p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--thread-workers</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">1</span></tt></p>
 <p>The number of threads in an actor thread pool.</p>
-<p>The thread pool is used by actors to perform CPU intensive calculations.
-In this way the actor main thread is free to listen to events on file
-descriptors and process them as quick as possible.</p>
+<p>The thread pool is used by actors to perform CPU intensive
+calculations. In this way the actor main thread is free to listen
+to events on file descriptors and process them as quick as possible.</p>
 </div>
 </div>
 <div class="section" id="application-hooks">
@@ -277,29 +283,29 @@ can run periodically, at every loop or when some defined events occur.</p>
 <span id="setting-connection-made"></span><h3>connection_made<a class="headerlink" href="#connection-made" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called after a new connection is made.</p>
-<p>The callable needs to accept one instance variables for the
+<p>The callable needs to accept one parameter for the
 connection instance.</p>
 </div>
 <div class="section" id="connection-lost">
 <span id="setting-connection-lost"></span><h3>connection_lost<a class="headerlink" href="#connection-lost" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
 <p>Called after a connection is lost.</p>
-<p>The callable needs to accept one instance variables for the
+<p>The callable needs to accept one parameter for the
 connection instance.</p>
 </div>
 <div class="section" id="pre-request">
 <span id="setting-pre-request"></span><h3>pre_request<a class="headerlink" href="#pre-request" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
-<p>Called just before a worker processes the request.</p>
-<p>The callable needs to accept two instance variables for the Worker and
-the Request.</p>
+<p>Called just before an application server processes a request.</p>
+<p>The callable needs to accept one parameters for the
+consumer.</p>
 </div>
 <div class="section" id="post-request">
 <span id="setting-post-request"></span><h3>post_request<a class="headerlink" href="#post-request" title="Permalink to this headline">¶</a></h3>
 <p><em>Default</em>: <a class="reference internal" href="#pulsar.utils.config.pass_through" title="pulsar.utils.config.pass_through"><tt class="xref py py-func docutils literal"><span class="pre">pass_through()</span></tt></a></p>
-<p>Called after a worker processes the request.</p>
-<p>The callable needs to accept two instance variables for the Worker and
-the Request.</p>
+<p>Called after an application server processes a request.</p>
+<p>The callable needs to accept one parameter for the
+consumer.</p>
 </div>
 </div>
 <div class="section" id="socket-servers">
@@ -350,9 +356,9 @@ Must be a positive integer. Generally set in the 64-2048 range.</p>
 </div>
 <div class="section" id="task-consumer">
 <span id="setting-section-task-consumer"></span><h2>Task Consumer<a class="headerlink" href="#task-consumer" title="Permalink to this headline">¶</a></h2>
-<p>This section covers configuration parameters used by CPU bound type applications
-such as the <a class="reference internal" href="apps/tasks/index.html#apps-taskqueue"><em>distributed task queue</em></a> and the
-<a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
+<p>This section covers configuration parameters used by CPU bound type
+applications such as the <a class="reference internal" href="apps/tasks/index.html#apps-taskqueue"><em>distributed task queue</em></a> and
+the <a class="reference internal" href="apps/test.html#apps-test"><em>test suite</em></a>.</p>
 <div class="section" id="concurrent-tasks">
 <span id="setting-concurrent-tasks"></span><h3>concurrent_tasks<a class="headerlink" href="#concurrent-tasks" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">tasks</span></tt></p>
@@ -419,8 +425,10 @@ and failed.</p>
 <span id="setting-labels"></span><h3>labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
-<p>Optional test labels to run. If not provided all tests are run.</p>
-<p>To see available labels use the -l option.</p>
+<p>Optional test labels to run.</p>
+<blockquote>
+<div>If not provided all tests are run.
+To see available labels use the -l option.</div></blockquote>
 </div>
 <div class="section" id="exclude-labels">
 <span id="setting-exclude-labels"></span><h3>exclude_labels<a class="headerlink" href="#exclude-labels" title="Permalink to this headline">¶</a></h3>
@@ -448,7 +456,9 @@ and failed.</p>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--sequential</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
-<p>Run test functions sequentially. Don&#8217;t run them asynchronously.</p>
+<p>Run test functions sequentially.</p>
+<blockquote>
+<div>Don&#8217;t run them asynchronously.</div></blockquote>
 </div>
 <div class="section" id="show-leaks">
 <span id="setting-show-leaks"></span><h3>show_leaks<a class="headerlink" href="#show-leaks" title="Permalink to this headline">¶</a></h3>
@@ -459,6 +469,18 @@ and failed.</p>
 <blockquote>
 <div>Run the garbadge collector before a process-based actor dies and shows
 the memory leak report.</div></blockquote>
+</div>
+<div class="section" id="log-failures">
+<span id="setting-log-failures"></span><h3>log_failures<a class="headerlink" href="#log-failures" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-failures</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Don&#8217;t mute exceptions.</p>
+<blockquote>
+<div><p>Tested exception are usually muted via mute_failure function. This
+flag disable it.</p>
+<p>To see the exception the log level must be at least error.</p>
+</div></blockquote>
 </div>
 </div>
 <div class="section" id="utilities">
@@ -502,6 +524,7 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#logconfig">logconfig</a></li>
 <li><a class="reference internal" href="#process-name">process_name</a></li>
 <li><a class="reference internal" href="#default-process-name">default_process_name</a></li>
+<li><a class="reference internal" href="#coverage">coverage</a></li>
 <li><a class="reference internal" href="#poller">poller</a></li>
 </ul>
 </li>
@@ -547,6 +570,7 @@ the memory leak report.</div></blockquote>
 <li><a class="reference internal" href="#list-labels">list_labels</a></li>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
 <li><a class="reference internal" href="#show-leaks">show_leaks</a></li>
+<li><a class="reference internal" href="#log-failures">log_failures</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#utilities">Utilities</a></li>

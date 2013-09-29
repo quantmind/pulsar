@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>HTTP Proxy Server &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>HTTP Proxy Server &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Web Mail" href="webmail.html" />
     <link rel="prev" title="Http Bin" href="httpbin.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="httpbin.html" title="Http Bin"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -71,11 +71,14 @@
 <span id="tutorials-proxy-server"></span><h1>HTTP Proxy Server<a class="headerlink" href="#http-proxy-server" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.proxyserver.manage" title="examples.proxyserver.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.proxyserver.manage</span></tt></a>
 module.</p>
-<span class="target" id="module-examples.proxyserver.manage"></span><p>An asynchronous multi-process <a class="reference external" href="http://en.wikipedia.org/wiki/Proxy_server">HTTP proxy server</a> with <em>headers middleware</em>
-to manipulate the original request headers. If the header middleware is
+<span class="target" id="module-examples.proxyserver.manage"></span><p>An asynchronous multi-process <a class="reference external" href="http://en.wikipedia.org/wiki/Proxy_server">HTTP proxy server</a></p>
+<div class="section" id="managing-headers">
+<h2>Managing Headers<a class="headerlink" href="#managing-headers" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to add middleware to manipulate the original request headers.
+If the header middleware is
 an empty list, the proxy passes requests and responses unmodified.
 This is an implementation for a forward-proxy which can be used
-to retrieve from any type of source from the Internet.</p>
+to retrieve any type of source from the Internet.</p>
 <p>To run the server:</p>
 <div class="highlight-python"><pre>python manage.py</pre>
 </div>
@@ -94,6 +97,7 @@ the list of request <em>headers</em>. By default the example uses:</p>
     <span class="n">server</span><span class="p">(</span><span class="n">headers_middleware</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">])</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
+</div>
 <div class="section" id="implemenation">
 <h2>Implemenation<a class="headerlink" href="#implemenation" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -103,6 +107,12 @@ the list of request <em>headers</em>. By default the example uses:</p>
 processing on headers you can pass a list of <tt class="docutils literal"><span class="pre">headers_middleware</span></tt>.
 An headers middleware is a callable which accepts two parameters, the wsgi
 <em>environ</em> dictionary and the <em>headers</em> container.</p>
+<dl class="attribute">
+<dt id="examples.proxyserver.manage.ProxyServerWsgiHandler.http_client">
+<tt class="descname">http_client</tt><a class="reference internal" href="../modules/examples/proxyserver/manage.html#ProxyServerWsgiHandler.http_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.proxyserver.manage.ProxyServerWsgiHandler.http_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>The :ref:<a href="#id1"><span class="problematic" id="id2">`</span></a>HttpClient &lt;</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="examples.proxyserver.manage.ProxyServerWsgiHandler.request_headers">
 <tt class="descname">request_headers</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/examples/proxyserver/manage.html#ProxyServerWsgiHandler.request_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.proxyserver.manage.ProxyServerWsgiHandler.request_headers" title="Permalink to this definition">¶</a></dt>
@@ -129,6 +139,7 @@ The returned headers will be sent to the target uri.</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">HTTP Proxy Server</a><ul>
+<li><a class="reference internal" href="#managing-headers">Managing Headers</a></li>
 <li><a class="reference internal" href="#implemenation">Implemenation</a></li>
 </ul>
 </li>

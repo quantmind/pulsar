@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Publish/Subscribe &mdash; pulsar 0.6.1-beta.2 documentation</title>
+    <title>Publish/Subscribe &mdash; pulsar 0.7.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.6.1-beta.2',
+        VERSION:     '0.7.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.6.1-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="Twisted Integration" href="twisted.html" />
-    <link rel="prev" title="WebSockets" href="websockets.html" /> 
+    <link rel="prev" title="Asynchronous Redis client" href="redis.html" /> 
   </head>
   <body>
 
@@ -43,9 +43,9 @@
           <a href="twisted.html" title="Twisted Integration"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="websockets.html" title="WebSockets"
+          <a href="redis.html" title="Asynchronous Redis client"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.6.1-beta.2 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -170,6 +170,12 @@ via the <a class="reference internal" href="#pulsar.apps.pubsub.PubSub.encoder" 
 <dd><p>Set of all clients for this <a class="reference internal" href="#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt>
+<tt class="descname">clients</tt><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.clients"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>The set of clients for this <a class="reference internal" href="#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pulsar.apps.pubsub.PubSubBackend.add_client">
 <tt class="descname">add_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.add_client" title="Permalink to this definition">¶</a></dt>
@@ -180,27 +186,9 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.pubsub.PubSubBackend.broadcast">
-<tt class="descname">broadcast</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.broadcast" title="Permalink to this definition">¶</a></dt>
-<dd><p>Broadcast <tt class="docutils literal"><span class="pre">message</span></tt> to all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt>
-<tt class="descname">clients</tt><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.clients"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>The set of clients for this <a class="reference internal" href="#pulsar.apps.pubsub.PubSub" title="pulsar.apps.pubsub.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.pubsub.PubSubBackend.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close this <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend" title="pulsar.apps.pubsub.PubSubBackend"><tt class="xref py py-class docutils literal"><span class="pre">PubSubBackend</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.pubsub.PubSubBackend.decode">
-<tt class="descname">decode</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.decode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert message to a string.</p>
+<dt id="pulsar.apps.pubsub.PubSubBackend.remove_client">
+<tt class="descname">remove_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.remove_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.remove_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <em>client</em> from the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -208,12 +196,6 @@ from the publisher, the <a class="reference internal" href="#pulsar.apps.pubsub.
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.publish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish a <tt class="docutils literal"><span class="pre">message</span></tt> into <tt class="docutils literal"><span class="pre">channel</span></tt>.</p>
 <p>Must be implemented by subclasses.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.pubsub.PubSubBackend.remove_client">
-<tt class="descname">remove_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.remove_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.remove_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove <em>client</em> from the set of all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -231,6 +213,24 @@ method which must be implemented by subclasses.</p>
 <p>An optional series of <tt class="docutils literal"><span class="pre">channels</span></tt> can be passed. If no channels are passed,
 it unsubscribed from all channels.</p>
 <p>Must be implemented by subclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.pubsub.PubSubBackend.broadcast">
+<tt class="descname">broadcast</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.broadcast" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast <tt class="docutils literal"><span class="pre">message</span></tt> to all <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend.clients" title="pulsar.apps.pubsub.PubSubBackend.clients"><tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.pubsub.PubSubBackend.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close this <a class="reference internal" href="#pulsar.apps.pubsub.PubSubBackend" title="pulsar.apps.pubsub.PubSubBackend"><tt class="xref py py-class docutils literal"><span class="pre">PubSubBackend</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.pubsub.PubSubBackend.decode">
+<tt class="descname">decode</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/pubsub.html#PubSubBackend.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.pubsub.PubSubBackend.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert message to a string.</p>
 </dd></dl>
 
 </dd></dl>
@@ -258,8 +258,8 @@ it unsubscribed from all channels.</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="websockets.html"
-                        title="previous chapter">WebSockets</a></p>
+  <p class="topless"><a href="redis.html"
+                        title="previous chapter">Asynchronous Redis client</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="twisted.html"
                         title="next chapter">Twisted Integration</a></p>
