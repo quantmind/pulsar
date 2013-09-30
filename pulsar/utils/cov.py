@@ -54,6 +54,13 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
               ignore_errors=False, stream=None):
     '''Send a coverage report to coveralls.io.
 
+    :param http: optional http client
+    :param url: optional url to send data to. It defaults to ``coveralls``
+        api url.
+    :param data_file: optional data file to load coverage data from. By
+        default, coverage uses ``.coverage``.
+    :param repo_token: required when not submitting from travis.
+
     https://coveralls.io/docs/api
     '''
     stream = stream or sys.stdout
