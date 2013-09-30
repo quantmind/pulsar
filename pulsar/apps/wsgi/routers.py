@@ -143,16 +143,6 @@ class RouterType(type):
         return super(RouterType, cls).__new__(cls, name, bases, attrs)
 
 
-class Redirect(object):
-
-    def __init__(self, path):
-        self.path = path
-
-    def response(self, environ, start_response, args):
-        request = wsgi_request(environ)
-        raise HttpRedirect(request.full_path(self.path))
-
-
 class Router(RouterType('RouterBase', (object,), {})):
     '''A WSGI middleware to handle client requests on multiple
 :ref:`routes <apps-wsgi-route>`. The user must implement the HTTP methods

@@ -557,10 +557,10 @@ class HttpRequest(pulsar.Request, RequestBase):
             else:
                 fn = guess_filename(v) or k
                 fp = v
-            if isinstance(fp, str):
-                fp = StringIO(fp)
             if isinstance(fp, bytes):
                 fp = BytesIO(fp)
+            elif is_string(fp, str):
+                fp = StringIO(fp)
             if ft:
                 new_v = (fn, fp.read(), ft)
             else:
