@@ -416,16 +416,22 @@ class HttpServerResponse(ProtocolConsumer):
     ########################################################################
     ##    INTERNALS
     def _generate(self, environ, failure=None):
+        finished = False
         try:
             if failure:
                 # A failure has occurred, try to handle it with the default
                 # wsgi error handler
-                wsgi_iter = self.handle_wsgi_error(environ, failure)
+                if isinstance(failure.error, IOError):
+                    finished = True
+                else:
+                    wsgi_iter = self.handle_wsgi_error(environ, failure)
             else:
                 # No server name. 400 Bad Request
                 if 'SERVER_NAME' not in environ:
                     raise HttpException(status=400)
                 wsgi_iter = self.wsgi_callable(environ, self.start_response)
+        except IOError:
+            finished = True
         except Exception:
             result = sys.exc_info()
         else:
@@ -433,9 +439,12 @@ class HttpServerResponse(ProtocolConsumer):
                 result = self._async_wsgi(wsgi_iter)
             else:
                 result = wsgi_iter
-        result = maybe_async(result, get_result=False)
-        err_handler = self._generate if failure is None else self.catastrofic
-        result.add_errback(partial(err_handler, environ))
+        if finished:
+            self.finished()
+        else:
+            result = maybe_async(result, get_result=False)
+            err_handler = self._generate if failure is None else self.catastrofic
+            result.add_errback(partial(err_handler, environ))
 
     def _async_wsgi(self, wsgi_iter):
         if isinstance(wsgi_iter, Deferred):

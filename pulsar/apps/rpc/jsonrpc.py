@@ -95,7 +95,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
                 msg = checkarity(callable, args, kwargs, discount=1)
             msg = msg or str(error) or 'JSON RPC exception'
             if code == -32603:
-                result.log(msg=msg, level='critical')
+                result.log(msg=msg, level='error')
             else:
                 result.log(msg=msg, level='warning')
             result = {'code': code,

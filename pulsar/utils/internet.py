@@ -184,23 +184,6 @@ def close_socket(sock):
             pass
 
 
-def create_socket(bindto=None, local_addr=None, family=socket.AF_INET,
-                  type=socket.SOCK_STREAM, backlog=100, reuse_address=None):
-    sock = socket.socket(family=family, type=type)
-    if bindto:
-        assert not local_addr, 'either bind or local address bind'
-        if reuse_address is None:
-            reuse_address = os.name == 'posix' and sys.platform != 'cygwin'
-        if reuse_address:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
-        sock.bind(bindto)
-        if backlog:
-            sock.listen(backlog)
-    if local_addr:
-        self.bind(local_addr)
-    return sock
-
-
 def nice_address(address, family=None):
     if isinstance(address, tuple):
         return ':'.join((str(s) for s in address[:2]))
