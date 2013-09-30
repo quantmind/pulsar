@@ -443,7 +443,7 @@ class HttpServerResponse(ProtocolConsumer):
             self.finished()
         else:
             result = maybe_async(result, get_result=False)
-            err_handler = self._generate if failure is None else self.catastrofic
+            err_handler = self._generate if not failure else self.catastrofic
             result.add_errback(partial(err_handler, environ))
 
     def _async_wsgi(self, wsgi_iter):
