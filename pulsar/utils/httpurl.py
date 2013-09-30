@@ -321,29 +321,6 @@ def remove_double_slash(route):
     return route
 
 
-def is_closed(sock):
-    """Check if socket is connected."""
-    if not sock:
-        return False
-    try:
-        if not poll:
-            if not select:
-                return False
-            try:
-                return bool(select([sock], [], [], 0.0)[0])
-            except socket.error:
-                return True
-        # This version is better on platforms that support it.
-        p = poll()
-        p.register(sock, POLLIN)
-        for (fno, ev) in p.poll(0.0):
-            if fno == sock.fileno():
-                # Either data is buffered (bad), or the connection is dropped.
-                return True
-    except Exception:
-        return True
-
-
 ####################################################    CONTENT TYPES
 JSON_CONTENT_TYPES = ('application/json',
                       'application/javascript',
@@ -1089,7 +1066,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         if not self._chunked:
             #
             if not data and self._clen is None:
-                if not self._status: # message complete only for servers
+                if not self._status:    # message complete only for servers
                     self.__on_message_complete = True
             else:
                 if self._clen_rest is not None:
@@ -1253,12 +1230,6 @@ def http_date(epoch_seconds=None):
     Outputs a string in the format 'Wdy, DD Mon YYYY HH:MM:SS GMT'.
     """
     return formatdate(epoch_seconds, usegmt=True)
-
-
-def make_nonce(timestamp=None):
-    """Generate pseudorandom number."""
-    timestamp = time.time()
-    return hexmd5(to_bytes('%d' % timestamp) + os.urandom(10))
 
 
 #################################################################### COOKIE

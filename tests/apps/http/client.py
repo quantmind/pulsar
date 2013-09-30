@@ -67,14 +67,18 @@ class TestHttpClientBase:
         '''When tunneling, the client needs to perform an extra request.'''
         return int(self.with_proxy and self.with_tls)
 
-    def client(self, timeout=None, **kwargs):
+    def client(self, timeout=None, parser=None, **kwargs):
         timeout = timeout or self.timeout
+        parser = self.parser()
         if self.with_proxy:
             kwargs['proxy_info'] = {'http': self.proxy_uri,
                                     'https': self.proxy_uri,
                                     'ws': self.proxy_uri,
                                     'wss': self.proxy_uri}
-        return HttpClient(timeout=timeout, **kwargs)
+        return HttpClient(timeout=timeout, parser=parser, **kwargs)
+
+    def parser(self):
+        return None
 
     def _check_pool(self, http, response, available=1, processed=1,
                     created=1, pools=1):
@@ -498,4 +502,3 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                   ).on_finished
         self.assertEqual(response.status_code, 304)
         self.assertFalse('Content-length' in response.headers)
-

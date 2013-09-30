@@ -6,7 +6,8 @@ omit =
     *pulsar/utils/system/winservice.py
     *pulsar/utils/system/windowssystem.py
     *pulsar/utils/system/winprocess.py
-    *pulsar/utils/cov.py,examples/httpbin/config.py
+    *pulsar/utils/cov.py
+    examples/httpbin/config.py
     examples/philosophers/config.py
     pshell,examples/taskqueue/winservice.py
     examples/pshell/*
@@ -15,6 +16,7 @@ omit =
     *pulsar/apps/taskqueue/backends/redis.py
     examples/taskqueue/test_redis.py
     *pulsar/async/udp.py
+    *pulsar/apps/green/*
 
 
 [report]

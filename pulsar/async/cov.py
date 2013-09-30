@@ -21,13 +21,14 @@ class Coverage(object):
                 'COVERAGE_FILE', os.path.join(cwd, '.coverage.pulsar'))
 
     def start_coverage(self):
-      if coverage and self.cfg.coverage:
-          target = os.environ.get('COVERAGE_FILE') or '.coverage'
-          file_name = os.path.join(self.params.coverage_directory, '.coverage')
-          self.logger.info('start coverage')
-          self._coverage = coverage.coverage(data_file=file_name,
-                                             data_suffix=True)
-          self._coverage.start()
+        if coverage and self.cfg.coverage:
+            target = os.environ.get('COVERAGE_FILE') or '.coverage'
+            file_name = os.path.join(self.params.coverage_directory,
+                                     '.coverage')
+            self.logger.info('start coverage')
+            self._coverage = coverage.coverage(data_file=file_name,
+                                               data_suffix=True)
+            self._coverage.start()
 
     def stop_coverage(self):
         if self._coverage and not self.is_arbiter():

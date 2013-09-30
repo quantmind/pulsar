@@ -21,15 +21,14 @@ class CoverallsReporter(Reporter):
                 with open(cu.filename) as fp:
                     source = fp.readlines()
             except IOError:
-                if ignore_errors:
-                    continue
-                else:
+                if not ignore_errors:
                     raise
             analysis = self.coverage._analyze(cu)
             coverage_list = [None for _ in source]
             for lineno, line in enumerate(source):
                 if lineno + 1 in analysis.statements:
-                    coverage_list[lineno] = int(lineno + 1 not in analysis.missing)
+                    coverage_list[lineno] = int(lineno + 1
+                                                not in analysis.missing)
             filename = cu.filename
             for dir in strip_dirs:
                 filename = filename.replace(dir, '').lstrip('/')
@@ -74,7 +73,7 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
         if service_job_id:
             service_name = 'travis-ci'
     if not git:
-        git=gitrepo()
+        git = gitrepo()
     data = {
         'service_job_id': service_job_id,
         'service_name': service_name or 'pulsar',

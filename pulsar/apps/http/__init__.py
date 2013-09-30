@@ -226,6 +226,7 @@ from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
 
+
 def guess_filename(obj):
     """Tries to guess the filename of the given object."""
     name = getattr(obj, 'name', None)
@@ -410,9 +411,7 @@ class HttpRequest(pulsar.Request, RequestBase):
 
     def __repr__(self):
         return self.first_line()
-
-    def __str__(self):
-        return self.__repr__()
+    __str__ = __repr__
 
     def get_full_url(self):
         '''The full url for this request.'''
@@ -428,7 +427,8 @@ class HttpRequest(pulsar.Request, RequestBase):
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
-        self.parser = http_parser(kind=1, decompress=self.decompress)
+        self.parser = self.client.http_parser(kind=1,
+                                              decompress=self.decompress)
 
     def set_proxy(self, scheme, *host):
         if not host and scheme is None:
@@ -723,13 +723,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
         else:
             raise pulsar.ProtocolError
 
-    def close(self):
-        if self.parser.is_message_complete():
-            self.finished()
-            if self.next_url:
-                return self.new_request(self.next_url)
-            return self
-
 
 class HttpClient(pulsar.Client):
     '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
@@ -805,7 +798,7 @@ class HttpClient(pulsar.Client):
               keyfile=None, certfile=None, cert_reqs=CERT_NONE,
               ca_certs=None, cookies=None, store_cookies=True,
               max_redirects=10, decompress=True, version=None,
-              websocket_handler=None):
+              websocket_handler=None, parser=None):
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookiejar_from_dict(cookies)
@@ -830,6 +823,7 @@ class HttpClient(pulsar.Client):
                                'certfile': certfile,
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
+        self.http_parser = parser or http_parser
         # Add hooks
         self.bind_event('pre_request', Tunneling())
         self.bind_event('on_headers', handle_101)

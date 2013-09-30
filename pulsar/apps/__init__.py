@@ -482,7 +482,6 @@ class Application(Configurator, pulsar.Pulsar):
         return arbiter
 
 
-
 class MultiApp(Configurator):
     '''A :class:`MultiApp` is a tool for creating several :class:`Application`
 and starting them at once. It makes sure all :ref:`settings <settings>` for the

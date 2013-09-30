@@ -25,6 +25,7 @@ def sh(command, cwd=None):
                             cwd=cwd,
                             universal_newlines=True).communicate()[0]
 
+
 def get_git_changeset():
     """Returns a numeric identifier of the latest git changeset.
 
