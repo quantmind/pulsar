@@ -32,7 +32,8 @@ class ServiceManagerLogHandler(logging.Handler):
 
 
 def ctrlHandler(ctrlType):
-    return True
+    return True
+
 
 class PulsarService(win32serviceutil.ServiceFramework):
     _svc_name_ = 'PULSAR_%s' % pulsar.__version__
