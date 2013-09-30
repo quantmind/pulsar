@@ -31,7 +31,9 @@ class CoverallsReporter(Reporter):
                                                 not in analysis.missing)
             filename = cu.filename
             for dir in strip_dirs:
-                filename = filename.replace(dir, '').lstrip('/')
+                if filename.startswith(dir):
+                    filename = filename.replace(dir, '').lstrip('/')
+                    break
             ret.append({
                 'name': filename,
                 'source': ''.join(source).rstrip(),

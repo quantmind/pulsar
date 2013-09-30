@@ -1,4 +1,5 @@
 import sys
+import os
 
 import coverage
 
@@ -19,7 +20,7 @@ if __name__ == '__main__':
         cov.combine()
         cov.save()
         path = Path(pulsar.__file__)
-        coveralls(strip_dirs=[path.parent.parent],
+        coveralls(strip_dirs=[path.parent.parent, os.getcwd()],
                   stream=stream,
                   repo_token='CNw6W9flYDDXZYeStmR1FX9F4vo0MKnyX')
 
