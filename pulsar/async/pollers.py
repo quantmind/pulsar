@@ -219,7 +219,7 @@ if hasattr(select, 'epoll'):
 
     POLLERS['epoll'] = IOepoll
 
-if hasattr(select, 'kqueue'):
+if hasattr(select, 'kqueue'):     # pragma    nocover
 
     KQ_FILTER_READ = select.KQ_FILTER_READ
     KQ_FILTER_WRITE = select.KQ_FILTER_WRITE
@@ -288,7 +288,7 @@ if hasattr(select, 'kqueue'):
     POLLERS['kqueue'] = IOkqueue
 
 
-class IOselect(Poller):
+class IOselect(Poller):     # pragma    nocover
     '''An epoll like select class.'''
     def __init__(self):
         super(IOselect, self).__init__()
@@ -336,7 +336,7 @@ class IOselect(Poller):
 POLLERS['select'] = IOselect
 DefaultIO = list(POLLERS.values())[0]
 
-if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':
+if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
     default_name = 'epoll on linux, kqueue on mac, select on windows'
 else:
     default_name = tuple(POLLERS)[0]
