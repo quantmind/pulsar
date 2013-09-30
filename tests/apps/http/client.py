@@ -473,3 +473,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
+
+    def test_media_root(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('media/')).on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'], 'text/html')
+

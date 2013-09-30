@@ -21,7 +21,7 @@ class ExternalBase(TestHttpClientBase):
 
     def test_get_https(self):
         client = self.client()
-        response = client.get('https://github.com/trending').on_finished
+        response = yield client.get('https://github.com/trending').on_finished
         self.assertEqual(response.status_code, 200)
 
     def test_get_httpbin(self):

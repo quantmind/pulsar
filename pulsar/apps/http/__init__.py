@@ -559,7 +559,7 @@ class HttpRequest(pulsar.Request, RequestBase):
                 fp = v
             if isinstance(fp, bytes):
                 fp = BytesIO(fp)
-            elif is_string(fp, str):
+            elif is_string(fp):
                 fp = StringIO(fp)
             if ft:
                 new_v = (fn, fp.read(), ft)
