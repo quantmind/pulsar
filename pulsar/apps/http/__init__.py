@@ -783,8 +783,7 @@ class HttpClient(pulsar.Client):
         kind='client')
     DEFAULT_TUNNEL_HEADERS = Headers([
         ('Connection', 'Keep-Alive'),
-        ('Proxy-Connection', 'Keep-Alive'),
-        ('Accept', 'text/plain, */*; q=0.8')],
+        ('Proxy-Connection', 'Keep-Alive')],
         kind='client')
     request_parameters = ('encode_multipart', 'max_redirects', 'decompress',
                           'allow_redirects', 'multipart_boundary', 'version',
@@ -810,7 +809,6 @@ class HttpClient(pulsar.Client):
             dheaders.update(headers)
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
-        self.tunnel_headers['user-agent'] = self.client_version
         self.proxy_info = dict(proxy_info or ())
         if not self.proxy_info and self.trust_env:
             self.proxy_info = get_environ_proxies()

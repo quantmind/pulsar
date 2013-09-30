@@ -168,9 +168,9 @@ class ProxyResponse(object):
                 # start the response
                 self.start_response(status, list(self._headers))
             body = response.recv_body()
-            self.queue.put(body)
             if response.parser.is_message_complete():
                 self._done = True
+            self.queue.put(body)
 
     def error(self, failure):
         '''Handle a failure.'''
@@ -183,8 +183,8 @@ class ProxyResponse(object):
             resp = wsgi.WsgiResponse(504, data, content_type='text/html')
             self.start_response(resp.status, resp.get_headers(),
                                 failure.exc_info)
-            yield self.queue.put(resp.content[0])
             self._done = True
+            self.queue.put(resp.content[0])
 
     def remove_hop_headers(self, headers):
         for header, value in headers:
