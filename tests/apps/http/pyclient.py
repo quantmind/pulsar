@@ -5,7 +5,7 @@ from . import client
 
 
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
-class TestHttpClientWithProxy(client.TestHttpClient):
+class TestHttpClientWithPythonParser(client.TestHttpClient):
 
     def parser(self):
         return HttpParser

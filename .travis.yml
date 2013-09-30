@@ -11,11 +11,15 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi
   - pip install -r requirements_dev.txt --use-mirrors
   - python setup.py install
+  - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
+
+script:
   - pep8 pulsar examples --exclude pulsar/utils/fallbacks/_dictconfig.py
   - sudo rm -rf pulsar
-  - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
-script:
   - python -m covrun -w 2 --test-timeout 60
+
+notifications:
+  email: false
 
 branches:
   only:
