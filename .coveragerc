@@ -13,7 +13,7 @@ omit =
     examples/pshell/*
     examples/philosophers/*
     *pulsar/apps/test/plugins/bench.py
-    *pulsar/apps/taskqueue/backends/redis.py
+    *pulsar/apps/tasks/backends/redis.py
     examples/taskqueue/test_redis.py
     *pulsar/async/udp.py
     *pulsar/apps/green/*
