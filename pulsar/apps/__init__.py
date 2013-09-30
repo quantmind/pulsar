@@ -301,7 +301,9 @@ The parameters overriding order is the following:
                     self.cfg.set(setting.name, setting.get())
         for name in list(self.cfg.params):
             if name in self.cfg.settings:
-                self.cfg.params.pop(name)
+                value = self.cfg.params.pop(name)
+                if value is not None:
+                    self.cfg.set(name, value)
         # parse console args
         if self.parsed_console:
             parser = self.cfg.parser()
