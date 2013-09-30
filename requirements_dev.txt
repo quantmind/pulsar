@@ -1,5 +1,5 @@
 coverage
-coveralls
+python-coveralls
 redis
 http-parser
 cython
