@@ -3,3 +3,4 @@ coveralls
 redis
 http-parser
 cython
+django
