@@ -55,7 +55,7 @@ class ExternalBase(TestHttpClientBase):
         data = response.json()
         self.assertEqual(data['files'], files)
 
-    def test_http_get_timeit(self):
+    def __test_http_get_timeit(self):
         client = self.client()
         response = yield client.timeit(10, 'get', 'http://www.amazon.co.uk/'
                                        ).on_finished
