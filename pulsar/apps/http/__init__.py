@@ -200,6 +200,7 @@ import platform
 import json
 from collections import namedtuple
 from base64 import b64encode
+from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import is_failure
@@ -224,6 +225,12 @@ from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
 tls_schemes = ('https', 'wss')
+
+def guess_filename(obj):
+    """Tries to guess the filename of the given object."""
+    name = getattr(obj, 'name', None)
+    if name and name[0] != '<' and name[-1] != '>':
+        return os.path.basename(name)
 
 
 class RequestBase(object):
@@ -300,6 +307,8 @@ class HttpTunnel(RequestBase):
 
 class HttpRequest(pulsar.Request, RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
+
+    :param files: optional dictionary of name, file-like-objects.
 
     .. attribute:: method
 
@@ -471,31 +480,26 @@ class HttpRequest(pulsar.Request, RequestBase):
     def encode_body(self):
         '''Encode body or url if the :attr:`method` does not have body.
 
-        Called by :meth:`encode`.'''
+        Called by the :meth:`encode` method.
+        '''
         body = None
         if self.method in ENCODE_URL_METHODS:
             self.files = None
             self._encode_url(self.data)
         elif isinstance(self.data, bytes):
+            assert self.files is None, ('data cannot be bytes when files are '
+                                        'present')
             body = self.data
         elif is_string(self.data):
+            assert self.files is None, ('data cannot be string when files are '
+                                        'present')
             body = to_bytes(self.data, self.charset)
-        elif self.data:
-            content_type = self.headers.get('content-type')
-            # No content type given
-            if not content_type:
-                content_type = 'application/x-www-form-urlencoded'
-                if self.encode_multipart:
-                    body, content_type = encode_multipart_formdata(
-                        self.data, boundary=self.multipart_boundary,
-                        charset=self.charset)
-                else:
-                    body = urlencode(self.data).encode(self.charset)
-                self.headers['Content-Type'] = content_type
-            elif content_type == 'application/json':
-                body = json.dumps(self.data).encode(self.charset)
+        elif self.data or self.files:
+            if self.files:
+                body, content_type = self._encode_files()
             else:
-                body = json.dumps(self.data).encode(self.charset)
+                body, content_type = self._encode_params()
+            self.headers['Content-Type'] = content_type
         return body
 
     def has_header(self, header_name):
@@ -513,6 +517,7 @@ class HttpRequest(pulsar.Request, RequestBase):
     def add_unredirected_header(self, header_name, header_value):
         self.unredirected_headers[header_name] = header_value
 
+    # INTERNAL ENCODING METHODS
     def _encode_url(self, body):
         query = self.query
         if body:
@@ -526,6 +531,61 @@ class HttpRequest(pulsar.Request, RequestBase):
             self.data = query
             query = urlencode(query)
         self.query = query
+
+    def _encode_files(self):
+        fields = []
+        for field, val in mapping_iterator(self.data or ()):
+            if (is_string(val) or isinstance(val, bytes) or
+                    not hasattr(val, '__iter__')):
+                val = [val]
+            for v in val:
+                if v is not None:
+                    if not isinstance(v, bytes):
+                        v = str(v)
+                    fields.append((field.decode('utf-8') if
+                                   isinstance(field, bytes) else field,
+                                   v.encode('utf-8') if isinstance(v, str)
+                                   else v))
+        for (k, v) in mapping_iterator(self.files):
+            # support for explicit filename
+            ft = None
+            if isinstance(v, (tuple, list)):
+                if len(v) == 2:
+                    fn, fp = v
+                else:
+                    fn, fp, ft = v
+            else:
+                fn = guess_filename(v) or k
+                fp = v
+            if isinstance(fp, str):
+                fp = StringIO(fp)
+            if isinstance(fp, bytes):
+                fp = BytesIO(fp)
+            if ft:
+                new_v = (fn, fp.read(), ft)
+            else:
+                new_v = (fn, fp.read())
+            fields.append((k, new_v))
+        #
+        return encode_multipart_formdata(fields, charset=self.charset)
+
+    def _encode_params(self):
+        content_type = self.headers.get('content-type')
+        # No content type given
+        if not content_type:
+            if self.encode_multipart:
+                return encode_multipart_formdata(
+                    self.data, boundary=self.multipart_boundary,
+                    charset=self.charset)
+            else:
+                content_type = 'application/x-www-form-urlencoded'
+                body = urlencode(self.data).encode(self.charset)
+        elif content_type in JSON_CONTENT_TYPES:
+            body = json.dumps(self.data).encode(self.charset)
+        else:
+            raise ValueError("Don't know how to encode body for %s" %
+                             content_type)
+        return body, content_type
 
 
 class HttpResponse(pulsar.ProtocolConsumer):
@@ -623,7 +683,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
 
-    def content_json(self, charset=None, **kwargs):
+    def json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
 

@@ -249,7 +249,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client(timeout=60)
         response = yield http.get(self.httpbin('getsize/600000')).on_finished
         self.assertEqual(response.status_code, 200)
-        data = response.content_json()
+        data = response.json()
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
         self.assertFalse(response.parser.is_chunked())
@@ -271,7 +271,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.get(self.httpbin('get'),
                                   data={'bla': 'foo'}).on_finished
-        result = response.content_json()
+        result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], 'application/json')
         self.assertEqual(result['args'], {'bla': 'foo'})
@@ -284,7 +284,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('gzip')).on_finished
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response)
-        content = response.content_json()
+        content = response.json()
         self.assertTrue(content['gzipped'])
         if 'content-encoding' in response.headers:
             self.assertTrue(response.headers['content-encoding'], 'gzip')
@@ -306,7 +306,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('post'), encode_multipart=False,
                                    data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -316,7 +316,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.post(self.httpbin('post'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -326,7 +326,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.put(self.httpbin('put'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -337,7 +337,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.patch(self.httpbin('patch'),
                                     data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -347,7 +347,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.delete(self.httpbin('delete'), data=data).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -355,7 +355,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.get(self.httpbin('response-headers')).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
         parser = response.parser
         self.assertTrue(parser.is_chunked())
@@ -373,7 +373,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('post'), data=data,
                                    wait_continue=True).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
@@ -390,7 +390,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.request.unredirected_headers)
-        result = r.content_json()
+        result = r.json()
         self.assertTrue(result['cookies'])
         self.assertEqual(result['cookies']['bla'],'foo')
         # Try without saving cookies
@@ -402,7 +402,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(r.history[0].headers['set-cookie'])
         r = yield http.get(self.httpbin('cookies')).on_finished
         self.assertEqual(r.status_code, 200)
-        result = r.content_json()
+        result = r.json()
         self.assertFalse(result['cookies'])
 
     def test_basic_authentication(self):
@@ -470,6 +470,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.post(self.httpbin('expect'), data=data
                                    ).on_finished
         self.assertEqual(response.status_code, 200)
-        result = response.content_json()
+        result = response.json()
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])

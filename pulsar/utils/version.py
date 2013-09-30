@@ -17,6 +17,14 @@ def get_version(version):
     return main + sub
 
 
+def sh(command, cwd=None):
+    return subprocess.Popen(command,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=True,
+                            cwd=cwd,
+                            universal_newlines=True).communicate()[0]
+
 def get_git_changeset():
     """Returns a numeric identifier of the latest git changeset.
 
@@ -25,15 +33,44 @@ def get_git_changeset():
     so it's sufficient for generating the development version numbers.
     """
     repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    git_show = subprocess.Popen('git show --pretty=format:%ct --quiet HEAD',
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                shell=True,
-                                cwd=repo_dir,
-                                universal_newlines=True)
-    timestamp = git_show.communicate()[0].partition('\n')[0]
+    git_show = sh('git show --pretty=format:%ct --quiet HEAD',
+                  cwd=repo_dir)
+    timestamp = git_show.partition('\n')[0]
     try:
         timestamp = datetime.datetime.utcfromtimestamp(int(timestamp))
     except ValueError:
         return None
     return timestamp.strftime('%Y%m%d%H%M%S')
+
+
+FORMAT = '%n'.join(['%H', '%aN', '%ae', '%cN', '%ce', '%s'])
+
+
+def gitrepo(root=None):
+    if not root:
+        cwd = root = os.getcwd()
+    else:
+        cwd = os.getcwd()
+        if cwd != root:
+            os.chdir(root)
+    gitlog = sh('git --no-pager log -1 --pretty="format:%s"' % FORMAT,
+                cwd=root).split('\n', 5)
+    branch = sh('git rev-parse --abbrev-ref HEAD', cwd=root).strip()
+    remotes = [x.split() for x in
+               filter(lambda x: x.endswith('(fetch)'),
+                      sh('git remote -v', cwd=root).strip().splitlines())]
+    if cwd != root:
+        os.chdir(cwd)
+    return {
+        "head": {
+            "id": gitlog[0],
+            "author_name": gitlog[1],
+            "author_email": gitlog[2],
+            "committer_name": gitlog[3],
+            "committer_email": gitlog[4],
+            "message": gitlog[5].strip(),
+        },
+        "branch": branch,
+        "remotes": [{'name': remote[0], 'url': remote[1]}
+                    for remote in remotes]
+    }

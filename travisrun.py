@@ -1,7 +1,6 @@
 import sys
 
 import coverage
-import coveralls
 
 
 if __name__ == '__main__':
@@ -9,15 +8,21 @@ if __name__ == '__main__':
         cov = coverage.coverage(data_suffix='travisrun')
         cov.start()
         from runtests import run, Path
+        from pulsar.utils.cov import coveralls
         import pulsar
-        run(coverage=True, profile=True)
+        suite = run(coverage=True, profile=True)
+        stream = pulsar.get_actor().stream
+        stream.write('Collecting coverage information\n')
         cov.stop()
         cov.save()
         cov = coverage.coverage(data_suffix=True)
         cov.combine()
         cov.save()
         path = Path(pulsar.__file__)
-        coveralls.wear(argv=['--base_dir', path.parent.parent])
+        coveralls(strip_dirs=[path.parent.parent],
+                  stream=stream,
+                  repo_token='CNw6W9flYDDXZYeStmR1FX9F4vo0MKnyX')
+
     else:
         from runtests import run
         run()
