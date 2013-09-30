@@ -485,8 +485,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin('media/httpbin.js')
                                   ).on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'],
-                         'application/x-javascript')
+        self.assertTrue(response.headers['content-type'] in
+                        ('application/javascript',
+                         'application/x-javascript'))
         self.assertTrue(int(response.headers['content-length']) > 0)
         modified = response.headers.get('Last-modified')
         self.assertTrue(modified)
