@@ -1,5 +1,5 @@
 '''
-The `dining philosophers`_ problem is an example problem often used in
+The dining `philosophers`_ problem is an example problem often used in
 concurrent algorithm design to illustrate synchronisation issues and
 techniques for resolving them.
 
@@ -47,7 +47,7 @@ Implementation
    :members:
    :member-order: bysource
 
-.. _`dining philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem
+.. _`philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem
 '''
 import random
 import time
