@@ -480,3 +480,21 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], 'text/html')
 
+    def test_media_file(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('media/httpbin.js')
+                                  ).on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'application/x-javascript')
+        self.assertTrue(int(response.headers['content-length']) > 0)
+        modified = response.headers.get('Last-modified')
+        self.assertTrue(modified)
+        #
+        # Test if modified since
+        response = yield http.get(self.httpbin('media/httpbin.js'),
+                                  headers=[('If-modified-since', modified)]
+                                  ).on_finished
+        self.assertEqual(response.status_code, 304)
+        self.assertFalse('Content-length' in response.headers)
+
