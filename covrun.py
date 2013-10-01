@@ -11,7 +11,7 @@ if __name__ == '__main__':
         from runtests import run, Path
         from pulsar.utils.cov import coveralls
         import pulsar
-        suite = run(coverage=True)
+        suite = run(coverage=True, show_leaks=True)
         stream = pulsar.get_actor().stream
         stream.write('Collecting coverage information\n')
         cov.stop()

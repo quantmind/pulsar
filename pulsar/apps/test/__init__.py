@@ -460,17 +460,17 @@ class TestSuite(tasks.TaskQueue):
     @local_property
     def runner(self):
         '''The :class:`TestRunner` driving the test case.'''
-        if unittest is None:
+        if unittest is None:    # pragma    nocover
             raise ImportError('python %s requires unittest2 library for '
                               'pulsar test suite application' % pyver)
-        if mock is None:
+        if mock is None:    # pragma    nocover
             raise ImportError('python %s requires mock library for pulsar '
                               'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
         stream = pulsar.get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
         abort_message = runner.configure(self.cfg)
-        if abort_message:
+        if abort_message:    # pragma    nocover
             raise ExitTest(str(abort_message))
         return runner
 
@@ -490,7 +490,7 @@ class TestSuite(tasks.TaskQueue):
     def on_config(self):
         loader = self.loader
         stream = pulsar.get_actor().stream
-        if self.cfg.list_labels:
+        if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
             if tags:
                 s = '' if len(tags) == 1 else 's'
@@ -537,12 +537,12 @@ class TestSuite(tasks.TaskQueue):
                 for tag, testcls in self.local.tests:
                     self.backend.run('test', testcls, tag)
                 monitor.event_loop.call_repeatedly(1, self._check_queue)
-            else:
+            else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
-        except ExitTest as e:
+        except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
-        except Exception:
+        except Exception:   # pragma    nocover
             self.logger.critical('Error occurred before starting tests',
                                  exc_info=True)
             monitor.arbiter.stop()

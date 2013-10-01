@@ -7,10 +7,11 @@ from pulsar.utils.pep import raise_error_trace
 class TestMiscellaneous(unittest.TestCase):
 
     def test_raise_error_trace(self):
-        self.assertRaises(ValueError, raise_error_trace, ValueError, None)
+        self.assertRaises(RuntimeError, raise_error_trace, RuntimeError(),
+                          None)
         try:
-            raise ValueError('bla')
+            raise RuntimeError('bla')
         except Exception:
             exc_info = sys.exc_info()
-        self.assertRaises(ValueError, raise_error_trace, exc_info[1],
+        self.assertRaises(RuntimeError, raise_error_trace, exc_info[1],
                           exc_info[2])
