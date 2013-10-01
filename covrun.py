@@ -23,7 +23,6 @@ if __name__ == '__main__':
         coveralls(strip_dirs=[path.parent.parent, os.getcwd()],
                   stream=stream,
                   repo_token='CNw6W9flYDDXZYeStmR1FX9F4vo0MKnyX')
-
     else:
         from runtests import run
         run()

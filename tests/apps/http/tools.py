@@ -141,5 +141,6 @@ class TestTools(unittest.TestCase):
         self.assertEqual(parse_cookie(''), {})
         self.assertEqual(parse_cookie(None), {})
         c = SimpleCookie()
-        self.assertEqual(parse_cookie(c), {})
-        self.assertEqual(parse_cookie('sdjkcbhsjkcbhsc'), {})
+        c.load('key=true')
+        self.assertEqual(parse_cookie(c), {'key':'true'})
+        self.assertEqual(parse_cookie('key='), {'key': ''})

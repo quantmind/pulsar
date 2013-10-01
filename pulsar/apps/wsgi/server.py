@@ -130,14 +130,6 @@ class StreamReader:
             raise HttpException(status=417)
 
     ##    INTERNALS
-    def _expectation_failed(self):
-        raise
-        msg = '%s 417 Expectation Failed\r\n\r\n' % self.protocol()
-        self._expect_sent = msg
-        self.transport.write(msg.encode(DEFAULT_CHARSET))
-        self.transport.close()
-        self.on_message_complete.callback(None)
-
     def _getvalue(self, body, maxbuf):
         if self.buffer:
             body = self.buffer + body
@@ -505,12 +497,14 @@ class HttpServerResponse(ProtocolConsumer):
         #return a the WSGI environ dictionary
         parser = self.parser
         https = True if is_tls(self.transport.sock) else False
+        multiprocess = (self.cfg.concurrency == 'process')
         environ = wsgi_environ(stream, self.transport.address, self.address,
                                self._request_headers, self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,
                                extra={'pulsar.connection': self.connection,
-                                      'pulsar.cfg': self.cfg})
+                                      'pulsar.cfg': self.cfg,
+                                      'wsgi.multiprocess': multiprocess})
         self.keep_alive = keep_alive(self.headers, parser.get_version())
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])

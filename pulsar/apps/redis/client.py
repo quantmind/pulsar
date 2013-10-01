@@ -422,14 +422,18 @@ class PubSub(pulsar.ProtocolConsumer):
         except Exception:
             d.callback(sys.exc_info())
 
-    def _close(self, d):
+    def _close(self, future):
         if self._connection:
             d = Deferred()
+            exc_info = None
             try:
                 yield self._unsubscribe((), d)
                 yield d
-            finally:
-                self._connection.close()
+            except Exception:
+                exc_info = sys.exc_info()
+            self._connection.close()
+            self._reset()
+            future.callback(exc_info)
 
     def _channel_patterns(self, channels):
         patterns = []

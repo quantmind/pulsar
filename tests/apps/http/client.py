@@ -371,6 +371,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.parser.is_chunked())
 
+    def test_stream_response_large_chunk(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('stream/100000/3')).on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.parser.is_chunked())
+
     def test_expect(self):
         http = self.client()
         data = (('bla', 'foo'), ('unz', 'whatz'),

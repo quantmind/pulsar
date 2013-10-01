@@ -101,3 +101,19 @@ class TestRedisPubSub(RedisTest):
         self.assertEqual(len(result), 4)
         self.assertEqual(set(result),
                          set((b'Hello', b'Hello2', b'Hello3', b'done')))
+
+    def test_close(self):
+        client = self.client()
+        pubsub = client.pubsub()
+        result = yield pubsub.subscribe('k1')
+        self.assertEqual(result, 1)
+        listener = Listener('k1', 2)
+        pubsub.bind_event('on_message', listener.on_message)
+        result = yield pubsub.publish('k1', 'Hello')
+        self.assertTrue(result>=0)
+        pubsub.publish('k1', 'done')
+        result = yield listener
+        self.assertEqual(len(result), 2)
+        self.assertEqual(set(result), set((b'Hello', b'done')))
+        yield pubsub.close()
+        self.assertEqual(pubsub._connection, None)

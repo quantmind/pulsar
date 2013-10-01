@@ -59,7 +59,7 @@ import zlib
 from collections import deque
 
 from .structures import mapping_iterator, OrderedDict
-from .pep import ispy3k, iteritems, itervalues, to_bytes
+from .pep import ispy3k, iteritems, itervalues, to_bytes, native_str
 
 try:
     from http_parser.parser import HttpParser as CHttpParser
@@ -79,7 +79,7 @@ except ImportError:   # pragma    nocover
         select = False
 
 
-def setDefaultHttpParser(parser):
+def setDefaultHttpParser(parser):   # pragma    nocover
     global _Http_Parser
     _Http_Parser = parser
 
@@ -115,12 +115,6 @@ if ispy3k:  # Python 3
     ascii_letters = string.ascii_letters
     chr = chr
     is_string = lambda s: isinstance(s, str)
-
-    def native_str(s, encoding=None):
-        if isinstance(s, bytes):
-            return s.decode(encoding or 'utf-8')
-        else:
-            return s
 
     def force_native_str(s, encoding=None):
         if isinstance(s, bytes):
@@ -172,12 +166,6 @@ else:   # pragma : no cover
                 raise err
             else:
                 raise Exception("getaddrinfo returns an empty list")
-
-    def native_str(s, encoding=None):
-        if isinstance(s, unicode):
-            return s.encode(encoding or 'utf-8')
-        else:
-            return s
 
     def force_native_str(s, encoding=None):
         if isinstance(s, unicode):
@@ -1133,7 +1121,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
         if data[:2] == b'\r\n':
             self._trailers = self._parse_headers(data[:idx])
 
-if not hasextensions:
+if not hasextensions:   # pragma    nocover
     setDefaultHttpParser(HttpParser)
 
 
@@ -1153,13 +1141,6 @@ def get_environ_proxies():
     get_proxy = lambda k: os.environ.get(k) or os.environ.get(k.upper())
     proxies = [(key, get_proxy(key + '_proxy')) for key in proxy_keys]
     return dict([(key, val) for (key, val) in proxies if val])
-
-
-def addslash(url):
-    '''Add a slash at the beginning of *url*.'''
-    if not url.startswith('/'):
-        url = '/%s' % url
-    return url
 
 
 def appendslash(url):
@@ -1300,7 +1281,7 @@ def parse_cookie(cookie):
         try:
             c = SimpleCookie()
             c.load(cookie)
-        except CookieError:
+        except CookieError:     # pragma    nocover
             # Invalid cookie
             return {}
     else:

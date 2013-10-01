@@ -239,20 +239,10 @@ class Monitor(PoolMixin):
 
     def monitor_task(self):
         '''Monitor specific task called by the :meth:`Monitor.periodic_task`.
-By default it does nothing. Override if you need to.'''
+
+        By default it does nothing. Override if you need to.
+        '''
         pass
-
-    @property
-    def multithread(self):
-        return self.cfg.concurrency == 'thread'
-
-    @property
-    def multiprocess(self):
-        return self.cfg.concurrency == 'process'
-
-    @property
-    def requestloop(self):
-        return self.monitor.requestloop
 
     def info(self):
         data = {'actor': {'actor_class': self.actor_class.__name__,
@@ -265,9 +255,6 @@ By default it does nothing. Override if you need to.'''
         data['workers'] = [a.info for a in itervalues(self.managed_actors)
                            if a.info]
         return data
-
-    def proxy_mailbox(address):
-        return self.arbiter.proxy_mailboxes.get(address)
 
     def get_actor(self, aid):
         #Delegate get_actor to the arbiter
