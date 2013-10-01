@@ -14,6 +14,17 @@ class ExternalBase(TestHttpClientBase):
     def after_response(self, response):
         pass
 
+    def __test_http_get_timeit(self):
+        N = 1
+        client = self.client()
+        response = client.get('http://www.amazon.co.uk/',
+                              data_received=save_data)
+        results = yield response
+        self.assertTrue(response.total_time)
+        self.assertEqual(len(results), N)
+        for r in results:
+            self.assertEqual(r.status_code, 200)
+
     def test_http_get(self):
         client = self.client()
         response = yield client.get('http://www.amazon.co.uk/').on_finished

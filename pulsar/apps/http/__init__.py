@@ -721,7 +721,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
                         request.parser.is_message_complete()):
                     self.finished()
         else:
-            raise pulsar.ProtocolError
+            raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
 
 
 class HttpClient(pulsar.Client):

@@ -502,3 +502,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                   ).on_finished
         self.assertEqual(response.status_code, 304)
         self.assertFalse('Content-length' in response.headers)
+
+    def test_http_get_timeit(self):
+        N = 20
+        client = self.client()
+        response = client.timeit(N, 'get', self.httpbin('get'),
+                                 data={'bla': 'foo'})
+        results = yield response
+        self.assertTrue(response.total_time)
+        self.assertEqual(len(results), N)
+        for r in results:
+            self.assertEqual(r.status_code, 200)
