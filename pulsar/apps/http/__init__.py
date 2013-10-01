@@ -38,6 +38,17 @@ Cookies are handled by the client by storing cookies received with responses.
 To disable cookie one can pass ``store_cookies=False`` during
 :class:`HttpClient` initialisation.
 
+If a response contains some Cookies, you can get quick access to them::
+
+    >>> r = yield client.get(...).on_headers
+    >>> type(r.cookies)
+    <type 'dict'>
+
+To send your own cookies to the server, you can use the cookies parameter::
+
+    response = client.get(..., cookies={'sessionid': 'test'})
+
+
 .. _http-authentication:
 
 Authentication
@@ -281,7 +292,7 @@ class HttpTunnel(RequestBase):
         self.parser = request.parser
         request.new_parser()
         self.headers = request.client.tunnel_headers.copy()
-        self.headers['host'] = request.headers['host']
+        self.headers['host'] = request.get_header('host')
 
     def __repr__(self):
         return 'Tunnel %s' % self.full_url
@@ -289,6 +300,7 @@ class HttpTunnel(RequestBase):
 
     @property
     def key(self):
+
         return self.request.key
 
     @property
@@ -304,6 +316,15 @@ class HttpTunnel(RequestBase):
         bits = req.target_address + (req.version,)
         self.first_line = 'CONNECT %s:%s %s\r\n' % bits
         return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
+
+    def has_header(self, header_name):
+        return header_name in self.headers
+
+    def get_header(self, header_name, default=None):
+        return self.headers.get(header_name, default)
+
+    def remove_header(self, header_name):
+        self.headers.pop(header_name, None)
 
 
 class HttpRequest(pulsar.Request, RequestBase):
@@ -371,7 +392,8 @@ class HttpRequest(pulsar.Request, RequestBase):
             client.cookies.add_cookie_header(self)
         if cookies:
             cookiejar_from_dict(cookies).add_cookie_header(self)
-        self.headers['host'] = host_no_default_port(self._scheme, self._netloc)
+        self.unredirected_headers['host'] = host_no_default_port(self._scheme,
+                                                                 self._netloc)
         client.set_proxy(self)
 
     @property
@@ -611,6 +633,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _data_sent = None
     _history = None
     _status_code = None
+    _cookies = None
     ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     @property
@@ -656,6 +679,12 @@ class HttpResponse(pulsar.ProtocolConsumer):
             return is_failure(self.on_finished.result)
         else:
             return False
+
+    @property
+    def cookies(self):
+        '''Dictionary of cookies set by the server or ``None``.
+        '''
+        return self._cookies
 
     @property
     def on_headers(self):

@@ -307,7 +307,8 @@ class HttpServerResponse(ProtocolConsumer):
                 self._request_headers = Headers(p.get_headers(), kind='client')
                 stream = StreamReader(self._request_headers, p, self.transport)
                 self.bind_event('data_processed', stream.data_processed)
-                self._generate(self.wsgi_environ(stream))
+                environ = self.wsgi_environ(stream)
+                self.event_loop.async(self._response(environ))
         else:
             # This is a parsing error, the client must have sent
             # bogus data
@@ -403,11 +404,13 @@ class HttpServerResponse(ProtocolConsumer):
             self.transport.write(self._headers_sent)
         if data:
             if self.chunked:
+                chunks = []
                 while len(data) >= MAX_CHUNK_SIZE:
                     chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-                    self.transport.write(chunk_encoding(chunk))
+                    chunks.append(chunk_encoding(chunk))
                 if data:
-                    self.transport.write(chunk_encoding(data))
+                    chunks.append(chunk_encoding(data))
+                self.transport.write(b''.join(chunks))
             else:
                 self.transport.write(data)
         elif force and self.chunked:
@@ -415,39 +418,31 @@ class HttpServerResponse(ProtocolConsumer):
 
     ########################################################################
     ##    INTERNALS
-    def _generate(self, environ, failure=None):
-        finished = False
+    def _response(self, environ):
+        exc_info = None
         try:
-            if failure:
-                # A failure has occurred, try to handle it with the default
-                # wsgi error handler
-                if isinstance(failure.error, IOError):
-                    finished = True
-                else:
-                    wsgi_iter = self.handle_wsgi_error(environ, failure)
-            else:
-                # No server name. 400 Bad Request
-                if 'SERVER_NAME' not in environ:
-                    raise HttpException(status=400)
-                wsgi_iter = self.wsgi_callable(environ, self.start_response)
-        except IOError:
-            finished = True
-        except Exception:
-            result = sys.exc_info()
-        else:
-            if not isinstance(wsgi_iter, Failure):
-                result = self._async_wsgi(wsgi_iter)
-            else:
-                result = wsgi_iter
-        if finished:
+            if 'SERVER_NAME' not in environ:
+                raise HttpException(status=400)
+            wsgi_iter = self.wsgi_callable(environ, self.start_response)
+            yield self._async_wsgi(wsgi_iter)
+        except IOError:     # client disconnected, end this connection
             self.finished()
-        else:
-            result = maybe_async(result, get_result=False)
-            err_handler = self._generate if not failure else self.catastrofic
-            result.add_errback(partial(err_handler, environ))
+        except Exception:
+            exc_info = sys.exc_info()
+        if exc_info:
+            failure = Failure(exc_info)
+            try:
+                wsgi_iter = handle_wsgi_error(environ, failure)
+                self.start_response(wsgi_iter.status, wsgi_iter.get_headers(),
+                                    exc_info)
+                yield self._async_wsgi(wsgi_iter)
+            except Exception:
+                # Error handling did not work, Just shut down
+                self.keep_alive = False
+                self.finish_wsgi()
 
     def _async_wsgi(self, wsgi_iter):
-        if isinstance(wsgi_iter, Deferred):
+        if isinstance(wsgi_iter, (Deferred, Failure)):
             wsgi_iter = yield wsgi_iter
         try:
             for b in wsgi_iter:
@@ -461,16 +456,6 @@ class HttpServerResponse(ProtocolConsumer):
                     wsgi_iter.close()
                 except Exception:
                     LOGGER.exception('Error while closing wsgi iterator')
-        self.finish_wsgi()
-
-    def handle_wsgi_error(self, environ, failure):
-        exc_info = failure.exc_info
-        response = handle_wsgi_error(environ, failure)
-        self.start_response(response.status, response.get_headers(), exc_info)
-        return response
-
-    def catastrofic(self, environ, failure):
-        self.keep_alive = False
         self.finish_wsgi()
 
     def finish_wsgi(self):
@@ -510,6 +495,10 @@ class HttpServerResponse(ProtocolConsumer):
             self.keep_alive = keep_alive_with_status(self._status, headers)
         if not self.keep_alive:
             headers['connection'] = 'close'
+        # If client sent cookies and set-cookies header is not available
+        # set the cookies
+        if 'cookie' in self._request_headers and not 'set-cookie' in headers:
+            headers['Set-cookie'] = self._request_headers['cookie']
         return headers
 
     def wsgi_environ(self, stream):

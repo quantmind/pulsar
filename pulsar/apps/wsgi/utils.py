@@ -61,14 +61,6 @@ def set_wsgi_request_class(RequestClass):
     _RequestClass = RequestClass
 
 
-def wsgi_iterator(gen, encoding):
-    for data in gen:
-        if isinstance(data, bytes):
-            yield data
-        else:
-            yield data.encode(encoding)
-
-
 def cookie_date(epoch_seconds=None):
     """Formats the time to ensure compatibility with Netscape's cookie
     standard.

@@ -6,7 +6,7 @@ from functools import partial
 try:
     from select import poll, POLLIN
 except ImportError:  # pragma    nocover
-    poll = False
+    poll = None
     try:
         from select import select
     except ImportError:  # pragma    nocover
@@ -153,7 +153,7 @@ def is_socket_closed(sock):
     if not sock:
         return True
     try:
-        if not poll:
+        if not poll:    # pragma nocover
             if not select:
                 return False
             try:

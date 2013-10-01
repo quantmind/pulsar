@@ -45,7 +45,8 @@ class TestHttpClientBase:
                 key_file, cert_file = None, None
             s = server(bind='127.0.0.1:0', concurrency=concurrency,
                        name='httpbin-%s' % cls.__name__.lower(),
-                       keep_alive=30, key_file=key_file, cert_file=cert_file)
+                       keep_alive=30, key_file=key_file, cert_file=cert_file,
+                       workers=1)
             cls.app = yield send('arbiter', 'run', s)
             bits = ('https' if cls.with_tls else 'http',) + cls.app.address
             cls.uri = '%s://%s:%s/' % bits
@@ -381,6 +382,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
+    def test_send_cookie(self):
+        http = self.client()
+        cookies = {'sessionid': 't1', 'cookies_are': 'working'}
+        response = yield http.get(self.httpbin(), cookies=cookies).on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.headers['set-cookie'])
+        self.assertEqual(response.cookies, cookies)
+
     def test_cookie(self):
         http = self.client()
         # First set the cookies
@@ -432,8 +441,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
 
         def remove_host(response):
-            host = response.request.headers.pop('host')
-            self.assertTrue(host)
+            r = response.request
+            self.assertTrue(r.has_header('host'))
+            response.request.remove_header('host')
+            self.assertFalse(r.has_header('host'))
+
 
         response = yield http.get(self.httpbin(),
                                   pre_request=remove_host).on_finished
@@ -504,7 +516,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertFalse('Content-length' in response.headers)
 
     def test_http_get_timeit(self):
-        N = 20
+        N = 10
         client = self.client()
         response = client.timeit(N, 'get', self.httpbin('get'),
                                  data={'bla': 'foo'})

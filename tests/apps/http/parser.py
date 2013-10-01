@@ -1,3 +1,5 @@
+import os
+
 from pulsar.utils.httpurl import hasextensions
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
@@ -6,6 +8,19 @@ class TestPythonHttpParser(unittest.TestCase):
 
     def parser(self, **kwargs):
         return httpurl.HttpParser(**kwargs)
+
+    def __test_amazon_protocol_error(self):
+        all = []
+        for n in range(18):
+            with open(os.path.join(os.path.dirname(__file__), 'data',
+                                   'data%d.dat' % n), 'rb') as f:
+                all.append(f.read())
+        #
+        p = self.parser()
+        for chunk in all:
+            self.assertEqual(p.execute(chunk, len(chunk)), len(chunk))
+        self.assertTrue(p.is_headers_complete())
+        self.assertTrue(p.is_message_begin())
 
     def test_client_connect(self):
         p = self.parser()

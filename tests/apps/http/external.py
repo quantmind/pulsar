@@ -14,20 +14,28 @@ class ExternalBase(TestHttpClientBase):
     def after_response(self, response):
         pass
 
-    def __test_http_get_timeit(self):
-        N = 1
+    def ___test_http_get_timeit(self):
         client = self.client()
-        response = client.get('http://www.amazon.co.uk/',
-                              data_received=save_data)
-        results = yield response
-        self.assertTrue(response.total_time)
-        self.assertEqual(len(results), N)
-        for r in results:
-            self.assertEqual(r.status_code, 200)
+        N = 20
+        responses = yield client.timeit(N, 'get', 'http://www.bbc.co.uk/')
+        self.assertEqual(len(responses), N)
+        for n in range(N):
+            all = []
+            def save_data(r, data=None):
+                all.append(data)
+            try:
+                response = yield client.get('http://www.theguardian.com/',
+                                            data_received=save_data).on_finished
+            except Exception:
+                for n, d in enumerate(all):
+                    with open('data%s.dat' % n, 'wb') as f:
+                        f.write(d)
+                raise
+            self.assertEqual(response.status_code, 200)
 
     def test_http_get(self):
         client = self.client()
-        response = yield client.get('http://www.amazon.co.uk/').on_finished
+        response = yield client.get('http://www.bbc.co.uk/').on_finished
         self.assertEqual(response.status_code, 200)
 
     def test_get_https(self):
@@ -65,12 +73,6 @@ class ExternalBase(TestHttpClientBase):
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
         data = response.json()
         self.assertEqual(data['files'], files)
-
-    def __test_http_get_timeit(self):
-        client = self.client()
-        response = yield client.timeit(10, 'get', 'http://www.amazon.co.uk/'
-                                       ).on_finished
-        self.assertTrue(response.total_time)
 
 
 class ProxyExternal(ExternalBase):

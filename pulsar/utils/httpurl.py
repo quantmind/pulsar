@@ -200,9 +200,11 @@ class SSLError(HTTPError):
 ####################################################    URI & IRI SUFF
 #
 # The reserved URI characters (RFC 3986 - section 2.2)
-#Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
-#http://www.ietf.org/rfc/rfc2616.txt
-DEFAULT_CHARSET = 'iso-8859-1'
+# Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
+# http://www.ietf.org/rfc/rfc2616.txt
+#
+# Latin alphabet 1 charset
+DEFAULT_CHARSET = 'ISO-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -662,16 +664,16 @@ results in::
         return self._headers.pop(header_field(key), *args)
 
     def clear(self):
-        '''Same as :meth:`dict.clear`, it removes all headers.'''
+        '''Same as :meth:`dict.clear`, it removes all headers.
+        '''
         self._headers.clear()
 
-    def getheaders(self, key):
-        '''Required by cookielib. If the key is not available,
-it returns an empty list.'''
-        return self._headers.get(header_field(key), [])
+    def getheaders(self, key):  # pragma    nocover
+        '''Required by cookielib in python 2.
 
-    def headers(self):
-        return list(self)
+        If the key is not available, it returns an empty list.
+        '''
+        return self._headers.get(header_field(key), [])
 
     def add_header(self, key, value, **params):
         '''Add ``value`` to ``key`` header.
@@ -683,6 +685,9 @@ it returns an empty list.'''
             values = self._headers.get(key, [])
             lower_values = [v.lower() for v in values]
             for value in self.get_values(value):
+                if params:
+                    value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
+                                                          in params.items())))
                 lower_value = value.lower()
                 if lower_value not in lower_values:
                     lower_values.append(lower_value)
@@ -690,8 +695,10 @@ it returns an empty list.'''
             self._headers[key] = values
 
     def remove_header(self, key, value=None):
-        '''Remove the header at ``key``, If ``value`` is provided, it removes
-only that value if found.'''
+        '''Remove the header at ``key``.
+
+        If ``value`` is provided, it removes only that value if found.
+        '''
         key = header_field(key, self.all_headers, self.strict)
         if key:
             if value:
@@ -1102,8 +1109,9 @@ OTHER DEALINGS IN THE SOFTWARE.'''
                 body_part = self.__decompress_obj.decompress(body_part)
             self._partial_body = True
             self._body.append(body_part)
-            self._buf = [rest[2:]]
-            return len(rest)
+            rest = rest[2:]
+            self._buf = [rest] if rest else []
+            return len(rest) + 2
 
     def _parse_chunk_size(self, data):
         idx = data.find(b'\r\n')
@@ -1282,9 +1290,11 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
 
 
 def parse_cookie(cookie):
-    '''Parse an `HTTP cookie`_ string and return a dictionary of
-cookie name/values.'''
-    if cookie == '':
+    '''Parse an `HTTP cookie`_ string.
+
+    Return a dictionary of cookie name/values.
+    '''
+    if not cookie:
         return {}
     if not isinstance(cookie, BaseCookie):
         try:

@@ -3,7 +3,8 @@ from functools import partial
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import FrameParser
 from pulsar.async.stream import SocketStreamSslTransport
-from pulsar.utils.httpurl import REDIRECT_CODES, urlparse, urljoin, requote_uri
+from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
+                                  requote_uri, parse_cookie)
 
 from pulsar import PulsarException
 
@@ -72,8 +73,14 @@ def handle_cookies(response):
     headers = response.headers
     request = response.request
     client = request.client
-    if client.store_cookies and 'set-cookie' in headers:
-        client.cookies.extract_cookies(response, request)
+    if 'set-cookie' in headers or 'set-cookie2' in headers:
+        response._cookies = cookies = {}
+        for cookie in (headers.get('set-cookie2'),
+                       headers.get('set-cookie')):
+            if cookie:
+                cookies.update(parse_cookie(cookie))
+        if client.store_cookies:
+            client.cookies.extract_cookies(response, request)
     return response
 
 
