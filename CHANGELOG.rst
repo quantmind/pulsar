@@ -1,7 +1,6 @@
 Ver. 0.7.0 - Development
 ===========================
-* Coverage option is global not just for tests. Coverage can be turned
-  on by using the ``--coverage`` option.
+* Coverage can be turned on by using the ``--coverage`` option.
 * WSGI respondes 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
