@@ -3,8 +3,8 @@ import time
 from hashlib import sha1
 from base64 import b64encode
 
-from pulsar.utils.httpurl import parse_dict_header, hexmd5, hexsha1, urlparse
-from pulsar.utils.pep import native_str
+from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
+                                  urlparse, native_str, DEFAULT_CHARSET)
 
 
 __all__ = ['Auth',
@@ -51,8 +51,8 @@ class HTTPBasicAuth(Auth):
 
     def header(self):
         b64 = b64encode(('%s:%s' % (
-            self.username, self.password)).encode('latin1'))
-        return 'Basic %s' % native_str(b64.strip(), 'latin1')
+            self.username, self.password)).encode(DEFAULT_CHARSET))
+        return 'Basic %s' % native_str(b64.strip(), DEFAULT_CHARSET)
 
     def __repr__(self):
         return 'Basic: %s' % self.username

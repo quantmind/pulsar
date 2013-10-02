@@ -226,7 +226,7 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   choose_boundary, urlunparse, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
-                                  host_no_default_port)
+                                  host_no_default_port, DEFAULT_CHARSET)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -862,7 +862,7 @@ class HttpClient(pulsar.Client):
     def websocket_key(self):
         if not hasattr(self, '_websocket_key'):
             self._websocket_key = native_str(b64encode(os.urandom(16)),
-                                             'latin-1')
+                                             DEFAULT_CHARSET)
         return self._websocket_key
 
     def get(self, url, **kwargs):

@@ -47,7 +47,7 @@ class TestTestLoader(unittest.TestCase):
         app = pulsar.get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
         modules = dict(loader.testmodules(('suite',)))
-        self.assertEqual(len(modules), 7)
+        self.assertEqual(len(modules), 6)
 
     def test_load_exclude(self):
         app = pulsar.get_actor().app

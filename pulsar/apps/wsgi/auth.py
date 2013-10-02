@@ -15,7 +15,7 @@ from base64 import b64decode
 
 from pulsar import HttpException
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
-                                  quote_header_value)
+                                  quote_header_value, DEFAULT_CHARSET)
 from pulsar.utils.pep import iteritems, to_bytes
 
 
@@ -153,7 +153,7 @@ def parse_authorization_header(value, charset='utf-8'):
         return
     if auth_type == 'basic':
         try:
-            up = b64decode(auth_info.encode('latin-1')).decode(charset)
+            up = b64decode(auth_info.encode(DEFAULT_CHARSET)).decode(charset)
             username, password = up.split(':', 1)
         except Exception:
             return

@@ -190,8 +190,6 @@ class SSLError(HTTPError):
 # The reserved URI characters (RFC 3986 - section 2.2)
 # Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 # http://www.ietf.org/rfc/rfc2616.txt
-#
-# Latin alphabet 1 charset
 DEFAULT_CHARSET = 'ISO-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
@@ -550,7 +548,7 @@ header fields.
         return '\r\n'.join(self._ordered())
 
     def __bytes__(self):
-        return str(self).encode('latin-1')
+        return str(self).encode(DEFAULT_CHARSET)
 
     def __iter__(self):
         for k, values in iteritems(self._headers):
