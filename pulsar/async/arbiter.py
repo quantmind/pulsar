@@ -39,22 +39,24 @@ def spawn(cfg=None, **kwargs):
     This method can be used from any :class:`Actor`.
     If not in the :class:`Arbiter` domain, the method sends a request
     to the :class:`Arbiter` to spawn a new actor.
-    Once the arbiter creates the actor it returns the proxy to the
+    Once the arbiter creates the actor it returns the ``proxy`` to the
     original caller.
 
     **Parameter kwargs**
 
     These optional parameters are:
-    * *actor_class* a custom :class:`Actor` subclass.
-    * *aid* the actor id
-    * *commands_set* the set of :ref:`remote commands <api-remote_commands>`
-      the :class:`Actor` can respond to.
+
+    * ``actor_class`` a custom :class:`Actor` subclass
+    * ``aid`` the actor id
+    * ``name`` the actor name
+    * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
+      and ``stop``
 
     :return: an :class:`ActorProxyDeferred`.
 
     A typical usage::
 
-        >>> a = spawn()
+        >>> a = spawn(start=do_something, ...)
         >>> a.aid
         'ba42b02b'
         >>> a.called

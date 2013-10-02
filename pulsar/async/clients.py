@@ -89,9 +89,7 @@ class ConnectionPool(ConnectionProducer):
 
     def __repr__(self):
         return repr(self.address)
-
-    def __str__(self):
-        return self.__repr__()
+    __str__ = __repr__
 
     @property
     def address(self):
@@ -345,11 +343,9 @@ class Client(Producer):
         self.event_loop = event_loop
         self.setup(**params)
 
-    def __str__(self):
-        return self.__repr__()
-
     def __repr__(self):
         return self.__class__.__name__
+    __str__ = __repr__
 
     @property
     def concurrent_connections(self):
@@ -498,11 +494,11 @@ class Client(Producer):
         return pool.get_or_create_connection(self, connection)
 
     def update_parameters(self, parameter_list, params):
-        '''Update *param* with attributes from this :class:`Client`.
+        '''Update ``params`` with attributes from this :class:`Client`.
 
-        :param parameter_list` an iterable over parameter names to add to
+        :param parameter_list: an iterable over parameter names to add to
             ``params`` if ``params`` does not already have them.
-        :param params: dictionary of parameters uo update.
+        :param params: dictionary of parameters to update.
         :return: an updated copy of params.
         '''
         nparams = params.copy()

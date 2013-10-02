@@ -22,7 +22,7 @@ __all__ = ['Concurrency', 'concurrency']
 def concurrency(kind, actor_class, monitor, cfg, **params):
     '''Function invoked by the :class:`Arbiter` or a :class:`Monitor` when
 spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
-which handle the contruction and the lif of an :class:`Actor`.
+which handle the initialisation and the life of an :class:`Actor`.
 
 :parameter kind: Type of concurrency.
 :parameter monitor: The monitor (or arbiter) managing the :class:`Actor`.
@@ -40,19 +40,20 @@ which handle the contruction and the lif of an :class:`Actor`.
 class Concurrency(object):
     '''Actor :class:`Concurrency`.
 
-    Responsible for the actual spawning of
-actors according to a concurrency implementation. Instances are picklable
-and are shared between the :class:`Actor` and its
-:class:`ActorProxyMonitor`.
-This is an abstract class, derived classes must implement the ``start`` method.
+    Responsible for the actual spawning of actors according to a
+    concurrency implementation. Instances are picklable
+    and are shared between the :class:`Actor` and its
+    :class:`ActorProxyMonitor`.
+    This is an abstract class, derived classes must implement the
+    ``start`` method.
 
-:parameter concurrency: string indicating the concurrency implementation.
-    Valid choices are ``monitor``, ``process``, ``thread``.
-:parameter actor_class: :class:`Actor` or one of its subclasses.
-:parameter timeout: timeout in seconds for the actor.
-:parameter kwargs: additional key-valued arguments to be passed to the actor
-    constructor.
-'''
+    :param concurrency: string indicating the concurrency implementation.
+        Valid choices are ``monitor``, ``process``, ``thread``.
+    :param actor_class: :class:`Actor` or one of its subclasses.
+    :param timeout: timeout in seconds for the actor.
+    :param kwargs: additional key-valued arguments to be passed to the actor
+        constructor.
+    '''
     _creation_counter = 0
 
     def make(self, kind, actor_class, monitor, cfg, name=None, aid=None, **kw):
@@ -95,8 +96,10 @@ system is chosen.'''
         actor.event_loop.run_forever()
 
     def setup_event_loop(self, actor):
-        '''Set up the event loop for ``actor``. Must be
-implemented by subclasses.'''
+        '''Set up the event loop for ``actor``.
+
+        Must be implemented by subclasses.
+        '''
         raise NotImplementedError
 
     def can_continue(self, actor):

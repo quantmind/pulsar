@@ -15,9 +15,6 @@ ACTOR_STATES = AttributeDictionary(INITIAL=0X0,
 '''
 .. _actor-states:
 
-Actor States
-~~~~~~~~~~~~~~
-
 Actor state constants are access via::
 
     from pulsar import ACTOR_STATES
