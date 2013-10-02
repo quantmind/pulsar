@@ -25,7 +25,7 @@ class WsgiRequestTests(unittest.TestCase):
 
 
 class WsgiResponseTests(unittest.TestCase):
-    
+
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)
         self.assertEqual(r.status_code, 200)
@@ -37,7 +37,7 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertTrue(r.started)
         self.assertEqual(str(r), r.status)
         self.assertTrue(repr(r))
-        
+
     def testResponse500(self):
         r = wsgi.WsgiResponse(500, content=b'A critical error occurred')
         self.assertEqual(r.status_code, 500)
@@ -47,7 +47,7 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertFalse(r.started)
         self.assertEqual(list(r), [b'A critical error occurred'])
         self.assertTrue(r.started)
-        
+
     def testStreamed(self):
         stream = ('line {0}\n'.format(l+1) for l in range(10))
         r = wsgi.WsgiResponse(content=stream)
@@ -61,7 +61,7 @@ class WsgiResponseTests(unittest.TestCase):
             self.assertTrue(r.started)
             self.assertEqual(a, ('line {0}\n'.format(l+1)).encode('utf-8'))
         self.assertEqual(len(data), 10)
-        
+
     def testForCoverage(self):
         r = wsgi.WsgiResponse(environ={'PATH_INFO': 'bla/'})
         self.assertEqual(r.path, 'bla/')
@@ -78,14 +78,14 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertEqual(parse('basic cbsdjcbsjchbsd'), None)
         auths = http.HTTPBasicAuth('pippo', 'pluto').header()
         self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
-    
+
     #### TO INCLUDE
     def testCookies(self):
         response = wsgi.WsgiResponse()
         expires = datetime.now() + timedelta(seconds=3600)
         response.set_cookie('bla', expires=expires)
         self.assertTrue('bla' in response.cookies)
-        
+
     def testDeleteCookie(self):
         response = wsgi.WsgiResponse()
         response.delete_cookie('bla')
@@ -114,30 +114,30 @@ class WsgiResponseTests(unittest.TestCase):
         # both as an output string, and using the cookie attributes
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
-        
-        
+
+
 class testWsgiApplication(unittest.TestCase):
-    
+
     def testBuildWsgiApp(self):
         appserver = wsgi.WSGIServer()
         self.assertEqual(appserver.name, 'wsgi')
         self.assertEqual(appserver.callable, None)
-        
+
     def testWsgiHandler(self):
         hnd = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
                                            wsgi.authorization_middleware))
         self.assertEqual(len(hnd.middleware), 2)
         hnd2 = pickle.loads(pickle.dumps(hnd))
         self.assertEqual(len(hnd2.middleware), 2)
-        
+
     def testHttpBinServer(self):
         from examples.httpbin.manage import server
         app = server(bind='127.0.0.1:0')
         app2 = pickle.loads(pickle.dumps(app))
-        
-        
+
+
 class TestWsgiMiddleware(unittest.TestCase):
-    
+
     def test_clean_path_middleware(self):
         url = 'bla//foo'
         try:
@@ -146,7 +146,7 @@ class TestWsgiMiddleware(unittest.TestCase):
         except pulsar.HttpRedirect as e:
             url = e.headers[0][1]
             self.assertEqual(url, '/bla/foo?page=1')
-            
+
     def test_handle_wsgi_error(self):
         environ = wsgi.test_wsgi_environ(extra=
                             {'error.handler': lambda request, failure: 'bla'})
@@ -158,4 +158,37 @@ class TestWsgiMiddleware(unittest.TestCase):
             response = wsgi.handle_wsgi_error(environ, failure)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.content, (b'bla',))
-            
+
+    def test_handle_wsgi_error_debug(self):
+        cfg = self.cfg.copy()
+        cfg.set('debug', True)
+        environ = wsgi.test_wsgi_environ(extra={'pulsar.cfg': cfg})
+        try:
+            raise ValueError('just a test for debug wsgi error handler')
+        except ValueError:
+            exc_info = sys.exc_info()
+        failure = pulsar.Failure(exc_info)
+        failure.mute()
+        response = wsgi.handle_wsgi_error(environ, failure)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.content_type, None)
+        self.assertEqual(len(response.content), 1)
+
+    def test_handle_wsgi_error_debug_html(self):
+        cfg = self.cfg.copy()
+        cfg.set('debug', True)
+        headers = [('Accept', '*/*')]
+        environ = wsgi.test_wsgi_environ(extra={'pulsar.cfg': cfg},
+                                         headers=headers)
+        try:
+            raise ValueError('just a test for debug wsgi error handler')
+        except ValueError:
+            exc_info = sys.exc_info()
+        failure = pulsar.Failure(exc_info)
+        failure.mute()
+        response = wsgi.handle_wsgi_error(environ, failure)
+        self.assertEqual(response.status_code, 500)
+        html = response.content[0]
+        self.assertEqual(response.content_type, 'text/html')
+        self.assertTrue(html.startswith(b'<!DOCTYPE html>'))
+        self.assertTrue(b'<title>500 Internal Server Error</title>' in html)

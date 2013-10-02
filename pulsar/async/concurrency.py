@@ -34,7 +34,6 @@ which handle the initialisation and the life of an :class:`Actor`.
         return c.make(kind, actor_class, monitor, cfg, **params)
     else:
         raise ValueError('Concurrency %s not supported in pulsar' % kind)
-    return c.make(kind, actor_class, monitor, cfg, **params)
 
 
 class Concurrency(object):
@@ -215,8 +214,13 @@ class ProcessMixin(object):
     def is_process(self):
         return True
 
-    def setup_event_loop(self, actor):
+    def before_start(self, actor):  # pragma    nocover
         actor.start_coverage()
+
+    def setup_event_loop(self, actor):
+        # After the coverage start this part is not covered for some reasons.
+        # TODO: move this bit of code into a different method so that we
+        # can measure coverage.
         event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                                     poll_timeout=actor.params.poll_timeout)
         actor.mailbox = self.create_mailbox(actor, event_loop)
@@ -328,12 +332,10 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
 
     def before_start(self, actor):  # pragma    nocover
         '''Daemonise the system if required.
-
-        Create coverage directory if required.
         '''
         if actor.cfg.daemon:
             system.daemonize()
-        actor.setup_coverage()
+        actor.start_coverage()
 
     def create_mailbox(self, actor, event_loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
@@ -396,7 +398,7 @@ def run_actor(self):
     finally:
         try:
             actor.cfg.when_exit(actor)
-        except Exception:
+        except Exception:   # pragma    nocover
             pass
         log = actor.logger or logger()
         self.stop_coverage(actor)
@@ -406,7 +408,8 @@ def run_actor(self):
 class ActorProcess(ProcessMixin, Concurrency, Process):
     '''Actor on a Operative system process. Created using the
 python multiprocessing module.'''
-    def run(self):
+    def run(self):  # pragma    nocover
+        # The coverage for this process has not yet started
         run_actor(self)
 
     def stop_coverage(self, actor):

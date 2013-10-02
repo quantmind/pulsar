@@ -108,8 +108,8 @@ from pulsar.apps.socket import SocketServer
 class EchoProtocol(pulsar.ProtocolConsumer):
     '''An echo :class:`pulsar.ProtocolConsumer` for client and servers.
 
-    The only difference between client and server is the implementation of the
-    :meth:`response` method.
+    The only difference between client and server is the implementation
+    of the :meth:`response` method.
     '''
     separator = b'\r\n\r\n'
     '''A separator for messages.'''

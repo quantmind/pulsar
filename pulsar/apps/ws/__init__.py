@@ -62,25 +62,31 @@ from .websocket import WebSocket, WebSocketProtocol
 
 
 class WS(object):
-    '''A web socket handler for both servers and clients. It implements
-the asynchronous message passing for a :class:`WebSocketProtocol`.
-On the server, the communication is started by the
-:class:`WebSocket` middleware after a successful handshake.
+    '''A web socket handler for both servers and clients.
 
-Override :meth:`on_message` to handle incoming string messages,
-:meth:`on_bytes` to handle incoming ``bytes`` messages
-You can also override :meth:`on_open` and :meth:`on_close` to handle opened
-and closed connections.
-These methods accept as first parameter the
-:class:`WebSocketProtocol` created during the handshake.
-'''
+    It implements the asynchronous message passing for a
+    :class:`WebSocketProtocol`.
+    On the server, the communication is started by the
+    :class:`WebSocket` middleware after a successful handshake.
+
+    Override :meth:`on_message` to handle incoming string messages and
+    :meth:`on_bytes` to handle incoming ``bytes`` messages.
+
+    You can also override :meth:`on_open` and :meth:`on_close` to perform
+    specific tasks when the websocket is opened or closed.
+
+    These methods accept as first parameter the
+    :class:`WebSocketProtocol` created during the handshake.
+    '''
     def on_open(self, websocket):
         """Invoked when a new WebSocket is opened."""
         pass
 
     def on_message(self, websocket, message):
         '''Handles incoming messages on the WebSocket.
-This method must be overloaded.'''
+
+        This method must be overloaded.
+        '''
         pass
 
     def on_bytes(self, websocket, body):

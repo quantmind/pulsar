@@ -14,15 +14,6 @@ __all__ = ['run_on_arbiter',
            'show_leaks']
 
 
-class MockArbiter(pulsar.Arbiter):
-    '''A mock Arbiter for Testing'''
-    def _run(self):
-        run = super(MockArbiter, self)._run
-        self._test_thread = threading.Thread(name='Mock arbiter thread',
-                                             target=run)
-        self._test_thread.start()
-
-
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass')
 

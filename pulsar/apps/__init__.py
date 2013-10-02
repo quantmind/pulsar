@@ -272,10 +272,14 @@ script which runs the application.'''
             sys.path.insert(0, path)
         return script
 
-    def on_config(self):
-        '''Callback when configuration is loaded. This is a chance to do
- an application specific check before the concurrent machinery is put into
- place. If it returns ``False`` the application will abort.'''
+    def on_config(self, arbiter):
+        '''Callback when configuration is loaded.
+
+        This is a chance to do applications specific checks before the
+        concurrent machinery is put into place.
+
+        If it returns ``False`` the application will abort.
+        '''
         pass
 
     def load_config(self):
@@ -390,7 +394,7 @@ class Application(Configurator, pulsar.Pulsar):
             self.configure_logging()
             self.fire_event('ready')
             arbiter = pulsar.arbiter(cfg=arbiter_config(self.cfg))
-            if self.on_config() is not False:
+            if self.on_config(arbiter) is not False:
                 if arbiter.started():
                     self._add_to_arbiter(arbiter)
                 else:   # the arbiter has not yet started.
@@ -403,6 +407,12 @@ class Application(Configurator, pulsar.Pulsar):
     def events(self):
         '''Events for the application: ``ready```, ``start``, ``stop``.'''
         return EventHandler(one_time_events=('ready', 'start', 'stop'))
+
+    @property
+    def stream(self):
+        '''Actor stream handler.
+        '''
+        return get_actor().stream
 
     def fire_event(self, name, **kw):
         '''Fire event ``name``.'''

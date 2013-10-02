@@ -391,10 +391,6 @@ class Client(Producer):
         else:
             return get_event_loop()
 
-    def hash(self, address, timeout, request):
-        #TODO: What is this?
-        return hash((address, timeout))
-
     def build_consumer(self, consumer_factory=None):
         '''Override the :meth:`Producer.build_consumer` method.
 
@@ -593,5 +589,7 @@ class Client(Producer):
                     event_loop, conn).add_errback(response.finished)
             else:
                 response.start(request)
+            return
         except Exception:
-            response.finished(Failure(sys.exc_info()).log())
+            exc_info = sys.exc_info()
+        response.finished(Failure(exc_info))

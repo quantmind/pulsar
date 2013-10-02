@@ -18,7 +18,7 @@ def wait(actor, period=0.5):
 
 
 class TestTestWorker(unittest.TestCase):
-    
+
     def testWorker(self):
         '''Test the test worker'''
         worker = pulsar.get_actor()
@@ -31,20 +31,21 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.pid, os.getpid())
         self.assertTrue(worker.impl.daemon)
         self.assertFalse(worker.is_monitor())
-        
+        self.assertEqual(str(worker.impl), worker.impl.unique_name)
+
     def testCPUbound(self):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         self.assertTrue(loop.cpubound)
         self.assertFalse(worker.event_loop.cpubound)
-        
+
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         monitor = worker.monitor
         self.assertEqual(mailbox.address, monitor.address)
         self.assertEqual(mailbox.timeout, 0)
-        
+
     @run_on_arbiter
     def test_TestSuiteMonitor(self):
         arbiter = pulsar.get_actor()
@@ -52,7 +53,7 @@ class TestTestWorker(unittest.TestCase):
         monitor = arbiter.registered['test']
         app = monitor.app
         self.assertTrue(isinstance(app, TestSuite))
-        
+
     def test_mailbox(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
@@ -65,7 +66,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
         self.assertEqual(mailbox.concurrent_connections, 1)
-        
+
     def test_event_loop(self):
         '''Test event loop in test worker'''
         worker = pulsar.get_actor()
@@ -78,7 +79,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.tid, worker.event_loop.tid)
         self.assertNotEqual(worker.tid, loop.tid)
         self.assertTrue(str(event_loop))
-        
+
     def test_NOT_DONE(self):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
@@ -87,7 +88,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(loop.num_loops, count+1)
         yield pulsar.NOT_DONE
         self.assertEqual(loop.num_loops, count+2)
-        
+
     def test_yield(self):
         '''Yielding a deferred calling back on separate thread'''
         worker = pulsar.get_actor()
@@ -107,24 +108,24 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.event_loop.tid, d.result)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop.tid, current_thread().ident)
-        
+
     def testInline(self):
         val = yield 3
         self.assertEqual(val, 3)
         future = yield send('monitor', 'ping')
         self.assertEqual(future, 'pong')
-        
+
     def test_run_on_arbiter(self):
         actor = pulsar.get_actor()
         response = yield actor.send('arbiter', 'run', simple_function)
         self.assertEqual(response, 'arbiter')
-        
+
     def test_unknown_send_target(self):
         # The target does not exists
         future = pulsar.send('vcghdvchdgcvshcd', 'ping').add_both(lambda r: [r])
         yield future
         self.assertTrue(is_failure(future.result[0]))
-        
+
     def test_multiple_execute(self):
         m = yield multi_async((send('arbiter', 'run', wait, 1.2),
                                send('arbiter', 'ping'),
@@ -136,7 +137,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(m[2], 'ciao!')
         self.assertTrue(m[3] >= 2.1)
         self.assertEqual(m[4], 'ciao again!')
-        
+
     def test_tasks(self):
         worker = pulsar.get_actor()
         backend = worker.app.backend
@@ -144,24 +145,24 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(backend.name, worker.app.name)
         self.assertEqual(len(backend.registry), 1)
         self.assertTrue('test' in backend.registry)
-        
-        
+
+
 class TestTestSuite(unittest.TestCase):
-    
+
     def test_no_plugins(self):
         suite = TestSuite()
         self.assertFalse(suite.cfg.plugins)
         self.assertFalse('profile' in suite.cfg.settings)
-        
+
     def test_profile_plugins(self):
         suite = TestSuite(plugins=[profile.Profile()])
         self.assertTrue(suite.cfg.plugins)
         self.assertTrue('profile' in suite.cfg.settings)
         self.assertTrue('profile_stats_path' in suite.cfg.settings)
-        
-        
+
+
 class TestPulsar(unittest.TestCase):
-    
+
     def test_version(self):
         self.assertTrue(pulsar.VERSION)
         self.assertTrue(pulsar.__version__)

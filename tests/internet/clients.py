@@ -5,7 +5,7 @@ from pulsar import Deferred
 from pulsar.apps.test import unittest
 from pulsar.utils.pep import get_event_loop
 
-from examples.echo.manage import Echo
+from examples.echo.manage import Echo, EchoProtocol
 
 
 def safe(callable, done):
@@ -18,6 +18,18 @@ def safe(callable, done):
 
 
 class TestClients(unittest.TestCase):
+
+    def test_meta(self):
+        client = Echo()
+        self.assertEqual(str(client), 'Echo')
+        self.assertEqual(client.max_reconnect, 1)
+        client = Echo(max_reconnect=10)
+        self.assertEqual(client.max_reconnect, 10)
+        self.assertEqual(client.consumer_factory, EchoProtocol)
+        client = Echo(consumer_factory=object)
+        self.assertEqual(client.consumer_factory, object)
+        self.assertRaises(AttributeError, client._response, None, None, None,
+                          None, None)
 
     def test_event_loop(self):
         client = Echo()

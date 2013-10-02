@@ -422,6 +422,15 @@ class TestLogFailures(TestOption):
     To see the exception the log level must be at least error."""
 
 
+class TestCoveralls(TestOption):
+    name = 'coveralls'
+    flags = ['--coveralls']
+    action = 'store_true'
+    default = False
+    validator = pulsar.validate_bool
+    desc = """Send coverage report to coveralls.io."""
+
+
 pyver = '%s.%s' % (sys.version_info[:2])
 
 
@@ -487,9 +496,10 @@ class TestSuite(tasks.TaskQueue):
             modules = modules(self)
         return TestLoader(self.root_dir, modules, runner, logger=self.logger)
 
-    def on_config(self):
+    def on_config(self, arbiter):
         loader = self.loader
-        stream = pulsar.get_actor().stream
+        stream = arbiter.stream
+        stream.writeln(sys.version)
         if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
             if tags:

@@ -3,14 +3,11 @@ import time
 import re
 import textwrap
 import logging
-import traceback
 from datetime import datetime, timedelta
-from inspect import istraceback
 from email.utils import formatdate
 
 
 from pulsar.utils.structures import MultiValueDict
-from pulsar import Failure, get_actor
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES, iteritems,
@@ -232,20 +229,18 @@ def handle_wsgi_error(environ, failure):
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
         try:
-            content = renderer(request, failure.exc_info)
-            if isinstance(content, Failure):
-                content.log()
-                content = None
+            content = renderer(request, failure)
         except Exception:
-            LOGGER.critical('Error while rendering error', exc_info=True)
+            LOGGER.critical('Error while rendering error')
             content = None
     response.content = content
     return response
 
 
-def render_error(request, exc_info):
+def render_error(request, failure):
     '''Default renderer for errors.'''
-    debug = get_actor().cfg.debug
+    cfg = request.get('pulsar.cfg')
+    debug = cfg.debug if cfg else False
     response = request.response
     if not response.content_type:
         response.content_type = request.content_types.best_match(
@@ -253,7 +248,7 @@ def render_error(request, exc_info):
     if response.content_type == 'text/html':
         request.html_document.head.title = response.status
     if debug:
-        msg = render_error_debug(request, exc_info)
+        msg = render_error_debug(request, failure)
     else:
         msg = error_messages.get(response.status_code) or ''
         if response.content_type == 'text/html':
@@ -273,32 +268,23 @@ def render_error(request, exc_info):
         return wsgi_error_msg(response, msg)
 
 
-def render_error_debug(request, exc_info):
+def render_error_debug(request, failure):
     '''Render the traceback into the content type in *response*.'''
-    if exc_info:
-        response = request.response
-        trace = exc_info[2]
-        is_html = response.content_type == 'text/html'
-        if istraceback(trace):
-            trace = traceback.format_exception(*exc_info)
-        if is_html:
-            error = Html('div', cn='section traceback error')
-        else:
-            error = []
-        if trace:
-            for traces in trace:
-                counter = 0
-                for trace in traces.split('\n'):
-                    if trace.startswith('  '):
-                        counter += 1
-                        trace = trace[2:]
-                    if not trace:
-                        continue
-                    if is_html:
-                        trace = Html('p', escape(trace))
-                        if counter:
-                            trace.css({'margin-left': '%spx' % (20*counter)})
-                    error.append(trace)
-        if not is_html:
-            error = '\n'.join(error)
-        return error
+    response = request.response
+    is_html = response.content_type == 'text/html'
+    error = Html('div', cn='section traceback error') if is_html else []
+    for traces in failure.exc_info[2]:
+        counter = 0
+        for trace in traces.split('\n'):
+            if trace.startswith('  '):
+                counter += 1
+                trace = trace[2:]
+            if trace:
+                if is_html:
+                    trace = Html('p', escape(trace))
+                    if counter:
+                        trace.css({'margin-left': '%spx' % (20*counter)})
+                error.append(trace)
+    if not is_html:
+        error = '\n'.join(error)
+    return error

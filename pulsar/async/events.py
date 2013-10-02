@@ -220,13 +220,6 @@ class EventHandler(object):
             if event2:
                 event.chain(event2)
 
-    def cancel_one_time_events(self, exclude=None):
-        '''Cancel all one time events not already fired.'''
-        exclude = exclude or ()
-        for event in itervalues(self._events):
-            if isinstance(event, OneTime) and event.name not in exclude:
-                event.cancel(mute=True)
-
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
 
