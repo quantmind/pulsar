@@ -132,13 +132,14 @@ class Tunneling:
         # the pre_request handler
         request = response._request
         tunnel = request._tunnel
-        #
-        # We Tunnel if a tunnel server is available
-        if tunnel:
-            # and if transport is not SSL already
+        if tunnel and getattr(request, '_apply_tunnel', False):
+            # if transport is not SSL already
             if not isinstance(response.transport, SocketStreamSslTransport):
                 response._request = tunnel
                 response.bind_event('on_headers', self.on_headers)
+        else:
+            request._apply_tunnel = True
+            response.bind_event('pre_request', self)
         # make sure to return the response
         return response
 

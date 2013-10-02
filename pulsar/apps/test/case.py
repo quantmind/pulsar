@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from pulsar import multi_async
+from pulsar import multi_async, Failure
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
 
@@ -170,4 +170,6 @@ class Test(tasks.Job):
                 runner.addExpectedFailure(test, exc_info)
             else:
                 runner.addError(test, exc_info)
+        else:
+            Failure(exc_info).log()
         return (error, exc_info)

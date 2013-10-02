@@ -311,7 +311,7 @@ class TcpServer(Server):
         '''Stop serving the :class:`pulsar.Server.sock`'''
         if self._sock:
             sock, self._sock = self._sock, None
-            self._event_loop.call_now_threadsafe(self._stop_serving, sock)
+            self._event_loop.call_soon_threadsafe(self._stop_serving, sock)
 
     def close(self):
         '''Same as :meth:`stop_serving` method.'''

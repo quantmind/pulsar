@@ -119,6 +119,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
+class d:
     def test_dodgy_on_header_event(self):
         client = HttpClient()
         hook = partial(dodgyhook, self)

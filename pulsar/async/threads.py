@@ -206,7 +206,7 @@ Return a :class:`Deferred` fired when all threads have exited.'''
         if self._state == RUN:
             self._state = CLOSE
             if self.event_loop.is_running():
-                self.event_loop.call_now_threadsafe(self._close)
+                self.event_loop.call_soon_threadsafe(self._close)
             else:
                 self._close()
         return self._closed.then().set_timeout(timeout)
@@ -217,7 +217,7 @@ Return a :class:`Deferred` fired when all threads have exited.'''
             if not self._closed.done():
                 self._state = TERMINATE
                 if self.event_loop.is_running():
-                    self.event_loop.call_now_threadsafe(self._terminate)
+                    self.event_loop.call_soon_threadsafe(self._terminate)
                 else:
                     self._terminate()
         return self._closed.then().set_timeout(timeout)

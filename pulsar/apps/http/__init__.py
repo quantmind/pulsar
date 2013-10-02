@@ -70,9 +70,8 @@ Supported out of the box::
     client = HttpClient()
     client.get('https://github.com/timeline.json')
 
-
 you can include certificate file and key too, either
-to a :class:`HttpClient` or to a specific request:
+to a :class:`HttpClient` or to a specific request::
 
     client = HttpClient(certkey='public.key')
     res1 = client.get('https://github.com/timeline.json')
@@ -97,7 +96,7 @@ To stream data received from the client one can use either the
     response = http.get(..., data_received=new_data)
 
 The ``on_finished`` callback on a :class:`HttpResponse` is only fired when
-the server has finished with the response.
+the client has finished with the response.
 Check the :ref:`proxy server <tutorials-proxy-server>` example for an
 application using the :class:`HttpClient` streaming capabilities.
 
@@ -115,7 +114,7 @@ websocket handler::
         def on_message(self, websocket, message):
             websocket.write(message)
 
-The websocket response can is obtained by waiting for the
+The websocket response is obtained by waiting for the
 :attr:`HttpResponse.on_headers` event::
 
     ws = yield http.get('ws://...', websocket_handler=Echo()).on_headers
@@ -219,6 +218,7 @@ from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
+from pulsar.utils.multipart import parse_options_header
 from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   http_parser, ENCODE_URL_METHODS,
                                   encode_multipart_formdata, urlencode,
@@ -226,7 +226,8 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   choose_boundary, urlunparse, request_host,
                                   is_succesful, HTTPError, URLError,
                                   get_hostport, cookiejar_from_dict,
-                                  host_no_default_port, DEFAULT_CHARSET)
+                                  host_no_default_port, DEFAULT_CHARSET,
+                                  JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
                       Tunneling, TooManyRedirects)
@@ -365,11 +366,7 @@ class HttpRequest(pulsar.Request, RequestBase):
         self.unredirected_headers = Headers(kind='client')
         self.timeout = timeout
         self.method = method.upper()
-        self._scheme, self._netloc, self.path, self.params,\
-            self.query, self.fragment = urlparse(url)
-        if not self._netloc and self.method == 'CONNECT':
-            self._scheme, self._netloc, self.path, self.params,\
-                self.query, self.fragment = urlparse('http://%s' % url)
+        self.full_url = url
         self.set_proxy(None)
         self.history = history
         self.wait_continue = wait_continue
@@ -435,14 +432,21 @@ class HttpRequest(pulsar.Request, RequestBase):
         return self.first_line()
     __str__ = __repr__
 
-    def get_full_url(self):
-        '''The full url for this request.'''
-        self.full_url = urlunparse((self._scheme, self._netloc, self.path,
-                                    self.params, self.query, self.fragment))
-        return self.full_url
+    def _get_full_url(self):
+        return urlunparse((self._scheme, self._netloc, self.path,
+                           self.params, self.query, self.fragment))
+
+    def _set_full_url(self, url):
+        self._scheme, self._netloc, self.path, self.params,\
+            self.query, self.fragment = urlparse(url)
+        if not self._netloc and self.method == 'CONNECT':
+            self._scheme, self._netloc, self.path, self.params,\
+                self.query, self.fragment = urlparse('http://%s' % url)
+
+    full_url = property(_get_full_url, _set_full_url)
 
     def first_line(self):
-        url = self.get_full_url()
+        url = self.full_url
         if not self._proxy:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
@@ -715,6 +719,19 @@ class HttpResponse(pulsar.ProtocolConsumer):
     def json(self, charset=None, **kwargs):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
+
+    def decode_content(self):
+        '''Return the best possible representation of the response body.
+        '''
+        ct = self.headers.get('content-type')
+        if ct:
+            ct, options = parse_options_header(ct)
+            charset = options.get('charset')
+            if ct in JSON_CONTENT_TYPES:
+                return self.json(charset)
+            elif ct.startswith('text/'):
+                return self.content_string(charset)
+        return response.get_content()
 
     def raise_for_status(self):
         '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.

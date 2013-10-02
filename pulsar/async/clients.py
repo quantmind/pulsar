@@ -451,9 +451,9 @@ class Client(Producer):
             response.silence_event('pre_request')
             response._request = request
         else:   # A new request
-            event_loop.call_now_threadsafe(self._response, event_loop,
-                                           response, request, new_connection,
-                                           connection)
+            event_loop.call_soon_threadsafe(self._response, event_loop,
+                                            response, request, new_connection,
+                                            connection)
             if self.force_sync:  # synchronous response
                 if not event_loop.is_running():
                     event_loop.run_until_complete(response.on_finished,

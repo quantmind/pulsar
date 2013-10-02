@@ -36,9 +36,10 @@ class KeyAuth(Auth):
 
 class HTTPBasicAuth(Auth):
     '''HTTP Basic Authentication handler.'''
-    def __init__(self, username, password):
+    def __init__(self, username, password, status_code=401):
         self.username = username
         self.password = password
+        self.status_code = status_code
 
     @property
     def type(self):

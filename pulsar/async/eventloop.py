@@ -564,16 +564,6 @@ the ``callback`` is scheduled at every loop. Installing this callback cause
 the event loop to poll with a 0 timeout all the times.'''
         return LoopingCall(self, callback, args)
 
-    def call_now_threadsafe(self, callback, *args):
-        '''Same as :meth:`call_soon_threadsafe` with the only exception that
-if we are calling from the same thread of execution as this
-:class:`EventLoop`, the ``callback`` is called immediately. Otherwise
-:meth:`call_soon_threadsafe` is invoked.'''
-        if self.tid != current_thread().ident:
-            return self.call_soon_threadsafe(callback, *args)
-        else:
-            self._call(callback, *args)
-
     def has_callback(self, callback):
         if callback.deadline:
             return callback in self._scheduled
