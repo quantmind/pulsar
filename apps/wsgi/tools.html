@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utilities &mdash; pulsar 0.7.0-beta.2 documentation</title>
+    <title>Utilities &mdash; pulsar 0.7.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.0-beta.2',
+        VERSION:     '0.7.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Distributed Task Queue" href="../tasks/index.html" />
     <link rel="prev" title="Middleware" href="middleware.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="middleware.html" title="Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -75,16 +75,28 @@
 both server and the <a class="reference internal" href="../http.html#apps-http"><em>HTTP client</em></a>. Headers are collected using
 the <a class="reference internal" href="../../api/utilities.html#tools-http-headers"><em>Headers data structure</em></a> which exposes a
 list/dictionary-type interface.</p>
-<p>At runtime, pulsar checks if the <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> package and <a class="reference external" href="http://cython.org/">cython</a>
-are available. If this is the case, it switches the default HTTP parser
+<p>At runtime, pulsar checks if the <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> package is available.
+If this is the case, it switches the default HTTP parser
 to be the one provided by the <tt class="xref py py-mod docutils literal"><span class="pre">http_parser.paser</span></tt> module.
 To check if the C parser is the default parser:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.lib</span> <span class="kn">import</span> <span class="n">hasextensions</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">hasextensions</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="authentication">
-<h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pulsar.apps.wsgi.auth">
+<span id="authentication"></span><h2>Authentication<a class="headerlink" href="#module-pulsar.apps.wsgi.auth" title="Permalink to this headline">¶</a></h2>
+<p>Handle basic and digest authentication on the server.</p>
+<div class="section" id="httpauthenticate">
+<h3>HttpAuthenticate<a class="headerlink" href="#httpauthenticate" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.auth.HttpAuthenticate">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.auth.</tt><tt class="descname">HttpAuthenticate</tt><big>(</big><em>type</em>, <em>realm=None</em>, <em>**options</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/auth.html#HttpAuthenticate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.auth.HttpAuthenticate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception when <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt> authentication is required.</p>
+<p>This HttpException is raised with status code <tt class="docutils literal"><span class="pre">401</span></tt> and the extra
+<tt class="docutils literal"><span class="pre">WWW_Authenticate</span></tt> header if <tt class="docutils literal"><span class="pre">type</span></tt> is either <tt class="docutils literal"><span class="pre">basic</span></tt> or <tt class="docutils literal"><span class="pre">digest</span></tt>.</p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="module-pulsar.apps.wsgi.structures">
 <span id="structures"></span><h2>Structures<a class="headerlink" href="#module-pulsar.apps.wsgi.structures" title="Permalink to this headline">¶</a></h2>
@@ -256,7 +268,10 @@ content types.</p>
   <ul>
 <li><a class="reference internal" href="#">Utilities</a><ul>
 <li><a class="reference internal" href="#http-parsers">HTTP Parsers</a></li>
-<li><a class="reference internal" href="#authentication">Authentication</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.wsgi.auth">Authentication</a><ul>
+<li><a class="reference internal" href="#httpauthenticate">HttpAuthenticate</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-pulsar.apps.wsgi.structures">Structures</a></li>
 </ul>
 </li>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Middleware &mdash; pulsar 0.7.0-beta.2 documentation</title>
+    <title>Middleware &mdash; pulsar 0.7.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.0-beta.2',
+        VERSION:     '0.7.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Asynchronous Content" href="content.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="content.html" title="Asynchronous Content"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -103,9 +103,10 @@ applications.</p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.cookies_middleware">
 <tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">cookies_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#cookies_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.cookies_middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_COOKIE</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt> and set
-the new <tt class="docutils literal"><span class="pre">http.cookie</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with a dictionary of cookies
-obtained via the <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.parse_cookie" title="pulsar.utils.httpurl.parse_cookie"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.utils.httpurl.parse_cookie()</span></tt></a> function.</p>
+<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_COOKIE</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
+<p>Set the new <tt class="docutils literal"><span class="pre">http.cookie</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with a dictionary
+of cookies obtained via the <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.parse_cookie" title="pulsar.utils.httpurl.parse_cookie"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.utils.httpurl.parse_cookie()</span></tt></a>
+function.</p>
 </dd></dl>
 
 </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Task Backend &mdash; pulsar 0.7.0-beta.2 documentation</title>
+    <title>Task Backend &mdash; pulsar 0.7.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.0-beta.2',
+        VERSION:     '0.7.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="Distributed Task Queue" href="index.html" />
     <link rel="next" title="RPC" href="rpc.html" />
     <link rel="prev" title="Jobs" href="jobs.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="jobs.html" title="Jobs"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Distributed Task Queue</a> &raquo;</li> 
       </ul>
     </div>
@@ -608,8 +608,11 @@ its date and count fields updated. Function called by
 <p>The local task backend store tasks in pulsar process domain and therefore
 is accessed only from one running task queue.</p>
 </div>
-<div class="section" id="redis-backend">
-<h2>Redis Backend<a class="headerlink" href="#redis-backend" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pulsar.apps.tasks.backends.redis">
+<span id="redis-backend"></span><h2>Redis Backend<a class="headerlink" href="#module-pulsar.apps.tasks.backends.redis" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#pulsar.apps.tasks.backends.TaskBackend" title="pulsar.apps.tasks.backends.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskBackend</span></tt></a> implementation
+based on <a class="reference external" href="http://redis.io/">redis</a> as data server.
+Requires <a class="reference external" href="https://pypi.python.org/pypi/python-stdnet">python-stdnet</a> for mapping tasks into redis hashes.</p>
 </div>
 </div>
 
@@ -640,7 +643,7 @@ is accessed only from one running task queue.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.apps.tasks.backends.local">Local Backend</a></li>
-<li><a class="reference internal" href="#redis-backend">Redis Backend</a></li>
+<li><a class="reference internal" href="#module-pulsar.apps.tasks.backends.redis">Redis Backend</a></li>
 </ul>
 </li>
 </ul>

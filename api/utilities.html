@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tools &mdash; pulsar 0.7.0-beta.2 documentation</title>
+    <title>Tools &mdash; pulsar 0.7.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.0-beta.2',
+        VERSION:     '0.7.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
     <link rel="prev" title="Applications API" href="application.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="application.html" title="Applications API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -207,8 +207,8 @@ For example:</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.getheaders">
 <tt class="descname">getheaders</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.getheaders"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.getheaders" title="Permalink to this definition">¶</a></dt>
-<dd><p>Required by cookielib. If the key is not available,
-it returns an empty list.</p>
+<dd><p>Required by cookielib in python 2.</p>
+<p>If the key is not available, it returns an empty list.</p>
 </dd></dl>
 
 <dl class="method">
@@ -221,8 +221,8 @@ it returns an empty list.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.remove_header">
 <tt class="descname">remove_header</tt><big>(</big><em>key</em>, <em>value=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.remove_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.remove_header" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove the header at <tt class="docutils literal"><span class="pre">key</span></tt>, If <tt class="docutils literal"><span class="pre">value</span></tt> is provided, it removes
-only that value if found.</p>
+<dd><p>Remove the header at <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is provided, it removes only that value if found.</p>
 </dd></dl>
 
 <dl class="method">
@@ -304,8 +304,8 @@ OTHER DEALINGS IN THE SOFTWARE.</p>
 <dl class="function">
 <dt id="pulsar.utils.httpurl.parse_cookie">
 <tt class="descclassname">pulsar.utils.httpurl.</tt><tt class="descname">parse_cookie</tt><big>(</big><em>cookie</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#parse_cookie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.parse_cookie" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse an <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie">HTTP cookie</a> string and return a dictionary of
-cookie name/values.</p>
+<dd><p>Parse an <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie">HTTP cookie</a> string.</p>
+<p>Return a dictionary of cookie name/values.</p>
 </dd></dl>
 
 </div>
