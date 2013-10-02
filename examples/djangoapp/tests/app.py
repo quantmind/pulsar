@@ -68,8 +68,7 @@ class TestDjangoChat(unittest.TestCase):
         self.assertEqual(response.connection, ws.connection)
         self.assertTrue(ws.connection)
 
-    def __test_websocket(self):
-        #TODO: this fails. Something to do with queue
+    def test_websocket(self):
         ws = yield self.http.get(self.ws, websocket_handler=MessageHandler()
                                  ).on_headers
         self.assertTrue(ws)
