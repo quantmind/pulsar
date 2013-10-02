@@ -8,17 +8,19 @@ omit =
     *pulsar/utils/system/winprocess.py
     *pulsar/utils/cov.py
     *pulsar/async/cov.py
-    examples/httpbin/config.py
-    examples/philosophers/config.py
-    pshell,examples/taskqueue/winservice.py
-    examples/pshell/*
-    examples/philosophers/*
     *pulsar/apps/test/plugins/bench.py
     *pulsar/apps/test/plugins/profile.py
     *pulsar/apps/tasks/backends/redis.py
-    examples/taskqueue/test_redis.py
     *pulsar/async/udp.py
     *pulsar/apps/green/*
+    examples/httpbin/config.py
+    examples/philosophers/config.py
+    examples/webmail/*
+    pshell,examples/taskqueue/winservice.py
+    examples/pshell/*
+    examples/philosophers/*
+    examples/taskqueue/test_redis.py
+
 
 
 [report]

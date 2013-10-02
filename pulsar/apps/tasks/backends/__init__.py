@@ -133,13 +133,21 @@ from pulsar.utils.pep import itervalues
 from pulsar.apps.tasks.models import JobRegistry
 from pulsar.apps.tasks import states, create_task_id
 from pulsar.apps import pubsub
-from pulsar.utils.timeutils import remaining, timedelta_seconds
 from pulsar.utils.log import local_property
 
 __all__ = ['Task', 'Backend', 'TaskBackend', 'TaskNotAvailable',
            'nice_task_message', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
+
+
+if hasattr(timedelta, "total_seconds"):
+    timedelta_seconds = lambda delta: max(delta.total_seconds(), 0)
+else:   # pragma    nocover
+    def timedelta_seconds(delta):
+        if delta.days < 0:
+            return 0
+        return delta.days * 86400 + delta.seconds + (delta.microseconds / 10e5)
 
 
 def get_datetime(expiry, start):
@@ -809,10 +817,6 @@ class Schedule(object):
         self.run_every = run_every
         self.anchor = anchor
 
-    def remaining_estimate(self, last_run_at, now=None):
-        """Returns when the periodic task should run next as a timedelta."""
-        return remaining(last_run_at, self.run_every, now=now)
-
     def is_due(self, last_run_at, now=None):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
         where next time to run is in seconds.
@@ -820,7 +824,8 @@ class Schedule(object):
         See :meth:`unuk.contrib.tasks.models.PeriodicTask.is_due`
         for more information.
         """
-        rem_delta = self.remaining_estimate(last_run_at, now=now)
+        now = now or datetime.now()
+        rem_delta = last_run_at + self.run_every - now
         rem = timedelta_seconds(rem_delta)
         if rem == 0:
             return True, timedelta_seconds(self.run_every)

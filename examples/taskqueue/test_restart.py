@@ -5,8 +5,9 @@ from pulsar.apps.test import unittest
 from .test_local import TaskQueueBase
 
 
-class a:
+class a:    # pragma    nocover
 #class TestTaskQueueRestart(TaskQueueBase, unittest.TestCase):
+#TODO: fix this test
 
     def info(self):
         info = yield self.proxy.server_info()

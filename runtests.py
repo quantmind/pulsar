@@ -15,6 +15,7 @@ def run(**params):
 
 
 def runtests(cov=None, **params):
+    import pulsar
     from pulsar.utils.path import Path
     from pulsar.apps.test import TestSuite
     from pulsar.apps.test.plugins import bench, profile
@@ -22,6 +23,7 @@ def runtests(cov=None, **params):
     #
     path = Path(__file__)
     path.add2python('stdnet', 1, down=['python-stdnet'], must_exist=False)
+    strip_dirs = [Path(pulsar.__file__).parent.parent, os.getcwd()]
     #
     suite = TestSuite(description='Pulsar Asynchronous test suite',
                       modules=('tests',
@@ -34,7 +36,7 @@ def runtests(cov=None, **params):
     #
     if suite.cfg.coveralls:
         from pulsar.utils.cov import coveralls
-        coveralls(strip_dirs=[path.parent.parent, os.getcwd()],
+        coveralls(strip_dirs=strip_dirs,
                   stream=suite.stream,
                   repo_token='CNw6W9flYDDXZYeStmR1FX9F4vo0MKnyX')
 
