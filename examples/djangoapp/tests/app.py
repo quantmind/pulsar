@@ -29,7 +29,7 @@ class MessageHandler(ws.WS):
         return self.queue.get()
 
     def on_message(self, websocket, message):
-        return self.queue.put(message)
+        self.queue.put(message)
 
 
 @unittest.skipUnless(manage, 'Requires django')
