@@ -93,19 +93,19 @@ install itself as a request loop rather than the IO event loop.'''
         return True
 
     def poll(self, timeout=0.5):
-        if self._actor.is_running():
-            loop = self._actor.event_loop
-            loops = loop.num_loops
-            if loops > self._actor_loop:
-                self._actor_loop = loops
-                self._actor_check = loop.timer()
-            else:
-                if loop.timer() - self._actor_check > ACTOR_ACTION_TIMEOUT:
-                    self._actor.logger.critical('loop is stuck. '
-                                                'Bailing out thread worker.')
-                    raise StopEventLoop
-        else:
-            raise StopEventLoop
+        #if self._actor.is_running():
+        #    loop = self._actor.event_loop
+        #    loops = loop.num_loops
+        #    if loops > self._actor_loop:
+        #        self._actor_loop = loops
+        #        self._actor_check = loop.timer()
+        #    else:
+        #        if loop.timer() - self._actor_check > ACTOR_ACTION_TIMEOUT:
+        #            self._actor.logger.critical('loop is stuck. '
+        #                                        'Bailing out thread worker.')
+        #            raise StopEventLoop
+        #else:
+        #    raise StopEventLoop
         if self._maxtasks and self.received >= self._maxtasks:
             if self.completed < self.received:
                 return ()

@@ -195,9 +195,9 @@ class ProxyResponse(object):
 class ProxyTunnel(ProxyResponse):
 
     def setup(self, response):
-        response.connection.bind_event('connection_made', self.connection_made)
+        response.bind_event('pre_request', self.connection_made)
 
-    def connection_made(self, upstream):
+    def connection_made(self, response):
         '''Start the tunnel.
 
         This is a callback fired once a connection with target server is
@@ -208,12 +208,14 @@ class ProxyTunnel(ProxyResponse):
         DownStreamTunnel.
         '''
         # Upgrade downstream protocol consumer
+        upstream = response.connection
         downstream = self.environ['pulsar.connection']
         downstream.upgrade(partial(DownStreamTunnel, upstream))
         self.start_response('200 Connection established', [])
         self._done = True
         # send empty byte so that headers are sent
         self.queue.put(b'')
+        return response
 
 
 class DownStreamTunnel(pulsar.ProtocolConsumer):

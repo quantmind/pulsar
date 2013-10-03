@@ -20,7 +20,7 @@ class TestTlsHttpClientWithProxy(client.TestHttpClient):
         pool = http.connection_pools[response.request.key]
         self.assertEqual(pool.received, 1)
 
-    def test_tunnel_request_object(self):
+    def __test_tunnel_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin()).on_finished
         request = response.request

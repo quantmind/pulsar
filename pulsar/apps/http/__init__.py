@@ -293,7 +293,6 @@ class HttpTunnel(RequestBase):
         self.parser = request.parser
         request.new_parser()
         self.headers = request.client.tunnel_headers.copy()
-        self.headers['host'] = request.get_header('host')
 
     def __repr__(self):
         return 'Tunnel %s' % self.full_url
@@ -314,6 +313,7 @@ class HttpTunnel(RequestBase):
 
     def encode(self):
         req = self.request
+        self.headers['host'] = req.get_header('host')
         bits = req.target_address + (req.version,)
         self.first_line = 'CONNECT %s:%s %s\r\n' % bits
         return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
@@ -529,14 +529,20 @@ class HttpRequest(pulsar.Request, RequestBase):
         return body
 
     def has_header(self, header_name):
+        '''Check ``header_name`` is in this request headers.
+        '''
         return (header_name in self.headers or
                 header_name in self.unredirected_headers)
 
     def get_header(self, header_name, default=None):
+        '''Retrieve ``header_name`` from this request headers.
+        '''
         return self.headers.get(
             header_name, self.unredirected_headers.get(header_name, default))
 
     def remove_header(self, header_name):
+        '''Remove ``header_name`` from this request.
+        '''
         self.headers.pop(header_name, None)
         self.unredirected_headers.pop(header_name, None)
 

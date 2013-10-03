@@ -467,8 +467,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client(version='HTTP/1.0')
 
         def remove_host(response):
-            host = response.request.headers.pop('host')
-            self.assertTrue(host)
+            r = response.request
+            self.assertTrue(r.has_header('host'))
+            r.remove_header('host')
+            self.assertFalse(r.has_header('host'))
+            return response
 
         response = yield http.get(self.httpbin(),
                                   pre_request=remove_host).on_finished
