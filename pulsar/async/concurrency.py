@@ -1,16 +1,16 @@
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system, platform
+from pulsar import system
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import new_event_loop, itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import get_actor, set_actor, remove_actor, logger
-from .threads import Thread, ThreadQueue, Empty
+from .threads import Thread
 from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure, Deferred
-from .eventloop import signal
+from .eventloop import signal, StopEventLoop
 from .stream import TcpServer
 from .pollers import POLLERS
 from .consts import *
@@ -101,10 +101,6 @@ system is chosen.'''
         '''
         raise NotImplementedError
 
-    def can_continue(self, actor):
-        '''Check if ``actor`` can continue its life.'''
-        return True
-
     def hand_shake(self, actor):
         try:
             a = get_actor()
@@ -146,21 +142,18 @@ to ping the actor monitor. If successful return a :class:`Deferred` called
 back with the acknowledgement from the monitor.
 '''
         actor.next_periodic_task = None
-        if self.can_continue(actor):
-            ack = None
-            if actor.is_running():
-                actor.logger.debug('notifying the monitor')
-                # if an error occurs, shut down the actor
-                ack = actor.send('monitor', 'notify', actor.info())\
-                           .add_errback(actor.stop)
-                next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
-            else:
-                next = 0
-            actor.next_periodic_task = actor.event_loop.call_later(
-                min(next, MAX_NOTIFY), self.periodic_task, actor)
-            return ack
+        ack = None
+        if actor.is_running():
+            actor.logger.debug('notifying the monitor')
+            # if an error occurs, shut down the actor
+            ack = actor.send('monitor', 'notify', actor.info())\
+                       .add_errback(actor.stop)
+            next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
         else:
-            actor.logger.info('===================================== QUITTING')
+            next = 0
+        actor.next_periodic_task = actor.event_loop.call_later(
+            min(next, MAX_NOTIFY), self.periodic_task, actor)
+        return ack
 
     def stop(self, actor, exc):
         '''Gracefully stop the ``actor``.'''
@@ -226,42 +219,20 @@ class ProcessMixin(object):
         proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
         if system.set_proctitle(proc_name):
             actor.logger.debug('Set process title to %s', proc_name)
-        #system.set_owner_process(cfg.uid, cfg.gid)
-        if signal and not platform.is_windows:
+        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
+        if signal:
             actor.logger.debug('Installing signals')
-            actor.signal_queue = ThreadQueue()
-            for name in system.ALL_SIGNALS:
-                sig = getattr(signal, 'SIG%s' % name)
+            for sig in system.EXIT_SIGNALS:
                 try:
-                    actor.event_loop.add_signal_handler(sig,
-                                                        self.handle_signal,
-                                                        actor)
+                    actor.event_loop.add_signal_handler(
+                        sig, self.handle_exit_signal, actor)
                 except ValueError:
-                    break
+                    pass
 
-    def handle_signal(self, actor, sig, frame):
-        actor.signal_queue.put(sig)
-        # call the periodic task of the actor
-        actor.event_loop.call_soon(self.periodic_task, actor)
-
-    def can_continue(self, actor):
-        if actor.signal_queue is not None:
-            while True:
-                try:
-                    sig = actor.signal_queue.get(timeout=0.01)
-                except (Empty, IOError):
-                    break
-                if sig not in system.SIG_NAMES:
-                    actor.logger.info("Ignoring unknown signal: %s", sig)
-                else:
-                    signame = system.SIG_NAMES.get(sig)
-                    if sig in system.EXIT_SIGNALS:
-                        actor.logger.warning("Got %s. Stopping.", signame)
-                        actor.event_loop.stop()
-                        return False
-                    else:
-                        actor.logger.debug('No handler for %s.', signame)
-        return True
+    def handle_exit_signal(self, actor, sig, frame):
+        actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
+        actor.event_loop.exit_signal = sig
+        raise StopEventLoop
 
 
 class MonitorMixin(object):
@@ -278,8 +249,8 @@ class MonitorMixin(object):
     def hand_shake(self, actor):
         ''':class:`MonitorMixin` doesn't do hand shakes'''
         actor.state = ACTOR_STATES.RUN
+        actor.bind_event('start', self.periodic_task, actor.stop)
         actor.fire_event('start')
-        self.periodic_task(actor)
 
     @property
     def pid(self):
@@ -315,6 +286,8 @@ to be spawned.'''
             actor.monitor_task()
         actor.next_periodic_task = actor.event_loop.call_later(
             interval, self.periodic_task, actor)
+        # Return actor!
+        return actor
 
     def _stop_actor(self, actor):
         def _cleanup(result):
@@ -355,19 +328,19 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         the :class:`Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
-        if self.can_continue(actor):
-            if actor.is_running():
-                # managed actors job
-                interval = MONITOR_TASK_PERIOD
-                actor.manage_actors()
-                for m in list(itervalues(actor.monitors)):
-                    if m.started():
-                        if not m.is_running():
-                            actor._remove_actor(m)
-                    else:
-                        m.start()
-            actor.next_periodic_task = actor.event_loop.call_later(
-                interval, self.periodic_task, actor)
+        if actor.is_running():
+            # managed actors job
+            interval = MONITOR_TASK_PERIOD
+            actor.manage_actors()
+            for m in list(itervalues(actor.monitors)):
+                if m.started():
+                    if not m.is_running():
+                        actor._remove_actor(m)
+                else:
+                    m.start()
+        actor.next_periodic_task = actor.event_loop.call_later(
+            interval, self.periodic_task, actor)
+        return actor
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''
@@ -375,6 +348,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             self._exit_arbiter(actor)
         else:
             actor.logger.debug('Restarts event loop to stop actors')
+            actor.event_loop.clear()
             actor.event_loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
 

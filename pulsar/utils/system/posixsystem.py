@@ -5,6 +5,7 @@ import grp
 import pwd
 import signal
 import socket
+import ctypes
 from multiprocessing import Pipe
 
 from .base import *
@@ -16,7 +17,8 @@ __all__ = ['close_on_exec',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
-           'get_maxfd']
+           'get_maxfd',
+           'set_owner_process']
 
 # standard signal quit
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGQUIT)
@@ -64,6 +66,19 @@ def get_gid(group=None):
         return int(group)
     else:
         return grp.getgrnam(group).gr_gid
+
+
+def set_owner_process(uid, gid):
+    """ set user and group of workers processes """
+    if gid:
+        try:
+            os.setgid(gid)
+        except OverflowError:
+            # versions of python < 2.6.2 don't manage unsigned int for
+            # groups like on osx or fedora
+            os.setgid(-ctypes.c_int(-gid).value)
+    if uid:
+        os.setuid(uid)
 
 
 def setpgrp():

@@ -196,7 +196,6 @@ class EventHandler(object):
             return self._events[name].fire(arg, **kwargs)
         else:
             logger().warning('Unknown event "%s" for %s', name, self)
-            return arg
 
     def silence_event(self, name):
         '''Silence event ``name``.

@@ -22,7 +22,7 @@ from redis.client import BasePipeline as _BasePipeline
 from redis.connection import PythonParser as _p
 
 import pulsar
-from pulsar import multi_async, Deferred, ProtocolError
+from pulsar import Deferred, ProtocolError
 from pulsar.utils.pep import zip
 
 from .parser import Parser
@@ -255,7 +255,7 @@ class BasePipeline(_BasePipeline):
                 self.watching = False
             elif command_name == 'WATCH':
                 self.watching = True
-            return result
+            return response
 
 
 class Pipeline(BasePipeline, Redis):

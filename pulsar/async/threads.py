@@ -1,6 +1,5 @@
 import logging
 from multiprocessing import dummy, current_process
-import threading
 from threading import Lock
 from functools import partial
 
@@ -94,8 +93,8 @@ install itself as a request loop rather than the IO event loop.'''
         return True
 
     def poll(self, timeout=0.5):
-        loop = self._actor.event_loop
-        if loop.is_running():
+        if self._actor.is_running():
+            loop = self._actor.event_loop
             loops = loop.num_loops
             if loops > self._actor_loop:
                 self._actor_loop = loops
@@ -177,6 +176,7 @@ class ThreadPool(object):
     the :meth:`apply` method.
     '''
     worker_name = 'pool-worker'
+
     def __init__(self, actor=None, threads=None, check_every=5, maxtasks=None):
         self._actor = actor or get_actor()
         self._check_every = check_every

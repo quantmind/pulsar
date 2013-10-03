@@ -51,6 +51,7 @@ Implementation
 '''
 import random
 import time
+from functools import partial
 try:
     import pulsar
 except ImportError:
@@ -173,8 +174,8 @@ information about the philosopher.'''
 available.'''
         right_fork = philosopher.params.number
         return philosopher.send(philosopher.monitor, 'pickup_fork', right_fork
-                                ).add_callback_args(self._continue,
-                                                    philosopher)
+                                ).add_callback(partial(self._continue,
+                                                       philosopher))
 
     def release_forks(self, philosopher):
         '''The ``philosopher`` has just eaten and is ready to release both
@@ -190,7 +191,7 @@ action to the monitor.'''
         time.sleep(self.cfg.waiting_period)
         self._continue(None, philosopher)
 
-    def _continue(self, fork, philosopher):
+    def _continue(self, philosopher, fork):
         if fork:
             forks = philosopher.params.forks
             if fork in forks:

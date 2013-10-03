@@ -125,24 +125,11 @@ class RedisPool(pulsar.Client):
     def _next(self, consumer, next_request, result):
         consumer.new_request(next_request)
 
-    def execute_script(self, client, to_load, callback):
-        # Override execute_script so that we execute after scripts have loaded
-        if to_load:
-            results = []
-            for name in to_load:
-                s = get_script(name)
-                results.append(client.script_load(s.script))
-            return multi_async(results).add_callback(callback)
-        else:
-            return callback()
-
     #    INTERNALS
-
     def _authenticate(self, response):
         # Perform redis authentication as a pre_request event
         if response._connection.processed <= 1:
             request = response._request
-            reqs = []
             client = request.client
             if request.is_pipeline:
                 client = client.client

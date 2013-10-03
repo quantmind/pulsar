@@ -1,7 +1,6 @@
 import gc
 from inspect import isclass
 from functools import partial
-import threading
 
 import pulsar
 from pulsar import safe_async, get_actor, send, multi_async

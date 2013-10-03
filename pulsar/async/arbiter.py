@@ -56,6 +56,8 @@ def spawn(cfg=None, **kwargs):
 
     A typical usage::
 
+        >>> def do_something(actor):
+                ...
         >>> a = spawn(start=do_something, ...)
         >>> a.aid
         'ba42b02b'
@@ -83,6 +85,7 @@ def stop_arbiter(self):     # pragma    nocover
     if p is not None:
         self.logger.debug('Removing %s' % p.fname)
         p.unlink()
+        self.pidfile = None
     if self.managed_actors:
         self.state = ACTOR_STATES.TERMINATE
     self.collect_coverage()
@@ -94,6 +97,7 @@ def stop_arbiter(self):     # pragma    nocover
         pass
     if exit_code:
         sys.exit(exit_code)
+    return self
 
 
 def start_arbiter(self):

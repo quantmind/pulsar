@@ -266,14 +266,14 @@ class RequestBase(object):
         else:
             return request_host(self)
 
+    def get_full_url(self):
+        return self.full_url
+
 
 if not ispy33:  # pragma     nocover
     _RequestBase = RequestBase
 
     class RequestBase(_RequestBase):
-
-        def get_full_url(self):
-            return self.full_url
 
         def is_unverifiable(self):
             return self.unverifiable
@@ -731,7 +731,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
                 return self.json(charset)
             elif ct.startswith('text/'):
                 return self.content_string(charset)
-        return response.get_content()
+        return self.get_content()
 
     def raise_for_status(self):
         '''Raises stored :class:`HTTPError` or :class:`URLError`, if occured.

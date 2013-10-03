@@ -15,7 +15,8 @@ __all__ = ['close_on_exec',
            'EXIT_SIGNALS',
            'get_uid',
            'get_gid',
-           'get_maxfd']
+           'get_maxfd',
+           'set_owner_process']
 
 # See: http://msdn.microsoft.com/en-us/library/ms724935(VS.85).aspx
 SetHandleInformation = ctypes.windll.kernel32.SetHandleInformation
@@ -24,12 +25,10 @@ SetHandleInformation.argtypes = (ctypes.wintypes.HANDLE, ctypes.wintypes.DWORD,
 SetHandleInformation.restype = ctypes.wintypes.BOOL
 
 HANDLE_FLAG_INHERIT = 0x00000001
-
-# The BREAK signal for windows
 EXIT_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGABRT, signal.SIGBREAK)
-if sys.version_info >= (2, 7):
-    SIG_NAMES[signal.CTRL_C_EVENT] = 'CTRL C EVENT'
-    EXIT_SIGNALS += (signal.CTRL_C_EVENT,)
+
+
+set_owner_process = lambda gid, uid: None
 
 
 def get_parent_id():

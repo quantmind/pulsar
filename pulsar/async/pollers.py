@@ -142,8 +142,11 @@ class Poller(object):
         if fd in self._handlers:
             mask, reader, writer, error = self._handlers[fd]
         else:
-            raise KeyError('Received an event on unregistered file '
-                           'descriptor %s' % fd)
+            if not loop.exit_signal:
+                raise KeyError('Received an event on unregistered file '
+                               'descriptor %s' % fd)
+            else:
+                return False
         processed = False
         if events & READ:
             processed = True

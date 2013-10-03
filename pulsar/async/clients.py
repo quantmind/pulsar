@@ -459,6 +459,7 @@ class Client(Producer):
                                             connection)
             if self.force_sync:  # synchronous response
                 if not event_loop.is_running():
+                    event_loop.clear()
                     event_loop.run_until_complete(response.on_finished,
                                                   timeout=request.timeout)
                     return response.on_finished.get_result()

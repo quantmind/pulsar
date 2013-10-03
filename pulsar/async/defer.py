@@ -62,9 +62,6 @@ call_back = namedtuple('call_back', 'call error continuation')
 log_exc_info = ('error', 'critical')
 
 
-pass_through = lambda result: result
-
-
 def is_relevant_tb(tb):
     return not ('__skip_traceback__' in tb.tb_frame.f_locals or
                 '__unittest' in tb.tb_frame.f_globals)
@@ -640,27 +637,25 @@ the :class:`Deferred` object.'''
 
         :return: ``self``
         '''
-        errback = errback if errback is not None else pass_through
-        if hasattr(callback, '__call__') and hasattr(errback, '__call__'):
+        if not (callback or errback):
+            return
+        if ((not callback or hasattr(callback, '__call__')) and
+                (not errback or hasattr(errback, '__call__'))):
             if self._callbacks is None:
                 self._callbacks = deque()
             self._callbacks.append(call_back(callback, errback, continuation))
             self._run_callbacks()
         else:
-            raise TypeError('callbacks must be callable')
+            raise TypeError('callbacks must be callable or None')
         return self
 
     def add_errback(self, errback, continuation=None):
         '''Same as :meth:`add_callback` but only for errors.'''
-        return self.add_callback(pass_through, errback, continuation)
+        return self.add_callback(None, errback, continuation)
 
     def add_both(self, callback, continuation=None):
         '''Equivalent to `self.add_callback(callback, callback)`.'''
         return self.add_callback(callback, callback, continuation)
-
-    def add_callback_args(self, callback, *args, **kwargs):
-        return self.add_callback(
-            lambda result: callback(result, *args, **kwargs))
 
     def callback(self, result=None, state=None):
         '''Run registered callbacks with the given *result*.
@@ -766,23 +761,24 @@ the result is a :class:`Failure`'''
         while self._callbacks:
             callbacks = self._callbacks.popleft()
             callback = callbacks[isinstance(self.result, Failure)]
-            try:
-                self._runningCallbacks = True
+            if callback:
                 try:
-                    self.result = maybe_async(callback(self.result),
-                                              event_loop=event_loop)
-                finally:
-                    self._runningCallbacks = False
-            except Exception:
-                self.result = Failure(sys.exc_info())
-            else:
-                # if we received an asynchronous instance we add a continuation
-                if isinstance(self.result, Deferred):
-                    # Add a pause
-                    self._pause()
-                    # Add a callback to the result to resume callbacks
-                    self.result.add_both(self._continue, self)
-                    break
+                    self._runningCallbacks = True
+                    try:
+                        self.result = maybe_async(callback(self.result),
+                                                  event_loop=event_loop)
+                    finally:
+                        self._runningCallbacks = False
+                except Exception:
+                    self.result = Failure(sys.exc_info())
+                else:
+                    # received an asynchronous instance, add a continuation
+                    if isinstance(self.result, Deferred):
+                        # Add a pause
+                        self._pause()
+                        # Add a callback to the result to resume callbacks
+                        self.result.add_both(self._continue, self)
+                        break
 
     def _pause(self):
         """Stop processing until :meth:`unpause` is called."""

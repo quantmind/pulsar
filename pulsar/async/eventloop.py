@@ -43,9 +43,6 @@ def setid(self):
     return ct
 
 
-STOP_LOOP = (KeyboardInterrupt, )
-
-
 class EventLoopPolicy(BaseEventLoopPolicy):
     '''Pulsar event loop policy'''
     def get_event_loop(self):
@@ -179,20 +176,21 @@ class EventLoop(BaseEventLoop):
 
     .. attribute:: poll_timeout
 
-        The timeout in seconds when polling with ``epolL``, ``kqueue``, ``select``
-        and so forth.
+        The timeout in seconds when polling with ``epolL``, ``kqueue``,
+        ``select`` and so forth.
 
         Default: ``0.5``
 
     .. attribute:: tid
 
-        The thread id where this event loop is running. If the event loop is not
-        running this attribute is ``None``.
+        The thread id where this event loop is running. If the
+        event loop is not running this attribute is ``None``.
 
     """
     poll_timeout = 0.5
     tid = None
     pid = None
+    exit_signal = None
     task_factory = Task
 
     def __init__(self, io=None, logger=None, poll_timeout=None, timer=None,
@@ -203,9 +201,7 @@ class EventLoop(BaseEventLoop):
         self.logger = logger or LOGGER
         close_on_exec(self._io.fileno())
         self._iothreadloop = iothreadloop
-        self._handlers = {}
-        self._callbacks = deque()
-        self._scheduled = []
+        self.clear()
         self._name = None
         self._num_loops = 0
         self._default_executor = None
@@ -219,7 +215,7 @@ class EventLoop(BaseEventLoop):
     def name(self):
         name = self._name if self._name else '<not running>'
         cpu = 'CPU bound ' if self.cpubound else ''
-        return '%s %s %s' % (cpu, name, self.logger.name)
+        return '%s%s %s' % (cpu, name, self.logger.name)
 
     @property
     def io(self):
@@ -248,7 +244,7 @@ loop of the thread where it is run.'''
 
     @property
     def active(self):
-        return bool(self._callbacks or self._scheduled or self._handlers)
+        return bool(self._callbacks or self._scheduled)
 
     @property
     def num_loops(self):
@@ -572,6 +568,10 @@ the event loop to poll with a 0 timeout all the times.'''
             return callback in self._scheduled
         else:
             return callback in self._callbacks
+
+    def clear(self):
+        self._callbacks = deque()
+        self._scheduled = []
 
     def maybe_async(self, value):
         '''Run ``value`` in this event loop.

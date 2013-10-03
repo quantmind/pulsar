@@ -11,8 +11,7 @@ __all__ = ['ALL_SIGNALS',
            'SIG_NAMES',
            'SKIP_SIGNALS',
            'MAXFD',
-           'set_proctitle',
-           'set_owner_process']
+           'set_proctitle']
 
 
 SIG_NAMES = {}
@@ -45,17 +44,3 @@ except ImportError:  # pragma    nocover
 
     def set_proctitle(title):
         return
-
-
-def set_owner_process(uid, gid):
-    """ set user and group of workers processes """
-    if gid:
-        try:
-            os.setgid(gid)
-        except OverflowError:
-            # versions of python < 2.6.2 don't manage unsigned int for
-            # groups like on osx or fedora
-            os.setgid(-ctypes.c_int(-gid).value)
-
-    if uid:
-        os.setuid(uid)

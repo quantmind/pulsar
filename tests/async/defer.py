@@ -57,6 +57,17 @@ class TestDeferred(unittest.TestCase):
         self.assertRaises(TypeError, d.add_callback, 3)
         self.assertRaises(TypeError, d.add_callback, lambda r: r, 4)
 
+    def test_None_callback(self):
+        d = Deferred()
+        d.add_callback(None)
+        self.assertEqual(d._callbacks, None)
+        d.add_callback(None, None)
+        self.assertEqual(d._callbacks, None)
+        errback = lambda r: r
+        d.add_callback(None, errback)
+        self.assertTrue(d._callbacks)
+        self.assertEqual(d._callbacks[0][:2], (None, errback))
+
     def testWrongOperations(self):
         d = Deferred()
         self.assertRaises(RuntimeError, d.callback, Deferred())

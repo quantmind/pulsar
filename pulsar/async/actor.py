@@ -393,7 +393,7 @@ This method is invoked when you run the
         if initial:
             try:
                 self.cfg.when_ready(self)
-            except Exception:
+            except Exception:   # pragma    nocover
                 self.logger.exception('Unhandled exception in when_ready hook')
         try:
             exc = self.__impl.run_actor(self)

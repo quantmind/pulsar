@@ -103,6 +103,7 @@ def monitor_start(self):
     if not self.cfg.workers:
         yield self.app.worker_start(self)
     self.app.fire_event('start')
+    yield self  # yield self as last. Part of the start event chain
 
 
 def monitor_stopping(self):

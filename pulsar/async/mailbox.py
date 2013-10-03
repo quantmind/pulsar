@@ -48,7 +48,7 @@ from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .defer import Failure, Deferred, maybe_failure, maybe_async
+from .defer import Failure, Deferred, maybe_async
 from .protocols import ProtocolConsumer
 from .clients import Client, Request
 from .proxy import actorid, get_proxy, get_command, ActorProxy
@@ -136,7 +136,7 @@ protocol.'''
         self._parser = FrameParser(kind=2)
         actor = get_actor()
         if actor.is_arbiter():
-            self.connection.bind_event('connection_lost',
+            self.connection.bind_event('connection_lost', None,
                                        self._connection_lost)
 
     def request(self, command, sender, target, args, kwargs):
@@ -172,12 +172,13 @@ protocol.'''
 
     ########################################################################
     ##    INTERNALS
-    def _connection_lost(self, exc):
+    def _connection_lost(self, failure):
         actor = get_actor()
-        if not actor.is_running():
-            exc = maybe_failure(exc)
-            if isinstance(exc, Failure):
-                exc.log(msg='Connection lost with actor.', level='debug')
+        if actor.is_running():
+            failure.log(msg='Connection lost with actor.', level='warning')
+        else:
+            failure.mute()
+        return failure
 
     def _responde(self, message):
         actor = get_actor()
