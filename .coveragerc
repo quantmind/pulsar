@@ -16,7 +16,7 @@ omit =
     examples/httpbin/config.py
     examples/philosophers/config.py
     examples/webmail/*
-    pshell,examples/taskqueue/winservice.py
+    examples/taskqueue/winservice.py
     examples/pshell/*
     examples/philosophers/*
     examples/taskqueue/test_redis.py

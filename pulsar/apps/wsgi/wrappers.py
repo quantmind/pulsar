@@ -200,9 +200,6 @@ class WsgiResponse(object):
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
 
-    def __contains__(self, header):
-        return self.has_header(header)
-
     @property
     def is_streamed(self):
         """If the response is streamed (the response is not an iterable with
@@ -260,6 +257,7 @@ This is usually `True` if a generator is passed to the response object."""
 
     def has_header(self, header):
         return header in self.headers
+    __contains__ = has_header
 
     def __setitem__(self, header, value):
         self.headers[header] = value

@@ -79,7 +79,6 @@ class WsgiResponseTests(unittest.TestCase):
         auths = http.HTTPBasicAuth('pippo', 'pluto').header()
         self.assertTrue(parse(auths).authenticated({}, 'pippo', 'pluto'))
 
-    #### TO INCLUDE
     def testCookies(self):
         response = wsgi.WsgiResponse()
         expires = datetime.now() + timedelta(seconds=3600)
@@ -115,6 +114,12 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertTrue('; httponly' in str(example_cookie))
         self.assertTrue(example_cookie['httponly'])
 
+    def test_headers(self):
+        response = wsgi.WsgiResponse(200)
+        response['content-type'] = 'text/plain'
+        self.assertTrue('content-type' in response)
+        self.assertTrue(response.has_header('content-type'))
+        self.assertEqual(response['content-type'], 'text/plain')
 
 class testWsgiApplication(unittest.TestCase):
 
