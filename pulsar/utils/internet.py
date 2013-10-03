@@ -94,7 +94,7 @@ def parse_address(netloc, default_port=8000):
     if ":" in netloc:
         port = netloc.split(':', 1)[1]
         if not port.isdigit():
-            raise RuntimeError("%r is not a valid port number." % port)
+            raise ValueError("%r is not a valid port number." % port)
         port = int(port)
     else:
         port = default_port

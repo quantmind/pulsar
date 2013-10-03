@@ -3,7 +3,7 @@ import socket
 
 from pulsar import Connection, Protocol, TcpServer, async_while
 from pulsar.utils.pep import get_event_loop, new_event_loop
-from pulsar.utils.internet import is_socket_closed
+from pulsar.utils.internet import is_socket_closed, format_address
 from pulsar.apps.test import unittest
 from pulsar.async.pollers import READ
 
@@ -42,6 +42,9 @@ class TestEventLoop(unittest.TestCase):
         self.assertEqual(len(sockets), 1)
         sock = sockets[0]
         self.assertEqual(sock.family, socket.AF_INET6)
+        address = sock.getsockname()
+        faddress = format_address(address)
+        self.assertEqual(faddress, '[::1]:%s' % address[1])
         loop.stop_serving(sock)
         self.assertTrue(is_socket_closed(sock))
 

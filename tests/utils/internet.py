@@ -7,7 +7,8 @@ import time
 import pulsar
 from pulsar import platform
 from pulsar.utils.internet import (parse_address, parse_connection_string,
-                                   socketpair, close_socket, is_socket_closed)
+                                   socketpair, close_socket, is_socket_closed,
+                                   format_address)
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mock
 
@@ -25,6 +26,12 @@ class TestParseAddress(unittest.TestCase):
         self.assertEqual(address, ('::1', 8000))
         address = parse_address('[::1]:8070')
         self.assertEqual(address, ('::1', 8070))
+
+    def test_parse_error(self):
+        self.assertRaises(ValueError, parse_address, ())
+        self.assertRaises(ValueError, parse_address, (1,))
+        self.assertRaises(ValueError, parse_address, (1, 2, 3))
+        self.assertRaises(ValueError, parse_address, '127.0.0.1:bla')
 
 
 class TestParseConnectionString(unittest.TestCase):
@@ -86,3 +93,18 @@ class TestMisc(unittest.TestCase):
         close_socket(server)
         self.assertTrue(is_socket_closed(server))
         self.assertTrue(is_socket_closed(None))
+
+    def test_close_socket(self):
+        close_socket(None)
+        sock = mock.Mock()
+        sock.configure_mock(**{'shutdown.side_effect': TypeError,
+                               'close.side_effect': TypeError})
+        close_socket(sock)
+        sock.shutdown.assert_called_with(socket.SHUT_RDWR)
+        sock.close.assert_called_with()
+
+    def test_format_address(self):
+        self.assertRaises(ValueError, format_address, (1,))
+        self.assertRaises(ValueError, format_address, (1, 2, 3))
+        self.assertRaises(ValueError, format_address, (1, 2, 3, 4, 5))
+        self.assertEqual(format_address(1), '1')
