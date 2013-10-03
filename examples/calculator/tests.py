@@ -138,7 +138,8 @@ class TestRpcOnThread(unittest.TestCase):
         handler = Root({'calc': Calculator})
         self.assertEqual(handler.parent, None)
         self.assertEqual(handler.root, handler)
-        self.assertRaises(rpc.NoSuchFunction, handler.get_handler, 'cdscsdcscd')
+        self.assertRaises(rpc.NoSuchFunction, handler.get_handler,
+                          'cdscsdcscd')
         calc = handler.subHandlers['calc']
         self.assertEqual(calc.parent, handler)
         self.assertEqual(calc.root, handler)

@@ -156,7 +156,7 @@ For full coverage run tests with the following flags::
 
 .. _kudo:
 
-Kudo
+Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
 and has been developed using ideas from nodejs_ (api design), Twisted_
