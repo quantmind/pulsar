@@ -53,23 +53,6 @@ def exception(code, msg):
     raise cls(msg)
 
 
-def wrap_object_call(fname, namefunc):
-
-    def _(self, *args, **kwargs):
-        f = getattr(self, fname)
-        return f(*args, **kwargs)
-    _.__name__ = namefunc
-    return _
-
-
-def rpcerror(func, args, kwargs, discount=0):
-    msg = checkarity(func, args, kwargs, discount=discount)
-    if msg:
-        raise InvalidParams('Invalid Parameters. %s' % msg)
-    else:
-        raise
-
-
 def rpc_method(func, doc=None, format='json', request_handler=None):
     '''A decorator which exposes a function ``func`` as an rpc function.
 
@@ -89,7 +72,11 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
         try:
             return func(*args, **kwargs)
         except TypeError:
-            rpcerror(func, args, kwargs)
+            msg = checkarity(func, args, kwargs)
+            if msg:
+                raise InvalidParams('Invalid Parameters. %s' % msg)
+            else:
+                raise
 
     _.__doc__ = doc or func.__doc__
     _.__name__ = func.__name__

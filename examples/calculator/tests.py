@@ -3,7 +3,7 @@ from pulsar import send
 from pulsar.apps import rpc
 from pulsar.apps.test import unittest, dont_run_with_thread
 
-from .manage import server
+from .manage import server, Root, Calculator
 
 
 class TestRpcOnThread(unittest.TestCase):
@@ -133,6 +133,17 @@ class TestRpcOnThread(unittest.TestCase):
     def test_sync_ping(self):
         self.assertEqual(self.sync.ping(), 'pong')
         self.assertEqual(self.sync.ping(), 'pong')
+
+    def test_docs(self):
+        handler = Root({'calc': Calculator})
+        self.assertEqual(handler.parent, None)
+        self.assertEqual(handler.root, handler)
+        self.assertRaises(rpc.NoSuchFunction, handler.get_handler, 'cdscsdcscd')
+        calc = handler.subHandlers['calc']
+        self.assertEqual(calc.parent, handler)
+        self.assertEqual(calc.root, handler)
+        docs = handler.docs()
+        self.assertTrue(docs)
 
 
 @dont_run_with_thread
