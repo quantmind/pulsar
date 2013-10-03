@@ -1,6 +1,7 @@
 import socket
 import sys
 import math
+import logging
 from functools import partial, reduce
 from threading import Lock
 
@@ -386,7 +387,9 @@ class Client(Producer):
         if self.event_loop:
             return self.event_loop
         elif self.force_sync:
-            self.event_loop = new_event_loop(iothreadloop=False)
+            logger = logging.getLogger(('pulsar.%s' % self).lower())
+            self.event_loop = new_event_loop(iothreadloop=False,
+                                             logger=logger)
             return self.event_loop
         else:
             return get_event_loop()

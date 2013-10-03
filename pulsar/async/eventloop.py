@@ -94,6 +94,10 @@ it is created by :meth:`EventLoop.call_soon`, :meth:`EventLoop.call_later`,
     def __lt__(self, other):
         return self.deadline < other.deadline
 
+    def __repr__(self):
+        return '%s: %s' % (self.__class__.__name__, self._callback)
+    __str__ = __repr__
+
     @property
     def deadline(self):
         return self._deadline
@@ -214,10 +218,8 @@ class EventLoop(BaseEventLoop):
     @property
     def name(self):
         name = self._name if self._name else '<not running>'
-        if self.cpubound:
-            return 'CPU bound %s %s' % (self.__class__.__name__, name)
-        else:
-            return '%s %s' % (self.__class__.__name__, name)
+        cpu = 'CPU bound ' if self.cpubound else ''
+        return '%s %s %s' % (cpu, name, self.logger.name)
 
     @property
     def io(self):
@@ -641,14 +643,25 @@ the event loop to poll with a 0 timeout all the times.'''
         while self._scheduled and self._scheduled[0].deadline <= now:
             self._callbacks.append(heappop(self._scheduled))
         #
-        # Call the callbacks
+        # Run callbacks
         callbacks = self._callbacks
         todo = len(callbacks)
-        call = self._call
-        if self._name != 'MainThread':
-            self.logger.info('Got %d callbacks' % todo)
         for i in range(todo):
-            call(callbacks.popleft())
+            exc_info = None
+            callback = callbacks.popleft()
+            try:
+                value = callback()
+            except socket.error as e:
+                if self._raise_loop_error(e):
+                    exc_info = sys.exc_info()
+            except Exception:
+                exc_info = sys.exc_info()
+            else:
+                if isgenerator(value):
+                    self.task_factory(value, event_loop=self)
+            if exc_info:
+                Failure(exc_info).log(
+                    msg='Unhadled exception in event loop callback.')
 
     def _poll(self, timeout):
         callbacks = self._callbacks
@@ -663,17 +676,6 @@ the event loop to poll with a 0 timeout all the times.'''
         else:
             for fd, events in event_pairs:
                 callbacks.append(partial(io.handle_events, self, fd, events))
-
-    def _call(self, callback, *args):
-        try:
-            self.maybe_async(callback(*args))
-        except socket.error as e:
-            if self._raise_loop_error(e):
-                Failure(sys.exc_info()).log(
-                    msg='Unhadled exception in event loop callback.')
-        except Exception as e:
-            Failure(sys.exc_info()).log(
-                msg='Unhadled exception in event loop callback.')
 
     def _raise_loop_error(self, e):
         # Depending on python version and EventLoop implementation,
