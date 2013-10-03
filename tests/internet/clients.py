@@ -69,23 +69,3 @@ class TestClients(unittest.TestCase):
             self.assertEqual(len(client.connection_pools), 1)
 
         client.get_event_loop().call_soon(_test_bad_request)
-
-    def test_bad_request_in_thread(self):
-        address = ('127.0.0.1', 9099)
-        client = Echo(full_response=True)
-        done = Deferred()
-        def _test():
-            result = client.request(address, b'Hello!')
-            connection = result.connection
-            self.assertTrue(connection)
-            self.assertEqual(connection.session, 1)
-            self.assertEqual(connection.current_consumer, result)
-            self.assertEqual(connection.producer, client)
-            try:
-                yield result.on_finished
-            except socket.error as e:
-                pass
-            self.assertEqual(len(client.connection_pools), 1)
-
-        client.get_event_loop().call_soon_threadsafe(safe, _test, done)
-        return done

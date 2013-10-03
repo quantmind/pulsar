@@ -288,7 +288,7 @@ Utilities
 import sys
 
 import pulsar
-from pulsar import EventHandler
+from pulsar import EventHandler, maybe_failure
 from pulsar.apps import tasks
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
@@ -322,7 +322,7 @@ def dont_run_with_thread(obj):
 def mute_failure(test, failure):
     #TODO: add test flag to control muting
     if not test.cfg.log_failures:
-        failure.mute()
+        maybe_failure(failure).mute()
 
 
 class ExitTest(Exception):

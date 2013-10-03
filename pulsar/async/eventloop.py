@@ -152,10 +152,12 @@ class LoopingCall(object):
         try:
             result = self.event_loop.async(self.callback(*self.args))
         except Exception:
-            result = Failure(sys.exc_info())
-            self.cancel(result)
+            self.cancel()
+            exc_info = sys.exc_info()
         else:
             result.add_callback(self._continue, self.cancel)
+            return
+        Failure(exc_info).log(msg='Exception in looping callback')
 
     def _continue(self, result):
         if not self._cancelled:
@@ -296,6 +298,7 @@ raise TimeoutError (but don't cancel the future).'''
                     raise TimeoutError
             future.cancel()
             result = future.result
+            #self.clear()
             if isinstance(result, Failure):
                 result.throw()
             else:

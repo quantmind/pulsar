@@ -457,12 +457,10 @@ class Client(Producer):
             event_loop.call_soon_threadsafe(self._response, event_loop,
                                             response, request, new_connection,
                                             connection)
-            if self.force_sync:  # synchronous response
-                if not event_loop.is_running():
-                    event_loop.clear()
-                    event_loop.run_until_complete(response.on_finished,
-                                                  timeout=request.timeout)
-                    return response.on_finished.get_result()
+            if self.force_sync and not event_loop.is_running():
+                event_loop.run_until_complete(response.on_finished,
+                                              timeout=request.timeout)
+                return response.on_finished.get_result()
         return response
 
     def get_connection(self, request, connection=None):

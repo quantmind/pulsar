@@ -26,7 +26,7 @@ def cause_terminate(actor):
         actor.stop = lambda exc=None: False
     else:
         actor.event_loop.call_soon(cause_timeout, actor)
-    
+
 
 class TestArbiterThread(ActorTestMixin, unittest.TestCase):
     concurrency = 'thread'
@@ -44,7 +44,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue('server' in info)
         server = info['server']
         self.assertEqual(server['state'], 'running')
-    
+
     @run_on_arbiter
     def test_arbiter_mailbox(self):
         arbiter = pulsar.get_actor()
@@ -54,7 +54,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         for monitor in arbiter.monitors.values():
             mailbox = monitor.mailbox
             self.assertFalse(hasattr(mailbox, 'request'))
-            
+
     @run_on_arbiter
     def test_registered(self):
         '''Test the arbiter in its process domain'''
@@ -63,7 +63,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertTrue(arbiter.registered)
         self.assertTrue('arbiter' in arbiter.registered)
         self.assertTrue('test' in arbiter.registered)
-    
+
     @run_on_arbiter
     def test_ping_test_worker(self):
         arbiter = pulsar.get_actor()
@@ -74,7 +74,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         result = yield multi_async((arbiter.send(w, 'ping') for w in workers))
         self.assertEqual(len(result), len(workers))
         self.assertEqual(result, len(result)*['pong'])
-        
+
     @run_on_arbiter
     def test_spawning_in_arbiter(self):
         arbiter = pulsar.get_actor()
@@ -89,14 +89,14 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         yield send(proxy, 'stop')
-        
+
     @run_on_arbiter
     def testBadMonitor(self):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.monitors)
         name = list(arbiter.monitors.values())[0].name
         self.assertRaises(KeyError, arbiter.add_monitor, name)
-        
+
     @run_on_arbiter
     def testTimeout(self):
         '''Test a bogus actor for timeout.'''
@@ -140,7 +140,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
                                  lambda: proxy.aid in arbiter.managed_actors)
         self.assertTrue(proxy in arbiter.terminated_actors)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
-    
+
     @run_on_arbiter
     def test_actor_termination(self):
         '''Terminate the remote actor via the concurreny terminate method.'''
@@ -162,36 +162,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
                                  lambda: proxy.aid in arbiter.managed_actors)
         self.assertFalse(proxy in arbiter.terminated_actors)
         self.assertFalse(proxy.aid in arbiter.managed_actors)
-        
-    @unittest.skipUnless(platform.is_posix, 'For posix systems only')
-    @run_on_arbiter
-    def testFakeSignal(self):
-        arbiter = pulsar.get_actor()
-        self.assertTrue(arbiter.is_arbiter())
-        # Now put the signal in the queue
-        arbiter.signal_queue.put('foooooo')
-        self.assertTrue(arbiter.signal_queue.qsize() >= 1)
-        # we need to yield so that the arbiter has a chance to process the signal
-        yield pulsar.NOT_DONE
-        # The arbiter should have processed the fake signal
-        #TODO this is not valid in multiprocessing!
-        #self.assertEqual(arbiter.signal_queue.qsize(), 0)
-    
-    @unittest.skipUnless(platform.is_posix, 'For posix systems only')    
-    @run_on_arbiter
-    def testSignal(self):
-        arbiter = pulsar.get_actor()
-        self.assertTrue(arbiter.is_arbiter())
-        for sig in system.SIG_NAMES:
-            if sig not in system.EXIT_SIGNALS:
-                break
-        # send the signal
-        arbiter.signal_queue.put(sig)
-        self.assertTrue(arbiter.signal_queue.qsize() >= 1)
-        yield pulsar.NOT_DONE
-        #TODO this is not valid in multiprocessing!
-        #self.assertEqual(arbiter.signal_queue.qsize(), 0)
-        
+
     def test_no_arbiter_in_worker_domain(self):
         worker = pulsar.get_actor()
         self.assertFalse(worker.is_arbiter())

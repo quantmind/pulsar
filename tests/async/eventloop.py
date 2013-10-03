@@ -86,12 +86,13 @@ class TestEventLoop(unittest.TestCase):
             def __call__(self):
                 self.c += 1
                 if self.c == self.loops:
-                    d.callback(self.c)
                     try:
                         raise ValueError('test periodic')
                     except Exception:
-                        mute_failure(test, Failure(sys.exc_info()))
+                        mute_failure(test, sys.exc_info())
                         raise
+                    finally:
+                        d.callback(self.c)
         #
         every = 2
         loops = 2
