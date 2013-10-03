@@ -19,7 +19,7 @@ Ver. 0.7.0 - Development
   element of an :ref:`Html document <wsgi-html-document>`.
 * Added :class:`pulsar.Actor.stream` attribute to write messages without using
   the logger.
-* **776 regression tests**, **88% coverage**.
+* **771 regression tests**, **88% coverage**.
 
 .. _`rfc2616 sec 5.2`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
 
