@@ -149,7 +149,7 @@ back with the acknowledgement from the monitor.
         if self.can_continue(actor):
             ack = None
             if actor.is_running():
-                actor.logger.debug('%s notifying the monitor', actor)
+                actor.logger.debug('notifying the monitor')
                 # if an error occurs, shut down the actor
                 ack = actor.send('monitor', 'notify', actor.info())\
                            .add_errback(actor.stop)
@@ -159,6 +159,8 @@ back with the acknowledgement from the monitor.
             actor.next_periodic_task = actor.event_loop.call_later(
                 min(next, MAX_NOTIFY), self.periodic_task, actor)
             return ack
+        else:
+            actor.logger.info('===================================== QUITTING')
 
     def stop(self, actor, exc):
         '''Gracefully stop the ``actor``.'''
@@ -218,9 +220,6 @@ class ProcessMixin(object):
         actor.start_coverage()
 
     def setup_event_loop(self, actor):
-        # After the coverage start this part is not covered for some reasons.
-        # TODO: move this bit of code into a different method so that we
-        # can measure coverage.
         event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                                     poll_timeout=actor.params.poll_timeout)
         actor.mailbox = self.create_mailbox(actor, event_loop)

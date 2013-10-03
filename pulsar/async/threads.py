@@ -1,3 +1,4 @@
+import logging
 from multiprocessing import dummy, current_process
 from threading import Lock
 from functools import partial
@@ -72,8 +73,9 @@ class PoolThread(Thread):
 
 class IOqueue(Poller):
 
-    def __init__(self, queue, maxtasks):
+    def __init__(self, actor, queue, maxtasks):
         super(IOqueue, self).__init__()
+        self._actor = actor
         self._queue = queue
         self._maxtasks = maxtasks
         self._wakeup = 0
@@ -88,6 +90,8 @@ install itself as a request loop rather than the IO event loop.'''
         return True
 
     def poll(self, timeout=0.5):
+        if not self._actor.is_running():
+            raise StopEventLoop
         if self._maxtasks and self.received >= self._maxtasks:
             if self.completed < self.received:
                 return ()
@@ -157,6 +161,7 @@ class ThreadPool(object):
     This pool maintains a group of threads to perform asynchronous tasks via
     the :meth:`apply` method.
     '''
+    worker_name = 'pool-worker'
     def __init__(self, actor=None, threads=None, check_every=5, maxtasks=None):
         self._actor = actor or get_actor()
         self._check_every = check_every
@@ -193,8 +198,10 @@ class ThreadPool(object):
     def apply(self, func, *args, **kwargs):
         '''Equivalent to ``func(*args, **kwargs)``.
 
-This method create a new task for function ``func`` and adds it to the queue.
-Return a :class:`Deferred` called back once the task has finished.'''
+        This method create a new task for function ``func`` and adds it to
+        the queue.
+        Return a :class:`Deferred` called back once the task has finished.
+        '''
         assert self._state == RUN, 'Pool not running'
         d = Deferred()
         self._inqueue.put((d, func, args, kwargs))
@@ -202,7 +209,8 @@ Return a :class:`Deferred` called back once the task has finished.'''
     def close(self, timeout=None):
         '''Close the thread pool.
 
-Return a :class:`Deferred` fired when all threads have exited.'''
+        Return a :class:`Deferred` fired when all threads have exited.
+        '''
         if self._state == RUN:
             self._state = CLOSE
             if self.event_loop.is_running():
@@ -267,11 +275,9 @@ Return a :class:`Deferred` fired when all threads have exited.'''
         return bool(cleaned)
 
     def _repopulate_pool(self):
-        """Bring the number of pool processes up to the specified number,
-        for use after reaping workers which have exited.
-        """
         while len(self._pool) < self._threads:
-            worker = PoolThread(self._actor, name='PoolWorker',
+            worker = PoolThread(self._actor,
+                                name=self.worker_name,
                                 target=self._run)
             self._pool.append(worker)
             worker.daemon = True
@@ -283,9 +289,11 @@ Return a :class:`Deferred` fired when all threads have exited.'''
             self._inqueue.put(None)
 
     def _run(self):
-        poller = IOqueue(self._inqueue, self._maxtasks)
+        # The run method for the threads in this therad pool
+        poller = IOqueue(self._actor, self._inqueue, self._maxtasks)
         # Create the event loop which get tasks from the task queue
-        event_loop = new_event_loop(io=poller, poll_timeout=1,
-                                    logger=self._actor.logger)
+        logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
+                                                     self.worker_name))
+        event_loop = new_event_loop(io=poller, poll_timeout=1, logger=logger)
         event_loop.add_reader(poller.fileno(), poller.handle_events)
         event_loop.run_forever()

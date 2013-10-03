@@ -168,23 +168,24 @@ class LoopingCall(object):
 
 
 class EventLoop(BaseEventLoop):
-    """A pluggable event loop which conforms with the pep-3156_ API. The
-event loop is the place where most asynchronous operations are carried out.
+    """A pluggable event loop which conforms with the pep-3156_ API.
 
-.. attribute:: poll_timeout
+    The event loop is the place where most asynchronous operations
+    are carried out.
 
-    The timeout in seconds when polling with ``epolL``, ``kqueue``, ``select``
-    and so forth.
+    .. attribute:: poll_timeout
 
-    Default: ``0.5``
+        The timeout in seconds when polling with ``epolL``, ``kqueue``, ``select``
+        and so forth.
 
-.. attribute:: tid
+        Default: ``0.5``
 
-    The thread id where this event loop is running. If the event loop is not
-    running this attribute is ``None``.
+    .. attribute:: tid
 
-"""
-    # Never use an infinite timeout here - it can stall epoll
+        The thread id where this event loop is running. If the event loop is not
+        running this attribute is ``None``.
+
+    """
     poll_timeout = 0.5
     tid = None
     pid = None
@@ -644,6 +645,8 @@ the event loop to poll with a 0 timeout all the times.'''
         callbacks = self._callbacks
         todo = len(callbacks)
         call = self._call
+        if self._name != 'MainThread':
+            self.logger.info('Got %d callbacks' % todo)
         for i in range(todo):
             call(callbacks.popleft())
 
