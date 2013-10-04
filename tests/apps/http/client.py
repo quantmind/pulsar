@@ -534,3 +534,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(results), N)
         for r in results:
             self.assertEqual(r.status_code, 200)
+
+    def test_send_files(self):
+        client = self.client()
+        files = {'test': 'simple file'}
+        response = yield client.post(self.httpbin('post'), files=files
+                                     ).on_finished
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files'], {'test': ['simple file']})

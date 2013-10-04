@@ -213,14 +213,16 @@ class HttpBin(wsgi.Router):
     @async()
     def info_data(self, request, **params):
         headers = self.getheaders(request)
-        args = {}
-        if request.method in ENCODE_URL_METHODS:
-            args = request.url_data
-        else:
-            args = yield request.body_data()
         data = {'method': request.method,
-                'headers': headers,
-                'args': dict(args)}
+                'headers': headers}
+        if request.method in ENCODE_URL_METHODS:
+            data['args'] = dict(request.url_data)
+        else:
+            args, files = yield request.data_and_files()
+            files = dict(((name, [p.value for p in part]) for name, part
+                          in dict(files).items()))
+            data.update((('args', dict(args)),
+                         ('files', files)))
         data.update(params)
         yield data
 

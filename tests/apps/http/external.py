@@ -37,18 +37,12 @@ class ExternalBase(TestHttpClientBase):
         client = self.client()
         response = yield client.get('http://www.bbc.co.uk/').on_finished
         self.assertEqual(response.status_code, 200)
+        self.after_response(response)
 
     def test_get_https(self):
         client = self.client()
         response = yield client.get('https://github.com/trending').on_finished
         self.assertEqual(response.status_code, 200)
-
-    def test_get_httpbin(self):
-        client = self.client()
-        response = yield client.get('http://httpbin.org/get').on_finished
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'], 'application/json')
-        self.after_response(response)
 
     def test_bad_host(self):
         client = self.client()
@@ -62,17 +56,6 @@ class ExternalBase(TestHttpClientBase):
         else:
             self.assertTrue(response.request.proxy)
             self.assertTrue(response.status_code >= 400)
-
-    def test_send_files(self):
-        client = self.client()
-        files = {'test': 'simple file'}
-        response = yield client.post('http://httpbin.org/post', files=files
-                                     ).on_finished
-        self.assertEqual(response.status_code, 200)
-        ct = response.request.headers['content-type']
-        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
-        data = response.json()
-        self.assertEqual(data['files'], files)
 
 
 class ProxyExternal(ExternalBase):

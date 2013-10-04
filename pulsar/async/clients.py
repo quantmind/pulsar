@@ -171,53 +171,7 @@ class ConnectionPool(ConnectionProducer):
             # build the new connection
             connection = self.new_connection(client.consumer_factory,
                                              producer=client)
-            # Bind the connection_lost to connection to handle dangling
-            # connections
-            reconnect = partial(self._try_reconnect, connection)
-            connection.bind_event('connection_lost', reconnect, reconnect)
         return connection
-
-    #########################################################################
-    ##    INTERNALS
-    def _try_reconnect(self, connection, exc):
-        # handle Read Exception on the transport
-        if is_failure(exc, socket.timeout, socket.error):
-            # Have we been here before?
-            consumer = connection.current_consumer
-            if consumer is None:
-                # No consumer. The address was probably wrong.
-                # Connection Refused
-                return exc
-            client = connection.producer
-            # The connection has processed request before and the consumer
-            # has never received data. If the client allows it, try to
-            # reconnect, it was probably a stale connection.
-            retries = consumer.can_reconnect(client.max_reconnect, exc)
-            if retries:
-                connection._current_consumer = None
-                lag = retries - 1
-                if lag:
-                    lag = client.reconnect_time_lag(lag)
-                    connection.logger.debug('Reconnecting in %s seconds', lag)
-                    loop = get_event_loop()
-                    loop.call_later(lag, self._reconnect, client, consumer)
-                else:
-                    connection.logger.debug('Reconnecting')
-                    self._reconnect(client, consumer)
-                return consumer
-        return exc
-
-    def _reconnect(self, client, consumer):
-        # get a new connection
-        conn = self.get_or_create_connection(client)
-        # Start the response without firing the events
-        conn.set_consumer(consumer)
-        consumer.start(consumer.request)
-
-    def _remove_connection(self, connection, exc=None):
-        with self.lock:
-            super(ConnectionPool, self)._remove_connection(connection, exc)
-            self._available_connections.discard(connection)
 
 
 def release_response_connection(response):
@@ -536,17 +490,9 @@ class Client(Producer):
         to finish.'''
         self.close(async=False)
 
-    def reconnect_time_lag(self, lag):
-        lag = self.reconnect_time_lag*(math.log(lag) + 1)
-        return round(lag, 1)
-
-    def remove_pool(self, pool):
-        key = None
-        for key, p in self.connection_pools.items():
-            if pool is p:
-                break
-        if key:
-            self.connection_pools.pop(key)
+    #def reconnect_time_lag(self, lag):
+    #    lag = self.reconnect_time_lag*(math.log(lag) + 1)
+    #    return round(lag, 1)
 
     def timeit(self, times, *args, **kwargs):
         '''Send ``times`` requests asynchronously and evaluate the time
