@@ -4,7 +4,7 @@ import sys
 from functools import partial
 from base64 import b64decode
 
-import pulsar
+import examples
 from pulsar import send, Failure
 from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
@@ -553,7 +553,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(data['args']['numero'],['1','2'])
 
     def test_send_images(self):
-        path = Path(pulsar.__file__).parent.parent
+        path = Path(examples.__file__).parent.parent
         path = path.join('docs', 'source', '_static')
         files = []
         sent = []

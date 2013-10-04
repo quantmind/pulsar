@@ -2,10 +2,14 @@ Ver. 0.7.0 - Development
 ===========================
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
-  * SSL support
-  * Proxy and Tunneling
-  * Cookie support
-* Coverage can be turned on by using the ``--coverage`` option.
+    * SSL support
+    * Proxy and Tunneling
+    * Cookie support
+    * File upload
+
+* Code coverage can be turned on by using the ``--coverage`` option. By
+  passing in the command line ``--coveralls`` when testing, coverage is
+  published to coveralls.io.
 * WSGI respondes 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
