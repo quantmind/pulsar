@@ -1,5 +1,6 @@
 '''Test Internet connections and wrapped socket methods in event loop.'''
 import socket
+from test.support import find_unused_port
 
 from pulsar import Connection, Protocol, TcpServer, async_while
 from pulsar.utils.pep import get_event_loop, new_event_loop
@@ -48,6 +49,36 @@ class TestEventLoop(unittest.TestCase):
         loop.stop_serving(sock)
         self.assertTrue(is_socket_closed(sock))
 
+    def test_start_serving_error(self):
+        loop = get_event_loop()
+        exc = None
+        try:
+            yield loop.start_serving(Protocol, '127.0.0.1', 0, sock=1)
+        except ValueError as e:
+            exc = e
+        assert exc
+        exc = None
+        try:
+            yield loop.start_serving(Protocol)
+        except ValueError as e:
+            exc = e
+        assert exc
+
+    def test_create_connection_error(self):
+        loop = get_event_loop()
+        exc = None
+        try:
+            yield loop.create_connection(Protocol, '127.0.0.1', 0, sock=1)
+        except ValueError as e:
+            exc = e
+        assert exc
+        exc = None
+        try:
+            yield loop.create_connection(Protocol)
+        except ValueError as e:
+            exc = e
+        assert exc
+
     def test_echo_serve(self):
         loop = get_event_loop()
         server = TcpServer(loop, '127.0.0.1', 0, EchoServerProtocol)
@@ -66,3 +97,14 @@ class TestEventLoop(unittest.TestCase):
         yield server.stop_serving()
         yield async_while(3, lambda: not is_socket_closed(sock))
         self.assertTrue(is_socket_closed(sock))
+
+    def __test_create_connection_local_addr(self):
+        loop = get_event_loop()
+        with run_test_server(loop, EchoServerProtocol) as server:
+            host = server.address[0]
+            port = find_unused_port()
+            tr, pr = yield loop.create_connection(Connection, *server.address,
+                                                  local_addr=(host, port))
+            expected = pr.transport.get_extra_info('socket').getsockname()[1]
+            self.assertEqual(port, expected)
+            tr.close()

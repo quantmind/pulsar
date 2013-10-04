@@ -461,18 +461,18 @@ default signal handler ``signal.SIG_DFL``.'''
 
         It is the asynchronous equivalent of ``socket.create_connection``.
 
-        :parameter protocol_factory: The callable to create the
+        :param protocol_factory: The callable to create the
             :class:`Protocol` which handle the connection.
-        :parameter host: If host is an empty string or None all interfaces are
+        :param host: If host is an empty string or None all interfaces are
             assumed and a list of multiple sockets will be returned (most
             likely one for IPv4 and another one for IPv6)
-        :parameter port:
-        :parameter ssl:
-        :parameter family:
-        :parameter proto:
-        :parameter flags:
-        :parameter sock:
-        :parameter local_addr: if supplied, it must be a 2-tuple
+        :param port:
+        :param ssl:
+        :param family:
+        :param proto:
+        :param flags:
+        :param sock:
+        :param local_addr: if supplied, it must be a 2-tuple
             ``(host, port)`` for the socket to bind to as its source address
             before connecting.
         :return: a :class:`Deferred` and its result on success is the
@@ -491,27 +491,29 @@ default signal handler ``signal.SIG_DFL``.'''
                       sock=None, backlog=100, reuse_address=None):
         """Creates a TCP server bound to ``host`` and ``port``.
 
-:parameter protocol_factory: The :class:`Protocol` which handle server
-    requests.
-:parameter host: If host is an empty string or None all interfaces are assumed
-    and a list of multiple sockets will be returned (most likely
-    one for IPv4 and another one for IPv6).
-:parameter port: integer indicating the port number.
-:parameter ssl: can be set to an SSLContext to enable SSL over the accepted
-    connections.
-:parameter family: socket family can be set to either ``AF_INET`` or
-    ``AF_INET6`` to force the socket to use IPv4 or IPv6.
-    If not set it will be determined from host (defaults to ``AF_UNSPEC``).
-:parameter flags: is a bitmask for :meth:`getaddrinfo`.
-:parameter sock: can optionally be specified in order to use a pre-existing
-    socket object.
-:parameter backlog: is the maximum number of queued connections passed to
-    listen() (defaults to 100).
-:parameter reuse_address: tells the kernel to reuse a local socket in
-    ``TIME_WAIT`` state, without waiting for its natural timeout to
-    expire. If not specified will automatically be set to ``True`` on UNIX.
-:return: a :class:`Deferred` whose result will be a list of socket objects
-    which will later be handled by ``protocol_factory``.
+        :param protocol_factory: The :class:`Protocol` which handle server
+            requests.
+        :param host: If host is an empty string or None all interfaces are
+            assumed and a list of multiple sockets will be returned (most
+            likely one for IPv4 and another one for IPv6).
+        :param port: integer indicating the port number.
+        :param ssl: can be set to an SSLContext to enable SSL over
+            the accepted connections.
+        :param family: socket family can be set to either ``AF_INET`` or
+            ``AF_INET6`` to force the socket to use IPv4 or IPv6.
+            If not set it will be determined from host (defaults to
+            ``AF_UNSPEC``).
+        :param flags: is a bitmask for :meth:`getaddrinfo`.
+        :param sock: can optionally be specified in order to use a
+            pre-existing socket object.
+        :param backlog: is the maximum number of queued connections
+            passed to listen() (defaults to 100).
+        :param reuse_address: tells the kernel to reuse a local socket in
+            ``TIME_WAIT`` state, without waiting for its natural timeout to
+            expire. If not specified will automatically be set to ``True``
+            on UNIX.
+        :return: a :class:`Deferred` whose result will be a list of socket
+            objects which will later be handled by ``protocol_factory``.
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
                             family, flags, sock, backlog, reuse_address)
