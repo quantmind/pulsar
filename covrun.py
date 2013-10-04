@@ -6,6 +6,6 @@ from runtests import run
 
 if __name__ == '__main__':
     if sys.version_info > (3, 3):
-        run(coverage=True, show_leaks=True, coveralls=True)
+        run(coverage=True, show_leaks=2, coveralls=True)
     else:
         run()

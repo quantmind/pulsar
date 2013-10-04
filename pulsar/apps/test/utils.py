@@ -1,20 +1,23 @@
 import gc
 from inspect import isclass
 from functools import partial
+from contextlib import contextmanager
 
 import pulsar
-from pulsar import safe_async, get_actor, send, multi_async
+from pulsar import safe_async, get_actor, send, multi_async, TcpServer
 
 
 __all__ = ['run_on_arbiter',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
            'AsyncAssert',
-           'show_leaks']
+           'show_leaks',
+           'hide_leaks',
+           'run_test_server']
 
 
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
-                    'setUpClass', 'tearDownClass')
+                    'setUpClass', 'tearDownClass', 'run_test_server')
 
 
 class TestCallable:
@@ -174,22 +177,37 @@ def inject_async_assert(obj):
         tcls.async = AsyncAssert()
 
 
-def show_leaks(actor):
+def show_leaks(actor, show=True):
     '''Function to show memory leaks on a processed-based actor.'''
     if not actor.is_process():
         return
     gc.collect()
     if gc.garbage:
         MAX_SHOW = 100
-        stream = actor.stream
-        stream.writeln('MEMORY LEAKS REPORT IN %s' % actor)
-        stream.writeln('Created %s uncollectable objects' % len(gc.garbage))
+        write = actor.stream.writeln if show else lambda msg: None
+        write('MEMORY LEAKS REPORT IN %s' % actor)
+        write('Created %s uncollectable objects' % len(gc.garbage))
         for obj in gc.garbage[:MAX_SHOW]:
-            stream.writeln('Type: %s' % type(obj))
-            stream.writeln('=================================================')
-            stream.writeln('%s' % obj)
-            stream.writeln('-------------------------------------------------')
-            stream.writeln('')
-            stream.writeln('')
+            write('Type: %s' % type(obj))
+            write('=================================================')
+            write('%s' % obj)
+            write('-------------------------------------------------')
+            write('')
+            write('')
         if len(gc.garbage) > MAX_SHOW:
-            stream.writeln('And %d more' % (len(gc.garbage) - MAX_SHOW))
+            write('And %d more' % (len(gc.garbage) - MAX_SHOW))
+
+
+def hide_leaks(actor):
+    show_leaks(actor, False)
+
+
+@contextmanager
+def run_test_server(loop, consumer_factory, address=None):
+    address = address or ('127.0.0.1', 0)
+    server = TcpServer(loop, '127.0.0.1', 0,
+                       consumer_factory=consumer_factory)
+    try:
+        yield server
+    finally:
+        server.stop_serving()

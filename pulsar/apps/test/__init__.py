@@ -399,9 +399,11 @@ class TestSequential(TestOption):
 class TestShowLeaks(TestOption):
     name = "show_leaks"
     flags = ['--show-leaks']
-    action = 'store_true'
-    default = False
-    validator = pulsar.validate_bool
+    nargs = '?'
+    choices = (0, 1, 2)
+    const = 1
+    type = int
+    default = 0
     desc = """Shows memory leaks.
 
     Run the garbadge collector before a process-based actor dies and shows
@@ -528,9 +530,10 @@ class TestSuite(tasks.TaskQueue):
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
         if self.cfg.show_leaks:
-            self.cfg.set('when_exit', show_leaks)
+            show = show_leaks if self.cfg.show_leaks == 1 else hide_leaks
+            self.cfg.set('when_exit', show)
             arbiter = pulsar.arbiter()
-            arbiter.cfg.set('when_exit', show_leaks)
+            arbiter.cfg.set('when_exit', show)
         try:
             self.local.tests = tests = []
             self.runner.on_start()

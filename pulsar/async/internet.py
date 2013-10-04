@@ -64,8 +64,6 @@ class Protocol(BaseProtocol):
 
       start -> CM [-> DR*] [-> ER?] -> CL -> end
     """
-    _transport = None
-
     def data_received(self, data):
         """Called when some data is received.
 
@@ -115,8 +113,8 @@ class Transport(object):
 
         The :class:`Protocol` for this :class:`Transport`.
     '''
-    def get_extra_info(name, default=None):
-        return None
+    def get_extra_info(self, name, default=None):
+        return default
 
 
 class SocketTransport(Transport):
@@ -197,6 +195,11 @@ class SocketTransport(Transport):
     def fileno(self):
         if self._sock:
             return self._sock.fileno()
+
+    def get_extra_info(self, name, default=None):
+        if name == 'socket':
+            name = 'sock'
+        return self.__dict__.get('_%s' % name, default)
 
     def close(self, async=True, exc=None):
         """Closes the transport.

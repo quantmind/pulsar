@@ -9,13 +9,6 @@ Config
    :members:
    :member-order: bysource
 
-SettingBase
-~~~~~~~~~~~~~~
-
-.. autoclass:: SettingBase
-   :members:
-   :member-order: bysource
-
 Setting
 ~~~~~~~~~~
 
@@ -42,13 +35,13 @@ from .pep import to_bytes, iteritems, native_str
 
 
 __all__ = ['Config',
-           'SimpleSetting',
            'Setting',
            'ordered_settings',
            'validate_string',
            'validate_callable',
            'validate_bool',
            'validate_list',
+           'validate_dict',
            'validate_pos_int',
            'validate_pos_float',
            'make_optparse_options']
@@ -66,6 +59,11 @@ def pass_through(arg):
 It does nothing and it is used as default by
 :ref:`Application Hooks <setting-section-application-hooks>`.'''
     pass
+
+
+def set_if_avail(container, key, value, *skip_values):
+    if value is not None and value not in skip_values:
+        container[key] = value
 
 
 def wrap_method(func):
@@ -365,78 +363,32 @@ in the global ``KNOWN_SETTINGS`` list.'''
         setattr(cls, "short", '' if not lines else lines[0])
 
 
-class SettingBase(object):
-    '''This is the base class of :class:`Settings` and :class:`SimpleSetting`.
+# This works for Python 2 and Python 3
+class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
+    '''A configuration parameter for pulsar.
 
-    It defines attributes for a given setting parameter.
+    Parameters can be specified on the command line or on a config file.
     '''
+    creation_count = 0
+    virtual = True
+    '''If set to ``True`` the settings won't be loaded.
+
+    It can be only used as base class for other settings.'''
     name = None
-    '''The unique name used to access this setting in the :class:`Config`
-    container.'''
+    '''The key to access this setting in a :class:`Config` container.'''
     validator = None
-    '''A validating function for this setting. It provided it must be a
-function accepting one positional argument, the value to validate.'''
+    '''A validating function for this setting.
+
+    It provided it must be a function accepting one positional argument,
+    the value to validate.'''
     value = None
     '''The actual value for this setting.'''
     default = None
     '''The default value for this setting.'''
-    def __str__(self):
-        return '{0} ({1})'.format(self.name, self.value)
-    __repr__ = __str__
-
-    def set(self, val, default=False):
-        '''Set *val* as the :attr:`value` for this :class:`SettingBase`.
-If *default* is ``True`` set also the :attr:`default` value.'''
-        if hasattr(self.validator, '__call__'):
-            val = self.validator(val)
-        self.value = val
-        if default:
-            self.default = val
-
-    def get(self):
-        '''Returns :attr:`value`'''
-        return self.value
-
-    def on_start(self):
-        '''Called when pulsar server starts. It can be used to perform
-custom initialization for this :class:`Setting`.'''
-        pass
-
-    def copy(self, name=None, prefix=None):
-        '''Copy this :class:`SettingBase`'''
-        setting = copy.copy(self)
-        if prefix and not setting.is_global:
-            flags = setting.flags
-            if flags and flags[-1].startswith('--'):
-                # Prefix a setting
-                setting.orig_name = setting.name
-                setting.name = '%s_%s' % (prefix, setting.name)
-                setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
-        if name and not setting.is_global:
-            setting.short = '%s application. %s' % (name, setting.short)
-        return setting
-
-
-class SimpleSetting(SettingBase):
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-        self.orig_name = self.name
-
-
-# This works for Python 2 and Python 3
-class Setting(SettingMeta('BaseSettings', (SettingBase,), {'virtual': True})):
-    '''A configuration parameter for pulsar. Parameters can be specified
-on the command line or on a config file.'''
-    creation_count = 0
-    virtual = True
-    '''If set to ``True`` the settings won't be loaded and it can be only used
-as base class for other settings.'''
     nargs = None
-    '''For positional arguments. Same usage as python :mod:`argparse`
-    module.
-    '''
+    '''The number of command-line arguments that should be consumed'''
+    const = None
+    '''A constant value required by some action and nargs selections'''
     app = None
     '''Setting for a specific :class:`Application`.'''
     section = None
@@ -447,13 +399,15 @@ as base class for other settings.'''
     choices = None
     '''Restrict the argument to the choices provided.'''
     type = None
+    '''The type to which the command-line argument should be converted'''
     meta = None
     '''Same usage as ``metavar`` in the python :mod:`argparse` module. It is
     the name for the argument in usage message.'''
     action = None
-    '''Same usage as ``action`` in the python
-    :mod:`argparse.ArgumentParser.add_argument` method.'''
+    '''The basic type of action to be taken when this argument is encountered
+    at the command line'''
     short = None
+    '''Optional shot description string'''
     desc = None
     '''Description string'''
     is_global = False
@@ -467,9 +421,12 @@ as base class for other settings.'''
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None,
-                 app=None, meta=None, choices=None):
+                 app=None, meta=None, choices=None, const=None):
+        self.extra = e = {}
         self.app = app or self.app
-        self.choices = choices or self.choices
+        set_if_avail(e, 'choices', choices or self.choices)
+        set_if_avail(e, 'const', const or self.const)
+        set_if_avail(e, 'type', type or self.type, 'string')
         self.default = default if default is not None else self.default
         self.desc = desc or self.desc
         self.flags = flags or self.flags
@@ -477,7 +434,6 @@ as base class for other settings.'''
         self.meta = meta or self.meta
         self.name = name or self.name
         self.nargs = nargs or self.nargs
-        self.type = type or self.type
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
         if self.default is not None:
@@ -493,16 +449,42 @@ as base class for other settings.'''
     def __getstate__(self):
         return self.__dict__.copy()
 
+    def __str__(self):
+        return '{0} ({1})'.format(self.name, self.value)
+    __repr__ = __str__
+
+    def on_start(self):
+        '''Called when pulsar server starts.
+
+        It can be used to perform custom initialization for this
+        :class:`Setting`.
+        '''
+        pass
+
+    def get(self):
+        '''Returns :attr:`value`'''
+        return self.value
+
+    def set(self, val, default=False):
+        '''Set ``val`` as the :attr:`value` for this :class:`Setting`.
+
+        If ``default`` is ``True`` set also the :attr:`default` value.
+        '''
+        if hasattr(self.validator, '__call__'):
+            val = self.validator(val)
+        self.value = val
+        if default:
+            self.default = val
+
     def add_argument(self, parser, set_default=False):
-        '''Add this :class:`Setting` to the *parser*, an instance of
-python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
-:attr:`nargs` and :attr:`name` are defined.'''
+        '''Add this :class:`Setting` to the ``parser``.
+
+        The operation is carried out only if :attr:`flags` or
+        :attr:`nargs` and :attr:`name` are defined.
+        '''
         default = self.default if set_default else None
         kwargs = {'nargs': self.nargs}
-        if self.type and self.type != 'string':
-            kwargs["type"] = self.type
-        if self.choices:
-            kwargs["choices"] = self.choices
+        kwargs.update(self.extra)
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({"dest": self.name,
@@ -520,6 +502,20 @@ python :class:`argparse.ArgumentParser`, only if :attr:`flags` or
             # Not added to argparser
             return
         parser.add_argument(*args, **kwargs)
+
+    def copy(self, name=None, prefix=None):
+        '''Copy this :class:`SettingBase`'''
+        setting = copy.copy(self)
+        if prefix and not setting.is_global:
+            flags = setting.flags
+            if flags and flags[-1].startswith('--'):
+                # Prefix a setting
+                setting.orig_name = setting.name
+                setting.name = '%s_%s' % (prefix, setting.name)
+                setting.flags = ['--%s-%s' % (prefix, flags[-1][2:])]
+        if name and not setting.is_global:
+            setting.short = '%s application. %s' % (name, setting.short)
+        return setting
 
 
 def validate_bool(val):
@@ -585,7 +581,13 @@ def validate_callable(arity):
         else:
             discount = 0
             cval = val
-        if arity != len(inspect.getargspec(cval)[0]) - discount:
+        result = inspect.getargspec(cval)
+        nargs = len(result.args) - discount
+        if result.defaults:
+            group = tuple(range(nargs-len(result.defaults), nargs+1))
+        else:
+            group = (nargs,)
+        if arity not in group:
             raise TypeError("Value must have an arity of: %s" % arity)
         return val
     return _validate_callable
@@ -641,7 +643,7 @@ class HttpProxyServer(Global):
         """
 
     def on_start(self):
-        if self.value:
+        if self.value:  # pragma    nocover
             os.environ['http_proxy'] = self.value
             os.environ['https_proxy'] = self.value
 
@@ -656,7 +658,7 @@ class HttpParser(Global):
         """
 
     def on_start(self):
-        if self.value:
+        if self.value:  # pragma    nocover
             from pulsar.utils.httpurl import setDefaultHttpParser
             setDefaultHttpParser(PyHttpParser)
 

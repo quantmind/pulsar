@@ -117,6 +117,7 @@ def monitor_stop(self):
     if not self.cfg.workers:
         yield self.app.worker_stop(self)
     yield self.app.monitor_stop(self)
+    yield self.app.fire_event('stop')
     yield self
 
 
