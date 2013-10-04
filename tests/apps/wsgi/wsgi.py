@@ -4,6 +4,7 @@ import sys
 from datetime import datetime, timedelta
 
 import pulsar
+from pulsar import Http404
 from pulsar.utils.pep import range, zip, pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
@@ -207,3 +208,12 @@ class TestWsgiMiddleware(unittest.TestCase):
         self.assertEqual(response.content_type, 'text/html')
         self.assertTrue(html.startswith(b'<!DOCTYPE html>'))
         self.assertTrue(b'<title>500 Internal Server Error</title>' in html)
+
+    def test_wsgi_handler(self):
+        handler = wsgi.WsgiHandler()
+        try:
+            yield handler({}, None)
+        except Http404:
+            pass
+        else:
+            assert False
