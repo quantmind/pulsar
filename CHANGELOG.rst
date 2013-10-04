@@ -1,10 +1,15 @@
 Ver. 0.7.0 - Development
 ===========================
+* Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
+  including:
+  * SSL support
+  * Proxy and Tunneling
+  * Cookie support
 * Coverage can be turned on by using the ``--coverage`` option.
 * WSGI respondes 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
-* Asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
+* A new asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
 * Removed the specialised application worker and monitor classes.
   Use standard actor and monitor with specialised
   :ref:`start hooks <actor-hooks>` instead.
@@ -13,7 +18,6 @@ Ver. 0.7.0 - Development
 * Protocol consumer to handle one request only. Better upgrade method for
   connections.
 * Proper handling of secure connections in :ref:`wsgi applications <apps-wsgi>`.
-* Cookie support for the :ref:`Http Client <apps-http>`.
 * Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.
 * Ability to add embedded css rules into the :ref:`head <wsgi-html-head>`
   element of an :ref:`Html document <wsgi-html-document>`.

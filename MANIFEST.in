@@ -4,7 +4,6 @@ include LICENSE
 include README.rst
 include docs/make.bat
 include docs/Makefile
-include docs/source/conf.py
-recursive-include examples *.py *.html
+recursive-include examples *
 recursive-include pulsar/apps/test/plugins/htmlfiles *
-recursive-include docs *.rst
+recursive-include docs/source *
