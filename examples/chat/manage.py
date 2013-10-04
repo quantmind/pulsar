@@ -1,9 +1,9 @@
-'''A web-based chat application, it exposes three different
-:ref:`wsgi handlers <wsgi-handlers>`:
+'''This example is web-based chat application which exposes three different
+:ref:`wsgi routers <wsgi-routing>`:
 
-* A :class:`pulsar.apps.wsgi.handlers.Router` to render the web page
+* A :class:`pulsar.apps.wsgi.routers.Router` to render the web page
 * A :class:`pulsar.apps.ws.WebSocket` with the :class:`Chat` handler
-* A :class:`pulsar.apps.wsgi.handlers.Router` with the :class:`Rpc` handler
+* A :class:`pulsar.apps.wsgi.routers.Router` with the :class:`Rpc` handler
   for exposing a :ref:`JSON-RPC <apps-rpc>` api.
 
 To run the server::
@@ -18,6 +18,9 @@ To send messages from the JSON RPC open a python shell and::
     >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc', force_sync=True)
     >>> p.message('Hi from rpc')
     'OK'
+
+This example uses the pulsar :ref:`Publish/Subscribe handler <apps-pubsub>`
+to synchronise messages in a multiprocessing web server.
 
 Implementation
 ===========================

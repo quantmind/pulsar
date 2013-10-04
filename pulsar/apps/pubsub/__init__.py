@@ -1,4 +1,4 @@
-'''The :mod:`pulsar.apps.pubsub` implements a middleware
+'''The :mod:`pulsar.apps.pubsub` module implements a middleware
 handler for the Publish/Subscribe pattern. The middleware can be used to
 synchronise pulsar actors across processes and machines.
 
@@ -8,9 +8,10 @@ synchronise pulsar actors across processes and machines.
     senders of messages, called publishers, do not program the messages to
     be sent directly to specific receivers, called subscribers.
     Instead, published messages are characterised into classes, without
-    knowledge of what, if any, subscribers there may be. Similarly, subscribers
-    express interest in one or more classes, and only receive messages that are
-    of interest, without knowledge of what, if any, publishers there are.
+    knowledge of what, if any, subscribers there may be. Similarly,
+    subscribers express interest in one or more classes, and only receive
+    messages that are of interest, without knowledge of what, if any,
+    publishers there are.
 
     -- wikipedia_
 
@@ -24,20 +25,76 @@ When using this middleware, one starts by creating a :class:`PubSub` handler::
 The ``backend`` parameter is needed in order to select the backend
 to use. If not supplied, the default ``local://`` backend is used.
 
-A backend handler is a picklable instance and therefore it can be passed to
-different process domains.
+Usage
+==============
+
+A pubsub handler can be passed to different process domain and therefore it
+can be used to synchronise pulsar actors.
+
+A tipical usage is when one needs to serve a websocket on a multiprocessing
+web server such as the :ref:`pulsar WSGI server <apps-wsgi>`.
+For example, the :ref:`websocket chat server <tutorials-chat>` uses a pubsub
+handler to propagate a message received from an http client to all
+the clients currently listening for messages.
+
+Since these clients may be served by different web server processes, the
+pubsub handler is an handy tool for synchronisation.
+
+Registering a client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a new client connects to the websocket, the ``on_open`` method of a
+:ref:`websocket handler <apps-ws>` add the websocket to the set of
+clients of the ``pubsub`` handler::
+
+    def on_open(self, websocket):
+        self.pubsub.add_client(PubSubClient(websocket))
+
+The ``PubSubClient`` is a :class:`Client` wrapper around the ``websocket``
+which calls the ``websocket`` write method when called::
+
+    class PubSubClient(pubsub.Client):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self, channel, message):
+        if channel == 'webchat':
+            self.connection.write(message)
+
+
+Publishing
+~~~~~~~~~~~~~~~~~~~~~~
+
+When a new message is received by the websocket ``on_message`` method,
+we use the ``pubsub`` handle to publish the message::
+
+    def on_message(self, websocket, msg):
+        self.pubsub.publish('webchat', msg)
+
+
+And the rest is taken care of by the callables ``PubSubClient`` which write
+the message to all listening websocket clients.
 
 
 PubSub handler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 .. autoclass:: PubSub
    :members:
    :member-order: bysource
 
 
+PubSub Client
+======================
+
+.. autoclass:: Client
+   :members:
+   :member-order: bysource
+
+
 PubSub backend
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 .. autoclass:: PubSubBackend
    :members:
@@ -58,13 +115,15 @@ LOGGER = logging.getLogger('pulsar.pubsub')
 
 
 class Client(object):
-    '''Interface for a client of :class:`PubSub` handler. Instances of this
-:class:`Client` are callable object and are called once a new message has
-arrived from a subscribed channel. The callable accepts two parameters:
+    '''Interface for a client of :class:`PubSub` handler.
 
-* ``channels`` the channels which originated the message
-* ``message`` the message
-'''
+    Instances of this :class:`Client` are callable object and are
+    called once a new message has arrived from a subscribed channel.
+    The callable accepts two parameters:
+
+    * ``channel`` the channel which originated the message
+    * ``message`` the message
+    '''
     def __call__(self, channel, message):
         raise NotImplementedError
 
@@ -72,15 +131,18 @@ arrived from a subscribed channel. The callable accepts two parameters:
 class PubSub(object):
     '''Publish/Subscribe paradigm handler.
 
-.. attribute:: backend
+    .. attribute:: backend
 
-    The :class:`PubSubBackend` for this handler.
+        The :class:`PubSubBackend` for this handler.
 
-.. attribute:: encoder
+    .. attribute:: encoder
 
-    Optional callable which encode the messages before they are published.
+        Optional callable which encode the messages before they are published.
 
-'''
+
+    A backend handler is a picklable instance and therefore it can be
+    passed to different process domains.
+    '''
     def __init__(self, backend=None, encoder=None, **params):
         be = PubSubBackend.make(backend=backend, **params)
         self.backend = PubSubBackend.get(be.id, backend=be)
@@ -132,12 +194,8 @@ via the :attr:`encoder` callable (if available).'''
 
 
 class PubSubBackend(pulsar.Backend):
-    '''Publish/Subscribe Backend interface.
-
-.. attribute:: clients
-
-    Set of all clients for this :class:`PubSub` handler.
-'''
+    '''Publish/Subscribe :class:`pulsar.apps.Backend` interface.
+    '''
     @local_property
     def clients(self):
         '''The set of clients for this :class:`PubSub` handler.'''

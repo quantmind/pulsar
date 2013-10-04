@@ -1,7 +1,7 @@
 import json
 import time
 
-from pulsar import is_failure
+from pulsar import is_failure, get_actor
 from pulsar.apps import ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import lazyproperty
@@ -28,18 +28,23 @@ class Client(pubsub.Client):
 class Chat(ws.WS):
     '''The websocket handler managing the chat application.
     '''
-    @lazyproperty
-    def pubsub(self):
-        p = pubsub.PubSub()
-        p.subscribe('webchat')
-        return p
+    _pubsub = None
+
+    def pubsub(self, websocket):
+        if not self._pubsub:
+            # the ``pulsar.cfg`` is injected by the pulser server into
+            # the wsgi environ
+            name = websocket.handshake.environ['pulsar.cfg'].name
+            self._pubsub = pubsub.PubSub(name=name)
+            self._pubsub.subscribe('webchat')
+        return self._pubsub
 
     def on_open(self, websocket):
         '''A new websocket connection is established.
 
         Add connection to the set of clients listening for messages.
         '''
-        self.pubsub.add_client(Client(websocket))
+        self.pubsub(websocket).add_client(Client(websocket))
 
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
@@ -58,11 +63,11 @@ class Chat(ws.WS):
                 else:
                     user = 'anonymous'
                 msg = {'message': msg, 'user': user, 'time': time.time()}
-                self.pubsub.publish('webchat', json.dumps(msg))
+                self.pubsub(websocket).publish('webchat', json.dumps(msg))
 
 
 class middleware(object):
-    '''Middleware for serving the Chat websocket'''
+    '''Middleware for serving the Chat websocket.'''
     def __init__(self):
         self._web_socket = ws.WebSocket('/message', Chat())
 

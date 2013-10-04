@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -
+from optparse import make_option
+
 import pulsar
+from pulsar.utils.security import random_string
 from pulsar.apps.wsgi import WSGIServer, LazyWsgi
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.wsgi import get_wsgi_application
 
-PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket'])
+
+PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket', 'pulse'])
+pulse_app_name = make_option('--pulse-app-name',
+                             dest='pulse-app-name',
+                             type='string',
+                             default='django_pulsar')
 
 
 class Wsgi(LazyWsgi):
@@ -16,7 +24,7 @@ class Wsgi(LazyWsgi):
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + PULSAR_OPTIONS
+    option_list = BaseCommand.option_list + (pulse_app_name,) + PULSAR_OPTIONS
     help = "Starts a fully-functional Web server using pulsar."
     args = 'pulse --help for usage'
 
@@ -26,17 +34,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
+        name = options.get('pulse-app-name')
         callable = Wsgi()
-        if options.pop('dryrun', False) is True:
+        if options.pop('dryrun', False) is True:    # used for testing
             return callable
         callable.setup()
         WSGIServer(callable=callable, cfg=options, parse_console=False,
-                   name=self.app_name()).start()
-
-    def app_name(self):
-        '''Used by the test suite to run several applications.'''
-        actor = pulsar.get_actor()
-        name = None
-        if actor:
-            name = actor.params.django_pulsar_name
-        return name or 'pulsar_django'
+                   name=name).start()

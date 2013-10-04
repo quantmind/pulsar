@@ -4,7 +4,7 @@ Security related helpers such as secure password hashing tools.
 from hashlib import sha1
 from uuid import uuid4
 import string
-from random import SystemRandom
+from random import SystemRandom, choice
 
 from .pep import range
 from .httpurl import ascii_letters
@@ -41,3 +41,8 @@ def check_password_hash(pwhash, password):
         return False
     salt, hashval = pwhash.split('$')
     return _hash_internal(salt, password) == hashval
+
+
+def random_string(characters=None, len=20):
+    characters = characters or ascii_letters
+    return ''.join((choice(characters) for s in range(len)))

@@ -231,6 +231,7 @@ class Configurator(object):
         self.cfg.description = description or self.cfg.description
         self.cfg.epilog = epilog or self.cfg.epilog
         self.cfg.version = version or self.cfg.version
+        self.cfg.name = self.name
         self.argv = argv
         self.parsed_console = parse_console
         self.script = self.python_path(script)
@@ -616,47 +617,51 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
 
 
 class Backend(LocalMixin):
-    '''Base class for backends. It is the base class for
-:ref:`publish/subscribe backend <apps-pubsub>` and for the
-:ref:`taskqueue backend <apps-taskqueue>`.
-A :class:`Backend` is never initialised directly, the
-:meth:`Backend.make` classmethod is used instead.
+    '''Base class for backends.
 
-.. attribute:: scheme
+    It is the base class for :ref:`publish/subscribe backend <apps-pubsub>`
+    and for the :ref:`taskqueue backend <apps-taskqueue>`.
 
-    The scheme for this backend (``local``, ``redis``, ``http``, ...).
+    A :class:`Backend` is never initialised directly, the
+    :meth:`Backend.make` classmethod is used instead.
 
-.. attribute:: name
+    .. attribute:: scheme
 
-    Optional name of the :class:`Application` which created this
-    :class:`Backend`. If not available the ``arbiter`` is used as owner
-    of this :class:`Backend`.
+        The scheme for this backend (``local``, ``redis``, ``http``, ...).
 
-.. attribute:: params
+    .. attribute:: name
 
-    Dictionary of additional parameters passed during initialisation.
+        Optional name of the :class:`Application` which created this
+        :class:`Backend`. If not available the ``arbiter`` is used as owner
+        of this :class:`Backend`.
 
-.. attribute:: connection_string
+    .. attribute:: params
 
-    The connection string fro this backend. It is always in the form::
+        Dictionary of additional parameters passed during initialisation.
+        These parameters are first pre-processed by the :meth:`setup`
+        method.
 
-        scheme:://address?param1=..&params2=... &...
+    .. attribute:: connection_string
 
-    where ``address`` is usually a ``host:port`` string.
+        The connection string fro this backend. It is always in the form::
 
-    A special connection string is::
+            scheme:://address?param1=..&params2=... &...
 
-        local://&param1=...&...
+        where ``address`` is usually a ``host:port`` string.
 
-    which represents a backend implemented using pulsar itself. A local backend
-    is installed in the monitor managing the :class:`Application` which
-    createded it.
+        A special connection string is::
 
-.. attribute:: default_path
+            local://&param1=...&...
 
-    A class attribute which represents the path from where to load backend
-    implementations.
-'''
+        which represents a backend implemented using pulsar itself.
+        A local backend is installed in the monitor registered with
+        :attr:`name`.
+
+    .. attribute:: default_path
+
+        A class attribute which represents the path from where to load backend
+        implementations.
+    '''
     def __init__(self, scheme, connection_string, name=None, **params):
         self.scheme = scheme
         self.name = name or 'arbiter'
@@ -673,13 +678,14 @@ A :class:`Backend` is never initialised directly, the
 
     @property
     def id(self):
-        '''Identy for this backend, calculated from the class name and the
-:attr:`connection_string`. Therefore if two backend instances from
-the same class have the same connection string, than the :attr:`id`
-is the same.
+        '''Identy for this backend.
 
-The :attr:`id`` is important when creating a new backend via the
-:meth:`make` method.'''
+        It is calculated from the class name and the
+        :attr:`connection_string`.
+
+        Therefore, if two backend instances from the same class have the
+        same connection string, than the :attr:`id` is the same.
+        '''
         return self._id
 
     @classmethod

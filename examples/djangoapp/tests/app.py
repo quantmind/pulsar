@@ -13,9 +13,7 @@ except ImportError:
 
 
 def start_server(actor, name, argv):
-    # we need to make sure djangoapp is in the python path
-    actor.params.django_pulsar_name = name
-    manage.execute_from_command_line(argv)
+    app = manage.execute_from_command_line(argv)
     app = yield get_application(name)
     yield app.event('start')
 
@@ -39,9 +37,12 @@ class TestDjangoChat(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        name = 'django_' + cls.concurrency
-        argv = [__file__, 'pulse', '--bind', '127.0.0.1:0',
-                '--concurrency', cls.concurrency]
+        name = cls.__name__.lower()
+        argv = [__file__, 'pulse',
+                '--bind', '127.0.0.1:0',
+                '--concurrency', cls.concurrency,
+                '--pulse-app-name', name,
+                '-s', 'local://?name=%s' % name]
         cls.app = yield send('arbiter', 'run', start_server, name, argv)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)

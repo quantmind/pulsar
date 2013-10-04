@@ -593,8 +593,7 @@ def validate_callable(arity):
     return _validate_callable
 
 
-def make_optparse_options(apps=None, exclude=None,
-                          include=None):  # pragma nocover
+def make_optparse_options(apps=None, exclude=None, include=None):
     '''Create a tuple of optparse options.'''
     from optparse import make_option
 

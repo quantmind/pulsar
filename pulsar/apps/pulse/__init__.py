@@ -11,4 +11,6 @@ and run the site via the ``pulse`` command::
 
     python manage.py pulse
 
+Check the :ref:`django chat example <tutorials-django>` for a django chat
+application served by a multiprocessing pulsar server.
 '''
