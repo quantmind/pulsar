@@ -115,12 +115,6 @@ for a list.'''
         return enumerate(stream, start)
 
 
-def is_generalised_generator(value):
-    '''Check if *value* is a generator. This is more general than the
-inspect.isgenerator function.'''
-    return hasattr(value, '__iter__') and not hasattr(value, '__len__')
-
-
 def is_exc_info(exc_info):
     if isinstance(exc_info, async_exec_info):
         return True
@@ -204,13 +198,13 @@ def maybe_async(value, canceller=None, event_loop=None, timeout=None,
 
 
 def log_failure(value):
+    '''Lag a :class:`Failure` if ``value`` is one.
+
+    Return ``value``.
+    '''
     value = maybe_failure(value)
     if isinstance(value, Failure):
         value.log()
-    else:
-        value = maybe_failure(value)
-        if isinstance(value, Failure):
-            value.log()
     return value
 
 
@@ -232,7 +226,8 @@ _maybe_async = default_maybe_async
 _maybe_failure = default_maybe_failure
 
 
-def set_async(maybe_async_callable, maybe_failure_callable):
+def set_async(maybe_async_callable,
+              maybe_failure_callable):    # pragma    nocover
     '''Set the asynchronous and failure discovery functions. This can be
 used when third-party asynchronous objects are used in conjunction
 with pulsar :class:`Deferred` and :class:`Failure`.'''
@@ -687,12 +682,6 @@ this point, :meth:`add_callback` will run the *callbacks* immediately.
 the result is a :class:`Failure`'''
         if self.done() and isinstance(self.result, Failure):
             self.result.throw()
-
-    def log(self, **kwargs):
-        '''Log a failure via the :meth:`Failure.log` method if the
-:attr:`result` is a :class:`Failure`.'''
-        if self.done() and isinstance(self.result, Failure):
-            self.result.log(**kwargs)
 
     def chain(self, deferred):
         '''Chain another ``deferred`` to this :class:`Deferred` callbacks.
