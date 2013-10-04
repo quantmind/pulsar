@@ -2,8 +2,11 @@
 import os
 import sys
 from functools import partial
+from base64 import b64decode
 
+import pulsar
 from pulsar import send, Failure
+from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
 from pulsar.utils import httpurl
 from pulsar.utils.pep import pypy
@@ -538,10 +541,36 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_send_files(self):
         client = self.client()
         files = {'test': 'simple file'}
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        response = yield client.post(self.httpbin('post'), data=data,
+                                     files=files).on_finished
+        self.assertEqual(response.status_code, 200)
+        ct = response.request.headers['content-type']
+        self.assertTrue(ct.startswith('multipart/form-data; boundary='))
+        data = response.json()
+        self.assertEqual(data['files'], {'test': ['simple file']})
+        self.assertEqual(data['args']['numero'],['1','2'])
+
+    def test_send_images(self):
+        path = Path(pulsar.__file__).parent.parent
+        path = path.join('docs', 'source', '_static')
+        files = []
+        sent = []
+        for name in ('pulsar.png', 'Game_of_life_pulsar.gif'):
+            with open(path.join(name), 'rb') as file:
+                image = file.read()
+            sent.append(image)
+            files.append(('images', (name, image)))
+        client = self.client()
         response = yield client.post(self.httpbin('post'), files=files
                                      ).on_finished
         self.assertEqual(response.status_code, 200)
         ct = response.request.headers['content-type']
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
         data = response.json()
-        self.assertEqual(data['files'], {'test': ['simple file']})
+        images = data['files']['images']
+        self.assertEqual(len(images), 2)
+        for image, s in zip(images, sent):
+            image = b64decode(image.encode('utf-8'))
+            self.assertEqual(image, s)

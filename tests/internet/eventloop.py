@@ -1,9 +1,8 @@
 '''Test Internet connections and wrapped socket methods in event loop.'''
 import socket
-from test.support import find_unused_port
 
 from pulsar import Connection, Protocol, TcpServer, async_while
-from pulsar.utils.pep import get_event_loop, new_event_loop
+from pulsar.utils.pep import get_event_loop, new_event_loop, ispy3k
 from pulsar.utils.internet import is_socket_closed, format_address
 from pulsar.apps.test import unittest, run_test_server
 from pulsar.async.pollers import READ
@@ -106,7 +105,9 @@ class TestEventLoop(unittest.TestCase):
         yield async_while(3, lambda: not is_socket_closed(sock))
         self.assertTrue(is_socket_closed(sock))
 
+    @unittest.skipUnless(ispy3k, 'Requires python 3')
     def test_create_connection_local_addr(self):
+        from test.support import find_unused_port
         loop = get_event_loop()
         with run_test_server(loop, EchoServerProtocol) as server:
             yield server.start_serving()

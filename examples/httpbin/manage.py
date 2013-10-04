@@ -26,6 +26,7 @@ from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
+from pulsar.utils.structures import MultiValueDict
 
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -219,10 +220,16 @@ class HttpBin(wsgi.Router):
             data['args'] = dict(request.url_data)
         else:
             args, files = yield request.data_and_files()
-            files = dict(((name, [p.value for p in part]) for name, part
-                          in dict(files).items()))
+            jfiles = MultiValueDict()
+            for name, parts in files.lists():
+                for part in parts:
+                    try:
+                        part = part.string()
+                    except UnicodeError:
+                        part = part.base64()
+                    jfiles[name] = part
             data.update((('args', dict(args)),
-                         ('files', files)))
+                         ('files', dict(jfiles))))
         data.update(params)
         yield data
 

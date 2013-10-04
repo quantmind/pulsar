@@ -9,6 +9,7 @@ import re
 import sys
 from tempfile import TemporaryFile
 from wsgiref.headers import Headers
+from base64 import b64encode
 from io import BytesIO
 
 from .httpurl import parse_qs, ENCODE_BODY_METHODS, mapping_iterator
@@ -278,14 +279,20 @@ class MultipartPart(object):
         ''' Return true if the data is fully buffered in memory.'''
         return isinstance(self.file, BytesIO)
 
-    @property
-    def value(self):
-        ''' Data decoded with the specified charset '''
+    def bytes(self):
         pos = self.file.tell()
         self.file.seek(0)
         val = self.file.read()
         self.file.seek(pos)
-        return val.decode(self.charset)
+        return val
+
+    def base64(self, charset=None):
+        '''Data encoded as base 64'''
+        return b64encode(self.bytes()).decode(charset or self.charset)
+
+    def string(self, charset=None):
+        '''Data decoded with the specified charset'''
+        return self.bytes().decode(charset or self.charset)
 
     def save_as(self, path):
         fp = open(path, 'wb')
@@ -331,8 +338,8 @@ into memory limits.
                                         content_length, **kw):
                 if part.filename or not part.is_buffered():
                     files[part.name] = part
-                else:  # TODO: Big form-fields are in the files dict. really?
-                    forms[part.name] = part.value
+                else:
+                    forms[part.name] = part.string()
         elif content_type in ('application/x-www-form-urlencoded',
                               'application/x-url-encoded'):
             mem_limit = kw.get('mem_limit', 2**20)

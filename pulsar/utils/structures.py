@@ -125,8 +125,7 @@ Raises KeyError if key is not found."""
             self[key] = value
 
     def items(self):
-        """Returns a generator ovr (key, value) pairs,
-where value is the last item in the list associated with the key.
+        """Returns a generator of (key, value) pairs.
         """
         return ((key, self[key]) for key in self)
 

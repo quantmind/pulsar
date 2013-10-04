@@ -26,9 +26,11 @@ class WsgiRequestTests(unittest.TestCase):
 
     def test_parse_form_data(self):
         environ = wsgi.test_wsgi_environ()
-        self.assertRaises(MultipartError, parse_form_data, environ)
+        self.assertRaises(MultipartError, parse_form_data, environ,
+                          strict=True)
         environ = wsgi.test_wsgi_environ(method='POST')
-        self.assertRaises(MultipartError, parse_form_data, environ)
+        self.assertRaises(MultipartError, parse_form_data, environ,
+                          strict=True)
 
 
 class WsgiResponseTests(unittest.TestCase):
