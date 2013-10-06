@@ -58,7 +58,7 @@ advantage of specific capabilities in some transport mechanisms.'''
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
 
-    def pause(self):
+    def pause(self):    # pragma    nocover
         """A :class:`SocketStreamTransport` can be paused and resumed.
 Invoking this method will cause the transport to buffer data coming
 from protocols but not sending it to the :attr:`protocol`. In other words,
@@ -67,7 +67,7 @@ until :meth:`resume` is called."""
         if not self._paused_reading:
             self._paused_reading = True
 
-    def resume(self):
+    def resume(self):    # pragma    nocover
         """Resume the receiving end. Data received will once again be
 passed to the :meth:`pulsar.Protocol.data_received` method."""
         if self._paused_reading:
@@ -77,7 +77,7 @@ passed to the :meth:`pulsar.Protocol.data_received` method."""
             for chunk in buffer:
                 self._data_received(chunk)
 
-    def pause_writing(self):
+    def pause_writing(self):    # pragma    nocover
         '''Suspend sending data to the network until a subsequent
 :meth:`resume_writing` call. Between :meth:`pause_writing` and
 :meth:`resume_writing` the transport's :meth:`write` method will just
@@ -86,7 +86,7 @@ be accumulating data in an internal buffer.'''
             self._paused_writing = True
             self._event_loop.remove_writer(self._sock_fd)
 
-    def resume_writing(self):
+    def resume_writing(self):    # pragma    nocover
         '''Restart sending data to the network.'''
         if self._paused_writing:
             if self._write_buffer:
@@ -501,7 +501,9 @@ def sock_connect(event_loop, sock, address, future=None):
         return future.callback(exc)
 
 
-def sock_accept(event_loop, sock, future=None):
+def sock_accept(event_loop, sock, future=None):    # pragma    nocover
+    #TODO
+    #do we need this function?
     fd = sock.fileno()
     if future is None:
         future = Deferred()

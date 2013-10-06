@@ -8,7 +8,6 @@ from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
 
 
 __all__ = ['Auth',
-           'KeyAuth',
            'HTTPBasicAuth',
            'HTTPDigestAuth']
 
@@ -23,15 +22,6 @@ class Auth(object):
 
     def __str__(self):
         return self.__repr__()
-
-
-class KeyAuth(Auth):
-
-    def __init__(self, **params):
-        self.params = params
-
-    def __call__(self, response):
-        response.request.data.update(self.params)
 
 
 class HTTPBasicAuth(Auth):

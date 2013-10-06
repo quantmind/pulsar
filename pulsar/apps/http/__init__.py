@@ -250,6 +250,7 @@ class RequestBase(object):
     inp_params = None
     history = None
     full_url = None
+    scheme = None
 
     @property
     def unverifiable(self):
@@ -266,6 +267,10 @@ class RequestBase(object):
         else:
             return request_host(self)
 
+    @property
+    def type(self):
+        return self.scheme
+
     def get_full_url(self):
         return self.full_url
 
@@ -280,6 +285,9 @@ if not ispy33:  # pragma     nocover
 
         def get_origin_req_host(self):
             return self.origin_req_host
+
+        def get_type(self):
+            return self.scheme
 
 
 class HttpTunnel(RequestBase):
@@ -332,6 +340,7 @@ class HttpRequest(pulsar.Request, RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
 
     :param files: optional dictionary of name, file-like-objects.
+    :param allow_redirects: allow the response to follow redirects.
 
     .. attribute:: method
 

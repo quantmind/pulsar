@@ -43,6 +43,6 @@ def check_password_hash(pwhash, password):
     return _hash_internal(salt, password) == hashval
 
 
-def random_string(characters=None, len=20):
-    characters = characters or ascii_letters
-    return ''.join((choice(characters) for s in range(len)))
+def random_string(characters=None, length=20):
+    characters = characters or SALT_CHARS
+    return ''.join((choice(characters) for s in range(length)))

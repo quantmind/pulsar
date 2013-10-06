@@ -153,21 +153,28 @@ class EventHandler(object):
         '''
         return self._events.get(name)
 
-    def bind_event(self, event, callback, errback=None):
+    def bind_event(self, name, callback, errback=None):
         '''Register a ``callback`` with ``event``.
 
         **The callback must be a callable accepting one parameter only**,
         the instance firing the event or the first positional argument
         passed to the :meth:`fire_event` method.
 
-        :param event: the event name. If the event is not available a warning
+        :param name: the event name. If the event is not available a warning
             message is logged.
-        :param callback: a callable receiving one positional parameter.
+        :param callback: a callable receiving one positional parameter. It
+            can also be a list/tuple of callables.
         :return: nothing.
         '''
-        if event not in self._events:
-            self._events[event] = ManyEvent(event)
-        self._events[event].bind(callback, errback)
+        if name not in self._events:
+            self._events[name] = ManyEvent(name)
+        event = self._events[name]
+        if isinstance(callback, (list, tuple)):
+            assert errback is None, "list of callbacks with errback"
+            for cbk in callback:
+                event.bind(cbk)
+        else:
+            event.bind(callback, errback)
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
