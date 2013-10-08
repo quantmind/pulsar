@@ -32,6 +32,9 @@ HTML_ATTRIBUTES['a'] = e('href', 'name', 'target')
 HTML_ATTRIBUTES['form'] = e('accept-charset', 'action', 'autocomplete',
                             'enctype', 'method', 'name', 'novalidate',
                             'target')
+HTML_ATTRIBUTES['img'] = e('align', 'alt', 'broder', 'crossorigin',
+                           'height', 'hspace', 'ismap', 'longdesc',
+                           'src', 'usemap', 'vspace', 'width')
 HTML_ATTRIBUTES['input'] = input_attr()
 HTML_ATTRIBUTES['input[type="checkbox"]'] = input_attr('checked')
 HTML_ATTRIBUTES['input[type="file"]'] = input_attr('accept')

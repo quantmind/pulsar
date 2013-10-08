@@ -485,7 +485,7 @@ data from the `QUERY_STRING` in :attr:`environ`.'''
         if path is None:
             path = self.path
             if not query:
-                query = self.environ.get('QUERY_STRING', '')
+                query = self.url_data
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
         return iri_to_uri(path, **query)
