@@ -867,7 +867,7 @@ class HttpClient(pulsar.Client):
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
-            dheaders.update(headers)
+            dheaders.override(headers)
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
         self.proxy_info = dict(proxy_info or ())

@@ -10,3 +10,11 @@ class TestClientDefaults(unittest.TestCase):
         accept = headers['accept-encoding']
         self.assertTrue('gzip' in accept)
         self.assertTrue('deflate' in accept)
+
+    def test_override_headers(self):
+        headers = {'Accept': 'application/json, text/plain; q=0.8',
+                   'content-type': 'application/json'}
+        client = HttpClient(headers=headers)
+        self.assertEqual(client.headers['accept'],
+                         'application/json, text/plain; q=0.8')
+        self.assertEqual(client.headers['content-type'], 'application/json')
