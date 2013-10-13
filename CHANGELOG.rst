@@ -28,7 +28,7 @@ Ver. 0.7.0 - Development
 * Added :class:`pulsar.Actor.stream` attribute to write messages without using
   the logger.
 * Pass pep8 test.
-* **786 regression tests**, **89% coverage**.
+* **807 regression tests**, **90% coverage**.
 
 .. _`rfc2616 sec 5.2`: http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2
 
