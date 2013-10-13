@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Changelog &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Release Notes &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -65,32 +65,56 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="changelog">
-<span id="id1"></span><h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-7-0-development">
-<h2>Ver. 0.7.0 - Development<a class="headerlink" href="#ver-0-7-0-development" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>Coverage option is global not just for tests. Coverage can be turned
-on by using the <tt class="docutils literal"><span class="pre">--coverage</span></tt> option.</li>
-<li>WSGI respondes 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
+  <div class="section" id="release-notes">
+<span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="ver-0-7-0-2013-oct-14">
+<h2>Ver. 0.7.0 - 2013-Oct-14<a class="headerlink" href="#ver-0-7-0-2013-oct-14" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Several improvements and bug fixes in the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>
+including:</p>
+<blockquote>
+<div><ul class="simple">
+<li>SSL support</li>
+<li>Proxy and Tunneling</li>
+<li>Cookie support</li>
+<li>File upload</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Code coverage can be turned on by using the <tt class="docutils literal"><span class="pre">--coverage</span></tt> option. By
+passing in the command line <tt class="docutils literal"><span class="pre">--coveralls</span></tt> when testing, coverage is
+published to coveralls.io.</p>
+</li>
+<li><p class="first">WSGI responses 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
 request URI is not an absolute URI. Follows the <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2">rfc2616 sec 5.2</a>
-guidelines.</li>
-<li>Asynchronous <a class="reference internal" href="apps/redis.html#redis-client"><em>redis client</em></a>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</li>
-<li>Removed the specialised application worker and monitor classes.
+guidelines.</p>
+</li>
+<li><p class="first">A new asynchronous <a class="reference internal" href="apps/redis.html#redis-client"><em>redis client</em></a>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</p>
+</li>
+<li><p class="first">Removed the specialised application worker and monitor classes.
 Use standard actor and monitor with specialised
-<a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</li>
-<li>Removed the global event dispatcher. No longer used. Less global variables
-the better.</li>
-<li>Protocol consumer to handle one request only. Better upgrade method for
-connections.</li>
-<li>Proper handling of secure connections in <a class="reference internal" href="apps/wsgi/index.html#apps-wsgi"><em>wsgi applications</em></a>.</li>
-<li>Cookie support for the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>.</li>
-<li>Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>WSGI Router</em></a>.</li>
-<li>Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
-element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</li>
-<li>Added <a class="reference internal" href="api/actor.html#pulsar.Actor.stream" title="pulsar.Actor.stream"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.stream</span></tt></a> attribute to write messages without using
-the logger.</li>
-<li><strong>771 regression tests</strong>, <strong>87% coverage</strong>.</li>
+<a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</p>
+</li>
+<li><p class="first">Removed the global event dispatcher. No longer used. Less global variables
+the better.</p>
+</li>
+<li><p class="first">Protocol consumer to handle one request only. Better upgrade method for
+connections.</p>
+</li>
+<li><p class="first">Proper handling of secure connections in <a class="reference internal" href="apps/wsgi/index.html#apps-wsgi"><em>wsgi applications</em></a>.</p>
+</li>
+<li><p class="first">Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>WSGI Router</em></a>.</p>
+</li>
+<li><p class="first">Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
+element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</p>
+</li>
+<li><p class="first">Added <a class="reference internal" href="api/actor.html#pulsar.Actor.stream" title="pulsar.Actor.stream"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.stream</span></tt></a> attribute to write messages without using
+the logger.</p>
+</li>
+<li><p class="first">Pass pep8 test.</p>
+</li>
+<li><p class="first"><strong>807 regression tests</strong>, <strong>90% coverage</strong>.</p>
+</li>
 </ul>
 </div>
 <div class="section" id="ver-0-6-0-2013-sep-05">
@@ -464,8 +488,8 @@ asynchronous test suite and asynchronous shell.</li>
 </p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#ver-0-7-0-development">Ver. 0.7.0 - Development</a></li>
+<li><a class="reference internal" href="#">Release Notes</a><ul>
+<li><a class="reference internal" href="#ver-0-7-0-2013-oct-14">Ver. 0.7.0 - 2013-Oct-14</a></li>
 <li><a class="reference internal" href="#ver-0-6-0-2013-sep-05">Ver. 0.6.0 - 2013-Sep-05</a></li>
 <li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>

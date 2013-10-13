@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>WebSockets &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>WebSockets &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous HTTP client" href="http.html" />
     <link rel="prev" title="JSON-RPC" href="rpc.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="rpc.html" title="JSON-RPC"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -123,15 +123,16 @@ interface.</p>
 <dl class="class">
 <dt id="pulsar.apps.ws.WS">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.ws.</tt><tt class="descname">WS</tt><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS" title="Permalink to this definition">¶</a></dt>
-<dd><p>A web socket handler for both servers and clients. It implements
-the asynchronous message passing for a <a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a>.
+<dd><p>A web socket handler for both servers and clients.</p>
+<p>It implements the asynchronous message passing for a
+<a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a>.
 On the server, the communication is started by the
 <a class="reference internal" href="#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> middleware after a successful handshake.</p>
-<p>Override <a class="reference internal" href="#pulsar.apps.ws.WS.on_message" title="pulsar.apps.ws.WS.on_message"><tt class="xref py py-meth docutils literal"><span class="pre">on_message()</span></tt></a> to handle incoming string messages,
-<a class="reference internal" href="#pulsar.apps.ws.WS.on_bytes" title="pulsar.apps.ws.WS.on_bytes"><tt class="xref py py-meth docutils literal"><span class="pre">on_bytes()</span></tt></a> to handle incoming <tt class="docutils literal"><span class="pre">bytes</span></tt> messages
-You can also override <a class="reference internal" href="#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> and <a class="reference internal" href="#pulsar.apps.ws.WS.on_close" title="pulsar.apps.ws.WS.on_close"><tt class="xref py py-meth docutils literal"><span class="pre">on_close()</span></tt></a> to handle opened
-and closed connections.
-These methods accept as first parameter the
+<p>Override <a class="reference internal" href="#pulsar.apps.ws.WS.on_message" title="pulsar.apps.ws.WS.on_message"><tt class="xref py py-meth docutils literal"><span class="pre">on_message()</span></tt></a> to handle incoming string messages and
+<a class="reference internal" href="#pulsar.apps.ws.WS.on_bytes" title="pulsar.apps.ws.WS.on_bytes"><tt class="xref py py-meth docutils literal"><span class="pre">on_bytes()</span></tt></a> to handle incoming <tt class="docutils literal"><span class="pre">bytes</span></tt> messages.</p>
+<p>You can also override <a class="reference internal" href="#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> and <a class="reference internal" href="#pulsar.apps.ws.WS.on_close" title="pulsar.apps.ws.WS.on_close"><tt class="xref py py-meth docutils literal"><span class="pre">on_close()</span></tt></a> to perform
+specific tasks when the websocket is opened or closed.</p>
+<p>These methods accept as first parameter the
 <a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a> created during the handshake.</p>
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_open">
@@ -142,8 +143,8 @@ These methods accept as first parameter the
 <dl class="method">
 <dt id="pulsar.apps.ws.WS.on_message">
 <tt class="descname">on_message</tt><big>(</big><em>websocket</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/ws.html#WS.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.ws.WS.on_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handles incoming messages on the WebSocket.
-This method must be overloaded.</p>
+<dd><p>Handles incoming messages on the WebSocket.</p>
+<p>This method must be overloaded.</p>
 </dd></dl>
 
 <dl class="method">

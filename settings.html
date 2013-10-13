@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Settings &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
     <link rel="next" title="Socket Servers" href="apps/socket.html" />
-    <link rel="prev" title="Changelog" href="changelog.html" /> 
+    <link rel="prev" title="Release Notes" href="changelog.html" /> 
   </head>
   <body>
 
@@ -43,9 +43,9 @@
           <a href="apps/socket.html" title="Socket Servers"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="changelog.html" title="Changelog"
+          <a href="changelog.html" title="Release Notes"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -464,7 +464,7 @@ To see available labels use the -l option.</div></blockquote>
 <span id="setting-show-leaks"></span><h3>show_leaks<a class="headerlink" href="#show-leaks" title="Permalink to this headline">¶</a></h3>
 <p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--show-leaks</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">0</span></tt></p>
 <p>Shows memory leaks.</p>
 <blockquote>
 <div>Run the garbadge collector before a process-based actor dies and shows
@@ -481,6 +481,13 @@ the memory leak report.</div></blockquote>
 flag disable it.</p>
 <p>To see the exception the log level must be at least error.</p>
 </div></blockquote>
+</div>
+<div class="section" id="coveralls">
+<span id="setting-coveralls"></span><h3>coveralls<a class="headerlink" href="#coveralls" title="Permalink to this headline">¶</a></h3>
+<p><em>Application namespace</em>: <tt class="docutils literal"><span class="pre">test</span></tt></p>
+<p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--coveralls</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>Send coverage report to coveralls.io.</p>
 </div>
 </div>
 <div class="section" id="utilities">
@@ -571,6 +578,7 @@ flag disable it.</p>
 <li><a class="reference internal" href="#sequential">sequential</a></li>
 <li><a class="reference internal" href="#show-leaks">show_leaks</a></li>
 <li><a class="reference internal" href="#log-failures">log_failures</a></li>
+<li><a class="reference internal" href="#coveralls">coveralls</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#utilities">Utilities</a></li>
@@ -580,7 +588,7 @@ flag disable it.</p>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="changelog.html"
-                        title="previous chapter">Changelog</a></p>
+                        title="previous chapter">Release Notes</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="apps/socket.html"
                         title="next chapter">Socket Servers</a></p>

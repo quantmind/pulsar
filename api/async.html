@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchonous API &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -188,21 +188,22 @@ it is created by <a class="reference internal" href="#pulsar.EventLoop.call_soon
 <dl class="class">
 <dt id="pulsar.EventLoop">
 <em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">EventLoop</tt><big>(</big><em>io=None</em>, <em>logger=None</em>, <em>poll_timeout=None</em>, <em>timer=None</em>, <em>iothreadloop=True</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop" title="Permalink to this definition">¶</a></dt>
-<dd><p>A pluggable event loop which conforms with the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API. The
-event loop is the place where most asynchronous operations are carried out.</p>
+<dd><p>A pluggable event loop which conforms with the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API.</p>
+<p>The event loop is the place where most asynchronous operations
+are carried out.</p>
 <dl class="attribute">
 <dt id="pulsar.EventLoop.poll_timeout">
 <tt class="descname">poll_timeout</tt><a class="headerlink" href="#pulsar.EventLoop.poll_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>The timeout in seconds when polling with <tt class="docutils literal"><span class="pre">epolL</span></tt>, <tt class="docutils literal"><span class="pre">kqueue</span></tt>, <tt class="docutils literal"><span class="pre">select</span></tt>
-and so forth.</p>
+<dd><p>The timeout in seconds when polling with <tt class="docutils literal"><span class="pre">epolL</span></tt>, <tt class="docutils literal"><span class="pre">kqueue</span></tt>,
+<tt class="docutils literal"><span class="pre">select</span></tt> and so forth.</p>
 <p>Default: <tt class="docutils literal"><span class="pre">0.5</span></tt></p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.EventLoop.tid">
 <tt class="descname">tid</tt><a class="headerlink" href="#pulsar.EventLoop.tid" title="Permalink to this definition">¶</a></dt>
-<dd><p>The thread id where this event loop is running. If the event loop is not
-running this attribute is <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<dd><p>The thread id where this event loop is running. If the
+event loop is not running this attribute is <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -419,28 +420,30 @@ appropriate exception will be raised.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>protocol_factory</strong> &#8211; The <a class="reference internal" href="protocols.html#pulsar.Protocol" title="pulsar.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> which handle server
 requests.</li>
-<li><strong>host</strong> &#8211; If host is an empty string or None all interfaces are assumed
-and a list of multiple sockets will be returned (most likely
-one for IPv4 and another one for IPv6).</li>
+<li><strong>host</strong> &#8211; If host is an empty string or None all interfaces are
+assumed and a list of multiple sockets will be returned (most
+likely one for IPv4 and another one for IPv6).</li>
 <li><strong>port</strong> &#8211; integer indicating the port number.</li>
-<li><strong>ssl</strong> &#8211; can be set to an SSLContext to enable SSL over the accepted
-connections.</li>
+<li><strong>ssl</strong> &#8211; can be set to an SSLContext to enable SSL over
+the accepted connections.</li>
 <li><strong>family</strong> &#8211; socket family can be set to either <tt class="docutils literal"><span class="pre">AF_INET</span></tt> or
 <tt class="docutils literal"><span class="pre">AF_INET6</span></tt> to force the socket to use IPv4 or IPv6.
-If not set it will be determined from host (defaults to <tt class="docutils literal"><span class="pre">AF_UNSPEC</span></tt>).</li>
+If not set it will be determined from host (defaults to
+<tt class="docutils literal"><span class="pre">AF_UNSPEC</span></tt>).</li>
 <li><strong>flags</strong> &#8211; is a bitmask for <tt class="xref py py-meth docutils literal"><span class="pre">getaddrinfo()</span></tt>.</li>
-<li><strong>sock</strong> &#8211; can optionally be specified in order to use a pre-existing
-socket object.</li>
-<li><strong>backlog</strong> &#8211; is the maximum number of queued connections passed to
-listen() (defaults to 100).</li>
+<li><strong>sock</strong> &#8211; can optionally be specified in order to use a
+pre-existing socket object.</li>
+<li><strong>backlog</strong> &#8211; is the maximum number of queued connections
+passed to listen() (defaults to 100).</li>
 <li><strong>reuse_address</strong> &#8211; tells the kernel to reuse a local socket in
 <tt class="docutils literal"><span class="pre">TIME_WAIT</span></tt> state, without waiting for its natural timeout to
-expire. If not specified will automatically be set to <tt class="docutils literal"><span class="pre">True</span></tt> on UNIX.</li>
+expire. If not specified will automatically be set to <tt class="docutils literal"><span class="pre">True</span></tt>
+on UNIX.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result will be a list of socket objects
-which will later be handled by <tt class="docutils literal"><span class="pre">protocol_factory</span></tt>.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result will be a list of socket
+objects which will later be handled by <tt class="docutils literal"><span class="pre">protocol_factory</span></tt>.</p>
 </td>
 </tr>
 </tbody>
@@ -492,15 +495,6 @@ broken and the <tt class="docutils literal"><span class="pre">callback</span></t
 <dd><p>Same as <a class="reference internal" href="#pulsar.EventLoop.call_repeatedly" title="pulsar.EventLoop.call_repeatedly"><tt class="xref py py-meth docutils literal"><span class="pre">call_repeatedly()</span></tt></a> with the only difference that
 the <tt class="docutils literal"><span class="pre">callback</span></tt> is scheduled at every loop. Installing this callback cause
 the event loop to poll with a 0 timeout all the times.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.call_now_threadsafe">
-<tt class="descname">call_now_threadsafe</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_now_threadsafe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <a class="reference internal" href="#pulsar.EventLoop.call_soon_threadsafe" title="pulsar.EventLoop.call_soon_threadsafe"><tt class="xref py py-meth docutils literal"><span class="pre">call_soon_threadsafe()</span></tt></a> with the only exception that
-if we are calling from the same thread of execution as this
-<a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>, the <tt class="docutils literal"><span class="pre">callback</span></tt> is called immediately. Otherwise
-<a class="reference internal" href="#pulsar.EventLoop.call_soon_threadsafe" title="pulsar.EventLoop.call_soon_threadsafe"><tt class="xref py py-meth docutils literal"><span class="pre">call_soon_threadsafe()</span></tt></a> is invoked.</p>
 </dd></dl>
 
 <dl class="method">
@@ -962,13 +956,6 @@ the result is a <a class="reference internal" href="#pulsar.Failure" title="puls
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.log">
-<tt class="descname">log</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Log a failure via the <a class="reference internal" href="#pulsar.Failure.log" title="pulsar.Failure.log"><tt class="xref py py-meth docutils literal"><span class="pre">Failure.log()</span></tt></a> method if the
-<a class="reference internal" href="#pulsar.Deferred.result" title="pulsar.Deferred.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> is a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.Deferred.chain">
 <tt class="descname">chain</tt><big>(</big><em>deferred</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.chain" title="Permalink to this definition">¶</a></dt>
 <dd><p>Chain another <tt class="docutils literal"><span class="pre">deferred</span></tt> to this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> callbacks.</p>
@@ -1280,7 +1267,7 @@ for scheduling connections and requests.</p>
 
 <dl class="method">
 <dt id="pulsar.EventHandler.bind_event">
-<tt class="descname">bind_event</tt><big>(</big><em>event</em>, <em>callback</em>, <em>errback=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.bind_event" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bind_event</tt><big>(</big><em>name</em>, <em>callback</em>, <em>errback=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.bind_event" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register a <tt class="docutils literal"><span class="pre">callback</span></tt> with <tt class="docutils literal"><span class="pre">event</span></tt>.</p>
 <p><strong>The callback must be a callable accepting one parameter only</strong>,
 the instance firing the event or the first positional argument
@@ -1290,9 +1277,10 @@ passed to the <a class="reference internal" href="#pulsar.EventHandler.fire_even
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>event</strong> &#8211; the event name. If the event is not available a warning
+<li><strong>name</strong> &#8211; the event name. If the event is not available a warning
 message is logged.</li>
-<li><strong>callback</strong> &#8211; a callable receiving one positional parameter.</li>
+<li><strong>callback</strong> &#8211; a callable receiving one positional parameter. It
+can also be a list/tuple of callables.</li>
 </ul>
 </td>
 </tr>
@@ -1362,12 +1350,6 @@ is invoked with the event <tt class="docutils literal"><span class="pre">name</s
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.cancel_one_time_events">
-<tt class="descname">cancel_one_time_events</tt><big>(</big><em>exclude=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.cancel_one_time_events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cancel all one time events not already fired.</p>
 </dd></dl>
 
 <dl class="method">

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Websocket Chat Server &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Websocket Chat Server &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" />
     <link rel="prev" title="JSON-RPC Calculator" href="calculator.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="calculator.html" title="JSON-RPC Calculator"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -70,12 +70,12 @@
   <div class="section" id="websocket-chat-server">
 <span id="tutorials-chat"></span><h1>Websocket Chat Server<a class="headerlink" href="#websocket-chat-server" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.chat.manage" title="examples.chat.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.chat.manage</span></tt></a> module.</p>
-<span class="target" id="module-examples.chat.manage"></span><p>A web-based chat application, it exposes three different
-<a class="reference internal" href="../apps/wsgi/async.html#wsgi-handlers"><em>wsgi handlers</em></a>:</p>
+<span class="target" id="module-examples.chat.manage"></span><p>This example is web-based chat application which exposes three different
+<a class="reference internal" href="../apps/wsgi/routing.html#wsgi-routing"><em>wsgi routers</em></a>:</p>
 <ul class="simple">
-<li>A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt> to render the web page</li>
+<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.routers.Router</span></tt></a> to render the web page</li>
 <li>A <a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ws.WebSocket</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Chat" title="examples.chat.manage.Chat"><tt class="xref py py-class docutils literal"><span class="pre">Chat</span></tt></a> handler</li>
-<li>A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.handlers.Router</span></tt> with the <a class="reference internal" href="#examples.chat.manage.Rpc" title="examples.chat.manage.Rpc"><tt class="xref py py-class docutils literal"><span class="pre">Rpc</span></tt></a> handler
+<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.routers.Router</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Rpc" title="examples.chat.manage.Rpc"><tt class="xref py py-class docutils literal"><span class="pre">Rpc</span></tt></a> handler
 for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><em>JSON-RPC</em></a> api.</li>
 </ul>
 <p>To run the server:</p>
@@ -89,6 +89,8 @@ for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><e
 <span class="go">&#39;OK&#39;</span>
 </pre></div>
 </div>
+<p>This example uses the pulsar <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>Publish/Subscribe handler</em></a>
+to synchronise messages in a multiprocessing web server.</p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <dl class="class">

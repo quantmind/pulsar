@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Applications API &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Applications API &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Tcp Stream API" href="stream.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="stream.html" title="Tcp Stream API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -178,10 +178,11 @@ script which runs the application.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.Configurator.on_config">
-<tt class="descname">on_config</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.on_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.on_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback when configuration is loaded. This is a chance to do
-an application specific check before the concurrent machinery is put into
-place. If it returns <tt class="docutils literal"><span class="pre">False</span></tt> the application will abort.</p>
+<tt class="descname">on_config</tt><big>(</big><em>arbiter</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Configurator.on_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Configurator.on_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Callback when configuration is loaded.</p>
+<p>This is a chance to do applications specific checks before the
+concurrent machinery is put into place.</p>
+<p>If it returns <tt class="docutils literal"><span class="pre">False</span></tt> the application will abort.</p>
 </dd></dl>
 
 <dl class="method">
@@ -262,6 +263,12 @@ a function or a picklable object.</p>
 <dt id="pulsar.apps.Application.events">
 <tt class="descname">events</tt><a class="headerlink" href="#pulsar.apps.Application.events" title="Permalink to this definition">¶</a></dt>
 <dd><p>Events for the application: <tt class="docutils literal"><span class="pre">ready`</span></tt>, <tt class="docutils literal"><span class="pre">start</span></tt>, <tt class="docutils literal"><span class="pre">stop</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.Application.stream">
+<tt class="descname">stream</tt><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Actor stream handler.</p>
 </dd></dl>
 
 <dl class="method">
@@ -445,10 +452,10 @@ The application name is set during initialisation. Check the
 <dl class="class">
 <dt id="pulsar.apps.Backend">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.</tt><tt class="descname">Backend</tt><big>(</big><em>scheme</em>, <em>connection_string</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Backend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Backend" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for backends. It is the base class for
-<a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe backend</em></a> and for the
-<a class="reference internal" href="../apps/tasks/index.html#apps-taskqueue"><em>taskqueue backend</em></a>.
-A <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.apps.Backend"><tt class="xref py py-class docutils literal"><span class="pre">Backend</span></tt></a> is never initialised directly, the
+<dd><p>Base class for backends.</p>
+<p>It is the base class for <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe backend</em></a>
+and for the <a class="reference internal" href="../apps/tasks/index.html#apps-taskqueue"><em>taskqueue backend</em></a>.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.apps.Backend"><tt class="xref py py-class docutils literal"><span class="pre">Backend</span></tt></a> is never initialised directly, the
 <a class="reference internal" href="#pulsar.apps.Backend.make" title="pulsar.apps.Backend.make"><tt class="xref py py-meth docutils literal"><span class="pre">Backend.make()</span></tt></a> classmethod is used instead.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.Backend.scheme">
@@ -467,7 +474,9 @@ of this <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.
 <dl class="attribute">
 <dt id="pulsar.apps.Backend.params">
 <tt class="descname">params</tt><a class="headerlink" href="#pulsar.apps.Backend.params" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dictionary of additional parameters passed during initialisation.</p>
+<dd><p>Dictionary of additional parameters passed during initialisation.
+These parameters are first pre-processed by the <tt class="xref py py-meth docutils literal"><span class="pre">setup()</span></tt>
+method.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -480,9 +489,9 @@ of this <a class="reference internal" href="#pulsar.apps.Backend" title="pulsar.
 <p>A special connection string is:</p>
 <div class="highlight-python"><pre>local://&amp;param1=...&amp;...</pre>
 </div>
-<p>which represents a backend implemented using pulsar itself. A local backend
-is installed in the monitor managing the <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> which
-createded it.</p>
+<p>which represents a backend implemented using pulsar itself.
+A local backend is installed in the monitor registered with
+<a class="reference internal" href="#pulsar.apps.Backend.name" title="pulsar.apps.Backend.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -495,12 +504,11 @@ implementations.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.Backend.id">
 <tt class="descname">id</tt><a class="reference internal" href="../modules/pulsar/apps.html#Backend.id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Backend.id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Identy for this backend, calculated from the class name and the
-<a class="reference internal" href="#pulsar.apps.Backend.connection_string" title="pulsar.apps.Backend.connection_string"><tt class="xref py py-attr docutils literal"><span class="pre">connection_string</span></tt></a>. Therefore if two backend instances from
-the same class have the same connection string, than the <a class="reference internal" href="#pulsar.apps.Backend.id" title="pulsar.apps.Backend.id"><tt class="xref py py-attr docutils literal"><span class="pre">id</span></tt></a>
-is the same.</p>
-<p>The <tt class="xref py py-attr docutils literal"><span class="pre">id`</span></tt> is important when creating a new backend via the
-<a class="reference internal" href="#pulsar.apps.Backend.make" title="pulsar.apps.Backend.make"><tt class="xref py py-meth docutils literal"><span class="pre">make()</span></tt></a> method.</p>
+<dd><p>Identy for this backend.</p>
+<p>It is calculated from the class name and the
+<a class="reference internal" href="#pulsar.apps.Backend.connection_string" title="pulsar.apps.Backend.connection_string"><tt class="xref py py-attr docutils literal"><span class="pre">connection_string</span></tt></a>.</p>
+<p>Therefore, if two backend instances from the same class have the
+same connection string, than the <a class="reference internal" href="#pulsar.apps.Backend.id" title="pulsar.apps.Backend.id"><tt class="xref py py-attr docutils literal"><span class="pre">id</span></tt></a> is the same.</p>
 </dd></dl>
 
 <dl class="classmethod">

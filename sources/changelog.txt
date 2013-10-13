@@ -1,1 +1,1 @@
-.. _changelog:=========================Changelog=========================.. include:: ../../CHANGELOG.rst
+.. _changelog:=========================Release Notes=========================.. include:: ../../CHANGELOG.rst

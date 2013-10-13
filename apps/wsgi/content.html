@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous Content &mdash; pulsar 0.7.0-beta.1 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.0-beta.1',
+        VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Middleware" href="middleware.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -451,8 +451,10 @@ whole <tt class="docutils literal"><span class="pre">css</span></tt> dictionary 
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">HtmlDocument</tt><big>(</big><em>title=None</em>, <em>media_path='/media/'</em>, <em>charset=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#HtmlDocument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument" title="Permalink to this definition">¶</a></dt>
-<dd><p>HTML5 asynchronous document. An instance of this class can be obtained
-via the <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiRequest.html_document</span></tt></a> attribute.</p>
+<dd><p>HTML5 asynchronous document.</p>
+<blockquote>
+<div>An instance of this class can be obtained via the
+<a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiRequest.html_document</span></tt></a> attribute.</div></blockquote>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument.head">
 <tt class="descname">head</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument.head" title="Permalink to this definition">¶</a></dt>
@@ -602,20 +604,22 @@ valid absolute or local url. For example:</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Media.is_relative">
 <tt class="descname">is_relative</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.is_relative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.is_relative" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is a local relative path. A path is local relative
-when it does not start with a slash <tt class="docutils literal"><span class="pre">/</span></tt> nor <tt class="docutils literal"><span class="pre">http://</span></tt> nor <tt class="docutils literal"><span class="pre">https://</span></tt>.</p>
+<dd><p>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is a local relative path.</p>
+<p>A path is local relative when it does not start with a slash
+<tt class="docutils literal"><span class="pre">/</span></tt> nor <tt class="docutils literal"><span class="pre">http://</span></tt> nor <tt class="docutils literal"><span class="pre">https://</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.Media.absolute_path">
 <tt class="descname">absolute_path</tt><big>(</big><em>path</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Media.absolute_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Media.absolute_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a suitable absolute url for <tt class="docutils literal"><span class="pre">path</span></tt>. The url is calculated
-in the following way:</p>
+<dd><p>Return a suitable absolute url for <tt class="docutils literal"><span class="pre">path</span></tt>.</p>
+<p>The url is calculated in the following way:</p>
 <ul class="simple">
-<li>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is an entry in the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="pulsar.apps.wsgi.content.Media.known_libraries"><tt class="xref py py-attr docutils literal"><span class="pre">known_libraries</span></tt></a> dictionary. In
-this case replace <tt class="docutils literal"><span class="pre">path</span></tt> with <tt class="docutils literal"><span class="pre">known_libraries[path]</span></tt>.</li>
-<li>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending the
-<a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">media_path</span></tt></a> attribute.</li>
+<li>Check if <tt class="docutils literal"><span class="pre">path</span></tt> is an entry in the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.known_libraries" title="pulsar.apps.wsgi.content.Media.known_libraries"><tt class="xref py py-attr docutils literal"><span class="pre">known_libraries</span></tt></a>
+dictionary. In this case replace <tt class="docutils literal"><span class="pre">path</span></tt> with
+<tt class="docutils literal"><span class="pre">known_libraries[path]</span></tt>.</li>
+<li>If <tt class="docutils literal"><span class="pre">path</span></tt> <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.is_relative" title="pulsar.apps.wsgi.content.Media.is_relative"><tt class="xref py py-meth docutils literal"><span class="pre">is_relative()</span></tt></a> build a sutable url by prepending
+the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">media_path</span></tt></a> attribute.</li>
 </ul>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
