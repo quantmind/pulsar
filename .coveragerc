@@ -13,6 +13,7 @@ omit =
     *pulsar/apps/tasks/backends/redis.py
     *pulsar/async/udp.py
     *pulsar/apps/green/*
+    *pulsar/apps/tx/*
     examples/httpbin/config.py
     examples/philosophers/config.py
     examples/webmail/*

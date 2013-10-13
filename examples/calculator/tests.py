@@ -129,6 +129,10 @@ class TestRpcOnThread(unittest.TestCase):
                                                  mu=1, sigma=2)
         self.assertTrue(response)
 
+    def test_echo(self):
+        response = yield self.p.echo('testing echo')
+        self.assertEqual(response, 'testing echo')
+
     # Synchronous client
     def test_sync_ping(self):
         self.assertEqual(self.sync.ping(), 'pong')
@@ -145,6 +149,8 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(calc.root, handler)
         docs = handler.docs()
         self.assertTrue(docs)
+        response = yield self.p.documentation()
+        self.assertEqual(response, docs)
 
 
 @dont_run_with_thread

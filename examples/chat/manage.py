@@ -127,7 +127,8 @@ handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
 section. It creates a :ref:`publish/subscribe handler <apps-pubsub>`
 and subscribe it to the ``webchat`` channel.'''
         backend = self.cfg.get('backend_server')
-        self.pubsub = pubsub.PubSub(backend, encoder=self.encode_message)
+        self.pubsub = pubsub.PubSub(backend, name=self.name,
+                                    encoder=self.encode_message)
         self.pubsub.subscribe('webchat')
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
                                  ws.WebSocket('/message', Chat(self.pubsub)),

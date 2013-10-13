@@ -43,3 +43,114 @@ class TestAsyncContent(unittest.TestCase):
         d.callback('ciao')
         result = yield result
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))
+
+    def test_append_self(self):
+        root = wsgi.AsyncString()
+        self.assertEqual(root.parent, None)
+        root.append(root)
+        self.assertEqual(root.parent, None)
+        self.assertEqual(len(root.children), 0)
+
+    def test_append(self):
+        root = wsgi.AsyncString()
+        child1 = wsgi.AsyncString()
+        child2 = wsgi.AsyncString()
+        root.append(child1)
+        self.assertEqual(child1.parent, root)
+        self.assertEqual(len(root.children), 1)
+        root.prepend(child2)
+        self.assertEqual(child2.parent, root)
+        self.assertEqual(len(root.children), 2)
+
+    def test_append_parent(self):
+        root = wsgi.AsyncString()
+        child1 = wsgi.AsyncString()
+        child2 = wsgi.AsyncString()
+        root.append(child1)
+        root.append(child2)
+        self.assertEqual(len(root.children), 2)
+        child1.append(root)
+        self.assertEqual(child1.parent, None)
+        self.assertEqual(root.parent, child1)
+        self.assertEqual(len(root.children), 1)
+        self.assertEqual(len(child1.children), 1)
+
+    def test_append_parent_with_parent(self):
+        root = wsgi.AsyncString()
+        child1 = wsgi.AsyncString()
+        child2 = wsgi.AsyncString()
+        child3 = wsgi.AsyncString()
+        root.append(child1)
+        child1.append(child2)
+        child1.append(child3)
+        self.assertEqual(len(root.children), 1)
+        self.assertEqual(len(child1.children), 2)
+        child2.append(child1)
+        self.assertEqual(len(root.children), 1)
+        self.assertEqual(root.children[0], child2)
+        self.assertEqual(len(child2.children), 1)
+        self.assertEqual(child1.parent, child2)
+        self.assertEqual(child2.parent, root)
+
+    def test_change_parent(self):
+        root = wsgi.AsyncString()
+        child1 = wsgi.AsyncString()
+        child2 = wsgi.AsyncString()
+        child3 = wsgi.AsyncString()
+        root.append(child1)
+        child1.append(child2)
+        child1.append(child3)
+        self.assertEqual(len(root.children), 1)
+        self.assertEqual(len(child1.children), 2)
+        root.append(child3)
+        self.assertEqual(len(root.children), 2)
+        self.assertEqual(len(child1.children), 1)
+
+    def test_remove_valueerror(self):
+        root = wsgi.AsyncString()
+        child1 = wsgi.AsyncString()
+        self.assertEqual(len(root.children), 0)
+        root.remove(child1)
+        self.assertEqual(len(root.children), 0)
+        child1.append_to(root)
+        self.assertEqual(len(root.children), 1)
+        self.assertEqual(child1.parent, root)
+
+    def test_remove_all(self):
+        root = wsgi.Html('div')
+        child1 = wsgi.Html('div')
+        root.append(child1)
+        root.append('ciao')
+        self.assertEqual(len(root.children), 2)
+        root.remove_all()
+        self.assertEqual(len(root.children), 0)
+
+    def test_media_path(self):
+        media = wsgi.Media('/media/',
+                           known_libraries={'jquery':
+                                            'http://bla.foo/jquery.js'})
+        self.assertTrue(media.is_relative('bla/test.js'))
+        path = media.absolute_path('bla/foo.css')
+        self.assertEqual(path, '/media/bla/foo.css')
+        self.assertEqual(media.absolute_path('/bla/foo.css'), '/bla/foo.css')
+        self.assertEqual(media.absolute_path('jquery'),
+                         'http://bla.foo/jquery.js')
+
+    def test_media_minified(self):
+        media = wsgi.Media('/media/',
+                           minified=True,
+                           known_libraries={'jquery':
+                                            'http://bla.foo/jquery.js'})
+        self.assertEqual(media.absolute_path('bla/foo.css'),
+                         '/media/bla/foo.min.css')
+
+    def test_html_doc_media(self):
+        doc = wsgi.HtmlDocument(media_path='/foo/')
+        self.assertEqual(doc.head.scripts.media_path, '/foo/')
+        self.assertEqual(doc.head.links.media_path, '/foo/')
+        self.assertEqual(doc.body.scripts.media_path, '/foo/')
+        doc = doc(title='ciao', media_path='/assets/')
+        self.assertEqual(doc.head.title, 'ciao')
+        self.assertEqual(doc.head.scripts.media_path, '/assets/')
+        self.assertEqual(doc.head.links.media_path, '/assets/')
+        self.assertEqual(doc.body.scripts.media_path, '/assets/')

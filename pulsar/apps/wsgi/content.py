@@ -239,15 +239,18 @@ This is a shortcut for the :meth:`insert` method at index 0.
 
 '''
         # make sure that child is not in child
-        if child is not None:
+        if child not in (None, self):
             if isinstance(child, AsyncString):
                 child_parent = child._parent
                 if self._parent is child:
-                    # the parent is the child we are appending, set the parent
-                    # to be the parent of child
-                    self._parent = child_parent
-                if child_parent:
-                    # remove child from the child parent
+                    # the parent is the child we are appending.
+                    # remove from the child
+                    child.remove(self)
+                    if child_parent:
+                        index = child_parent.children.index(child)
+                        child_parent.remove(child)
+                        child_parent.insert(index, self)
+                elif child_parent:
                     child_parent.remove(child)
                 child._parent = self
             if index is None:
@@ -728,8 +731,11 @@ or scripts.
         raise NotImplementedError
 
     def is_relative(self, path):
-        '''Check if ``path`` is a local relative path. A path is local relative
-when it does not start with a slash ``/`` nor ``http://`` nor ``https://``.'''
+        '''Check if ``path`` is a local relative path.
+
+        A path is local relative when it does not start with a slash
+        ``/`` nor ``http://`` nor ``https://``.
+        '''
         if path.startswith('http://') or path.startswith('https://')\
                 or path.startswith('/'):
             return False
@@ -737,15 +743,18 @@ when it does not start with a slash ``/`` nor ``http://`` nor ``https://``.'''
             return True
 
     def absolute_path(self, path):
-        '''Return a suitable absolute url for ``path``. The url is calculated
-in the following way:
+        '''Return a suitable absolute url for ``path``.
 
-* Check if ``path`` is an entry in the :attr:`known_libraries` dictionary. In
-  this case replace ``path`` with ``known_libraries[path]``.
-* If ``path`` :meth:`is_relative` build a sutable url by prepending the
-  :attr:`media_path` attribute.
+        The url is calculated in the following way:
 
-:return: A url path to insert in a HTML ``link`` or ``script``.'''
+        * Check if ``path`` is an entry in the :attr:`known_libraries`
+          dictionary. In this case replace ``path`` with
+          ``known_libraries[path]``.
+        * If ``path`` :meth:`is_relative` build a sutable url by prepending
+          the :attr:`media_path` attribute.
+
+        :return: A url path to insert in a HTML ``link`` or ``script``.
+        '''
         if path in self.known_libraries:
             path = self.known_libraries[path]
         if self.is_relative(path):
@@ -945,8 +954,10 @@ request object and a dictionary for rendering children with a key.
 
 
 class HtmlDocument(Html):
-    '''HTML5 asynchronous document. An instance of this class can be obtained
-via the :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
+    '''HTML5 asynchronous document.
+
+    An instance of this class can be obtained via the
+    :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
 
 .. attribute:: head
 

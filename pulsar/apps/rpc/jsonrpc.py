@@ -162,7 +162,6 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
 
 '''
     separator = '.'
-    rawprefix = 'raw'
     default_version = '2.0'
     default_timeout = 30
     _json = JsonToolkit
@@ -180,6 +179,8 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             http = HttpClient(timeout=timeout, **kw)
+        http.headers['accept'] = 'application/json, text/*; q=0.5'
+        http.headers['content-type'] = 'application/json'
         self.local.http = http
 
     @property
@@ -220,44 +221,30 @@ usage is simple::
         return multi_async((func(*args, **kwargs) for t in range(times)))
 
     def _call(self, name, *args, **kwargs):
-        data, raw = self._get_data(name, *args, **kwargs)
+        data = self._get_data(name, *args, **kwargs)
         body = self._json.dumps(data).encode('utf-8')
-        # Always make sure the content-type is application/json
-        self.http.headers['content-type'] = 'application/json'
         resp = self.http.post(self.url, data=body)
         if self._full_response:
             return resp
-        elif hasattr(resp, 'on_finished'):
-            res = resp.on_finished.add_callback(partial(self._end_call, raw))
-            return res.result if self.http.force_sync else res
-        else:
-            return self._end_call(raw, resp)
+        res = resp.on_finished.add_callback(self._end_call)
+        return res.result if self.http.force_sync else res
 
-    def _end_call(self, raw, resp):
-        content = resp.content_string()
+    def _end_call(self, resp):
+        content = resp.decode_content(object_hook=DefaultJSONHook)
         if resp.is_error:
             if 'error' in content:
                 return self.loads(content)
             else:
                 resp.raise_for_status()
         else:
-            if raw:
-                return content
-            else:
-                return self.loads(content)
+            return self.loads(content)
 
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()
-        fs = func_name.split('_')
-        raw = False
-        if len(fs) > 1 and fs[0] == self.rawprefix:
-            raw = True
-            fs.pop(0)
-            func_name = '_'.join(fs)
         params = self.get_params(*args, **kwargs)
         data = {'method': func_name, 'params': params, 'id': id,
                 'jsonrpc': self.__version}
-        return data, raw
+        return data
 
     def get_params(self, *args, **kwargs):
         '''
@@ -274,11 +261,10 @@ usage is simple::
             return kwargs
 
     def loads(self, obj):
-        res = self._json.loads(obj)
-        if isinstance(res, dict):
-            if 'error' in res:
-                error = res['error']
+        if isinstance(obj, dict):
+            if 'error' in obj:
+                error = obj['error']
                 raise exception(error.get('code'), error.get('message'))
             else:
-                return res.get('result')
-        return res
+                return obj.get('result')
+        return obj

@@ -735,15 +735,18 @@ class HttpResponse(pulsar.ProtocolConsumer):
         '''Decode content as a JSON object.'''
         return json.loads(self.content_string(charset), **kwargs)
 
-    def decode_content(self):
+    def decode_content(self, object_hook=None):
         '''Return the best possible representation of the response body.
+
+        :param object_hook: optional object hook function to pass to the
+            ``json`` decoder if the content type is a ``json`` format.
         '''
         ct = self.headers.get('content-type')
         if ct:
             ct, options = parse_options_header(ct)
             charset = options.get('charset')
             if ct in JSON_CONTENT_TYPES:
-                return self.json(charset)
+                return self.json(charset, object_hook=object_hook)
             elif ct.startswith('text/'):
                 return self.content_string(charset)
         return self.get_content()

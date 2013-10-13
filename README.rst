@@ -86,7 +86,7 @@ the following:
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
 * Application to run a Django_ site with pulsar.
-* Twisted_ integration.
+* Twisted_ integration (python 2 only).
 
 .. _examples:
 

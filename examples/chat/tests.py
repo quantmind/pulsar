@@ -1,9 +1,24 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
-from pulsar import send
-from pulsar.apps import rpc, http
+import json
+
+from pulsar import send, Queue
+from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.utils.httpurl import HTTPError
 
 from .manage import server
+
+
+class MessageHandler(ws.WS):
+
+    def __init__(self):
+        self.queue = Queue()
+
+    def get(self):
+        return self.queue.get()
+
+    def on_message(self, websocket, message):
+        self.queue.put(message)
 
 
 class TestWebChat(unittest.TestCase):
@@ -12,7 +27,7 @@ class TestWebChat(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        s = server(bind='127.0.0.1:0', name=cls.__name__,
+        s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
                    concurrency=cls.concurrency)
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://%s:%s' % cls.app.address
@@ -25,13 +40,26 @@ class TestWebChat(unittest.TestCase):
         if cls.app is not None:
             yield send('arbiter', 'kill_actor', cls.app.name)
 
-    def __test_rpc(self):
-        #TODO: Fix this test which sometimes fails
+    def test_home(self):
+        response = yield self.http.get(self.uri).on_finished
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'], 'text/html')
+
+    def test_rpc(self):
         '''Send a message to the rpc'''
-        response = yield self.http.get(self.ws).on_headers
-        self.assertEqual(response.handshake.status_code, 101)
+        ws = yield self.http.get(self.ws,
+                                 websocket_handler=MessageHandler()
+                                 ).on_headers
+        self.assertEqual(ws.handshake.status_code, 101)
+        ws.write('Hello there!')
+        data = yield ws.handler.get()
+        data = json.loads(data)
+        self.assertEqual(data['message'], 'Hello there!')
         result = yield self.rpc.message('Hi!')
         self.assertEqual(result, 'OK')
+        data = yield ws.handler.get()
+        data = json.loads(data)
+        self.assertEqual(data['message'], 'Hi!')
 
     def test_handshake(self):
         ws = yield self.http.get(self.ws).on_headers
@@ -41,6 +69,14 @@ class TestWebChat(unittest.TestCase):
         self.assertEqual(response.connection, ws.connection)
         self.assertTrue(ws.connection)
 
+    def test_invalid_method(self):
+        p = rpc.JsonProxy(self.uri)
+        try:
+            yield p.message('ciao')
+        except HTTPError as e:
+            self.assertEqual(e.code, 405)
+        else:
+            assert False, '405 not raised'
 
 @dont_run_with_thread
 class TestWebChatProcess(TestWebChat):
