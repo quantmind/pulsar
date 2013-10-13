@@ -1,4 +1,4 @@
-Ver. 0.7.0 - Development
+Ver. 0.7.0 - 2013-Oct-14
 ===========================
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
