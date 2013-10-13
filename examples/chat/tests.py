@@ -78,6 +78,7 @@ class TestWebChat(unittest.TestCase):
         else:
             assert False, '405 not raised'
 
+
 @dont_run_with_thread
 class TestWebChatProcess(TestWebChat):
     concurrency = 'process'

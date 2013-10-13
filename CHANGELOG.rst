@@ -10,7 +10,7 @@ Ver. 0.7.0 - Development
 * Code coverage can be turned on by using the ``--coverage`` option. By
   passing in the command line ``--coveralls`` when testing, coverage is
   published to coveralls.io.
-* WSGI respondes 400 Bad Request to request with no ``Host`` header if the
+* WSGI responses 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
 * A new asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
