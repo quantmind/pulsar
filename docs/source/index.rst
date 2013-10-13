@@ -40,7 +40,6 @@ located in the :mod:`pulsar.apps` module.
    apps/pubsub
    apps/twisted
    apps/pulse
-   apps/green
 
 
 Indices and tables
