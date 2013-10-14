@@ -328,7 +328,7 @@ in the :attr:`response_content_types` list.'''
     def __repr__(self):
         return self.route.__repr__()
 
-    def __call__(self, environ):
+    def __call__(self, environ, start_response):
         path = environ.get('PATH_INFO') or '/'
         path = path[1:]
         router_args = self.resolve(path)

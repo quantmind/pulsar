@@ -59,7 +59,7 @@ class Chat(ws.WS):
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                user = websocket.handshake.get('django.cache').user
+                user = websocket.handshake.get('django.user')
                 if user.is_authenticated():
                     user = user.username
                 else:
@@ -75,17 +75,16 @@ class middleware(object):
 
     def process_request(self, request):
         from django.http import HttpResponse
-        data = AttributeDictionary(request.__dict__)
-        environ = data.pop('environ')
-        environ['django.cache'] = data
+        environ = request.META
+        environ['django.user'] = request.user
         response = self._web_socket(environ, None)
         if response is not None:
             # we have a response, this is the websocket upgrade.
-            if is_failure(response):
-                response.throw()
             # Convert to django response
             resp = HttpResponse(status=response.status_code,
                                 content_type=response.content_type)
             for header, value in response.headers:
                 resp[header] = value
             return resp
+        else:
+            environ.pop('django.user')

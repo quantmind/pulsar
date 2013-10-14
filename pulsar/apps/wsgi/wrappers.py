@@ -51,7 +51,6 @@ from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri)
 
-from .middleware import is_streamed
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
                     parse_accept_header)
@@ -206,13 +205,17 @@ class WsgiResponse(object):
 length information) this property is `True`.  In this case streamed
 means that there is no information about the number of iterations.
 This is usually `True` if a generator is passed to the response object."""
-        return is_streamed(self.content)
+        try:
+            len(self.content)
+        except TypeError:
+            return True
+        return False
 
     def __iter__(self):
         if self._started:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self._started = True
-        if is_streamed(self.content):
+        if self.is_streamed:
             return wsgi_encoder(self.content, self.encoding or 'utf-8')
         else:
             return iter(self.content)
