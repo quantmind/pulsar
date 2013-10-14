@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Routing &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Routing &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="../../static/jquery.js"></script>
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../index.html" />
+    <link rel="shortcut icon" href="../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="WSGI Wrappers" href="wrappers.html" />
     <link rel="prev" title="Asynchronous WSGI" href="async.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="async.html" title="Asynchronous WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -100,9 +100,10 @@ WSGI environ.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.routers.Router">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.routers.</tt><tt class="descname">Router</tt><big>(</big><em>rule</em>, <em>*routes</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router" title="Permalink to this definition">¶</a></dt>
-<dd><p>A WSGI middleware to handle client requests on multiple
-<a class="reference internal" href="#apps-wsgi-route"><em>routes</em></a>. The user must implement the HTTP methods
-required by her application. For example if the route needs to serve a <tt class="docutils literal"><span class="pre">GET</span></tt>
+<dd><p>A <a class="reference internal" href="middleware.html#wsgi-middleware"><em>WSGI middleware</em></a> to handle client requests
+on multiple <a class="reference internal" href="#apps-wsgi-route"><em>routes</em></a>.</p>
+<p>The user must implement the HTTP methods
+required by the application. For example if the route needs to serve a <tt class="docutils literal"><span class="pre">GET</span></tt>
 request, the <tt class="docutils literal"><span class="pre">get(self,</span> <span class="pre">request)</span></tt> method must be implemented.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -111,7 +112,7 @@ request, the <tt class="docutils literal"><span class="pre">get(self,</span> <sp
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>rule</strong> &#8211; String used for creating the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.route" title="pulsar.apps.wsgi.routers.Router.route"><tt class="xref py py-attr docutils literal"><span class="pre">route</span></tt></a> of this
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</li>
-<li><strong>routes</strong> &#8211; Optionals <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> instances which are added to the
+<li><strong>routes</strong> &#8211; Optional <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> instances which are added to the
 children <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.routes" title="pulsar.apps.wsgi.routers.Router.routes"><tt class="xref py py-attr docutils literal"><span class="pre">routes</span></tt></a> of this router.</li>
 <li><strong>parameters</strong> &#8211; Optional parameters for this router. They are stored in the
 <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.parameters" title="pulsar.apps.wsgi.routers.Router.parameters"><tt class="xref py py-attr docutils literal"><span class="pre">parameters</span></tt></a> attribute. If a <tt class="docutils literal"><span class="pre">response_content_types</span></tt> value is
@@ -159,8 +160,9 @@ passed to the <tt class="docutils literal"><span class="pre">__init__</span></tt
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.name">
 <tt class="descname">name</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The name of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>. This attribute can be specified
-during initialisation. If available, it can be used to retrieve a child router
+<dd><p>The name of this <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a>.</p>
+<p>This attribute can be specified during initialisation.
+If available, it can be used to retrieve a child router
 by name via the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.get_route" title="pulsar.apps.wsgi.routers.Router.get_route"><tt class="xref py py-meth docutils literal"><span class="pre">get_route()</span></tt></a> method.</p>
 </dd></dl>
 
@@ -180,8 +182,8 @@ in the <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router.resp
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.routers.Router.creation_count">
 <tt class="descname">creation_count</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/routers.html#Router.creation_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.routers.Router.creation_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Integer for sorting <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> by creation. It is autogenerated
-during <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> initialisation.</p>
+<dd><p>Integer for sorting <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> by creation.</p>
+<p>Auto-generated during initialisation.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -298,7 +300,7 @@ returns <tt class="docutils literal"><span class="pre">utf-8</span></tt>.</p>
 
 </div>
 <div class="section" id="media-router">
-<h2>Media Router<a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-media-router"></span><h2>Media Router<a class="headerlink" href="#media-router" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#pulsar.apps.wsgi.routers.MediaRouter" title="pulsar.apps.wsgi.routers.MediaRouter"><tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt></a> is a specialised <a class="reference internal" href="#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> for serving static
 files such ass <tt class="docutils literal"><span class="pre">css</span></tt>, <tt class="docutils literal"><span class="pre">javascript</span></tt>, images and so forth.</p>
 <dl class="class">
@@ -522,6 +524,18 @@ the root route and <tt class="docutils literal"><span class="pre">None</span></t
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Routing</a><ul>

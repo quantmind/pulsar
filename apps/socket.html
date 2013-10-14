@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Socket Servers &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Socket Servers &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="../static/jquery.js"></script>
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
+    <link rel="shortcut icon" href="../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Settings" href="../settings.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="../settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -91,9 +91,7 @@ implementation of the <tt class="docutils literal"><span class="pre">EchoServerP
 specific to sockets and can be used to fine tune your application:</p>
 <div class="section" id="bind">
 <h3>bind<a class="headerlink" href="#bind" title="Permalink to this headline">¶</a></h3>
-<p>The <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> application introduces the additional pulsar settings
-<a class="reference internal" href="../settings.html#setting-bind"><em>bind</em></a> which is used to specify the address
-to bind the server to:</p>
+<p>To specify the address to bind the server to:</p>
 <div class="highlight-python"><pre>python script.py --bind 127.0.0.1:8070</pre>
 </div>
 <p>This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080:</p>
@@ -102,11 +100,11 @@ to bind the server to:</p>
 </div>
 <div class="section" id="backlog">
 <h3>backlog<a class="headerlink" href="#backlog" title="Permalink to this headline">¶</a></h3>
-<p>To control the concurrency of the server you can use the
+<p>To specify the maximum number of queued connections you can use the
 <a class="reference internal" href="../settings.html#setting-backlog"><em>backlog</em></a> settings. For example:</p>
 <div class="highlight-python"><pre>python script.py --backlog 1000</pre>
 </div>
-<p>will serve a maximum of 1000 clients per <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Worker</span></tt> concurrently.</p>
+<p>rarely used.</p>
 </div>
 <div class="section" id="keep-alive">
 <h3>keep_alive<a class="headerlink" href="#keep-alive" title="Permalink to this headline">¶</a></h3>
@@ -136,7 +134,7 @@ This is how pre-forking servers operate.</p>
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
 <div class="highlight-python"><pre>python script.py --concurrency thread</pre>
 </div>
-<p>the number of <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Worker</span></tt> serving the application is set
+<p>the number of <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> serving the application is set
 to <tt class="docutils literal"><span class="pre">0</span></tt> so that the application is actually served by the
 <a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
@@ -211,6 +209,18 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Socket Servers</a><ul>

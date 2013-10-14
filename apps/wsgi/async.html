@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous WSGI &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Asynchronous WSGI &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="../../static/jquery.js"></script>
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../index.html" />
+    <link rel="shortcut icon" href="../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Routing" href="routing.html" />
     <link rel="prev" title="WSGI Server" href="intro.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="intro.html" title="WSGI Server"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -106,7 +106,7 @@ the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>
 <span id="wsgi-async-iter"></span><h2>Asynchronous Iterable<a class="headerlink" href="#asynchronous-iterable" title="Permalink to this headline">¶</a></h2>
 <p>An asynchronous iterable is an iterable over a combination of <tt class="docutils literal"><span class="pre">bytes</span></tt> or
 <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
-For eaxample this could be an asynchronous iterable:</p>
+For example this could be an asynchronous iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
     <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;hello&#39;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
@@ -117,7 +117,7 @@ For eaxample this could be an asynchronous iterable:</p>
 </div>
 </div>
 <div class="section" id="wsgihandler">
-<h2>WsgiHandler<a class="headerlink" href="#wsgihandler" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-lazy-handler"></span><h2>WsgiHandler<a class="headerlink" href="#wsgihandler" title="Permalink to this headline">¶</a></h2>
 <p>The first application handler is the <a class="reference internal" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="pulsar.apps.wsgi.handlers.WsgiHandler"><tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt></a>
 which is a step above the <a class="reference internal" href="../../tutorials/hello.html#tutorials-hello-world"><em>hello callable</em></a>
 in the tutorial. It accepts two iterables, a list of
@@ -130,8 +130,8 @@ in the tutorial. It accepts two iterables, a list of
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler.middleware">
 <tt class="descname">middleware</tt><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler.middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of callable WSGI middleware callable which accept
-<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as arguments.
+<dd><p>List of <a class="reference internal" href="middleware.html#wsgi-middleware"><em>asynchronous WSGI middleware</em></a> callables
+which accept <tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as arguments.
 The order matter, since the response returned by the callable
 is the non <tt class="docutils literal"><span class="pre">None</span></tt> value returned by a middleware.</p>
 </dd></dl>
@@ -152,7 +152,7 @@ Pulsar contains some
 
 </div>
 <div class="section" id="lazy-wsgi-handler">
-<span id="wsgi-lazy-handler"></span><h2>Lazy Wsgi Handler<a class="headerlink" href="#lazy-wsgi-handler" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-handler"></span><h2>Lazy Wsgi Handler<a class="headerlink" href="#lazy-wsgi-handler" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.LazyWsgi">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">LazyWsgi</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#LazyWsgi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.LazyWsgi" title="Permalink to this definition">¶</a></dt>
@@ -194,6 +194,18 @@ implemented by subclasses and <strong>must</strong> return a
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous WSGI</a><ul>

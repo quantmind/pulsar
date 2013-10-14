@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Overview &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
+    <link rel="shortcut icon" href="static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -82,13 +82,15 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Documentation:</th><td class="field-body"><a class="reference external" href="http://packages.python.org/pulsar/">http://packages.python.org/pulsar/</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Dowloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
+<tr class="field-odd field"><th class="field-name">Downloads:</th><td class="field-body"><a class="reference external" href="http://pypi.python.org/pypi/pulsar">http://pypi.python.org/pypi/pulsar</a></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Source:</th><td class="field-body"><a class="reference external" href="https://github.com/quantmind/pulsar">https://github.com/quantmind/pulsar</a></td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, <a class="reference external" href="http://pypy.org/">pypy</a></td>
+<tr class="field-odd field"><th class="field-name">Mailing list:</th><td class="field-body"><a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/python-pulsar">google user group</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
+<tr class="field-even field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, <a class="reference external" href="http://pypy.org/">pypy</a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
 task queue, wsgi, websocket, redis, json-rpc</td>
 </tr>
 </tbody>
@@ -127,6 +129,7 @@ a combination of the two.</p>
 <div class="highlight-python"><pre>pip install pulsar</pre>
 </div>
 <p><cite>easy_install</cite> or downloading the tarball from <a class="reference external" href="http://pypi.python.org/pypi/pulsar">pypi</a>.</p>
+<p>If <a class="reference external" href="http://cython.org/">cython</a> is available, c extensions will be compiled and installed.</p>
 </div>
 <div class="section" id="applications">
 <h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
@@ -220,12 +223,13 @@ community, in particular:</p>
 <span id="id2"></span><h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
 <p>Development of <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> happens at Github. We very much welcome your contribution
 of course. To do so, simply follow these guidelines:</p>
-<ol class="arabic simple">
+<ul class="simple">
 <li>Fork <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar</a> on github</li>
 <li>Create a topic branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">my_branch</span></tt></li>
 <li>Push to your branch <tt class="docutils literal"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">my_branch</span></tt></li>
-<li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with a link to your patch.</li>
-</ol>
+<li>Create an issue at <a class="reference external" href="https://github.com/quantmind/pulsar/issues">https://github.com/quantmind/pulsar/issues</a> with pull request
+for the <tt class="docutils literal"><span class="pre">dev</span></tt> branch.</li>
+</ul>
 </div>
 <div class="section" id="license">
 <span id="id3"></span><h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
@@ -244,6 +248,18 @@ file in the top distribution directory for the full license text.</p>
   <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Overview</a><ul>

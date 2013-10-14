@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Middleware &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Asynchronous Middleware &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="../../static/jquery.js"></script>
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../index.html" />
+    <link rel="shortcut icon" href="../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
-    <link rel="next" title="Utilities" href="tools.html" />
-    <link rel="prev" title="Asynchronous Content" href="content.html" /> 
+    <link rel="next" title="Asynchronous Content" href="content.html" />
+    <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
   </head>
   <body>
 
@@ -41,12 +41,12 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="tools.html" title="Utilities"
+          <a href="content.html" title="Asynchronous Content"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="content.html" title="Asynchronous Content"
+          <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -68,41 +68,46 @@
           <div class="body">
             
   <div class="section" id="module-pulsar.apps.wsgi.middleware">
-<span id="middleware"></span><span id="wsgi-middleware"></span><h1>Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
-<p>Middleware are functions or callable objects similar to
+<span id="asynchronous-middleware"></span><span id="wsgi-middleware"></span><h1>Asynchronous Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
+<p>A WSGI Middleware is a function or callable object similar to
 <a class="reference internal" href="async.html#wsgi-handlers"><em>WSGI application handlers</em></a>
-with the only difference that they can return <tt class="docutils literal"><span class="pre">None</span></tt>. Middleware can be used
-in conjunction with a <tt class="xref py py-class docutils literal"><span class="pre">WsgiHandler</span></tt> or any other handler which iterate
-through a list of middleware in a similar way (for example django wsgi
-handler).</p>
+with the only difference that they can return <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<p>Middleware can be used in conjunction with a
+<a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a> or any
+other handler which iterate through a list of middleware in a similar
+way (for example django wsgi handler).</p>
 <p>Here we introduce the <tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt> to handle
 requests on given urls. Pulsar is shipped with
 <a class="reference internal" href="#wsgi-additional-middleware"><em>additional wsgi middleware</em></a> for manipulating
 the environment before a client response is returned.</p>
-<p>This module implements several WSGI middleware which does not
-serve request but instead perform initialization and sanity checks.
-It also introduces the <strong>Response middlewares</strong> implemented as a subclass of
-<a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a>. Response middlewares are used by the
-<a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a> to modify/add headers and
-manipulate content.</p>
-<div class="section" id="additional-wsgi-middlewares">
-<span id="wsgi-additional-middleware"></span><h2>Additional WSGI Middlewares<a class="headerlink" href="#additional-wsgi-middlewares" title="Permalink to this headline">¶</a></h2>
-<p>Several <a class="reference internal" href="#wsgi-middleware"><em>wsgi middleware</em></a> useful in several
-applications.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">An asynchronous WSGI middleware is a callble accepting a WSGI
+<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as the only input paramaters.
+It must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><em>asynchronous iterator</em></a>
+or nothing.</p>
+</div>
+<p>The two most important wsgi middleware in pulsar are:</p>
+<ul class="simple">
+<li>the <a class="reference internal" href="routing.html#wsgi-router"><em>Router</em></a> for serving dynamic web applications</li>
+<li>the <a class="reference internal" href="routing.html#wsgi-media-router"><em>MediaRouter</em></a> for serving static files</li>
+</ul>
+<p>In addition, there are several WSGI middlewares which don&#8217;t
+serve request but instead perform initialisation and sanity checks.</p>
 <div class="section" id="clean-path">
-<h3>clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h3>
+<span id="wsgi-additional-middleware"></span><h2>Clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.clean_path_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">clean_path_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">clean_path_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean url from double slashes and redirect if needed.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="cookie">
-<h3>cookie<a class="headerlink" href="#cookie" title="Permalink to this headline">¶</a></h3>
+<h2>Cookie<a class="headerlink" href="#cookie" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.cookies_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">cookies_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#cookies_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.cookies_middleware" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">cookies_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#cookies_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.cookies_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_COOKIE</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
 <p>Set the new <tt class="docutils literal"><span class="pre">http.cookie</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with a dictionary
 of cookies obtained via the <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.parse_cookie" title="pulsar.utils.httpurl.parse_cookie"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.utils.httpurl.parse_cookie()</span></tt></a>
@@ -111,10 +116,10 @@ function.</p>
 
 </div>
 <div class="section" id="authorization">
-<h3>authorization<a class="headerlink" href="#authorization" title="Permalink to this headline">¶</a></h3>
+<h2>Authorization<a class="headerlink" href="#authorization" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.middleware.authorization_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">authorization_middleware</tt><big>(</big><em>environ</em>, <em>start_response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">authorization_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#authorization_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.authorization_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_AUTHORIZATION</span></tt> key in the <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
 <p>If available, set the <tt class="docutils literal"><span class="pre">http.authorization</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with
 the result obtained from
@@ -122,26 +127,40 @@ the result obtained from
 </dd></dl>
 
 </div>
-</div>
+<div class="section" id="wait-for-request-body">
+<span id="wait-for-body-middleware"></span><h2>Wait for request body<a class="headerlink" href="#wait-for-request-body" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.apps.wsgi.middleware.wait_for_body_middleware">
+<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">wait_for_body_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.wsgi.middleware.wait_for_body_middleware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use this middleware to wait for the full body.</p>
+<p>This middleware wait for the full body to be received before letting
+other middleware to be processed.</p>
+<p>Useful when using synchronous web-frameworks.</p>
+</dd></dl>
+
 <div class="section" id="response-middlewares">
-<span id="wsgi-response-middleware"></span><h2>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h2>
+<span id="wsgi-response-middleware"></span><h3>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h3>
 <p>Response middleware are callable objects which can be used in conjunction
-with pulsar <a class="reference internal" href="async.html#wsgi-handlers"><em>application handlers</em></a>. They must return
-a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a> which can be the same as
-the one passed to the callable or a brand new one.</p>
+with pulsar <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a>.
+They must return a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a> which can be the
+same as the one passed to the callable or a brand new one.</p>
+</div>
+</div>
 <div class="section" id="interface">
-<h3>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h3>
+<h2>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">ResponseMiddleware</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bas class for <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a>
-middlewares. The focus of this class is the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> method where
+<dd><p>Base class for response middlewares.</p>
+<p>A response middleware is used by a <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a>,
+it is a callable used to manipulate a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a>.</p>
+<p>The focus of this class is the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> method where
 the middleware logic is implemented.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware.available">
 <tt class="descname">available</tt><big>(</big><em>environ</em>, <em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware.available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.available" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if this <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a> can be applied to
-the <em>response</em> object.</p>
+the <tt class="docutils literal"><span class="pre">response</span></tt> object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -170,7 +189,7 @@ method returns <tt class="docutils literal"><span class="pre">True</span></tt>.<
 
 </div>
 <div class="section" id="gzip-middleware">
-<h3>GZip Middleware<a class="headerlink" href="#gzip-middleware" title="Permalink to this headline">¶</a></h3>
+<h2>GZip Middleware<a class="headerlink" href="#gzip-middleware" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.middleware.GZipMiddleware">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">GZipMiddleware</tt><big>(</big><em>min_length=200</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#GZipMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.GZipMiddleware" title="Permalink to this definition">¶</a></dt>
@@ -180,7 +199,6 @@ allows gzip compression. It sets the Vary header accordingly.</p>
 <a class="reference external" href="http://jython.xhaus.com/http-compression-in-python-and-jython">http://jython.xhaus.com/http-compression-in-python-and-jython</a></p>
 </dd></dl>
 
-</div>
 </div>
 </div>
 
@@ -194,30 +212,40 @@ allows gzip compression. It sets the Vary header accordingly.</p>
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Middleware</a><ul>
-<li><a class="reference internal" href="#additional-wsgi-middlewares">Additional WSGI Middlewares</a><ul>
-<li><a class="reference internal" href="#clean-path">clean path</a></li>
-<li><a class="reference internal" href="#cookie">cookie</a></li>
-<li><a class="reference internal" href="#authorization">authorization</a></li>
+<li><a class="reference internal" href="#">Asynchronous Middleware</a><ul>
+<li><a class="reference internal" href="#clean-path">Clean path</a></li>
+<li><a class="reference internal" href="#cookie">Cookie</a></li>
+<li><a class="reference internal" href="#authorization">Authorization</a></li>
+<li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a><ul>
+<li><a class="reference internal" href="#response-middlewares">Response Middlewares</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#response-middlewares">Response Middlewares</a><ul>
 <li><a class="reference internal" href="#interface">Interface</a></li>
 <li><a class="reference internal" href="#gzip-middleware">GZip Middleware</a></li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="content.html"
-                        title="previous chapter">Asynchronous Content</a></p>
+  <p class="topless"><a href="wrappers.html"
+                        title="previous chapter">WSGI Wrappers</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tools.html"
-                        title="next chapter">Utilities</a></p>
+  <p class="topless"><a href="content.html"
+                        title="next chapter">Asynchronous Content</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/wsgi/middleware.txt"

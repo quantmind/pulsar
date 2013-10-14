@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Release Notes &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Release Notes &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="shortcut icon" href="static/Game_of_life_pulsar.gif"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
+    <link rel="shortcut icon" href="static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -67,8 +67,26 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-7-0-2013-oct-14">
-<h2>Ver. 0.7.0 - 2013-Oct-14<a class="headerlink" href="#ver-0-7-0-2013-oct-14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-7-2-development">
+<h2>Ver. 0.7.2 - Development<a class="headerlink" href="#ver-0-7-2-development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fixed <a class="reference internal" href="apps/wsgi/middleware.html#wait-for-body-middleware"><em>wait for body middleware</em></a>.</li>
+<li>Fixed <a class="reference internal" href="apps/pulse.html#apps-pulse"><em>django pulse</em></a> application when the client request
+has body to load.</li>
+<li><strong>807 regression tests</strong>, <strong>90% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-7-1-2013-oct-14">
+<h2>Ver. 0.7.1 - 2013-Oct-14<a class="headerlink" href="#ver-0-7-1-2013-oct-14" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Documentation fixes</li>
+<li>Critical fix in <tt class="docutils literal"><span class="pre">setup.py</span></tt> for python 2.</li>
+<li>Replaced the favicon in documentation.</li>
+<li><strong>807 regression tests</strong>, <strong>90% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-7-0-2013-oct-13">
+<h2>Ver. 0.7.0 - 2013-Oct-13<a class="headerlink" href="#ver-0-7-0-2013-oct-13" title="Permalink to this headline">¶</a></h2>
 <ul>
 <li><p class="first">Several improvements and bug fixes in the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>
 including:</p>
@@ -486,10 +504,24 @@ asynchronous test suite and asynchronous shell.</li>
   <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#ver-0-7-0-2013-oct-14">Ver. 0.7.0 - 2013-Oct-14</a></li>
+<li><a class="reference internal" href="#ver-0-7-2-development">Ver. 0.7.2 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-7-1-2013-oct-14">Ver. 0.7.1 - 2013-Oct-14</a></li>
+<li><a class="reference internal" href="#ver-0-7-0-2013-oct-13">Ver. 0.7.0 - 2013-Oct-13</a></li>
 <li><a class="reference internal" href="#ver-0-6-0-2013-sep-05">Ver. 0.6.0 - 2013-Sep-05</a></li>
 <li><a class="reference internal" href="#ver-0-5-2-2013-june-30">Ver. 0.5.2 - 2013-June-30</a></li>
 <li><a class="reference internal" href="#ver-0-5-1-2013-june-03">Ver. 0.5.1 - 2013-June-03</a></li>
