@@ -6,7 +6,7 @@ activities in different threads and/or processes.
 :Master CI: |master-build|_ |coverage-master|
 :Dev CI: |dev-build|_ |coverage-dev|
 :Documentation: http://packages.python.org/pulsar/
-:Dowloads: http://pypi.python.org/pypi/pulsar
+:Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
@@ -69,6 +69,8 @@ Pulsar is a stand alone python library and it can be installed via `pip`::
     pip install pulsar
 
 `easy_install` or downloading the tarball from pypi_.
+
+If cython_ is available, c extensions will be compiled and installed.
 
 
 Applications
@@ -207,3 +209,4 @@ file in the top distribution directory for the full license text.
 .. _Django: https://www.djangoproject.com/
 .. _tulip: https://code.google.com/p/tulip/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
+.. _cython: http://cython.org/

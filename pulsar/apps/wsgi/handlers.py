@@ -46,7 +46,7 @@ Asynchronous Iterable
 
 An asynchronous iterable is an iterable over a combination of ``bytes`` or
 :class:`pulsar.Deferred` which result in ``bytes``.
-For eaxample this could be an asynchronous iterable::
+For example this could be an asynchronous iterable::
 
     def simple_async():
         yield b'hello'
