@@ -8,6 +8,7 @@ activities in different threads and/or processes.
 :Documentation: http://packages.python.org/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
+:Mailing list: `google user group`_
 :Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
     task queue, wsgi, websocket, redis, json-rpc
@@ -211,3 +212,4 @@ file in the top distribution directory for the full license text.
 .. _tulip: https://code.google.com/p/tulip/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _cython: http://cython.org/
+.. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
