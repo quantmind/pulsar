@@ -1,1 +1,0 @@
-.. _changelog:=========================Release Notes=========================.. include:: ../../CHANGELOG.rst

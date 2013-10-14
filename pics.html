@@ -6,27 +6,27 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Django Application &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Pics &mdash; pulsar 0.7.1-beta.1 documentation</title>
     
-    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
-    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
+        URL_ROOT:    './',
         VERSION:     '0.7.1-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../static/jquery.js"></script>
-    <script type="text/javascript" src="../static/underscore.js"></script>
-    <script type="text/javascript" src="../static/doctools.js"></script>
-    <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
-    <link rel="next" title="Greenlet Integration" href="green.html" />
-    <link rel="prev" title="Twisted Integration" href="twisted.html" /> 
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="shortcut icon" href="static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
+    <link rel="next" title="Socket Servers" href="apps/socket.html" />
+    <link rel="prev" title="Settings" href="settings.html" /> 
   </head>
   <body>
 
@@ -34,18 +34,18 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
+          <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
+          <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="green.html" title="Greenlet Integration"
+          <a href="apps/socket.html" title="Socket Servers"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="twisted.html" title="Twisted Integration"
+          <a href="settings.html" title="Settings"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -53,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://pythonhosted.org/pulsar/apps/pulse.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/pics.html">release docs here</a>.
         </p>
     
 </div>
@@ -65,21 +65,24 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="module-pulsar.apps.pulse">
-<span id="django-application"></span><span id="apps-pulse"></span><h1>Django Application<a class="headerlink" href="#module-pulsar.apps.pulse" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-pulsar.apps.pulse" title="pulsar.apps.pulse"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pulse</span></tt></a> module is a django application for running
-a django web site with pulsar. Add it to the list of your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>:</p>
-<div class="highlight-python"><pre>INSTALLED_APPS = (
-    ...,
-    &#x27;pulsar.apps.pulse&#x27;,
-    ...
-)</pre>
+  <div class="section" id="pics">
+<h1>Pics<a class="headerlink" href="#pics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="game-of-life">
+<h2>Game of life<a class="headerlink" href="#game-of-life" title="Permalink to this headline">¶</a></h2>
+<p>Did you know?</p>
+<p>Pulsar is the fourth most common oscillator in the game of life.</p>
+<a class="reference internal image-reference" href="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif"><img alt="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif" src="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif" style="width: 100px;" /></a>
 </div>
-<p>and run the site via the <tt class="docutils literal"><span class="pre">pulse</span></tt> command:</p>
-<div class="highlight-python"><pre>python manage.py pulse</pre>
+<div class="section" id="python-powered">
+<h2>Python Powered<a class="headerlink" href="#python-powered" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar loves python as much as the minion in the image!</p>
+<a class="reference internal image-reference" href="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no"><img alt="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no" src="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no" style="width: 500px;" /></a>
 </div>
-<p>Check the <a class="reference internal" href="../tutorials/django.html#tutorials-django"><em>django chat example</em></a> for a django chat
-application served by a multiprocessing pulsar server.</p>
+<div class="section" id="logo">
+<h2>Logo<a class="headerlink" href="#logo" title="Permalink to this headline">¶</a></h2>
+<p>Pulsar needs a logo, can you do one for us?</p>
+<img alt="images/pulsar.png" src="images/pulsar.png" />
+</div>
 </div>
 
 
@@ -88,8 +91,8 @@ application served by a multiprocessing pulsar server.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
-  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+<a href="index.html">
+  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -105,20 +108,30 @@ application served by a multiprocessing pulsar server.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pics</a><ul>
+<li><a class="reference internal" href="#game-of-life">Game of life</a></li>
+<li><a class="reference internal" href="#python-powered">Python Powered</a></li>
+<li><a class="reference internal" href="#logo">Logo</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="twisted.html"
-                        title="previous chapter">Twisted Integration</a></p>
+  <p class="topless"><a href="settings.html"
+                        title="previous chapter">Settings</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="green.html"
-                        title="next chapter">Greenlet Integration</a></p>
+  <p class="topless"><a href="apps/socket.html"
+                        title="next chapter">Socket Servers</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/apps/pulse.txt"
+    <li><a href="sources/pics.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
+    <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
