@@ -96,7 +96,7 @@ __all__ = ['clean_path_middleware',
            'wait_for_body_middleware']
 
 
-def clean_path_middleware(environ, start_response):
+def clean_path_middleware(environ, start_response=None):
     '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']
     if path and '//' in path:
@@ -109,7 +109,7 @@ def clean_path_middleware(environ, start_response):
         raise pulsar.HttpRedirect(url)
 
 
-def cookies_middleware(environ, start_response):
+def cookies_middleware(environ, start_response=None):
     '''Parse the ``HTTP_COOKIE`` key in ``environ``.
 
     Set the new ``http.cookie`` key in ``environ`` with a dictionary
@@ -128,7 +128,7 @@ def cookies_middleware(environ, start_response):
         environ['http.cookie'] = c
 
 
-def authorization_middleware(environ, start_response):
+def authorization_middleware(environ, start_response=None):
     '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
 
     If available, set the ``http.authorization`` key in ``environ`` with
@@ -143,7 +143,7 @@ def authorization_middleware(environ, start_response):
             environ[key] = parse_authorization_header(environ[code])
 
 
-def wait_for_body_middleware(environ, start_response):
+def wait_for_body_middleware(environ, start_response=None):
     '''Use this middleware to wait for the full body.
 
     This middleware wait for the full body to be received before letting

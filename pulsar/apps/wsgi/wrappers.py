@@ -442,6 +442,9 @@ data from the request body.'''
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)
                     result = parse_form_data(self.environ, charset)
+                # set the wsgi.input to a readable file-like object for
+                # third-parties application (django or any other web-framework)
+                self.environ['wsgi.input'] = BytesIO(chunk)
             else:
                 result = {}, None
         else:

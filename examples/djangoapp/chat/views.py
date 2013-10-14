@@ -77,7 +77,7 @@ class middleware(object):
         from django.http import HttpResponse
         environ = request.META
         environ['django.user'] = request.user
-        response = self._web_socket(environ, None)
+        response = self._web_socket(environ)
         if response is not None:
             # we have a response, this is the websocket upgrade.
             # Convert to django response

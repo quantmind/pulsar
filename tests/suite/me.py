@@ -7,9 +7,12 @@ from pulsar import send, multi_async, is_failure
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.pep import get_event_loop, default_timer
+from pulsar.utils.version import get_version
+
 
 def simple_function(actor):
     return actor.name
+
 
 def wait(actor, period=0.5):
     start = default_timer()
@@ -122,7 +125,8 @@ class TestTestWorker(unittest.TestCase):
 
     def test_unknown_send_target(self):
         # The target does not exists
-        future = pulsar.send('vcghdvchdgcvshcd', 'ping').add_both(lambda r: [r])
+        future = pulsar.send('vcghdvchdgcvshcd',
+                             'ping').add_both(lambda r: [r])
         yield future
         self.assertTrue(is_failure(future.result[0]))
 
@@ -166,7 +170,7 @@ class TestPulsar(unittest.TestCase):
     def test_version(self):
         self.assertTrue(pulsar.VERSION)
         self.assertTrue(pulsar.__version__)
-        self.assertEqual(pulsar.__version__,pulsar.get_version(pulsar.VERSION))
+        self.assertEqual(pulsar.__version__, get_version(pulsar.VERSION))
         self.assertTrue(len(pulsar.VERSION) >= 2)
 
     def test_meta(self):
