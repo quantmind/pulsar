@@ -1,6 +1,9 @@
+Ver. 0.7.2 - Development
+===========================
+
 Ver. 0.7.1 - 2013-Oct-14
 ===========================
-* Documentations fixes
+* Documentation fixes
 * Critical fix in ``setup.py`` for python 2.
 * Replaced the favicon in documentation.
 * **807 regression tests**, **90% coverage**.

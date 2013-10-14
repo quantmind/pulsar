@@ -174,10 +174,11 @@ Contributing
 Development of pulsar_ happens at Github. We very much welcome your contribution
 of course. To do so, simply follow these guidelines:
 
-1. Fork pulsar_ on github
-2. Create a topic branch ``git checkout -b my_branch``
-3. Push to your branch ``git push origin my_branch``
-4. Create an issue at https://github.com/quantmind/pulsar/issues with a link to your patch.
+* Fork pulsar_ on github
+* Create a topic branch ``git checkout -b my_branch``
+* Push to your branch ``git push origin my_branch``
+* Create an issue at https://github.com/quantmind/pulsar/issues with pull request
+  for the ``dev`` branch.
 
 
 .. _license:

@@ -1,27 +1,36 @@
 '''
-Middleware are functions or callable objects similar to
+A WSGI Middleware is a function or callable object similar to
 :ref:`WSGI application handlers <wsgi-handlers>`
-with the only difference that they can return ``None``. Middleware can be used
-in conjunction with a :class:`WsgiHandler` or any other handler which iterate
-through a list of middleware in a similar way (for example django wsgi
-handler).
+with the only difference that they can return ``None``.
+
+Middleware can be used in conjunction with a
+:ref:`WsgiHandler <wsgi-handler>` or any
+other handler which iterate through a list of middleware in a similar
+way (for example django wsgi handler).
 
 Here we introduce the :class:`Router` and :class:`MediaRouter` to handle
 requests on given urls. Pulsar is shipped with
 :ref:`additional wsgi middleware <wsgi-additional-middleware>` for manipulating
 the environment before a client response is returned.
 
+.. important::
 
-This module implements several WSGI middleware which does not
-serve request but instead perform initialization and sanity checks.
-It also introduces the **Response middlewares** implemented as a subclass of
-:class:`ResponseMiddleware`. Response middlewares are used by the
-:class:`pulsar.apps.wsgi.wrappers.WsgiResponse` to modify/add headers and
-manipulate content.
+    An asynchronous WSGI middleware is a callble accepting a WSGI
+    ``environ`` as the only input paramater. It must returns an
+    :ref:`asynchronous iterator <wsgi-async-iter>` or nothing.
+
+The two most important wsgi middleware in pulsar are:
+
+* the :ref:`Router <wsgi-router>` for serving dynamic web applications
+* the :ref:`MediaRouter <wsgi-media-router>` for serving static files
+
+In addition, there are several WSGI middlewares which don't
+serve request but instead perform initialisation and sanity checks.
+
 
 .. _wsgi-additional-middleware:
 
-Additional WSGI Middlewares
+Useful WSGI Middlewares
 ============================
 
 Several :ref:`wsgi middleware <wsgi-middleware>` useful in several
@@ -46,9 +55,9 @@ Response Middlewares
 =============================
 
 Response middleware are callable objects which can be used in conjunction
-with pulsar :ref:`application handlers <wsgi-handlers>`. They must return
-a :ref:`WsgiResponse <wsgi-response>` which can be the same as
-the one passed to the callable or a brand new one.
+with pulsar :ref:`WsgiHandler <wsgi-handler>`.
+They must return a :ref:`WsgiResponse <wsgi-response>` which can be the
+same as the one passed to the callable or a brand new one.
 
 Interface
 ~~~~~~~~~~~~~~~~~~
@@ -91,7 +100,7 @@ def is_streamed(content):
     return False
 
 
-def clean_path_middleware(environ, start_response):
+def clean_path_middleware(environ):
     '''Clean url from double slashes and redirect if needed.'''
     path = environ['PATH_INFO']
     if path and '//' in path:
@@ -104,7 +113,7 @@ def clean_path_middleware(environ, start_response):
         raise pulsar.HttpRedirect(url)
 
 
-def cookies_middleware(environ, start_response):
+def cookies_middleware(environ):
     '''Parse the ``HTTP_COOKIE`` key in ``environ``.
 
     Set the new ``http.cookie`` key in ``environ`` with a dictionary
@@ -123,7 +132,7 @@ def cookies_middleware(environ, start_response):
         environ['http.cookie'] = c
 
 
-def authorization_middleware(environ, start_response):
+def authorization_middleware(environ):
     '''Parse the ``HTTP_AUTHORIZATION`` key in the ``environ``.
 
     If available, set the ``http.authorization`` key in ``environ`` with
@@ -138,7 +147,7 @@ def authorization_middleware(environ, start_response):
             environ[key] = parse_authorization_header(environ[code])
 
 
-def wait_for_body_middleware(environ, start_response):
+def wait_for_body_middleware(environ):
     '''Use this middleware to wait for the full body.
 
     This middleware wait for the full body to be received before letting
@@ -151,19 +160,25 @@ def wait_for_body_middleware(environ, start_response):
 
 #####################################################    RESPONSE MIDDLEWARE
 class ResponseMiddleware(object):
-    '''Bas class for :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
-middlewares. The focus of this class is the :meth:`execute` method where
-the middleware logic is implemented.'''
+    '''Base class for response middlewares.
+
+    A response middleware is used by a :ref:`WsgiHandler <wsgi-handler>`,
+    it is a callable used to manipulate a :ref:`WsgiResponse <wsgi-response>`.
+
+    The focus of this class is the :meth:`execute` method where
+    the middleware logic is implemented.
+    '''
     def version(self, environ):
         return environ.get('wsgi.version')
 
     def available(self, environ, response):
         '''Check if this :class:`ResponseMiddleware` can be applied to
-the *response* object.
+        the ``response`` object.
 
-:param environ: a WSGI environ dictionary.
-:param response: a :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
-:return: ``True`` or ``False``.'''
+        :param environ: a WSGI environ dictionary.
+        :param response: a :class:`pulsar.apps.wsgi.wrappers.WsgiResponse`
+        :return: ``True`` or ``False``.
+        '''
         return True
 
     def __call__(self, environ, response):
@@ -180,7 +195,8 @@ method returns ``True``.'''
 
 class AccessControl(ResponseMiddleware):
     '''A response middleware which add the ``Access-Control-Allow-Origin``
-response header.'''
+    response header.
+    '''
     def __init__(self, origin='*', methods=None):
         self.origin = origin
         self.methods = methods

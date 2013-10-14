@@ -53,3 +53,4 @@ del local
 # Import tasks local backend for commands
 from .apps.tasks.backends import local
 del local
+del get_version

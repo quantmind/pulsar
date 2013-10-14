@@ -1,7 +1,7 @@
 .. _wsgi-middleware:
 
 ===============================
-Middleware
+Asynchronous Middleware
 ===============================
 
 .. automodule:: pulsar.apps.wsgi.middleware

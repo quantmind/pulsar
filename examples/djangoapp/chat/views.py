@@ -32,8 +32,10 @@ class Chat(ws.WS):
 
     def pubsub(self, websocket):
         if not self._pubsub:
-            # the ``pulsar.cfg`` is injected by the pulser server into
-            # the wsgi environ
+            # ``pulsar.cfg`` is injected by the pulsar server into
+            # the wsgi environ. Here we pick up the name of the wsgi
+            # application running the server. This is **only** needed by the
+            # test suite which tests several servers/clients at once.
             name = websocket.handshake.environ['pulsar.cfg'].name
             self._pubsub = pubsub.PubSub(name=name)
             self._pubsub.subscribe('webchat')
@@ -42,7 +44,7 @@ class Chat(ws.WS):
     def on_open(self, websocket):
         '''A new websocket connection is established.
 
-        Add connection to the set of clients listening for messages.
+        Add it to the set of clients listening for messages.
         '''
         self.pubsub(websocket).add_client(Client(websocket))
 
@@ -67,7 +69,7 @@ class Chat(ws.WS):
 
 
 class middleware(object):
-    '''Middleware for serving the Chat websocket.'''
+    '''Django middleware for serving the Chat websocket.'''
     def __init__(self):
         self._web_socket = ws.WebSocket('/message', Chat())
 
@@ -78,9 +80,10 @@ class middleware(object):
         environ['django.cache'] = data
         response = self._web_socket(environ, None)
         if response is not None:
-            # Convert to django response
+            # we have a response, this is the websocket upgrade.
             if is_failure(response):
                 response.throw()
+            # Convert to django response
             resp = HttpResponse(status=response.status_code,
                                 content_type=response.content_type)
             for header, value in response.headers:
