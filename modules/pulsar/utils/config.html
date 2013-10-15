@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.config &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.utils.config &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -72,13 +72,6 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
-<span class="sd">SettingBase</span>
-<span class="sd">~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: SettingBase</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-<span class="sd">      </span>
 <span class="sd">Setting</span>
 <span class="sd">~~~~~~~~~~</span>
 
@@ -94,60 +87,53 @@
 <span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">textwrap</span>
-<span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">__version__</span><span class="p">,</span> <span class="n">SERVER_NAME</span><span class="p">,</span> <span class="n">parse_address</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">__version__</span><span class="p">,</span> <span class="n">SERVER_NAME</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">PyHttpParser</span><span class="p">,</span>\
-                     <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="n">parse_address</span>
 <span class="kn">from</span> <span class="nn">.importer</span> <span class="kn">import</span> <span class="n">import_system_file</span>
+<span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">PyHttpParser</span>
+<span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">native_str</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Config&#39;</span><span class="p">,</span>
-           <span class="s">&#39;SimpleSetting&#39;</span><span class="p">,</span>
            <span class="s">&#39;Setting&#39;</span><span class="p">,</span>
-           <span class="c">#&#39;defaults&#39;,</span>
            <span class="s">&#39;ordered_settings&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_string&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_callable&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_bool&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_list&#39;</span><span class="p">,</span>
+           <span class="s">&#39;validate_dict&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_pos_int&#39;</span><span class="p">,</span>
            <span class="s">&#39;validate_pos_float&#39;</span><span class="p">,</span>
            <span class="s">&#39;make_optparse_options&#39;</span><span class="p">]</span>
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.config&#39;</span><span class="p">)</span>
 
-<span class="k">class</span> <span class="nc">DefaultSettings</span><span class="p">:</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c"># port for serving a socket</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">PORT</span> <span class="o">=</span> <span class="mi">8060</span>
-        <span class="c"># timeout for asynchronous Input/Output</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">IO_TIMEOUT</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="c"># Maximum number of concurrenct clients</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">BACKLOG</span> <span class="o">=</span> <span class="mi">2048</span>
-        <span class="c"># Actors timeout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">TIMEOUT</span> <span class="o">=</span> <span class="mi">30</span>
-        <span class="c"># mailbox clients blocking</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">message_timeout</span> <span class="o">=</span> <span class="mi">3</span>
-
-<span class="n">defaults</span> <span class="o">=</span> <span class="n">DefaultSettings</span><span class="p">()</span>
 <span class="n">section_docs</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">KNOWN_SETTINGS</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">KNOWN_SETTINGS_ORDER</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <div class="viewcode-block" id="pass_through"><a class="viewcode-back" href="../../../settings.html#pulsar.utils.config.pass_through">[docs]</a><span class="k">def</span> <span class="nf">pass_through</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A dummy function accepting on parameter only. It does nothing. It is</span>
-<span class="sd">used as default by :ref:`Application Hooks &lt;setting-section-application-hooks&gt;`.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A dummy function accepting one parameter only.</span>
+
+<span class="sd">It does nothing and it is used as default by</span>
+<span class="sd">:ref:`Application Hooks &lt;setting-section-application-hooks&gt;`.&#39;&#39;&#39;</span>
     <span class="k">pass</span>
+
 </div>
+<span class="k">def</span> <span class="nf">set_if_avail</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="n">skip_values</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">skip_values</span><span class="p">:</span>
+        <span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+
 <span class="k">def</span> <span class="nf">wrap_method</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">_wrapped</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_wrapped</span>
+
 
 <span class="k">def</span> <span class="nf">ordered_settings</span><span class="p">():</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">KNOWN_SETTINGS_ORDER</span><span class="p">:</span>
@@ -173,14 +159,14 @@
 <span class="sd">    Dictionary of all :class:`Setting` instances available in this</span>
 <span class="sd">    :class:`Config` container. Keys are given by the :attr:`SettingBase.name`</span>
 <span class="sd">    attribute.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. attribute:: params</span>
 
 <span class="sd">    Dictionary of additional parameters which cannot be parsed in the</span>
 <span class="sd">    command line.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">exclude_from_config</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s">&#39;config&#39;</span><span class="p">,))</span>
-    
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">epilog</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -201,20 +187,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">epilog</span> <span class="o">=</span> <span class="n">epilog</span> <span class="ow">or</span> <span class="s">&#39;Have fun!&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">version</span> <span class="ow">or</span> <span class="n">__version__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span>
-    
+
     <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">):</span>
             <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">value</span>
-    
+
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
@@ -236,14 +222,14 @@
         <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s">&quot;settings&quot;</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Invalid access!&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Config</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-    
+
 <div class="viewcode-block" id="Config.update"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Update this :attr:`Config` with ``data`` which is either an</span>
 <span class="sd">instance of Mapping or :class:`Config`.&#39;&#39;&#39;</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            </div>
+</div>
 <div class="viewcode-block" id="Config.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Get the value at ``name`` for this :class:`Config` container</span>
 <span class="sd">following this algorithm:</span>
@@ -266,7 +252,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
                 <span class="n">prefix_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">prefix_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="c"># dont set this value</span>
+                    <span class="k">return</span>  <span class="c"># don&#39;t set this value</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">)</span>
@@ -293,14 +279,14 @@
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">setts</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">sorter</span><span class="p">):</span>
             <span class="n">setts</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parser</span>
-        
+
     <span class="k">def</span> <span class="nf">import_from_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mod</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">mod</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;config&#39;</span><span class="p">,</span> <span class="n">mod</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">mod</span> <span class="o">=</span> <span class="n">import_system_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Failed to read config file &quot;</span><span class="si">%s</span><span class="s">&quot;. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>\
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Failed to read config file &quot;</span><span class="si">%s</span><span class="s">&quot;. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
         <span class="n">unknowns</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">mod</span><span class="p">:</span>
@@ -316,7 +302,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">kl</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">unknowns</span>
-        
+
 <div class="viewcode-block" id="Config.on_start"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoked by a :class:`pulsar.Application` just before starting.&#39;&#39;&#39;</span>
         <span class="k">for</span> <span class="n">sett</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -358,7 +344,7 @@
             <span class="n">pn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;default_process_name&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">pn</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">pn</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        
+
 <div class="viewcode-block" id="Config.copy"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A deep copy of this :class:`Config` container. If ``prefix``</span>
 <span class="sd">is given, it prefixes all non</span>
@@ -377,19 +363,19 @@
             <span class="n">me</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">setting</span>
         <span class="n">me</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">me</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">me</span>
-    </div>
+</div>
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    
+
     <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__copy__</span><span class="p">()</span>
-    
-    <span class="c">############################################################################</span>
+
+    <span class="c">########################################################################</span>
     <span class="c">##    INTERNALS</span>
     <span class="k">def</span> <span class="nf">update_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">ordered_settings</span><span class="p">():</span>
             <span class="n">setting</span> <span class="o">=</span> <span class="n">s</span><span class="p">()</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>  
+            <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">:</span>
@@ -397,7 +383,7 @@
                 <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">app</span> <span class="ow">and</span> <span class="n">setting</span><span class="o">.</span><span class="n">app</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
                     <span class="k">continue</span>    <span class="c"># the setting is for an app not in the apps set</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">setting</span>
-            
+
     <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">KNOWN_SETTINGS</span><span class="p">:</span>
@@ -406,15 +392,14 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;&#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-    
-            
+
 </div>
 <span class="k">class</span> <span class="nc">SettingMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A metaclass which collects all setting classes and put them</span>
 <span class="sd">in the global ``KNOWN_SETTINGS`` list.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">super_new</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SettingMeta</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span>
-        <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">SettingMeta</span><span class="p">)]</span>
+        <span class="c">#parents = [b for b in bases if isinstance(b, SettingMeta)]</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;validator&quot;</span><span class="p">)</span>
         <span class="n">attrs</span><span class="p">[</span><span class="s">&quot;validator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrap_method</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;virtual&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
@@ -441,74 +426,32 @@
         <span class="nb">setattr</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="s">&quot;short&quot;</span><span class="p">,</span> <span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span> <span class="k">else</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
 
-<div class="viewcode-block" id="SettingBase"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.SettingBase">[docs]</a><span class="k">class</span> <span class="nc">SettingBase</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;This is the base class of :class:`Settings` and :class:`SimpleSetting`.</span>
-<span class="sd">It defines attributes for a given setting parameter.&#39;&#39;&#39;</span>
+<span class="c"># This works for Python 2 and Python 3</span>
+<div class="viewcode-block" id="Setting"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting">[docs]</a><span class="k">class</span> <span class="nc">Setting</span><span class="p">(</span><span class="n">SettingMeta</span><span class="p">(</span><span class="s">&#39;BaseSettings&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+    <span class="sd">&#39;&#39;&#39;A configuration parameter for pulsar.</span>
+
+<span class="sd">    Parameters can be specified on the command line or on a config file.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="sd">&#39;&#39;&#39;If set to ``True`` the settings won&#39;t be loaded.</span>
+
+<span class="sd">    It can be only used as base class for other settings.&#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&#39;&#39;&#39;The unique name used to access this setting in the :class:`Config`</span>
-<span class="sd">    container.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The key to access this setting in a :class:`Config` container.&#39;&#39;&#39;</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&#39;&#39;&#39;A validating function for this setting. It provided it must be a</span>
-<span class="sd">function accepting one positional argument, the value to validate.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A validating function for this setting.</span>
+
+<span class="sd">    It provided it must be a function accepting one positional argument,</span>
+<span class="sd">    the value to validate.&#39;&#39;&#39;</span>
     <span class="n">value</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;The actual value for this setting.&#39;&#39;&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;The default value for this setting.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;{0} ({1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
-
-<div class="viewcode-block" id="SettingBase.set"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.SettingBase.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Set *val* as the :attr:`value` for this :class:`SettingBase`.</span>
-<span class="sd">If *default* is ``True`` set also the :attr:`default` value.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
-            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">if</span> <span class="n">default</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">val</span>
-</div>
-<div class="viewcode-block" id="SettingBase.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.SettingBase.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Returns :attr:`value`&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-</div>
-<div class="viewcode-block" id="SettingBase.on_start"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.SettingBase.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Called when pulsar server starts. It can be used to perform</span>
-<span class="sd">custom initialization for this :class:`Setting`.&#39;&#39;&#39;</span>
-        <span class="k">pass</span>
-    </div>
-<div class="viewcode-block" id="SettingBase.copy"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.SettingBase.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Copy this :class:`SettingBase`&#39;&#39;&#39;</span>
-        <span class="n">setting</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
-            <span class="n">flags</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">flags</span>
-            <span class="k">if</span> <span class="n">flags</span> <span class="ow">and</span> <span class="n">flags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;--&#39;</span><span class="p">):</span>
-                <span class="c"># Prefix a setting</span>
-                <span class="n">setting</span><span class="o">.</span><span class="n">orig_name</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> 
-                <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="n">setting</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">flags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">:])]</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
-            <span class="n">setting</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> application. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span> <span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">short</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">setting</span>
-    
-</div></div>
-<span class="k">class</span> <span class="nc">SimpleSetting</span><span class="p">(</span><span class="n">SettingBase</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">orig_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-
-
-<span class="c"># This works for Python 2 and Python 3</span>
-<div class="viewcode-block" id="Setting"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting">[docs]</a><span class="k">class</span> <span class="nc">Setting</span><span class="p">(</span><span class="n">SettingMeta</span><span class="p">(</span><span class="s">&#39;BaseSettings&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">SettingBase</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
-    <span class="sd">&#39;&#39;&#39;A configuration parameter for pulsar. Parameters can be specified</span>
-<span class="sd">on the command line or on a config file.&#39;&#39;&#39;</span>
-    <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="sd">&#39;&#39;&#39;If set to ``True`` the settings won&#39;t be loaded and it can be only used</span>
-<span class="sd">as base class for other settings.&#39;&#39;&#39;</span>
     <span class="n">nargs</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&#39;&#39;&#39;For positional arguments. Same usage as python :mod:`argparse` module.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The number of command-line arguments that should be consumed&#39;&#39;&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;A constant value required by some action and nargs selections&#39;&#39;&#39;</span>
     <span class="n">app</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Setting for a specific :class:`Application`.&#39;&#39;&#39;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="bp">None</span>
@@ -519,13 +462,15 @@
     <span class="n">choices</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Restrict the argument to the choices provided.&#39;&#39;&#39;</span>
     <span class="nb">type</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;The type to which the command-line argument should be converted&#39;&#39;&#39;</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Same usage as ``metavar`` in the python :mod:`argparse` module. It is</span>
 <span class="sd">    the name for the argument in usage message.&#39;&#39;&#39;</span>
     <span class="n">action</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="sd">&#39;&#39;&#39;Same usage as ``action`` in the python</span>
-<span class="sd">    :mod:`argparse.ArgumentParser.add_argument` method.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The basic type of action to be taken when this argument is encountered</span>
+<span class="sd">    at the command line&#39;&#39;&#39;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="sd">&#39;&#39;&#39;Optional shot description string&#39;&#39;&#39;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Description string&#39;&#39;&#39;</span>
     <span class="n">is_global</span> <span class="o">=</span> <span class="bp">False</span>
@@ -539,9 +484,12 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">app</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">app</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">const</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra</span> <span class="o">=</span> <span class="n">e</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">choices</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
+        <span class="n">set_if_avail</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;choices&#39;</span><span class="p">,</span> <span class="n">choices</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">)</span>
+        <span class="n">set_if_avail</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;const&#39;</span><span class="p">,</span> <span class="n">const</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">const</span><span class="p">)</span>
+        <span class="n">set_if_avail</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="nb">type</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="s">&#39;string&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">default</span> <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="n">desc</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">flags</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span>
@@ -549,7 +497,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span> <span class="o">=</span> <span class="n">nargs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">desc</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">short</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -565,16 +512,42 @@
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;{0} ({1})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
+
+<div class="viewcode-block" id="Setting.on_start"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting.on_start">[docs]</a>    <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called when pulsar server starts.</span>
+
+<span class="sd">        It can be used to perform custom initialization for this</span>
+<span class="sd">        :class:`Setting`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Setting.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns :attr:`value`&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+</div>
+<div class="viewcode-block" id="Setting.set"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set ``val`` as the :attr:`value` for this :class:`Setting`.</span>
+
+<span class="sd">        If ``default`` is ``True`` set also the :attr:`default` value.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">if</span> <span class="n">default</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">val</span>
+</div>
 <div class="viewcode-block" id="Setting.add_argument"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting.add_argument">[docs]</a>    <span class="k">def</span> <span class="nf">add_argument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">set_default</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Add this :class:`Setting` to the *parser*, an instance of</span>
-<span class="sd">python :class:`argparse.ArgumentParser`, only if :attr:`flags` or</span>
-<span class="sd">:attr:`nargs` and :attr:`name` are defined.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Add this :class:`Setting` to the ``parser``.</span>
+
+<span class="sd">        The operation is carried out only if :attr:`flags` or</span>
+<span class="sd">        :attr:`nargs` and :attr:`name` are defined.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">default</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span> <span class="k">if</span> <span class="n">set_default</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;nargs&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nargs</span><span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s">&#39;string&#39;</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s">&quot;choices&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;nargs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span><span class="p">}</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extra</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">:</span>
             <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&quot;dest&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -582,8 +555,8 @@
                            <span class="s">&quot;default&quot;</span><span class="p">:</span> <span class="n">default</span><span class="p">,</span>
                            <span class="s">&quot;help&quot;</span><span class="p">:</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> [</span><span class="si">%s</span><span class="s">]&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">)})</span>
             <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&quot;action&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&quot;store&quot;</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
-                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;nargs&quot;</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;type&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&quot;nargs&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">nargs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;metavar&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="bp">None</span><span class="p">,</span>
@@ -592,7 +565,21 @@
             <span class="c"># Not added to argparser</span>
             <span class="k">return</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        
+</div>
+<div class="viewcode-block" id="Setting.copy"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Setting.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Copy this :class:`SettingBase`&#39;&#39;&#39;</span>
+        <span class="n">setting</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">flags</span>
+            <span class="k">if</span> <span class="n">flags</span> <span class="ow">and</span> <span class="n">flags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;--&#39;</span><span class="p">):</span>
+                <span class="c"># Prefix a setting</span>
+                <span class="n">setting</span><span class="o">.</span><span class="n">orig_name</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">setting</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--</span><span class="si">%s</span><span class="s">-</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">flags</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">:])]</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
+            <span class="n">setting</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> application. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">short</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">setting</span>
+
 </div></div>
 <span class="k">def</span> <span class="nf">validate_bool</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
@@ -607,6 +594,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Invalid boolean: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">validate_pos_int</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -617,11 +605,13 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value must be positive: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">val</span>
 
+
 <span class="k">def</span> <span class="nf">validate_pos_float</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="n">val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value must be positive: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">val</span>
+
 
 <span class="k">def</span> <span class="nf">validate_string</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="n">va</span> <span class="o">=</span> <span class="n">native_str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
@@ -631,19 +621,22 @@
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Not a string: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">va</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
+
 <span class="k">def</span> <span class="nf">validate_list</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Not a list: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">validate_dict</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Not a dictionary: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">val</span>
 
+
 <span class="k">def</span> <span class="nf">validate_callable</span><span class="p">(</span><span class="n">arity</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">_validate_callable</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span><span class="s">&#39;__call__&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Value is not callable: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">val</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
             <span class="n">cval</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">__call__</span>
@@ -651,31 +644,40 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">discount</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">cval</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">if</span> <span class="n">arity</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getargspec</span><span class="p">(</span><span class="n">cval</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">discount</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getargspec</span><span class="p">(</span><span class="n">cval</span><span class="p">)</span>
+        <span class="n">nargs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="o">-</span> <span class="n">discount</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nargs</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">defaults</span><span class="p">),</span> <span class="n">nargs</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="p">(</span><span class="n">nargs</span><span class="p">,)</span>
+        <span class="k">if</span> <span class="n">arity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Value must have an arity of: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">arity</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span>
     <span class="k">return</span> <span class="n">_validate_callable</span>
 
 
-<span class="k">def</span> <span class="nf">make_optparse_options</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span> <span class="c"># pragma nocover</span>
-    <span class="sd">&#39;&#39;&#39;Create a tuple of optparse options&#39;&#39;&#39;</span>
+<span class="k">def</span> <span class="nf">make_optparse_options</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create a tuple of optparse options.&#39;&#39;&#39;</span>
     <span class="kn">from</span> <span class="nn">optparse</span> <span class="kn">import</span> <span class="n">make_option</span>
+
     <span class="k">class</span> <span class="nc">AddOptParser</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">add_argument</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_option</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
     <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="n">apps</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">AddOptParser</span><span class="p">()</span>
     <span class="n">config</span><span class="o">.</span><span class="n">add_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
-    
 
-<span class="c">################################################################################</span>
+
+<span class="c">############################################################################</span>
 <span class="c">##    Global Server Settings</span>
-
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Global Server Settings&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">These settings are global in the sense that they are used by the arbiter</span>
 <span class="s">as well as all pulsar workers. They are server configuration parameters.</span>
 <span class="s">&#39;&#39;&#39;</span>
+
+
 <span class="k">class</span> <span class="nc">Global</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Global Server Settings&quot;</span>
@@ -693,7 +695,7 @@
 <span class="s">        paramaters can be specified.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
-    
+
 <span class="k">class</span> <span class="nc">HttpProxyServer</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;http_proxy&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--http-proxy&quot;</span><span class="p">]</span>
@@ -701,8 +703,9 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        The HTTP proxy server to use with HttpClient.</span>
 <span class="s">        &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
             <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;http_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
             <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;https_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
 
@@ -717,8 +720,8 @@
 <span class="s">        &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">on_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">setDefaultHttpParser</span> 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
+            <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">setDefaultHttpParser</span>
             <span class="n">setDefaultHttpParser</span><span class="p">(</span><span class="n">PyHttpParser</span><span class="p">)</span>
 
 
@@ -808,15 +811,16 @@
     <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_string</span>
     <span class="n">default</span> <span class="o">=</span> <span class="s">&quot;info&quot;</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;The granularity of log outputs.</span>
-<span class="s">            </span>
+
 <span class="s">            Valid level names are:</span>
-<span class="s">            </span>
+
 <span class="s">             * debug</span>
 <span class="s">             * info</span>
 <span class="s">             * warning</span>
 <span class="s">             * error</span>
 <span class="s">             * critical</span>
 <span class="s">             &quot;&quot;&quot;</span>
+
 
 <span class="k">class</span> <span class="nc">LogHandlers</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;loghandlers&quot;</span>
@@ -848,8 +852,8 @@
 
 <span class="s">        This affects things like ``ps`` and ``top``. If you&#39;re going to be</span>
 <span class="s">        running more than one instance of Pulsar you&#39;ll probably want to set a</span>
-<span class="s">        name to tell them apart. This requires that you install the setproctitle</span>
-<span class="s">        module.</span>
+<span class="s">        name to tell them apart. This requires that you install the</span>
+<span class="s">        setproctitle module.</span>
 
 <span class="s">        It defaults to &#39;pulsar&#39;.</span>
 <span class="s">        &quot;&quot;&quot;</span>
@@ -863,15 +867,27 @@
 <span class="s">        Internal setting that is adjusted for each type of application.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
-<span class="c">################################################################################</span>
-<span class="c">##    Worker Processes</span>
 
+<span class="k">class</span> <span class="nc">Coverage</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;coverage&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--coverage&quot;</span><span class="p">]</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">validate_bool</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s">&quot;store_true&quot;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s">        Collect code coverage from all spawn actors.</span>
+<span class="s">        &quot;&quot;&quot;</span>
+
+
+<span class="c">############################################################################</span>
+<span class="c">##    Worker Processes</span>
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Worker Processes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">This group of configuration parameters control the number of actors</span>
 <span class="s">for a given :class:`pulsar.Monitor`, the type of concurreny of the server and</span>
 <span class="s">other actor-specific parameters.</span>
 <span class="s">&#39;&#39;&#39;</span>
-    
+
+
 <span class="k">class</span> <span class="nc">Workers</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;workers&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
@@ -881,14 +897,15 @@
     <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        The number of workers for handling requests.</span>
-<span class="s">        </span>
-<span class="s">If using a multi-process concurrency, a number in the</span>
-<span class="s">the ``2-4 x NUM_CORES`` range should be good. If you are using threads this</span>
-<span class="s">number can be higher.&quot;&quot;&quot;</span>
+
+<span class="s">        If using a multi-process concurrency, a number in the</span>
+<span class="s">        the ``2-4 x NUM_CORES`` range should be good. If you are using</span>
+<span class="s">        threads this number can be higher.</span>
+<span class="s">        &quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">Concurrency</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
-    <span class="n">inherit</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># Inherited by the arbiter if an application is first created</span>
+    <span class="n">inherit</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c"># Inherited by the arbiter</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;concurrency&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--concurrency&quot;</span><span class="p">]</span>
@@ -916,6 +933,7 @@
 <span class="s">        restarts are disabled.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
+
 <span class="k">class</span> <span class="nc">Timeout</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;timeout&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Worker Processes&quot;</span>
@@ -937,15 +955,15 @@
     <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        The number of threads in an actor thread pool.</span>
-<span class="s">        </span>
-<span class="s">        The thread pool is used by actors to perform CPU intensive calculations.</span>
-<span class="s">        In this way the actor main thread is free to listen to events on file</span>
-<span class="s">        descriptors and process them as quick as possible.&quot;&quot;&quot;</span>
+
+<span class="s">        The thread pool is used by actors to perform CPU intensive</span>
+<span class="s">        calculations. In this way the actor main thread is free to listen</span>
+<span class="s">        to events on file descriptors and process them as quick as possible.</span>
+<span class="s">        &quot;&quot;&quot;</span>
 
 
-<span class="c">################################################################################</span>
+<span class="c">############################################################################</span>
 <span class="c">##    APPLICATION HOOKS</span>
-
 <span class="n">section_docs</span><span class="p">[</span><span class="s">&#39;Application Hooks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">Application hooks are functions which can be specified in a</span>
 <span class="s">:ref:`config &lt;setting-config&gt;` file to perform custom tasks in a pulsar server.</span>
@@ -954,7 +972,8 @@
 
 <span class="s">All application hooks are functions which accept one parameter only, the actor</span>
 <span class="s">invoking the function.&#39;&#39;&#39;</span>
-    
+
+
 <span class="k">class</span> <span class="nc">Postfork</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;post_fork&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Application Hooks&quot;</span>
@@ -966,7 +985,7 @@
 
 <span class="s">        The event loop is not yet available.</span>
 <span class="s">        &quot;&quot;&quot;</span>
-        
+
 
 <span class="k">class</span> <span class="nc">WhenReady</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;when_ready&quot;</span>
@@ -976,12 +995,12 @@
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        Called just before a worker starts its event loop.</span>
-<span class="s">        </span>
+
 <span class="s">        This is a chance to setup :class:`pulsar.EventLoop` callbacks which</span>
 <span class="s">        can run periodically, at every loop or when some defined events occur.</span>
 <span class="s">        &quot;&quot;&quot;</span>
-        
-        
+
+
 <span class="k">class</span> <span class="nc">WhenExit</span><span class="p">(</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;when_exit&quot;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Application Hooks&quot;</span>
@@ -990,7 +1009,7 @@
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        Called just before an actor is garbadge collected.</span>
-<span class="s">        </span>
+
 <span class="s">        This is a chance to check the actor status if needed.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
@@ -1004,7 +1023,7 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        Called after a new connection is made.</span>
 
-<span class="s">        The callable needs to accept one instance variables for the</span>
+<span class="s">        The callable needs to accept one parameter for the</span>
 <span class="s">        connection instance.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
@@ -1018,7 +1037,7 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Called after a connection is lost.</span>
 
-<span class="s">        The callable needs to accept one instance variables for the</span>
+<span class="s">        The callable needs to accept one parameter for the</span>
 <span class="s">        connection instance.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
@@ -1030,10 +1049,10 @@
     <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;callable&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        Called just before a worker processes the request.</span>
+<span class="s">        Called just before an application server processes a request.</span>
 
-<span class="s">        The callable needs to accept two instance variables for the Worker and</span>
-<span class="s">        the Request.</span>
+<span class="s">        The callable needs to accept one parameters for the</span>
+<span class="s">        consumer.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
 
@@ -1044,10 +1063,10 @@
     <span class="nb">type</span> <span class="o">=</span> <span class="s">&quot;callable&quot;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">pass_through</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s">        Called after a worker processes the request.</span>
+<span class="s">        Called after an application server processes a request.</span>
 
-<span class="s">        The callable needs to accept two instance variables for the Worker and</span>
-<span class="s">        the Request.</span>
+<span class="s">        The callable needs to accept one parameter for the</span>
+<span class="s">        consumer.</span>
 <span class="s">        &quot;&quot;&quot;</span>
 </pre></div>
 

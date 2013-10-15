@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.tx &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.tx &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -73,8 +73,8 @@
 <span class="sd">The implementation replaces the twisted reactor with a proxy for</span>
 <span class="sd">:class:`pulsar.EventLoop`.</span>
 <span class="sd">Twisted Deferred and Failures are made compatible with pulsar</span>
-<span class="sd">by installing two different discovery functions via the :func:`pulsar.set_async`</span>
-<span class="sd">function.</span>
+<span class="sd">by installing two different discovery functions via the</span>
+<span class="sd">:func:`pulsar.set_async` function.</span>
 
 <span class="sd">Threads, signal handling, scheduling and so forth is handled by pulsar itself,</span>
 <span class="sd">twisted implementation is switched off.</span>
@@ -88,17 +88,17 @@
 <span class="sd">.. autoclass:: PulsarReactor</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 
 <span class="sd">.. _twisted: http://twistedmatrix.com/</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="k">try</span><span class="p">:</span>    <span class="c">#pragma    nocover</span>
+<span class="k">try</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
     <span class="kn">import</span> <span class="nn">twisted</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.main</span> <span class="kn">import</span> <span class="n">installReactor</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.posixbase</span> <span class="kn">import</span> <span class="n">PosixReactorBase</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.defer</span> <span class="kn">import</span> <span class="n">Deferred</span>
     <span class="kn">from</span> <span class="nn">twisted.python.failure</span> <span class="kn">import</span> <span class="n">Failure</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma    nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
     <span class="c"># This is for when we build documentation with sphinx in python 3</span>
     <span class="kn">import</span> <span class="nn">os</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;BUILDING-PULSAR-DOCS&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;yes&#39;</span><span class="p">:</span>
@@ -108,11 +108,12 @@
         <span class="k">raise</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.async.defer</span> <span class="kn">import</span> <span class="n">default_maybe_async</span><span class="p">,</span> <span class="n">default_maybe_failure</span><span class="p">,</span> <span class="n">set_async</span>
+<span class="kn">from</span> <span class="nn">pulsar.async.defer</span> <span class="kn">import</span> <span class="p">(</span><span class="n">default_maybe_async</span><span class="p">,</span> <span class="n">default_maybe_failure</span><span class="p">,</span>
+                                <span class="n">set_async</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">get_event_loop</span>
 
-    
-<span class="k">def</span> <span class="nf">_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>    <span class="c">#pragma    nocover</span>
+
+<span class="k">def</span> <span class="nf">_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
         <span class="n">d</span><span class="o">.</span><span class="n">_twisted_deferred</span> <span class="o">=</span> <span class="n">obj</span>
@@ -120,67 +121,71 @@
         <span class="n">obj</span> <span class="o">=</span> <span class="n">d</span>
     <span class="k">return</span> <span class="n">default_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">_maybe_failure</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>  <span class="c">#pragma    nocover</span>
+
+<span class="k">def</span> <span class="nf">_maybe_failure</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Failure</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Failure</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">tb</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">default_maybe_failure</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        
+
 
 <span class="c"># Set the new async discovery functions</span>
 <span class="n">set_async</span><span class="p">(</span><span class="n">_maybe_async</span><span class="p">,</span> <span class="n">_maybe_failure</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c">#pragma    nocover</span>
-    <span class="sd">&#39;&#39;&#39;A twisted reactor which acts as a proxy to pulsar eventloop. The</span>
-<span class="sd">event loop is obtained via the ``get_event_loop`` function.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
+    <span class="sd">&#39;&#39;&#39;A twisted reactor which acts as a proxy to pulsar eventloop.</span>
+
+<span class="sd">    The event loop is obtained via the ``get_event_loop`` function.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">callLater</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_seconds</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">_seconds</span><span class="p">,</span> <span class="k">lambda</span> <span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
-    
+        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_later</span><span class="p">(</span><span class="n">_seconds</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">callFromThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="k">lambda</span> <span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
-    
+        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">callInThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="k">lambda</span> <span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
-        
+        <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">addReader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">reader</span><span class="o">.</span><span class="n">doRead</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">addWriter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="n">writer</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">writer</span><span class="o">.</span><span class="n">doWrite</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">removeReader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
-        
+
     <span class="k">def</span> <span class="nf">removeWriter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="n">writer</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
-        
+
     <span class="k">def</span> <span class="nf">removeAll</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">remove_all</span><span class="p">()</span>
-    
-    <span class="c">############################################################################</span>
+
+    <span class="c">#######################################################################</span>
     <span class="c"># Functions not needed by pulsar</span>
     <span class="n">_registerAsIOThread</span> <span class="o">=</span> <span class="bp">False</span>
-    
+
     <span class="k">def</span> <span class="nf">installWaker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
-    
+
     <span class="k">def</span> <span class="nf">mainLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
-    
+
     <span class="k">def</span> <span class="nf">doIteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
         <span class="k">pass</span>
-    
+
     <span class="k">def</span> <span class="nf">spawnProcess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Cannot spawn process from Pulsar reactor&#39;</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">_initThreads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
-    
+
     <span class="k">def</span> <span class="nf">_handleSignals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>
-        </div>
-<span class="k">if</span> <span class="n">installReactor</span><span class="p">:</span>  <span class="c">#pragma    nocover</span>
+
+</div>
+<span class="k">if</span> <span class="n">installReactor</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
     <span class="n">_reactor</span> <span class="o">=</span> <span class="n">PulsarReactor</span><span class="p">()</span>
     <span class="n">installReactor</span><span class="p">(</span><span class="n">_reactor</span><span class="p">)</span>
     <span class="n">_reactor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>

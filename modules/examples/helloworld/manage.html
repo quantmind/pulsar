@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.helloworld.manage &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>examples.helloworld.manage &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -64,7 +64,7 @@
 <span class="sd">the ``Hello World!`` message. To run the script type::</span>
 
 <span class="sd">    python manage.py</span>
-<span class="sd">    </span>
+
 <span class="sd">To see all options available type::</span>
 
 <span class="sd">    python manage.py -h</span>
@@ -73,11 +73,11 @@
 
 <span class="sd">.. autofunction:: server</span>
 
-<span class="sd">.. _WSGI: http://www.python.org/dev/peps/pep-3333/ </span>
+<span class="sd">.. _WSGI: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="kn">import</span> <span class="nn">sys</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
@@ -89,7 +89,7 @@
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;200 OK&#39;</span>
     <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span> <span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
     <span class="p">]</span>
     <span class="n">start_response</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
@@ -97,12 +97,13 @@
 
 </div>
 <div class="viewcode-block" id="server"><a class="viewcode-back" href="../../../tutorials/hello.html#examples.helloworld.manage.server">[docs]</a><span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Create the :class:`pulsar.apps.wsgi.WSGIServer` running :func:`hello`.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Create the :class:`pulsar.apps.wsgi.WSGIServer` running :func:`hello`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="s">&#39;Pulsar Hello World Application&#39;</span>
     <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">hello</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    
+
 </div>
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c">#pragma nocover</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 

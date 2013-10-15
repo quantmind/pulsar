@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.redis.client &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.redis.client &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.redis" href="../redis.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -87,7 +87,7 @@
 <span class="kn">from</span> <span class="nn">redis.connection</span> <span class="kn">import</span> <span class="n">PythonParser</span> <span class="k">as</span> <span class="n">_p</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">ProtocolError</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">ProtocolError</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="nb">zip</span>
 
 <span class="kn">from</span> <span class="nn">.parser</span> <span class="kn">import</span> <span class="n">Parser</span>
@@ -320,7 +320,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">watching</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="k">elif</span> <span class="n">command_name</span> <span class="o">==</span> <span class="s">&#39;WATCH&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">watching</span> <span class="o">=</span> <span class="bp">True</span>
-            <span class="k">return</span> <span class="n">result</span>
+            <span class="k">return</span> <span class="n">response</span>
 
 
 <span class="k">class</span> <span class="nc">Pipeline</span><span class="p">(</span><span class="n">BasePipeline</span><span class="p">,</span> <span class="n">Redis</span><span class="p">):</span>
@@ -487,14 +487,18 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
             <span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
+            <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unsubscribe</span><span class="p">((),</span> <span class="n">d</span><span class="p">)</span>
                 <span class="k">yield</span> <span class="n">d</span>
-            <span class="k">finally</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reset</span><span class="p">()</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">exc_info</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_channel_patterns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">):</span>
         <span class="n">patterns</span> <span class="o">=</span> <span class="p">[]</span>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.test &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -98,12 +98,20 @@
 <span class="sd">To run the test suite::</span>
 
 <span class="sd">    python runtests.py</span>
-<span class="sd">    </span>
+
 <span class="sd">Type::</span>
 
 <span class="sd">    python runtests.py --help</span>
-<span class="sd">    </span>
+
 <span class="sd">For a list different options/parameters which can be used when running tests.</span>
+
+<span class="sd">.. note::</span>
+
+<span class="sd">    Pulsar test suite help you speed up your tests!</span>
+<span class="sd">    Use ``setUpClass`` rather than ``setUp``, use asynchronous tests and if</span>
+<span class="sd">    not possible add fire power with more test workers.</span>
+
+<span class="sd">    Try with the ``-w 8`` command line input for a laugh.</span>
 
 <span class="sd">The next step is to actually write the tests.</span>
 
@@ -125,18 +133,18 @@
 <span class="sd">    # Otherwise it is the same as</span>
 <span class="sd">    #     import unittest</span>
 <span class="sd">    from pulsar.apps.test import unittest</span>
-<span class="sd">    </span>
+
 <span class="sd">    class MyTest(unittest.TestCase):</span>
-<span class="sd">        </span>
+
 <span class="sd">        def test_async_test(self):</span>
 <span class="sd">            result = yield maybe_async_function()</span>
 <span class="sd">            self.assertEqual(result, ...)</span>
-<span class="sd">            </span>
+
 <span class="sd">        def test_simple_test(self):</span>
 <span class="sd">            self.assertEqual(1, 1)</span>
 
 <span class="sd">.. note::</span>
-<span class="sd">    </span>
+
 <span class="sd">    Test functions are asynchronous, when they return a generator or a</span>
 <span class="sd">    :class:`pulsar.Deferred`, synchronous, when they return anything else.</span>
 
@@ -153,7 +161,7 @@
 <span class="sd">    if __name__ == &#39;__main__&#39;:</span>
 <span class="sd">        TestSuite(modules=(&#39;tests&#39;,</span>
 <span class="sd">                          (&#39;examples&#39;,&#39;tests&#39;))).start()</span>
-<span class="sd">                           </span>
+
 <span class="sd">The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.</span>
 
 <span class="sd">In the context of explaining the rules for loading tests, we refer to</span>
@@ -161,7 +169,7 @@
 
 <span class="sd">* a ``module`` (including a directory module)</span>
 <span class="sd">* a python ``class``.</span>
-<span class="sd">    </span>
+
 <span class="sd">with this in mind:</span>
 
 <span class="sd">* Directories that aren&#39;t packages are not inspected. This means that if a</span>
@@ -172,31 +180,31 @@
 <span class="sd">* If an ``object`` defines a ``__test__`` attribute that does not evaluate to</span>
 <span class="sd">  ``True``, that object will not be collected, nor will any ``objects``</span>
 <span class="sd">  it contains.</span>
-<span class="sd">  </span>
+
 <span class="sd">The ``modules`` parameter is a tuple or list of entries where each single</span>
 <span class="sd">``entry`` follows the rules:</span>
 
-<span class="sd">* If the ``entry`` is a string, it indicates the **dotted path** relative to the</span>
-<span class="sd">  **root** directory (the directory of the script running the tests). For</span>
-<span class="sd">  example::</span>
-<span class="sd">  </span>
+<span class="sd">* If the ``entry`` is a string, it indicates the **dotted path** relative</span>
+<span class="sd">  to the **root** directory (the directory of the script running the tests).</span>
+<span class="sd">  For example::</span>
+
 <span class="sd">      modules = [&#39;tests&#39;, &#39;moretests.here&#39;]</span>
-<span class="sd">  </span>
+
 <span class="sd">* If an entry is two elements tuple, than the first element represents</span>
 <span class="sd">  a **dotted path** relative to the **root** directory and the</span>
 <span class="sd">  second element a **pattern** which modules (files or directories) must match</span>
 <span class="sd">  in order to be included in the search. For example::</span>
-<span class="sd">  </span>
+
 <span class="sd">      modules = [...,</span>
 <span class="sd">                 (&#39;examples&#39;, &#39;test*&#39;)</span>
 <span class="sd">                 ]</span>
-<span class="sd">  </span>
+
 <span class="sd">  load modules, from inside the ``examples`` module, starting with ``test``.</span>
-<span class="sd">  </span>
+
 <span class="sd">* If an entry is a three elements tuple, it is the same as the *two elements</span>
 <span class="sd">  tuple* rule with the third element which specifies the top level **tag**</span>
 <span class="sd">  for all tests in this entry. For example::</span>
-<span class="sd">  </span>
+
 <span class="sd">      modules = [...,</span>
 <span class="sd">                  (&#39;bla&#39;, &#39;*&#39;, &#39;foo&#39;)</span>
 <span class="sd">                ]</span>
@@ -206,11 +214,12 @@
 <span class="sd">    modules = [&#39;test&#39;, (&#39;bla&#39;, &#39;*&#39;, &#39;foo&#39;), (&#39;examples&#39;,&#39;test*&#39;)]</span>
 
 <span class="sd">loads</span>
-<span class="sd">    </span>
+
 <span class="sd">* all tests from modules in the ``test`` directory,</span>
 <span class="sd">* all tests from the ``bla`` directory with top level tag ``foo``,</span>
-<span class="sd">* all tests from modules which starts with *test* from the ``examples`` directory.</span>
-<span class="sd">     </span>
+<span class="sd">* all tests from modules which starts with *test* from the ``examples``</span>
+<span class="sd">  directory.</span>
+
 <span class="sd">All top level modules will be added to the python ``path``.</span>
 
 
@@ -235,24 +244,24 @@
 <span class="sd">forces tests to be run in a sequential model, one after the other::</span>
 
 <span class="sd">    python runtests.py --sequential</span>
-<span class="sd">    </span>
-<span class="sd">Alternatively, if you need to specify a Testcase which always runs its test functions</span>
-<span class="sd">in a sequential way, you can use the :func:`sequential` decorator::</span>
+
+<span class="sd">Alternatively, if you need to specify a Testcase which always runs its test</span>
+<span class="sd">functions in a sequential way, you can use the :func:`sequential` decorator::</span>
 
 <span class="sd">    from pulsar.apps.test import unittest, sequential</span>
-<span class="sd">    </span>
+
 <span class="sd">    @sequential</span>
 <span class="sd">    class MyTestCase(unittest.TestCase):</span>
 <span class="sd">        ...</span>
-<span class="sd">        </span>
-<span class="sd">        </span>
+
+
 <span class="sd">list labels</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">By passing the ``-l`` or :ref:`--list-labels &lt;setting-list_labels&gt;` flag to the command line, the</span>
-<span class="sd">full list of test labels available is displayed::</span>
+<span class="sd">By passing the ``-l`` or :ref:`--list-labels &lt;setting-list_labels&gt;` flag</span>
+<span class="sd">to the command line, the full list of test labels available is displayed::</span>
 
 <span class="sd">    python runtests.py -l</span>
-<span class="sd">    </span>
+
 
 <span class="sd">test timeout</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~</span>
@@ -261,7 +270,7 @@
 <span class="sd">:ref:`--test-timeout &lt;setting-test_timeout&gt;` command line flag does::</span>
 
 <span class="sd">    python runtests.py --test-timeout 10</span>
-<span class="sd">    </span>
+
 <span class="sd">Set the test timeout to 10 seconds.</span>
 
 
@@ -330,7 +339,7 @@
 <span class="sd">.. autoclass:: TestPlugin</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">.. _unittest2: http://pypi.python.org/pypi/unittest2</span>
 <span class="sd">.. _mock: http://pypi.python.org/pypi/mock</span>
 
@@ -343,8 +352,8 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">maybe_failure</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">tasks</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils</span> <span class="kn">import</span> <span class="n">events</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">local_property</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">section_docs</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">default_timer</span>
@@ -360,16 +369,24 @@
 <span class="s">This section covers configuration parameters used by the</span>
 <span class="s">:ref:`Asynchronous/Parallel test suite &lt;apps-test&gt;`.&#39;&#39;&#39;</span>
 
+
 <span class="k">def</span> <span class="nf">dont_run_with_thread</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator for disabling test cases when the test suite runs in</span>
-<span class="sd">threading, rather than processing, mode.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for disabling process baaed test cases when the test suite</span>
+<span class="sd">    runs in threading, rather than processing, mode.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span><span class="o">==</span><span class="s">&#39;process&#39;</span><span class="p">,</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">unittest</span><span class="o">.</span><span class="n">skipUnless</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">,</span>
                                 <span class="s">&#39;Run only when concurrency is process&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">d</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">obj</span>
+
+
+<span class="k">def</span> <span class="nf">mute_failure</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
+    <span class="c">#TODO: add test flag to control muting</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">test</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">log_failures</span><span class="p">:</span>
+        <span class="n">maybe_failure</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span><span class="o">.</span><span class="n">mute</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">ExitTest</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -382,8 +399,8 @@
     <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
     <span class="n">default</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Test verbosity, 0, 1, 2, 3&quot;&quot;&quot;</span>
-    
-    
+
+
 <span class="k">class</span> <span class="nc">TestTimeout</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;test_timeout&#39;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--test-timeout&#39;</span><span class="p">]</span>
@@ -399,10 +416,11 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;labels&quot;</span>
     <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;*&#39;</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_list</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Optional test labels to run. If not provided</span><span class="se">\</span>
-<span class="s"> all tests are run.</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Optional test labels to run.</span>
 
-<span class="s">To see available labels use the -l option.&quot;&quot;&quot;</span>
+<span class="s">    If not provided all tests are run.</span>
+<span class="s">    To see available labels use the -l option.</span>
+<span class="s">    &quot;&quot;&quot;</span>
 
 
 <span class="k">class</span> <span class="nc">TestExcludeLabels</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
@@ -423,12 +441,12 @@
 
 <span class="k">class</span> <span class="nc">TestList</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;list_labels&quot;</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-l&#39;</span><span class="p">,</span><span class="s">&#39;--list-labels&#39;</span><span class="p">]</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-l&#39;</span><span class="p">,</span> <span class="s">&#39;--list-labels&#39;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;List all test labels without performing tests.&quot;&quot;&quot;</span>
-    
+
 
 <span class="k">class</span> <span class="nc">TestSequential</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;sequential&quot;</span>
@@ -436,68 +454,98 @@
     <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Run test functions sequentially. Don&#39;t run them asynchronously.&quot;&quot;&quot;</span>
-    
-    
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Run test functions sequentially.</span>
+
+<span class="s">    Don&#39;t run them asynchronously.</span>
+<span class="s">    &quot;&quot;&quot;</span>
+
+
 <span class="k">class</span> <span class="nc">TestShowLeaks</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;show_leaks&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--show-leaks&#39;</span><span class="p">]</span>
+    <span class="n">nargs</span> <span class="o">=</span> <span class="s">&#39;?&#39;</span>
+    <span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Shows memory leaks.</span>
+
+<span class="s">    Run the garbadge collector before a process-based actor dies and shows</span>
+<span class="s">    the memory leak report.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">TestLogFailures</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;log_failures&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--log-failures&#39;</span><span class="p">]</span>
     <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
     <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Shows memory leaks.</span>
-<span class="s">    </span>
-<span class="s">    Run the garbadge collector before a process-based actor dies and shows</span>
-<span class="s">    the memory leak report.&quot;&quot;&quot;</span>
-    
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Don&#39;t mute exceptions.</span>
+
+<span class="s">    Tested exception are usually muted via mute_failure function. This</span>
+<span class="s">    flag disable it.</span>
+
+<span class="s">    To see the exception the log level must be at least error.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">TestCoveralls</span><span class="p">(</span><span class="n">TestOption</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;coveralls&#39;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;--coveralls&#39;</span><span class="p">]</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Send coverage report to coveralls.io.&quot;&quot;&quot;</span>
+
 
 <span class="n">pyver</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
 
+
 <div class="viewcode-block" id="TestSuite"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite">[docs]</a><span class="k">class</span> <span class="nc">TestSuite</span><span class="p">(</span><span class="n">tasks</span><span class="o">.</span><span class="n">TaskQueue</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An asynchronous test suite which works like a task queue where each task</span>
-<span class="sd">is a group of tests specified in a test class.</span>
+    <span class="sd">&#39;&#39;&#39;An asynchronous test suite which works like a task queue.</span>
 
-<span class="sd">:parameter modules: An iterable over modules where to look for tests.</span>
-<span class="sd">    Alternatively it can be a callable returning the iterable over modules.</span>
-<span class="sd">    For example::</span>
+<span class="sd">    Each task is a group of test methods in a python TestCase class.</span>
 
-<span class="sd">        suite = TestSuite(modules=(&#39;regression&#39;,</span>
-<span class="sd">                                   (&#39;examples&#39;,&#39;tests&#39;),</span>
-<span class="sd">                                   (&#39;apps&#39;,&#39;test_*&#39;)))</span>
-<span class="sd">        </span>
-<span class="sd">        def get_modules(suite):</span>
-<span class="sd">            ...</span>
+<span class="sd">    :parameter modules: An iterable over modules where to look for tests.</span>
+<span class="sd">        Alternatively it can be a callable returning the iterable over modules.</span>
+<span class="sd">        For example::</span>
 
-<span class="sd">        suite = TestSuite(modules=get_modules)</span>
+<span class="sd">            suite = TestSuite(modules=(&#39;regression&#39;,</span>
+<span class="sd">                                       (&#39;examples&#39;,&#39;tests&#39;),</span>
+<span class="sd">                                       (&#39;apps&#39;,&#39;test_*&#39;)))</span>
 
-<span class="sd">    If not provided it is set as default to ``[&quot;tests&quot;]`` which loads all</span>
-<span class="sd">    python module from the tests module in a recursive fashion.</span>
-<span class="sd">    Check the the :class:`TestLoader` for detailed information.</span>
+<span class="sd">            def get_modules(suite):</span>
+<span class="sd">                ...</span>
 
-<span class="sd">:parameter result_class: Optional class for collecting test results. By default</span>
-<span class="sd">    it used the standard ``unittest.TextTestResult``.</span>
-<span class="sd">:parameter plugins: Optional list of :class:`TestPlugin` instances.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            suite = TestSuite(modules=get_modules)</span>
+
+<span class="sd">        If not provided it is set as default to ``[&quot;tests&quot;]`` which loads all</span>
+<span class="sd">        python module from the tests module in a recursive fashion.</span>
+<span class="sd">        Check the the :class:`TestLoader` for detailed information.</span>
+
+<span class="sd">    :parameter result_class: Optional class for collecting test results.</span>
+<span class="sd">        By default it used the standard ``unittest.TextTestResult``.</span>
+<span class="sd">    :parameter plugins: Optional list of :class:`TestPlugin` instances.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,</span> <span class="s">&#39;test&#39;</span><span class="p">),</span>
                         <span class="n">loglevel</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span>
                         <span class="n">task_paths</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;pulsar.apps.test.case&#39;</span><span class="p">],</span>
                         <span class="n">plugins</span><span class="o">=</span><span class="p">())</span>
+
     <span class="nd">@local_property</span>
 <div class="viewcode-block" id="TestSuite.runner"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.runner">[docs]</a>    <span class="k">def</span> <span class="nf">runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Instance of :class:`TestRunner` driving the test case</span>
-<span class="sd">configuration and plugins.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="n">unittest</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires unittest2 library for pulsar &#39;</span>
-                              <span class="s">&#39;test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">mock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`TestRunner` driving the test case.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">unittest</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires unittest2 library for &#39;</span>
+                              <span class="s">&#39;pulsar test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mock</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;python </span><span class="si">%s</span><span class="s"> requires mock library for pulsar &#39;</span>
                               <span class="s">&#39;test suite application&#39;</span> <span class="o">%</span> <span class="n">pyver</span><span class="p">)</span>
         <span class="n">result_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;result_class&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">runner</span> <span class="o">=</span> <span class="n">TestRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">plugins</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">result_class</span><span class="p">)</span>
         <span class="n">abort_message</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">abort_message</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">abort_message</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
             <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">abort_message</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">runner</span>
 </div>
@@ -513,28 +561,32 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
             <span class="n">modules</span> <span class="o">=</span> <span class="n">modules</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">TestLoader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
         <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">list_labels</span><span class="p">:</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">stream</span>
+        <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">list_labels</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
             <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
             <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
                 <span class="n">s</span> <span class="o">=</span> <span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s">&#39;s&#39;</span>
-                <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">Test labels for label{0} {1}</span><span class="se">\n</span><span class="s">&#39;</span>\
-                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags</span><span class="p">)))</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">Test labels for</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">:&#39;</span> <span class="o">%</span>
+                               <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags</span><span class="p">)))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">All test labels</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">All test labels:&#39;</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
             <span class="k">def</span> <span class="nf">_tags</span><span class="p">():</span>
                 <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">loader</span><span class="o">.</span><span class="n">testmodules</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span>
                     <span class="n">doc</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">__doc__</span>
                     <span class="k">if</span> <span class="n">doc</span><span class="p">:</span>
-                        <span class="n">tag</span> <span class="o">=</span> <span class="s">&#39;{0} - {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span><span class="n">doc</span><span class="p">)</span>
+                        <span class="n">tag</span> <span class="o">=</span> <span class="s">&#39;{0} - {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
                     <span class="k">yield</span> <span class="n">tag</span>
             <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_tags</span><span class="p">()):</span>
-                <span class="k">print</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+                <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
-    
+
 <div class="viewcode-block" id="TestSuite.monitor_start"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When the monitor starts load all test classes into the queue&#39;&#39;&#39;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TestSuite</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span>
@@ -542,9 +594,10 @@
         <span class="n">tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">labels</span>
         <span class="n">exclude_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exclude_labels</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">show_leaks</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show_leaks</span><span class="p">)</span>
+            <span class="n">show</span> <span class="o">=</span> <span class="n">show_leaks</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">show_leaks</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">hide_leaks</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span>
             <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
-            <span class="n">arbiter</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show_leaks</span><span class="p">)</span>
+            <span class="n">arbiter</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;when_exit&#39;</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span> <span class="o">=</span> <span class="n">tests</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
@@ -555,21 +608,27 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">tests</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;loaded </span><span class="si">%s</span><span class="s"> test classes&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">))</span>
-                <span class="n">events</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="n">tests</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,</span> <span class="n">tests</span><span class="o">=</span><span class="n">tests</span><span class="p">)</span>
                 <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">)))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">testcls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s">&#39;test&#39;</span><span class="p">,</span> <span class="n">testcls</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
                 <span class="n">monitor</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_queue</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
+            <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
                 <span class="k">raise</span> <span class="n">ExitTest</span><span class="p">(</span><span class="s">&#39;Could not find any tests.&#39;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">ExitTest</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+            <span class="n">monitor</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="n">monitor</span><span class="o">.</span><span class="n">arbiter</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Error occurred before starting tests&#39;</span><span class="p">,</span>
                                  <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="n">monitor</span><span class="o">.</span><span class="n">arbiter</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</div>
+    <span class="nd">@local_property</span>
+<div class="viewcode-block" id="TestSuite.events"><a class="viewcode-back" href="../../../apps/test.html#pulsar.apps.test.TestSuite.events">[docs]</a>    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Events for the application: ``ready```, ``start``, ``stop``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">EventHandler</span><span class="p">(</span><span class="n">one_time_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;ready&#39;</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">),</span>
+                            <span class="n">many_times_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tests&#39;</span><span class="p">,))</span>
 </div>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">create_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -579,9 +638,9 @@
         <span class="k">for</span> <span class="n">plugin</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;plugins&#39;</span><span class="p">]:</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cfg</span>
-    
+
     <span class="k">def</span> <span class="nf">_check_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">runner</span><span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
+        <span class="n">runner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span>
         <span class="n">tests</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">tasks</span><span class="o">.</span><span class="n">READY_STATES</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tests</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">tests</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;All tests have finished.&#39;</span><span class="p">)</span>
@@ -595,8 +654,7 @@
                 <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">2</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">exit_code</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HaltServer</span><span class="p">(</span><span class="n">exit_code</span><span class="o">=</span><span class="n">exit_code</span><span class="p">)</span>
-        </div>
+            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HaltServer</span><span class="p">(</span><span class="n">exit_code</span><span class="o">=</span><span class="n">exit_code</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

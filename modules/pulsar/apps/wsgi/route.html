@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.route &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -85,7 +85,7 @@
 <span class="sd">    Route(&#39;&lt;int:size&gt;&#39;)</span>
 <span class="sd">    # accept an integer between 1 and 200 only</span>
 <span class="sd">    Route(&#39;&lt;int(min=1,max=200):size&gt;&#39;)</span>
-<span class="sd">    </span>
+
 
 <span class="sd">Paths::</span>
 
@@ -93,7 +93,7 @@
 <span class="sd">    Route(&#39;&lt;path:pages&gt;&#39;)</span>
 <span class="sd">    # accept an integer between 1 and 200 only</span>
 <span class="sd">    Route(&#39;&lt;path:pages&gt;/edit&#39;)</span>
-<span class="sd">    </span>
+
 
 
 <span class="sd">.. _wsgi-route-decorator:</span>
@@ -104,7 +104,7 @@
 <span class="sd">.. autoclass:: route</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">.. _apps-wsgi-route:</span>
 
 <span class="sd">Route</span>
@@ -113,7 +113,7 @@
 <span class="sd">.. autoclass:: Route</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
@@ -128,14 +128,14 @@
 
 
 <span class="k">class</span> <span class="nc">rule_info</span><span class="p">(</span><span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;rinfo&#39;</span><span class="p">,</span> <span class="s">&#39;rule method parameters position order&#39;</span><span class="p">)):</span>
-    
+
     <span class="k">def</span> <span class="nf">override</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">rule_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
                              <span class="n">parent</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
-        
+
 
 <span class="n">_rule_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;&#39;&#39;</span>
 <span class="s">    (?:</span>
@@ -156,7 +156,7 @@
 <span class="s">        \w+|</span>
 <span class="s">        [urUR]?(?P&lt;stringval&gt;&quot;[^&quot;]*?&quot;|&#39;[^&#39;]*&#39;)</span>
 <span class="s">    )\s*,</span>
-<span class="s">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="o">|</span><span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
+<span class="s">&#39;&#39;&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
 
 
 <span class="n">_PYTHON_CONSTANTS</span> <span class="o">=</span> <span class="p">{</span>
@@ -195,18 +195,19 @@
 
 
 <div class="viewcode-block" id="route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.route">[docs]</a><span class="k">class</span> <span class="nc">route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator to create a child route from a :ref:`Router &lt;wsgi-router&gt;` method.</span>
-<span class="sd">    </span>
+    <span class="sd">&#39;&#39;&#39;Decorator to create a child route from a :ref:`Router &lt;wsgi-router&gt;`</span>
+<span class="sd">    method.</span>
+
 <span class="sd">Tipical usage::</span>
 
 <span class="sd">    from pulsar.apps import wsgi</span>
-<span class="sd">    </span>
+
 <span class="sd">    class View(wsgi.Router):</span>
-<span class="sd">    </span>
+
 <span class="sd">        wsgi.route(&#39;/foo&#39;)</span>
 <span class="sd">        def handle_view(self, request):</span>
 <span class="sd">            ...</span>
-<span class="sd">            </span>
+
 <span class="sd">        wsgi.route(&#39;/bla&#39;, async=True)</span>
 <span class="sd">        def asynchronous_handle(self, request):</span>
 <span class="sd">            result = yield async_function(...)</span>
@@ -234,9 +235,10 @@
 <span class="sd">    the :class:`pulsar.apps.wsgi.handlers.Router` created by this decorator.</span>
 <span class="sd">    The ``async=True`` parameter will treat the ``callable`` as an asynchronous</span>
 <span class="sd">    component.</span>
-<span class="sd">                </span>
+
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">creation_count</span> <span class="o">=</span> <span class="mi">0</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">position</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">creation_count</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -246,11 +248,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">defaults</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span>
-        
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">creation_count</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span>
-        
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
         <span class="n">bits</span> <span class="o">=</span> <span class="nb">callable</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
         <span class="n">method</span> <span class="o">=</span> <span class="bp">None</span>
@@ -264,11 +266,11 @@
         <span class="nb">callable</span><span class="o">.</span><span class="n">rule_method</span> <span class="o">=</span> <span class="n">rule_info</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
                                          <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">callable</span>
-        
-    </div>
+
+</div>
 <div class="viewcode-block" id="Route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route">[docs]</a><span class="k">class</span> <span class="nc">Route</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A Route is a class with a relative :attr:`path`.</span>
-<span class="sd">    </span>
+
 <span class="sd">:parameter rule: Rule strings basically are just normal URL paths</span>
 <span class="sd">    with placeholders in the format ``&lt;converter(parameters):name&gt;``</span>
 <span class="sd">    where both the ``converter`` and the ``parameters`` are optional.</span>
@@ -276,21 +278,21 @@
 <span class="sd">    means ``string``. ``name`` is the variable name.</span>
 <span class="sd">:parameter defaults: optional dictionary of default values for the rule</span>
 <span class="sd">    variables.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. attribute:: is_leaf</span>
 
 <span class="sd">    If ``True``, the route is equivalent to a file and no sub-routes can be</span>
 <span class="sd">    added.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. attribute:: path</span>
 
 <span class="sd">    The full path for this route including initial ``&#39;/&#39;``.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. attribute:: variables</span>
 
 <span class="sd">    a set of  variable names for this route. If the route has no variables, the</span>
 <span class="sd">    set is empty.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. _werkzeug: https://github.com/mitsuhiko/werkzeug</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -310,73 +312,76 @@
                 <span class="n">e</span> <span class="o">=</span> <span class="n">bit</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s">&#39;&lt;&#39;</span> <span class="ow">or</span> <span class="n">e</span> <span class="o">==</span> <span class="s">&#39;&gt;&#39;</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">s</span> <span class="o">+</span> <span class="n">e</span> <span class="o">!=</span> <span class="s">&#39;&lt;&gt;&#39;</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;malformed rule {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="s">&#39;malformed rule {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
                     <span class="n">converter</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">variable</span> <span class="o">=</span> <span class="n">parse_rule</span><span class="p">(</span><span class="n">bit</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                     <span class="k">if</span> <span class="n">variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;variable name {0} used twice</span><span class="se">\</span>
-<span class="s"> in rule {1}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;variable name {0} used twice in &#39;</span>
+                                         <span class="s">&#39;rule {1}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span>
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">))</span>
                     <span class="n">convobj</span> <span class="o">=</span> <span class="n">get_converter</span><span class="p">(</span><span class="n">converter</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
-                    <span class="n">regex_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;(?P&lt;</span><span class="si">%s</span><span class="s">&gt;</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">convobj</span><span class="o">.</span><span class="n">regex</span><span class="p">))</span>
-                    <span class="n">breadcrumbs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">True</span><span class="p">,</span><span class="n">variable</span><span class="p">))</span>
+                    <span class="n">regex_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;(?P&lt;</span><span class="si">%s</span><span class="s">&gt;</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">variable</span><span class="p">,</span>
+                                                       <span class="n">convobj</span><span class="o">.</span><span class="n">regex</span><span class="p">))</span>
+                    <span class="n">breadcrumbs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">True</span><span class="p">,</span> <span class="n">variable</span><span class="p">))</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">[</span><span class="n">variable</span><span class="p">]</span> <span class="o">=</span> <span class="n">convobj</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">variable</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">variable</span> <span class="o">=</span> <span class="n">bit</span>
                     <span class="n">regex_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">variable</span><span class="p">))</span>
                     <span class="n">breadcrumbs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">False</span><span class="p">,</span> <span class="n">variable</span><span class="p">))</span>
-                    
+
         <span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">breadcrumbs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_regex_string</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">regex_parts</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_string</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_regex_string</span> <span class="o">+=</span> <span class="s">&#39;/&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
-    
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">level</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span><span class="p">)</span>
-        
+
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Route.path"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span>
-    </div>
+</div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;^&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_string</span> <span class="o">+</span> <span class="s">&#39;$&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;^&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_string</span>
-    
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">bits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span><span class="p">))</span>
-    
+
     <span class="k">def</span> <span class="nf">ordered_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">b</span> <span class="k">for</span> <span class="n">dyn</span><span class="p">,</span><span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span> <span class="k">if</span> <span class="n">dyn</span><span class="p">))</span>
-    
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">b</span> <span class="k">for</span> <span class="n">dyn</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span> <span class="k">if</span> <span class="n">dyn</span><span class="p">))</span>
+
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
-    
+
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
-        
+
     <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">to_string</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot compare {0} with {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot compare {0} with {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_url_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">is_dynamic</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">breadcrumbs</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">is_dynamic</span><span class="p">:</span>
                 <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converters</span><span class="p">[</span><span class="n">val</span><span class="p">]</span><span class="o">.</span><span class="n">to_url</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">val</span><span class="p">])</span>
             <span class="k">yield</span> <span class="n">val</span>
-            
+
 <div class="viewcode-block" id="Route.url"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.url">[docs]</a>    <span class="k">def</span> <span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">urlargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Build a *url* from *urlargs* dictionary.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
@@ -389,7 +394,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">url</span>
             <span class="k">return</span> <span class="n">url</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span> <span class="k">else</span> <span class="n">url</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span>
-        </div>
+</div>
     <span class="k">def</span> <span class="nf">safe_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
@@ -398,7 +403,7 @@
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-    
+
 <div class="viewcode-block" id="Route.match"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Match a path and return ``None`` if no matching, otherwise</span>
 <span class="sd"> a dictionary of matched variables with values. If there is more</span>
@@ -418,7 +423,7 @@
             <span class="k">if</span> <span class="n">remaining</span><span class="p">:</span>
                 <span class="n">result</span><span class="p">[</span><span class="s">&#39;__remaining__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">remaining</span>
             <span class="k">return</span> <span class="n">result</span>
-        </div>
+</div>
 <div class="viewcode-block" id="Route.split"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.route.Route.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a two element tuple containing the parent route and</span>
 <span class="sd">the last url bit as route. If this route is the root route, it returns</span>
@@ -427,33 +432,33 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rule</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span><span class="bp">None</span> 
+            <span class="k">return</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">),</span> <span class="bp">None</span>
         <span class="n">bits</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;/&#39;</span><span class="o">+</span><span class="n">rule</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
-        <span class="n">last</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span> <span class="k">else</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>  
+        <span class="n">last</span> <span class="o">=</span> <span class="n">Route</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span> <span class="k">else</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">),</span><span class="n">last</span>
+            <span class="k">return</span> <span class="n">Route</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span><span class="p">),</span> <span class="n">last</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">last</span><span class="p">,</span><span class="bp">None</span>
-        </div>
+            <span class="k">return</span> <span class="n">last</span><span class="p">,</span> <span class="bp">None</span>
+</div>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot prepend {0} to {1}. &#39;</span>\
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Cannot prepend {0} to {1}. &#39;</span>
                              <span class="s">&#39;It is a leaf.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span>
         <span class="n">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span>
         <span class="n">defaults</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">rule</span>
             <span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">rule</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">+</span> <span class="n">rule</span><span class="p">,</span> <span class="n">defaults</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__copy__</span><span class="p">()</span>
-    
+
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
-        
+
 </div>
 <span class="k">class</span> <span class="nc">BaseConverter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Base class for all converters.&quot;&quot;&quot;</span>
@@ -553,7 +558,7 @@
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="p">)</span> <span class="ow">or</span> \
            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_digits</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_digits</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%%</span><span class="s">0</span><span class="si">%s</span><span class="s">d&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_digits</span><span class="p">)</span> <span class="o">%</span> <span class="n">value</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
@@ -590,7 +595,7 @@
     <span class="n">num_convert</span> <span class="o">=</span> <span class="nb">float</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FloatConverter</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FloatConverter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">parse_converter_args</span><span class="p">(</span><span class="n">argstr</span><span class="p">):</span>
@@ -618,11 +623,11 @@
         <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s">&#39;Route converter {0} not available&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
         <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">parse_converter_args</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">c</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">c</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">c</span><span class="p">()</span>
 
-    
+
 <span class="c">#: the default converter mapping for the map.</span>
 <span class="n">_CONVERTERS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s">&#39;default&#39;</span><span class="p">:</span>          <span class="n">StringConverter</span><span class="p">,</span>

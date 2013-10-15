@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Design &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Design &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="FAQ" href="faq.html" />
     <link rel="prev" title="Overview" href="overview.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="overview.html" title="Overview"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -303,25 +303,27 @@ its file descriptor with the <a class="reference internal" href="api/actor.html#
 </div>
 <p>The <a class="reference internal" href="tutorials/clients.html#examples.echo.manage.EchoServerProtocol" title="examples.echo.manage.EchoServerProtocol"><tt class="xref py py-class docutils literal"><span class="pre">examples.echo.manage.EchoServerProtocol</span></tt></a> is introduced in the
 <a class="reference internal" href="tutorials/clients.html#tutorials-writing-clients"><em>echo server and client tutorial</em></a>.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Hooks are function accepting two parameters, the actor which
-invokes them and optional data. Hooks are
-<a class="reference internal" href="tutorials/events.html#one-time-event"><em>one time events</em></a> for actors.</p>
-</div>
 <p><strong>stopping</strong></p>
 <p>Fired when the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> starts stopping.</p>
 <p><strong>stop</strong></p>
 <p>Fired just before the <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is garbage collected</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last"><tt class="docutils literal"><span class="pre">start</span></tt>, <tt class="docutils literal"><span class="pre">stopping</span></tt> and <tt class="docutils literal"><span class="pre">stop</span></tt> hooks are function accepting one
+parameter only, the actor which invokes them. They are
+<a class="reference internal" href="tutorials/events.html#one-time-event"><em>one time events</em></a> for actors.</p>
+</div>
 <p><strong>on_info</strong></p>
 <p>Fired every time the actor status information is accessed via the
 <a class="reference internal" href="#actor-info-command"><em>info command</em></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">extra_info</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-    <span class="n">data</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Hello&#39;</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">extra_info</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">info</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Hello&#39;</span>
 
 <span class="n">proxy</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">(</span><span class="n">on_info</span><span class="o">=</span><span class="n">extra_info</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>The hook must accept the actor as first parameter and the <tt class="docutils literal"><span class="pre">key-valued</span></tt>
+parameter <tt class="docutils literal"><span class="pre">info</span></tt> (a dictionary).</p>
 <p><strong>on_params</strong></p>
 <p>Fired every time an actor is about to spawn another actor. It can be used to
 add additional key-valued parameters passed to the <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.spawn()</span></tt></a>

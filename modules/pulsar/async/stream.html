@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.async.stream &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.async.stream &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -71,7 +71,7 @@
 <span class="sd">.. autoclass:: SocketStreamTransport</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">TcpServer</span>
 <span class="sd">============================</span>
 
@@ -82,22 +82,33 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
+<span class="kn">from</span> <span class="nn">pulsar.utils.exceptions</span> <span class="kn">import</span> <span class="n">PulsarException</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">TRY_WRITE_AGAIN</span><span class="p">,</span> <span class="n">TRY_READ_AGAIN</span><span class="p">,</span>
                                    <span class="n">ACCEPT_ERRORS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EPERM</span><span class="p">,</span>
                                    <span class="n">format_address</span><span class="p">,</span> <span class="n">ssl_context</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span>
-                                   <span class="n">WRITE_BUFFER_MAX_SIZE</span><span class="p">)</span>
+                                   <span class="n">ESHUTDOWN</span><span class="p">,</span> <span class="n">WRITE_BUFFER_MAX_SIZE</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">merge_prefix</span>
 
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">NUMBER_ACCEPTS</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">Deferred</span>
 <span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="n">SocketTransport</span><span class="p">,</span> <span class="n">AF_INET6</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Server</span><span class="p">,</span> <span class="n">logger</span>
-    
+
+<span class="n">SSLV3_ALERT_CERTIFICATE_UNKNOWN</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="c"># Got this error on pypy</span>
+<span class="n">SSL3_WRITE_PENDING</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">MAX_CONSECUTIVE_WRITES</span> <span class="o">=</span> <span class="mi">500</span>
+
+
+<span class="k">class</span> <span class="nc">TooManyConsecutiveWrite</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Raise when too many consecutive writes are attempted.&#39;&#39;&#39;</span>
+
 
 <div class="viewcode-block" id="SocketStreamTransport"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport">[docs]</a><span class="k">class</span> <span class="nc">SocketStreamTransport</span><span class="p">(</span><span class="n">SocketTransport</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`pulsar.SocketTransport` for TCP streams.</span>
-<span class="sd">    </span>
+
 <span class="sd">The primary feature of a stream transport is sending bytes to a protocol</span>
 <span class="sd">and receiving bytes from the underlying protocol. Writing to the transport</span>
 <span class="sd">is done using the :meth:`write` and :meth:`writelines` methods.</span>
@@ -105,13 +116,12 @@
 <span class="sd">advantage of specific capabilities in some transport mechanisms.&#39;&#39;&#39;</span>
     <span class="n">_paused_reading</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">_paused_writing</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">SocketError</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span>
-    
+
     <span class="k">def</span> <span class="nf">_do_handshake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready_read</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_protocol</span><span class="o">.</span><span class="n">connection_made</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        
-<div class="viewcode-block" id="SocketStreamTransport.pause"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.pause">[docs]</a>    <span class="k">def</span> <span class="nf">pause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+<div class="viewcode-block" id="SocketStreamTransport.pause"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.pause">[docs]</a>    <span class="k">def</span> <span class="nf">pause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
         <span class="sd">&quot;&quot;&quot;A :class:`SocketStreamTransport` can be paused and resumed.</span>
 <span class="sd">Invoking this method will cause the transport to buffer data coming</span>
 <span class="sd">from protocols but not sending it to the :attr:`protocol`. In other words,</span>
@@ -120,7 +130,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused_reading</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_paused_reading</span> <span class="o">=</span> <span class="bp">True</span>
 </div>
-<div class="viewcode-block" id="SocketStreamTransport.resume"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.resume">[docs]</a>    <span class="k">def</span> <span class="nf">resume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SocketStreamTransport.resume"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.resume">[docs]</a>    <span class="k">def</span> <span class="nf">resume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
         <span class="sd">&quot;&quot;&quot;Resume the receiving end. Data received will once again be</span>
 <span class="sd">passed to the :meth:`pulsar.Protocol.data_received` method.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused_reading</span><span class="p">:</span>
@@ -129,8 +139,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_read_buffer</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">buffer</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-                </div>
-<div class="viewcode-block" id="SocketStreamTransport.pause_writing"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.pause_writing">[docs]</a>    <span class="k">def</span> <span class="nf">pause_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="SocketStreamTransport.pause_writing"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.pause_writing">[docs]</a>    <span class="k">def</span> <span class="nf">pause_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
         <span class="sd">&#39;&#39;&#39;Suspend sending data to the network until a subsequent</span>
 <span class="sd">:meth:`resume_writing` call. Between :meth:`pause_writing` and</span>
 <span class="sd">:meth:`resume_writing` the transport&#39;s :meth:`write` method will just</span>
@@ -139,45 +149,54 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_paused_writing</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="SocketStreamTransport.resume_writing"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.resume_writing">[docs]</a>    <span class="k">def</span> <span class="nf">resume_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SocketStreamTransport.resume_writing"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.resume_writing">[docs]</a>    <span class="k">def</span> <span class="nf">resume_writing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
         <span class="sd">&#39;&#39;&#39;Restart sending data to the network.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused_writing</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_ready</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_paused_writing</span> <span class="o">=</span> <span class="bp">False</span>
-            </div>
+</div>
 <div class="viewcode-block" id="SocketStreamTransport.write"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Write chunk of ``data`` to the endpoint.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Write chunk of ``data`` to the endpoint.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_closed</span><span class="p">()</span>
-        <span class="n">writing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">writing</span>
+        <span class="n">is_writing</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+            <span class="c"># Add data to the buffer</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">WRITE_BUFFER_MAX_SIZE</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">WRITE_BUFFER_MAX_SIZE</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">WRITE_BUFFER_MAX_SIZE</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused_writing</span><span class="p">:</span>
+            <span class="k">return</span>
         <span class="c"># Try to write only when not waiting for write callbacks</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">writing</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused_writing</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_writing</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_writes</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_ready_write</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">writing</span><span class="p">:</span>    <span class="c"># still writing</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="p">:</span>    <span class="c"># still writing</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready_write</span><span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closing</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span><span class="p">)</span>
-                </div>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_writes</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_writes</span> <span class="o">&gt;</span> <span class="n">MAX_CONSECUTIVE_WRITES</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">TooManyConsecutiveWrite</span><span class="p">())</span>
+</div>
 <div class="viewcode-block" id="SocketStreamTransport.writelines"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.writelines">[docs]</a>    <span class="k">def</span> <span class="nf">writelines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_data</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Write a list (or any iterable) of data bytes to the transport.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">list_of_data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    </div>
+</div>
     <span class="k">def</span> <span class="nf">_write_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">TRY_WRITE_AGAIN</span>
-        
+
     <span class="k">def</span> <span class="nf">_read_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">EWOULDBLOCK</span>
-        
+
     <span class="k">def</span> <span class="nf">_ready_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Do the actual writing</span>
         <span class="nb">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span>
@@ -189,7 +208,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">while</span> <span class="nb">buffer</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                     <span class="k">if</span> <span class="n">sent</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="k">break</span>
                     <span class="n">merge_prefix</span><span class="p">(</span><span class="nb">buffer</span><span class="p">,</span> <span class="n">sent</span><span class="p">)</span>
@@ -201,14 +220,16 @@
                     <span class="k">else</span><span class="p">:</span>
                         <span class="k">raise</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()))</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">writing</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closing</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_shutdown</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">tot_bytes</span>
-    
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closing</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_ready_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Read from the socket until we get EWOULDBLOCK or equivalent.</span>
         <span class="c"># If any other error occur, abort the connection and re-raise.</span>
@@ -235,57 +256,75 @@
                     <span class="k">finally</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="n">passes</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span>
+        <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">SocketError</span><span class="p">:</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closing</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()))</span>
-    
-    </div>
+            <span class="n">failure</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">failure</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SocketStreamTransport.mute_read_error"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.SocketStreamTransport.mute_read_error">[docs]</a>    <span class="k">def</span> <span class="nf">mute_read_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return ``True`` if a socket error from a read operation is muted.</span>
+
+<span class="sd">        This is when the socket cannot send sinse the socket has started</span>
+<span class="sd">        shutting down already.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">error</span><span class="o">.</span><span class="n">errno</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ESHUTDOWN</span><span class="p">,)</span>
+
+</div></div>
 <span class="k">class</span> <span class="nc">SocketStreamSslTransport</span><span class="p">(</span><span class="n">SocketStreamTransport</span><span class="p">):</span>
     <span class="n">SocketError</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ssl</span><span class="p">,</span> <span class="s">&#39;SSLError&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-    
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">,</span> <span class="n">rawsock</span><span class="p">,</span> <span class="n">protocol</span><span class="p">,</span> <span class="n">sslcontext</span><span class="p">,</span>
-                 <span class="n">server_side</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                 <span class="n">server_side</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">server_hostname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">sslcontext</span> <span class="o">=</span> <span class="n">ssl_context</span><span class="p">(</span><span class="n">sslcontext</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="n">server_side</span><span class="p">)</span>
         <span class="n">sslsock</span> <span class="o">=</span> <span class="n">sslcontext</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="n">rawsock</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="n">server_side</span><span class="p">,</span>
-                                         <span class="n">do_handshake_on_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                                         <span class="n">do_handshake_on_connect</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                         <span class="n">server_hostname</span><span class="o">=</span><span class="n">server_hostname</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rawsock</span> <span class="o">=</span> <span class="n">rawsock</span>
+        <span class="c"># waiting for reading handshake</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_reading</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># waiting for writing handshake</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_writing</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SocketStreamSslTransport</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">sslsock</span><span class="p">,</span>
                                                        <span class="n">protocol</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rawsock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The raw socket.</span>
+
+<span class="sd">        This is the socket not wrapped by the sslcontext.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rawsock</span>
+
     <span class="k">def</span> <span class="nf">_write_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_WANT_WRITE</span>
-        
+        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_WANT_WRITE</span><span class="p">,</span>
+                           <span class="n">SSL3_WRITE_PENDING</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_read_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_WANT_READ</span>
-    
+        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SSLV3_ALERT_CERTIFICATE_UNKNOWN</span><span class="p">,</span>
+                           <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_WANT_READ</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_do_handshake</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">do_handshake</span><span class="p">()</span>
         <span class="k">except</span> <span class="bp">self</span><span class="o">.</span><span class="n">SocketError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_continue</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_reading</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_reading</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="n">loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_handshake</span><span class="p">)</span>
+                <span class="k">return</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_continue</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_writing</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="n">loop</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_writing</span> <span class="o">=</span> <span class="bp">True</span>
                 <span class="n">loop</span><span class="o">.</span><span class="n">add_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_handshake</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_SSL</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">peer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="n">peer</span> <span class="o">=</span> <span class="s">&#39;(not connected)&#39;</span>
-                <span class="n">failure</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
-                <span class="n">failure</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&quot;SSL Error on fd </span><span class="si">%d</span><span class="s"> </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span>
-                                                <span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">,</span> <span class="n">peer</span><span class="p">,</span> <span class="n">e</span><span class="p">),</span>
-                            <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
+                <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()))</span>
+                <span class="k">raise</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()))</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_reading</span><span class="p">:</span>
@@ -299,25 +338,27 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_reading</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_handshake_writing</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_protocol</span><span class="o">.</span><span class="n">connection_made</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abort</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="TcpServer"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.TcpServer">[docs]</a><span class="k">class</span> <span class="nc">TcpServer</span><span class="p">(</span><span class="n">Server</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A TCP :class:`pulsar.Server`.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: consumer_factory</span>
 
-<span class="sd">    Callable or a :class:`pulsar.ProtocolConsumer` class for producing</span>
-<span class="sd">    :class:`ProtocolConsumer` which handle the receiving, decoding and</span>
-<span class="sd">    sending of data.</span>
-<span class="sd">    </span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    .. attribute:: consumer_factory</span>
+
+<span class="sd">        Callable or a :class:`pulsar.ProtocolConsumer` class for producing</span>
+<span class="sd">        :class:`ProtocolConsumer` which handle the receiving, decoding and</span>
+<span class="sd">        sending of data.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
 <div class="viewcode-block" id="TcpServer.start_serving"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.TcpServer.start_serving">[docs]</a>    <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backlog</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start serving the Tcp socket.</span>
-<span class="sd">        </span>
-<span class="sd">:parameter backlog: Number of maximum connections</span>
-<span class="sd">:parameter sslcontext: optional SSLContext object.</span>
-<span class="sd">:return: a :class:`pulsar.Deferred` called back when the server is serving</span>
-<span class="sd">    the socket.&#39;&#39;&#39;</span>
+
+<span class="sd">        :param backlog: Number of maximum connections</span>
+<span class="sd">        :param sslcontext: optional SSLContext object.</span>
+<span class="sd">        :return: a :class:`pulsar.Deferred` called back when the server is</span>
+<span class="sd">            serving the socket.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
             <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol_factory</span><span class="p">,</span>
                                                  <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_host</span><span class="p">,</span>
@@ -325,40 +366,40 @@
                                                  <span class="n">sock</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="p">,</span>
                                                  <span class="n">backlog</span><span class="o">=</span><span class="n">backlog</span><span class="p">,</span>
                                                  <span class="n">ssl</span><span class="o">=</span><span class="n">sslcontext</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_got_sockets</span><span class="p">)</span>\
-                      <span class="o">.</span><span class="n">add_both</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
-    </div>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_got_sockets</span>
+                                    <span class="p">)</span><span class="o">.</span><span class="n">add_both</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">,</span>
+                                                       <span class="s">&#39;start&#39;</span><span class="p">))</span>
+</div>
 <div class="viewcode-block" id="TcpServer.stop_serving"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.TcpServer.stop_serving">[docs]</a>    <span class="k">def</span> <span class="nf">stop_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Stop serving the :class:`pulsar.Server.sock`&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="p">:</span>
             <span class="n">sock</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="p">,</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_now_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stop_serving</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
-    </div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">call_soon_threadsafe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stop_serving</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
+</div>
 <div class="viewcode-block" id="TcpServer.close"><a class="viewcode-back" href="../../../api/stream.html#pulsar.async.stream.TcpServer.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Same as :meth:`stop_serving` method.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">()</span>
-            </div>
+</div>
     <span class="k">def</span> <span class="nf">_got_sockets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sockets</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">sockets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> serving on </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span>
                          <span class="n">format_address</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span>
-    
+
     <span class="k">def</span> <span class="nf">_stop_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_loop</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
-    
-    </div>
+
+</div>
 <span class="k">def</span> <span class="nf">create_connection</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span>
                       <span class="n">family</span><span class="p">,</span> <span class="n">proto</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">local_addr</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">sock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s">&#39;host/port and sock can not be specified at the same time&#39;</span><span class="p">)</span>
-
-        <span class="n">fs</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_loop</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span>
-                <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="n">family</span><span class="p">,</span>
-                <span class="nb">type</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="n">proto</span><span class="o">=</span><span class="n">proto</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">)]</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_loop</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="n">family</span><span class="p">,</span>
+                                     <span class="nb">type</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="n">proto</span><span class="o">=</span><span class="n">proto</span><span class="p">,</span>
+                                     <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">local_addr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event_loop</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span>
                 <span class="o">*</span><span class="n">local_addr</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="n">family</span><span class="p">,</span>
@@ -427,7 +468,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">transport</span> <span class="o">=</span> <span class="n">SocketStreamTransport</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">protocol</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">transport</span><span class="p">,</span> <span class="n">protocol</span>
-    
+
+
 <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span>
                   <span class="n">family</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">backlog</span><span class="p">,</span> <span class="n">reuse_address</span><span class="p">):</span>
     <span class="c">#Coroutine which starts socket servers</span>
@@ -487,6 +529,7 @@
                               <span class="n">event_loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">sockets</span>
 
+
 <span class="k">def</span> <span class="nf">sock_connect</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">fd</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
     <span class="n">connect</span> <span class="o">=</span> <span class="bp">False</span>
@@ -503,8 +546,8 @@
                 <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">TRY_WRITE_AGAIN</span><span class="p">:</span>
-                    <span class="n">event_loop</span><span class="o">.</span><span class="n">add_connector</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">sock_connect</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span>
-                                             <span class="n">address</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
+                    <span class="n">event_loop</span><span class="o">.</span><span class="n">add_connector</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">sock_connect</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">,</span>
+                                             <span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">future</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span>
@@ -519,8 +562,11 @@
             <span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-        
-<span class="k">def</span> <span class="nf">sock_accept</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+
+<span class="k">def</span> <span class="nf">sock_accept</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
+    <span class="c">#TODO</span>
+    <span class="c">#do we need this function?</span>
     <span class="n">fd</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">future</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
@@ -533,7 +579,8 @@
             <span class="n">future</span><span class="o">.</span><span class="n">set_result</span><span class="p">((</span><span class="n">conn</span><span class="p">,</span> <span class="n">address</span><span class="p">))</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">TRY_READ_AGAIN</span><span class="p">:</span>
-                <span class="n">event_loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">sock_accept</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
+                <span class="n">event_loop</span><span class="o">.</span><span class="n">add_reader</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">sock_accept</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span>
+                                      <span class="n">future</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">EPERM</span><span class="p">:</span>
                 <span class="c"># Netfilter on Linux may have rejected the</span>
                 <span class="c"># connection, but we get told to try to accept() anyway.</span>
@@ -544,7 +591,9 @@
             <span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">future</span>
 
+
 <span class="k">def</span> <span class="nf">sock_accept_connection</span><span class="p">(</span><span class="n">event_loop</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Used by start_serving.&#39;&#39;&#39;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_ACCEPTS</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>

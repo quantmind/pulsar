@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>JSON-RPC &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>JSON-RPC &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="Asynchronous Shell" href="shell.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="shell.html" title="Asynchronous Shell"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -245,8 +245,8 @@ It can be used to add additional parameters based on request and format.</li>
 <dl class="class">
 <dt id="pulsar.apps.rpc.PulsarServerCommands">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">PulsarServerCommands</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.PulsarServerCommands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Some useful commands to add to your <a class="reference internal" href="#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler to get you
-started. It exposes the following functions:</p>
+<dd><p>Useful commands to add to your <a class="reference internal" href="#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler.</p>
+<p>It exposes the following functions:</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.PulsarServerCommands.rpc_ping">
 <tt class="descname">rpc_ping</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.PulsarServerCommands.rpc_ping" title="Permalink to this definition">¶</a></dt>
@@ -262,8 +262,9 @@ started. It exposes the following functions:</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.PulsarServerCommands.rpc_server_info">
 <tt class="descname">rpc_server_info</tt><big>(</big><em>request</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.PulsarServerCommands.rpc_server_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a dictionary of information regarding the server and workers.
-It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServerCommands.extra_server_info" title="pulsar.apps.rpc.PulsarServerCommands.extra_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">extra_server_info()</span></tt></a> for adding custom information.</p>
+<dd><p>Return a dictionary of information regarding the server and workers.</p>
+<p>It invokes the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServerCommands.extra_server_info" title="pulsar.apps.rpc.PulsarServerCommands.extra_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">extra_server_info()</span></tt></a> for adding custom
+information.</p>
 </dd></dl>
 
 <dl class="method">
@@ -288,9 +289,9 @@ by this <a class="reference internal" href="#pulsar.apps.rpc.JSONRPC" title="pul
 <dl class="method">
 <dt id="pulsar.apps.rpc.PulsarServerCommands.extra_server_info">
 <tt class="descname">extra_server_info</tt><big>(</big><em>request</em>, <em>info</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.PulsarServerCommands.extra_server_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Not an <tt class="docutils literal"><span class="pre">rpc</span></tt> method, but an internal method which adds additional
-information to the info dictionary. Used by the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServerCommands.rpc_server_info" title="pulsar.apps.rpc.PulsarServerCommands.rpc_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">rpc_server_info()</span></tt></a>
-method.</p>
+<dd><p>An internal method.</p>
+<p>Used by the <a class="reference internal" href="#pulsar.apps.rpc.PulsarServerCommands.rpc_server_info" title="pulsar.apps.rpc.PulsarServerCommands.rpc_server_info"><tt class="xref py py-meth docutils literal"><span class="pre">rpc_server_info()</span></tt></a> method to add additional
+information to the info dictionary.</p>
 </dd></dl>
 
 </dd></dl>

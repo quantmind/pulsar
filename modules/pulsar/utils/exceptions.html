@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.utils.exceptions &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.utils.exceptions &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar" href="../../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -64,6 +64,8 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">A list of all Exception specific to pulsar library.</span>
 <span class="sd">&#39;&#39;&#39;</span>
+
+
 <div class="viewcode-block" id="PulsarException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.PulsarException">[docs]</a><span class="k">class</span> <span class="nc">PulsarException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Base class of all Pulsar exceptions.&#39;&#39;&#39;</span>
 
@@ -81,85 +83,76 @@
 <span class="k">class</span> <span class="nc">CommandNotFound</span><span class="p">(</span><span class="n">CommandError</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">CommandNotFound</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
-                            <span class="s">&#39;Command &quot;</span><span class="si">%s</span><span class="s">&quot; not available&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
-        
-<div class="viewcode-block" id="ProtocolError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ProtocolError">[docs]</a><span class="k">class</span> <span class="nc">ProtocolError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CommandNotFound</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="s">&#39;Command &quot;</span><span class="si">%s</span><span class="s">&quot; not available&#39;</span> <span class="o">%</span>
+                                              <span class="n">name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProtocolError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ProtocolError">[docs]</a><span class="k">class</span> <span class="nc">ProtocolError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Raised when the protocol encounter unexpected data. It will close</span>
 <span class="sd">the socket connection.&#39;&#39;&#39;</span>
 
 </div>
-<div class="viewcode-block" id="TooManyConnections"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.TooManyConnections">[docs]</a><span class="k">class</span> <span class="nc">TooManyConnections</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<div class="viewcode-block" id="TooManyConnections"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.TooManyConnections">[docs]</a><span class="k">class</span> <span class="nc">TooManyConnections</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Raised when there are too many concurrent connections.&#39;&#39;&#39;</span>
-    
-    </div>
-<span class="k">class</span> <span class="nc">EventAlreadyRegistered</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-    <span class="k">pass</span>
-    
 
-<span class="k">class</span> <span class="nc">ConnectionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</div>
+<span class="k">class</span> <span class="nc">EventAlreadyRegistered</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="k">pass</span>
-
 
 
 <div class="viewcode-block" id="StopEventLoop"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.StopEventLoop">[docs]</a><span class="k">class</span> <span class="nc">StopEventLoop</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;:class:`BaseException` raised to cleanly stop a</span>
 <span class="sd">    :class:`pulsar.EventLoop`.&#39;&#39;&#39;</span>
-    
-    </div>
+
+</div>
 <div class="viewcode-block" id="HaltServer"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HaltServer">[docs]</a><span class="k">class</span> <span class="nc">HaltServer</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;:class:`BaseException` raised to stop a running server.</span>
-<span class="sd">    </span>
+
 <span class="sd">    When ``exit_code`` is greater than 1, it is considered an expected</span>
 <span class="sd">    failure and therefore the full stack trace is not logged.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s">&#39;Exiting server.&#39;</span><span class="p">,</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">HaltServer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">=</span> <span class="n">exit_code</span>
 
-</div>
-<span class="k">class</span> <span class="nc">CannotCallBackError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="k">pass</span>
 
-
-<span class="k">class</span> <span class="nc">NotRegisteredWithServer</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="k">pass</span>
-
-
-<span class="c">##################################################################### HTTP</span>
+<span class="c">##################################################################### HTTP</span></div>
 <div class="viewcode-block" id="HTTPError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HTTPError">[docs]</a><span class="k">class</span> <span class="nc">HTTPError</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="s">&quot;Base for all HTTP related errors.&quot;</span>
     <span class="k">pass</span>
+
 </div>
 <div class="viewcode-block" id="SSLError"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.SSLError">[docs]</a><span class="k">class</span> <span class="nc">SSLError</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
     <span class="s">&quot;Raised when SSL certificate fails in an HTTPS connection.&quot;</span>
     <span class="k">pass</span>
+
 </div>
 <div class="viewcode-block" id="HttpException"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpException">[docs]</a><span class="k">class</span> <span class="nc">HttpException</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The base class of all ``HTTP`` server exceptions</span>
-<span class="sd">    </span>
+
 <span class="sd">Introduces the following attributes:</span>
 
 <span class="sd">.. attribute:: status</span>
 
 <span class="sd">    The numeric status code for the exception (ex 500 for server error).</span>
-<span class="sd">    </span>
+
 <span class="sd">    Default: ``500``.</span>
-<span class="sd">    </span>
+
 <span class="sd">.. attribute:: headers</span>
 
 <span class="sd">    Additional headers to add to the client response.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">500</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handler</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                  <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="c"># for compatibility with HTTPError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span>  <span class="c"># for compatibility with HTTPError</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strict</span> <span class="o">=</span> <span class="n">strict</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">HttpException</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">hdrs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
@@ -167,10 +160,11 @@
 </div>
 <div class="viewcode-block" id="HttpRedirect"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpRedirect">[docs]</a><span class="k">class</span> <span class="nc">HttpRedirect</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` for redirects.</span>
-<span class="sd">    </span>
+
 <span class="sd">The :attr:`HttpException.status` is set to ``302`` by default.</span>
-<span class="sd">&#39;&#39;&#39;</span>    
+<span class="sd">&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">302</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">headers</span>
         <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="n">location</span><span class="p">))</span>
@@ -180,10 +174,10 @@
     <span class="nd">@property</span>
 <div class="viewcode-block" id="HttpRedirect.location"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HttpRedirect.location">[docs]</a>    <span class="k">def</span> <span class="nf">location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The value in the ``Location`` header entry.</span>
-<span class="sd">        </span>
+
 <span class="sd">It is a proxy for ``self.headers[&#39;location&#39;].&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span>
-    
+
 </div></div>
 <div class="viewcode-block" id="PermissionDenied"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.PermissionDenied">[docs]</a><span class="k">class</span> <span class="nc">PermissionDenied</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``403`` status code.&#39;&#39;&#39;</span>
@@ -194,12 +188,12 @@
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``404`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">404</span>
 
-    </div>
+</div>
 <div class="viewcode-block" id="MethodNotAllowed"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.MethodNotAllowed">[docs]</a><span class="k">class</span> <span class="nc">MethodNotAllowed</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``405`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">405</span>
-    
-    </div>
+
+</div>
 <div class="viewcode-block" id="ContentNotAccepted"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ContentNotAccepted">[docs]</a><span class="k">class</span> <span class="nc">ContentNotAccepted</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An :class:`HttpException` with default ``406`` status code.&#39;&#39;&#39;</span>
     <span class="n">status</span> <span class="o">=</span> <span class="mi">406</span></div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.wsgi.server &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -70,8 +70,8 @@
 <span class="sd">.. autoclass:: HttpServerResponse</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
-<span class="sd">   </span>
+
+
 <span class="sd">Testing WSGI Environ</span>
 <span class="sd">=========================</span>
 
@@ -81,69 +81,162 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">wsgiref.handlers</span> <span class="kn">import</span> <span class="n">format_date_time</span>
-<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">raise_error_trace</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
-                                  <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">)</span>
-                                 
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span>
+                                  <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
+                                  <span class="n">urlparse</span><span class="p">,</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span><span class="p">,</span> <span class="n">is_tls</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils</span> <span class="kn">import</span> <span class="n">events</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s">&#39;MAX_CHUNK_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;test_wsgi_environ&#39;</span><span class="p">]</span>
 
+
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
 
-<div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An utility function for creating a WSGI environment dictionary</span>
-<span class="sd">for testing purposes.</span>
-<span class="sd">    </span>
-<span class="sd">:param url: the resource in the ``PATH_INFO``.</span>
-<span class="sd">:param method: the ``REQUEST_METHOD``.</span>
-<span class="sd">:param headers: optional request headers</span>
-<span class="sd">:param extra: optional dictionary of additional key-valued parameters to add.</span>
-<span class="sd">:return: a valid WSGI environ dictionary.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An function to create a WSGI environment dictionary for testing.</span>
+
+<span class="sd">    :param url: the resource in the ``PATH_INFO``.</span>
+<span class="sd">    :param method: the ``REQUEST_METHOD``.</span>
+<span class="sd">    :param headers: optional request headers</span>
+<span class="sd">    :params secure: a secure connection?</span>
+<span class="sd">    :param extra: additional dictionary of parameters to add.</span>
+<span class="sd">    :return: a valid WSGI environ dictionary.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;GET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-    <span class="n">request_headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;777.777.777.777:8080&#39;</span><span class="p">,</span>
-                        <span class="n">request_headers</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">extra</span><span class="p">)</span>
-    
-    </div>
-<span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">client_address</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span>
-                 <span class="n">headers</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="n">protocol</span> <span class="o">=</span> <span class="s">&quot;HTTP/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()))</span>
-    <span class="n">environ</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s">&quot;wsgi.input&quot;</span><span class="p">:</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()),</span>
-            <span class="s">&quot;wsgi.errors&quot;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
-            <span class="s">&quot;wsgi.version&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="s">&quot;wsgi.run_once&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-            <span class="s">&#39;wsgi.multithread&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-            <span class="s">&#39;wsgi.multiprocess&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
-            <span class="s">&quot;SERVER_SOFTWARE&quot;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
-            <span class="s">&quot;REQUEST_METHOD&quot;</span><span class="p">:</span> <span class="n">native_str</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_method</span><span class="p">()),</span>
-            <span class="s">&quot;QUERY_STRING&quot;</span><span class="p">:</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_query_string</span><span class="p">(),</span>
-            <span class="s">&quot;RAW_URI&quot;</span><span class="p">:</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_url</span><span class="p">(),</span>
-            <span class="s">&quot;SERVER_PROTOCOL&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
-            <span class="s">&#39;CONTENT_TYPE&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
-        <span class="p">}</span>
-    <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;http&quot;</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">StreamReader</span><span class="p">(</span><span class="n">request_headers</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">8060</span><span class="p">),</span> <span class="s">&#39;777.777.777.777:8080&#39;</span><span class="p">,</span>
+                        <span class="n">request_headers</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="n">secure</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">StreamReader</span><span class="p">:</span>
+    <span class="n">_expect_sent</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_waiting</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">transport</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">parser</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span> <span class="o">=</span> <span class="n">transport</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
+    <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
+
+    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` when the full HTTP message has been read.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">protocol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
+        <span class="k">return</span> <span class="s">&quot;HTTP/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">version</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">waiting_expect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` when the client is waiting for 100 Continue.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expect_sent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">()</span> <span class="ow">and</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s">&#39;expect&#39;</span><span class="p">,</span> <span class="s">&#39;100-continue&#39;</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="bp">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_expect_sent</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Read bytes in the buffer.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_expect</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">417</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> 100 Continue</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_expect_sent</span> <span class="o">=</span> <span class="n">msg</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">recv_body</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxbuf</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return bytes in the buffer.</span>
+
+<span class="sd">        If the stream is not yet ready, return a :class:`pulsar.Deferred`</span>
+<span class="sd">        which results in the bytes read.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getvalue</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">then</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getvalue</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span>
+
+    <span class="k">def</span> <span class="nf">fail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_expect</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">417</span><span class="p">)</span>
+
+    <span class="c">##    INTERNALS</span>
+    <span class="k">def</span> <span class="nf">_getvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">maxbuf</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">body</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">body</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">maxbuf</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">maxbuf</span><span class="p">:</span>
+            <span class="n">body</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">body</span><span class="p">[:</span><span class="n">maxbuf</span><span class="p">],</span> <span class="n">body</span><span class="p">[</span><span class="n">maxbuf</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">body</span>
+
+    <span class="k">def</span> <span class="nf">data_processed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Callback by the protocol when new body data is received.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">client_address</span><span class="p">,</span> <span class="n">request_headers</span><span class="p">,</span>
+                 <span class="n">headers</span><span class="p">,</span> <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">https</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">protocol</span><span class="p">()</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">parser</span>
+    <span class="n">raw_uri</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_url</span><span class="p">()</span>
+    <span class="n">request_uri</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">raw_uri</span><span class="p">)</span>
+    <span class="c">#</span>
+    <span class="c"># http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2</span>
+    <span class="c"># If Request-URI is an absoluteURI, the host is part of the Request-URI.</span>
+    <span class="c"># Any Host header field value in the request MUST be ignored</span>
+    <span class="k">if</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">scheme</span><span class="p">:</span>
+        <span class="n">url_scheme</span> <span class="o">=</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">scheme</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">request_uri</span><span class="o">.</span><span class="n">netloc</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&#39;https&#39;</span> <span class="k">if</span> <span class="n">https</span> <span class="k">else</span> <span class="s">&#39;http&#39;</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c">#</span>
+    <span class="n">environ</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;wsgi.input&quot;</span><span class="p">:</span> <span class="n">stream</span><span class="p">,</span>
+               <span class="s">&quot;wsgi.errors&quot;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+               <span class="s">&quot;wsgi.version&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+               <span class="s">&quot;wsgi.run_once&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s">&quot;wsgi.multithread&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s">&quot;wsgi.multiprocess&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+               <span class="s">&quot;SERVER_SOFTWARE&quot;</span><span class="p">:</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
+               <span class="s">&quot;REQUEST_METHOD&quot;</span><span class="p">:</span> <span class="n">native_str</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">get_method</span><span class="p">()),</span>
+               <span class="s">&quot;QUERY_STRING&quot;</span><span class="p">:</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_query_string</span><span class="p">(),</span>
+               <span class="s">&quot;RAW_URI&quot;</span><span class="p">:</span> <span class="n">raw_uri</span><span class="p">,</span>
+               <span class="s">&quot;SERVER_PROTOCOL&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
+               <span class="s">&quot;CONTENT_TYPE&quot;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">}</span>
     <span class="n">forward</span> <span class="o">=</span> <span class="n">client_address</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="n">format_address</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
     <span class="n">script_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;SCRIPT_NAME&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">header</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -155,8 +248,8 @@
             <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;https&quot;</span>
         <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;x-forwarded-ssl&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s">&quot;on&quot;</span><span class="p">:</span>
             <span class="n">url_scheme</span> <span class="o">=</span> <span class="s">&quot;https&quot;</span>
-        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;host&quot;</span><span class="p">:</span>
-            <span class="n">server</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;host&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;script_name&quot;</span><span class="p">:</span>
             <span class="n">script_name</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">elif</span> <span class="n">header</span> <span class="o">==</span> <span class="s">&quot;content-type&quot;</span><span class="p">:</span>
@@ -168,6 +261,8 @@
         <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;HTTP_&#39;</span> <span class="o">+</span> <span class="n">header</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
         <span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.url_scheme&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url_scheme</span>
+    <span class="k">if</span> <span class="n">url_scheme</span> <span class="o">==</span> <span class="s">&#39;https&#39;</span><span class="p">:</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;HTTPS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;on&#39;</span>
     <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">forward</span><span class="p">):</span>
         <span class="c"># we only took the last one</span>
         <span class="c"># http://en.wikipedia.org/wiki/X-Forwarded-For</span>
@@ -180,9 +275,12 @@
         <span class="n">remote</span> <span class="o">=</span> <span class="n">forward</span>
     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">remote</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;REMOTE_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">remote</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">server</span> <span class="o">=</span>  <span class="n">host_and_port_default</span><span class="p">(</span><span class="n">url_scheme</span><span class="p">,</span> <span class="n">server</span><span class="p">)</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">(</span><span class="n">server</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">server</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span> <span class="ow">and</span> <span class="n">protocol</span> <span class="o">==</span> <span class="s">&#39;HTTP/1.0&#39;</span><span class="p">:</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">format_address</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">host</span><span class="p">:</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">host_and_port_default</span><span class="p">(</span><span class="n">url_scheme</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getfqdn</span><span class="p">(</span><span class="n">host</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;SERVER_PORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">host</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">path_info</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_path</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">path_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">script_name</span><span class="p">:</span>
@@ -192,18 +290,19 @@
     <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
         <span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">environ</span>
-    
-    
+
+
 <span class="k">def</span> <span class="nf">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Write a chunk::</span>
 
 <span class="sd">    chunk-size(hex) CRLF</span>
 <span class="sd">    chunk-data CRLF</span>
-<span class="sd">    </span>
+
 <span class="sd">If the size is 0, this is the last chunk, and an extra CRLF is appended.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">head</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="si">%X</span><span class="se">\r\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">head</span> <span class="o">+</span> <span class="n">chunk</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
+
 
 <span class="k">def</span> <span class="nf">keep_alive</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; return True if the connection should be kept alive&quot;&quot;&quot;</span>
@@ -220,60 +319,56 @@
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
-        
+
+
 <span class="k">def</span> <span class="nf">keep_alive_with_status</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
     <span class="n">code</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">code</span> <span class="o">&gt;=</span> <span class="mi">400</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
     <span class="k">return</span> <span class="bp">True</span>
-    
+
 
 <div class="viewcode-block" id="HttpServerResponse"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpServerResponse</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Server side HTTP :class:`pulsar.ProtocolConsumer`.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Server side WSGI :class:`pulsar.ProtocolConsumer`.</span>
+
+<span class="sd">    .. attribute:: wsgi_callable</span>
+
+<span class="sd">        The wsgi callable handling requests.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_status</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_headers_sent</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_request_headers</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">max_empty_consecutive</span> <span class="o">=</span> <span class="mi">20</span>
     <span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="n">ProtocolConsumer</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">server_software</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span> <span class="o">=</span> <span class="n">wsgi_callable</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
-        
+        <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
+
 <div class="viewcode-block" id="HttpServerResponse.data_received"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Implements :class:`pulsar.Protocol.data_received`. Once we have a</span>
-<span class="sd">full HTTP message, build the wsgi ``environ`` and write the response</span>
-<span class="sd">using the :meth:`pulsar.Transport.writelines` method.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Implements :class:`pulsar.ProtocolConsumer.data_received` method.</span>
+
+<span class="sd">        Once we have a full HTTP message, build the wsgi ``environ`` and</span>
+<span class="sd">        delegate the response to the :func:`wsgi_callable` function.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span>
-        <span class="n">request_headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span>
         <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-            <span class="n">done</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">request_headers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_headers_complete</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_headers_complete</span><span class="p">():</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">expect_continue</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">done</span><span class="p">:</span> <span class="c"># message is done</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wsgi_environ</span><span class="p">())</span>
+                <span class="n">stream</span> <span class="o">=</span> <span class="n">StreamReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;data_processed&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="o">.</span><span class="n">data_processed</span><span class="p">)</span>
+                <span class="n">environ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_response</span><span class="p">(</span><span class="n">environ</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c"># This is a parsing error, the client must have sent</span>
             <span class="c"># bogus data</span>
             <span class="k">raise</span> <span class="n">ProtocolError</span>
-    </div>
-<div class="viewcode-block" id="HttpServerResponse.expect_continue"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.expect_continue">[docs]</a>    <span class="k">def</span> <span class="nf">expect_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Handle the expect=100-continue header if available, according to</span>
-<span class="sd">the following algorithm:</span>
-
-<span class="sd">* Send the 100 Continue response before waiting for the body.</span>
-<span class="sd">* Omit the 100 (Continue) response if it has already received some or all of</span>
-<span class="sd">  the request body for the corresponding request.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s">&#39;expect&#39;</span><span class="p">,</span> <span class="s">&#39;100-continue&#39;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;HTTP/1.1 100 Continue</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span><span class="p">)</span>
-    </div>
+</div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span>
@@ -298,28 +393,29 @@
 
 <div class="viewcode-block" id="HttpServerResponse.start_response"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.start_response">[docs]</a>    <span class="k">def</span> <span class="nf">start_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;WSGI compliant ``start_response`` callable, see pep3333_.</span>
-<span class="sd">The application may call start_response more than once, if and only</span>
-<span class="sd">if the ``exc_info`` argument is provided.</span>
-<span class="sd">More precisely, it is a fatal error to call ``start_response`` without the</span>
-<span class="sd">``exc_info`` argument if start_response has already been called within</span>
-<span class="sd">the current invocation of the application.</span>
 
-<span class="sd">:parameter status: an HTTP ``status`` string like ``200 OK`` or</span>
-<span class="sd">    ``404 Not Found``.</span>
-<span class="sd">:parameter response_headers: a list of ``(header_name, header_value)`` tuples.</span>
-<span class="sd">    It must be a Python list. Each header_name must be a valid HTTP header</span>
-<span class="sd">    field-name (as defined by RFC 2616_, Section 4.2), without a trailing</span>
-<span class="sd">    colon or other punctuation.</span>
-<span class="sd">:parameter exc_info: optional python ``sys.exc_info()`` tuple. This argument</span>
-<span class="sd">    should be supplied by the application only if start_response is being</span>
-<span class="sd">    called by an error handler.</span>
-<span class="sd">:return: The :meth:`write` method.</span>
+<span class="sd">        The application may call start_response more than once, if and only</span>
+<span class="sd">        if the ``exc_info`` argument is provided.</span>
+<span class="sd">        More precisely, it is a fatal error to call ``start_response`` without</span>
+<span class="sd">        the ``exc_info`` argument if start_response has already been called</span>
+<span class="sd">        within the current invocation of the application.</span>
 
-<span class="sd">``HOP_HEADERS`` are not considered but no error is raised.</span>
+<span class="sd">        :parameter status: an HTTP ``status`` string like ``200 OK`` or</span>
+<span class="sd">            ``404 Not Found``.</span>
+<span class="sd">        :parameter response_headers: a list of ``(header_name, header_value)``</span>
+<span class="sd">            tuples. It must be a Python list. Each header_name must be a valid</span>
+<span class="sd">            HTTP header field-name (as defined by RFC 2616_, Section 4.2),</span>
+<span class="sd">            without a trailing colon or other punctuation.</span>
+<span class="sd">        :parameter exc_info: optional python ``sys.exc_info()`` tuple.</span>
+<span class="sd">            This argument should be supplied by the application only if</span>
+<span class="sd">            ``start_response`` is being called by an error handler.</span>
+<span class="sd">        :return: The :meth:`write` method.</span>
 
-<span class="sd">.. _pep3333: http://www.python.org/dev/peps/pep-3333/</span>
-<span class="sd">.. _2616: http://www.faqs.org/rfcs/rfc2616.html</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        ``HOP_HEADERS`` are not considered but no error is raised.</span>
+
+<span class="sd">        .. _pep3333: http://www.python.org/dev/peps/pep-3333/</span>
+<span class="sd">        .. _2616: http://www.faqs.org/rfcs/rfc2616.html</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
@@ -349,56 +445,63 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span>
 </div>
 <div class="viewcode-block" id="HttpServerResponse.write"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The write function which is returned by the :meth:`start_response`</span>
-<span class="sd">method as required by the WSGI specification.</span>
+        <span class="sd">&#39;&#39;&#39;The write function returned by the :meth:`start_response` method.</span>
 
-<span class="sd">:param data: bytes to write</span>
-<span class="sd">:param force: Optional flag used internally.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Required by the WSGI specification.</span>
+
+<span class="sd">        :param data: bytes to write</span>
+<span class="sd">        :param force: Optional flag used internally.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">:</span>
             <span class="n">tosend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_headers</span><span class="p">()</span>
-            <span class="n">events</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="s">&#39;http-headers&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">tosend</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span> <span class="o">=</span> <span class="n">tosend</span><span class="o">.</span><span class="n">flat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers_sent</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
+                <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MAX_CHUNK_SIZE</span><span class="p">:</span>
                     <span class="n">chunk</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">:]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+                    <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+                    <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">force</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunked</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk_encoding</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-</div>
-    <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+    <span class="c">########################################################################</span>
+    <span class="c">##    INTERNALS</span></div>
+    <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">failure</span><span class="p">:</span>
-                <span class="c"># A failure has occurred, try to handle it with the default</span>
-                <span class="c"># wsgi error handler</span>
-                <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s">&#39;SERVER_NAME&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+            <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c"># client disconnected, end this connection</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="n">Failure</span><span class="p">):</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">wsgi_iter</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="n">err_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate</span> <span class="k">if</span> <span class="n">failure</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">catastrofic</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">add_errback</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">err_handler</span><span class="p">,</span> <span class="n">environ</span><span class="p">))</span>
-        
-<div class="viewcode-block" id="HttpServerResponse.async_wsgi"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.async_wsgi">[docs]</a>    <span class="k">def</span> <span class="nf">async_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Asynchronous WSGI server handler. Fully conforms with `WSGI 1.0.1`_</span>
-<span class="sd">when the ``wsgi_iter`` yields bytes only.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span> <span class="c"># handle asynchronous wsgi response</span>
-            <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">wsgi_iter</span> 
+            <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">exc_info</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span>
+                                    <span class="n">exc_info</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c"># Error handling did not work, Just shut down</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">finish_wsgi</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_async_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="p">(</span><span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span><span class="p">)):</span>
+            <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">wsgi_iter</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">wsgi_iter</span><span class="p">:</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">b</span> <span class="c"># handle asynchronous components</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">b</span>     <span class="c"># handle asynchronous components</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
             <span class="c"># make sure we write headers</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
@@ -409,30 +512,21 @@
                 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="n">LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error while closing wsgi iterator&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">finish_wsgi</span><span class="p">()</span>
-        </div>
-    <span class="k">def</span> <span class="nf">handle_wsgi_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
-        <span class="n">exc_info</span> <span class="o">=</span> <span class="n">failure</span><span class="o">.</span><span class="n">exc_info</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">exc_info</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">response</span>
-        
-    <span class="k">def</span> <span class="nf">catastrofic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">finish_wsgi</span><span class="p">()</span>
-        
+
     <span class="k">def</span> <span class="nf">finish_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
-            
+
 <div class="viewcode-block" id="HttpServerResponse.is_chunked"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Only use chunked responses when the client is</span>
-<span class="sd">speaking HTTP/1.1 or newer and there was no Content-Length header set.&#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">elif</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[:</span><span class="mi">3</span><span class="p">])):</span>
-            <span class="c"># Do not use chunked responses when the response</span>
-            <span class="c"># is guaranteed to not have a response body.</span>
+        <span class="sd">&#39;&#39;&#39;Check if the response uses chunked transfer encoding.</span>
+
+<span class="sd">        Only use chunked responses when the client is speaking HTTP/1.1</span>
+<span class="sd">        or newer and there was no Content-Length header set.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_status</span> <span class="o">==</span> <span class="s">&#39;200 Connection established&#39;</span> <span class="ow">or</span>
+                <span class="n">has_empty_content</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[:</span><span class="mi">3</span><span class="p">]))):</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;chunked&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">True</span>
@@ -440,8 +534,8 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_length</span> <span class="ow">is</span> <span class="bp">None</span>
 </div>
 <div class="viewcode-block" id="HttpServerResponse.get_headers"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.get_headers">[docs]</a>    <span class="k">def</span> <span class="nf">get_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get the headers to send only if *force* is ``True`` or this</span>
-<span class="sd">is an HTTP upgrade (websockets)&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Get the headers to send to the client.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">:</span>
             <span class="c"># we are sending headers but the start_response was not called</span>
             <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="s">&#39;Headers not set.&#39;</span><span class="p">)</span>
@@ -456,15 +550,24 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive_with_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;close&#39;</span>
+        <span class="c"># If client sent cookies and set-cookies header is not available</span>
+        <span class="c"># set the cookies</span>
+        <span class="k">if</span> <span class="s">&#39;cookie&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s">&#39;set-cookie&#39;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Set-cookie&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span><span class="p">[</span><span class="s">&#39;cookie&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">headers</span>
 </div>
-    <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
         <span class="c">#return a the WSGI environ dictionary</span>
         <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span>
-        <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
+        <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">sock</span><span class="p">)</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">)</span>
+        <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">_request_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
-                               <span class="p">{</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span>
-                                <span class="s">&#39;pulsar.cfg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">})</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
+                               <span class="n">https</span><span class="o">=</span><span class="n">https</span><span class="p">,</span>
+                               <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span>
+                                      <span class="s">&#39;pulsar.cfg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
+                                      <span class="s">&#39;wsgi.multiprocess&#39;</span><span class="p">:</span> <span class="n">multiprocess</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">),</span>
                              <span class="p">(</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>

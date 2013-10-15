@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.socket &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.socket &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -63,20 +63,20 @@
             
   <h1>Source code for pulsar.apps.socket</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;Asynchronous application for serving requests</span>
-<span class="sd">on a socket. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.</span>
+<span class="sd">on sockets. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.</span>
 <span class="sd">All is needed by a :class:`SocketServer` is a callable which build a</span>
 <span class="sd">:class:`pulsar.ProtocolConsumer` for each new client request received.</span>
 <span class="sd">This is an example of a script for an Echo server::</span>
 
 <span class="sd">    import pulsar</span>
 <span class="sd">    from pulsar.apps.socket import SocketServer</span>
-<span class="sd">    </span>
+
 <span class="sd">    class EchoServerProtocol(pulsar.ProtocolConsumer):</span>
 <span class="sd">        ...</span>
-<span class="sd">        </span>
+
 <span class="sd">    if __name__ == &#39;__main__&#39;:</span>
 <span class="sd">        SocketServer(EchoServerProtocol).start()</span>
-<span class="sd">        </span>
+
 <span class="sd">Check the :ref:`echo server example &lt;tutorials-writing-clients&gt;` for detailed</span>
 <span class="sd">implementation of the ``EchoServerProtocol`` class.</span>
 
@@ -90,20 +90,22 @@
 
 <span class="sd">bind</span>
 <span class="sd">------</span>
-<span class="sd">The :class:`SocketServer` application introduces the additional pulsar settings</span>
-<span class="sd">:ref:`bind &lt;setting-bind&gt;` which is used to specify the address</span>
-<span class="sd">to bind the server to::</span>
+<span class="sd">To specify the address to bind the server to::</span>
 
 <span class="sd">    python script.py --bind 127.0.0.1:8070</span>
 
+<span class="sd">This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::</span>
+
+<span class="sd">    python script.py --bind :8080</span>
+
 <span class="sd">backlog</span>
-<span class="sd">---------   </span>
-<span class="sd">To control the concurrency of the server you can use the</span>
+<span class="sd">---------</span>
+<span class="sd">To specify the maximum number of queued connections you can use the</span>
 <span class="sd">:ref:`backlog &lt;setting-backlog&gt;` settings. For example::</span>
 
 <span class="sd">    python script.py --backlog 1000</span>
-<span class="sd">    </span>
-<span class="sd">will serve a maximum of 1000 clients per :class:`pulsar.Worker` concurrently.</span>
+
+<span class="sd">rarely used.</span>
 
 <span class="sd">keep_alive</span>
 <span class="sd">---------------</span>
@@ -112,7 +114,7 @@
 <span class="sd">:ref:`keep-alive &lt;setting-keep_alive&gt;` setting::</span>
 
 <span class="sd">    python script.py --keep-alive 10</span>
-<span class="sd">    </span>
+
 <span class="sd">will close client connections which have been idle for 10 seconds.</span>
 
 <span class="sd">.. _socket-server-ssl:</span>
@@ -124,7 +126,7 @@
 <span class="sd">settings::</span>
 
 <span class="sd">    python script.py --cert-file server.crt --key-file server.key</span>
-<span class="sd">    </span>
+
 
 <span class="sd">.. _socket-server-concurrency:</span>
 
@@ -135,38 +137,41 @@
 <span class="sd">the application, create a listening socket in the parent (Arbiter) process</span>
 <span class="sd">and then spawn several process-based actors which listen on the</span>
 <span class="sd">same shared socket.</span>
-<span class="sd">This is how, pre-forking servers operate.</span>
+<span class="sd">This is how pre-forking servers operate.</span>
 
 <span class="sd">When running a :class:`SocketServer` in threading mode::</span>
 
 <span class="sd">    python script.py --concurrency thread</span>
-<span class="sd"> </span>
-<span class="sd">the number of :class:`pulsar.apps.Worker` serving the application is set to ``0``</span>
-<span class="sd">so that the application is actually served by the :class:`pulsar.Arbiter`</span>
-<span class="sd">event-loop (we refer this to a single process server).</span>
+
+<span class="sd">the number of :class:`pulsar.Actor` serving the application is set</span>
+<span class="sd">to ``0`` so that the application is actually served by the</span>
+<span class="sd">:class:`pulsar.Arbiter` event-loop (we refer this to a single process server).</span>
 <span class="sd">This configuration is used when debugging, testing, benchmarking or on small</span>
 <span class="sd">load servers.</span>
 
-<span class="sd">In addition, a :class:`SocketServer` in multi-process mode is only available for:</span>
-<span class="sd">    </span>
+<span class="sd">In addition, a :class:`SocketServer` in multi-process mode is only available</span>
+<span class="sd">for:</span>
+
 <span class="sd">* Posix systems.</span>
 <span class="sd">* Windows running python 3.2 or above (python 2 on windows does not support</span>
 <span class="sd">  the creation of sockets from file descriptors).</span>
-<span class="sd">  </span>
+
 <span class="sd">Check the :meth:`SocketServer.monitor_start` method for implementation details.</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">TcpServer</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">parse_address</span><span class="p">,</span> <span class="n">SSLContext</span><span class="p">,</span> <span class="n">WrapSocket</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">TcpServer</span><span class="p">,</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">parse_address</span><span class="p">,</span> <span class="n">SSLContext</span><span class="p">,</span> <span class="n">WrapSocket</span><span class="p">,</span>
+                                   <span class="n">format_address</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.config</span> <span class="kn">import</span> <span class="n">pass_through</span>
 
 
 <span class="k">class</span> <span class="nc">SocketSetting</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
     <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;socket&#39;</span>
     <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Socket Servers&quot;</span>
-    
+
 
 <span class="k">class</span> <span class="nc">Bind</span><span class="p">(</span><span class="n">SocketSetting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;bind&quot;</span>
@@ -175,11 +180,12 @@
     <span class="n">default</span> <span class="o">=</span> <span class="s">&quot;127.0.0.1:{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">DEFAULT_PORT</span><span class="p">)</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        The socket to bind.</span>
-<span class="s">        </span>
+
 <span class="s">        A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.</span>
 <span class="s">        An IP is a valid HOST.</span>
 <span class="s">        &quot;&quot;&quot;</span>
-        
+
+
 <span class="k">class</span> <span class="nc">KeepAlive</span><span class="p">(</span><span class="n">SocketSetting</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;keep_alive&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;--keep-alive&quot;</span><span class="p">]</span>
@@ -199,7 +205,7 @@
     <span class="n">default</span> <span class="o">=</span> <span class="mi">2048</span>
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        The maximum number of queued connections in a socket.</span>
-<span class="s">        </span>
+
 <span class="s">        This refers to the number of clients that can be waiting to be served.</span>
 <span class="s">        Exceeding this number results in the client getting an error when</span>
 <span class="s">        attempting to connect. It should only affect servers under significant</span>
@@ -227,39 +233,44 @@
 <span class="s">    SSL certificate file</span>
 <span class="s">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SocketServer"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer">[docs]</a><span class="k">class</span> <span class="nc">SocketServer</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.Application` which bind a socket to a given address</span>
-<span class="sd">and listen for requests. The request handler is constructed from the</span>
-<span class="sd">callable passed during initialisation.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: address</span>
 
-<span class="sd">    The socket address, available once the application has started.</span>
+<div class="viewcode-block" id="SocketServer"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer">[docs]</a><span class="k">class</span> <span class="nc">SocketServer</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.Application` which serve application on a socket.</span>
+
+<span class="sd">    It bind a socket to a given address and listen for requests. The request</span>
+<span class="sd">    handler is constructed from the callable passed during initialisation.</span>
+
+<span class="sd">    .. attribute:: address</span>
+
+<span class="sd">        The socket address, available once the application has started.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;socket&#39;</span>
     <span class="n">address</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">])</span>
-    
+
 <div class="viewcode-block" id="SocketServer.protocol_consumer"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.protocol_consumer">[docs]</a>    <span class="k">def</span> <span class="nf">protocol_consumer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Returns the factory of :class:`pulsar.ProtocolConsumer` used by</span>
-<span class="sd">the server. By default it returns the :attr:`pulsar.apps.Application.callable`</span>
-<span class="sd">attribute.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Factory of :class:`pulsar.ProtocolConsumer` used by the server.</span>
+
+<span class="sd">        By default it returns the :attr:`pulsar.apps.Application.callable`</span>
+<span class="sd">        attribute.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span>
-    </div>
-    <span class="nd">@async</span><span class="p">()</span>
+</div>
 <div class="viewcode-block" id="SocketServer.monitor_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create the socket listening to the ``bind`` address. if the platform</span>
-<span class="sd">does not support multiprocessing sockets set the number of workers to 0.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Create the socket listening to the ``bind`` address.</span>
+
+<span class="sd">        If the platform does not support multiprocessing sockets set the</span>
+<span class="sd">        number of workers to 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">event_loop</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">has_multiProcessSocket</span>\
-            <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;thread&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">has_multiProcessSocket</span>
+                <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;thread&#39;</span><span class="p">):</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">address</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;Could not open a socket. &#39;</span>
                                               <span class="s">&#39;No address to bind to&#39;</span><span class="p">)</span>
         <span class="n">ssl</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">:</span> 
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_file</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;cert_file &quot;</span><span class="si">%s</span><span class="s">&quot; does not exist&#39;</span> <span class="o">%</span>
                                  <span class="n">cfg</span><span class="o">.</span><span class="n">cert_file</span><span class="p">)</span>
@@ -272,27 +283,37 @@
         <span class="n">addresses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">sockets</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">loop</span><span class="o">.</span><span class="n">remove_reader</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">()),</span> <span class="p">(</span>
-                        <span class="s">&quot;Could not remove reader&quot;</span><span class="p">)</span>
+                <span class="s">&quot;Could not remove reader&quot;</span><span class="p">)</span>
             <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">())</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="p">[</span><span class="n">WrapSocket</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sockets</span><span class="p">]</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    </div>
+</div>
 <div class="viewcode-block" id="SocketServer.worker_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start the worker by invoking the :meth:`create_server` method.&#39;&#39;&#39;</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">servers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">sockets</span><span class="p">:</span>
             <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">sock</span><span class="o">.</span><span class="n">sock</span><span class="p">)</span>
             <span class="n">servers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
-    </div>
-    <span class="k">def</span> <span class="nf">on_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="n">server</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">socket_server</span>
-        <span class="n">data</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;listen_on&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
-                          <span class="s">&#39;read_timeout&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
-                          <span class="s">&#39;active_connections&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">active_connections</span><span class="p">,</span>
-                          <span class="s">&#39;received_connections&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">received</span><span class="p">}</span>
-        <span class="k">return</span> <span class="n">data</span>
+</div>
+    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="nb">all</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">servers</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
+            <span class="nb">all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">close_connections</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">multi_async</span><span class="p">(</span><span class="nb">all</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="n">info</span><span class="p">[</span><span class="s">&#39;sockets&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sockets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">server</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">servers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="n">format_address</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+            <span class="n">sockets</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="n">format_address</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">address</span><span class="p">),</span>
+                <span class="s">&#39;read_timeout&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="s">&#39;concurrent_connections&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">concurrent_connections</span><span class="p">,</span>
+                <span class="s">&#39;received_connections&#39;</span><span class="p">:</span> <span class="n">server</span><span class="o">.</span><span class="n">received</span><span class="p">})</span>
+
+    <span class="c">#   INTERNALS</span>
 
 <div class="viewcode-block" id="SocketServer.create_server"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.create_server">[docs]</a>    <span class="k">def</span> <span class="nf">create_server</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">ssl</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the Server Protocol which will listen for requests. It</span>
@@ -304,13 +325,13 @@
                            <span class="n">max_connections</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">max_requests</span><span class="p">,</span>
                            <span class="n">timeout</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">,</span>
                            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">connection_made</span><span class="p">)</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">pre_request</span><span class="p">)</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">post_request</span><span class="p">)</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">,</span> <span class="s">&#39;pre_request&#39;</span><span class="p">,</span> <span class="s">&#39;post_request&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;connection_lost&#39;</span><span class="p">):</span>
+            <span class="n">callback</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">callback</span> <span class="o">!=</span> <span class="n">pass_through</span><span class="p">:</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
         <span class="n">server</span><span class="o">.</span><span class="n">start_serving</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">backlog</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">ssl</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">server</span>
-        </div></div>
+        <span class="k">return</span> <span class="n">server</span></div></div>
 </pre></div>
 
           </div>

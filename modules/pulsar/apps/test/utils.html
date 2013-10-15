@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.utils &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.test.utils &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -66,31 +66,24 @@
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">TcpServer</span>
 
-<span class="kn">from</span> <span class="nn">.case</span> <span class="kn">import</span> <span class="n">get_stream</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;run_on_arbiter&#39;</span><span class="p">,</span>
            <span class="s">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
            <span class="s">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
            <span class="s">&#39;AsyncAssert&#39;</span><span class="p">,</span>
-           <span class="s">&#39;show_leaks&#39;</span><span class="p">]</span>
+           <span class="s">&#39;show_leaks&#39;</span><span class="p">,</span>
+           <span class="s">&#39;hide_leaks&#39;</span><span class="p">,</span>
+           <span class="s">&#39;run_test_server&#39;</span><span class="p">]</span>
 
-
-<span class="k">class</span> <span class="nc">MockArbiter</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Arbiter</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A mock Arbiter for Testing&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">run</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MockArbiter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_run</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_test_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;Mock arbiter thread&#39;</span><span class="p">,</span>
-                                             <span class="n">target</span><span class="o">=</span><span class="n">run</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_test_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    
 
 <span class="n">NOT_TEST_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;setUp&#39;</span><span class="p">,</span> <span class="s">&#39;tearDown&#39;</span><span class="p">,</span> <span class="s">&#39;_pre_setup&#39;</span><span class="p">,</span> <span class="s">&#39;_post_teardown&#39;</span><span class="p">,</span>
-                    <span class="s">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s">&#39;tearDownClass&#39;</span><span class="p">)</span>
+                    <span class="s">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s">&#39;tearDownClass&#39;</span><span class="p">,</span> <span class="s">&#39;run_test_server&#39;</span><span class="p">)</span>
+
 
 <span class="k">class</span> <span class="nc">TestCallable</span><span class="p">:</span>
 
@@ -99,14 +92,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span> <span class="o">=</span> <span class="n">method_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">istest</span> <span class="o">=</span> <span class="n">istest</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
-        
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">):</span>
             <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">)</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
-    
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">):</span>
         <span class="n">test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">:</span>
@@ -115,33 +108,33 @@
         <span class="n">test_function</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">safe_async</span><span class="p">(</span><span class="n">test_function</span><span class="p">)</span><span class="o">.</span><span class="n">add_both</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="n">actor</span><span class="p">))</span>\
                                         <span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">:</span>
             <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">after_test_function_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
-    
+
 
 <span class="k">class</span> <span class="nc">TestFunction</span><span class="p">:</span>
-    
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span> <span class="o">=</span> <span class="n">method_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">istest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">NOT_TEST_METHODS</span>
-    
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
-    
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="nb">callable</span> <span class="o">=</span> <span class="n">TestCallable</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_actor</span><span class="p">())</span>
-        
-        
+
+
 <span class="k">class</span> <span class="nc">TestFunctionOnArbiter</span><span class="p">(</span><span class="n">TestFunction</span><span class="p">):</span>
-    
+
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_monitor</span><span class="p">():</span>
@@ -149,14 +142,15 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c"># send the callable to the actor monitor</span>
             <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">monitor</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="nb">callable</span><span class="p">)</span>
-        
+
+
 <div class="viewcode-block" id="run_on_arbiter"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.run_on_arbiter">[docs]</a><span class="k">def</span> <span class="nf">run_on_arbiter</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Decorator for running a test function in the :class:`pulsar.Arbiter`</span>
 <span class="sd">context domain. This can be useful to test Arbiter mechanics.&#39;&#39;&#39;</span>
     <span class="n">f</span><span class="o">.</span><span class="n">testfunction</span> <span class="o">=</span> <span class="n">TestFunctionOnArbiter</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">f</span>
-    
-    </div>
+
+</div>
 <div class="viewcode-block" id="AsyncAssert"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.AsyncAssert">[docs]</a><span class="k">class</span> <span class="nc">AsyncAssert</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A `descriptor`_ which the :ref:`test-suite` add to all python</span>
 <span class="sd">:class:`unitest.TestCase`. It can be used to invoke the same</span>
@@ -166,24 +160,24 @@
 <span class="sd">The descriptor is available bia the ``async`` attribute. For example::</span>
 
 <span class="sd">    class MyTest(unittest.TestCase):</span>
-<span class="sd">    </span>
+
 <span class="sd">        def test1(self):</span>
 <span class="sd">            yield self.async.assertEqual(3, Deferred().callback(3))</span>
-<span class="sd">          </span>
-<span class="sd">    </span>
+
+
 <span class="sd">.. _descriptor: http://users.rcn.com/python/download/Descriptor.htm&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
-    
+
     <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">instance_type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">AsyncAssert</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-        
+
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="n">args</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
             <span class="k">yield</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_</span>
-        
+
     <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">yield</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -195,11 +189,11 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> not raised by </span><span class="si">%s</span><span class="s">&#39;</span>
                                              <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">))</span>
-        
+
 </div>
 <div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A mixin for :class:`unittest.TestCase`.</span>
-<span class="sd">    </span>
+
 <span class="sd">Useful for classes testing spawning of actors.</span>
 <span class="sd">Make sure this is the first class you derive from, before the</span>
 <span class="sd">unittest.TestCase, so that the tearDown method is overwritten.</span>
@@ -210,13 +204,13 @@
 <span class="sd">    method.</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">concurrency</span> <span class="o">=</span> <span class="s">&#39;thread&#39;</span>
-    
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">all_spawned</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_spawned&#39;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span>
-        
+
 <div class="viewcode-block" id="ActorTestMixin.spawn"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn">[docs]</a>    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Spawn a new actor and perform some tests.&#39;&#39;&#39;</span>
         <span class="n">concurrency</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">concurrency</span>
@@ -230,43 +224,58 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">proxy</span>
-    </div>
+</div>
     <span class="k">def</span> <span class="nf">stop_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="nb">all</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">all</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">send</span><span class="p">(</span><span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">all</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">multi_async</span><span class="p">((</span><span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">all</span><span class="p">))</span>
-            
+
     <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_actors</span><span class="p">()</span>
-        
-        </div>
+
+</div>
 <span class="k">def</span> <span class="nf">inject_async_assert</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="n">tcls</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tcls</span><span class="p">,</span> <span class="s">&#39;async&#39;</span><span class="p">):</span>
         <span class="n">tcls</span><span class="o">.</span><span class="n">async</span> <span class="o">=</span> <span class="n">AsyncAssert</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="show_leaks"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.show_leaks">[docs]</a><span class="k">def</span> <span class="nf">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
+<div class="viewcode-block" id="show_leaks"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.show_leaks">[docs]</a><span class="k">def</span> <span class="nf">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Function to show memory leaks on a processed-based actor.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_process</span><span class="p">():</span>
         <span class="k">return</span>
     <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">:</span>
         <span class="n">MAX_SHOW</span> <span class="o">=</span> <span class="mi">100</span>
-        <span class="n">stream</span> <span class="o">=</span> <span class="n">get_stream</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;MEMORY LEAKS REPORT IN </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span><span class="p">)</span>
-        <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;Created </span><span class="si">%s</span><span class="s"> uncollectable objects&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">))</span>
+        <span class="n">write</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">writeln</span> <span class="k">if</span> <span class="n">show</span> <span class="k">else</span> <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="bp">None</span>
+        <span class="n">write</span><span class="p">(</span><span class="s">&#39;MEMORY LEAKS REPORT IN </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span><span class="p">)</span>
+        <span class="n">write</span><span class="p">(</span><span class="s">&#39;Created </span><span class="si">%s</span><span class="s"> uncollectable objects&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">[:</span><span class="n">MAX_SHOW</span><span class="p">]:</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;Type: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;=================================================&#39;</span><span class="p">)</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;-------------------------------------------------&#39;</span><span class="p">)</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;Type: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;=================================================&#39;</span><span class="p">)</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;-------------------------------------------------&#39;</span><span class="p">)</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_SHOW</span><span class="p">:</span>
-            <span class="n">stream</span><span class="o">.</span><span class="n">writeln</span><span class="p">(</span><span class="s">&#39;And </span><span class="si">%d</span><span class="s"> more&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">-</span> <span class="n">MAX_SHOW</span><span class="p">))</span></div>
+            <span class="n">write</span><span class="p">(</span><span class="s">&#39;And </span><span class="si">%d</span><span class="s"> more&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">-</span> <span class="n">MAX_SHOW</span><span class="p">))</span>
+
+</div>
+<span class="k">def</span> <span class="nf">hide_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
+    <span class="n">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">run_test_server</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="n">address</span> <span class="ow">or</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">TcpServer</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                       <span class="n">consumer_factory</span><span class="o">=</span><span class="n">consumer_factory</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">server</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">()</span>
 </pre></div>
 
           </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.test.loader &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.test.loader &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
@@ -67,7 +67,7 @@
 <span class="sd">.. autoclass:: TestLoader</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">re</span>
@@ -86,12 +86,13 @@
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">False</span>
 
+
 <div class="viewcode-block" id="TestLoader"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.loader.TestLoader">[docs]</a><span class="k">class</span> <span class="nc">TestLoader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Classes used by the :class:`TestSuite` to aggregate tests</span>
 <span class="sd">from a list of paths. The way it works is simple,</span>
 <span class="sd">you give a *root* directory and a list of submodules where to look for tests.</span>
 
-<span class="sd">:parameter root: root path passed by the :class:`TestSuite`. </span>
+<span class="sd">:parameter root: root path passed by the :class:`TestSuite`.</span>
 <span class="sd">:parameter modules: list (or tuple) of entries where to look for tests.</span>
 <span class="sd">    Check :ref:`loading test documentation &lt;apps-test-loading&gt;` for</span>
 <span class="sd">    more information.</span>
@@ -145,7 +146,8 @@
 </div>
     <span class="k">def</span> <span class="nf">testclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">pt</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="k">if</span> <span class="n">tags</span> <span class="k">else</span> <span class="s">&#39;all&#39;</span>
-        <span class="n">ex</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39; excluding </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exclude_tags</span><span class="p">))</span> <span class="k">if</span> <span class="n">exclude_tags</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">ex</span> <span class="o">=</span> <span class="p">((</span><span class="s">&#39; excluding </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exclude_tags</span><span class="p">))</span> <span class="k">if</span>
+              <span class="n">exclude_tags</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Load test classes for </span><span class="si">%s</span><span class="s"> tags</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">pt</span><span class="p">,</span> <span class="n">ex</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">testmodules</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
@@ -160,24 +162,24 @@
                 <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">issubclass_safe</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
                     <span class="k">yield</span> <span class="n">tag</span><span class="p">,</span> <span class="n">obj</span>
-    
+
 <div class="viewcode-block" id="TestLoader.testmodules"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.loader.TestLoader.testmodules">[docs]</a>    <span class="k">def</span> <span class="nf">testmodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Generator of ``tag``, ``modules`` pairs.</span>
-<span class="sd">        </span>
+
 <span class="sd">:parameter tags: optional list of tags to include, if not available all tags</span>
 <span class="sd">    will be included.</span>
 <span class="sd">:parameter exclude_tags: optional list of tags to exclude. If not provided no</span>
 <span class="sd">    tags will be excluded.&#39;&#39;&#39;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_testmodules</span><span class="p">(</span><span class="n">tags</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="p">))</span>
         <span class="k">return</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
-    </div>
+</div>
     <span class="k">def</span> <span class="nf">_testmodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">,</span> <span class="n">exclude_tags</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pattern</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span><span class="p">:</span>
                 <span class="n">pattern</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">pattern</span><span class="p">:</span>
                 <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="s">&#39;(.*)&#39;</span><span class="p">))</span>
-            <span class="n">names</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="p">()</span> 
+            <span class="n">names</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="p">()</span>
             <span class="n">absolute_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="o">*</span><span class="n">names</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Loading from &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span><span class="p">,</span> <span class="n">absolute_path</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">absolute_path</span><span class="p">):</span>
@@ -191,15 +193,16 @@
                                                <span class="n">exclude_tags</span><span class="o">=</span><span class="n">exclude_tags</span><span class="p">):</span>
                     <span class="k">yield</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mod</span>
             <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">absolute_path</span> <span class="o">+</span> <span class="s">&#39;.py&#39;</span><span class="p">):</span>
-                <span class="n">include</span><span class="p">,</span> <span class="n">ntag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">absolute_path</span><span class="p">))</span>
+                <span class="n">include</span><span class="p">,</span> <span class="n">ntag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span>
+                                           <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">absolute_path</span><span class="p">))</span>
                 <span class="k">if</span> <span class="n">include</span><span class="p">:</span>
                     <span class="n">tag</span> <span class="o">=</span> <span class="n">ntag</span> <span class="ow">or</span> <span class="n">tag</span> <span class="ow">or</span> <span class="n">name</span>
                     <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">mod</span><span class="p">:</span>
                         <span class="k">yield</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mod</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> cannot be found in </span><span class="si">%s</span><span class="s"> directory.&#39;</span>\
-                                  <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> cannot be found in </span><span class="si">%s</span><span class="s"> directory.&#39;</span>
+                                 <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
 
 <div class="viewcode-block" id="TestLoader.get_tests"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.loader.TestLoader.get_tests">[docs]</a>    <span class="k">def</span> <span class="nf">get_tests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">dotted_path</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">import_tags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                   <span class="n">tags</span><span class="o">=</span><span class="p">(),</span> <span class="n">exclude_tags</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -224,10 +227,11 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">continue</span>
             <span class="n">include</span><span class="p">,</span> <span class="n">addtag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">include</span> <span class="ow">and</span> <span class="n">is_file</span><span class="p">:</span> <span class="c"># does not match and is a file, skip.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include</span> <span class="ow">and</span> <span class="n">is_file</span><span class="p">:</span>  <span class="c"># does not match and is a file, skip.</span>
                 <span class="k">continue</span>
             <span class="k">elif</span> <span class="n">include</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_file</span> <span class="ow">and</span> <span class="n">pattern</span><span class="p">:</span>
-                <span class="c"># All modules under this directory will be included regardless of pattern</span>
+                <span class="c"># All modules under this directory will be included</span>
+                <span class="c"># regardless of pattern</span>
                 <span class="n">pattern</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="c"># module dotted path</span>
             <span class="k">if</span> <span class="n">dotted_path</span><span class="p">:</span>
@@ -276,11 +280,12 @@
                 <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="s">&#39;__test__&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">):</span>
                     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-               <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Failed to import module </span><span class="si">%s</span><span class="s">. Skipping.&#39;</span><span class="p">,</span>
-                                 <span class="n">name</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;Failed to import module </span><span class="si">%s</span><span class="s">. Skipping.&#39;</span><span class="p">,</span>
+                                  <span class="n">name</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Full python path:</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-               <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Failed to import module </span><span class="si">%s</span><span class="s">. Skipping.&#39;</span><span class="p">,</span>
-                                    <span class="n">name</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Failed to import module </span><span class="si">%s</span><span class="s">. Skipping.&#39;</span><span class="p">,</span>
+                                     <span class="n">name</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">pattern</span><span class="p">:</span>
@@ -290,8 +295,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">False</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">True</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span>
-                </div>
+            <span class="k">return</span> <span class="bp">True</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,)</span></div>
 </pre></div>
 
           </div>

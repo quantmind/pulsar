@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Applications API &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Applications API &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Tools" href="utilities.html" />
     <link rel="prev" title="Tcp Stream API" href="stream.html" /> 
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="stream.html" title="Tcp Stream API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -222,16 +222,15 @@ several battery included examples in the <a class="reference internal" href="#mo
 module.</p>
 <p>These are the most important facts about a pulsar <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a>:</p>
 <ul class="simple">
-<li>It derives from <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><tt class="xref py py-class docutils literal"><span class="pre">Configurator</span></tt></a> so that it has all the</li>
-</ul>
-<p>functionalities to parse command line arguments and setup the
-<a class="reference internal" href="#pulsar.apps.Configurator.cfg" title="pulsar.apps.Configurator.cfg"><tt class="xref py py-attr docutils literal"><span class="pre">Configurator.cfg</span></tt></a>.
-* Instances must be picklable. If non-picklable data needs to be add on an</p>
-<blockquote>
-<div><a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> instance, it must be stored on the
-<tt class="xref py py-attr docutils literal"><span class="pre">Application.local</span></tt> dictionary.</div></blockquote>
-<ul class="simple">
-<li>Instances of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> are callable objects.</li>
+<li>It derives from <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><tt class="xref py py-class docutils literal"><span class="pre">Configurator</span></tt></a> so that it has all the
+functionalities to parse command line arguments and setup the
+<a class="reference internal" href="#pulsar.apps.Configurator.cfg" title="pulsar.apps.Configurator.cfg"><tt class="xref py py-attr docutils literal"><span class="pre">Configurator.cfg</span></tt></a>.</li>
+<li>Instances must be picklable. If non-picklable data needs to be added
+on an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> instance, it should be stored on the
+<tt class="docutils literal"><span class="pre">local</span></tt> attribute dictionary (<a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> derives
+from <a class="reference internal" href="utilities.html#pulsar.utils.log.LocalMixin" title="pulsar.utils.log.LocalMixin"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.log.LocalMixin</span></tt></a>).</li>
+<li>Instances of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> are callable objects accepting
+the calling actor as only argument.</li>
 <li>When an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> is called for the first time,
 a new <a class="reference internal" href="actor.html#pulsar.Monitor" title="pulsar.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Monitor</span></tt></a> instance is added to the
 <a class="reference internal" href="actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a>, ready to perform its duties.</li>
@@ -261,13 +260,13 @@ a function or a picklable object.</p>
 
 <dl class="attribute">
 <dt id="pulsar.apps.Application.events">
-<tt class="descname">events</tt><a class="headerlink" href="#pulsar.apps.Application.events" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">events</tt><a class="reference internal" href="../modules/pulsar/apps.html#Application.events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.events" title="Permalink to this definition">¶</a></dt>
 <dd><p>Events for the application: <tt class="docutils literal"><span class="pre">ready`</span></tt>, <tt class="docutils literal"><span class="pre">start</span></tt>, <tt class="docutils literal"><span class="pre">stop</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.Application.stream">
-<tt class="descname">stream</tt><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">stream</tt><a class="reference internal" href="../modules/pulsar/apps.html#Application.stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>Actor stream handler.</p>
 </dd></dl>
 
@@ -297,7 +296,7 @@ a function or a picklable object.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.worker_info">
-<tt class="descname">worker_info</tt><big>(</big><em>worker</em>, <em>info=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_info" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">worker_info</tt><big>(</big><em>worker</em>, <em>info</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook to add additional entries to the worker <tt class="docutils literal"><span class="pre">info</span></tt> dictionary.</p>
 </dd></dl>
 
@@ -327,13 +326,13 @@ a function or a picklable object.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.monitor_info">
-<tt class="descname">monitor_info</tt><big>(</big><em>monitor</em>, <em>info=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_info" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">monitor_info</tt><big>(</big><em>monitor</em>, <em>info</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook to add additional entries to the monitor <tt class="docutils literal"><span class="pre">info</span></tt> dictionary.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.monitor_stopping">
-<tt class="descname">monitor_stopping</tt><big>(</big><em>monitor</em><big>)</big><a class="headerlink" href="#pulsar.apps.Application.monitor_stopping" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">monitor_stopping</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.monitor_stopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.monitor_stopping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback by the monitor before stopping.</p>
 </dd></dl>
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.webmail.manage &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>examples.webmail.manage &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -80,7 +80,7 @@
 <span class="sd">And type::</span>
 
 <span class="sd">    python manage.py</span>
-<span class="sd">    </span>
+
 <span class="sd">Open a web browser at http://localhost:8060 and you should see the web app.</span>
 
 <span class="sd">For information on twised IMAP4 client library check this example:</span>
@@ -93,30 +93,27 @@
 <span class="sd">.. autoclass:: WsMail</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">time</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="nb">zip</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span><span class="p">,</span> <span class="n">wsgi</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
-    <span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">protocol</span><span class="p">,</span> <span class="n">defer</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">reactor</span>
+    <span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">protocol</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">reactor</span>
     <span class="kn">from</span> <span class="nn">twisted.mail</span> <span class="kn">import</span> <span class="n">imap4</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma    nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
     <span class="n">twisted</span> <span class="o">=</span> <span class="bp">None</span>    <span class="c"># This is for when we build docs</span>
 
 <span class="n">ASSET_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;assets&#39;</span><span class="p">)</span>
 
-    
+
 <span class="k">def</span> <span class="nf">mail_client</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Create a new mail client using twisted IMAP4 library.&#39;&#39;&#39;</span>
     <span class="n">endpoint</span> <span class="o">=</span> <span class="n">endpoints</span><span class="o">.</span><span class="n">clientFromString</span><span class="p">(</span><span class="n">reactor</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">mail_incoming</span><span class="p">)</span>
@@ -142,7 +139,7 @@
         <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">mailclient</span> <span class="o">=</span> <span class="n">client</span>
         <span class="c"># retrieve the list of mailboxes and them to the client</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_mailboxes</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
-        </div>
+</div>
     <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">request</span>
         <span class="n">client</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">mailclient</span>
@@ -154,7 +151,7 @@
 
     <span class="k">def</span> <span class="nf">_send_mailboxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">request</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">mailclient</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span><span class="s">&quot;*&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">mailclient</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;*&quot;</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">result</span><span class="p">])</span>
         <span class="n">websocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;list&#39;</span><span class="p">:</span> <span class="n">result</span><span class="p">}))</span>
 
@@ -171,13 +168,13 @@
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">data</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/html&#39;</span>
         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    
-    
+
+
 <span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;webmail&#39;</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WSGIServer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="n">WebMail</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c">#pragma nocover</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Overview &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Overview &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="index.html" />
     <link rel="next" title="Design" href="design.html" />
     <link rel="prev" title="Pulsar" href="index.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="index.html" title="Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -145,8 +145,8 @@ the following:</p>
 <li>Distributed task queue.</li>
 <li>Shell for asynchronous scripting.</li>
 <li>Asynchronous test suite.</li>
-<li>Application to run a <a class="reference external" href="https://www.djangoproject.com/">Django</a> site with pulsar.</li>
-<li><a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a> integration (python 2 only).</li>
+<li>Application to run a <a class="reference external" href="https://www.djangoproject.com/">django</a> site with pulsar.</li>
+<li><a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> integration (python 2 only).</li>
 </ul>
 </div>
 <div class="section" id="examples">
@@ -161,8 +161,8 @@ using pulsar alone. It includes:</p>
 <li>A taskqueue application with a JSON-RPC interface.</li>
 <li>Websocket graph.</li>
 <li>Websocket Web Chat.</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">Django</a> web site with a websocket middleware to handle a web chat.</li>
-<li>A web mail application which uses <a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a> IMAP4 API.</li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a> web site with a websocket middleware to handle a web chat.</li>
+<li>A web mail application which uses <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> IMAP4 API.</li>
 <li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
 <li>Asynchronous shell.</li>
 </ul>
@@ -183,15 +183,17 @@ of them as a pool of actors.</p>
 <div class="section" id="add-ons">
 <h2>Add-ons<a class="headerlink" href="#add-ons" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar checks if some additional libraries are available at runtime, and
-uses them to add additional functionalities.</p>
+uses them to add additional functionalities or improve performance:</p>
 <ul class="simple">
 <li><a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a>: upgrade the HTTP parser to a faster C version.</li>
 <li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names
 of the running application.</li>
 <li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary
 returned by Actor info method.</li>
-<li><a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.tx</span></tt> application when using pulsar
+<li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <tt class="docutils literal"><span class="pre">json</span></tt> module.</li>
+<li><a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.tx</span></tt> application when using pulsar
 with twisted protocols.</li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.pulse</span></tt> application.</li>
 </ul>
 </div>
 <div class="section" id="running-tests">
@@ -204,11 +206,14 @@ library is also needed. To run tests:</p>
 <p>For options and help type:</p>
 <div class="highlight-python"><pre>python runtests.py -h</pre>
 </div>
+<p><a class="reference external" href="http://www.python.org/dev/peps/pep-0008/">pep8</a> check (requires pep8 package):</p>
+<div class="highlight-python"><pre>python runtests.py --pep8</pre>
+</div>
 </div>
 <div class="section" id="kudos">
 <span id="kudo"></span><h2>Kudos<a class="headerlink" href="#kudos" title="Permalink to this headline">¶</a></h2>
 <p>Pulsar project started as a fork of <a class="reference external" href="http://gunicorn.org/">gunicorn</a> (from where the arbiter idea)
-and has been developed using ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">Twisted</a>
+and has been developed using ideas from <a class="reference external" href="http://nodejs.org/">nodejs</a> (api design), <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>
 (the deferred implementation), <a class="reference external" href="http://www.tornadoweb.org/">tornado</a> web server (the initial event-loop
 implementation), <a class="reference external" href="http://celeryproject.org/">celery</a> (the task queue application) and,
 since version 0.5, <a class="reference external" href="https://code.google.com/p/tulip/">tulip</a> and <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">PEP-3156</a>.

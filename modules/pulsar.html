@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Module code" href="index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -62,52 +62,49 @@
   <h1>Source code for pulsar</h1><div class="highlight"><pre>
 <span class="c"># -*- coding: utf-8 -</span>
 <span class="sd">&#39;&#39;&#39;Event driven concurrent framework for Python&#39;&#39;&#39;</span>
-<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;beta&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.utils.version</span> <span class="kn">import</span> <span class="n">get_version</span>
 
-<span class="n">__version__</span>   <span class="o">=</span> <span class="n">version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="n">VERSION</span><span class="p">)</span>
-<span class="n">__license__</span>   <span class="o">=</span> <span class="s">&quot;BSD&quot;</span>
-<span class="n">__author__</span>    <span class="o">=</span> <span class="s">&quot;Luca Sbardella&quot;</span>
-<span class="n">__contact__</span>   <span class="o">=</span> <span class="s">&quot;luca.sbardella@gmail.com&quot;</span>
-<span class="n">__homepage__</span>  <span class="o">=</span> <span class="s">&quot;https://github.com/quantmind/pulsar&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="n">version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="n">VERSION</span><span class="p">)</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s">&quot;BSD&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s">&quot;Luca Sbardella&quot;</span>
+<span class="n">__contact__</span> <span class="o">=</span> <span class="s">&quot;luca.sbardella@gmail.com&quot;</span>
+<span class="n">__homepage__</span> <span class="o">=</span> <span class="s">&quot;https://github.com/quantmind/pulsar&quot;</span>
 <span class="n">__docformat__</span> <span class="o">=</span> <span class="s">&quot;restructuredtext&quot;</span>
-<span class="n">CLASSIFIERS</span>  <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Development Status :: 4 - Beta&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Environment :: Web Environment&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Intended Audience :: Developers&#39;</span><span class="p">,</span>
-                <span class="s">&#39;License :: OSI Approved :: BSD License&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Operating System :: OS Independent&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 2&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 2.6&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 2.7&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 3&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 3.2&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: 3.3&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Programming Language :: Python :: Implementation :: PyPy&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Internet&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Utilities&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: System :: Distributed Computing&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Software Development :: Libraries :: Python Modules&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Internet :: WWW/HTTP&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: WSGI&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: WSGI :: Server&#39;</span><span class="p">,</span>
-                <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: Dynamic Content&#39;</span><span class="p">]</span>
+<span class="n">CLASSIFIERS</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Development Status :: 4 - Beta&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Environment :: Web Environment&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Intended Audience :: Developers&#39;</span><span class="p">,</span>
+               <span class="s">&#39;License :: OSI Approved :: BSD License&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Operating System :: OS Independent&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 2&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 2.6&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 2.7&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 3&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 3.2&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: 3.3&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Programming Language :: Python :: Implementation :: PyPy&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Internet&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Utilities&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: System :: Distributed Computing&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Software Development :: Libraries :: Python Modules&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Internet :: WWW/HTTP&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: WSGI&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: WSGI :: Server&#39;</span><span class="p">,</span>
+               <span class="s">&#39;Topic :: Internet :: WWW/HTTP :: Dynamic Content&#39;</span><span class="p">]</span>
 
 
 <span class="n">DEFAULT_PORT</span> <span class="o">=</span> <span class="mi">8060</span>
 <span class="n">ASYNC_TIMEOUT</span> <span class="o">=</span> <span class="bp">None</span>
-<span class="n">SERVER_NAME</span> <span class="o">=</span> <span class="s">&#39;Pulsar&#39;</span>
+<span class="n">SERVER_NAME</span> <span class="o">=</span> <span class="s">&#39;pulsar&#39;</span>
 <span class="n">JAPANESE</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc</span><span class="s">&#39;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
 <span class="n">CHINESE</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f</span><span class="s">&#39;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-<span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s">&quot;python-{0}/{1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SERVER_NAME</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
+<span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="s">&quot;{0}/{1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SERVER_NAME</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.utils.exceptions</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">.utils.internet</span> <span class="kn">import</span> <span class="n">parse_address</span>
-<span class="kn">from</span> <span class="nn">.utils.pep</span> <span class="kn">import</span> <span class="n">to_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">to_bytes</span>
 <span class="n">platform</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">platform</span>
-
 <span class="kn">from</span> <span class="nn">.utils.config</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.async</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.apps</span> <span class="kn">import</span> <span class="o">*</span>
@@ -118,6 +115,7 @@
 <span class="c"># Import tasks local backend for commands</span>
 <span class="kn">from</span> <span class="nn">.apps.tasks.backends</span> <span class="kn">import</span> <span class="n">local</span>
 <span class="k">del</span> <span class="n">local</span>
+<span class="k">del</span> <span class="n">get_version</span>
 </pre></div>
 
           </div>

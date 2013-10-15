@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>examples.echo.manage &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>examples.echo.manage &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -71,12 +71,20 @@
 <span class="sd">Writing the Client</span>
 <span class="sd">=========================</span>
 
+<span class="sd">There are two classes one needs to implement in order to have a flexible client</span>
+<span class="sd">for Echo servers, or for any TCP servers.</span>
+
+<span class="sd">The first class implements the :class:`pulsar.ProtocolConsumer` as it is</span>
+<span class="sd">described in the next session, while the second class implements the</span>
+<span class="sd">:class:`pulsar.Client` which is a thread safe</span>
+<span class="sd">pool of connections to remote servers.</span>
+
 <span class="sd">The protocol consumer</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">The first step is to subclass :class:`pulsar.ProtocolConsumer` to create the</span>
 <span class="sd">:class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed</span>
-<span class="sd">for two reasons: </span>
+<span class="sd">for two reasons:</span>
 
 <span class="sd">* It encodes and sends the request to the remote server via the</span>
 <span class="sd">  :meth:`EchoProtocol.start_request` method.</span>
@@ -92,8 +100,9 @@
 <span class="sd">and implement the :class:`Echo.request` method. :class:`Echo` is the main</span>
 <span class="sd">client class, used in all interactions with the echo server::</span>
 
-<span class="sd">    &gt;&gt;&gt; client = Echo((&#39;127,0,0,1&#39;, 8080))</span>
-<span class="sd">    &gt;&gt;&gt; response = client.request(b&#39;Hello!&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; pool = Echo()</span>
+<span class="sd">    &gt;&gt;&gt; echo = pool.client((&#39;127,0,0,1&#39;, 8080))</span>
+<span class="sd">    &gt;&gt;&gt; response = echo(b&#39;Hello!&#39;)</span>
 
 
 <span class="sd">Run The example</span>
@@ -102,20 +111,20 @@
 <span class="sd">To run the server::</span>
 
 <span class="sd">    python manage.py</span>
-<span class="sd">    </span>
+
 <span class="sd">Open a new shell, in this directory, launch python and type::</span>
 
 <span class="sd">    &gt;&gt;&gt; from manage import Echo</span>
-<span class="sd">    &gt;&gt;&gt; p = Echo(&#39;localhost:8060&#39;, force_sync=True)</span>
-<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; echo = Echo(force_sync=True).client((&#39;localhost&#39;,8060))</span>
+
 <span class="sd">The `force_sync` set to ``True``, force the client to wait for results rather</span>
 <span class="sd">than returning a :class:`pulsar.Deferred`.</span>
 <span class="sd">Check the :ref:`creating synchronous clients &lt;tutorials-synchronous&gt;` tutorial</span>
 <span class="sd">for further information.</span>
 
-<span class="sd">    &gt;&gt;&gt; p.request(b&#39;Hello&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; echo(b&#39;Hello&#39;)</span>
 <span class="sd">    b&#39;Hello&#39;</span>
-<span class="sd">    </span>
+
 <span class="sd">Implementation</span>
 <span class="sd">==================</span>
 
@@ -132,120 +141,130 @@
 <span class="sd">.. autoclass:: EchoServerProtocol</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">Echo Client</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autoclass:: Echo</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 <span class="sd">Echo Server</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autofunction:: server</span>
 
 <span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span> <span class="c">#pragma nocover</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma nocover</span>
     <span class="kn">import</span> <span class="nn">sys</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
-    
-<span class="kn">import</span> <span class="nn">pulsar</span>
+    <span class="kn">import</span> <span class="nn">pulsar</span>
+
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
 
 
 <div class="viewcode-block" id="EchoProtocol"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A symmetric echo :class:`pulsar.ProtocolConsumer` for client and servers.</span>
-<span class="sd">The only difference between client and server is the implementation of the</span>
-<span class="sd">:meth:`response` method.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;An echo :class:`pulsar.ProtocolConsumer` for client and servers.</span>
+
+<span class="sd">    The only difference between client and server is the implementation</span>
+<span class="sd">    of the :meth:`response` method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">separator</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span>
     <span class="sd">&#39;&#39;&#39;A separator for messages.&#39;&#39;&#39;</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>        
-    
+    <span class="nb">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;The buffer for long messages&#39;&#39;&#39;</span>
+
 <div class="viewcode-block" id="EchoProtocol.data_received"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Implements the :meth:`pulsar.Protocol.data_received` method.</span>
-<span class="sd">It simply search for the :attr:`separator` and, if found, it invokes the</span>
-<span class="sd">:meth:`response` method with the value of the message.&#39;&#39;&#39;</span>
+
+<span class="sd">        It simply search for the :attr:`separator` and, if found, it invokes</span>
+<span class="sd">        the :meth:`response` method with the value of the message.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># we have a full message</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>    <span class="c"># we have a full message</span>
             <span class="n">idx</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
             <span class="n">data</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">idx</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">+</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">rest</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+=</span> <span class="n">data</span>
-    </div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">+</span> <span class="n">data</span>
+</div>
 <div class="viewcode-block" id="EchoProtocol.start_request"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol.start_request">[docs]</a>    <span class="k">def</span> <span class="nf">start_request</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override :meth:`pulsar.Protocol.start_request` to write</span>
 <span class="sd">the message ended by the :attr:`separator` into the transport.&#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_request</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
-        </div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">message</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+</div>
 <div class="viewcode-block" id="EchoProtocol.response"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoProtocol.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Clients return the message so that the</span>
 <span class="sd">:attr:`pulsar.ProtocolConsumer.on_finished` deferred is called back with the</span>
 <span class="sd">message value, while servers sends the message back to the client.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
-        
+
 </div></div>
 <div class="viewcode-block" id="EchoServerProtocol"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoServerProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoServerProtocol</span><span class="p">(</span><span class="n">EchoProtocol</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The :class:`pulsar.ProtocolConsumer` used by the echo :func:`server`.&#39;&#39;&#39;</span>
-    
+
 <div class="viewcode-block" id="EchoServerProtocol.response"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.EchoServerProtocol.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Override :meth:`EchoProtocol.response` method by writing the</span>
 <span class="sd">``data`` received back to the client.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="c"># If we get a QUIT message, close the transport. Used by the test suite.</span>
-        <span class="k">if</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;QUIT&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)]</span>
+        <span class="c"># If we get a QUIT message, close the transport.</span>
+        <span class="c"># Used by the test suite.</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;QUIT&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    
-    </div></div>
+        <span class="k">return</span> <span class="n">data</span>
+
+</div></div>
 <div class="viewcode-block" id="Echo"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo">[docs]</a><span class="k">class</span> <span class="nc">Echo</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Echo :class:`pulsar.Client`.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: full_response</span>
 
-<span class="sd">    Flag indicating if the :meth:`request` method should return the</span>
-<span class="sd">    :class:`EchoProtocol` handling the request (``True``) or a :class:`Deferred`</span>
-<span class="sd">    which will result in the server response message (``False``).</span>
-<span class="sd">    </span>
-<span class="sd">    Default: ``False``</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    .. attribute:: full_response</span>
+
+<span class="sd">        Flag indicating if the :meth:`request` method should return the</span>
+<span class="sd">        :class:`EchoProtocol` handling the request (``True``) or a</span>
+<span class="sd">        :class:`Deferred` which will result in the server response message</span>
+<span class="sd">        (``False``).</span>
+
+<span class="sd">        Default: ``False``</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">EchoProtocol</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">full_response</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Echo</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_response</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">full_response</span> <span class="o">=</span> <span class="n">full_response</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
 
-<div class="viewcode-block" id="Echo.request"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Build the client request and return a :class:`pulsar.Deferred`</span>
-<span class="sd">which will be called once the server has sent back its response.&#39;&#39;&#39;</span>
-        <span class="n">request</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+<div class="viewcode-block" id="Echo.client"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo.client">[docs]</a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Utility for returning a function which interact with one server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Echo.request"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.Echo.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Build the client request send it to the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
         <span class="n">request</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_response</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response</span>
         <span class="k">elif</span> <span class="n">response</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">result</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">buffer</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">on_finished</span>
-            
-        </div></div>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">buffer</span><span class="p">)</span>
+
+</div></div>
 <div class="viewcode-block" id="server"><a class="viewcode-back" href="../../../tutorials/clients.html#examples.echo.manage.server">[docs]</a><span class="k">def</span> <span class="nf">server</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Create the :class:`pulsar.apps.socket.SocketServer` instance with</span>
 <span class="sd">:class:`EchoServerProtocol` as protocol factory.&#39;&#39;&#39;</span>
     <span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="s">&#39;Echo Server&#39;</span>
     <span class="k">return</span> <span class="n">SocketServer</span><span class="p">(</span><span class="n">EchoServerProtocol</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    
+
 </div>
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c">#pragma nocover</span>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>  <span class="c"># pragma nocover</span>
     <span class="n">server</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 

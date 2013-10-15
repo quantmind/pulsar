@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Asynchronous HTTP client &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>Asynchronous HTTP client &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../index.html" />
     <link rel="next" title="Asynchronous Redis client" href="redis.html" />
     <link rel="prev" title="WebSockets" href="websockets.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="websockets.html" title="WebSockets"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -310,7 +310,7 @@ It can be overwritten during a <a class="reference internal" href="#pulsar.apps.
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.client_version">
-<tt class="descname">client_version</tt><em class="property"> = 'pulsar/0.7.1-beta.1'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">client_version</tt><em class="property"> = 'pulsar/0.7.2-beta.1'</em><a class="headerlink" href="#pulsar.apps.http.HttpClient.client_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>String for the <tt class="docutils literal"><span class="pre">User-Agent</span></tt> header.</p>
 </dd></dl>
 
@@ -462,7 +462,7 @@ initialisation.</li>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpClient.again">
-<tt class="descname">again</tt><big>(</big><em>response</em>, <em>method=None</em>, <em>url=None</em>, <em>params=None</em>, <em>history=False</em>, <em>new_response=None</em>, <em>request=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpClient.again" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">again</tt><big>(</big><em>response</em>, <em>method=None</em>, <em>url=None</em>, <em>params=None</em>, <em>history=False</em>, <em>new_response=None</em>, <em>request=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.again"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.again" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new request from <tt class="docutils literal"><span class="pre">response</span></tt>.</p>
 <p>The input <tt class="docutils literal"><span class="pre">response</span></tt> must be done.</p>
 </dd></dl>
@@ -533,7 +533,7 @@ initialisation.</li>
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpRequest.ssl">
-<tt class="descname">ssl</tt><a class="headerlink" href="#pulsar.apps.http.HttpRequest.ssl" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">ssl</tt><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.ssl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.ssl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Context for TLS connections.</p>
 <p>If this is a tunneled request and the tunnel connection is not yet
 established, it returns <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
@@ -541,7 +541,7 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpRequest.proxy">
-<tt class="descname">proxy</tt><a class="headerlink" href="#pulsar.apps.http.HttpRequest.proxy" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">proxy</tt><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.proxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.proxy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Proxy server for this request.</p>
 </dd></dl>
 
@@ -562,19 +562,19 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpRequest.has_header">
-<tt class="descname">has_header</tt><big>(</big><em>header_name</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpRequest.has_header" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">has_header</tt><big>(</big><em>header_name</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.has_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.has_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check <tt class="docutils literal"><span class="pre">header_name</span></tt> is in this request headers.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpRequest.get_header">
-<tt class="descname">get_header</tt><big>(</big><em>header_name</em>, <em>default=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpRequest.get_header" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_header</tt><big>(</big><em>header_name</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.get_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.get_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve <tt class="docutils literal"><span class="pre">header_name</span></tt> from this request headers.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpRequest.remove_header">
-<tt class="descname">remove_header</tt><big>(</big><em>header_name</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpRequest.remove_header" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">remove_header</tt><big>(</big><em>header_name</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpRequest.remove_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpRequest.remove_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove <tt class="docutils literal"><span class="pre">header_name</span></tt> from this request.</p>
 </dd></dl>
 
@@ -591,7 +591,7 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 <p>There are two events you can yield in a coroutine:</p>
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpResponse.on_headers">
-<tt class="descname">on_headers</tt><a class="headerlink" href="#pulsar.apps.http.HttpResponse.on_headers" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">on_headers</tt><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.on_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.on_headers" title="Permalink to this definition">¶</a></dt>
 <dd><p>fired once the response headers are received.</p>
 </dd></dl>
 
@@ -617,7 +617,7 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpResponse.cookies">
-<tt class="descname">cookies</tt><a class="headerlink" href="#pulsar.apps.http.HttpResponse.cookies" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">cookies</tt><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.cookies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.cookies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of cookies set by the server or <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
@@ -641,23 +641,14 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpResponse.json">
-<tt class="descname">json</tt><big>(</big><em>charset=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpResponse.json" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">json</tt><big>(</big><em>charset=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decode content as a JSON object.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpResponse.decode_content">
-<tt class="descname">decode_content</tt><big>(</big><em>object_hook=None</em><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpResponse.decode_content" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">decode_content</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.decode_content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.decode_content" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the best possible representation of the response body.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>object_hook</strong> &#8211; optional object hook function to pass to the
-<tt class="docutils literal"><span class="pre">json</span></tt> decoder if the content type is a <tt class="docutils literal"><span class="pre">json</span></tt> format.</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -668,7 +659,7 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpResponse.info">
-<tt class="descname">info</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.apps.http.HttpResponse.info" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">info</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse.info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Required by python CookieJar.</p>
 <p>Return <tt class="xref py py-attr docutils literal"><span class="pre">headers</span></tt>.</p>
 </dd></dl>

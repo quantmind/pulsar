@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../index.html" />
     <link rel="up" title="pulsar" href="../pulsar.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../index.html" >Module code</a> &raquo;</li>
           <li><a href="../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
       </ul>
@@ -67,7 +67,7 @@
 <span class="sd">implement servers with very little effort. The main classes here are:</span>
 <span class="sd">:class:`Application` and :class:`MultiApp` which, has the name suggests, is</span>
 <span class="sd">a factory of several :class:`Application` running on a single server.</span>
-<span class="sd">The :class:`Configurator` is a mixin used as base class for both </span>
+<span class="sd">The :class:`Configurator` is a mixin used as base class for both</span>
 <span class="sd">:class:`Application` and :class:`MultiApp`.</span>
 
 <span class="sd">.. note::</span>
@@ -78,49 +78,33 @@
 
 <span class="sd">Configurator</span>
 <span class="sd">===============================</span>
-<span class="sd">   </span>
+
 <span class="sd">.. autoclass:: Configurator</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
-<span class="sd">   </span>
+
+
 <span class="sd">Application</span>
 <span class="sd">===============================</span>
-<span class="sd">   </span>
+
 <span class="sd">.. autoclass:: Application</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 
 <span class="sd">Multi App</span>
 <span class="sd">===============================</span>
-<span class="sd">      </span>
+
 <span class="sd">.. autoclass:: MultiApp</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
-<span class="sd">   </span>
+
+
 <span class="sd">Get application</span>
 <span class="sd">=========================</span>
 
 <span class="sd">.. autofunction:: get_application</span>
 
-
-<span class="sd">Application Worker</span>
-<span class="sd">===============================</span>
-<span class="sd">   </span>
-<span class="sd">.. autoclass:: Worker</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
-
-<span class="sd">Application Monitor</span>
-<span class="sd">===============================</span>
-<span class="sd">   </span>
-<span class="sd">.. autoclass:: ApplicationMonitor</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
 
 <span class="sd">Backend</span>
 <span class="sd">===================</span>
@@ -135,24 +119,23 @@
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">getfile</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Actor</span><span class="p">,</span> <span class="n">Monitor</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">EventHandler</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">parse_connection_string</span><span class="p">,</span> <span class="n">get_connection_string</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">parse_connection_string</span><span class="p">,</span>
+                                   <span class="n">get_connection_string</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">import_module</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Application&#39;</span><span class="p">,</span>
            <span class="s">&#39;MultiApp&#39;</span><span class="p">,</span>
            <span class="s">&#39;Backend&#39;</span><span class="p">,</span>
-           <span class="s">&#39;Worker&#39;</span><span class="p">,</span>
-           <span class="s">&#39;ApplicationMonitor&#39;</span><span class="p">,</span>
            <span class="s">&#39;get_application&#39;</span><span class="p">]</span>
-    
-    
+
+
 <div class="viewcode-block" id="get_application"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.get_application">[docs]</a><span class="k">def</span> <span class="nf">get_application</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Fetch the :class:`Application` associated with ``name`` if available.</span>
-<span class="sd">    </span>
+
 <span class="sd">This function may return an :ref:`asynchronous component &lt;coroutine&gt;`.</span>
 <span class="sd">The application name is set during initialisation. Check the</span>
 <span class="sd">:attr:`Configurator.name` attribute for more information.</span>
@@ -163,145 +146,133 @@
             <span class="k">return</span> <span class="n">_get_app</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">_get_app</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        </div>
+
+</div>
 <span class="k">def</span> <span class="nf">_get_app</span><span class="p">(</span><span class="n">arbiter</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
     <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
 
-<span class="nd">@async</span><span class="p">()</span>
+
 <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_params&#39;</span><span class="p">,</span> <span class="n">monitor_params</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">monitor_info</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">monitor_stopping</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">monitor_stop</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">monitor_task</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span>
-        
+    <span class="k">yield</span> <span class="bp">self</span>  <span class="c"># yield self as last. Part of the start event chain</span>
+
+
+<span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span>
+
+
 <span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="bp">self</span>
+
+
+<span class="k">def</span> <span class="nf">monitor_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">monitor_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;thread&#39;</span><span class="p">:</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">app</span><span class="p">,</span>
+                   <span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;{0}-worker&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                   <span class="s">&#39;start&#39;</span><span class="p">:</span> <span class="n">worker_start</span><span class="p">})</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">arbiter_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">app</span><span class="p">:</span> <span class="c"># Don&#39;t include application specific settings</span>
+        <span class="k">if</span> <span class="n">setting</span><span class="o">.</span><span class="n">app</span><span class="p">:</span>  <span class="c"># Don&#39;t include application specific settings</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">setting</span><span class="o">.</span><span class="n">is_global</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="s">&#39;inherit&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
                 <span class="n">setting</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">setting</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cfg</span> 
+    <span class="k">return</span> <span class="n">cfg</span>
 
-
-<div class="viewcode-block" id="Worker"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Worker">[docs]</a><span class="k">class</span> <span class="nc">Worker</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An :class:`pulsar.Actor` for serving a pulsar :class:`Application`.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Worker</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">)</span>
-        
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Worker.app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Worker.app">[docs]</a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`Application` served by this :class:`Worker`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
-    </div>
-    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Worker</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-    
-</div>
-<div class="viewcode-block" id="ApplicationMonitor"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.ApplicationMonitor">[docs]</a><span class="k">class</span> <span class="nc">ApplicationMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.Monitor` for managing a pulsar :class:`Application`.&#39;&#39;&#39;</span>
-    <span class="n">actor_class</span> <span class="o">=</span> <span class="n">Worker</span>
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ApplicationMonitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">monitor_start</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">monitor_stop</span><span class="p">)</span>
-        
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="ApplicationMonitor.app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.ApplicationMonitor.app">[docs]</a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`Application` served by this</span>
-<span class="sd">:class:`ApplicationMonitor`.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">app</span>
-        
-    <span class="c">############################################################################</span>
-    <span class="c"># Delegates Callbacks to the application</span></div>
-    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        
-    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">Monitor</span><span class="o">.</span><span class="n">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;thread&#39;</span><span class="p">:</span>
-            <span class="n">app</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
-        <span class="n">p</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;app&#39;</span><span class="p">:</span> <span class="n">app</span><span class="p">,</span>
-                  <span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;{0}-worker&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)})</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-    
-    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ApplicationMonitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        
-
-</div>
-<span class="k">class</span> <span class="nc">AppEvents</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
-    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;ready&#39;</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
-    
 
 <div class="viewcode-block" id="Configurator"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator">[docs]</a><span class="k">class</span> <span class="nc">Configurator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A mixin for configuring and loading the various necessities for any</span>
-<span class="sd">given server running on :mod:`pulsar` concurrent framework.</span>
+    <span class="sd">&#39;&#39;&#39;A mixin for configuring and loading a pulsar server.</span>
 
-<span class="sd">:parameter name: to override the class :attr:`name` attribute.</span>
-<span class="sd">:parameter description: to override the class :attr:`cfg.description` attribute.</span>
-<span class="sd">:parameter epilog: to override the class :attr:`cfg.epilog` attribute.</span>
-<span class="sd">:parameter version: Optional version of this application, it overrides the</span>
-<span class="sd">    class :attr:`cfg.version` attribute.</span>
-<span class="sd">:parameter argv: Optional list of command line parameters to parse, if</span>
-<span class="sd">    not supplied the :attr:`sys.argv` list will be used. The parameter is</span>
-<span class="sd">    only relevant if **parse_console** is ``True``.</span>
-<span class="sd">:parameter parse_console: ``True`` (default) if the console parameters needs</span>
-<span class="sd">    parsing.</span>
-<span class="sd">:parameter script: Optional string which set the :attr:`script` attribute.</span>
-<span class="sd">:parameter params: a dictionary of configuration parameters which overrides</span>
-<span class="sd">    the defaults and the :attr:`cfg` class attribute. They will be overritten</span>
-<span class="sd">    by a :ref:`config file &lt;setting-config&gt;` or command line</span>
-<span class="sd">    arguments.   </span>
+<span class="sd">    :parameter name: to override the class :attr:`name` attribute.</span>
+<span class="sd">    :parameter description: to override the class :attr:`cfg.description`</span>
+<span class="sd">        attribute.</span>
+<span class="sd">    :parameter epilog: to override the class :attr:`cfg.epilog` attribute.</span>
+<span class="sd">    :parameter version: Optional version of this application, it overrides</span>
+<span class="sd">        the class :attr:`cfg.version` attribute.</span>
+<span class="sd">    :parameter argv: Optional list of command line parameters to parse, if</span>
+<span class="sd">        not supplied the :attr:`sys.argv` list will be used. The parameter</span>
+<span class="sd">        is only relevant if **parse_console** is ``True``.</span>
+<span class="sd">    :parameter parse_console: ``True`` (default) if the console parameters</span>
+<span class="sd">        needs parsing.</span>
+<span class="sd">    :parameter script: Optional string which set the :attr:`script`</span>
+<span class="sd">        attribute.</span>
+<span class="sd">    :parameter params: a dictionary of configuration parameters which</span>
+<span class="sd">        overrides the defaults and the :attr:`cfg` class attribute.</span>
+<span class="sd">        They will be overritten by a :ref:`config file &lt;setting-config&gt;`</span>
+<span class="sd">        or command line arguments.</span>
 
-<span class="sd">.. attribute:: name</span>
-<span class="sd">    </span>
-<span class="sd">    The name is unique if this is an :class:`Application`. In this</span>
-<span class="sd">    case it defines the application monitor name as well and can be access in</span>
-<span class="sd">    the arbiter domain via the :func:`get_application` function.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: argv</span>
+<span class="sd">    .. attribute:: name</span>
 
-<span class="sd">    Optional list of command line parameters. If not available the</span>
-<span class="sd">    :attr:`sys.argv` list will be used when parsing the console.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: cfg</span>
+<span class="sd">        The name is unique if this is an :class:`Application`. In this</span>
+<span class="sd">        case it defines the application monitor name as well and can be</span>
+<span class="sd">        access in the arbiter domain via the :func:`get_application`</span>
+<span class="sd">        function.</span>
 
-<span class="sd">    The :class:`pulsar.utils.config.Config` for this :class:`Configurator`.</span>
-<span class="sd">    If set as class attribute it will be replaced during initialisation.</span>
+<span class="sd">    .. attribute:: argv</span>
 
-<span class="sd">    Default: ``None``.</span>
+<span class="sd">        Optional list of command line parameters. If not available the</span>
+<span class="sd">        :attr:`sys.argv` list will be used when parsing the console.</span>
 
-<span class="sd">.. attribute:: parsed_console</span>
+<span class="sd">    .. attribute:: cfg</span>
 
-<span class="sd">    ``True`` if this application parsed the console before starting.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: script</span>
+<span class="sd">        The :class:`pulsar.utils.config.Config` for this :class:`Configurator`.</span>
+<span class="sd">        If set as class attribute it will be replaced during initialisation.</span>
 
-<span class="sd">    Full path of the script which starts the application or ``None``.</span>
-<span class="sd">    Evaluated during initialization via the :meth:`python_path` method.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Default: ``None``.</span>
+
+<span class="sd">    .. attribute:: parsed_console</span>
+
+<span class="sd">        ``True`` if this application parsed the console before starting.</span>
+
+<span class="sd">    .. attribute:: script</span>
+
+<span class="sd">        Full path of the script which starts the application or ``None``.</span>
+<span class="sd">        Evaluated during initialization via the :meth:`python_path` method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="bp">None</span>
-    
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
                  <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                  <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -323,28 +294,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">description</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">epilog</span> <span class="o">=</span> <span class="n">epilog</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">epilog</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">version</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parsed_console</span> <span class="o">=</span> <span class="n">parse_console</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">python_path</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
-    
+
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Configurator.version"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.version">[docs]</a>    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Version of this :class:`Application`&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">version</span>
-    </div>
+</div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Configurator.root_dir"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.root_dir">[docs]</a>    <span class="k">def</span> <span class="nf">root_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Root directory of this :class:`Configurator`. Evaluated from the</span>
-<span class="sd">:attr:`script` attribute.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Root directory of this :class:`Configurator`.</span>
+
+<span class="sd">        Evaluated from the :attr:`script` attribute.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">script</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">script</span><span class="p">)</span>
-    </div>
+</div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
-    
+
 <div class="viewcode-block" id="Configurator.python_path"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.python_path">[docs]</a>    <span class="k">def</span> <span class="nf">python_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called during initialization to obtain the ``script`` name and</span>
 <span class="sd">to add the :attr:`script` directory to the python path if not in the</span>
@@ -355,7 +329,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">script</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="kn">import</span> <span class="nn">__main__</span>
-            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
                 <span class="k">return</span>
             <span class="n">script</span> <span class="o">=</span> <span class="n">getfile</span><span class="p">(</span><span class="n">__main__</span><span class="p">)</span>
         <span class="n">script</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
@@ -363,13 +337,17 @@
         <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">script</span>
-    </div>
-<div class="viewcode-block" id="Configurator.on_config"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.on_config">[docs]</a>    <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback when configuration is loaded. This is a chance to do</span>
-<span class="sd"> an application specific check before the concurrent machinery is put into</span>
-<span class="sd"> place. If it returns ``False`` the application will abort.&#39;&#39;&#39;</span>
+</div>
+<div class="viewcode-block" id="Configurator.on_config"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.on_config">[docs]</a>    <span class="k">def</span> <span class="nf">on_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Callback when configuration is loaded.</span>
+
+<span class="sd">        This is a chance to do applications specific checks before the</span>
+<span class="sd">        concurrent machinery is put into place.</span>
+
+<span class="sd">        If it returns ``False`` the application will abort.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="Configurator.load_config"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.load_config">[docs]</a>    <span class="k">def</span> <span class="nf">load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Load the application configuration from a file and/or</span>
 <span class="sd">from the command line. Called during application initialization.</span>
@@ -393,7 +371,9 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">setting</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="c"># parse console args</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsed_console</span><span class="p">:</span>
             <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">parser</span><span class="p">()</span>
@@ -414,11 +394,12 @@
                 <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">v</span><span class="p">)</span>
-    </div>
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Configurator.create_config"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator.create_config">[docs]</a>    <span class="k">def</span> <span class="nf">create_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new :class:`pulsar.utils.config.Config` container by</span>
-<span class="sd">overriding default values with *params*.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Create a new :class:`pulsar.utils.config.Config` container.</span>
+
+<span class="sd">        Overrides defaults with ``params``.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="p">:</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
             <span class="c"># update with latest settings</span>
@@ -427,58 +408,49 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cfg</span>
-    
-    </div></div>
+
+</div></div>
 <div class="viewcode-block" id="Application"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application">[docs]</a><span class="k">class</span> <span class="nc">Application</span><span class="p">(</span><span class="n">Configurator</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Pulsar</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;An application interface for configuring and loading</span>
-<span class="sd">the various necessities for any given server or distributed application running</span>
-<span class="sd">on :mod:`pulsar` concurrent framework.</span>
-<span class="sd">Applications can be of any sorts or forms and the library is shipped with</span>
-<span class="sd">several battery included examples in the :mod:`pulsar.apps` framework module.</span>
+    <span class="sd">&quot;&quot;&quot;An application interface.</span>
 
-<span class="sd">These are the most important facts about a pulsar :class:`Application`:</span>
+<span class="sd">    Applications can be of any sorts or forms and the library is shipped with</span>
+<span class="sd">    several battery included examples in the :mod:`pulsar.apps` framework</span>
+<span class="sd">    module.</span>
 
-<span class="sd">* It derives from :class:`Configurator` so that it has all the functionalities</span>
-<span class="sd">  to parse command line arguments and setup the :attr:`Configurator.cfg`.</span>
-<span class="sd">* Instances must be picklable. If non-picklable data needs to be add on an</span>
-<span class="sd">  :class:`Application` instance, it must be stored on the</span>
-<span class="sd">  :attr:`Application.local` dictionary.</span>
-<span class="sd">* Instances of an :class:`Application` are callable objects.</span>
-<span class="sd">* When an :class:`Application` is called for the first time,</span>
-<span class="sd">  a new :class:`ApplicationMonitor` instance is added to the</span>
-<span class="sd">  :class:`pulsar.Arbiter`, ready to perform its duties.</span>
+<span class="sd">    These are the most important facts about a pulsar :class:`Application`:</span>
 
-<span class="sd">:parameter callable: Initialise the :attr:`Application.callable` attribute.</span>
-<span class="sd">:parameter load_config: If ``False`` the :meth:`Configurator.load_config`</span>
-<span class="sd">    is not invoked. Default ``True``.</span>
-<span class="sd">:parameter params: Passed to the :class:`Configurator` initialiser.</span>
+<span class="sd">    * It derives from :class:`Configurator` so that it has all the</span>
+<span class="sd">      functionalities to parse command line arguments and setup the</span>
+<span class="sd">      :attr:`Configurator.cfg`.</span>
+<span class="sd">    * Instances must be picklable. If non-picklable data needs to be added</span>
+<span class="sd">      on an :class:`Application` instance, it should be stored on the</span>
+<span class="sd">      ``local`` attribute dictionary (:class:`Application` derives</span>
+<span class="sd">      from :class:`pulsar.utils.log.LocalMixin`).</span>
+<span class="sd">    * Instances of an :class:`Application` are callable objects accepting</span>
+<span class="sd">      the calling actor as only argument.</span>
+<span class="sd">    * When an :class:`Application` is called for the first time,</span>
+<span class="sd">      a new :class:`pulsar.Monitor` instance is added to the</span>
+<span class="sd">      :class:`pulsar.Arbiter`, ready to perform its duties.</span>
 
-<span class="sd">.. attribute:: callable</span>
+<span class="sd">    :parameter callable: Initialise the :attr:`Application.callable` attribute.</span>
+<span class="sd">    :parameter load_config: If ``False`` the :meth:`Configurator.load_config`</span>
+<span class="sd">        is not invoked. Default ``True``.</span>
+<span class="sd">    :parameter params: Passed to the :class:`Configurator` initialiser.</span>
 
-<span class="sd">    Optional callable serving or configuring your application.</span>
-<span class="sd">    If provided, the callable must be picklable, therefore it is either</span>
-<span class="sd">    a function or a picklable object.</span>
+<span class="sd">    .. attribute:: callable</span>
 
-<span class="sd">    Default ``None``</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optional callable serving or configuring your application.</span>
+<span class="sd">        If provided, the callable must be picklable, therefore it is either</span>
+<span class="sd">        a function or a picklable object.</span>
+
+<span class="sd">        Default ``None``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">load_config</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Initialize a new :class:`Application` and add its</span>
-<span class="sd">:class:`ApplicationMonitor` to the class:`pulsar.Arbiter`.</span>
-
-<span class="sd">:parameter version: Optional version number of the application.</span>
-
-<span class="sd">    Default: ``pulsar.__version__``</span>
-
-<span class="sd">:parameter parse_console: flag for parsing console inputs. By default it parse</span>
-<span class="sd">    only if the arbiter has not yet started.</span>
-<span class="sd">&#39;&#39;&#39;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Application</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">load_config</span><span class="o">=</span><span class="n">load_config</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">AppEvents</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">callable</span> <span class="o">=</span> <span class="nb">callable</span>
         <span class="k">if</span> <span class="n">load_config</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">()</span>
-        <span class="bp">self</span><span class="p">()</span>
-        
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">actor</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
@@ -490,93 +462,106 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;ready&#39;</span><span class="p">)</span>
             <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="n">arbiter_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">))</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_config</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
-                <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">add_monitor</span><span class="p">(</span><span class="n">ApplicationMonitor</span><span class="p">,</span>
-                                              <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                                              <span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-                                              <span class="n">cfg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_config</span><span class="p">(</span><span class="n">arbiter</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">started</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_add_to_arbiter</span><span class="p">(</span><span class="n">arbiter</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>   <span class="c"># the arbiter has not yet started.</span>
+                    <span class="n">arbiter</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_to_arbiter</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span>
-        
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Application.app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.app">[docs]</a>    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Returns ``self``. Implemented so that the :class:`ApplicationMonitor`</span>
-<span class="sd">and the :class:`Application` have the same interface.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span>
-</div>
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">registered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Application</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setstate__</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">AppEvents</span><span class="p">()</span>
-        
-<div class="viewcode-block" id="Application.fire_event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.fire_event">[docs]</a>    <span class="k">def</span> <span class="nf">fire_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        </div>
-<div class="viewcode-block" id="Application.bind_event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.bind_event">[docs]</a>    <span class="k">def</span> <span class="nf">bind_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
-        </div>
-<div class="viewcode-block" id="Application.event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.event">[docs]</a>    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="nd">@local_property</span>
+<div class="viewcode-block" id="Application.events"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.events">[docs]</a>    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Events for the application: ``ready```, ``start``, ``stop``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">EventHandler</span><span class="p">(</span><span class="n">one_time_events</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;ready&#39;</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">))</span>
 </div>
-    <span class="k">def</span> <span class="nf">add_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arbiter</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">add_timeout</span><span class="p">(</span><span class="n">deadline</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
-    
-    <span class="c"># WORKERS CALLBACKS</span>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Application.stream"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.stream">[docs]</a>    <span class="k">def</span> <span class="nf">stream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Actor stream handler.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">stream</span>
+</div>
+<div class="viewcode-block" id="Application.fire_event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.fire_event">[docs]</a>    <span class="k">def</span> <span class="nf">fire_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Fire event ``name``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Application.bind_event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.bind_event">[docs]</a>    <span class="k">def</span> <span class="nf">bind_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Bind ``callback`` to event ``name``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Application.event"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.event">[docs]</a>    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return the event ``name``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="c"># WORKERS CALLBACKS</span></div>
 <div class="viewcode-block" id="Application.worker_start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``start`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Application.worker_info"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_info">[docs]</a>    <span class="k">def</span> <span class="nf">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Hook to add additional entries to the worker ``info`` dictionary.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">info</span>
-    </div>
+        <span class="sd">&#39;&#39;&#39;Hook to add additional entries to the worker ``info`` dictionary.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
 <div class="viewcode-block" id="Application.worker_stopping"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stopping">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``stopping`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="Application.worker_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stop">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``stop`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 
     <span class="c"># MONITOR CALLBACKS</span></div>
-<div class="viewcode-block" id="Application.actorparams"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.actorparams">[docs]</a>    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A chance to override the dictionary of parameters *params*</span>
-<span class="sd">before a new :class:`Worker` is spawned. This method is invoked by</span>
-<span class="sd">the :class:`ApplicationMonitor`. By default it does nothing.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">params</span>
-</div>
-<div class="viewcode-block" id="Application.monitor_start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback by :class:`ApplicationMonitor` when starting.</span>
-<span class="sd">The application is now in the arbiter but has not yet started.&#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Application.actorparams"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.actorparams">[docs]</a>    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Hook to add additional entries when the monitor spawn new actors.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
-<div class="viewcode-block" id="Application.monitor_info"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_info">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Hook to add additional entries to the monitor ``info`` dictionary.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">data</span>
-    </div>
+<div class="viewcode-block" id="Application.monitor_start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Callback by the monitor when starting.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Application.monitor_info"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_info">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Hook to add additional entries to the monitor ``info`` dictionary.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
+<div class="viewcode-block" id="Application.monitor_stopping"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_stopping">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Callback by the monitor before stopping.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
 <div class="viewcode-block" id="Application.monitor_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_stop">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback by :class:`ApplicationMonitor` when stopping&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Callback by the monitor on stop.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="Application.monitor_task"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Callback by :class:`ApplicationMonitor` at each event loop&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Callback by the monitor at each event loop.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="Application.start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start the :class:`pulsar.Arbiter` if it wasn&#39;t already started.</span>
-<span class="sd">Calling this method when the :class:`pulsar.Arbiter` is already running has</span>
-<span class="sd">no effect.&#39;&#39;&#39;</span>
+
+<span class="sd">        Calling this method when the :class:`pulsar.Arbiter` is already</span>
+<span class="sd">        running has no effect.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">on_start</span> <span class="o">=</span> <span class="bp">self</span><span class="p">()</span>
         <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">arbiter</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">registered</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">arbiter</span> <span class="ow">and</span> <span class="n">on_start</span><span class="p">:</span>
             <span class="n">arbiter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-</div></div>
+    <span class="c">#   INTERNALS</span></div>
+    <span class="k">def</span> <span class="nf">_add_to_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
+        <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">add_monitor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">monitor_start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span>
+        <span class="k">return</span> <span class="n">arbiter</span>
+
+</div>
 <div class="viewcode-block" id="MultiApp"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp">[docs]</a><span class="k">class</span> <span class="nc">MultiApp</span><span class="p">(</span><span class="n">Configurator</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`MultiApp` is a tool for creating several :class:`Application`</span>
 <span class="sd">and starting them at once. It makes sure all :ref:`settings &lt;settings&gt;` for the</span>
@@ -590,7 +575,7 @@
 <span class="sd">A minimal example usage::</span>
 
 <span class="sd">    import pulsar</span>
-<span class="sd">    </span>
+
 <span class="sd">    class Server(pulsar.MultiApp):</span>
 <span class="sd">        def build(self):</span>
 <span class="sd">            yield self.new_app(TaskQueue)</span>
@@ -598,21 +583,22 @@
 <span class="sd">            yield self.new_app(WSGIserver, prefix=&quot;web&quot;, callable=..., ...)</span>
 <span class="sd">&#39;&#39;&#39;</span>
     <span class="n">_apps</span> <span class="o">=</span> <span class="bp">None</span>
-    
+
 <div class="viewcode-block" id="MultiApp.build"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Virtual method, must be implemented by subclasses and return an</span>
 <span class="sd">iterable over results obtained from calls to the :meth:`new_app` method.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-    </div>
+</div>
 <div class="viewcode-block" id="MultiApp.apps"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp.apps">[docs]</a>    <span class="k">def</span> <span class="nf">apps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;List of :class:`Application` for this :class:`MultiApp`.</span>
 <span class="sd">The list is lazily loaded from the :meth:`build` method.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c"># Add non-default settings values to the list of cfg params</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span>\
-                       <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span>
+                                    <span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">s</span><span class="o">.</span><span class="n">default</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span>  <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">apps</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">())</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">apps</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span>
@@ -629,9 +615,16 @@
                     <span class="n">new_settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">setting</span>
                 <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="n">new_settings</span>
                 <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s">&#39;cfg&#39;</span><span class="p">:</span> <span class="n">cfg</span><span class="p">,</span> <span class="s">&#39;callable&#39;</span><span class="p">:</span> <span class="nb">callable</span><span class="p">})</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">App</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">params</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">params</span><span class="p">[</span><span class="s">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">params</span> <span class="o">=</span> <span class="n">kwargs</span>
+                <span class="n">app</span> <span class="o">=</span> <span class="n">App</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+                <span class="n">app</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apps</span>
-    </div>
+</div>
 <div class="viewcode-block" id="MultiApp.new_app"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp.new_app">[docs]</a>    <span class="k">def</span> <span class="nf">new_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">App</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">callable</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Invoke this method in the :meth:`build` method as many times</span>
 <span class="sd">as the number of :class:`Application` required by this :class:`MultiApp`.</span>
@@ -648,7 +641,7 @@
 <span class="sd">:return: a tuple used by the :meth:`apps` method.</span>
 <span class="sd">&#39;&#39;&#39;</span>
         <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>    <span class="c"># remove the name</span>
         <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
             <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
@@ -660,26 +653,27 @@
             <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="n">App</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
-            </div>
+</div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">multi_async</span><span class="p">((</span><span class="n">app</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">()))</span>
-        
+
 <div class="viewcode-block" id="MultiApp.start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Use this method to start all applications at once.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">()</span>
         <span class="n">arbiter</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">arbiter</span><span class="p">:</span>
             <span class="n">arbiter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    
+
     <span class="c">##    INTERNALS</span></div>
     <span class="k">def</span> <span class="nf">_iter_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_name_callables</span><span class="p">):</span>
         <span class="n">main</span> <span class="o">=</span> <span class="n">app_name_callables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">main</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;No main application in MultiApp&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ImproperlyConfigured</span><span class="p">(</span>
+                <span class="s">&#39;No main application in MultiApp&#39;</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">main</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">app_name_callables</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">yield</span> <span class="n">app</span>
-    
+
     <span class="k">def</span> <span class="nf">_get_app_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -690,75 +684,80 @@
             <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
         <span class="n">params</span><span class="p">[</span><span class="s">&#39;load_config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">params</span>
-    
-    </div>
+
+</div>
 <div class="viewcode-block" id="Backend"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Backend">[docs]</a><span class="k">class</span> <span class="nc">Backend</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Base class for backends. It is the base class for</span>
-<span class="sd">:ref:`publish/subscribe backend &lt;apps-pubsub&gt;` and for the</span>
-<span class="sd">:ref:`taskqueue backend &lt;apps-taskqueue&gt;`.</span>
-<span class="sd">A :class:`Backend` is never initialised directly, the</span>
-<span class="sd">:meth:`Backend.make` classmethod is used instead.</span>
+    <span class="sd">&#39;&#39;&#39;Base class for backends.</span>
 
-<span class="sd">.. attribute:: scheme</span>
+<span class="sd">    It is the base class for :ref:`publish/subscribe backend &lt;apps-pubsub&gt;`</span>
+<span class="sd">    and for the :ref:`taskqueue backend &lt;apps-taskqueue&gt;`.</span>
 
-<span class="sd">    The scheme for this backend (``local``, ``redis``, ``http``, ...).</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: name</span>
+<span class="sd">    A :class:`Backend` is never initialised directly, the</span>
+<span class="sd">    :meth:`Backend.make` classmethod is used instead.</span>
 
-<span class="sd">    Optional name of the :class:`Application` which created this</span>
-<span class="sd">    :class:`Backend`. If not available the ``arbiter`` is used as owner</span>
-<span class="sd">    of this :class:`Backend`.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: params</span>
+<span class="sd">    .. attribute:: scheme</span>
 
-<span class="sd">    Dictionary of additional parameters passed during initialisation.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: connection_string</span>
+<span class="sd">        The scheme for this backend (``local``, ``redis``, ``http``, ...).</span>
 
-<span class="sd">    The connection string fro this backend. It is always in the form::</span>
-<span class="sd">    </span>
-<span class="sd">        scheme:://address?param1=..&amp;params2=... &amp;...</span>
-<span class="sd">        </span>
-<span class="sd">    where ``address`` is usually a ``host:port`` string.</span>
-<span class="sd">    </span>
-<span class="sd">    A special connection string is::</span>
-<span class="sd">    </span>
-<span class="sd">        local://&amp;param1=...&amp;...</span>
-<span class="sd">        </span>
-<span class="sd">    which represents a backend implemented using pulsar itself. A local backend</span>
-<span class="sd">    is installed in the monitor managing the :class:`Application` which</span>
-<span class="sd">    createded it.</span>
-<span class="sd">    </span>
-<span class="sd">.. attribute:: default_path</span>
+<span class="sd">    .. attribute:: name</span>
 
-<span class="sd">    A class attribute which represents the path from where to load backend</span>
-<span class="sd">    implementations.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Optional name of the :class:`Application` which created this</span>
+<span class="sd">        :class:`Backend`. If not available the ``arbiter`` is used as owner</span>
+<span class="sd">        of this :class:`Backend`.</span>
+
+<span class="sd">    .. attribute:: params</span>
+
+<span class="sd">        Dictionary of additional parameters passed during initialisation.</span>
+<span class="sd">        These parameters are first pre-processed by the :meth:`setup`</span>
+<span class="sd">        method.</span>
+
+<span class="sd">    .. attribute:: connection_string</span>
+
+<span class="sd">        The connection string fro this backend. It is always in the form::</span>
+
+<span class="sd">            scheme:://address?param1=..&amp;params2=... &amp;...</span>
+
+<span class="sd">        where ``address`` is usually a ``host:port`` string.</span>
+
+<span class="sd">        A special connection string is::</span>
+
+<span class="sd">            local://&amp;param1=...&amp;...</span>
+
+<span class="sd">        which represents a backend implemented using pulsar itself.</span>
+<span class="sd">        A local backend is installed in the monitor registered with</span>
+<span class="sd">        :attr:`name`.</span>
+
+<span class="sd">    .. attribute:: default_path</span>
+
+<span class="sd">        A class attribute which represents the path from where to load backend</span>
+<span class="sd">        implementations.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">connection_string</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">scheme</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="s">&#39;arbiter&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">connection_string</span> <span class="o">=</span> <span class="n">connection_string</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">sha1</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection_string</span><span class="p">)</span>
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
-    
+
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">params</span>
-    
+
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Backend.id"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Backend.id">[docs]</a>    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Identy for this backend, calculated from the class name and the</span>
-<span class="sd">:attr:`connection_string`. Therefore if two backend instances from</span>
-<span class="sd">the same class have the same connection string, than the :attr:`id`</span>
-<span class="sd">is the same.</span>
+        <span class="sd">&#39;&#39;&#39;Identy for this backend.</span>
 
-<span class="sd">The :attr:`id`` is important when creating a new backend via the</span>
-<span class="sd">:meth:`make` method.&#39;&#39;&#39;</span>
+<span class="sd">        It is calculated from the class name and the</span>
+<span class="sd">        :attr:`connection_string`.</span>
+
+<span class="sd">        Therefore, if two backend instances from the same class have the</span>
+<span class="sd">        same connection string, than the :attr:`id` is the same.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id</span>
-    </div>
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Backend.make"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Backend.make">[docs]</a>    <span class="k">def</span> <span class="nf">make</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new :class:`Backend` from a *backend* connection string</span>
@@ -769,11 +768,11 @@
 <span class="sd">For example, a parameter-less local backend is::</span>
 
 <span class="sd">    local://</span>
-<span class="sd">    </span>
+
 <span class="sd">A redis backend could be::</span>
 
 <span class="sd">    redis://127.0.0.1:6379?db=1&amp;password=bla</span>
-<span class="sd">    </span>
+
 <span class="sd">:param backend: the connection string, if not supplied ``local://`` is used.</span>
 <span class="sd">:param kwargs: additional key-valued parameters used by the :class:`Backend`</span>
 <span class="sd">    during initialisation.</span>
@@ -795,7 +794,7 @@
         <span class="k">if</span> <span class="s">&#39;timeout&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
             <span class="n">params</span><span class="p">[</span><span class="s">&#39;timeout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;timeout&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">bcls</span><span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">con_str</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-    </div>
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Backend.get_connection_string"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Backend.get_connection_string">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection_string</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the connection string used during initialisation</span>
@@ -803,7 +802,7 @@
         <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
             <span class="n">params</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
         <span class="k">return</span> <span class="n">get_connection_string</span><span class="p">(</span><span class="n">scheme</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-    </div>
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Backend.path_from_scheme"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Backend.path_from_scheme">[docs]</a>    <span class="k">def</span> <span class="nf">path_from_scheme</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">scheme</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A class method which returns the import dotted path for a given</span>

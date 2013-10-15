@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pulsar.apps.ws &mdash; pulsar 0.7.1-beta.1 documentation</title>
+    <title>pulsar.apps.ws &mdash; pulsar 0.7.2-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.7.1-beta.1',
+        VERSION:     '0.7.2-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.7.1-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.7.2-beta.1 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.7.1-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.7.2-beta.1 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
@@ -73,13 +73,13 @@
 <span class="sd">back to the client::</span>
 
 <span class="sd">    from pulsar.apps import wsgi, ws</span>
-<span class="sd">    </span>
+
 <span class="sd">    class EchoWS(ws.WS):</span>
-<span class="sd">    </span>
+
 <span class="sd">        def on_message(self, websocket, message):</span>
 <span class="sd">            websocket.write(message)</span>
-<span class="sd">            </span>
-<span class="sd">            </span>
+
+
 <span class="sd">To create a valid :class:`WebSocket` middleware initialise as follow::</span>
 
 <span class="sd">    wm = ws.WebSocket(&#39;/bla&#39;, EchoWS())</span>
@@ -112,7 +112,7 @@
 <span class="sd">.. autoclass:: WS</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
-<span class="sd">   </span>
+
 
 <span class="sd">WebSocket protocol</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~</span>
@@ -120,41 +120,47 @@
 <span class="sd">.. autoclass:: WebSocketProtocol</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">.websocket</span> <span class="kn">import</span> <span class="n">WebSocket</span><span class="p">,</span> <span class="n">WebSocketProtocol</span>
-<span class="kn">from</span> <span class="nn">.xhr</span> <span class="kn">import</span> <span class="n">SocketIO</span>
 
 
 <div class="viewcode-block" id="WS"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS">[docs]</a><span class="k">class</span> <span class="nc">WS</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A web socket handler for both servers and clients. It implements</span>
-<span class="sd">the asynchronous message passing for a :class:`WebSocketProtocol`.</span>
-<span class="sd">On the server, the communication is started by the</span>
-<span class="sd">:class:`WebSocket` middleware after a successful handshake.</span>
-<span class="sd"> </span>
-<span class="sd">Override :meth:`on_message` to handle incoming string messages,</span>
-<span class="sd">:meth:`on_bytes` to handle incoming ``bytes`` messages</span>
-<span class="sd">You can also override :meth:`on_open` and :meth:`on_close` to handle opened</span>
-<span class="sd">and closed connections.</span>
-<span class="sd">These methods accept as first parameter the</span>
-<span class="sd">:class:`WebSocketProtocol` created during the handshake.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A web socket handler for both servers and clients.</span>
+
+<span class="sd">    It implements the asynchronous message passing for a</span>
+<span class="sd">    :class:`WebSocketProtocol`.</span>
+<span class="sd">    On the server, the communication is started by the</span>
+<span class="sd">    :class:`WebSocket` middleware after a successful handshake.</span>
+
+<span class="sd">    Override :meth:`on_message` to handle incoming string messages and</span>
+<span class="sd">    :meth:`on_bytes` to handle incoming ``bytes`` messages.</span>
+
+<span class="sd">    You can also override :meth:`on_open` and :meth:`on_close` to perform</span>
+<span class="sd">    specific tasks when the websocket is opened or closed.</span>
+
+<span class="sd">    These methods accept as first parameter the</span>
+<span class="sd">    :class:`WebSocketProtocol` created during the handshake.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 <div class="viewcode-block" id="WS.on_open"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Invoked when a new WebSocket is opened.&quot;&quot;&quot;</span>
         <span class="k">pass</span>
 </div>
 <div class="viewcode-block" id="WS.on_message"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handles incoming messages on the WebSocket.</span>
-<span class="sd">This method must be overloaded.&#39;&#39;&#39;</span>
+
+<span class="sd">        This method must be overloaded.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="WS.on_bytes"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_bytes">[docs]</a>    <span class="k">def</span> <span class="nf">on_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handles incoming bytes.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="WS.on_ping"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_ping">[docs]</a>    <span class="k">def</span> <span class="nf">on_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handle incoming ping ``Frame``.&#39;&#39;&#39;</span>
-        <span class="n">websocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pong</span><span class="p">(</span><span class="n">websocket</span><span class="p">))</span>
-        </div>
+        <span class="n">websocket</span><span class="o">.</span><span class="n">pong</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+</div>
 <div class="viewcode-block" id="WS.on_pong"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_pong">[docs]</a>    <span class="k">def</span> <span class="nf">on_pong</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">body</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handle incoming pong ``Frame``.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
@@ -162,15 +168,14 @@
 <div class="viewcode-block" id="WS.on_close"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.on_close">[docs]</a>    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Invoked when the WebSocket is closed.&quot;&quot;&quot;</span>
         <span class="k">pass</span>
-    </div>
+</div>
 <div class="viewcode-block" id="WS.pong"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.pong">[docs]</a>    <span class="k">def</span> <span class="nf">pong</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a ``pong`` frame.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">websocket</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">pong</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-    </div>
+</div>
 <div class="viewcode-block" id="WS.ping"><a class="viewcode-back" href="../../../apps/websockets.html#pulsar.apps.ws.WS.ping">[docs]</a>    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a ``ping`` frame.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">websocket</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-        </div></div>
+        <span class="k">return</span> <span class="n">websocket</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="n">body</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
