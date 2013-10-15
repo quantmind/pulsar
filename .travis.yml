@@ -16,7 +16,7 @@ install:
 script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar
-  - python -m covrun -w 2 --test-timeout 60
+  - python -m covrun -w 4 --test-timeout 60
 
 notifications:
   email: false

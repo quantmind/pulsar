@@ -531,7 +531,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         for name, value in iteritems(params):
             if name in attributes:
                 self.attr(name, value)
-            elif name is not 'charset':
+            elif name != 'charset':
                 self.data(name, value)
 
     def attr(self, *args):
