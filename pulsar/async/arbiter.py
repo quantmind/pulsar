@@ -116,6 +116,27 @@ def start_arbiter(self):
     return self
 
 
+def info_arbiter(self, info=None):
+    data = info
+    monitors = {}
+    for m in itervalues(self.monitors):
+        info = m.info()
+        actor = info['actor']
+        monitors[actor['name']] = info
+    server = data.pop('actor')
+    server.update({'version': pulsar.__version__,
+                   'name': pulsar.SERVER_NAME,
+                   'number_of_monitors': len(self.monitors),
+                   'number_of_actors': len(self.managed_actors)})
+    server.pop('is_process', None)
+    server.pop('ppid', None)
+    server.pop('actor_id', None)
+    server.pop('age', None)
+    data['server'] = server
+    data['workers'] = [a.info for a in itervalues(self.managed_actors)]
+    data['monitors'] = monitors
+    return data
+
 class Arbiter(PoolMixin):
     '''The Arbiter drives pulsar servers.
 
@@ -145,6 +166,7 @@ class Arbiter(PoolMixin):
         self.registered = {'arbiter': self}
         self.bind_event('start', start_arbiter)
         self.bind_event('stop', stop_arbiter)
+        self.bind_event('on_info', info_arbiter)
 
     ########################################################################
     # ARBITER HIGH LEVEL API
@@ -188,27 +210,6 @@ class Arbiter(PoolMixin):
                         return m.managed_actors[aid]
         else:
             return a
-
-    def info(self):
-        data = super(Arbiter, self).info()
-        monitors = {}
-        for m in itervalues(self.monitors):
-            info = m.info()
-            actor = info['actor']
-            monitors[actor['name']] = info
-        server = data.pop('actor')
-        server.update({'version': pulsar.__version__,
-                       'name': pulsar.SERVER_NAME,
-                       'number_of_monitors': len(self.monitors),
-                       'number_of_actors': len(self.managed_actors)})
-        server.pop('is_process', None)
-        server.pop('ppid', None)
-        server.pop('actor_id', None)
-        server.pop('age', None)
-        data['server'] = server
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)]
-        data['monitors'] = monitors
-        return data
 
     def identity(self):
         return self.name

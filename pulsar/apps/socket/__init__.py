@@ -98,7 +98,8 @@ import os
 
 import pulsar
 from pulsar import TcpServer, multi_async
-from pulsar.utils.internet import parse_address, SSLContext, WrapSocket
+from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
+                                   format_address)
 from pulsar.utils.config import pass_through
 
 
@@ -238,12 +239,15 @@ class SocketServer(pulsar.Application):
             all.append(server.close_connections())
         return multi_async(all)
 
-    def worker_info(self, worker, info=None):
-        server = worker.socket_server
-        info['socket'] = {'listen_on': server.address,
-                          'read_timeout': server.timeout,
-                          'active_connections': server.active_connections,
-                          'received_connections': server.received}
+    def worker_info(self, worker, info):
+        info['sockets'] = sockets = []
+        for server in worker.servers.get(self.name, ()):
+            address = format_address(server.address)
+            sockets.append({
+                'address': format_address(server.address),
+                'read_timeout': server.timeout,
+                'concurrent_connections': server.concurrent_connections,
+                'received_connections': server.received})
 
     #   INTERNALS
 

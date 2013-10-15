@@ -436,7 +436,7 @@ class Application(Configurator, pulsar.Pulsar):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_info(self, worker, info=None):
+    def worker_info(self, worker, info):
         '''Hook to add additional entries to the worker ``info`` dictionary.
         '''
         pass
@@ -460,7 +460,7 @@ class Application(Configurator, pulsar.Pulsar):
         '''
         pass
 
-    def monitor_info(self, monitor, info=None):
+    def monitor_info(self, monitor, info):
         '''Hook to add additional entries to the monitor ``info`` dictionary.
         '''
         pass
