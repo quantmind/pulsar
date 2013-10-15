@@ -3,7 +3,7 @@ from pulsar.apps.test import unittest
 
 
 class TestHtmlFactory(unittest.TestCase):
-    
+
     def test_html_factory(self):
         input = wsgi.html_factory('input', type='text')
         h = input(value='bla')
@@ -13,20 +13,20 @@ class TestHtmlFactory(unittest.TestCase):
         text = h.render()
         self.assertTrue(" type='text'" in text)
         self.assertTrue(" value='bla'" in text)
-        
-        
+
+
 class TestAttributes(unittest.TestCase):
-    
+
     def testEmpty(self):
         c = wsgi.Html('div')
         self.assertEqual(c._attr, None)
         self.assertEqual(c._classes, None)
         self.assertEqual(c._data, None)
         self.assertEqual(c._css, None)
-        
+
     def testHtmlRepr(self):
-        c = wsgi.Html('div', cn='bla')
-        self.assertEqual(c.content_type, 'text/html')
+        c = wsgi.Html('div', cn='bla', charset='utf-16')
+        self.assertEqual(c.content_type, 'text/html; charset=utf-16')
         self.assertEqual(str(c), "<div class='bla'>")
         c = wsgi.Html(None, cn='bla')
         self.assertEqual(c.tag, None)
@@ -41,14 +41,14 @@ class TestAttributes(unittest.TestCase):
                               " class='pippo ciao'"))
         c = wsgi.Html('div').addClass('ciao pippo bla')
         self.assertTrue(c.hasClass('bla'))
-        
+
     def testClassList(self):
         c = wsgi.Html('div', cn=['ciao', 'pippo', 'ciao'])
         self.assertEqual(len(c._classes), 2)
         self.assertTrue('ciao' in c._classes)
         self.assertTrue('pippo' in c._classes)
         self.assertTrue(c.hasClass('pippo'))
-        
+
     def testRemoveClass(self):
         c = wsgi.Html('div', cn=['ciao', 'pippo', 'ciao', 'foo'])
         self.assertEqual(len(c._classes), 3)
@@ -58,7 +58,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(len(c._classes), 2)
         c.removeClass('pippo foo')
         self.assertEqual(len(c._classes), 0)
-        
+
     def testData(self):
         c = wsgi.Html('div')
         c.data('food', 'pasta').data('city', 'Rome')
@@ -104,23 +104,23 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(opt.attr('value'), '')
         text = opt.render()
         self.assertTrue(" value=''" in text)
-        
+
     def test_textarea_value_attribute(self):
         opt = wsgi.Html('textarea', 'Hello World!')
         self.assertEqual(opt.attr('value'), None)
         self.assertEqual(opt.get_form_value(), 'Hello World!')
         text = opt.render()
         self.assertTrue("Hello World!" in text)
-        
+
     def testHide(self):
         c = wsgi.Html('div', 'foo').hide()
         self.assertEqual(c.flatatt(), " style='display:none;'")
         c.show()
         self.assertEqual(c.flatatt(), "")
-        
-        
+
+
 class TestWidgets(unittest.TestCase):
-    
+
     def testAncor(self):
         a = wsgi.Html('a', 'kaput', cn='bla', href='/abc/')
         self.assertEqual(a.attr('href'), '/abc/')
@@ -129,7 +129,7 @@ class TestWidgets(unittest.TestCase):
         a = wsgi.Html('a', xxxx='ciao')
         self.assertFalse('xxxx' in a.attr())
         self.assertEqual(a.data('xxxx'), 'ciao')
-    
+
     def testList(self):
         ul = wsgi.Html('ul')
         self.assertEqual(ul.tag, 'ul')
@@ -141,22 +141,22 @@ class TestWidgets(unittest.TestCase):
         self.assertTrue('</ul>' in ht)
         self.assertTrue('<li>a list item</li>' in ht)
         self.assertTrue('<li>another one</li>' in ht)
-        
-        
+
+
 class TestHtmlDocument(unittest.TestCase):
-    
+
     def testSimple(self):
         html = wsgi.HtmlDocument()
         self.assertEqual(len(html.head.children), 4)
         self.assertEqual(len(html.body.children), 0)
-        
+
     def testHead(self):
         html = wsgi.HtmlDocument()
         head = html.head
         self.assertTrue(head.meta)
         self.assertTrue(head.links)
         self.assertTrue(head.scripts)
-        
+
     def testMeta(self):
         html = wsgi.HtmlDocument()
         meta = html.head.meta
@@ -169,7 +169,7 @@ class TestHtmlDocument(unittest.TestCase):
 
 
 class TestMedia(unittest.TestCase):
-    
+
     def testEmptyHtml(self):
         m = wsgi.HtmlDocument(title='test', bla='foo')
         self.assertTrue(m.head)

@@ -4,7 +4,7 @@ Ver. 0.7.2 - Development
 * Fixed :ref:`wait for body middleware <wait-for-body-middleware>`.
 * Fixed :ref:`django pulse <apps-pulse>` application when the client request
   has body to load.
-* **809 regression tests**, **90% coverage**.
+* **821 regression tests**, **90% coverage**.
 
 Ver. 0.7.1 - 2013-Oct-14
 ===========================

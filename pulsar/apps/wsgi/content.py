@@ -517,8 +517,8 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         super(Html, self).append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
-               charset=None, **params):
-        self.charset = charset or 'utf-8'
+               **params):
+        self.charset = params.get('charset') or 'utf-8'
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
@@ -531,7 +531,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         for name, value in iteritems(params):
             if name in attributes:
                 self.attr(name, value)
-            else:
+            elif name is not 'charset':
                 self.data(name, value)
 
     def attr(self, *args):
