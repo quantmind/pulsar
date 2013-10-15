@@ -21,6 +21,12 @@ try:
 except ImportError:    # pragma    nocover
     psutil = None
 
+try:
+    import ujson as json
+except ImportError:     # pragma    nocover
+    import json
+
+
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
 memory_size = dict(((s, 1 << (i+1)*10) for i, s in enumerate(memory_symbols)))
 

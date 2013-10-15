@@ -1,10 +1,10 @@
 import os
 import sys
-import json
 
 from coverage.report import Reporter
 from coverage import coverage
 
+from .system import json
 from .version import gitrepo
 
 

@@ -1,5 +1,6 @@
 Ver. 0.7.2 - Development
 ===========================
+* Use ujson_ if installed.
 * Fixed :ref:`wait for body middleware <wait-for-body-middleware>`.
 * Fixed :ref:`django pulse <apps-pulse>` application when the client request
   has body to load.
@@ -332,3 +333,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _django: https://www.djangoproject.com/
 .. _redis: http://redis.io/
 .. _redis-py: https://github.com/andymccurdy/redis-py
+.. _ujson: https://pypi.python.org/pypi/ujson

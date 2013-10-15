@@ -207,13 +207,13 @@ HTTP Response
 '''
 import os
 import platform
-import json
 from collections import namedtuple
 from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import is_failure
+from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
@@ -731,22 +731,19 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if data is not None:
             return data.decode(charset or 'utf-8', errors or 'strict')
 
-    def json(self, charset=None, **kwargs):
+    def json(self, charset=None):
         '''Decode content as a JSON object.'''
-        return json.loads(self.content_string(charset), **kwargs)
+        return json.loads(self.content_string(charset))
 
-    def decode_content(self, object_hook=None):
+    def decode_content(self):
         '''Return the best possible representation of the response body.
-
-        :param object_hook: optional object hook function to pass to the
-            ``json`` decoder if the content type is a ``json`` format.
         '''
         ct = self.headers.get('content-type')
         if ct:
             ct, options = parse_options_header(ct)
             charset = options.get('charset')
             if ct in JSON_CONTENT_TYPES:
-                return self.json(charset, object_hook=object_hook)
+                return self.json(charset)
             elif ct.startswith('text/'):
                 return self.content_string(charset)
         return self.get_content()

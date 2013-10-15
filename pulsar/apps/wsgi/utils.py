@@ -1,4 +1,3 @@
-import json
 import time
 import re
 import textwrap
@@ -7,6 +6,7 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 
 
+from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
 from pulsar.utils.pep import to_string

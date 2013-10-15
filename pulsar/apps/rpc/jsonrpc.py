@@ -11,14 +11,13 @@ The specification is at
 http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 '''
 import sys
-import json
 from functools import partial
 
 from pulsar import async, Failure, multi_async, maybe_failure
+from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import range
-from pulsar.utils.jsontools import DefaultJSONEncoder, DefaultJSONHook
 from pulsar.utils.tools import checkarity
 from pulsar.apps.wsgi import Json
 from pulsar.apps.http import HttpClient
@@ -29,17 +28,6 @@ from .handlers import RpcHandler, InvalidRequest, exception
 __all__ = ['JSONRPC', 'JsonProxy']
 
 
-class JsonToolkit(object):
-
-    @classmethod
-    def dumps(cls, data, **kwargs):
-        return json.dumps(data, cls=DefaultJSONEncoder, **kwargs)
-
-    @classmethod
-    def loads(cls, content):
-        return json.loads(content, object_hook=DefaultJSONHook)
-
-
 class JSONRPC(RpcHandler):
     '''An :class:`RpcHandler` for class for JSON-RPC services.
 Design to comply with the `JSON-RPC 2.0`_ Specification.
@@ -48,26 +36,18 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
 '''
     version = '2.0'
     methods = ('post',)
-    _json = JsonToolkit
 
     def __call__(self, request):
-        return Json(self._call(request),
-                    json=self._json).http_response(request)
+        return Json(self._call(request)).http_response(request)
 
     @async()
     def _call(self, request):
         response = request.response
         data = {}
-        # No content type - set it equal to application/json
-        if not response.content_type:
-            response.content_type = 'application/json'
         try:
             try:
                 data = yield request.body_data()
             except ValueError:
-                raise InvalidRequest(
-                    status=415, msg='Content-Type must be application/json')
-            if response.content_type not in JSON_CONTENT_TYPES:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')
             if data.get('jsonrpc') != self.version:
@@ -164,7 +144,6 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
     separator = '.'
     default_version = '2.0'
     default_timeout = 30
-    _json = JsonToolkit
 
     def __init__(self, url, version=None, data=None,
                  full_response=False, **kw):
@@ -222,7 +201,7 @@ usage is simple::
 
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
-        body = self._json.dumps(data).encode('utf-8')
+        body = json.dumps(data).encode('utf-8')
         resp = self.http.post(self.url, data=body)
         if self._full_response:
             return resp
@@ -230,7 +209,7 @@ usage is simple::
         return res.result if self.http.force_sync else res
 
     def _end_call(self, resp):
-        content = resp.decode_content(object_hook=DefaultJSONHook)
+        content = resp.decode_content()
         if resp.is_error:
             if 'error' in content:
                 return self.loads(content)

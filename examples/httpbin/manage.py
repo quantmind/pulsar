@@ -206,6 +206,19 @@ class HttpBin(wsgi.Router):
         return self.info_data_response(request)
 
     ########################################################################
+    #    BENCHMARK ROUTES
+    @route('json')
+    def bench_json(self, request):
+        return Json({'message': "Hello, World!"}).http_response(request)
+
+    @route('plaintext')
+    def bench_text(self, request):
+        r = request.response
+        r.content = 'Hello, World!'
+        r.content_type = 'text/plain; charset=utf-8'
+        return r
+
+    ########################################################################
     #    INTERNALS
     def info_data_response(self, request, **params):
         data = self.info_data(request, **params)

@@ -281,7 +281,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                                   data={'bla': 'foo'}).on_finished
         result = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'], 'application/json')
+        self.assertEqual(response.headers['content-type'],
+                         'application/json; charset=utf-8')
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
                 self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
@@ -311,7 +312,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = yield http.post(self.httpbin('post'), encode_multipart=False,
+        response = yield http.post(self.httpbin('post'),
+                                   encode_multipart=False,
                                    data=data).on_finished
         self.assertEqual(response.status_code, 200)
         result = response.json()
@@ -353,7 +355,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = (('bla', 'foo'), ('unz', 'whatz'),
                 ('numero', '1'), ('numero', '2'))
         http = self.client()
-        response = yield http.delete(self.httpbin('delete'), data=data).on_finished
+        response = yield http.delete(self.httpbin('delete'),
+                                     data=data).on_finished
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
@@ -506,7 +509,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = yield http.get(self.httpbin('media/')).on_finished
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'], 'text/html')
+        self.assertEqual(response.headers['content-type'],
+                         'text/html; charset=utf-8')
 
     def test_media_file(self):
         http = self.client()
@@ -574,3 +578,19 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         for image, s in zip(images, sent):
             image = b64decode(image.encode('utf-8'))
             self.assertEqual(image, s)
+
+    def test_bench_json(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('json')).on_finished
+        self.assertEqual(response.headers['content-type'],
+                         'application/json; charset=utf-8')
+        result = response.decode_content()
+        self.assertEqual(result, {'message': 'Hello, World!'})
+
+    def test_bench_text(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('plaintext')).on_finished
+        self.assertEqual(response.headers['content-type'],
+                         'text/plain; charset=utf-8')
+        result = response.decode_content()
+        self.assertEqual(result, 'Hello, World!')
