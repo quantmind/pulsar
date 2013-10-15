@@ -357,12 +357,14 @@ class Application(Configurator, pulsar.Pulsar):
     These are the most important facts about a pulsar :class:`Application`:
 
     * It derives from :class:`Configurator` so that it has all the
-    functionalities to parse command line arguments and setup the
-    :attr:`Configurator.cfg`.
-    * Instances must be picklable. If non-picklable data needs to be add on an
-      :class:`Application` instance, it must be stored on the
-      :attr:`Application.local` dictionary.
-    * Instances of an :class:`Application` are callable objects.
+      functionalities to parse command line arguments and setup the
+      :attr:`Configurator.cfg`.
+    * Instances must be picklable. If non-picklable data needs to be added
+      on an :class:`Application` instance, it should be stored on the
+      ``local`` attribute dictionary (:class:`Application` derives
+      from :class:`pulsar.utils.log.LocalMixin`).
+    * Instances of an :class:`Application` are callable objects accepting
+      the calling actor as only argument.
     * When an :class:`Application` is called for the first time,
       a new :class:`pulsar.Monitor` instance is added to the
       :class:`pulsar.Arbiter`, ready to perform its duties.

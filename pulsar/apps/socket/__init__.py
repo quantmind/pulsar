@@ -238,7 +238,7 @@ class SocketServer(pulsar.Application):
             all.append(server.close_connections())
         return multi_async(all)
 
-    def on_info(self, worker, info=None):
+    def worker_info(self, worker, info=None):
         server = worker.socket_server
         info['socket'] = {'listen_on': server.address,
                           'read_timeout': server.timeout,

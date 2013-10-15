@@ -180,9 +180,6 @@ task.Tasks and managing scheduling of tasks via a
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
 
-    def request_instance(self, request):
-        return self.scheduler.get_task(request)
-
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
 
