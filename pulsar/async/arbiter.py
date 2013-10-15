@@ -121,8 +121,9 @@ def info_arbiter(self, info=None):
     monitors = {}
     for m in itervalues(self.monitors):
         info = m.info()
-        actor = info['actor']
-        monitors[actor['name']] = info
+        if info:
+            actor = info['actor']
+            monitors[actor['name']] = info
     server = data.pop('actor')
     server.update({'version': pulsar.__version__,
                    'name': pulsar.SERVER_NAME,
