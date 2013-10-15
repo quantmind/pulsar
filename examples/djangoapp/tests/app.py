@@ -1,10 +1,9 @@
 '''Tests django chat application.'''
-import json
-
 from pulsar import send, get_application, Queue
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.utils.system import json
 
 try:
     manage = Path(__file__).add2python('manage', up=1)

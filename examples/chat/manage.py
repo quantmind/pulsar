@@ -39,7 +39,6 @@ Implementation
 '''
 import os
 import sys
-import json
 import time
 try:
     import pulsar
@@ -48,6 +47,7 @@ except ImportError:  # pragma nocover
     import pulsar
 from pulsar.utils.path import Path
 from pulsar.apps import ws, wsgi, rpc, pubsub
+from pulsar.utils.system import json
 
 CHAT_DIR = os.path.dirname(__file__)
 

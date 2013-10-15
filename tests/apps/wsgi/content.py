@@ -1,8 +1,7 @@
-import json
-
 from pulsar import Deferred
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
+from pulsar.utils.system import json
 
 
 class TestAsyncContent(unittest.TestCase):

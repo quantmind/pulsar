@@ -8,7 +8,6 @@ and open a web browser at http://localhost:8060
 '''
 import os
 import sys
-import json
 from random import random
 try:
     import pulsar
@@ -17,6 +16,7 @@ except ImportError:  # pragma nocover
     import pulsar
 from pulsar.apps import ws, wsgi
 from pulsar.utils.pep import range
+from pulsar.utils.system import json
 
 
 class Graph(ws.WS):

@@ -1,10 +1,10 @@
-import json
 import time
 
 from pulsar import is_failure, get_actor
 from pulsar.apps import ws, pubsub
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.log import lazyproperty
+from pulsar.utils.system import json
 
 
 def home(request):
