@@ -31,6 +31,9 @@ def run(**params):
                 sys.exit(1)
             print('OK')
             sys.exit(0)
+        else:
+            print('pep8 must be installed')
+            sys.exit(1)
     if '--coverage' in args or params.get('coverage'):
         import coverage
         p = current_process()

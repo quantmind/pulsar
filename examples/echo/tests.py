@@ -54,6 +54,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(b'pippo' in result)
         self.assertTrue(b'foo' in result)
 
+    # TESTS FOR PROTOCOLS AND CONNECTIONS
     def test_client(self):
         c = self.pool
         yield self.test_multi()
@@ -65,6 +66,17 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertIsInstance(info, dict)
         self.assertEqual(info['actor']['name'], self.server.name)
         self.assertEqual(info['actor']['concurrency'], self.concurrency)
+
+    def test_connection(self):
+        pool = Echo(full_response=True)
+        echo = pool.client(self.server.address)
+        response = echo(b'test connection')
+        self.assertTrue(str(response.connection))
+        yield response.on_finished
+        self.assertEqual(response.buffer, b'test connection')
+        connection = response.connection
+        self.assertTrue(str(connection))
+        self.assertEqual(str(connection.transport)[:4], 'TCP ')
 
 
 @dont_run_with_thread

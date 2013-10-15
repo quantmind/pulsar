@@ -186,11 +186,8 @@ def close_socket(sock):
 
 def nice_address(address, family=None):
     if isinstance(address, tuple):
-        return ':'.join((str(s) for s in address[:2]))
-    elif family:
-        return '%s:%s' % (family, address)
-    else:
-        return address
+        address = ':'.join((str(s) for s in address[:2]))
+    return '%s %s' % (family, address) if family else address
 
 
 def format_address(address):

@@ -138,6 +138,7 @@ def info_arbiter(self, info=None):
     data['monitors'] = monitors
     return data
 
+
 class Arbiter(PoolMixin):
     '''The Arbiter drives pulsar servers.
 

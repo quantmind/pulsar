@@ -152,6 +152,10 @@ For options and help type::
 
     python runtests.py -h
 
+pep8_ check (requires pep8 package)::
+
+    python runtests.py --pep8
+
 
 .. _kudo:
 
@@ -213,3 +217,4 @@ file in the top distribution directory for the full license text.
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _cython: http://cython.org/
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
+.. _pep8: http://www.python.org/dev/peps/pep-0008/
