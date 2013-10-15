@@ -14,7 +14,7 @@ install:
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
 script:
-  - pep8 pulsar examples --exclude pulsar/utils/fallbacks/_dictconfig.py
+  - python -m covrun --pep8
   - sudo rm -rf pulsar
   - python -m covrun -w 2 --test-timeout 60
 

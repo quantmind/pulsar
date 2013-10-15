@@ -1,5 +1,4 @@
-import pulsar
-from pulsar import multi_async
+from pulsar import send, multi_async
 from pulsar.utils.pep import range
 from pulsar.apps.test import unittest, dont_run_with_thread
 
@@ -14,14 +13,14 @@ class TestEchoServerThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
-        cls.server = yield pulsar.send('arbiter', 'run', s)
+        cls.server = yield send('arbiter', 'run', s)
         cls.pool = Echo()
         cls.echo = cls.pool.client(cls.server.address)
 
     @classmethod
     def tearDownClass(cls):
         if cls.server:
-            yield pulsar.send('arbiter', 'kill_actor', cls.server.name)
+            yield send('arbiter', 'kill_actor', cls.server.name)
 
     def test_server(self):
         self.assertTrue(self.server)
@@ -60,6 +59,12 @@ class TestEchoServerThread(unittest.TestCase):
         yield self.test_multi()
         self.assertTrue(len(c.connection_pools), 1)
         self.assertTrue(c.available_connections)
+
+    def test_info(self):
+        info = yield send(self.server.name, 'info')
+        self.assertIsInstance(info, dict)
+        self.assertEqual(info['actor']['name'], self.server.name)
+        self.assertEqual(info['actor']['concurrency'], self.concurrency)
 
 
 @dont_run_with_thread

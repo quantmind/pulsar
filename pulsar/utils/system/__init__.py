@@ -51,7 +51,7 @@ def system_info(pid=None):
     try:
         p = psutil.Process(pid)
     # this fails on platforms which don't allow multiprocessing
-    except psutil.NoSuchProcess:
+    except psutil.NoSuchProcess:  # pragma    nocover
         return {}
     else:
         mem = p.get_memory_info()

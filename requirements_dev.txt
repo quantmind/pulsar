@@ -5,3 +5,4 @@ cython
 django
 pep8
 setproctitle
+psutil
