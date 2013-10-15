@@ -557,7 +557,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         path = path.join('docs', 'source', '_static')
         files = []
         sent = []
-        for name in ('pulsar.png', 'Game_of_life_pulsar.gif'):
+        for name in ('pulsar.png', 'favicon.ico'):
             with open(path.join(name), 'rb') as file:
                 image = file.read()
             sent.append(image)

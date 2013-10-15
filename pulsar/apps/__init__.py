@@ -266,7 +266,7 @@ script which runs the application.'''
         if not script:
             try:
                 import __main__
-            except ImportError:
+            except ImportError:  # pragma    nocover
                 return
             script = getfile(__main__)
         script = os.path.realpath(script)
@@ -550,7 +550,12 @@ The list is lazily loaded from the :meth:`build` method.'''
                     new_settings[setting.name] = setting
                 cfg.settings = new_settings
                 kwargs.update({'name': name, 'cfg': cfg, 'callable': callable})
-                app = App(**kwargs)
+                if name == self.name:
+                    params = kwargs.copy()
+                    params['version'] = self.version
+                else:
+                    params = kwargs
+                app = App(**params)
                 app()
                 self._apps.append(app)
         return self._apps
@@ -571,7 +576,7 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
 :return: a tuple used by the :meth:`apps` method.
 '''
         params.update(self.cfg.params.copy())
-        params.pop('name', None)
+        params.pop('name', None)    # remove the name
         prefix = prefix or ''
         if not prefix:
             name = self.name
