@@ -6,4 +6,3 @@ django
 pep8
 setproctitle
 psutil
-ujson

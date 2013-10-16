@@ -247,6 +247,8 @@ Must be implemented by subclasses.'''
         for client in clients:
             try:
                 client(channel, message)
+            except IOError:
+                remove.add(client)
             except Exception:
                 LOGGER.exception('Exception while processing pub/sub client. '
                                  'Removing it.')
