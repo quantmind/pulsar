@@ -1,10 +1,10 @@
 '''Utilities for HTML and text manipulation.
 '''
 import re
-import json
 from unicodedata import normalize
 from collections import namedtuple
 
+from .system import json
 from .pep import (ispy3k, native_str, to_string, iteritems, is_string,
                   string_type)
 

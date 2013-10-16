@@ -1,4 +1,5 @@
 '''Tests the rpc middleware and utilities. It uses the calculator example.'''
+import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
@@ -9,27 +10,30 @@ from pulsar.apps.test import unittest, run_on_arbiter
 def dummy(environ, start_response):
     start_response('200 OK', [])
     yield [b'dummy']
-    
+
 class MultiWsgi(MultiApp):
     cfg = Config(bind=':0', rpc_bind=':0', bla='foo')
-    
+
     def build(self):
         yield self.new_app(WSGIServer, callable=dummy)
         yield self.new_app(WSGIServer, 'rpc', callable=dummy)
-    
+
 
 class TestMultiApp(unittest.TestCase):
-    
+
     def create(self, **params):
         # create the application
         return MultiWsgi(**params)
-    
+
     def testApp(self):
-        app = self.create()
+        app = self.create(version='2.0')
+        self.assertEqual(app.version, '2.0')
         self.assertTrue(app)
         apps = app.apps()
         self.assertEqual(len(apps), 2)
-        
+        self.assertEqual(apps[0].version, '2.0')
+        self.assertEqual(apps[1].version, pulsar.__version__)
+
     def testConfig(self):
         app = self.create(bind=':9999', unz='whatz')
         self.assertTrue(app)
@@ -39,7 +43,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(app.cfg.bla, 'foo')
         self.assertEqual(app.cfg.unz, 'whatz')
         self.assertEqual(app.cfg.bind, ':9999')
-        
+
     def testTimeout(self):
         app = self.create(timeout=22, name='pippo')
         self.assertEqual(app.name, 'pippo')
@@ -55,7 +59,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertNotEqual(app2.cfg.timeout, 22)
         self.assertEqual(app2.cfg.timeout,
                          app2.cfg.settings['timeout'].default)
-        
+
     def testName(self):
         app = self.create()
         self.assertEqual(app.name, 'multiwsgi')
@@ -64,7 +68,7 @@ class TestMultiApp(unittest.TestCase):
         apps = app.apps()
         self.assertEqual(apps[0].name, 'bla')
         self.assertEqual(apps[1].name, 'rpc_bla')
-        
+
     @run_on_arbiter
     def testInstall(self):
         arbiter = get_actor()
@@ -83,7 +87,7 @@ class TestMultiApp(unittest.TestCase):
         yield monitor1.stop()
         yield monitor2.stop()
         yield None
-        
+
     def test_config_copy(self):
         app = self.create()
         self.assertTrue(app)
@@ -93,4 +97,3 @@ class TestMultiApp(unittest.TestCase):
         self.assertEqual(cfg.prefix, rpc.cfg.prefix)
         for name in cfg:
             self.assertTrue(name in rpc.cfg)
-        

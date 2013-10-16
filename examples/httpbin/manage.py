@@ -10,7 +10,6 @@ Implementation
    :member-order: bysource
 '''
 import os
-import json
 import sys
 import string
 from random import choice, random
@@ -27,6 +26,7 @@ from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
 from pulsar.apps.wsgi import route, Html, Json
 from pulsar.utils.structures import MultiValueDict
+from pulsar.utils.system import json
 
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
@@ -204,6 +204,19 @@ class HttpBin(wsgi.Router):
         stream = request.get('wsgi.input')
         stream.fail()
         return self.info_data_response(request)
+
+    ########################################################################
+    #    BENCHMARK ROUTES
+    @route('json')
+    def bench_json(self, request):
+        return Json({'message': "Hello, World!"}).http_response(request)
+
+    @route('plaintext')
+    def bench_text(self, request):
+        r = request.response
+        r.content = 'Hello, World!'
+        r.content_type = 'text/plain; charset=utf-8'
+        return r
 
     ########################################################################
     #    INTERNALS

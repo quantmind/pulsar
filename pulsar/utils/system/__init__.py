@@ -21,6 +21,12 @@ try:
 except ImportError:    # pragma    nocover
     psutil = None
 
+try:
+    import ujson as json
+except ImportError:     # pragma    nocover
+    import json
+
+
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
 memory_size = dict(((s, 1 << (i+1)*10) for i, s in enumerate(memory_symbols)))
 
@@ -51,7 +57,7 @@ def system_info(pid=None):
     try:
         p = psutil.Process(pid)
     # this fails on platforms which don't allow multiprocessing
-    except psutil.NoSuchProcess:
+    except psutil.NoSuchProcess:  # pragma    nocover
         return {}
     else:
         mem = p.get_memory_info()

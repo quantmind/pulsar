@@ -33,6 +33,15 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertRaises(MultipartError, parse_form_data, environ,
                           strict=True)
 
+    def test_get_host(self):
+        request = self.request(headers=[('host', 'blaa.com')])
+        self.assertEqual(request.get_host(), 'blaa.com')
+
+    def test_full_path(self):
+        request = self.request(headers=[('host', 'blaa.com')])
+        self.assertEqual(request.full_path(), '/')
+        self.assertEqual(request.full_path('/foo'), '/foo')
+
 
 class WsgiResponseTests(unittest.TestCase):
 

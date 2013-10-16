@@ -1,3 +1,6 @@
+'''
+Module containing utilities and mixins for logging and serialisation.
+'''
 import sys
 from copy import deepcopy, copy
 from time import time
@@ -73,6 +76,8 @@ def update_config(config, c):
 
 
 def local_method(f):
+    '''Decorator to be used in conjunction with :class:`LocalMixin` methods.
+    '''
     name = f.__name__
 
     def _(self):
@@ -84,6 +89,8 @@ def local_method(f):
 
 
 def local_property(f):
+    '''Decorator to be used in conjunction with :class:`LocalMixin` methods.
+    '''
     return property(local_method(f), doc=f.__doc__)
 
 
@@ -106,10 +113,18 @@ class WritelnDecorator(object):
 
 
 class LocalMixin(object):
-    '''The :class:`LocalMixin` defines "local" attributes which are
-removed when pickling the object'''
+    '''Defines the :attr:`local` attribute.
+
+    Classes derived from a :class:`LocalMixin` can use the
+    :func:`local_method` and :func:`local_property` decorators for managing
+    attributes which are not picklable.
+    '''
     @property
     def local(self):
+        '''A lazy :class:`pulsar.utils.structures.AttributeDictionary`.
+
+        This attribute is removed when pickling an instance.
+        '''
         if not hasattr(self, '_local'):
             self._local = AttributeDictionary()
         return self._local
@@ -165,12 +180,13 @@ class Silence(logging.Handler):
 
 
 class LogginMixin(LocalMixin):
-    '''A Mixin used throught the library.
+    '''A :class:`LocalMixin` used throughout the library.
 
     It provides built in logging object and utilities for pickle.
     '''
     @property
     def logger(self):
+        '''A python logger for this instance.'''
         return self.local.logger
 
     def __setstate__(self, state):

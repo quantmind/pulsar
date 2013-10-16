@@ -152,7 +152,7 @@ class SocketTransport(Transport):
         address = self.address
         if address:
             family = FAMILY_NAME.get(self._sock.family, 'UNKNOWN')
-            return '%s %s' % (family, nice_address(address))
+            return nice_address(address, family)
         else:
             return '<closed>'
 

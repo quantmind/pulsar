@@ -1,5 +1,4 @@
-import pulsar
-from pulsar import multi_async
+from pulsar import send, multi_async
 from pulsar.utils.pep import range
 from pulsar.apps.test import unittest, dont_run_with_thread
 
@@ -14,14 +13,14 @@ class TestEchoServerThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
-        cls.server = yield pulsar.send('arbiter', 'run', s)
+        cls.server = yield send('arbiter', 'run', s)
         cls.pool = Echo()
         cls.echo = cls.pool.client(cls.server.address)
 
     @classmethod
     def tearDownClass(cls):
         if cls.server:
-            yield pulsar.send('arbiter', 'kill_actor', cls.server.name)
+            yield send('arbiter', 'kill_actor', cls.server.name)
 
     def test_server(self):
         self.assertTrue(self.server)
@@ -55,11 +54,29 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(b'pippo' in result)
         self.assertTrue(b'foo' in result)
 
+    # TESTS FOR PROTOCOLS AND CONNECTIONS
     def test_client(self):
         c = self.pool
         yield self.test_multi()
         self.assertTrue(len(c.connection_pools), 1)
         self.assertTrue(c.available_connections)
+
+    def test_info(self):
+        info = yield send(self.server.name, 'info')
+        self.assertIsInstance(info, dict)
+        self.assertEqual(info['actor']['name'], self.server.name)
+        self.assertEqual(info['actor']['concurrency'], self.concurrency)
+
+    def test_connection(self):
+        pool = Echo(full_response=True)
+        echo = pool.client(self.server.address)
+        response = echo(b'test connection')
+        self.assertTrue(str(response.connection))
+        yield response.on_finished
+        self.assertEqual(response.buffer, b'test connection')
+        connection = response.connection
+        self.assertTrue(str(connection))
+        self.assertEqual(str(connection.transport)[:4], 'TCP ')
 
 
 @dont_run_with_thread

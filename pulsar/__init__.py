@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 7, 0, 'final', 0)
+VERSION = (0, 7, 2, 'final', 0)
 
 from .utils.version import get_version
 
@@ -53,3 +53,4 @@ del local
 # Import tasks local backend for commands
 from .apps.tasks.backends import local
 del local
+del get_version

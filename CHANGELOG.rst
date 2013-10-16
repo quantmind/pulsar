@@ -1,4 +1,21 @@
-Ver. 0.7.0 - 2013-Oct-14
+Ver. 0.7.2 - 2013-Oct-16
+===========================
+* A bug fix release.
+* Must upgrade if using the :ref:`django pulse <apps-pulse>` application.
+* Use ujson_ if installed.
+* Fixed :ref:`wait for body middleware <wait-for-body-middleware>`.
+* Fixed :ref:`django pulse <apps-pulse>` application when the client request
+  has body to load.
+* **821 regression tests**, **91% coverage**.
+
+Ver. 0.7.1 - 2013-Oct-14
+===========================
+* Documentation fixes
+* Critical fix in ``setup.py`` for python 2.
+* Replaced the favicon in documentation.
+* **807 regression tests**, **90% coverage**.
+
+Ver. 0.7.0 - 2013-Oct-13
 ===========================
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
@@ -318,3 +335,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _django: https://www.djangoproject.com/
 .. _redis: http://redis.io/
 .. _redis-py: https://github.com/andymccurdy/redis-py
+.. _ujson: https://pypi.python.org/pypi/ujson

@@ -26,9 +26,7 @@ specific to sockets and can be used to fine tune your application:
 
 bind
 ------
-The :class:`SocketServer` application introduces the additional pulsar settings
-:ref:`bind <setting-bind>` which is used to specify the address
-to bind the server to::
+To specify the address to bind the server to::
 
     python script.py --bind 127.0.0.1:8070
 
@@ -38,12 +36,12 @@ This will listen for both ipv4 and ipv6 sockets on all hosts on port 8080::
 
 backlog
 ---------
-To control the concurrency of the server you can use the
+To specify the maximum number of queued connections you can use the
 :ref:`backlog <setting-backlog>` settings. For example::
 
     python script.py --backlog 1000
 
-will serve a maximum of 1000 clients per :class:`pulsar.Worker` concurrently.
+rarely used.
 
 keep_alive
 ---------------
@@ -81,7 +79,7 @@ When running a :class:`SocketServer` in threading mode::
 
     python script.py --concurrency thread
 
-the number of :class:`pulsar.apps.Worker` serving the application is set
+the number of :class:`pulsar.Actor` serving the application is set
 to ``0`` so that the application is actually served by the
 :class:`pulsar.Arbiter` event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
@@ -100,7 +98,8 @@ import os
 
 import pulsar
 from pulsar import TcpServer, multi_async
-from pulsar.utils.internet import parse_address, SSLContext, WrapSocket
+from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
+                                   format_address)
 from pulsar.utils.config import pass_through
 
 
@@ -240,12 +239,15 @@ class SocketServer(pulsar.Application):
             all.append(server.close_connections())
         return multi_async(all)
 
-    def on_info(self, worker, info=None):
-        server = worker.socket_server
-        info['socket'] = {'listen_on': server.address,
-                          'read_timeout': server.timeout,
-                          'active_connections': server.active_connections,
-                          'received_connections': server.received}
+    def worker_info(self, worker, info):
+        info['sockets'] = sockets = []
+        for server in worker.servers.get(self.name, ()):
+            address = format_address(server.address)
+            sockets.append({
+                'address': format_address(server.address),
+                'read_timeout': server.timeout,
+                'concurrent_connections': server.concurrent_connections,
+                'received_connections': server.received})
 
     #   INTERNALS
 

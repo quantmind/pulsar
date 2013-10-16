@@ -266,7 +266,7 @@ script which runs the application.'''
         if not script:
             try:
                 import __main__
-            except ImportError:
+            except ImportError:  # pragma    nocover
                 return
             script = getfile(__main__)
         script = os.path.realpath(script)
@@ -357,12 +357,14 @@ class Application(Configurator, pulsar.Pulsar):
     These are the most important facts about a pulsar :class:`Application`:
 
     * It derives from :class:`Configurator` so that it has all the
-    functionalities to parse command line arguments and setup the
-    :attr:`Configurator.cfg`.
-    * Instances must be picklable. If non-picklable data needs to be add on an
-      :class:`Application` instance, it must be stored on the
-      :attr:`Application.local` dictionary.
-    * Instances of an :class:`Application` are callable objects.
+      functionalities to parse command line arguments and setup the
+      :attr:`Configurator.cfg`.
+    * Instances must be picklable. If non-picklable data needs to be added
+      on an :class:`Application` instance, it should be stored on the
+      ``local`` attribute dictionary (:class:`Application` derives
+      from :class:`pulsar.utils.log.LocalMixin`).
+    * Instances of an :class:`Application` are callable objects accepting
+      the calling actor as only argument.
     * When an :class:`Application` is called for the first time,
       a new :class:`pulsar.Monitor` instance is added to the
       :class:`pulsar.Arbiter`, ready to perform its duties.
@@ -434,7 +436,7 @@ class Application(Configurator, pulsar.Pulsar):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_info(self, worker, info=None):
+    def worker_info(self, worker, info):
         '''Hook to add additional entries to the worker ``info`` dictionary.
         '''
         pass
@@ -458,7 +460,7 @@ class Application(Configurator, pulsar.Pulsar):
         '''
         pass
 
-    def monitor_info(self, monitor, info=None):
+    def monitor_info(self, monitor, info):
         '''Hook to add additional entries to the monitor ``info`` dictionary.
         '''
         pass
@@ -550,7 +552,12 @@ The list is lazily loaded from the :meth:`build` method.'''
                     new_settings[setting.name] = setting
                 cfg.settings = new_settings
                 kwargs.update({'name': name, 'cfg': cfg, 'callable': callable})
-                app = App(**kwargs)
+                if name == self.name:
+                    params = kwargs.copy()
+                    params['version'] = self.version
+                else:
+                    params = kwargs
+                app = App(**params)
                 app()
                 self._apps.append(app)
         return self._apps
@@ -571,7 +578,7 @@ as the number of :class:`Application` required by this :class:`MultiApp`.
 :return: a tuple used by the :meth:`apps` method.
 '''
         params.update(self.cfg.params.copy())
-        params.pop('name', None)
+        params.pop('name', None)    # remove the name
         prefix = prefix or ''
         if not prefix:
             name = self.name

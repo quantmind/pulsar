@@ -66,6 +66,12 @@ class Rpc(wsgi.LazyWsgi):
                                 response_middleware=response)
 
 
+def dummy():
+    # Just a dummy callable for testing coverage.
+    # A callable is invoked when the taskqueue starts
+    pass
+
+
 class server(pulsar.MultiApp):
     '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
 
@@ -76,7 +82,8 @@ class server(pulsar.MultiApp):
     cfg = pulsar.Config('Taskqueue with JSON-RPC API example')
 
     def build(self):
-        yield self.new_app(tasks.TaskQueue, task_paths=TASK_PATHS)
+        yield self.new_app(tasks.TaskQueue, callable=dummy,
+                           task_paths=TASK_PATHS)
         yield self.new_app(wsgi.WSGIServer, prefix='rpc',
                            callable=Rpc(self.name))
 
