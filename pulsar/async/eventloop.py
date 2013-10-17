@@ -403,6 +403,7 @@ to transfer control from other threads to the EventLoop's thread.'''
         return handler
 
     def add_connector(self, fd, callback, *args):
+        '''Add a connector callback. Return a Handler instance.'''
         handler = TimedCall(None, callback, args)
         fd = file_descriptor(fd)
         self._io.add_writer(fd, handler)
@@ -582,7 +583,10 @@ the event loop to poll with a 0 timeout all the times.'''
         '''Run ``value`` in this event loop.
 
         If ``value`` is a :ref:`coroutine <coroutine>`, it is run immediately
-        in this event loop.'''
+        in this event loop.
+
+        :return: either ``value`` or a :class:`Deferred`
+        '''
         if isgenerator(value):
             return self.task_factory(value, event_loop=self)
         return value

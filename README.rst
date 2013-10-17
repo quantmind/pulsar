@@ -5,7 +5,7 @@ activities in different threads and/or processes.
 :PyPI: |pypi_version| |pypi_downloads|
 :Master CI: |master-build|_ |coverage-master|
 :Dev CI: |dev-build|_ |coverage-dev|
-:Documentation: http://packages.python.org/pulsar/
+:Documentation: http://pythonhosted.org/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
