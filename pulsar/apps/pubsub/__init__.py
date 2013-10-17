@@ -31,7 +31,7 @@ Usage
 A pubsub handler can be passed to different process domain and therefore it
 can be used to synchronise pulsar actors.
 
-A tipical usage is when one needs to serve a websocket on a multiprocessing
+A typical usage is when one needs to serve a websocket on a multiprocessing
 web server such as the :ref:`pulsar WSGI server <apps-wsgi>`.
 For example, the :ref:`websocket chat server <tutorials-chat>` uses a pubsub
 handler to propagate a message received from an http client to all
