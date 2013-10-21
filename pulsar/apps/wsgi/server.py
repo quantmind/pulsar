@@ -245,7 +245,7 @@ def keep_alive(headers, version):
         if "close" in conn:
             return False
         elif 'upgrade' in conn:
-            headers['connection'] = 'Upgrade'
+            headers['connection'] = 'upgrade'
             return True
         elif "keep-alive" in conn:
             return True
@@ -310,7 +310,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     @property
     def upgrade(self):
-        return self.headers.get('Upgrade')
+        return self.headers.get('upgrade')
 
     @property
     def chunked(self):

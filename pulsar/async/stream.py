@@ -543,7 +543,8 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                     # connection, but we get told to try to accept() anyway.
                     continue
                 elif e.args[0] in ACCEPT_ERRORS:
-                    logger(event_loop).info('Could not accept new connection')
+                    logger(event_loop).info(
+                        'Could not accept new connection %s: %s', i+1, e)
                     break
                 raise
             protocol = protocol_factory()

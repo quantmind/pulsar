@@ -108,6 +108,20 @@ Media
    :members:
    :member-order: bysource
 
+Scripts
+~~~~~~~~~~
+
+.. autoclass:: Scripts
+   :members:
+   :member-order: bysource
+
+Css
+~~~~~~~~~~
+
+.. autoclass:: Css
+   :members:
+   :member-order: bysource
+
 Html Factory
 =================
 
@@ -806,8 +820,15 @@ class Css(Media):
 
 
 class Scripts(Media):
-
+    '''A :class:`Media` container for javascript links.
+    '''
     def append(self, child):
+        '''add a new link to the javascript links.
+
+        :param child: a ``string`` representing an absolute path to the script
+            or relative path (does not start with ``http`` or ``/``), in which
+            case the :attr:`Media.media_path` attribute is prepended.
+        '''
         if child:
             if is_string(child):
                 path = self.absolute_path(child)

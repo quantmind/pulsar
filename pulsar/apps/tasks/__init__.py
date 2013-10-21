@@ -36,7 +36,7 @@ standard :ref:`application settings <settings>`:
 
 .. _app-tasks_path:
 
-* The :ref:`task_paths <setting-task_paths>` parameter specify
+* The :ref:`task_paths <setting-task_paths>` parameter specifies
   a list of python paths where to collect :class:`models.Job` classes::
 
       task_paths = ['myjobs','another.moduledir.*']
@@ -47,7 +47,7 @@ standard :ref:`application settings <settings>`:
 * The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
   if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,
   only one running :class:`TaskQueue` application is responsible for
-  scheduling tasks while any the other, simply consume tasks.
+  scheduling tasks.
 
   It can be specified in the command line via the
   ``--schedule-periodic`` flag.
@@ -63,7 +63,7 @@ standard :ref:`application settings <settings>`:
 
   Default: ``local://``.
 
-* The :ref:`concurrent_tasks <setting-concurrent_tasks>` parameter control
+* The :ref:`concurrent_tasks <setting-concurrent_tasks>` parameter controls
   the maximum number of concurrent tasks for a given task worker.
   This parameter is important when tasks are asynchronous, that is when
   they perform some sort of I/O and the :ref:`job callable <job-callable>`
@@ -169,22 +169,27 @@ class SchedulePeriodic(TaskSetting):
 
 
 class TaskQueue(pulsar.Application):
-    '''A :class:`pulsar.apps.Application` for consuming
-task.Tasks and managing scheduling of tasks via a
-:class:`scheduler.Scheduler`.'''
+    '''A :class:`pulsar.apps.Application` for consuming task.Tasks.
+
+    This application can also schedule periodic tasks when the
+    :ref:`schedule_periodic <setting-schedule_periodic>` flag is ``True``.
+    '''
     backend = None
     '''The :ref:`TaskBackend <apps-taskqueue-backend>` for this task queue.
+
     This picklable attribute is available once the :class:`TaskQueue` has
-    started (that is when the :meth:`monitor_start` method is invoked by the
-    :class:`pulsar.apps.ApplicationMonitor` running it).'''
+    started (when the :meth:`monitor_start` method is invoked by the
+    :class:`pulsar.Monitor` running it).
+    '''
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
 
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
 
-        It calles the :attr:`pulsar.Application.callable` (if available) and
-        create the :attr:`backend`.'''
+        It calles the :attr:`pulsar.apps.Application.callable` (if available)
+        and create the :attr:`backend`.
+        '''
         if self.callable:
             self.callable()
         self.backend = TaskBackend.make(
@@ -198,7 +203,7 @@ task.Tasks and managing scheduling of tasks via a
     def monitor_task(self, monitor):
         '''Override the :meth:`pulsar.apps.Application.monitor_task` callback.
 
-        Check if the :attr:`scheduler` needs to perform a new run.
+        Check if the :attr:`backend` needs to schedule new tasks.
         '''
         if self.backend and monitor.is_running():
             if self.backend.next_run <= datetime.now():
