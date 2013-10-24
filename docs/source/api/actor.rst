@@ -45,7 +45,7 @@ Actors
 At the core of the library we have the :class:`Actor` class which defines
 the primitive of pulsar concurrent framework. Actor's instances communicate
 with each other via messages in a *share-nothing architecture*.
-   
+
 Actor
 ~~~~~~~~~~~~~~
 
@@ -67,7 +67,7 @@ Arbiter
 .. autoclass:: Arbiter
    :members:
    :member-order: bysource
-      
+
 
 Actor Internals
 =======================
@@ -86,16 +86,16 @@ ActorProxy
 .. autoclass:: ActorProxy
    :members:
    :member-order: bysource
-   
-   
+
+
 ActorProxyDeferred
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: ActorProxyDeferred
    :members:
    :member-order: bysource
-   
-   
+
+
 ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,16 +124,17 @@ another remote actor it does so by *sending* an **action** to it
 with positional and/or key-valued arguments. For example::
 
     send(target, 'ping')
-    
+
 will :ref:`send <send-function>` the *ping* action to *target* from the actor
 in the current context of execution. The above is equivalent to::
 
     get_actor().send(target, 'ping')
 
-    
+
 Each action is implemented via the :func:`command` decorator implemented
-in the :mod:`pulsar.async.commands` module. A :ref:`list of standard commands <actor_commands>`
-is available in the design documentation. 
+in the :mod:`pulsar.async.commands` module.
+A :ref:`list of standard commands <actor_commands>`
+is available in the design documentation.
 
 pulsar command
 ~~~~~~~~~~~~~~~~~~~~
@@ -163,23 +164,23 @@ Base Concurrency
    :members:
    :member-order: bysource
 
-   
+
 Monitor Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pulsar.async.concurrency.MonitorConcurrency
    :members:
    :member-order: bysource
-   
-   
+
+
 Arbiter Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pulsar.async.concurrency.ArbiterConcurrency
    :members:
    :member-order: bysource
-   
-   
+
+
 Constants
 =========================
 

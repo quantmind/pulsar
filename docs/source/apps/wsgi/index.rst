@@ -4,7 +4,7 @@
 WSGI
 =================
 
-The :mod:`pulsar.apps.wsgi` module implements a :ref:`web server <wsgi-server>`
+The :mod:`~.apps.wsgi` module implements a :ref:`web server <wsgi-server>`
 and several web :ref:`application handlers <wsgi-handlers>` which
 conform with pulsar :ref:`WSGI asynchronous specification <wsgi-async>`.
 In addition, the module contains several utilities which facilitate the

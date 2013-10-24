@@ -124,7 +124,10 @@ class WebSocketProtocol(ProtocolConsumer):
 
     .. attribute:: handshake
 
-    The handshake response/request
+    The original handshake response/request.
+
+    For a server-side :class:`WebSocketProtocol` the handshake is a
+    :class:`.HttpRequest`, for client-side it is a :class:
 
     .. attribute:: handler
 

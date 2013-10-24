@@ -3,9 +3,9 @@ Pulsar ships with an asynchronous :class:`TaskQueue` built on top
 :ref:`pulsar application framework <apps-framework>`. Task queues are used
 as a mechanism to distribute work across threads/processes or machines.
 Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share :class:`backends.Task` across
+or multiprocessing (default) mode and can share :class:`.Task` across
 several machines.
-By creating :class:`models.Job` classes in a similar way you do for celery_,
+By creating :class:`.Job` classes in a similar way you do for celery_,
 this application gives you all you need for running them with very
 little setup effort::
 
@@ -37,15 +37,15 @@ standard :ref:`application settings <settings>`:
 .. _app-tasks_path:
 
 * The :ref:`task_paths <setting-task_paths>` parameter specifies
-  a list of python paths where to collect :class:`models.Job` classes::
+  a list of python paths where to collect :class:`.Job` classes::
 
       task_paths = ['myjobs','another.moduledir.*']
 
   The ``*`` at the end of the second module indicates to collect
-  :class:`models.Job` from all submodules of ``another.moduledir``.
+  :class:`.Job` from all submodules of ``another.moduledir``.
 
 * The :ref:`schedule_periodic <setting-schedule_periodic>` flag indicates
-  if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,
+  if the :class:`TaskQueue` can schedule :class:`.PeriodicJob`. Usually,
   only one running :class:`TaskQueue` application is responsible for
   scheduling tasks.
 
@@ -136,10 +136,9 @@ class TaskBackendConnection(TaskSetting):
         A task backend is string which connect to the backend storing Tasks)
         which accepts one parameter only and returns an instance of a
         distributed queue which has the same API as
-        :class:`pulsar.MessageQueue`. The only parameter passed to the
-        task queue factory is a :class:`pulsar.utils.config.Config` instance.
-        This parameters is used by :class:`pulsar.apps.tasks.TaskQueue`
-        application.'''
+        :class:`.MessageQueue`. The only parameter passed to the
+        task queue factory is a :class:`.Config` instance.
+        This parameters is used by :class:`.TaskQueue` application.'''
 
 
 class TaskPaths(TaskSetting):
@@ -163,13 +162,13 @@ class SchedulePeriodic(TaskSetting):
     desc = '''\
         Enable scheduling of periodic tasks.
 
-        If enabled, :class:`pulsar.apps.tasks.PeriodicJob` will produce
+        If enabled, :class:`.PeriodicJob` will produce
         tasks according to their schedule.
         '''
 
 
 class TaskQueue(pulsar.Application):
-    '''A :class:`pulsar.apps.Application` for consuming task.Tasks.
+    '''A :class:`.Application` for consuming task.Tasks.
 
     This application can also schedule periodic tasks when the
     :ref:`schedule_periodic <setting-schedule_periodic>` flag is ``True``.
@@ -179,7 +178,7 @@ class TaskQueue(pulsar.Application):
 
     This picklable attribute is available once the :class:`TaskQueue` has
     started (when the :meth:`monitor_start` method is invoked by the
-    :class:`pulsar.Monitor` running it).
+    :class:`.Monitor` running it).
     '''
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
@@ -187,7 +186,7 @@ class TaskQueue(pulsar.Application):
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
 
-        It calles the :attr:`pulsar.apps.Application.callable` (if available)
+        It calles the :attr:`.Application.callable` (if available)
         and create the :attr:`backend`.
         '''
         if self.callable:
@@ -201,7 +200,7 @@ class TaskQueue(pulsar.Application):
             backlog=self.cfg.concurrent_tasks)
 
     def monitor_task(self, monitor):
-        '''Override the :meth:`pulsar.apps.Application.monitor_task` callback.
+        '''Override the :meth:`.Application.monitor_task` callback.
 
         Check if the :attr:`backend` needs to schedule new tasks.
         '''

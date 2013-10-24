@@ -182,7 +182,7 @@ request, the ``get(self, request)`` method must be implemented.
 
 .. attribute:: parameters
 
-    A :class:`pulsar.utils.structures.AttributeDictionary` of parameters for
+    A :class:`.AttributeDictionary` of parameters for
     this :class:`Router`. Parameters are created at initialisation from
     the ``parameters`` class attribute and the key-valued parameters
     passed to the ``__init__`` method for which the value is not callable.

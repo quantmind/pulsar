@@ -37,6 +37,8 @@ Wsgi Response
    :member-order: bysource
 
 .. _WSGI: http://www.wsgi.org
+.. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)
+.. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 '''
 import re
 from functools import reduce
@@ -111,7 +113,7 @@ class WsgiResponse(object):
 
     .. attribute:: headers
 
-        The :class:`pulsar.utils.httpurl.Headers` container for this response.
+        The :class:`.Headers` container for this response.
 
     .. attribute:: environ
 
@@ -185,10 +187,6 @@ class WsgiResponse(object):
             self.headers.pop('content-type', None)
     content_type = property(_get_content_type, _set_content_type)
 
-    def length(self):
-        if not self.is_streamed:
-            return reduce(lambda x, y: x+len(y), self.content, 0)
-
     @property
     def response(self):
         return responses.get(self.status_code)
@@ -218,6 +216,10 @@ class WsgiResponse(object):
         except TypeError:
             return True
         return False
+
+    def length(self):
+        if not self.is_streamed:
+            return reduce(lambda x, y: x+len(y), self.content, 0)
 
     def __iter__(self):
         if self._started:
@@ -334,34 +336,41 @@ class WsgiRequest(EnvironMixin):
 
     @cached_property
     def content_types(self):
-        """List of content types this client supports."""
+        '''List of content types this client supports as
+        :class:`.ContentAccept` object.
+
+        Obtained form the ``Accept`` request header.
+        '''
         return parse_accept_header(self.environ.get('HTTP_ACCEPT'),
                                    ContentAccept)
 
     @cached_property
     def charsets(self):
-        """List of charsets this client supports as
-        :class:`~werkzeug.datastructures.CharsetAccept` object.
-        """
+        '''List of charsets this client supports as
+        :class:`.CharsetAccept` object.
+
+        Obtained form the ``Accept-Charset`` request header.
+        '''
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_CHARSET'),
                                    CharsetAccept)
 
     @cached_property
     def encodings(self):
-        """List of encodings this client accepts.  Encodings in a HTTP term
-        are compression encodings such as gzip.  For charsets have a look at
-        :attr:`accept_charset`.
+        """List of encodings this client supports as
+        :class:`.Accept` object.
+
+        Obtained form the ``Accept-Charset`` request header.
+        Encodings in a HTTP term are compression encodings such as gzip.
+        For charsets have a look at :attr:`charsets` attribute.
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_ENCODING'))
 
     @cached_property
     def languages(self):
         """List of languages this client accepts as
-        :class:`~werkzeug.datastructures.LanguageAccept` object.
+        :class:`.LanguageAccept` object.
 
-        .. versionchanged 0.5
-           In previous versions this was a regular
-           :class:`~werkzeug.datastructures.Accept` object.
+        Obtained form the ``Accept-Language`` request header.
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
@@ -379,21 +388,28 @@ class WsgiRequest(EnvironMixin):
 
     @cached_property
     def response(self):
+        '''The :class:`WsgiResponse` for this client request.
+        '''
         return WsgiResponse(environ=self.environ)
 
     #######################################################################
     #    environ shortcuts
     @property
     def is_xhr(self):
+        '''``True`` if this is an AJAX_ request
+        '''
         return self.environ.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
 
     @property
     def is_secure(self):
+        '''``True`` if this request is via a TLS_ connection
+        '''
         return self.environ.get('HTTPS') == 'on'
 
     @property
     def path(self):
-        '''Shortcut to the :attr:`environ` `PATH_INFO` value.'''
+        '''Shortcut to the :attr:`~EnvironMixin.environ` ``PATH_INFO`` value.
+        '''
         return self.environ.get('PATH_INFO', '/')
 
     @property
@@ -417,10 +433,10 @@ class WsgiRequest(EnvironMixin):
         '''Retrieve body data.
 
         Returns a two-elements tuple of a
-        :class:`pulsar.utils.structures.MultiValueDict` containing data from
+        :class:`~.MultiValueDict` containing data from
         the request body, and data from uploaded files.
 
-        If the body data is not ready, return a :class:`pulsar.Deferred`
+        If the body data is not ready, return a :class:`.Deferred`
         which results in the tuple.
 
         The result is cached.
@@ -432,8 +448,8 @@ class WsgiRequest(EnvironMixin):
 
     @async()
     def body_data(self):
-        '''A :class:`pulsar.utils.structures.MultiValueDict` containing
-data from the request body.'''
+        '''A :class:`~.MultiValueDict` containing data from the request body.
+        '''
         data, _ = yield self.data_and_files()
         yield data
 
@@ -463,15 +479,15 @@ data from the request body.'''
 
     @cached_property
     def url_data(self):
-        '''A :class:`pulsar.utils.structures.MultiValueDict` containing
-data from the `QUERY_STRING` in :attr:`environ`.'''
+        '''A (cached) dictionary containing data from the ``QUERY_STRING``
+        in :attr:`~.EnvironMixin.environ`.
+        '''
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
 
     @cached_property
     def html_document(self):
-        '''Return a cached instance of an
-:ref:`Html document <wsgi-html-document>`.'''
+        '''Return a cached instance of :class:`.HtmlDocument`.'''
         return HtmlDocument()
 
     def get_host(self, use_x_forwarded=True):

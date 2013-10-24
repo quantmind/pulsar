@@ -42,12 +42,3 @@ located in the :mod:`pulsar.apps` module.
    apps/twisted
    apps/pulse
    apps/green
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
