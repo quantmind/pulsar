@@ -310,7 +310,7 @@
         <span class="k">if</span> <span class="s">&quot;close&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="k">elif</span> <span class="s">&#39;upgrade&#39;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Upgrade&#39;</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;upgrade&#39;</span>
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">elif</span> <span class="s">&quot;keep-alive&quot;</span> <span class="ow">in</span> <span class="n">conn</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">True</span>
@@ -329,7 +329,7 @@
 
 
 <div class="viewcode-block" id="HttpServerResponse"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpServerResponse</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Server side WSGI :class:`pulsar.ProtocolConsumer`.</span>
+    <span class="sd">&#39;&#39;&#39;Server side WSGI :class:`.ProtocolConsumer`.</span>
 
 <span class="sd">    .. attribute:: wsgi_callable</span>
 
@@ -351,7 +351,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="n">server_software</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
 
 <div class="viewcode-block" id="HttpServerResponse.data_received"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Implements :class:`pulsar.ProtocolConsumer.data_received` method.</span>
+        <span class="sd">&#39;&#39;&#39;Implements :meth:`~.ProtocolConsumer.data_received` method.</span>
 
 <span class="sd">        Once we have a full HTTP message, build the wsgi ``environ`` and</span>
 <span class="sd">        delegate the response to the :func:`wsgi_callable` function.</span>
@@ -375,7 +375,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">upgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Upgrade&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;upgrade&#39;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

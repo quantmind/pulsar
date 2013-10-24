@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Http Bin &mdash; pulsar 0.8.0-beta.1 documentation</title>
+    <title>Deploy Web Applications &mdash; pulsar 0.8.0-beta.1 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="HTTP Proxy Server" href="proxy.html" />
-    <link rel="prev" title="Deploy Web Applications" href="deploy.html" /> 
+    <link rel="next" title="Http Bin" href="httpbin.html" />
+    <link rel="prev" title="WSGI" href="wsgi.html" /> 
   </head>
   <body>
 
@@ -41,10 +41,10 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="proxy.html" title="HTTP Proxy Server"
+          <a href="httpbin.html" title="Http Bin"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="deploy.html" title="Deploy Web Applications"
+          <a href="wsgi.html" title="WSGI"
              accesskey="P">previous</a> |</li>
         <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
@@ -55,7 +55,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://pythonhosted.org/pulsar/tutorials/httpbin.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/deploy.html">release docs here</a>.
         </p>
     
 </div>
@@ -67,33 +67,44 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="http-bin">
-<span id="tutorials-httpbin"></span><h1>Http Bin<a class="headerlink" href="#http-bin" title="Permalink to this headline">¶</a></h1>
-<p>The code for this example is located in the <a class="reference internal" href="#module-examples.httpbin.manage" title="examples.httpbin.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.httpbin.manage</span></tt></a>
-module.</p>
-<span class="target" id="module-examples.httpbin.manage"></span><p>Pulsar HTTP test application:</p>
-<div class="highlight-python"><pre>python manage.py</pre>
+  <div class="section" id="deploy-web-applications">
+<span id="tutorials-deploy"></span><h1>Deploy Web Applications<a class="headerlink" href="#deploy-web-applications" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar has a fully fledged wsgi http server which can used to serve dynamic
+web applications. The best way to do that is to run pulsar server behind
+another HTTP server such as <a class="reference external" href="http://nginx.org/en/">nginx</a> and <a class="reference external" href="http://httpd.apache.org/">apache</a>.</p>
+<div class="section" id="nginx">
+<h2>Nginx<a class="headerlink" href="#nginx" title="Permalink to this headline">¶</a></h2>
+<p>The best way to deploy web apps using pulsar wsgi http server is
+to use nginx as reverse proxy server to pulsar server.</p>
+<p>For example, this minimal configuration does the trick:</p>
+<div class="highlight-python"><pre>server {
+    listen 80;
+    server_name example.org;
+    access_log  /var/log/nginx/example.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:8060;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_redirect off;
+    }
+}</pre>
 </div>
-<div class="section" id="implementation">
-<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="examples.httpbin.manage.HttpBin">
-<em class="property">class </em><tt class="descclassname">examples.httpbin.manage.</tt><tt class="descname">HttpBin</tt><big>(</big><em>rule</em>, <em>*routes</em>, <em>**parameters</em><big>)</big><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="examples.httpbin.manage.HttpBin.get">
-<tt class="descname">get</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>The home page of this router</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="examples.httpbin.manage.HttpBin.request_stats">
-<tt class="descname">request_stats</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/examples/httpbin/manage.html#HttpBin.request_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.httpbin.manage.HttpBin.request_stats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Live stats for the server.</p>
-<p>Try sending lots of requests</p>
-</dd></dl>
-
-</dd></dl>
-
+<p>Link the configuration file to the nginx site_enabled directory
+(usually in <tt class="docutils literal"><span class="pre">/etc/nginx/site_enabled</span></tt>):</p>
+<div class="highlight-python"><pre>sudo ln -s site.conf /etc/nginx/sites-enabled/site.conf</pre>
+</div>
+<p>and <a class="reference external" href="http://wiki.nginx.org/CommandLine">reload nginx</a>:</p>
+<div class="highlight-python"><pre>nginx -s reload</pre>
+</div>
+</div>
+<div class="section" id="apache">
+<h2>Apache<a class="headerlink" href="#apache" title="Permalink to this headline">¶</a></h2>
+<p>An alternative option to nginx is to use <a class="reference external" href="http://httpd.apache.org/">apache</a> web server.
+Apache is a complex server with lots of configuration parameters to fine tune
+how it works.</p>
+<p>To use pulsar behind apache you need the <a class="reference external" href="http://httpd.apache.org/docs/current/mod/mod_proxy.html">mod_proxy</a> installed.</p>
 </div>
 </div>
 
@@ -122,21 +133,22 @@ module.</p>
 <br>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Http Bin</a><ul>
-<li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#">Deploy Web Applications</a><ul>
+<li><a class="reference internal" href="#nginx">Nginx</a></li>
+<li><a class="reference internal" href="#apache">Apache</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="deploy.html"
-                        title="previous chapter">Deploy Web Applications</a></p>
+  <p class="topless"><a href="wsgi.html"
+                        title="previous chapter">WSGI</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="proxy.html"
-                        title="next chapter">HTTP Proxy Server</a></p>
+  <p class="topless"><a href="httpbin.html"
+                        title="next chapter">Http Bin</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/httpbin.txt"
+    <li><a href="../sources/tutorials/deploy.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

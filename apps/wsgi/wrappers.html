@@ -76,7 +76,7 @@ The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest" 
 dictionary.
 It contains only the <tt class="docutils literal"><span class="pre">environ</span></tt> as its private data.
 The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a>, which is available in the
-<tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></tt> attribute, is an iterable over bytestring with
+<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="pulsar.apps.wsgi.wrappers.WsgiRequest.response"><tt class="xref py py-class docutils literal"><span class="pre">WsgiRequest.response</span></tt></a> attribute, is an iterable over bytestring with
 several utility methods for manipulating headers and asynchronous content.</p>
 <div class="section" id="environ-mixin">
 <h2>Environ Mixin<a class="headerlink" href="#environ-mixin" title="Permalink to this headline">¶</a></h2>
@@ -119,29 +119,35 @@ key <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.content_types">
 <tt class="descname">content_types</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.content_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of content types this client supports.</p>
+<dd><p>List of content types this client supports as
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.ContentAccept" title="pulsar.apps.wsgi.structures.ContentAccept"><tt class="xref py py-class docutils literal"><span class="pre">ContentAccept</span></tt></a> object.</p>
+<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept</span></tt> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets">
 <tt class="descname">charsets</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.charsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of charsets this client supports as
-<tt class="xref py py-class docutils literal"><span class="pre">CharsetAccept</span></tt> object.</p>
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.CharsetAccept" title="pulsar.apps.wsgi.structures.CharsetAccept"><tt class="xref py py-class docutils literal"><span class="pre">CharsetAccept</span></tt></a> object.</p>
+<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Charset</span></tt> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.encodings">
 <tt class="descname">encodings</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.encodings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of encodings this client accepts.  Encodings in a HTTP term
-are compression encodings such as gzip.  For charsets have a look at
-<tt class="xref py py-attr docutils literal"><span class="pre">accept_charset</span></tt>.</p>
+<dd><p>List of encodings this client supports as
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.Accept" title="pulsar.apps.wsgi.structures.Accept"><tt class="xref py py-class docutils literal"><span class="pre">Accept</span></tt></a> object.</p>
+<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Charset</span></tt> request header.
+Encodings in a HTTP term are compression encodings such as gzip.
+For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets" title="pulsar.apps.wsgi.wrappers.WsgiRequest.charsets"><tt class="xref py py-attr docutils literal"><span class="pre">charsets</span></tt></a> attribute.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.languages">
 <tt class="descname">languages</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.languages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.languages" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of languages this client accepts as
-<tt class="xref py py-class docutils literal"><span class="pre">LanguageAccept</span></tt> object.</p>
+<a class="reference internal" href="tools.html#pulsar.apps.wsgi.structures.LanguageAccept" title="pulsar.apps.wsgi.structures.LanguageAccept"><tt class="xref py py-class docutils literal"><span class="pre">LanguageAccept</span></tt></a> object.</p>
+<p>Obtained form the <tt class="docutils literal"><span class="pre">Accept-Language</span></tt> request header.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -158,9 +164,27 @@ are compression encodings such as gzip.  For charsets have a look at
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.response">
+<tt class="descname">response</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.response" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">WsgiResponse</span></tt></a> for this client request.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr">
+<tt class="descname">is_xhr</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.is_xhr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this is an <a class="reference external" href="http://en.wikipedia.org/wiki/Ajax_(programming)">AJAX</a> request</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure">
+<tt class="descname">is_secure</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.is_secure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this request is via a <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> connection</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.path">
 <tt class="descname">path</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Shortcut to the <tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt> <cite>PATH_INFO</cite> value.</p>
+<dd><p>Shortcut to the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> <tt class="docutils literal"><span class="pre">PATH_INFO</span></tt> value.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -174,9 +198,9 @@ are compression encodings such as gzip.  For charsets have a look at
 <tt class="descname">data_and_files</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve body data.</p>
 <p>Returns a two-elements tuple of a
-<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing data from
+<a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from
 the request body, and data from uploaded files.</p>
-<p>If the body data is not ready, return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+<p>If the body data is not ready, return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
 which results in the tuple.</p>
 <p>The result is cached.</p>
 </dd></dl>
@@ -184,22 +208,20 @@ which results in the tuple.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">
 <tt class="descname">body_data</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.body_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing
-data from the request body.</p>
+<dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from the request body.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.url_data">
 <tt class="descname">url_data</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.url_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.url_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.MultiValueDict" title="pulsar.utils.structures.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.MultiValueDict</span></tt></a> containing
-data from the <cite>QUERY_STRING</cite> in <tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt>.</p>
+<dd><p>A (cached) dictionary containing data from the <tt class="docutils literal"><span class="pre">QUERY_STRING</span></tt>
+in <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document">
 <tt class="descname">html_document</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.html_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a cached instance of an
-<a class="reference internal" href="content.html#wsgi-html-document"><em>Html document</em></a>.</p>
+<dd><p>Return a cached instance of <a class="reference internal" href="content.html#pulsar.apps.wsgi.content.HtmlDocument" title="pulsar.apps.wsgi.content.HtmlDocument"><tt class="xref py py-class docutils literal"><span class="pre">HtmlDocument</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -265,7 +287,7 @@ requesting client.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.headers">
 <tt class="descname">headers</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.headers" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.Headers" title="pulsar.utils.httpurl.Headers"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.httpurl.Headers</span></tt></a> container for this response.</p>
+<dd><p>The <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.Headers" title="pulsar.utils.httpurl.Headers"><tt class="xref py py-class docutils literal"><span class="pre">Headers</span></tt></a> container for this response.</p>
 </dd></dl>
 
 <dl class="attribute">

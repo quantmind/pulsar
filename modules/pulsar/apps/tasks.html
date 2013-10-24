@@ -67,9 +67,9 @@
 <span class="sd">:ref:`pulsar application framework &lt;apps-framework&gt;`. Task queues are used</span>
 <span class="sd">as a mechanism to distribute work across threads/processes or machines.</span>
 <span class="sd">Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading</span>
-<span class="sd">or multiprocessing (default) mode and can share :class:`backends.Task` across</span>
+<span class="sd">or multiprocessing (default) mode and can share :class:`.Task` across</span>
 <span class="sd">several machines.</span>
-<span class="sd">By creating :class:`models.Job` classes in a similar way you do for celery_,</span>
+<span class="sd">By creating :class:`.Job` classes in a similar way you do for celery_,</span>
 <span class="sd">this application gives you all you need for running them with very</span>
 <span class="sd">little setup effort::</span>
 
@@ -100,18 +100,18 @@
 
 <span class="sd">.. _app-tasks_path:</span>
 
-<span class="sd">* The :ref:`task_paths &lt;setting-task_paths&gt;` parameter specify</span>
-<span class="sd">  a list of python paths where to collect :class:`models.Job` classes::</span>
+<span class="sd">* The :ref:`task_paths &lt;setting-task_paths&gt;` parameter specifies</span>
+<span class="sd">  a list of python paths where to collect :class:`.Job` classes::</span>
 
 <span class="sd">      task_paths = [&#39;myjobs&#39;,&#39;another.moduledir.*&#39;]</span>
 
 <span class="sd">  The ``*`` at the end of the second module indicates to collect</span>
-<span class="sd">  :class:`models.Job` from all submodules of ``another.moduledir``.</span>
+<span class="sd">  :class:`.Job` from all submodules of ``another.moduledir``.</span>
 
 <span class="sd">* The :ref:`schedule_periodic &lt;setting-schedule_periodic&gt;` flag indicates</span>
-<span class="sd">  if the :class:`TaskQueue` can schedule :class:`models.PeriodicJob`. Usually,</span>
+<span class="sd">  if the :class:`TaskQueue` can schedule :class:`.PeriodicJob`. Usually,</span>
 <span class="sd">  only one running :class:`TaskQueue` application is responsible for</span>
-<span class="sd">  scheduling tasks while any the other, simply consume tasks.</span>
+<span class="sd">  scheduling tasks.</span>
 
 <span class="sd">  It can be specified in the command line via the</span>
 <span class="sd">  ``--schedule-periodic`` flag.</span>
@@ -127,7 +127,7 @@
 
 <span class="sd">  Default: ``local://``.</span>
 
-<span class="sd">* The :ref:`concurrent_tasks &lt;setting-concurrent_tasks&gt;` parameter control</span>
+<span class="sd">* The :ref:`concurrent_tasks &lt;setting-concurrent_tasks&gt;` parameter controls</span>
 <span class="sd">  the maximum number of concurrent tasks for a given task worker.</span>
 <span class="sd">  This parameter is important when tasks are asynchronous, that is when</span>
 <span class="sd">  they perform some sort of I/O and the :ref:`job callable &lt;job-callable&gt;`</span>
@@ -200,10 +200,9 @@
 <span class="s">        A task backend is string which connect to the backend storing Tasks)</span>
 <span class="s">        which accepts one parameter only and returns an instance of a</span>
 <span class="s">        distributed queue which has the same API as</span>
-<span class="s">        :class:`pulsar.MessageQueue`. The only parameter passed to the</span>
-<span class="s">        task queue factory is a :class:`pulsar.utils.config.Config` instance.</span>
-<span class="s">        This parameters is used by :class:`pulsar.apps.tasks.TaskQueue`</span>
-<span class="s">        application.&#39;&#39;&#39;</span>
+<span class="s">        :class:`.MessageQueue`. The only parameter passed to the</span>
+<span class="s">        task queue factory is a :class:`.Config` instance.</span>
+<span class="s">        This parameters is used by :class:`.TaskQueue` application.&#39;&#39;&#39;</span>
 
 
 <span class="k">class</span> <span class="nc">TaskPaths</span><span class="p">(</span><span class="n">TaskSetting</span><span class="p">):</span>
@@ -227,28 +226,33 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
 <span class="s">        Enable scheduling of periodic tasks.</span>
 
-<span class="s">        If enabled, :class:`pulsar.apps.tasks.PeriodicJob` will produce</span>
+<span class="s">        If enabled, :class:`.PeriodicJob` will produce</span>
 <span class="s">        tasks according to their schedule.</span>
 <span class="s">        &#39;&#39;&#39;</span>
 
 
 <div class="viewcode-block" id="TaskQueue"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue">[docs]</a><span class="k">class</span> <span class="nc">TaskQueue</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.Application` for consuming</span>
-<span class="sd">task.Tasks and managing scheduling of tasks via a</span>
-<span class="sd">:class:`scheduler.Scheduler`.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.Application` for consuming task.Tasks.</span>
+
+<span class="sd">    This application can also schedule periodic tasks when the</span>
+<span class="sd">    :ref:`schedule_periodic &lt;setting-schedule_periodic&gt;` flag is ``True``.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">backend</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;The :ref:`TaskBackend &lt;apps-taskqueue-backend&gt;` for this task queue.</span>
+
 <span class="sd">    This picklable attribute is available once the :class:`TaskQueue` has</span>
-<span class="sd">    started (that is when the :meth:`monitor_start` method is invoked by the</span>
-<span class="sd">    :class:`pulsar.apps.ApplicationMonitor` running it).&#39;&#39;&#39;</span>
+<span class="sd">    started (when the :meth:`monitor_start` method is invoked by the</span>
+<span class="sd">    :class:`.Monitor` running it).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;tasks&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;tasks&#39;</span><span class="p">,),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
 
 <div class="viewcode-block" id="TaskQueue.monitor_start"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Starts running the task queue in ``monitor``.</span>
 
-<span class="sd">        It calles the :attr:`pulsar.Application.callable` (if available) and</span>
-<span class="sd">        create the :attr:`backend`.&#39;&#39;&#39;</span>
+<span class="sd">        It calles the :attr:`.Application.callable` (if available)</span>
+<span class="sd">        and create the :attr:`backend`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">TaskBackend</span><span class="o">.</span><span class="n">make</span><span class="p">(</span>
@@ -260,9 +264,9 @@
             <span class="n">backlog</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrent_tasks</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="TaskQueue.monitor_task"><a class="viewcode-back" href="../../../apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override the :meth:`pulsar.apps.Application.monitor_task` callback.</span>
+        <span class="sd">&#39;&#39;&#39;Override the :meth:`.Application.monitor_task` callback.</span>
 
-<span class="sd">        Check if the :attr:`scheduler` needs to perform a new run.</span>
+<span class="sd">        Check if the :attr:`backend` needs to schedule new tasks.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">and</span> <span class="n">monitor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">next_run</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>

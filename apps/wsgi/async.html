@@ -95,9 +95,9 @@ the application object must return an iterable yielding zero or more bytes.</p>
 with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following two
 exceptions:</p>
 <ul class="simple">
-<li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>.</li>
-<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, the deferred, when called, i.e.
-the deferred get its <a class="reference internal" href="../../api/async.html#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.callback()</span></tt></a> method invoked,
+<li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</li>
+<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, the deferred, when called, i.e.
+the deferred get its <a class="reference internal" href="../../api/async.html#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.callback()</span></tt></a> method invoked,
 the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
 </ul>
 <p>Pulsar is shipped with two WSGI application handlers documented below.</p>
@@ -105,7 +105,7 @@ the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>
 <div class="section" id="asynchronous-iterable">
 <span id="wsgi-async-iter"></span><h2>Asynchronous Iterable<a class="headerlink" href="#asynchronous-iterable" title="Permalink to this headline">¶</a></h2>
 <p>An asynchronous iterable is an iterable over a combination of <tt class="docutils literal"><span class="pre">bytes</span></tt> or
-<a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
+<a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
 For example this could be an asynchronous iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
     <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;hello&#39;</span>

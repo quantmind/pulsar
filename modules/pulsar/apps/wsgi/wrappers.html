@@ -102,6 +102,8 @@
 <span class="sd">   :member-order: bysource</span>
 
 <span class="sd">.. _WSGI: http://www.wsgi.org</span>
+<span class="sd">.. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)</span>
+<span class="sd">.. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
@@ -176,7 +178,7 @@
 
 <span class="sd">    .. attribute:: headers</span>
 
-<span class="sd">        The :class:`pulsar.utils.httpurl.Headers` container for this response.</span>
+<span class="sd">        The :class:`.Headers` container for this response.</span>
 
 <span class="sd">    .. attribute:: environ</span>
 
@@ -250,10 +252,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
     <span class="n">content_type</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get_content_type</span><span class="p">,</span> <span class="n">_set_content_type</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-
     <span class="nd">@property</span>
 <div class="viewcode-block" id="WsgiResponse.response"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">responses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
@@ -284,6 +282,10 @@
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
+    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;WsgiResponse can be iterated once only&#39;</span><span class="p">)</span>
@@ -399,34 +401,41 @@
 
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.content_types"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.content_types">[docs]</a>    <span class="k">def</span> <span class="nf">content_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of content types this client supports.&quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;List of content types this client supports as</span>
+<span class="sd">        :class:`.ContentAccept` object.</span>
+
+<span class="sd">        Obtained form the ``Accept`` request header.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT&#39;</span><span class="p">),</span>
                                    <span class="n">ContentAccept</span><span class="p">)</span>
 </div>
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.charsets"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.charsets">[docs]</a>    <span class="k">def</span> <span class="nf">charsets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of charsets this client supports as</span>
-<span class="sd">        :class:`~werkzeug.datastructures.CharsetAccept` object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;List of charsets this client supports as</span>
+<span class="sd">        :class:`.CharsetAccept` object.</span>
+
+<span class="sd">        Obtained form the ``Accept-Charset`` request header.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_CHARSET&#39;</span><span class="p">),</span>
                                    <span class="n">CharsetAccept</span><span class="p">)</span>
 </div>
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.encodings"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.encodings">[docs]</a>    <span class="k">def</span> <span class="nf">encodings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;List of encodings this client accepts.  Encodings in a HTTP term</span>
-<span class="sd">        are compression encodings such as gzip.  For charsets have a look at</span>
-<span class="sd">        :attr:`accept_charset`.</span>
+        <span class="sd">&quot;&quot;&quot;List of encodings this client supports as</span>
+<span class="sd">        :class:`.Accept` object.</span>
+
+<span class="sd">        Obtained form the ``Accept-Charset`` request header.</span>
+<span class="sd">        Encodings in a HTTP term are compression encodings such as gzip.</span>
+<span class="sd">        For charsets have a look at :attr:`charsets` attribute.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_ENCODING&#39;</span><span class="p">))</span>
 </div>
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.languages"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.languages">[docs]</a>    <span class="k">def</span> <span class="nf">languages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;List of languages this client accepts as</span>
-<span class="sd">        :class:`~werkzeug.datastructures.LanguageAccept` object.</span>
+<span class="sd">        :class:`.LanguageAccept` object.</span>
 
-<span class="sd">        .. versionchanged 0.5</span>
-<span class="sd">           In previous versions this was a regular</span>
-<span class="sd">           :class:`~werkzeug.datastructures.Accept` object.</span>
+<span class="sd">        Obtained form the ``Accept-Language`` request header.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">parse_accept_header</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_ACCEPT_LANGUAGE&#39;</span><span class="p">),</span>
                                    <span class="n">LanguageAccept</span><span class="p">)</span>
@@ -443,22 +452,29 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">urlargs</span>
 </div>
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.response"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.response">[docs]</a>    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`WsgiResponse` for this client request.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">WsgiResponse</span><span class="p">(</span><span class="n">environ</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">)</span>
 
     <span class="c">#######################################################################</span>
-    <span class="c">#    environ shortcuts</span>
+    <span class="c">#    environ shortcuts</span></div>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_xhr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.is_xhr"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.is_xhr">[docs]</a>    <span class="k">def</span> <span class="nf">is_xhr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if this is an AJAX_ request</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_X_REQUESTED_WITH&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;XMLHttpRequest&#39;</span>
-
+</div>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_secure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.is_secure"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.is_secure">[docs]</a>    <span class="k">def</span> <span class="nf">is_secure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if this request is via a TLS_ connection</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTPS&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;on&#39;</span>
-
+</div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="WsgiRequest.path"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Shortcut to the :attr:`environ` `PATH_INFO` value.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Shortcut to the :attr:`~EnvironMixin.environ` ``PATH_INFO`` value.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
 </div>
     <span class="nd">@property</span>
@@ -482,10 +498,10 @@
         <span class="sd">&#39;&#39;&#39;Retrieve body data.</span>
 
 <span class="sd">        Returns a two-elements tuple of a</span>
-<span class="sd">        :class:`pulsar.utils.structures.MultiValueDict` containing data from</span>
+<span class="sd">        :class:`~.MultiValueDict` containing data from</span>
 <span class="sd">        the request body, and data from uploaded files.</span>
 
-<span class="sd">        If the body data is not ready, return a :class:`pulsar.Deferred`</span>
+<span class="sd">        If the body data is not ready, return a :class:`.Deferred`</span>
 <span class="sd">        which results in the tuple.</span>
 
 <span class="sd">        The result is cached.</span>
@@ -497,8 +513,8 @@
 </div>
     <span class="nd">@async</span><span class="p">()</span>
 <div class="viewcode-block" id="WsgiRequest.body_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">[docs]</a>    <span class="k">def</span> <span class="nf">body_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A :class:`pulsar.utils.structures.MultiValueDict` containing</span>
-<span class="sd">data from the request body.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;A :class:`~.MultiValueDict` containing data from the request body.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">()</span>
         <span class="k">yield</span> <span class="n">data</span>
 </div>
@@ -528,15 +544,15 @@
 
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.url_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.url_data">[docs]</a>    <span class="k">def</span> <span class="nf">url_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A :class:`pulsar.utils.structures.MultiValueDict` containing</span>
-<span class="sd">data from the `QUERY_STRING` in :attr:`environ`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;A (cached) dictionary containing data from the ``QUERY_STRING``</span>
+<span class="sd">        in :attr:`~.EnvironMixin.environ`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">query_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;QUERY_STRING&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">),</span>
                           <span class="n">encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
 </div>
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.html_document"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document">[docs]</a>    <span class="k">def</span> <span class="nf">html_document</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return a cached instance of an</span>
-<span class="sd">:ref:`Html document &lt;wsgi-html-document&gt;`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Return a cached instance of :class:`.HtmlDocument`.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">HtmlDocument</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="WsgiRequest.get_host"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.get_host">[docs]</a>    <span class="k">def</span> <span class="nf">get_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_x_forwarded</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>

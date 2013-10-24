@@ -75,7 +75,7 @@
 <span class="sd">Overview</span>
 <span class="sd">===============</span>
 
-<span class="sd">The backend is created by the :class:`pulsar.apps.tasks.TaskQueue`</span>
+<span class="sd">The backend is created by the :class:`.TaskQueue`</span>
 <span class="sd">as soon as it starts. It is then passed to all task queue workers</span>
 <span class="sd">which, in turns, invoke the :class:`TaskBackend.start` method</span>
 <span class="sd">to start pulling tasks form the distributed task queue.</span>
@@ -85,17 +85,17 @@
 <span class="sd">When creating a new :class:`TaskBackend` there are six methods which must</span>
 <span class="sd">be implemented:</span>
 
-<span class="sd">* The :meth:`TaskBackend.put_task` method, invoked when putting a new</span>
+<span class="sd">* The :meth:`~TaskBackend.put_task` method, invoked when putting a new</span>
 <span class="sd">  :class:`Task.id` into the distributed task queue, whatever that is.</span>
-<span class="sd">* The :meth:`TaskBackend.get_task` method, invoked when retrieving</span>
+<span class="sd">* The :meth:`~TaskBackend.get_task` method, invoked when retrieving</span>
 <span class="sd">  a :class:`Task` from the backend server.</span>
-<span class="sd">* The :meth:`TaskBackend.get_tasks` method, invoked when retrieving</span>
+<span class="sd">* The :meth:`~TaskBackend.get_tasks` method, invoked when retrieving</span>
 <span class="sd">  a group of :class:`Task` from the backend server.</span>
-<span class="sd">* The :meth:`TaskBackend.save_task` method, invoked when creating</span>
+<span class="sd">* The :meth:`~TaskBackend.save_task` method, invoked when creating</span>
 <span class="sd">  or updating a :class:`Task`.</span>
-<span class="sd">* The :meth:`TaskBackend.delete_tasks` method, invoked when deleting</span>
+<span class="sd">* The :meth:`~TaskBackend.delete_tasks` method, invoked when deleting</span>
 <span class="sd">  a bunch of :class:`Task`.</span>
-<span class="sd">* The :meth:`TaskBackend.flush` method, invoked flushing a backend (remove</span>
+<span class="sd">* The :meth:`~TaskBackend.flush` method, invoked flushing a backend (remove</span>
 <span class="sd">  all tasks and clear the task queue).</span>
 
 <span class="sd">.. _task-state:</span>
@@ -115,12 +115,14 @@
 <span class="sd">* ``FAILURE`` task execution has finished with failure.</span>
 <span class="sd">* ``SUCCESS`` task execution has finished with success.</span>
 
+<span class="sd">.. _task-run-state:</span>
 
 <span class="sd">**FULL_RUN_STATES**</span>
 
 <span class="sd">The set of states for which a :class:`Task` has run:</span>
 <span class="sd">``FAILURE`` and ``SUCCESS``</span>
 
+<span class="sd">.. _task-ready-state:</span>
 
 <span class="sd">**READY_STATES**</span>
 
@@ -133,11 +135,11 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">A :class:`TaskBackend` broadcast :class:`Task` state into three different</span>
-<span class="sd">channels via the :attr:`TaskBackend.pubsub` handler.</span>
+<span class="sd">channels via the :attr:`~TaskBackend.pubsub` handler.</span>
 
 <span class="sd">The pubsub handler is constructed using the same</span>
-<span class="sd">:attr:`pulsar.apps.Backend.connection_string` and</span>
-<span class="sd">:attr:`pulsar.apps.Backend.name` as the the :class:`TaskBackend`.</span>
+<span class="sd">:attr:`~pulsar.apps.Backend.connection_string` and</span>
+<span class="sd">:attr:`~pulsar.apps.Backend.name` as the the :class:`TaskBackend`.</span>
 
 <span class="sd">API</span>
 <span class="sd">=========</span>
@@ -259,26 +261,26 @@
 <div class="viewcode-block" id="TaskConsumer"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskConsumer">[docs]</a><span class="k">class</span> <span class="nc">TaskConsumer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A context manager for consuming tasks.</span>
 
-<span class="sd">Instances of this consumer are created by the :class:`TaskBackend` when</span>
-<span class="sd">a task is executed.</span>
+<span class="sd">    Instances of this consumer are created by the :class:`TaskBackend` when</span>
+<span class="sd">    a task is executed.</span>
 
-<span class="sd">.. attribute:: task_id</span>
+<span class="sd">    .. attribute:: task_id</span>
 
-<span class="sd">    the :attr:`Task.id` being consumed.</span>
+<span class="sd">        the :attr:`Task.id` being consumed.</span>
 
-<span class="sd">.. attribute:: job</span>
+<span class="sd">    .. attribute:: job</span>
 
-<span class="sd">    the :ref:`Job &lt;apps-taskqueue-job&gt;` which generated the :attr:`task`.</span>
+<span class="sd">        the :ref:`Job &lt;apps-taskqueue-job&gt;` which generated the :attr:`task`.</span>
 
-<span class="sd">.. attribute:: worker</span>
+<span class="sd">    .. attribute:: worker</span>
 
-<span class="sd">    the :class:`pulsar.Actor` running the task worker.</span>
+<span class="sd">        the :class:`.Actor` running the task worker.</span>
 
-<span class="sd">.. attribute:: backend</span>
+<span class="sd">    .. attribute:: backend</span>
 
-<span class="sd">    Access to the :class:`TaskBackend`. This is useful when creating</span>
-<span class="sd">    tasks from within a :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Access to the :class:`TaskBackend`. This is useful when creating</span>
+<span class="sd">        tasks from within a :ref:`job callable &lt;job-callable&gt;`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">worker</span> <span class="o">=</span> <span class="n">worker</span>
@@ -288,46 +290,46 @@
 </div>
 <div class="viewcode-block" id="Task"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.Task">[docs]</a><span class="k">class</span> <span class="nc">Task</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Interface for tasks which are produced by</span>
-<span class="sd">:ref:`jobs or periodic jobs &lt;apps-taskqueue-job&gt;`.</span>
+<span class="sd">    :ref:`jobs or periodic jobs &lt;apps-taskqueue-job&gt;`.</span>
 
-<span class="sd">.. attribute:: id</span>
+<span class="sd">    .. attribute:: id</span>
 
-<span class="sd">    :class:`Task` unique id.</span>
+<span class="sd">        :class:`Task` unique id.</span>
 
-<span class="sd">.. attribute:: name</span>
+<span class="sd">    .. attribute:: name</span>
 
-<span class="sd">    :class:`Job` name.</span>
+<span class="sd">        :class:`Job` name.</span>
 
-<span class="sd">.. attribute:: status</span>
+<span class="sd">    .. attribute:: status</span>
 
-<span class="sd">    The current :ref:`status string &lt;task-state&gt;` of task.</span>
+<span class="sd">        The current :ref:`status string &lt;task-state&gt;` of task.</span>
 
-<span class="sd">.. attribute:: time_executed</span>
+<span class="sd">    .. attribute:: time_executed</span>
 
-<span class="sd">    date time when the task was executed.</span>
+<span class="sd">        date time when the task was executed.</span>
 
-<span class="sd">.. attribute:: time_start</span>
+<span class="sd">    .. attribute:: time_start</span>
 
-<span class="sd">    date-time when the task calculation has started.</span>
+<span class="sd">        date-time when the task calculation has started.</span>
 
-<span class="sd">.. attribute:: time_end</span>
+<span class="sd">    .. attribute:: time_end</span>
 
-<span class="sd">    date-time when the task has finished.</span>
+<span class="sd">        date-time when the task has finished.</span>
 
-<span class="sd">.. attribute:: expiry</span>
+<span class="sd">    .. attribute:: expiry</span>
 
-<span class="sd">    optional date-time indicating when the task should expire.</span>
+<span class="sd">        optional date-time indicating when the task should expire.</span>
 
-<span class="sd">.. attribute:: timeout</span>
+<span class="sd">    .. attribute:: timeout</span>
 
-<span class="sd">    A datetime or ``None`` indicating whether a timeout has occurred.</span>
+<span class="sd">        A datetime or ``None`` indicating whether a timeout has occurred.</span>
 
-<span class="sd">.. attribute:: from_task</span>
+<span class="sd">    .. attribute:: from_task</span>
 
-<span class="sd">    Optional :attr:`Task.id` for the :class:`Task` which queued</span>
-<span class="sd">    this :class:`Task`. This is a usuful for monitoring the creation</span>
-<span class="sd">    of tasks within other tasks.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Optional :attr:`Task.id` for the :class:`Task` which queued</span>
+<span class="sd">        this :class:`Task`. This is a usuful for monitoring the creation</span>
+<span class="sd">        of tasks within other tasks.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">stack_trace</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">overlap_id</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">time_executed</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -358,8 +360,10 @@
         <span class="k">return</span> <span class="n">states</span><span class="o">.</span><span class="n">PRECEDENCE_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">states</span><span class="o">.</span><span class="n">UNKNOWN_STATE</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Task.done"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.Task.done">[docs]</a>    <span class="k">def</span> <span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Return ``True`` if the :class:`Task` has finshed</span>
-<span class="sd">(its status is one of :ref:`READY_STATES &lt;task-state&gt;`).&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Return ``True`` if the :class:`Task` has finshed.</span>
+
+<span class="sd">        Its status is one of :ref:`READY_STATES &lt;task-ready-state&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">READY_STATES</span>
 </div>
     <span class="k">def</span> <span class="nf">execute2start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -371,8 +375,11 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_ended</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_executed</span>
 
 <div class="viewcode-block" id="Task.duration"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.Task.duration">[docs]</a>    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`Task` duration. Only available if the task status is in</span>
-<span class="sd">:attr:`FULL_RUN_STATES`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`Task` duration.</span>
+
+<span class="sd">        Only available if the task status is in</span>
+<span class="sd">        :ref:`FULL_RUN_STATES &lt;task-run-state&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_started</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_ended</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_started</span>
 </div>
@@ -398,7 +405,7 @@
 
 
 <div class="viewcode-block" id="TaskBackend"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend">[docs]</a><span class="k">class</span> <span class="nc">TaskBackend</span><span class="p">(</span><span class="n">Backend</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.Backend` class for :class:`Task`.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.Backend` class for :class:`Task`.</span>
 <span class="sd">A :class:`TaskBackend` is responsible for creating tasks and put them</span>
 <span class="sd">into the distributed queue.</span>
 <span class="sd">It also schedules the run of periodic tasks if enabled to do so.</span>
@@ -418,7 +425,7 @@
 <span class="sd">.. attribute:: backlog</span>
 
 <span class="sd">    The maximum number of concurrent tasks running on a task-queue</span>
-<span class="sd">    :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally</span>
+<span class="sd">    for an :class:`.Actor`. A number in the order of 5 to 10 is normally</span>
 <span class="sd">    used. Passed by the task-queue application</span>
 <span class="sd">    :ref:`concurrent tasks setting &lt;setting-concurrent_tasks&gt;`.</span>
 
@@ -471,7 +478,7 @@
 
     <span class="nd">@local_property</span>
 <div class="viewcode-block" id="TaskBackend.pubsub"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend.pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.pubsub.PubSub` handler which notifies</span>
+        <span class="sd">&#39;&#39;&#39;A :class:`.PubSub` handler which notifies</span>
 <span class="sd">and listen tasks execution status. There are three channels:</span>
 
 <span class="sd">* ``&lt;name&gt;_task_created`` published when a new task is created.</span>
@@ -479,7 +486,7 @@
 <span class="sd">* ``&lt;name&gt;_task_done`` published when a task is done.</span>
 
 <span class="sd">All three messages are composed by the task id only. Here ``&lt;name&gt;`` is</span>
-<span class="sd">replaced by the :attr:`pulsar.Backend.name` attribute of this task backend.</span>
+<span class="sd">replaced by the :attr:`.Backend.name` attribute of this task backend.</span>
 
 <span class="sd">Check the :ref:`task broadcasting documentation &lt;tasks-pubsub&gt;` for more</span>
 <span class="sd">information.</span>
@@ -509,8 +516,7 @@
 
     <span class="nd">@local_property</span>
 <div class="viewcode-block" id="TaskBackend.registry"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend.registry">[docs]</a>    <span class="k">def</span> <span class="nf">registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The :class:`pulsar.apps.tasks.models.JobRegistry` for this</span>
-<span class="sd">        backend.</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`.JobRegistry` for this backend.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">JobRegistry</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_paths</span><span class="p">)</span>
 </div>
@@ -523,27 +529,27 @@
 </div>
 <div class="viewcode-block" id="TaskBackend.run_job"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend.run_job">[docs]</a>    <span class="k">def</span> <span class="nf">run_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">targs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tkwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">meta_params</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create a new :ref:`task &lt;apps-taskqueue-task&gt;` which may or</span>
-<span class="sd">may not be queued. This method returns a :class:`pulsar.Deferred` which</span>
+<span class="sd">may not be queued. This method returns a :class:`.Deferred` which</span>
 <span class="sd">results in the :attr:`Task.id` created.</span>
-<span class="sd">If ``jobname`` is not a valid :attr:`pulsar.apps.tasks.models.Job.name`,</span>
+<span class="sd">If ``jobname`` is not a valid :attr:`.Job.name`,</span>
 <span class="sd">a ``TaskNotAvailable`` exception occurs.</span>
 
-<span class="sd">:parameter jobname: the name of a :class:`pulsar.apps.tasks.models.Job`</span>
-<span class="sd">    registered with the :class:`pulsar.apps.tasks.TaskQueue` application.</span>
+<span class="sd">:parameter jobname: the name of a :class:`.Job`</span>
+<span class="sd">    registered with the :class:`.TaskQueue` application.</span>
 <span class="sd">:parameter targs: optional tuple used for the positional arguments in the</span>
 <span class="sd">    task callable.</span>
 <span class="sd">:parameter tkwargs: optional dictionary used for the key-valued arguments</span>
 <span class="sd">    in the task callable.</span>
 <span class="sd">:parameter meta_params: Additional parameters to be passed to the :class:`Task`</span>
 <span class="sd">    constructor (not its callable function).</span>
-<span class="sd">:return: a :class:`pulsar.Deferred` resulting in a :attr:`Task.id`</span>
+<span class="sd">:return: a :class:`.Deferred` resulting in a :attr:`Task.id`</span>
 <span class="sd">    on success.&#39;&#39;&#39;</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">targs</span><span class="p">,</span> <span class="n">tkwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">meta_params</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">put_task</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.wait_for_task"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend.wait_for_task">[docs]</a>    <span class="k">def</span> <span class="nf">wait_for_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Asynchronously wait for a task with ``task_id`` to have finished</span>
-<span class="sd">its execution. It returns a :class:`pulsar.Deferred`.&#39;&#39;&#39;</span>
+<span class="sd">its execution. It returns a :class:`.Deferred`.&#39;&#39;&#39;</span>
         <span class="c"># make sure we are subscribed to the task_done channel</span>
         <span class="k">def</span> <span class="nf">_</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span>
@@ -565,7 +571,7 @@
         <span class="sd">&#39;&#39;&#39;invoked by the task queue ``worker`` when it starts.</span>
 
 <span class="sd">        Here, the ``worker`` creates its thread pool via</span>
-<span class="sd">        :meth:`pulsar.Actor.create_thread_pool` and register the</span>
+<span class="sd">        :meth:`.Actor.create_thread_pool` and register the</span>
 <span class="sd">        :meth:`may_pool_task` callback in its event loop.&#39;&#39;&#39;</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">create_thread_pool</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">task_poller</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">event_loop</span><span class="o">.</span><span class="n">call_soon</span><span class="p">(</span>
@@ -573,8 +579,10 @@
         <span class="n">worker</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;started polling tasks&#39;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="TaskBackend.close"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.TaskBackend.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Close this :class:`TaskBackend`. Invoked by the</span>
-<span class="sd">:class:`pulsar.apps.Worker` when is stopping.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Close this :class:`TaskBackend`.</span>
+
+<span class="sd">        Invoked by the :class:`.Actor` when stopping.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">task_poller</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">task_poller</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="n">worker</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;stopped polling tasks&#39;</span><span class="p">)</span>
@@ -909,7 +917,7 @@
 
 
 <div class="viewcode-block" id="SchedulerEntry"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.SchedulerEntry">[docs]</a><span class="k">class</span> <span class="nc">SchedulerEntry</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A class used as a schedule entry in by a :class:`Scheduler`.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;A class used as a schedule entry by the :class:`.TaskBackend`.&quot;&quot;&quot;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Task name&#39;&#39;&#39;</span>
     <span class="n">schedule</span> <span class="o">=</span> <span class="bp">None</span>
@@ -918,7 +926,7 @@
     <span class="sd">&#39;&#39;&#39;The time and date of when this task was last run.&#39;&#39;&#39;</span>
     <span class="n">total_run_count</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="sd">&#39;&#39;&#39;Total number of times this periodic task has been executed by the</span>
-<span class="sd">    :class:`Scheduler`.&#39;&#39;&#39;</span>
+<span class="sd">    :class:`.TaskBackend`.&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">schedule</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{},</span>
                  <span class="n">last_run_at</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">total_run_count</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -933,8 +941,11 @@
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="SchedulerEntry.scheduled_last_run_at"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.SchedulerEntry.scheduled_last_run_at">[docs]</a>    <span class="k">def</span> <span class="nf">scheduled_last_run_at</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The scheduled last run datetime. This is different from</span>
-<span class="sd">:attr:`last_run_at` only when :attr:`anchor` is set.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The scheduled last run datetime.</span>
+
+<span class="sd">        This is different from :attr:`last_run_at` only when</span>
+<span class="sd">        :attr:`anchor` is set.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">last_run_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_run_at</span>
         <span class="n">anchor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anchor</span>
         <span class="k">if</span> <span class="n">last_run_at</span> <span class="ow">and</span> <span class="n">anchor</span><span class="p">:</span>
@@ -953,17 +964,24 @@
             <span class="k">return</span> <span class="n">last_run_at</span>
 </div>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">run_every</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerEntry.run_every"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.SchedulerEntry.run_every">[docs]</a>    <span class="k">def</span> <span class="nf">run_every</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;tasks run every interval given by this attribute.</span>
+
+<span class="sd">        A python :class:`datetime.timedelta` instance.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">run_every</span>
-
+</div>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">anchor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SchedulerEntry.anchor"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.SchedulerEntry.anchor">[docs]</a>    <span class="k">def</span> <span class="nf">anchor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Some periodic :class:`.PeriodicJob` can specify an anchor.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">anchor</span>
-
+</div>
 <div class="viewcode-block" id="SchedulerEntry.next"><a class="viewcode-back" href="../../../../apps/tasks/backend.html#pulsar.apps.tasks.backends.SchedulerEntry.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">now</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns a new instance of the same class, but with</span>
-<span class="sd">        its date and count fields updated. Function called by</span>
-<span class="sd">        :class:`Backend` when the ``this`` is due to run.</span>
+<span class="sd">        its date and count fields updated.</span>
+
+<span class="sd">        Function called by :class:`.TaskBackend` when this entry</span>
+<span class="sd">        is due to run.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">now</span> <span class="o">=</span> <span class="n">now</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_run_at</span> <span class="o">=</span> <span class="n">now</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>

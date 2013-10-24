@@ -341,6 +341,12 @@ to transfer control from other threads to the EventLoop&#8217;s thread.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.EventLoop.add_connector">
+<tt class="descname">add_connector</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.add_connector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a connector callback. Return a Handler instance.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.EventLoop.remove_reader">
 <tt class="descname">remove_reader</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.remove_reader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cancels the current read callback for file descriptor fd,
@@ -503,6 +509,14 @@ the event loop to poll with a 0 timeout all the times.</p>
 <dd><p>Run <tt class="docutils literal"><span class="pre">value</span></tt> in this event loop.</p>
 <p>If <tt class="docutils literal"><span class="pre">value</span></tt> is a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a>, it is run immediately
 in this event loop.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">either <tt class="docutils literal"><span class="pre">value</span></tt> or a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">

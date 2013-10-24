@@ -648,7 +648,7 @@ underlying remote object.</p>
 <span class="n">send</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&#39;echo&#39;</span><span class="p">,</span> <span class="s">&#39;hello there!&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>will send the <em class="xref std std-ref">command</em> <tt class="docutils literal"><span class="pre">echo</span></tt> to actor <tt class="docutils literal"><span class="pre">a</span></tt> with
+<p>will send the <a class="reference internal" href="../design.html#actor-commands"><em>command</em></a> <tt class="docutils literal"><span class="pre">echo</span></tt> to actor <tt class="docutils literal"><span class="pre">a</span></tt> with
 parameter <tt class="docutils literal"><span class="pre">&quot;hello</span> <span class="pre">there!&quot;</span></tt>.</p>
 <dl class="attribute">
 <dt id="pulsar.ActorProxy.aid">
@@ -828,7 +828,8 @@ in the current context of execution. The above is equivalent to:</p>
 </pre></div>
 </div>
 <p>Each action is implemented via the <a class="reference internal" href="#pulsar.command" title="pulsar.command"><tt class="xref py py-func docutils literal"><span class="pre">command()</span></tt></a> decorator implemented
-in the <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.commands</span></tt> module. A <em class="xref std std-ref">list of standard commands</em>
+in the <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.commands</span></tt> module.
+A <a class="reference internal" href="../design.html#actor-commands"><em>list of standard commands</em></a>
 is available in the design documentation.</p>
 <div class="section" id="pulsar-command">
 <h3>pulsar command<a class="headerlink" href="#pulsar-command" title="Permalink to this headline">¶</a></h3>
@@ -852,7 +853,7 @@ response. Usually is set to <tt class="docutils literal"><span class="pre">True<
 <h3>Mailbox Consumer<a class="headerlink" href="#mailbox-consumer" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.async.mailbox.MailboxConsumer">
-<em class="property">class </em><tt class="descclassname">pulsar.async.mailbox.</tt><tt class="descname">MailboxConsumer</tt><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.mailbox.</tt><tt class="descname">MailboxConsumer</tt><big>(</big><em>one_time_events=None</em>, <em>many_times_events=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/mailbox.html#MailboxConsumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.mailbox.MailboxConsumer" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for internal message passing
 between actors. Encoding and decoding uses the unmasked websocket
 protocol.</p>
@@ -996,7 +997,7 @@ the <a class="reference internal" href="#pulsar.Arbiter" title="pulsar.Arbiter">
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'INACTIVE': 1, 'STOPPING': 4, 'CLOSE': 5, 'TERMINATE': 6, 'INITIAL': 0, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'STARTING': 2, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'STARTING': 2, 'INITIAL': 0, 'CLOSE': 5, 'STOPPING': 4, 'RUN': 3, 'INACTIVE': 1, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'TERMINATE': 6}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

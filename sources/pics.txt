@@ -25,6 +25,6 @@ Pulsar loves python as much as the minion in the image!
 Logo
 =======
 
-Pulsar needs a logo, can you do one for us?
+Pulsar needs a logo, can you design one for us?
 
 .. image:: _static/pulsar.png

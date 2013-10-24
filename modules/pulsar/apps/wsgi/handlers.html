@@ -97,9 +97,9 @@
 <span class="sd">with the standard `WSGI 1.0.1`_ specification with the following two</span>
 <span class="sd">exceptions:</span>
 
-<span class="sd">* It can return a :class:`pulsar.Deferred`.</span>
-<span class="sd">* If it returns a :class:`pulsar.Deferred`, the deferred, when called, i.e.</span>
-<span class="sd">  the deferred get its :meth:`pulsar.Deferred.callback` method invoked,</span>
+<span class="sd">* It can return a :class:`.Deferred`.</span>
+<span class="sd">* If it returns a :class:`.Deferred`, the deferred, when called, i.e.</span>
+<span class="sd">  the deferred get its :meth:`.Deferred.callback` method invoked,</span>
 <span class="sd">  the result must be an :ref:`asynchronous iterable &lt;wsgi-async-iter&gt;`.</span>
 
 <span class="sd">Pulsar is shipped with two WSGI application handlers documented below.</span>
@@ -110,7 +110,7 @@
 <span class="sd">========================</span>
 
 <span class="sd">An asynchronous iterable is an iterable over a combination of ``bytes`` or</span>
-<span class="sd">:class:`pulsar.Deferred` which result in ``bytes``.</span>
+<span class="sd">:class:`.Deferred` which result in ``bytes``.</span>
 <span class="sd">For example this could be an asynchronous iterable::</span>
 
 <span class="sd">    def simple_async():</span>

@@ -133,7 +133,7 @@ for further information.</p>
 <h3>Echo Client Protocol<a class="headerlink" href="#echo-client-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="examples.echo.manage.EchoProtocol">
-<em class="property">class </em><tt class="descclassname">examples.echo.manage.</tt><tt class="descname">EchoProtocol</tt><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">examples.echo.manage.</tt><tt class="descname">EchoProtocol</tt><big>(</big><em>one_time_events=None</em>, <em>many_times_events=None</em><big>)</big><a class="reference internal" href="../modules/examples/echo/manage.html#EchoProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>An echo <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for client and servers.</p>
 <p>The only difference between client and server is the implementation
 of the <a class="reference internal" href="#examples.echo.manage.EchoProtocol.response" title="examples.echo.manage.EchoProtocol.response"><tt class="xref py py-meth docutils literal"><span class="pre">response()</span></tt></a> method.</p>
@@ -179,7 +179,7 @@ message value, while servers sends the message back to the client.</p>
 <h3>Echo Server Protocol<a class="headerlink" href="#echo-server-protocol" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="examples.echo.manage.EchoServerProtocol">
-<em class="property">class </em><tt class="descclassname">examples.echo.manage.</tt><tt class="descname">EchoServerProtocol</tt><a class="reference internal" href="../modules/examples/echo/manage.html#EchoServerProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoServerProtocol" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">examples.echo.manage.</tt><tt class="descname">EchoServerProtocol</tt><big>(</big><em>one_time_events=None</em>, <em>many_times_events=None</em><big>)</big><a class="reference internal" href="../modules/examples/echo/manage.html#EchoServerProtocol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.echo.manage.EchoServerProtocol" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> used by the echo <a class="reference internal" href="#examples.echo.manage.server" title="examples.echo.manage.server"><tt class="xref py py-func docutils literal"><span class="pre">server()</span></tt></a>.</p>
 <dl class="method">
 <dt id="examples.echo.manage.EchoServerProtocol.response">

@@ -606,7 +606,8 @@
                     <span class="c"># connection, but we get told to try to accept() anyway.</span>
                     <span class="k">continue</span>
                 <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ACCEPT_ERRORS</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="p">(</span><span class="n">event_loop</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Could not accept new connection&#39;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="p">(</span><span class="n">event_loop</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s">&#39;Could not accept new connection </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
                     <span class="k">break</span>
                 <span class="k">raise</span>
             <span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol_factory</span><span class="p">()</span>

@@ -622,6 +622,39 @@ the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_pa
 </dd></dl>
 
 </div>
+<div class="section" id="scripts">
+<h3>Scripts<a class="headerlink" href="#scripts" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.content.Scripts">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Scripts</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Scripts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Scripts" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.content.Media" title="pulsar.apps.wsgi.content.Media"><tt class="xref py py-class docutils literal"><span class="pre">Media</span></tt></a> container for javascript links.</p>
+<dl class="method">
+<dt id="pulsar.apps.wsgi.content.Scripts.append">
+<tt class="descname">append</tt><big>(</big><em>child</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Scripts.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Scripts.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a new link to the javascript links.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>child</strong> &#8211; a <tt class="docutils literal"><span class="pre">string</span></tt> representing an absolute path to the script
+or relative path (does not start with <tt class="docutils literal"><span class="pre">http</span></tt> or <tt class="docutils literal"><span class="pre">/</span></tt>), in which
+case the <a class="reference internal" href="#pulsar.apps.wsgi.content.Media.media_path" title="pulsar.apps.wsgi.content.Media.media_path"><tt class="xref py py-attr docutils literal"><span class="pre">Media.media_path</span></tt></a> attribute is prepended.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="css">
+<h3>Css<a class="headerlink" href="#css" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.wsgi.content.Css">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Css</tt><big>(</big><em>media_path</em>, <em>minified=False</em>, <em>known_libraries=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Css"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Css" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 </div>
 <div class="section" id="html-factory">
 <h2>Html Factory<a class="headerlink" href="#html-factory" title="Permalink to this headline">¶</a></h2>
@@ -673,6 +706,8 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 <li><a class="reference internal" href="#head">Head</a></li>
 <li><a class="reference internal" href="#body">Body</a></li>
 <li><a class="reference internal" href="#media">Media</a></li>
+<li><a class="reference internal" href="#scripts">Scripts</a></li>
+<li><a class="reference internal" href="#css">Css</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#html-factory">Html Factory</a></li>

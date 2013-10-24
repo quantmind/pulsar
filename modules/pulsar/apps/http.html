@@ -90,7 +90,7 @@
 <span class="sd">about the request and, once finished, the result.</span>
 
 <span class="sd">The ``resp`` is finished once the ``on_finished`` attribute</span>
-<span class="sd">(a :class:`pulsar.Deferred`) is fired. In a :ref:`coroutine &lt;coroutine&gt;` one</span>
+<span class="sd">(a :class:`.Deferred`) is fired. In a :ref:`coroutine &lt;coroutine&gt;` one</span>
 <span class="sd">can obtained a full response by yielding ``on_finished``::</span>
 
 <span class="sd">    resp = yield client.get(&#39;https://github.com/timeline.json&#39;).on_finished</span>
@@ -229,7 +229,7 @@
 <span class="sd">==========</span>
 
 <span class="sd">The main class here is the :class:`HttpClient` which is a subclass of</span>
-<span class="sd">:class:`pulsar.Client`.</span>
+<span class="sd">:class:`~pulsar.Client`.</span>
 <span class="sd">You can use the client as a global singletone::</span>
 
 
@@ -694,7 +694,7 @@
 
 </div>
 <div class="viewcode-block" id="HttpResponse"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpResponse">[docs]</a><span class="k">class</span> <span class="nc">HttpResponse</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.ProtocolConsumer` for the HTTP client protocol.</span>
 
 <span class="sd">    Initialised by a call to the :class:`HttpClient.request` method.</span>
 
@@ -850,10 +850,10 @@
 
 </div>
 <div class="viewcode-block" id="HttpClient"><a class="viewcode-back" href="../../../apps/http.html#pulsar.apps.http.HttpClient">[docs]</a><span class="k">class</span> <span class="nc">HttpClient</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.Client` for HTTP/HTTPS servers.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`~pulsar.Client` for HTTP/HTTPS servers.</span>
 
-<span class="sd">    As :class:`pulsar.Client` it handles</span>
-<span class="sd">    a pool of asynchronous :class:`pulsar.Connection`.</span>
+<span class="sd">    As any :class:`~pulsar.Client` it handles</span>
+<span class="sd">    pools of asynchronous :class:`.Connection`.</span>
 
 <span class="sd">    .. attribute:: headers</span>
 

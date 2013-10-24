@@ -173,6 +173,20 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
+<span class="sd">Scripts</span>
+<span class="sd">~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: Scripts</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+<span class="sd">Css</span>
+<span class="sd">~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: Css</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
 <span class="sd">Html Factory</span>
 <span class="sd">=================</span>
 
@@ -839,7 +853,7 @@
         <span class="k">return</span> <span class="n">path</span>
 
 </div>
-<span class="k">class</span> <span class="nc">Css</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
+<div class="viewcode-block" id="Css"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Css">[docs]</a><span class="k">class</span> <span class="nc">Css</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
@@ -869,10 +883,17 @@
                                                            <span class="n">link</span><span class="p">)</span>
                 <span class="k">yield</span> <span class="n">link</span>
 
+</div>
+<div class="viewcode-block" id="Scripts"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts">[docs]</a><span class="k">class</span> <span class="nc">Scripts</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`Media` container for javascript links.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Scripts.append"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.Scripts.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;add a new link to the javascript links.</span>
 
-<span class="k">class</span> <span class="nc">Scripts</span><span class="p">(</span><span class="n">Media</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
+<span class="sd">        :param child: a ``string`` representing an absolute path to the script</span>
+<span class="sd">            or relative path (does not start with ``http`` or ``/``), in which</span>
+<span class="sd">            case the :attr:`Media.media_path` attribute is prepended.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">child</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">absolute_path</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
@@ -882,14 +903,14 @@
                 <span class="k">return</span> <span class="n">script</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Html</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s">&#39;script&#39;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">child</span><span class="p">]</span> <span class="o">=</span> <span class="n">child</span>
-
+</div>
     <span class="k">def</span> <span class="nf">do_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">child</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
                 <span class="k">yield</span> <span class="n">bit</span>
             <span class="k">yield</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">EmbeddedCss</span><span class="p">(</span><span class="n">Html</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="n">media</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>

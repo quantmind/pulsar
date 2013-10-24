@@ -67,7 +67,7 @@
 <span class="sd">An application implements several :class:`Job`</span>
 <span class="sd">classes which specify the way each :ref:`task &lt;apps-taskqueue-task&gt;` is run.</span>
 <span class="sd">Each :class:`Job` class is a task-factory, therefore,</span>
-<span class="sd">a :ref:`task &lt;apps-taskqueue-task&gt;` is always associated</span>
+<span class="sd">a :class:`.Task` is always associated</span>
 <span class="sd">with one :class:`Job`, which can be of two types:</span>
 
 <span class="sd">* standard (:class:`Job`)</span>
@@ -89,7 +89,7 @@
 <span class="sd">            &quot;Add two numbers&quot;</span>
 <span class="sd">            return a+b</span>
 
-<span class="sd">The ``consumer``, instance of :class:`pulsar.apps.tasks.backends.TaskConsumer`,</span>
+<span class="sd">The ``consumer``, instance of :class:`.TaskConsumer`,</span>
 <span class="sd">is passed by the :ref:`Task backend &lt;apps-taskqueue-backend&gt;` and should</span>
 <span class="sd">always be the first positional parameter in the callable method.</span>
 <span class="sd">The remaining (optional) positional and key-valued parameters are needed by</span>
@@ -276,7 +276,7 @@
 <span class="sd">:ref:`job callable &lt;job-callable&gt;` method and it allows tasks to act</span>
 <span class="sd">as tasks factories.</span>
 
-<span class="sd">:parameter consumer: the :class:`pulsar.apps.tasks.backends.TaskConsumer`</span>
+<span class="sd">:parameter consumer: the :class:`.TaskConsumer`</span>
 <span class="sd">    handling the :ref:`Task &lt;apps-taskqueue-task&gt;`. Must be the same instance</span>
 <span class="sd">    as the one passed to the :ref:`job callable &lt;job-callable&gt;` method.</span>
 <span class="sd">:parameter jobname: The name of the :class:`Job` to run.</span>
@@ -287,7 +287,7 @@
 <span class="sd">:return: a :class:`pulsar.Deferred` called back with the task id of the</span>
 <span class="sd">    new job.</span>
 
-<span class="sd">This method invokes the :meth:`pulsar.apps.tasks.backends.TaskBackend.run_job`</span>
+<span class="sd">This method invokes the :meth:`.TaskBackend.run_job`</span>
 <span class="sd">method with the additional ``from_task`` argument equal to the</span>
 <span class="sd">id of the task invoking the method.</span>
 <span class="sd">&#39;&#39;&#39;</span>

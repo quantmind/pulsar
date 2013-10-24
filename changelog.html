@@ -70,6 +70,9 @@
 <div class="section" id="ver-0-8-0-development">
 <h2>Ver. 0.8.0 - Development<a class="headerlink" href="#ver-0-8-0-development" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
+<li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.run_in_loop_thread()</span></tt> high level function. The function
+runs a callable in the event loop thread and returns <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+called back once the callable has a result/exception.</li>
 <li><strong>821 regression tests</strong>, <strong>91% coverage</strong>.</li>
 </ul>
 </div>

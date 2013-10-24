@@ -6,27 +6,28 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Pics &mdash; pulsar 0.8.0-beta.1 documentation</title>
+    <title>Benchmarking &mdash; pulsar 0.8.0-beta.1 documentation</title>
     
-    <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
+        URL_ROOT:    '../',
         VERSION:     '0.8.0-beta.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/underscore.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="index.html" />
-    <link rel="next" title="Socket Servers" href="apps/socket.html" />
-    <link rel="prev" title="Settings" href="settings.html" /> 
+    <script type="text/javascript" src="../static/jquery.js"></script>
+    <script type="text/javascript" src="../static/underscore.js"></script>
+    <script type="text/javascript" src="../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="API" href="../api/index.html" />
+    <link rel="prev" title="Synchronous Clients" href="sync.html" /> 
   </head>
   <body>
 
@@ -34,18 +35,19 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
+          <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
+          <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="apps/socket.html" title="Socket Servers"
+          <a href="../api/index.html" title="API"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="settings.html" title="Settings"
+          <a href="sync.html" title="Synchronous Clients"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -53,7 +55,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the 
-        <a href="http://pythonhosted.org/pulsar/pics.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/benchmarking.html">release docs here</a>.
         </p>
     
 </div>
@@ -65,23 +67,25 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="pics">
-<h1>Pics<a class="headerlink" href="#pics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="game-of-life">
-<h2>Game of life<a class="headerlink" href="#game-of-life" title="Permalink to this headline">¶</a></h2>
-<p>Did you know?</p>
-<p>Pulsar is the fourth most common oscillator in the game of life.</p>
-<a class="reference internal image-reference" href="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif"><img alt="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif" src="http://www.conwaylife.com/w/images/e/ef/Pulsar.gif" style="width: 100px;" /></a>
+  <div class="section" id="benchmarking">
+<h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="test-slow-clients">
+<h2>Test slow clients<a class="headerlink" href="#test-slow-clients" title="Permalink to this headline">¶</a></h2>
+<p>Testing pulsar with <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> is a great way to check the performance under
+low bandwidth yet greedy clients.</p>
+<p>check the file limits with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ulimit</span> <span class="o">-</span><span class="n">a</span>
+</pre></div>
 </div>
-<div class="section" id="python-powered">
-<h2>Python Powered<a class="headerlink" href="#python-powered" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar loves python as much as the minion in the image!</p>
-<a class="reference internal image-reference" href="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no"><img alt="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no" src="https://lh5.googleusercontent.com/-xVSvSecp6kE/Uk3XDSCCHVI/AAAAAAAABIs/r1rnKMHbT_w/w1560-h878-no" style="width: 500px;" /></a>
+<p>and set:</p>
+<div class="highlight-python"><pre>ulimit -n 1000</pre>
 </div>
-<div class="section" id="logo">
-<h2>Logo<a class="headerlink" href="#logo" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar needs a logo, can you design one for us?</p>
-<img alt="images/pulsar.png" src="images/pulsar.png" />
+<p>Check <a class="reference external" href="http://ha.ckers.org/slowloris/">slowloris</a> usage with:</p>
+<div class="highlight-python"><pre>perldoc slowloris.pl</pre>
+</div>
+<p>To test for slow bandwidth greedy clients:</p>
+<div class="highlight-python"><pre>./slowloris.pl -dns www.example.com -port 80 -timeout 30 -num 1000</pre>
+</div>
 </div>
 </div>
 
@@ -91,8 +95,8 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="index.html">
-  <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
+<a href="../index.html">
+  <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
 <div class="g-plusone"></div>
@@ -108,30 +112,28 @@
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Pics</a><ul>
-<li><a class="reference internal" href="#game-of-life">Game of life</a></li>
-<li><a class="reference internal" href="#python-powered">Python Powered</a></li>
-<li><a class="reference internal" href="#logo">Logo</a></li>
+<li><a class="reference internal" href="#">Benchmarking</a><ul>
+<li><a class="reference internal" href="#test-slow-clients">Test slow clients</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="settings.html"
-                        title="previous chapter">Settings</a></p>
+  <p class="topless"><a href="sync.html"
+                        title="previous chapter">Synchronous Clients</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="apps/socket.html"
-                        title="next chapter">Socket Servers</a></p>
+  <p class="topless"><a href="../api/index.html"
+                        title="next chapter">API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="sources/pics.txt"
+    <li><a href="../sources/tutorials/benchmarking.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
+    <form class="search" action="../search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />

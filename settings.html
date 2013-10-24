@@ -379,10 +379,9 @@ Must be a positive integer. Generally set in the range of 5-10.</p>
 <p>A task backend is string which connect to the backend storing Tasks)
 which accepts one parameter only and returns an instance of a
 distributed queue which has the same API as
-<tt class="xref py py-class docutils literal"><span class="pre">pulsar.MessageQueue</span></tt>. The only parameter passed to the
-task queue factory is a <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.config.Config</span></tt></a> instance.
-This parameters is used by <a class="reference internal" href="apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.TaskQueue</span></tt></a>
-application.</p>
+<tt class="xref py py-class docutils literal"><span class="pre">MessageQueue</span></tt>. The only parameter passed to the
+task queue factory is a <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> instance.
+This parameters is used by <a class="reference internal" href="apps/tasks/intro.html#pulsar.apps.tasks.TaskQueue" title="pulsar.apps.tasks.TaskQueue"><tt class="xref py py-class docutils literal"><span class="pre">TaskQueue</span></tt></a> application.</p>
 </div>
 <div class="section" id="task-paths">
 <span id="setting-task-paths"></span><h3>task_paths<a class="headerlink" href="#task-paths" title="Permalink to this headline">¶</a></h3>
@@ -398,7 +397,7 @@ application.</p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--schedule-periodic</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 <p>Enable scheduling of periodic tasks.</p>
-<p>If enabled, <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.PeriodicJob</span></tt> will produce
+<p>If enabled, <a class="reference internal" href="apps/tasks/jobs.html#pulsar.apps.tasks.models.PeriodicJob" title="pulsar.apps.tasks.models.PeriodicJob"><tt class="xref py py-class docutils literal"><span class="pre">PeriodicJob</span></tt></a> will produce
 tasks according to their schedule.</p>
 </div>
 </div>

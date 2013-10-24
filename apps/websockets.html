@@ -197,7 +197,9 @@ specific tasks when the websocket is opened or closed.</p>
 <tt class="descname">handshake</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.handshake" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<p>The handshake response/request</p>
+<p>The original handshake response/request.</p>
+<p>For a server-side <a class="reference internal" href="#pulsar.apps.ws.WebSocketProtocol" title="pulsar.apps.ws.WebSocketProtocol"><tt class="xref py py-class docutils literal"><span class="pre">WebSocketProtocol</span></tt></a> the handshake is a
+<a class="reference internal" href="http.html#pulsar.apps.http.HttpRequest" title="pulsar.apps.http.HttpRequest"><tt class="xref py py-class docutils literal"><span class="pre">HttpRequest</span></tt></a>, for client-side it is a :class:</p>
 <dl class="attribute">
 <dt id="pulsar.apps.ws.WebSocketProtocol.handler">
 <tt class="descname">handler</tt><a class="headerlink" href="#pulsar.apps.ws.WebSocketProtocol.handler" title="Permalink to this definition">¶</a></dt>

@@ -78,6 +78,14 @@ as well as <a class="reference internal" href="async.html#wsgi-handlers"><em>pul
 <a class="reference internal" href="middleware.html#wsgi-middleware"><em>pulsar router</em></a>,
 the <a class="reference internal" href="../rpc.html#apps-rpc"><em>pulsar RPC middleware</em></a> and
 the <a class="reference internal" href="../websockets.html#apps-ws"><em>websocket middleware</em></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Pulsar wsgi server is production ready designed to easily
+handle fast, scalable http applications. As all pulsar applications,
+it uses an event-driven, non-blocking I/O model that makes it
+lightweight and efficient. In addition, its multiprocessing
+capabilities allow to handle the <a class="reference external" href="http://en.wikipedia.org/wiki/C10k_problem">c10k problem</a> with ease.</p>
+</div>
 <p>An example of a web server written with <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> which responds
 with <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">World!</span></tt> for every request:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
@@ -105,11 +113,11 @@ To run the application:</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.WSGIServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wsgi <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.socket.SocketServer</span></tt></a>.</p>
+<dd><p>A WSGI <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a>.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.WSGIServer.protocol_consumer">
 <tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build the <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> factory.</p>
+<dd><p>Build the <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> factory.</p>
 <p>It uses the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.server.HttpServerResponse</span></tt></a>
 protocol consumer and the wsgi callable provided as parameter during
 initialisation.</p>
@@ -123,7 +131,7 @@ initialisation.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>cfg</em>, <em>server_software=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Server side WSGI <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a>.</p>
+<dd><p>Server side WSGI <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable">
 <tt class="descname">wsgi_callable</tt><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable" title="Permalink to this definition">¶</a></dt>
@@ -133,7 +141,7 @@ initialisation.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.data_received">
 <tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.data_received" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer.data_received" title="pulsar.ProtocolConsumer.data_received"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer.data_received</span></tt></a> method.</p>
+<dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer.data_received" title="pulsar.ProtocolConsumer.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">data_received()</span></tt></a> method.</p>
 <p>Once we have a full HTTP message, build the wsgi <tt class="docutils literal"><span class="pre">environ</span></tt> and
 delegate the response to the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable" title="pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable"><tt class="xref py py-func docutils literal"><span class="pre">wsgi_callable()</span></tt></a> function.</p>
 </dd></dl>

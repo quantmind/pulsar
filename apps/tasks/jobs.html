@@ -72,7 +72,7 @@
 <p>An application implements several <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>
 classes which specify the way each <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>task</em></a> is run.
 Each <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> class is a task-factory, therefore,
-a <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>task</em></a> is always associated
+a <a class="reference internal" href="../../api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is always associated
 with one <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>, which can be of two types:</p>
 <ul class="simple">
 <li>standard (<a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a>)</li>
@@ -91,7 +91,7 @@ with one <a class="reference internal" href="#pulsar.apps.tasks.models.Job" titl
         <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">consumer</span></tt>, instance of <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskConsumer</span></tt></a>,
+<p>The <tt class="docutils literal"><span class="pre">consumer</span></tt>, instance of <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt></a>,
 is passed by the <a class="reference internal" href="backend.html#apps-taskqueue-backend"><em>Task backend</em></a> and should
 always be the first positional parameter in the callable method.
 The remaining (optional) positional and key-valued parameters are needed by
@@ -193,7 +193,7 @@ as tasks factories.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>consumer</strong> &#8211; the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskConsumer</span></tt></a>
+<li><strong>consumer</strong> &#8211; the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskConsumer" title="pulsar.apps.tasks.backends.TaskConsumer"><tt class="xref py py-class docutils literal"><span class="pre">TaskConsumer</span></tt></a>
 handling the <a class="reference internal" href="backend.html#apps-taskqueue-task"><em>Task</em></a>. Must be the same instance
 as the one passed to the <a class="reference internal" href="#job-callable"><em>job callable</em></a> method.</li>
 <li><strong>jobname</strong> &#8211; The name of the <a class="reference internal" href="#pulsar.apps.tasks.models.Job" title="pulsar.apps.tasks.models.Job"><tt class="xref py py-class docutils literal"><span class="pre">Job</span></tt></a> to run.</li>
@@ -210,7 +210,7 @@ new job.</p>
 </tr>
 </tbody>
 </table>
-<p>This method invokes the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskBackend.run_job" title="pulsar.apps.tasks.backends.TaskBackend.run_job"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.tasks.backends.TaskBackend.run_job()</span></tt></a>
+<p>This method invokes the <a class="reference internal" href="backend.html#pulsar.apps.tasks.backends.TaskBackend.run_job" title="pulsar.apps.tasks.backends.TaskBackend.run_job"><tt class="xref py py-meth docutils literal"><span class="pre">TaskBackend.run_job()</span></tt></a>
 method with the additional <tt class="docutils literal"><span class="pre">from_task</span></tt> argument equal to the
 id of the task invoking the method.</p>
 </dd></dl>

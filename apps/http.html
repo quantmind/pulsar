@@ -108,7 +108,7 @@ HTTP requests.</p>
 <p><tt class="docutils literal"><span class="pre">resp</span></tt> is a <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><tt class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></tt></a> object which contains all the information
 about the request and, once finished, the result.</p>
 <p>The <tt class="docutils literal"><span class="pre">resp</span></tt> is finished once the <tt class="docutils literal"><span class="pre">on_finished</span></tt> attribute
-(a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>) is fired. In a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> one
+(a <a class="reference internal" href="../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>) is fired. In a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> one
 can obtained a full response by yielding <tt class="docutils literal"><span class="pre">on_finished</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">resp</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;https://github.com/timeline.json&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">on_finished</span>
 </pre></div>
@@ -236,7 +236,7 @@ handling <em>100 Continue</em>, <em>websocket upgrade</em> and <em>cookies</em>,
 <div class="section" id="api">
 <h2><a class="toc-backref" href="#id10">API</a><a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
 <p>The main class here is the <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a> which is a subclass of
-<a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a>.
+<a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>.
 You can use the client as a global singletone:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">requests</span> <span class="o">=</span> <span class="n">HttpClient</span><span class="p">()</span>
 </pre></div>
@@ -251,9 +251,9 @@ You can use the client as a global singletone:</p>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpClient">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.http.</tt><tt class="descname">HttpClient</tt><big>(</big><em>connection_factory=None</em>, <em>timeout=None</em>, <em>client_version=None</em>, <em>connection_pool=None</em>, <em>trust_env=True</em>, <em>max_connections=None</em>, <em>consumer_factory=None</em>, <em>event_loop=None</em>, <em>max_reconnect=None</em>, <em>force_sync=False</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> for HTTP/HTTPS servers.</p>
-<p>As <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Client</span></tt></a> it handles
-a pool of asynchronous <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Connection</span></tt></a>.</p>
+<dd><p>A <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a> for HTTP/HTTPS servers.</p>
+<p>As any <a class="reference internal" href="../api/protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a> it handles
+pools of asynchronous <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.http.HttpClient.headers">
 <tt class="descname">headers</tt><a class="headerlink" href="#pulsar.apps.http.HttpClient.headers" title="Permalink to this definition">¶</a></dt>
@@ -585,8 +585,8 @@ established, it returns <tt class="docutils literal"><span class="pre">None</spa
 <h3><a class="toc-backref" href="#id13">HTTP Response</a><a class="headerlink" href="#http-response" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.http.HttpResponse">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.http.</tt><tt class="descname">HttpResponse</tt><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for the HTTP client protocol.</p>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.http.</tt><tt class="descname">HttpResponse</tt><big>(</big><em>one_time_events=None</em>, <em>many_times_events=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> for the HTTP client protocol.</p>
 <p>Initialised by a call to the <a class="reference internal" href="#pulsar.apps.http.HttpClient.request" title="pulsar.apps.http.HttpClient.request"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient.request</span></tt></a> method.</p>
 <p>There are two events you can yield in a coroutine:</p>
 <dl class="attribute">
