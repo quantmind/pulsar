@@ -26,7 +26,7 @@ from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 from .pollers import DefaultIO
 
-__all__ = ['EventLoop', 'TimedCall']
+__all__ = ['EventLoop', 'TimedCall', 'run_in_loop_thread']
 
 
 def file_descriptor(fd):
@@ -41,6 +41,23 @@ def setid(self):
     self.tid = ct.ident
     self.pid = os.getpid()
     return ct
+
+
+def run_in_loop_thread(event_loop, callback, *args, **kwargs):
+    '''Run ``callable`` in the ``event_loop`` thread.
+
+    Return a :class:`Deferred`
+    '''
+    d = Deferred()
+
+    def _():
+        try:
+            result = yield callback(*args, **kwargs)
+        except Exception:
+            result = sys.exc_info()
+        d.set_result(result)
+    event_loop.call_soon_threadsafe(_)
+    return d
 
 
 class EventLoopPolicy(BaseEventLoopPolicy):
@@ -403,6 +420,7 @@ to transfer control from other threads to the EventLoop's thread.'''
         return handler
 
     def add_connector(self, fd, callback, *args):
+        '''Add a connector callback. Return a Handler instance.'''
         handler = TimedCall(None, callback, args)
         fd = file_descriptor(fd)
         self._io.add_writer(fd, handler)
@@ -582,7 +600,10 @@ the event loop to poll with a 0 timeout all the times.'''
         '''Run ``value`` in this event loop.
 
         If ``value`` is a :ref:`coroutine <coroutine>`, it is run immediately
-        in this event loop.'''
+        in this event loop.
+
+        :return: either ``value`` or a :class:`Deferred`
+        '''
         if isgenerator(value):
             return self.task_factory(value, event_loop=self)
         return value

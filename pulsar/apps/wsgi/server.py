@@ -245,7 +245,7 @@ def keep_alive(headers, version):
         if "close" in conn:
             return False
         elif 'upgrade' in conn:
-            headers['connection'] = 'Upgrade'
+            headers['connection'] = 'upgrade'
             return True
         elif "keep-alive" in conn:
             return True
@@ -264,7 +264,7 @@ def keep_alive_with_status(status, headers):
 
 
 class HttpServerResponse(ProtocolConsumer):
-    '''Server side WSGI :class:`pulsar.ProtocolConsumer`.
+    '''Server side WSGI :class:`.ProtocolConsumer`.
 
     .. attribute:: wsgi_callable
 
@@ -286,7 +286,7 @@ class HttpServerResponse(ProtocolConsumer):
         self.SERVER_SOFTWARE = server_software or self.SERVER_SOFTWARE
 
     def data_received(self, data):
-        '''Implements :class:`pulsar.ProtocolConsumer.data_received` method.
+        '''Implements :meth:`~.ProtocolConsumer.data_received` method.
 
         Once we have a full HTTP message, build the wsgi ``environ`` and
         delegate the response to the :func:`wsgi_callable` function.
@@ -310,7 +310,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     @property
     def upgrade(self):
-        return self.headers.get('Upgrade')
+        return self.headers.get('upgrade')
 
     @property
     def chunked(self):

@@ -78,8 +78,13 @@ def parse_address(netloc, default_port=8000):
         return netloc
     #
     netloc = native_str(netloc)
+    auth = None
+    # Check if auth is available
+    if '@' in netloc:
+        auth, netloc = netloc.split('@')
     if netloc.startswith("unix:"):
-        return netloc.split("unix:")[1]
+        host = netloc.split("unix:")[1]
+        return '%s@%s' % (auth, host) if auth else host
     # get host
     if '[' in netloc and ']' in netloc:
         host = netloc.split(']')[0][1:].lower()
@@ -98,7 +103,7 @@ def parse_address(netloc, default_port=8000):
         port = int(port)
     else:
         port = default_port
-    return (host, port)
+    return ('%s@%s' % (auth, host) if auth else host, port)
 
 
 def parse_connection_string(connection_string, default_port=8000):

@@ -53,14 +53,9 @@ class ProtocolConsumer(EventHandler):
     '''
     _connection = None
     _request = None
-    #
+    _data_received_count = 0
     ONE_TIME_EVENTS = ('pre_request', 'post_request')
     MANY_TIMES_EVENTS = ('data_received', 'data_processed')
-
-    def __init__(self):
-        super(ProtocolConsumer, self).__init__()
-        self._data_received_count = 0
-        self._reconnect_retries = 0
 
     @property
     def connection(self):
@@ -199,8 +194,7 @@ class ProtocolConsumer(EventHandler):
         # Called by Connection, it updates the counters and invoke
         # the high level data_received method which must be implemented
         # by subclasses
-        self._data_received_count += 1
-        self._reconnect_retries = 0
+        self._data_received_count = self._data_received_count + 1
         self.fire_event('data_received', data=data)
         result = self.data_received(data)
         self.fire_event('data_processed', data=data)
@@ -281,7 +275,7 @@ class Connection(EventHandler, Protocol):
     def address(self):
         '''The address of this connection.'''
         if self._transport:
-            addr = self._transport._extra.get('addr')
+            addr = self._transport.get_extra_info('addr')
             if not addr:
                 addr = self._transport.address
             return addr

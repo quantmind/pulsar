@@ -26,7 +26,7 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 about the request and, once finished, the result.
 
 The ``resp`` is finished once the ``on_finished`` attribute
-(a :class:`pulsar.Deferred`) is fired. In a :ref:`coroutine <coroutine>` one
+(a :class:`.Deferred`) is fired. In a :ref:`coroutine <coroutine>` one
 can obtained a full response by yielding ``on_finished``::
 
     resp = yield client.get('https://github.com/timeline.json').on_finished
@@ -165,7 +165,7 @@ API
 ==========
 
 The main class here is the :class:`HttpClient` which is a subclass of
-:class:`pulsar.Client`.
+:class:`~pulsar.Client`.
 You can use the client as a global singletone::
 
 
@@ -630,7 +630,7 @@ class HttpRequest(pulsar.Request, RequestBase):
 
 
 class HttpResponse(pulsar.ProtocolConsumer):
-    '''A :class:`pulsar.ProtocolConsumer` for the HTTP client protocol.
+    '''A :class:`.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
 
@@ -786,10 +786,10 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
 
 class HttpClient(pulsar.Client):
-    '''A :class:`pulsar.Client` for HTTP/HTTPS servers.
+    '''A :class:`~pulsar.Client` for HTTP/HTTPS servers.
 
-    As :class:`pulsar.Client` it handles
-    a pool of asynchronous :class:`pulsar.Connection`.
+    As any :class:`~pulsar.Client` it handles
+    pools of asynchronous :class:`.Connection`.
 
     .. attribute:: headers
 

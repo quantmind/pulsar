@@ -3,7 +3,7 @@ import sys
 from threading import current_thread
 
 import pulsar
-from pulsar import Failure
+from pulsar import Failure, run_in_loop_thread, Deferred
 from pulsar.utils.pep import get_event_loop, new_event_loop
 from pulsar.apps.test import unittest, mute_failure
 
@@ -169,3 +169,19 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(d.done())
         self.assertFalse(event_loop.running)
 
+    def test_run_in_thread_loop(self):
+        event_loop = get_event_loop()
+        def simple(a, b):
+            return a + b
+        d = run_in_loop_thread(event_loop, simple, 1, 2)
+        self.assertIsInstance(d, Deferred)
+        result = yield d
+        self.assertEqual(result, 3)
+        d = run_in_loop_thread(event_loop, simple, 1, 'a')
+        self.assertIsInstance(d, Deferred)
+        try:
+            result = yield d
+        except TypeError:
+            pass
+        else:
+            assert False, "TypeError not raised"

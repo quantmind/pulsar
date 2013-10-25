@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Httpbin server stats</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js"></script>
+<script>
+(function($) {
+    $(document).ready(function() {
+        var data = {},
+            current_freq=0,
+            next,
+            ws = new WebSocket("%(address)s"),
+            freq = $('#frequency').change(function () {
+                var value = parseInt($(this).val());
+                if (value >= 0) {
+                    current_freq = value;
+                    if (next) {
+                        clearTimeout(next);
+                        next = null;
+                    }
+                    next_call();
+                }
+            }),
+            next_call = function() {
+              if (current_freq > 0) {
+                  next = setTimeout(function () {
+                      ws.send('more data');
+                  }, 1000*current_freq);
+              } else {
+                  ws.send('more data');
+              }
+            };
+        //
+        ws.onmessage = function (e) {
+          //alert('got ' + e.data);
+          try {
+            var data = $.parseJSON(e.data);
+            $.plot('#holder', [data],
+                    {
+                      series: {
+                        lines: { show: true, fill: true },
+                      },
+                      yaxis: { min: 0 },
+                    } );
+          } catch(e){}
+          next_call();
+        };
+        ws.onopen = function() {
+            ws.send('hi there');
+        };
+    });
+}(jQuery));
+</script>
+</head>
+<body>
+<h3>Plot</h3>
+<div id="holder" style="width:600px;height:300px"></div>
+<label for='frequency'>Frequency</label>
+<input id="frequency" type='number'></input>
+</body>
+</html>

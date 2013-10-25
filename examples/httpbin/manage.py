@@ -24,7 +24,7 @@ from pulsar import HttpRedirect, HttpException, version, async, JAPANESE
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import route, Html, Json
+from pulsar.apps.wsgi import route, Html, Json, HtmlDocument
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
@@ -198,6 +198,20 @@ class HttpBin(wsgi.Router):
         request.response.content_type = 'text/html'
         request.response.content = data
         return request.response
+
+    @route('stats', title='Live server statistics')
+    def request_stats(self, request):
+        '''Live stats for the server.
+
+        Try sending lots of requests
+        '''
+        scheme = 'wss' if request.is_secure else 'ws'
+        host = request.get('HTTP_HOST')
+        address = '%s://%s/stats' % (scheme, host)
+        docs = HtmlDocument(title='Live server stats',
+                            media_path='/assets/')
+        docs.head.scripts
+        return doc.http_response(request)
 
     @route('expect', method='post', title='Expectation Failed')
     def expectation_failure(self, request):

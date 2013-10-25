@@ -1,5 +1,14 @@
-Ver. 0.7.2 - Development
+Ver. 0.8.0 - Development
 ===========================
+* Added :func:`pulsar.run_in_loop_thread` high level function. The function
+  runs a callable in the event loop thread and returns :class:`pulsar.Deferred`
+  called back once the callable has a result/exception.
+* **821 regression tests**, **91% coverage**.
+
+Ver. 0.7.2 - 2013-Oct-16
+===========================
+* A bug fix release.
+* Must upgrade if using the :ref:`django pulse <apps-pulse>` application.
 * Use ujson_ if installed.
 * Fixed :ref:`wait for body middleware <wait-for-body-middleware>`.
 * Fixed :ref:`django pulse <apps-pulse>` application when the client request
