@@ -1,7 +1,7 @@
 '''Asynchronous application for serving requests
-on sockets. This is the base class of :class:`pulsar.apps.wsgi.WSGIServer`.
+on sockets. This is the base class of :class:`.WSGIServer`.
 All is needed by a :class:`SocketServer` is a callable which build a
-:class:`pulsar.ProtocolConsumer` for each new client request received.
+:class:`.ProtocolConsumer` for each new client request received.
 This is an example of a script for an Echo server::
 
     import pulsar
@@ -45,7 +45,7 @@ rarely used.
 
 keep_alive
 ---------------
-To control how long a server :class:`pulsar.Connection` is kept alive after the
+To control how long a server :class:`.Connection` is kept alive after the
 last read from the remote client, one can use the
 :ref:`keep-alive <setting-keep_alive>` setting::
 
@@ -79,9 +79,9 @@ When running a :class:`SocketServer` in threading mode::
 
     python script.py --concurrency thread
 
-the number of :class:`pulsar.Actor` serving the application is set
+the number of :class:`.Actor` serving the application is set
 to ``0`` so that the application is actually served by the
-:class:`pulsar.Arbiter` event-loop (we refer this to a single process server).
+:class:`.Arbiter` event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
 load servers.
 
@@ -171,7 +171,7 @@ class CertFile(SocketSetting):
 
 
 class SocketServer(pulsar.Application):
-    '''A :class:`pulsar.apps.Application` which serve application on a socket.
+    '''A :class:`.Application` which serve application on a socket.
 
     It bind a socket to a given address and listen for requests. The request
     handler is constructed from the callable passed during initialisation.
@@ -185,10 +185,10 @@ class SocketServer(pulsar.Application):
     cfg = pulsar.Config(apps=['socket'])
 
     def protocol_consumer(self):
-        '''Factory of :class:`pulsar.ProtocolConsumer` used by the server.
+        '''Factory of :class:`.ProtocolConsumer` used by the server.
 
-        By default it returns the :attr:`pulsar.apps.Application.callable`
-        attribute.'''
+        By default it returns the :meth:`.Application.callable`.
+        '''
         return self.callable
 
     def monitor_start(self, monitor):

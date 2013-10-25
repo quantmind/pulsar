@@ -109,7 +109,7 @@ class StreamReader:
     def read(self, maxbuf=None):
         '''Return bytes in the buffer.
 
-        If the stream is not yet ready, return a :class:`pulsar.Deferred`
+        If the stream is not yet ready, return a :class:`.Deferred`
         which results in the bytes read.
         '''
         if not self._waiting:

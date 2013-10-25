@@ -2,7 +2,9 @@ Ver. 0.8.0 - Development
 ===========================
 * asyncio_ integration with several changes in internals. The integration
   works with all supported python versions.
-* :class:`.Deferred` is a subclass of ``asyncio.Future``.
+* This version brings some backward incompatible changes for internals classes
+  since we needed to bring in line the :class:`.Deferred` with asyncio_.
+* :class:`.Deferred` is a now subclass of ``asyncio.Future``.
 * Renamed ``Task`` as :class:`.DeferredTask`. No conflict with the
   :class:`.Task` class in the :ref:`task queue application <apps-taskqueue>`.
   No problem in doing so since a deferred task is never initialised directly.

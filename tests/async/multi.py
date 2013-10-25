@@ -11,9 +11,9 @@ class TestApi(unittest.TestCase):
     def test_empy_list(self):
         r = multi_async(())
         self.assertTrue(r.done())
-        self.assertEqual(r.result, [])
+        self.assertEqual(r.result(), [])
 
     def test_empy_dict(self):
         r = multi_async({})
         self.assertTrue(r.done())
-        self.assertEqual(r.result, {})
+        self.assertEqual(r.result(), {})
