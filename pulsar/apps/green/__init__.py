@@ -15,9 +15,9 @@ Lets assume a generator ``gen``.
 from socket import socket
 
 import pulsar
-from pulsar import ImproperlyConfigured
+from pulsar import get_event_loop, ImproperlyConfigured
 from pulsar.async.defer import _PENDING
-from pulsar.utils.pep import get_event_loop, ispy3k
+from pulsar.utils.pep import ispy3k
 
 try:
     import greenlet
@@ -31,7 +31,7 @@ except ImportError:
     greenlet = None
 
 
-class GreenTask(pulsar.Task):
+class GreenTask(pulsar.DeferredTask):
     _greenlet = None
 
     def _consume(self, result):

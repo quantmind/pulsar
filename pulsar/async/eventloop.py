@@ -17,13 +17,13 @@ from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_local_data, LOGGER
-from .defer import Task, Deferred, Failure, TimeoutError
+from .defer import DeferredTask, Deferred, Failure, TimeoutError
 from .stream import create_connection, start_serving, sock_connect, sock_accept
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 from .pollers import DefaultIO
 
-__all__ = ['EventLoop', 'run_in_loop_thread']
+__all__ = ['EventLoop']
 
 
 def file_descriptor(fd):
@@ -38,23 +38,6 @@ def setid(self):
     self.tid = ct.ident
     self.pid = os.getpid()
     return ct
-
-
-def run_in_loop_thread(loop, callback, *args, **kwargs):
-    '''Run ``callable`` in the ``loop`` thread.
-
-    Return a :class:`Deferred`
-    '''
-    d = Deferred()
-
-    def _():
-        try:
-            result = yield callback(*args, **kwargs)
-        except Exception:
-            result = sys.exc_info()
-        d.set_result(result)
-    loop.call_soon_threadsafe(_)
-    return d
 
 
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
@@ -158,7 +141,7 @@ class EventLoop(BaseEventLoop):
     tid = None
     pid = None
     exit_signal = None
-    task_factory = Task
+    task_factory = DeferredTask
 
     def __init__(self):
         self.clear()

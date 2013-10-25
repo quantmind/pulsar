@@ -131,7 +131,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         except ValueError:
             pass
         self.assertTrue(response.headers)
-        self.assertIsInstance(response.on_headers.result, Failure)
+        self.assertIsInstance(response.on_headers.result(), Failure)
 
     def test_request_object(self):
         http = self.client()

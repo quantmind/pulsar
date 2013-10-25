@@ -1,4 +1,3 @@
-.. module:: pulsar
 
 .. _protocol-api:
 
@@ -15,61 +14,33 @@ comply with pep-3156_ specification
 Transports
 ==========================
 
-Transport
-~~~~~~~~~~~~~~~~~~
+.. module:: pulsar.async.internet
 
-.. autoclass:: Transport
-   :members:
-   :member-order: bysource
-   
-   
 SocketTransport
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: SocketTransport
    :members:
    :member-order: bysource
-   
-  
+
+
+.. module:: pulsar.async.protocols
+
 Protocols
 ==========================
-
-BaseProtocol
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: BaseProtocol
-   :members:
-   :member-order: bysource
-
-
-Protocol
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Protocol
-   :members:
-   :member-order: bysource
-   
-   
-DatagramProtocol
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: DatagramProtocol
-   :members:
-   :member-order: bysource
-
 
 Connection
 ~~~~~~~~~~~~~~
 .. autoclass:: Connection
    :members:
    :member-order: bysource
-   
-   
+
+
 Protocol Consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProtocolConsumer
    :members:
-   :member-order: bysource      
+   :member-order: bysource
 
 
 Producers
@@ -95,6 +66,9 @@ Server
 .. autoclass:: Server
    :members:
    :member-order: bysource
+
+
+.. module:: pulsar.async.clients
 
 .. _clients-api:
 
@@ -124,6 +98,6 @@ Request
 .. autoclass:: Request
    :members:
    :member-order: bysource
-   
+
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

@@ -55,7 +55,7 @@ class TestQueue(unittest.TestCase):
         result = yield q.put('Hello')
         self.assertEqual(result, None)
         self.assertTrue(item.done())
-        self.assertEqual(item.result, 'Hello')
+        self.assertEqual(item.result(), 'Hello')
         self.assertEqual(q.qsize(), 0)
 
     def test_maxsize(self):
@@ -81,11 +81,11 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(q.qsize(), 2)
 
     def test_event_loop(self):
-        q1 = Queue(event_loop=get_request_loop())
-        q2 = Queue(event_loop=get_event_loop())
+        q1 = Queue(loop=get_request_loop())
+        q2 = Queue(loop=get_event_loop())
         q3 = Queue()
-        self.assertEqual(q2.event_loop, q3.event_loop)
-        self.assertNotEqual(q1.event_loop, q3.event_loop)
+        self.assertEqual(q2._loop, q3._loop)
+        self.assertNotEqual(q1._loop, q3._loop)
 
     def test_put_timeout(self):
         q = Queue(maxsize=2)
@@ -111,7 +111,7 @@ class TestQueue(unittest.TestCase):
         r = q.put('ciao')
         self.assertIsInstance(r, Deferred)
         self.assertTrue(r.done())
-        self.assertEqual(r.result, None)
+        self.assertEqual(r.result(), None)
         self.assertEqual(q.get_nowait(), 'ciao')
         self.assertRaises(Empty, q.get_nowait)
 

@@ -11,7 +11,7 @@ from .consts import *
 
 __all__ = ['Deferred',
            'MultiDeferred',
-           'Task',
+           'DeferredTask',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
@@ -26,14 +26,8 @@ __all__ = ['Deferred',
            'multi_async',
            'async_sleep',
            'async_while',
-           'safe_async']
-
-
-class CoroutineReturn(BaseException):
-
-    def __init__(self, value):
-        self.value = value
-
+           'safe_async',
+           'run_in_loop_thread']
 
 if not getattr(asyncio, 'fallback', False):
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
@@ -41,7 +35,11 @@ if not getattr(asyncio, 'fallback', False):
 else:   # pragma    nocover
     from ._asyncio import _PENDING, _CANCELLED, _FINISHED
 
+from . import _asyncio
+
 # States of Deferred
+coroutine_return = _asyncio.coroutine_return
+CoroutineReturn = _asyncio.CoroutineReturn
 InvalidStateError = asyncio.InvalidStateError
 CancelledError = asyncio.CancelledError
 TimeoutError = asyncio.TimeoutError
@@ -89,10 +87,6 @@ def as_async_exec_info(exc_info):
         trace = format_exception(exctype, value, tb)
         exc_info = async_exec_info(exctype, value, trace)
     return exc_info
-
-
-def coroutine_return(value=None):
-    raise CoroutineReturn(value)
 
 
 def iterdata(stream, start=0):
@@ -147,7 +141,7 @@ def default_maybe_async(val, get_result=True, loop=None, **kwargs):
     if isgenerator(val):
         loop = loop or get_request_loop()
         assert loop, 'No event loop available'
-        task_factory = getattr(loop, 'task_factory', Task)
+        task_factory = getattr(loop, 'task_factory', DeferredTask)
         val = task_factory(val, loop, **kwargs)
     if isinstance(val, Deferred):
         if get_result and val.done():
@@ -171,7 +165,7 @@ def maybe_async(value, loop=None, timeout=None, get_result=True):
 
     :parameter value: the value to convert to an asynchronous instance
         if it needs to.
-    :parameter loop: optional :class:`EventLoop`.
+    :parameter loop: optional :class:`.EventLoop`.
     :parameter timeout: optional timeout after which any asynchronous element
         get a cancellation.
     :parameter get_result: optional flag indicating if to get the result in
@@ -354,6 +348,23 @@ def async_while(timeout, while_clause, *args):
     return maybe_async(_(), get_result=False)
 
 
+def run_in_loop_thread(loop, callback, *args, **kwargs):
+    '''Run ``callable`` in the event ``loop`` thread.
+
+    Return a :class:`.Deferred`
+    '''
+    d = Deferred()
+
+    def _():
+        try:
+            result = yield callback(*args, **kwargs)
+        except Exception:
+            result = sys.exc_info()
+        d.set_result(result)
+    loop.call_soon_threadsafe(_)
+    return d
+
+
 ############################################################### FAILURE
 class Failure(object):
     '''The asynchronous equivalent of python Exception.
@@ -464,10 +475,14 @@ which will be put off until later. It conforms with the
 
 :param timeout: optional timeout. If greater than zero the deferred will be
     cancelled after ``timeout`` seconds if no result is available.
-:param loop: If supplied, it is the :class:`EventLoop` associated
+:param loop: If supplied, it is the :class:`.EventLoop` associated
     with this :class:`Deferred`. If not supplied, the default event loop
     is used. The event loop associated with this :class:`Deferred` is accessed
-    via the :attr:`loop` attribute.
+    via the :attr:`_loop` attribute.
+
+.. attribute:: _loop
+
+    The event loop associated with this :class:`Deferred`.
 
 .. attribute:: paused
 
@@ -508,8 +523,11 @@ which will be put off until later. It conforms with the
 
     @property
     def timeout(self):
-        '''The :class:`TimedCall` which handles the timeout of this
-:class:`Deferred`. Available only when a timeout is set.'''
+        '''The ``asyncio.TimerHandle`` which handles the timeout of this
+        :class:`Deferred`.
+
+        Available only when a timeout is set.
+        '''
         return self._timeout
 
     def set_timeout(self, timeout, loop=None):
@@ -740,14 +758,15 @@ the :class:`Deferred` object.'''
         return self._result
 
 
-class Task(Deferred):
-    '''A :class:`Task` is a :class:`Deferred` which consumes a
-:ref:`coroutine <coroutine>`.
-The callback will occur once the coroutine has finished
-(when it raises StopIteration), or an unhandled exception occurs.
-Instances of :class:`Task` are never
-initialised directly, they are created by the :func:`maybe_async`
-function when a generator is passed as argument.'''
+class DeferredTask(Deferred):
+    '''A :class:`Deferred` which consumes a :ref:`coroutine <coroutine>`.
+
+    The callback will occur once the coroutine has finished
+    (when it raises StopIteration), or an unhandled exception occurs.
+    Instances of :class:`DeferredTask` are never
+    initialised directly, they are created by the :func:`maybe_async`
+    function when a generator is passed as argument.
+    '''
     _waiting = None
 
     def __init__(self, gen, loop, timeout=None):
@@ -818,7 +837,7 @@ function when a generator is passed as argument.'''
         if self._waiting:
             self._waiting.cancel(msg, mute)
         else:
-            super(Task, self).cancel(msg, mute)
+            super(DeferredTask, self).cancel(msg, mute)
 
 
 ############################################################### MultiDeferred

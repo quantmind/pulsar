@@ -44,9 +44,9 @@ except ImportError:     # pragma    nocover
         raise
 
 import pulsar
+from pulsar import get_event_loop
 from pulsar.async.defer import (default_maybe_async, default_maybe_failure,
                                 set_async)
-from pulsar.utils.pep import get_event_loop
 
 
 def _maybe_async(obj, **params):    # pragma    nocover

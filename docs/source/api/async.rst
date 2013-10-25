@@ -1,4 +1,4 @@
-.. module:: pulsar
+.. module:: pulsar.async
 
 .. _async-api:
 
@@ -12,36 +12,30 @@ Event loop
 Poller
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Poller
+.. autoclass:: pulsar.async.pollers.Poller
    :members:
    :member-order: bysource
-   
-   
-Timed Call
-~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TimedCall
-   :members:
-   :member-order: bysource
-   
-   
+
 EventLoop
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: EventLoop
+.. autoclass:: pulsar.async.eventloop.EventLoop
    :members:
    :member-order: bysource
-      
+
 
 .. _async-discovery:
+
+.. module:: pulsar.async.defer
 
 Async Discovery Functions
 =================================
 
 This section describes the asynchronous discover functions which are used
 throughout the library to access if objects are asynchronous or not.
-There are two important functions: :func:`maybe_async` and :func:`maybe_failure`
-for asynchronous exceptions.
+There are two important functions: :func:`.maybe_async` and
+:func:`.maybe_failure` for asynchronous exceptions.
 
 Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
@@ -53,9 +47,11 @@ Maybe Failure
 
 .. autofunction:: maybe_failure
 
+
 Set Async
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: set_async
+
 
 Is failure
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -73,9 +69,11 @@ Async
 
 .. autoclass:: async
 
+
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
+
 
 Safe Async
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,13 +82,21 @@ Safe Async
     Safely execute a ``callable`` and always return a :class:`Deferred`,
     even if the ``callable`` is not asynchronous. Never throws.
 
+
 Async Sleep
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_sleep
 
+
 Async While
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_while
+
+
+Run in loop thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: run_in_loop_thread
+
 
 Asynchronous Classes
 ==========================
@@ -105,27 +111,30 @@ Deferred
 .. autoclass:: Deferred
    :members:
    :member-order: bysource
-   
+
 Multi Deferred
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: MultiDeferred
    :members:
    :member-order: bysource
-   
-Task
+
+DeferredTask
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Task
+.. autoclass:: DeferredTask
    :members:
    :member-order: bysource
-   
+
 Failure
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Failure
    :members:
    :member-order: bysource
+
+
+.. module:: pulsar.async.events
 
 Events
 ============
@@ -148,6 +157,9 @@ Events Handler
 .. autoclass:: EventHandler
    :members:
    :member-order: bysource
+
+
+.. module:: pulsar.async.queues
 
 Queues
 =============

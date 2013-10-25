@@ -148,7 +148,7 @@ class Tunneling:
     def on_headers(self, response):
         '''Called back once the headers have arrived.'''
         if response.status_code == 200:
-            loop = response.event_loop
+            loop = response._loop
             loop.remove_reader(response.transport.sock.fileno())
             # Wraps the socket at the next iteration loop. Important!
             loop.call_soon_threadsafe(self.switch_to_ssl, response)
@@ -157,7 +157,7 @@ class Tunneling:
 
     def switch_to_ssl(self, prev_response):
         '''Wrap the transport for SSL communication.'''
-        loop = prev_response.event_loop
+        loop = prev_response._loop
         request = prev_response._request.request
         connection = prev_response._connection
         response = connection.upgrade(build_consumer=True)

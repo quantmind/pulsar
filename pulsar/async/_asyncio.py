@@ -23,6 +23,16 @@ class InvalidStateError(Error):
     """The operation is not allowed in this state."""
 
 
+class CoroutineReturn(BaseException):
+
+    def __init__(self, value):
+        self.value = value
+
+
+def coroutine_return(value=None):
+    raise CoroutineReturn(value)
+
+
 class AbstractEventLoopPolicy(object):
     """Abstract policy for accessing the event loop."""
 
@@ -55,7 +65,7 @@ def get_event_loop_policy():
 def set_event_loop_policy(policy):
     """XXX"""
     global _event_loop_policy
-    assert policy is None or isinstance(policy, EventLoopPolicy)
+    assert policy is None or isinstance(policy, AbstractEventLoopPolicy)
     _event_loop_policy = policy
 
 
@@ -223,7 +233,7 @@ was cancelled.'''
             self._blocking = True
             yield self  # This tells Task to wait for completion.
         assert self.done(), "yield from wasn't used with future"
-        return self.result()  # May raise too.
+        coroutine_return(self.result())  # May raise too.
 
 
 ###########################################################################
