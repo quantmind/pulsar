@@ -106,9 +106,9 @@ class TestTestWorker(unittest.TestCase):
         def _callback():
             d.callback(current_thread().ident)
         worker.event_loop.call_later(0.2, _callback)
-        yield d
-        self.assertEqual(worker.tid, d.result)
-        self.assertEqual(worker.event_loop.tid, d.result)
+        result = yield d
+        self.assertEqual(worker.tid, result)
+        self.assertEqual(worker.event_loop.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop.tid, current_thread().ident)
 
@@ -127,8 +127,8 @@ class TestTestWorker(unittest.TestCase):
         # The target does not exists
         future = pulsar.send('vcghdvchdgcvshcd',
                              'ping').add_both(lambda r: [r])
-        yield future
-        self.assertTrue(is_failure(future.result[0]))
+        result = yield future
+        self.assertTrue(is_failure(result[0]))
 
     def test_multiple_execute(self):
         m = yield multi_async((send('arbiter', 'run', wait, 1.2),

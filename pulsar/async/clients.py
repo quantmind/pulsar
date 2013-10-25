@@ -5,11 +5,11 @@ import logging
 from functools import partial, reduce
 from threading import Lock
 
-from pulsar.utils.pep import get_event_loop, new_event_loop, itervalues, range
+from pulsar.utils.pep import itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
+from .access import asyncio, new_event_loop
 from .defer import Failure, is_failure, multi_async
-
 from .protocols import Producer, ConnectionProducer
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
@@ -56,11 +56,11 @@ class Request(object):
     def encode(self):
         raise NotImplementedError
 
-    def connect(self, event_loop, connection):
+    def connect(self, loop, connection):
         '''Called by a :class:`Client` when a new connection is needed.
         '''
         host, port = self.address
-        _, connection = yield event_loop.create_connection(
+        _, connection = yield loop.create_connection(
             lambda: connection, host, port, ssl=self.ssl)
         # wait for the connection_made event
         yield connection.event('connection_made')
@@ -227,8 +227,7 @@ class Client(Producer):
     :param connection_factory: set the :attr:`Producer.connection_factory`
         attribute.
     :param force_sync: set the :attr:`force_sync` attribute.
-    :param event_loop: optional :class:`EventLoop` which set the
-        :attr:`event_loop`.
+    :param loop: optional event loop which set the :attr:`_loop` attribute.
     :param connection_pool: optional factory which set the
         :attr:`connection_pool`.
         The :attr:`connection_pool` can also be set at class level.
@@ -237,7 +236,7 @@ class Client(Producer):
     :parameter client_version: optional version string for this
         :class:`Client`.
 
-    .. attribute:: event_loop
+    .. attribute:: _loop
 
         The :class:`EventLoop` for this :class:`Client`. Can be ``None``.
         The preferred way to obtain the event loop is via the
@@ -276,7 +275,7 @@ class Client(Producer):
 
     def __init__(self, connection_factory=None, timeout=None,
                  client_version=None, connection_pool=None, trust_env=True,
-                 max_connections=None, consumer_factory=None, event_loop=None,
+                 max_connections=None, consumer_factory=None, loop=None,
                  max_reconnect=None, force_sync=False, **params):
         super(Client, self).__init__(connection_factory=connection_factory,
                                      timeout=timeout,
@@ -293,7 +292,7 @@ class Client(Producer):
         if max_reconnect:
             self.max_reconnect = max_reconnect
         self.force_sync = force_sync
-        self.event_loop = event_loop
+        self._loop = loop
         self.setup(**params)
 
     def __repr__(self):
@@ -336,15 +335,14 @@ class Client(Producer):
         The event loop can be set during initialisation. If :attr:`force_sync`
         is ``True`` a specialised event loop is created.
         '''
-        if self.event_loop:
-            return self.event_loop
+        if self._loop:
+            return self._loop
         elif self.force_sync:
             logger = logging.getLogger(('pulsar.%s' % self).lower())
-            self.event_loop = new_event_loop(iothreadloop=False,
-                                             logger=logger)
-            return self.event_loop
+            self._loop = new_event_loop(iothreadloop=False, logger=logger)
+            return self._loop
         else:
-            return get_event_loop()
+            return asyncio.get_event_loop()
 
     def build_consumer(self, consumer_factory=None):
         '''Override the :meth:`Producer.build_consumer` method.
@@ -393,7 +391,7 @@ class Client(Producer):
         :return: a :class:`ProtocolConsumer` obtained form
             :attr:`consumer_factory`.
         '''
-        event_loop = self.get_event_loop()
+        loop = self.get_event_loop()
         if response is None or response.has_finished:
             response = self.build_consumer()
         inp_params = request.inp_params
@@ -406,12 +404,11 @@ class Client(Producer):
             response.silence_event('pre_request')
             response._request = request
         else:   # A new request
-            event_loop.call_soon_threadsafe(self._response, event_loop,
-                                            response, request, new_connection,
-                                            connection)
-            if self.force_sync and not event_loop.is_running():
-                event_loop.run_until_complete(response.on_finished,
-                                              timeout=request.timeout)
+            loop.call_soon_threadsafe(self._response, loop, response, request,
+                                      new_connection, connection)
+            if self.force_sync and not loop.is_running():
+                loop.run_until_complete(response.on_finished,
+                                        timeout=request.timeout)
                 return response.on_finished.get_result()
         return response
 
@@ -518,8 +515,7 @@ class Client(Producer):
 
     #   INTERNALS
 
-    def _response(self, event_loop, response, request, new_connection,
-                  connection):
+    def _response(self, loop, response, request, new_connection, connection):
         # Actually execute the request. This method is always called on the
         # event loop thread
         try:
@@ -530,8 +526,8 @@ class Client(Producer):
                 conn.set_consumer(response)
             if conn.transport is None:
                 # There is no transport, we need to connect with server first
-                event_loop.async(request.connect(
-                    event_loop, conn)).add_errback(response.finished)
+                loop.async(request.connect(
+                    loop, conn)).add_errback(response.finished)
             else:
                 response.start(request)
             return

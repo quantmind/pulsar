@@ -3,9 +3,16 @@ import logging
 from threading import current_thread
 from multiprocessing import current_process
 
-from pulsar.utils.pep import get_event_loop_policy
+try:
+    import asyncio
+except ImportError:  # pragma    nocover
+    from . import _asyncio as asyncio
+
 
 __all__ = ['get_request_loop',
+           'get_event_loop',
+           'new_event_loop',
+           'asyncio',
            'get_actor',
            'is_mainthread',
            'process_local_data',
@@ -13,8 +20,20 @@ __all__ = ['get_request_loop',
            'logger',
            'NOTHING']
 
+
 LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
+
+
+get_event_loop = asyncio.get_event_loop
+
+
+def new_event_loop(**kwargs):
+    '''Obtain a new event loop.'''
+    loop = asyncio.new_event_loop()
+    if hasattr(loop, 'setup_loop'):
+        loop.setup_loop(**kwargs)
+    return loop
 
 
 def is_mainthread(thread=None):
@@ -25,11 +44,11 @@ the current thread.'''
 
 
 def get_request_loop():
-    return get_event_loop_policy().get_request_loop()
+    return asyncio.get_event_loop_policy().get_request_loop()
 
 
-def logger(event_loop=None):
-    return getattr(event_loop or get_request_loop(), 'logger', LOGGER)
+def logger(loop=None):
+    return getattr(loop or get_request_loop(), 'logger', LOGGER)
 
 
 def process_local_data(name=None):

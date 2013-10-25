@@ -25,7 +25,7 @@ They are:
   :class:`pulsar.Actor.start` method is called.
 * ``ACTOR_STATES.STARTING = 2`` when :class:`pulsar.Actor.start` method
   is called.
-* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up
+* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor._loop` is up
   and running.
 * ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been
   called for the first time and the actor is running.

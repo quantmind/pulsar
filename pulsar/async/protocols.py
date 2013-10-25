@@ -6,11 +6,14 @@ from pulsar.utils.internet import nice_address, format_address
 
 from .defer import multi_async, log_failure
 from .events import EventHandler
-from .internet import Protocol, logger
+from .access import asyncio, logger
 
 
-__all__ = ['Protocol', 'ProtocolConsumer', 'Connection', 'Producer',
-           'ConnectionProducer', 'Server']
+__all__ = ['ProtocolConsumer',
+           'Connection',
+           'Producer',
+           'ConnectionProducer',
+           'Server']
 
 BIG = 2**31
 
@@ -63,13 +66,13 @@ class ProtocolConsumer(EventHandler):
         return self._connection
 
     @property
-    def event_loop(self):
+    def _loop(self):
         '''The event loop of this consumer.
 
         The same as the :attr:`connection` event loop.
         '''
         if self._connection:
-            return self._connection.event_loop
+            return self._connection._loop
 
     @property
     def request(self):
@@ -201,7 +204,7 @@ class ProtocolConsumer(EventHandler):
         return result
 
 
-class Connection(EventHandler, Protocol):
+class Connection(EventHandler, asyncio.Protocol):
     '''A :class:`Protocol` which represents a client or server connection
     with an end-point. A :class:`Connection` is not connected until
     :meth:`connection_made` is called by a :class:`Transport`.
@@ -266,10 +269,10 @@ class Connection(EventHandler, Protocol):
             return self._transport.sock
 
     @property
-    def event_loop(self):
+    def _loop(self):
         '''The :attr:`transport` event loop.'''
         if self._transport:
-            return self._transport.event_loop
+            return self._transport._loop
 
     @property
     def address(self):
@@ -298,7 +301,7 @@ class Connection(EventHandler, Protocol):
     @property
     def logger(self):
         '''The python logger for this connection.'''
-        return logger(self.event_loop)
+        return logger(self._loop)
 
     @property
     def consumer_factory(self):
@@ -446,8 +449,8 @@ class Connection(EventHandler, Protocol):
 
     def _add_idle_timeout(self):
         if not self.closed and not self._idle_timeout and self._timeout:
-            self._idle_timeout = self.event_loop.call_later(self._timeout,
-                                                            self._timed_out)
+            self._idle_timeout = self._loop.call_later(self._timeout,
+                                                       self._timed_out)
 
     def _cancel_timeout(self):
         if self._idle_timeout:
@@ -634,15 +637,15 @@ class Server(ConnectionProducer):
                          'connection_lost')
     consumer_factory = None
 
-    def __init__(self, event_loop, host=None, port=None,
+    def __init__(self, loop, host=None, port=None,
                  consumer_factory=None, name=None, sock=None, **kw):
         super(Server, self).__init__(**kw)
         self._name = name or self.__class__.__name__
-        self._event_loop = event_loop
+        self._loop = loop
         self._host = host
         self._port = port
         self._sock = sock
-        self.logger = logger(event_loop)
+        self.logger = logger(loop)
         if consumer_factory:
             self.consumer_factory = consumer_factory
         assert hasattr(self.consumer_factory, '__call__'), (
@@ -673,11 +676,6 @@ class Server(ConnectionProducer):
         consumer = consumer_factory()
         consumer.copy_many_times_events(self)
         return consumer
-
-    @property
-    def event_loop(self):
-        '''The :class:`EventLoop` running the server'''
-        return self._event_loop
 
     @property
     def sock(self):

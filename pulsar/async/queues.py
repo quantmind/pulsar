@@ -1,6 +1,7 @@
 from collections import deque
 
-from .defer import get_event_loop, CancelledError, Deferred
+from .defer import CancelledError, Deferred
+from .access import asyncio
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
@@ -23,11 +24,11 @@ class errback:
 class Queue:
     '''Asynchronous FIFO queue.
     '''
-    def __init__(self, maxsize=0, event_loop=None):
-        if event_loop:
-            self._event_loop = event_loop
+    def __init__(self, maxsize=0, loop=None):
+        if loop:
+            self._loop = loop
         else:
-            self._event_loop = get_event_loop()
+            self._loop = asyncio.get_event_loop()
         self._lock = Lock()
         self._maxsize = max(maxsize or 0, 0)
         self._queue = deque()
@@ -41,11 +42,6 @@ that can be placed in the queue.
 
 If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
         return self._maxsize
-
-    @property
-    def event_loop(self):
-        '''The event loop running the queue'''
-        return self._event_loop
 
     def qsize(self):
         '''Size of the queue.'''
@@ -83,8 +79,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 # add it to the putters queue if we can wait
                 if self._maxsize and self._maxsize <= self.qsize():
                     if wait:
-                        waiter = Deferred(event_loop=self._event_loop,
-                                          timeout=timeout)
+                        waiter = Deferred(loop=self._loop, timeout=timeout)
                         waiter.add_errback(errback(Full))
                         self._putters.append((item, waiter))
                     else:
@@ -130,7 +125,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                     assert self.full(), 'queue non-full with putters'
                     self._queue.append(new_item)
                     if wait:
-                        self._event_loop.call_soon(putter.callback, None)
+                        self._loop.call_soon(putter.callback, None)
                     else:
                         putter.callback(None)
                     break
@@ -143,7 +138,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 else:
                     return item
             elif wait:
-                item = Deferred(event_loop=self._event_loop, timeout=timeout)
+                item = Deferred(loop=self._loop, timeout=timeout)
                 self._waiting.append(item)
                 return item.add_errback(errback(Empty))
             else:

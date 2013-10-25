@@ -10,14 +10,14 @@ from .consts import LOG_THRESHOLD_FOR_CONNLOST_WRITES
 
 class SocketDatagramTransport(SocketTransport):
 
-    def __init__(self, event_loop, sock, protocol, address=None, **kwargs):
+    def __init__(self, loop, sock, protocol, address=None, **kwargs):
         self._address = address
-        super(SocketDatagramTransport, self).__init__(event_loop, sock,
+        super(SocketDatagramTransport, self).__init__(loop, sock,
                                                       protocol, **kwargs)
 
     def _do_handshake(self):
-        self._event_loop.add_reader(self._sock_fd, self._ready_read)
-        self._event_loop.call_soon(self._protocol.connection_made, self)
+        self._loop.add_reader(self._sock_fd, self._ready_read)
+        self._loop.call_soon(self._protocol.connection_made, self)
 
     def _check_closed(self):
         if self._conn_lost:
@@ -47,9 +47,9 @@ class SocketDatagramTransport(SocketTransport):
         if not writing:
             self._ready_sendto()
             if self.writing:    # still writing
-                self._event_loop.add_writer(self._sock_fd, self._ready_sendto)
+                self._loop.add_writer(self._sock_fd, self._ready_sendto)
             elif self._closing:
-                self._event_loop.call_soon(self._shutdown)
+                self._loop.call_soon(self._shutdown)
 
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
@@ -103,13 +103,13 @@ class SocketDatagramTransport(SocketTransport):
             self.abort(exc=e)
         else:
             if not self.writing:
-                self._event_loop.remove_writer(self._sock_fd)
+                self._loop.remove_writer(self._sock_fd)
                 if self._closing:
-                    self._event_loop.call_soon(self._shutdown)
+                    self._loop.call_soon(self._shutdown)
             return tot_bytes
 
 
-def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
+def create_datagram_endpoint(loop, protocol_factory, local_addr,
                              remote_addr, family, proto, flags):
     if not (local_addr or remote_addr):
         if family == socket.AF_UNSPEC:
@@ -122,7 +122,7 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
             if addr is not None:
                 assert isinstance(addr, tuple) and len(addr) == 2, (
                     '2-tuple is expected')
-                infos = yield event_loop.getaddrinfo(
+                infos = yield loop.getaddrinfo(
                     *addr, family=family, type=socket.SOCK_DGRAM,
                     proto=proto, flags=flags)
                 if not infos:
@@ -156,7 +156,7 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
                 sock.bind(local_address)
                 l_addr = sock.getsockname()
             if remote_addr:
-                yield event_loop.sock_connect(sock, remote_address)
+                yield loop.sock_connect(sock, remote_address)
                 r_addr = remote_address
         except OSError as exc:
             if sock is not None:
@@ -167,6 +167,6 @@ def create_datagram_endpoint(event_loop, protocol_factory, local_addr,
     else:
         raise exceptions[0]
     protocol = protocol_factory()
-    transport = SocketDatagramTransport(event_loop, sock, protocol, r_addr,
+    transport = SocketDatagramTransport(loop, sock, protocol, r_addr,
                                         extra={'addr': l_addr})
     yield transport, protocol

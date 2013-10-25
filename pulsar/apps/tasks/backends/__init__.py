@@ -509,7 +509,7 @@ its execution. It returns a :class:`.Deferred`.'''
         :meth:`.Actor.create_thread_pool` and register the
         :meth:`may_pool_task` callback in its event loop.'''
         worker.create_thread_pool()
-        self.local.task_poller = worker.event_loop.call_soon(
+        self.local.task_poller = worker._loop.call_soon(
             self.may_pool_task, worker)
         worker.logger.debug('started polling tasks')
 
@@ -731,7 +731,7 @@ value ``now`` can be passed.'''
                 worker.logger.info('%s concurrent requests. Cannot poll.',
                                    self.num_concurrent_tasks)
                 next_time = 1
-        worker.event_loop.call_later(next_time, self.may_pool_task, worker)
+        worker._loop.call_later(next_time, self.may_pool_task, worker)
 
     def _execute_task(self, worker, task):
         #Asynchronous execution of a Task. This method is called

@@ -3,9 +3,16 @@ import sys
 from threading import current_thread
 
 import pulsar
-from pulsar import Failure, run_in_loop_thread, Deferred
-from pulsar.utils.pep import get_event_loop, new_event_loop
+from pulsar import (Failure, run_in_loop_thread, Deferred,
+                    asyncio, get_event_loop, new_event_loop)
 from pulsar.apps.test import unittest, mute_failure
+
+
+def has_callback(loop, handler):
+    if isinstance(handler, asyncio.TimerHandle):
+        return handler in loop._scheduled
+    else:
+        return handler in loop._ready
 
 
 class TestEventLoop(unittest.TestCase):
@@ -25,52 +32,54 @@ class TestEventLoop(unittest.TestCase):
         d = pulsar.Deferred()
         callback = lambda: d.callback(current_thread().ident)
         cbk = ioloop.call_soon(callback)
-        self.assertEqual(cbk.callback, callback)
-        self.assertEqual(cbk.args, ())
+        self.assertEqual(cbk._callback, callback)
+        self.assertEqual(cbk._args, ())
         # we should be able to wait less than a second
-        yield d
-        self.assertEqual(d.result, ioloop.tid)
+        result = yield d
+        self.assertEqual(result, ioloop.tid)
 
     def test_call_later(self):
         ioloop = get_event_loop()
         d = pulsar.Deferred()
-        timeout1 = ioloop.call_later(20,
-                            lambda: d.callback(current_thread().ident))
-        timeout2 = ioloop.call_later(10,
-                            lambda: d.callback(current_thread().ident))
+        timeout1 = ioloop.call_later(
+            20, lambda: d.callback(current_thread().ident))
+        timeout2 = ioloop.call_later(
+            10, lambda: d.callback(current_thread().ident))
         # lets wake the ioloop
-        self.assertTrue(ioloop.has_callback(timeout1))
-        self.assertTrue(ioloop.has_callback(timeout2))
+        self.assertTrue(has_callback(ioloop, timeout1))
+        self.assertTrue(has_callback(ioloop, timeout2))
         timeout1.cancel()
         timeout2.cancel()
-        self.assertTrue(timeout1.cancelled)
-        self.assertTrue(timeout2.cancelled)
-        timeout1 = ioloop.call_later(0.1,
-                            lambda: d.callback(current_thread().ident))
+        self.assertTrue(timeout1._cancelled)
+        self.assertTrue(timeout2._cancelled)
+        timeout1 = ioloop.call_later(
+            0.1, lambda: d.callback(current_thread().ident))
         yield d
         self.assertTrue(d.done())
-        self.assertEqual(d.result, ioloop.tid)
-        self.assertFalse(ioloop.has_callback(timeout1))
+        self.assertEqual(d.result(), ioloop.tid)
+        self.assertFalse(has_callback(ioloop, timeout1))
 
     def test_call_later_cheat(self):
         ioloop = get_event_loop()
-        def dummy(d, sleep=None):
+
+        def dummy(d, sleep):
             d.callback(time.time())
-            if sleep:
-                time.sleep(sleep)
+            time.sleep(sleep)
+
         d1 = pulsar.Deferred()
         d2 = pulsar.Deferred()
-        ioloop.call_later(0, dummy, d1, 0.2)
-        ioloop.call_later(-5, dummy, d2)
+        ioloop.call_later(0, dummy, d1, 0.1)
+        ioloop.call_later(-5, dummy, d2, 0.1)
         yield d2
-        self.assertTrue(d1.result < d2.result)
+        self.assertTrue(d2.result() < d1.result())
 
     def test_call_at(self):
         ioloop = get_event_loop()
         d1 = pulsar.Deferred()
         d2 = pulsar.Deferred()
-        c1 = ioloop.call_at(ioloop.timer()+1, lambda: d1.callback(ioloop.timer()))
-        c2 = ioloop.call_later(1, lambda: d2.callback(ioloop.timer()))
+        c1 = ioloop.call_at(ioloop.time()+1,
+                            lambda: d1.callback(ioloop.time()))
+        c2 = ioloop.call_later(1, lambda: d2.callback(ioloop.time()))
         t1, t2 = yield pulsar.multi_async((d1, d2))
         self.assertTrue(t1 <= t2)
 
@@ -78,11 +87,12 @@ class TestEventLoop(unittest.TestCase):
         test = self
         ioloop = get_event_loop()
         d = pulsar.Deferred()
-        #
+
         class p:
             def __init__(self, loops):
                 self.loops = loops
                 self.c = 0
+
             def __call__(self):
                 self.c += 1
                 if self.c == self.loops:
@@ -93,7 +103,7 @@ class TestEventLoop(unittest.TestCase):
                         raise
                     finally:
                         d.callback(self.c)
-        #
+
         every = 2
         loops = 2
         track = p(loops)
@@ -105,7 +115,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertTrue(taken > every*loops)
         self.assertTrue(taken < every*loops + 2)
         self.assertTrue(periodic.cancelled)
-        self.assertFalse(ioloop.has_callback(periodic.handler))
+        self.assertFalse(has_callback(ioloop, periodic.handler))
 
     def test_call_every(self):
         test = self
@@ -113,12 +123,13 @@ class TestEventLoop(unittest.TestCase):
         thread = current_thread()
         d = pulsar.Deferred()
         test = self
-        #
+
         class p:
             def __init__(self, loop):
                 self.loop = loop
                 self.c = 0
                 self.prev_loop = 0
+
             def __call__(self):
                 try:
                     test.assertNotEqual(current_thread(), thread)
@@ -144,7 +155,7 @@ class TestEventLoop(unittest.TestCase):
         loop = yield d
         self.assertEqual(loop, loops)
         self.assertTrue(periodic.cancelled)
-        self.assertFalse(ioloop.has_callback(periodic.handler))
+        self.assertFalse(has_callback(ioloop, periodic.handler))
 
     def test_run_until_complete(self):
         event_loop = new_event_loop(iothreadloop=False)
@@ -155,7 +166,7 @@ class TestEventLoop(unittest.TestCase):
         event_loop.call_later(2, d.callback, 'OK')
         event_loop.run_until_complete(d)
         self.assertTrue(d.done())
-        self.assertEqual(d.result, 'OK')
+        self.assertEqual(d.result(), 'OK')
         self.assertFalse(event_loop.running)
 
     def test_run_until_complete_timeout(self):
@@ -171,8 +182,10 @@ class TestEventLoop(unittest.TestCase):
 
     def test_run_in_thread_loop(self):
         event_loop = get_event_loop()
+
         def simple(a, b):
             return a + b
+
         d = run_in_loop_thread(event_loop, simple, 1, 2)
         self.assertIsInstance(d, Deferred)
         result = yield d

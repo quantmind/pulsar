@@ -152,8 +152,7 @@ unittest.TestCase, so that the tearDown method is overwritten.
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
-        yield ad
-        proxy = ad.result
+        proxy = yield ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)

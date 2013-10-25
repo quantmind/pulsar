@@ -55,8 +55,8 @@ advantage of specific capabilities in some transport mechanisms.'''
     _paused_writing = False
 
     def _do_handshake(self):
-        self._event_loop.add_reader(self._sock_fd, self._ready_read)
-        self._event_loop.call_soon(self._protocol.connection_made, self)
+        self._loop.add_reader(self._sock_fd, self._ready_read)
+        self._loop.call_soon(self._protocol.connection_made, self)
 
     def pause(self):    # pragma    nocover
         """A :class:`SocketStreamTransport` can be paused and resumed.
@@ -84,13 +84,13 @@ passed to the :meth:`pulsar.Protocol.data_received` method."""
 be accumulating data in an internal buffer.'''
         if not self._paused_writing:
             self._paused_writing = True
-            self._event_loop.remove_writer(self._sock_fd)
+            self._loop.remove_writer(self._sock_fd)
 
     def resume_writing(self):    # pragma    nocover
         '''Restart sending data to the network.'''
         if self._paused_writing:
             if self._write_buffer:
-                self._event_loop.add_writer(self._sock_fd, self._write_ready)
+                self._loop.add_writer(self._sock_fd, self._write_ready)
             self._paused_writing = False
 
     def write(self, data):
@@ -115,9 +115,9 @@ be accumulating data in an internal buffer.'''
             self._consecutive_writes = 0
             self._ready_write()
             if self._write_buffer:    # still writing
-                self._event_loop.add_writer(self._sock_fd, self._ready_write)
+                self._loop.add_writer(self._sock_fd, self._ready_write)
             elif self._closing:
-                self._event_loop.call_soon(self._shutdown)
+                self._loop.call_soon(self._shutdown)
         else:
             self._consecutive_writes += 1
             if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
@@ -160,9 +160,9 @@ be accumulating data in an internal buffer.'''
             failure = sys.exc_info()
         else:
             if not self._write_buffer:
-                self._event_loop.remove_writer(self._sock_fd)
+                self._loop.remove_writer(self._sock_fd)
                 if self._closing:
-                    self._event_loop.call_soon(self._shutdown)
+                    self._loop.call_soon(self._shutdown)
             return tot_bytes
         if not self._closing:
             self.abort(failure)
@@ -213,7 +213,7 @@ be accumulating data in an internal buffer.'''
 class SocketStreamSslTransport(SocketStreamTransport):
     SocketError = getattr(ssl, 'SSLError', None)
 
-    def __init__(self, event_loop, rawsock, protocol, sslcontext,
+    def __init__(self, loop, rawsock, protocol, sslcontext,
                  server_side=True, server_hostname=None, **kwargs):
         sslcontext = ssl_context(sslcontext, server_side=server_side)
         sslsock = sslcontext.wrap_socket(rawsock, server_side=server_side,
@@ -224,7 +224,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self._handshake_reading = False
         # waiting for writing handshake
         self._handshake_writing = False
-        super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
+        super(SocketStreamSslTransport, self).__init__(loop, sslsock,
                                                        protocol, **kwargs)
 
     @property
@@ -244,7 +244,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
                            ssl.SSL_ERROR_WANT_READ)
 
     def _do_handshake(self):
-        loop = self._event_loop
+        loop = self._loop
         try:
             self._sock.do_handshake()
         except self.SocketError as e:
@@ -263,7 +263,6 @@ class SocketStreamSslTransport(SocketStreamTransport):
         except Exception:
             failure = sys.exc_info()
         else:
-            loop = self._event_loop
             if self._handshake_reading:
                 loop.remove_reader(self._sock_fd)
                 loop.add_reader(self._sock_fd, self._ready_read)
@@ -274,7 +273,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
                 loop.add_writer(self._sock_fd, self._ready_write)
             self._handshake_reading = False
             self._handshake_writing = False
-            self._event_loop.call_soon(self._protocol.connection_made, self)
+            loop.call_soon(self._protocol.connection_made, self)
             return
         self.abort(failure)
 
@@ -297,12 +296,12 @@ class TcpServer(Server):
         :return: a :class:`pulsar.Deferred` called back when the server is
             serving the socket.'''
         if not self.event('start').done():
-            res = self._event_loop.start_serving(self.protocol_factory,
-                                                 host=self._host,
-                                                 port=self._port,
-                                                 sock=self._sock,
-                                                 backlog=backlog,
-                                                 ssl=sslcontext)
+            res = self._loop.start_serving(self.protocol_factory,
+                                           host=self._host,
+                                           port=self._port,
+                                           sock=self._sock,
+                                           backlog=backlog,
+                                           ssl=sslcontext)
             return res.add_callback(self._got_sockets
                                     ).add_both(partial(self.fire_event,
                                                        'start'))
@@ -311,7 +310,7 @@ class TcpServer(Server):
         '''Stop serving the :class:`pulsar.Server.sock`'''
         if self._sock:
             sock, self._sock = self._sock, None
-            self._event_loop.call_soon_threadsafe(self._stop_serving, sock)
+            self._loop.call_soon_threadsafe(self._stop_serving, sock)
 
     def close(self):
         '''Same as :meth:`stop_serving` method.'''
@@ -324,21 +323,21 @@ class TcpServer(Server):
         return self
 
     def _stop_serving(self, sock):
-        self._event_loop.stop_serving(sock)
+        self._loop.stop_serving(sock)
         self.fire_event('stop')
 
 
-def create_connection(event_loop, protocol_factory, host, port, ssl,
+def create_connection(loop, protocol_factory, host, port, ssl,
                       family, proto, flags, sock, local_addr):
     if host is not None or port is not None:
         if sock is not None:
             raise ValueError(
                 'host/port and sock can not be specified at the same time')
-        fs = [event_loop.getaddrinfo(host, port, family=family,
-                                     type=socket.SOCK_STREAM, proto=proto,
-                                     flags=flags)]
+        fs = [loop.getaddrinfo(host, port, family=family,
+                               type=socket.SOCK_STREAM, proto=proto,
+                               flags=flags)]
         if local_addr is not None:
-            fs.append(event_loop.getaddrinfo(
+            fs.append(loop.getaddrinfo(
                 *local_addr, family=family,
                 type=socket.SOCK_STREAM, proto=proto, flags=flags))
         #
@@ -350,7 +349,7 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
         else:
             laddr_infos = None
         #
-        socket_factory = getattr(event_loop, 'socket_factory', socket.socket)
+        socket_factory = getattr(loop, 'socket_factory', socket.socket)
         exceptions = []
         for family, type, proto, cname, address in fs[0]:
             try:
@@ -372,7 +371,7 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
                         sock.close()
                         sock = None
                         continue
-                yield event_loop.sock_connect(sock, address)
+                yield loop.sock_connect(sock, address)
             except socket.error as exc:
                 if sock is not None:
                     sock.close()
@@ -401,13 +400,13 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
     if ssl:
         sslcontext = None if isinstance(ssl, bool) else ssl
         transport = SocketStreamSslTransport(
-            event_loop, sock, protocol, sslcontext, server_side=False)
+            loop, sock, protocol, sslcontext, server_side=False)
     else:
-        transport = SocketStreamTransport(event_loop, sock, protocol)
+        transport = SocketStreamTransport(loop, sock, protocol)
     yield transport, protocol
 
 
-def start_serving(event_loop, protocol_factory, host, port, ssl,
+def start_serving(loop, protocol_factory, host, port, ssl,
                   family, flags, sock, backlog, reuse_address):
     #Coroutine which starts socket servers
     if host is not None or port is not None:
@@ -420,13 +419,13 @@ def start_serving(event_loop, protocol_factory, host, port, ssl,
         if host == '':
             host = None
 
-        infos = yield event_loop.getaddrinfo(
+        infos = yield loop.getaddrinfo(
             host, port, family=family,
             type=socket.SOCK_STREAM, proto=0, flags=flags)
         if not infos:
             raise socket.error('getaddrinfo() returned empty list')
         #
-        socket_factory = getattr(event_loop, 'socket_factory', socket.socket)
+        socket_factory = getattr(loop, 'socket_factory', socket.socket)
         completed = False
         try:
             for af, socktype, proto, canonname, sa in infos:
@@ -462,20 +461,17 @@ def start_serving(event_loop, protocol_factory, host, port, ssl,
     for sock in sockets:
         sock.listen(backlog)
         sock.setblocking(False)
-        event_loop.add_reader(sock.fileno(), sock_accept_connection,
-                              event_loop, protocol_factory, sock, ssl)
+        loop.add_reader(sock.fileno(), sock_accept_connection,
+                        loop, protocol_factory, sock, ssl)
     yield sockets
 
 
-def sock_connect(event_loop, sock, address, future=None):
+def sock_connect(loop, sock, address, future=None):
     fd = sock.fileno()
     connect = False
     if future is None:
-        def canceller(d):
-            event_loop.remove_connector(fd)
-            d._suppressAlreadyCalled = True
-        #
-        future = Deferred(canceller=canceller, event_loop=event_loop)
+        future = Deferred(loop=loop).add_errback(
+            lambda r: loop.remove_connector(fd))
         connect = True
     try:
         if connect:
@@ -483,13 +479,13 @@ def sock_connect(event_loop, sock, address, future=None):
                 sock.connect(address)
             except socket.error as e:
                 if e.args[0] in TRY_WRITE_AGAIN:
-                    event_loop.add_connector(fd, sock_connect, event_loop,
-                                             sock, address, future)
+                    loop.add_connector(fd, sock_connect, loop, sock,
+                                       address, future)
                     return future
                 else:
                     raise
         else:   # This is the callback from the event loop
-            event_loop.remove_connector(fd)
+            loop.remove_connector(fd)
             if future.cancelled():
                 return
             err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
@@ -501,14 +497,14 @@ def sock_connect(event_loop, sock, address, future=None):
         return future.callback(exc)
 
 
-def sock_accept(event_loop, sock, future=None):    # pragma    nocover
+def sock_accept(loop, sock, future=None):    # pragma    nocover
     #TODO
     #do we need this function?
     fd = sock.fileno()
     if future is None:
         future = Deferred()
     else:
-        event_loop.remove_reader(fd)
+        loop.remove_reader(fd)
     if not future.cancelled():
         try:
             conn, address = sock.accept()
@@ -516,12 +512,11 @@ def sock_accept(event_loop, sock, future=None):    # pragma    nocover
             future.set_result((conn, address))
         except socket.error as e:
             if e.args[0] in TRY_READ_AGAIN:
-                event_loop.add_reader(fd, sock_accept, event_loop, sock,
-                                      future)
+                loop.add_reader(fd, sock_accept, loop, sock, future)
             elif e.args[0] == EPERM:
                 # Netfilter on Linux may have rejected the
                 # connection, but we get told to try to accept() anyway.
-                return sock_accept(event_loop, sock, future)
+                return sock_accept(loop, sock, future)
             else:
                 future.callback(e)
         except Exception as e:
@@ -529,7 +524,7 @@ def sock_accept(event_loop, sock, future=None):    # pragma    nocover
     return future
 
 
-def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
+def sock_accept_connection(loop, protocol_factory, sock, ssl):
     '''Used by start_serving.'''
     try:
         for i in range(NUMBER_ACCEPTS):
@@ -543,16 +538,16 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                     # connection, but we get told to try to accept() anyway.
                     continue
                 elif e.args[0] in ACCEPT_ERRORS:
-                    logger(event_loop).info(
+                    logger(loop).info(
                         'Could not accept new connection %s: %s', i+1, e)
                     break
                 raise
             protocol = protocol_factory()
             if ssl:
-                SocketStreamSslTransport(event_loop, conn, protocol, ssl,
+                SocketStreamSslTransport(loop, conn, protocol, ssl,
                                          extra={'addr': address})
             else:
-                SocketStreamTransport(event_loop, conn, protocol,
+                SocketStreamTransport(loop, conn, protocol,
                                       extra={'addr': address})
     except Exception:
-        logger(event_loop).exception('Could not accept new connection')
+        logger(loop).exception('Could not accept new connection')

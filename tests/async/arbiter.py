@@ -83,8 +83,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         name = 'testSpawning-%s' % self.concurrency
         future = spawn(name=name, concurrency=self.concurrency)
         self.assertTrue(future.aid in arbiter.managed_actors)
-        yield future
-        proxy = future.result
+        proxy = yield future
         self.assertEqual(future.aid, proxy.aid)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)

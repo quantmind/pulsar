@@ -549,7 +549,7 @@ class TestSuite(tasks.TaskQueue):
                 self._time_start = default_timer()
                 for tag, testcls in self.local.tests:
                     self.backend.run('test', testcls, tag)
-                monitor.event_loop.call_repeatedly(1, self._check_queue)
+                monitor._loop.call_repeatedly(1, self._check_queue)
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover

@@ -51,7 +51,7 @@ def send(target, action, *args, **params):
 
         >>> a = spawn()
         >>> r = a.add_callback(lambda p: send(p,'ping'))
-        >>> r.result
+        >>> r.result()
         'pong'
     '''
     return get_actor().send(target, action, *args, **params)
@@ -109,11 +109,11 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
         The :class:`Concurrency` implementation for this :class:`Actor`.
 
-    .. attribute:: event_loop
+    .. attribute:: _loop
 
         An instance of :class:`EventLoop` which listen for input/output events
         on sockets or socket-like :class:`Transport`. It is the driver of the
-        :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
+        :class:`Actor`. If the :attr:_loop` stps, the :class:`Actor` stop
         running and goes out of scope.
 
     .. attribute:: mailbox
@@ -229,8 +229,8 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         return self.mailbox.address
 
     @property
-    def event_loop(self):
-        return self.mailbox.event_loop
+    def _loop(self):
+        return self.mailbox._loop
 
     @property
     def thread_pool(self):
@@ -247,7 +247,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         '''Called after forking to start the actor's life.
 
         This is where logging is configured, the :attr:`Actor.mailbox` is
-        registered and the :attr:`Actor.event_loop` is initialised and
+        registered and the :attr:`Actor._loop` is initialised and
         started. Calling this method more than once does nothing.
         '''
         if self.state == ACTOR_STATES.INITIAL:
@@ -262,7 +262,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         '''Send a message to ``target`` to perform ``action`` with given
 positional ``args`` and key-valued ``kwargs``.
 Always return a :class:`Deferred`.'''
-        return self.event_loop.async(self._send(target, action, *args, **kw))
+        return self._loop.async(self._send(target, action, *args, **kw))
 
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
@@ -304,7 +304,7 @@ Always return a :class:`Deferred`.'''
         '''``True`` if actor is running, that is when the :attr:`state`
 is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
 running.'''
-        return self.state == ACTOR_STATES.RUN and self.event_loop.is_running()
+        return self.state == ACTOR_STATES.RUN and self._loop.is_running()
 
     def started(self):
         '''``True`` if actor has started. It does not necessarily
@@ -378,8 +378,8 @@ This method is invoked when you run the
                  'process_id': self.pid,
                  'is_process': isp,
                  'age': self.impl.age}
-        events = {'callbacks': len(self.event_loop._callbacks),
-                  'io_loops': self.event_loop.num_loops}
+        events = {'callbacks': len(self._loop._ready),
+                  'io_loops': self._loop.num_loops}
         data = {'actor': actor,
                 'events': events,
                 'extra': self.extra}

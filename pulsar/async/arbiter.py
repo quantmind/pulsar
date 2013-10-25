@@ -63,7 +63,7 @@ def spawn(cfg=None, **kwargs):
         'ba42b02b'
         >>> a.called
         True
-        >>> p = a.result
+        >>> p = a.result()
         >>> p.address
         ('127.0.0.1', 46691)
     '''

@@ -198,7 +198,7 @@ class SocketServer(pulsar.Application):
         number of workers to 0.
         '''
         cfg = self.cfg
-        loop = monitor.event_loop
+        loop = monitor._loop
         if (not pulsar.platform.has_multiProcessSocket
                 or cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
@@ -250,12 +250,11 @@ class SocketServer(pulsar.Application):
                 'received_connections': server.received})
 
     #   INTERNALS
-
     def create_server(self, worker, sock, ssl=None):
         '''Create the Server Protocol which will listen for requests. It
 uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
         cfg = self.cfg
-        server = TcpServer(worker.event_loop,
+        server = TcpServer(worker._loop,
                            sock=sock,
                            consumer_factory=self.protocol_consumer(),
                            max_connections=cfg.max_requests,

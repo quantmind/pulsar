@@ -1,7 +1,7 @@
 from pulsar import (Queue, Empty, maybe_async, Deferred, Full,
-                    get_request_loop, maybe_failure)
+                    get_request_loop, get_event_loop, maybe_failure)
 from pulsar.async.queues import errback
-from pulsar.utils.pep import default_timer, get_event_loop
+from pulsar.utils.pep import default_timer
 from pulsar.apps.test import unittest
 
 

@@ -155,7 +155,7 @@ protocol.'''
                 message = pickle.loads(msg.body)
             except Exception as e:
                 raise ProtocolError('Could not decode message body: %s' % e)
-            maybe_async(self._responde(message), event_loop=self.event_loop)
+            maybe_async(self._responde(message), loop=self._loop)
             msg = self._parser.decode()
 
     def start_request(self, req=None):
@@ -186,7 +186,7 @@ protocol.'''
         #actor.logger.debug('handling %s', command)
         if command == 'callback':
             # this is a callback
-            self._callback(message.get('ack'), message.get('result'))
+            yield self._callback(message.get('ack'), message.get('result'))
         else:
             try:
                 target = actor.get_actor(message['target'])
@@ -225,7 +225,7 @@ protocol.'''
             pending = self._pending_responses.pop(ack)
         except KeyError:
             raise KeyError('Callback %s not in pending callbacks' % ack)
-        pending.callback(result)
+        return pending.callback(result)
 
     def _write(self, req):
         obj = pickle.dumps(req.data, protocol=2)
@@ -243,8 +243,8 @@ class MailboxClient(Client):
     consumer_factory = MailboxConsumer
     max_reconnect = 0
 
-    def __init__(self, address, actor, event_loop):
-        super(MailboxClient, self).__init__(event_loop=event_loop)
+    def __init__(self, address, actor, loop):
+        super(MailboxClient, self).__init__(loop=loop)
         self.address = address
         self._consumer = None
         self.name = 'Mailbox for %s' % actor

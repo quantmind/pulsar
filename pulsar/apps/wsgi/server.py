@@ -298,7 +298,7 @@ class HttpServerResponse(ProtocolConsumer):
                 stream = StreamReader(self._request_headers, p, self.transport)
                 self.bind_event('data_processed', stream.data_processed)
                 environ = self.wsgi_environ(stream)
-                self.event_loop.async(self._response(environ))
+                self._loop.async(self._response(environ))
         else:
             # This is a parsing error, the client must have sent
             # bogus data

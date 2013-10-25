@@ -2,13 +2,14 @@
 from functools import partial
 
 import pulsar
+from pulsar import asyncio
 from pulsar.apps import http
 from pulsar.apps.wsgi import HttpServerResponse
 
 __all__ = ['HttpTestClient']
 
 
-class DummyTransport(pulsar.Transport):
+class DummyTransport(asyncio.Transport):
     '''A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
 .. attribute:: client

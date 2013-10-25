@@ -3,17 +3,15 @@ import traceback
 from collections import deque, namedtuple, Mapping
 from inspect import isgenerator, istraceback
 
-from pulsar.utils.pep import (iteritems, default_timer,
-                              get_event_loop, ispy3k)
+from pulsar.utils.pep import iteritems, default_timer, ispy3k
 
-from .access import get_request_loop, logger
+from .access import asyncio, get_request_loop, logger
 from .consts import *
 
 
 __all__ = ['Deferred',
            'MultiDeferred',
            'Task',
-           'Error',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
@@ -30,32 +28,24 @@ __all__ = ['Deferred',
            'async_while',
            'safe_async']
 
-if ispy3k:
-    from concurrent.futures._base import Error, CancelledError, TimeoutError
-else:   # pragma    nocover
-    class Error(Exception):
-        '''Raised when no other information is available on a Failure'''
-
-    class CancelledError(Error):
-        pass
-
-    class TimeoutError(Error):
-        pass
-
-
-class InvalidStateError(Error):
-    """The operation is not allowed in this state."""
-
 
 class CoroutineReturn(BaseException):
+
     def __init__(self, value):
         self.value = value
 
 
+if not getattr(asyncio, 'fallback', False):
+    from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
+
+else:   # pragma    nocover
+    from ._asyncio import _PENDING, _CANCELLED, _FINISHED
+
 # States of Deferred
-_PENDING = 'PENDING'
-_CANCELLED = 'CANCELLED'
-_FINISHED = 'FINISHED'
+InvalidStateError = asyncio.InvalidStateError
+CancelledError = asyncio.CancelledError
+TimeoutError = asyncio.TimeoutError
+Future = asyncio.Future
 EMPTY_EXC_INFO = (None, None, None)
 async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
 call_back = namedtuple('call_back', 'call error continuation')
@@ -153,15 +143,15 @@ def default_maybe_failure(value):
         return value
 
 
-def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
+def default_maybe_async(val, get_result=True, loop=None, **kwargs):
     if isgenerator(val):
-        event_loop = event_loop or get_request_loop()
-        assert event_loop, 'No event loop available'
-        task_factory = getattr(event_loop, 'task_factory', Task)
-        val = task_factory(val, event_loop, **kwargs)
+        loop = loop or get_request_loop()
+        assert loop, 'No event loop available'
+        task_factory = getattr(loop, 'task_factory', Task)
+        val = task_factory(val, loop, **kwargs)
     if isinstance(val, Deferred):
         if get_result and val.done():
-            return val.result
+            return val.result()
         else:
             return val
     elif get_result:
@@ -172,8 +162,7 @@ def default_maybe_async(val, get_result=True, event_loop=None, **kwargs):
         return d
 
 
-def maybe_async(value, canceller=None, event_loop=None, timeout=None,
-                get_result=True):
+def maybe_async(value, loop=None, timeout=None, get_result=True):
     '''Handle a possible asynchronous ``value``.
 
     Return an :ref:`asynchronous instance <tutorials-coroutine>`
@@ -182,8 +171,7 @@ def maybe_async(value, canceller=None, event_loop=None, timeout=None,
 
     :parameter value: the value to convert to an asynchronous instance
         if it needs to.
-    :parameter canceller: optional canceller (see :attr:`Deferred.canceller`).
-    :parameter event_loop: optional :class:`EventLoop`.
+    :parameter loop: optional :class:`EventLoop`.
     :parameter timeout: optional timeout after which any asynchronous element
         get a cancellation.
     :parameter get_result: optional flag indicating if to get the result in
@@ -193,8 +181,8 @@ def maybe_async(value, canceller=None, event_loop=None, timeout=None,
     value.
     '''
     global _maybe_async
-    return _maybe_async(value, canceller=canceller, event_loop=event_loop,
-                        timeout=timeout, get_result=get_result)
+    return _maybe_async(value, loop=loop, timeout=timeout,
+                        get_result=get_result)
 
 
 def log_failure(value):
@@ -299,12 +287,12 @@ when invoked::
     >>> d = simple()
     >>> d
     Deferred (done)
-    >>> d.result
+    >>> d.result()
     1
     >>> d = simple_error()
     >>> d
     Deferred (done)
-    >>> d.result
+    >>> d.result()
     Failure: Traceback (most recent call last):
       File "...pulsar\async\defer.py", line 260, in call
         result = callable(*args, **kwargs)
@@ -468,26 +456,18 @@ back to perform logging and propagate the failure. For example::
 
 
 ############################################################### Deferred
-class Deferred(object):
+class Deferred(asyncio.Future):
     """The main class of pulsar asynchronous engine. It is a callback
 which will be put off until later. It conforms with the
 ``tulip.Future`` interface with an implementation similar to the
 ``twisted.defer.Deferred`` class.
 
-:param canceller: optional callable which set the :attr:`canceller`
-    attribute.
 :param timeout: optional timeout. If greater than zero the deferred will be
     cancelled after ``timeout`` seconds if no result is available.
-:param event_loop: If supplied, it is the :class:`EventLoop` associated
+:param loop: If supplied, it is the :class:`EventLoop` associated
     with this :class:`Deferred`. If not supplied, the default event loop
     is used. The event loop associated with this :class:`Deferred` is accessed
-    via the :attr:`event_loop` attribute.
-
-.. attribute:: canceller
-
-    A callable used to stop the pending operation scheduled by this
-    :class:`Deferred` when :meth:`cancel` is invoked. The canceller must
-    accept a deferred as the only argument.
+    via the :attr:`loop` attribute.
 
 .. attribute:: paused
 
@@ -502,16 +482,14 @@ which will be put off until later. It conforms with the
     ``AttributeError`` exception.
 """
     paused = 0
-    _state = _PENDING
     _runningCallbacks = False
     _suppressAlreadyCalled = False
     _timeout = None
     _callbacks = None
     _chained_to = None
 
-    def __init__(self, canceller=None, timeout=None, event_loop=None):
-        self._canceller = canceller
-        self._event_loop = event_loop
+    def __init__(self, timeout=None, loop=None):
+        self._loop = loop or asyncio.get_event_loop()
         if timeout:
             self.set_timeout(timeout)
 
@@ -529,82 +507,52 @@ which will be put off until later. It conforms with the
         return self. __repr__()
 
     @property
-    def event_loop(self):
-        '''The :class:`EventLoop` associated with this :class:`Deferred`. It
-can be set during initialisation.'''
-        return self._event_loop or get_event_loop()
-
-    @property
     def timeout(self):
         '''The :class:`TimedCall` which handles the timeout of this
 :class:`Deferred`. Available only when a timeout is set.'''
         return self._timeout
 
-    def set_timeout(self, timeout, event_loop=None):
+    def set_timeout(self, timeout, loop=None):
         '''Set a the :attr:`timeout` for this :class:`Deferred`.
 
 :parameter timeout: a timeout in seconds.
-:parameter event_loop: optional event loop where to run the callback. If not
-    supplied the :attr:`event_loop` attribute is used.
+:parameter loop: optional event loop where to run the callback. If not
+    supplied the :attr:`loop` attribute is used.
 :return: returns ``self`` so that other methods can be concatenated.'''
         if timeout and timeout > 0:
             if self._timeout:
                 self._timeout.cancel()
-            if not event_loop:
-                event_loop = self.event_loop
-            elif self._event_loop:
-                assert event_loop == self._event_loop,\
-                    "Incompatible event loop"
+            if not loop:
+                loop = self._loop
+            elif self._loop:
+                assert loop == self._loop, "Incompatible event loop"
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
-            self._timeout = event_loop.call_later(
+            self._timeout = loop.call_later(
                 timeout, self.cancel, 'timeout (%s seconds)' % timeout)
         return self
 
-    def cancelled(self):
-        '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred`
-was cancelled.'''
-        return self._state == _CANCELLED
-
-    def done(self):
-        '''Returns ``True`` if the :class:`Deferred` is done.
-
-        This is the case when it was called or cancelled.
-        '''
-        return self._state != _PENDING
-
     def cancel(self, msg='', mute=False):
         '''pep-3156_ API method, it cancel the deferred and schedule callbacks.
-If the deferred is waiting for another :class:`Deferred`, forward the
-cancellation to that one. If the :class:`Deferred` is already :meth:`done`,
-it does nothing.
 
-:param msg: Optional message to pass to the when the :class:`CancelledError`
-    is initialised.'''
-        if not self.done():
-            if self._canceller:
-                self._canceller(self)
-            else:
-                self._suppressAlreadyCalled = True
-            if not self.done():
-                self.callback(CancelledError(msg))
-                if mute and isinstance(self.result, Failure):
-                    self.result.mute()
-        elif isinstance(self.result, Deferred):
-            return self.result.cancel(msg, mute)
+        If the deferred is waiting for another :class:`Deferred`,
+        forward the cancellation to that one.
 
-    def running(self):
-        '''pep-3156_ API method, always returns ``False``.'''
-        return False
+        If the :class:`Deferred` is already :meth:`done`, it does nothing.
 
-    def get_result(self):
-        '''Retrieve the result is ready.
-
-        If not raise ``InvalidStateError``.'''
-        if self._state != _PENDING:
-            return self.result
+        :param msg: Optional message to pass to the when the
+            :class:`CancelledError` is initialised.
+        '''
+        if self._state == _PENDING:
+            self._suppressAlreadyCalled = True
+            self.callback(CancelledError(msg))
+            if mute and isinstance(self._result, Failure):
+                self._result.mute()
+            return True
+        elif isinstance(self._result, Future):
+            return self._result.cancel(msg, mute)
         else:
-            raise InvalidStateError('Result is not ready.')
+            return False
 
     def add_done_callback(self, fn):
         '''pep-3156_ API method, Add a callback to be run when the
@@ -654,34 +602,42 @@ the :class:`Deferred` object.'''
 
     def callback(self, result=None, state=None):
         '''Run registered callbacks with the given *result*.
-This can only be run once. Later calls to this will raise
-:class:`InvalidStateError`. If further callbacks are added after
-this point, :meth:`add_callback` will run the *callbacks* immediately.
 
-:return: the *result* input parameter
-'''
+        This can only be run once. Later calls to this will raise
+        :class:`InvalidStateError`. If further callbacks are added after
+        this point, :meth:`add_callback` will run the *callbacks* immediately.
+
+        :return: the ``result`` input parameter
+        '''
         if isinstance(result, Deferred):
             raise RuntimeError('Received a deferred instance from '
                                'callback function')
-        elif self.done():
+        elif self._state != _PENDING:
             if self._suppressAlreadyCalled:
                 self._suppressAlreadyCalled = False
-                return self.result
+                return self._result
             raise InvalidStateError
-        self.result = maybe_failure(result)
+        self._result = maybe_failure(result)
         if not state:
-            state = (_CANCELLED if is_failure(self.result, CancelledError)
+            state = (_CANCELLED if is_failure(self._result, CancelledError)
                      else _FINISHED)
         self._state = state
         if self._callbacks:
             self._run_callbacks()
-        return self.result
+        return self._result
 
     def throw(self):
-        '''raise an exception only if :meth:`done` is ``True`` and
-the result is a :class:`Failure`'''
-        if self.done() and isinstance(self.result, Failure):
-            self.result.throw()
+        '''raise an exception only if done and the result is
+        a :class:`Failure`.
+        '''
+        if self.done() and isinstance(self._result, Failure):
+            self._result.throw()
+
+    def result_or_throw(self):
+        if self.done() and isinstance(self._result, Failure):
+            self._result.throw()
+        else:
+            return self.result()
 
     def chain(self, deferred):
         '''Chain another ``deferred`` to this :class:`Deferred` callbacks.
@@ -733,7 +689,7 @@ the result is a :class:`Failure`'''
             d2 = d1.then().add_callback(...)
         '''
         if deferred is None:
-            deferred = Deferred(event_loop=self._event_loop)
+            deferred = Deferred(loop=self._loop)
 
         def cbk(result):
             deferred.callback(result)
@@ -746,27 +702,27 @@ the result is a :class:`Failure`'''
     def _run_callbacks(self):
         if not self.done() or self._runningCallbacks or self.paused:
             return
-        event_loop = self.event_loop
+        loop = self._loop
         while self._callbacks:
             callbacks = self._callbacks.popleft()
-            callback = callbacks[isinstance(self.result, Failure)]
+            callback = callbacks[isinstance(self._result, Failure)]
             if callback:
                 try:
                     self._runningCallbacks = True
                     try:
-                        self.result = maybe_async(callback(self.result),
-                                                  event_loop=event_loop)
+                        self._result = maybe_async(callback(self._result),
+                                                   loop=loop)
                     finally:
                         self._runningCallbacks = False
                 except Exception:
-                    self.result = Failure(sys.exc_info())
+                    self._result = Failure(sys.exc_info())
                 else:
                     # received an asynchronous instance, add a continuation
-                    if isinstance(self.result, Deferred):
+                    if isinstance(self._result, Deferred):
                         # Add a pause
                         self._pause()
                         # Add a callback to the result to resume callbacks
-                        self.result.add_both(self._continue, self)
+                        self._result.add_both(self._continue, self)
                         break
 
     def _pause(self):
@@ -779,9 +735,9 @@ the result is a :class:`Failure`'''
         self._run_callbacks()
 
     def _continue(self, result):
-        self.result = result
+        self._result = result
         self._unpause()
-        return self.result
+        return self._result
 
 
 class Task(Deferred):
@@ -794,10 +750,9 @@ initialised directly, they are created by the :func:`maybe_async`
 function when a generator is passed as argument.'''
     _waiting = None
 
-    def __init__(self, gen, event_loop, canceller=None, timeout=None):
+    def __init__(self, gen, loop, timeout=None):
         self._gen = gen
-        self._event_loop = event_loop
-        self._canceller = canceller
+        self._loop = loop
         if timeout:
             self.set_timeout(timeout)
         self._consume(None)
@@ -828,7 +783,7 @@ function when a generator is passed as argument.'''
             result = sys.exc_info()
             conclude = True
         else:
-            result = maybe_async(result, event_loop=self._event_loop)
+            result = maybe_async(result, loop=self._loop)
             if isinstance(result, Deferred):
                 # async result add callback/errorback and transfer control
                 # to the event loop
@@ -836,7 +791,7 @@ function when a generator is passed as argument.'''
                 return None, True
             elif result == NOT_DONE:
                 # transfer control to the event loop
-                self._event_loop.call_soon(self._consume, None)
+                self._loop.call_soon(self._consume, None)
                 return None, True
         if conclude:
             if failure:
@@ -854,7 +809,7 @@ function when a generator is passed as argument.'''
     def _restart(self, result):
         self._waiting = None
         # restart the coroutine in the same event loop it was started
-        self._event_loop.call_soon_threadsafe(self._consume, result)
+        self._loop.call_soon_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
         # the passed result (which is synchronous).
         return result

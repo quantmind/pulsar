@@ -33,11 +33,11 @@ An :class:`AsyncString` can only be rendered once, and it accepts
 
 Once the deferred is done, we have the concatenated string::
 
-    >>> a.callback('World!')
+    >>> a.set_result('World!')
     'World!'
     >>> value.done()
     True
-    >>> value.result
+    >>> value.result()
     'Hello, World!'
 
 .. note::

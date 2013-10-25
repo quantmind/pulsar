@@ -11,10 +11,10 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from pulsar.utils.pep import set_event_loop, new_event_loop
 from pulsar.utils.exceptions import StopEventLoop
 
-from .access import get_actor, set_actor, thread_local_data, LOGGER
+from .access import (asyncio, new_event_loop, get_actor, set_actor,
+                     thread_local_data, LOGGER)
 from .defer import Deferred, safe_async
 from .pollers import Poller, READ
 
@@ -64,7 +64,7 @@ class PoolThread(Thread):
         actor = self._actor
         del self._actor
         set_actor(actor)
-        set_event_loop(actor.event_loop)
+        asyncio.set_event_loop(actor._loop)
         super(Thread, self).run()
 
     def loop(self):
@@ -109,16 +109,13 @@ install itself as a request loop rather than the IO event loop.'''
             raise StopEventLoop
         return ((self.fileno(), task),)
 
-    def install_waker(self, event_loop):
+    def install_waker(self, loop):
         return self
 
     def wake(self):
         '''Waker implementation. This IOqueue is its own waker.'''
         with self.lock:
             self._wakeup += 1
-
-    def check_stream(self):
-        raise IOError('Cannot use stream interface')
 
     def handle_events(self, loop, fd, task):
         try:
@@ -171,10 +168,10 @@ class ThreadPool(object):
         self._threads = max(threads or 1, 1)
         self._pool = []
         self._state = RUN
-        self._closed = Deferred(event_loop=self.event_loop)
+        self._closed = Deferred(loop=self._loop)
         self._maxtasks = maxtasks
         self._inqueue = ThreadQueue()
-        self._check = self.event_loop.call_soon(self._maintain)
+        self._check = self._loop.call_soon(self._maintain)
 
     @property
     def status(self):
@@ -189,9 +186,9 @@ class ThreadPool(object):
             return 'unknown'
 
     @property
-    def event_loop(self):
+    def _loop(self):
         '''The event loop running this :class:`ThreadPool`.'''
-        return self._actor.event_loop
+        return self._actor._loop
 
     @property
     def num_threads(self):
@@ -216,8 +213,8 @@ class ThreadPool(object):
         '''
         if self._state == RUN:
             self._state = CLOSE
-            if self.event_loop.is_running():
-                self.event_loop.call_soon_threadsafe(self._close)
+            if self._loop.is_running():
+                self._loop.call_soon_threadsafe(self._close)
             else:
                 self._close()
         return self._closed.then().set_timeout(timeout)
@@ -227,8 +224,8 @@ class ThreadPool(object):
         if self._state < TERMINATE:
             if not self._closed.done():
                 self._state = TERMINATE
-                if self.event_loop.is_running():
-                    self.event_loop.call_soon_threadsafe(self._terminate)
+                if self._loop.is_running():
+                    self._loop.call_soon_threadsafe(self._terminate)
                 else:
                     self._terminate()
         return self._closed.then().set_timeout(timeout)
@@ -245,7 +242,7 @@ class ThreadPool(object):
         elif self._state == CLOSE:
             self._close_pool()
         if self._pool:
-            self._maintain_call = self._actor.event_loop.call_later(
+            self._maintain_call = self._actor._loop.call_later(
                 self._check_every, self._maintain)
         elif not self._closed.done():
             self._closed.callback(self._state)
@@ -297,6 +294,6 @@ class ThreadPool(object):
         # Create the event loop which get tasks from the task queue
         logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
                                                      self.worker_name))
-        event_loop = new_event_loop(io=poller, poll_timeout=1, logger=logger)
-        event_loop.add_reader(poller.fileno(), poller.handle_events)
-        event_loop.run_forever()
+        loop = new_event_loop(io=poller, poll_timeout=1, logger=logger)
+        loop.add_reader(poller.fileno(), poller.handle_events)
+        loop.run_forever()

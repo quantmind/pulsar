@@ -152,7 +152,7 @@ class WebSocketProtocol(ProtocolConsumer):
 
     def data_received(self, data):
         frame = self.parser.decode(data)
-        async = self.event_loop.maybe_async
+        async = self._loop.maybe_async
         while frame:
             if frame.is_close:
                 # done with this, call finished method.
