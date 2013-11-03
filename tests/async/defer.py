@@ -42,10 +42,19 @@ def async_pair():
 
 class TestDeferred(unittest.TestCase):
 
+    def testCancel(self):
+        d = Deferred()
+        self.assertFalse(d.timeout)
+        d.cancel('timeout')
+        self.assertTrue(d.done())
+        self.assertTrue(d.cancelled())
+        self.assertTrue(is_failure(d.result()))
+        mute_failure(self, d.result())
+
+class f:
     def testSimple(self):
         d = Deferred()
         self.assertFalse(d.done())
-        self.assertFalse(d.running())
         self.assertEqual(str(d), 'Deferred (pending)')
         d.callback('ciao')
         self.assertTrue(d.done())
@@ -172,6 +181,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(is_failure(a.result()[0]))
         mute_failure(self, a.result()[0])
 
+class d:
     def testCancel(self):
         d = Deferred()
         self.assertFalse(d.timeout)
@@ -263,10 +273,7 @@ class TestDeferred(unittest.TestCase):
         self.assertRaises(InvalidStateError, d.callback, 3)
         mute_failure(self, d.result())
 
-
-class TestMultiDeferred(unittest.TestCase):
-
-    def testSimple(self):
+    def test_simple_multi(self):
         d = MultiDeferred()
         self.assertFalse(d.done())
         self.assertFalse(d._locked)
@@ -279,7 +286,7 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertRaises(RuntimeError, d.lock)
         self.assertRaises(InvalidStateError, d._finish)
 
-    def testMulti(self):
+    def test_multi(self):
         d = MultiDeferred()
         d1 = Deferred()
         d2 = Deferred()
@@ -298,7 +305,7 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d.done())
         self.assertEqual(d.result(), ['second', 'first', 'bla'])
 
-    def testUpdate(self):
+    def test_multi_update(self):
         d1 = Deferred()
         d2 = Deferred()
         d = MultiDeferred()
@@ -308,7 +315,7 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d.done())
         self.assertEqual(d.result(), ['first', 'second'])
 
-    def testNested(self):
+    def test_multi_nested(self):
         d = MultiDeferred()
         # add a generator
         d.append([a for a in range(1, 11)])
@@ -316,9 +323,6 @@ class TestMultiDeferred(unittest.TestCase):
         self.assertTrue(d.locked)
         self.assertNotIsInstance(r, Deferred)
         self.assertEqual(r, [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])
-
-
-class TestCoroutine(unittest.TestCase):
 
     def test_coroutine_return(self):
         def f(count=0):
@@ -330,9 +334,6 @@ class TestCoroutine(unittest.TestCase):
         self.assertEqual(result, 'a')
         result = yield f(10)
         self.assertEqual(result, 'a')
-
-
-class TestFunctions(unittest.TestCase):
 
     def test_is_exc_info(self):
         self.assertFalse(is_exc_info(None))

@@ -145,7 +145,7 @@ class BaseEventLoop(AbstractEventLoop):
     def call_at(self, when, callback, *args):
         """Like call_later(), but uses an absolute time."""
         timer = TimerHandle(when, callback, args)
-        heapq.heappush(self._scheduled, timer)
+        heappush(self._scheduled, timer)
         return timer
 
     def call_soon(self, callback, *args):
@@ -181,7 +181,7 @@ class BaseEventLoop(AbstractEventLoop):
         if handle._cancelled:
             return
         if isinstance(handle, TimerHandle):
-            heapq.heappush(self._scheduled, handle)
+            heappush(self._scheduled, handle)
         else:
             self._ready.append(handle)
 
@@ -239,7 +239,7 @@ was cancelled.'''
 ###########################################################################
 ##  ABSTRACT TRANSPORT
 
-class BaseTransport:
+class BaseTransport(object):
     """Base ABC for transports."""
 
     def __init__(self, extra=None):

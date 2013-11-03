@@ -26,7 +26,7 @@ class TestThreadQueue(unittest.TestCase):
         self.assertEqual(pool._state, 0)
         self.assertEqual(pool.status, 'running')
         self.assertEqual(pool._loop, get_event_loop())
-        self.assertNotEqual(pool.event_loop, get_request_loop())
+        self.assertNotEqual(pool._loop, get_request_loop())
         #give a chance to start the pool
         yield async_while(3, lambda: not pool.num_threads)
         self.assertEqual(pool.num_threads, 2)
