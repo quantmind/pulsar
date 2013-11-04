@@ -468,35 +468,34 @@ back to perform logging and propagate the failure. For example::
 
 ############################################################### Deferred
 class Deferred(asyncio.Future):
-    """The main class of pulsar asynchronous engine. It is a callback
-which will be put off until later. It conforms with the
-``tulip.Future`` interface with an implementation similar to the
-``twisted.defer.Deferred`` class.
+    """The main class of pulsar asynchronous engine.
 
-:param timeout: optional timeout. If greater than zero the deferred will be
-    cancelled after ``timeout`` seconds if no result is available.
-:param loop: If supplied, it is the :class:`.EventLoop` associated
-    with this :class:`Deferred`. If not supplied, the default event loop
-    is used. The event loop associated with this :class:`Deferred` is accessed
-    via the :attr:`_loop` attribute.
+    It is a callback which will be put off until later. It conforms with the
+    ``tulip.Future`` interface with an implementation similar to the
+    ``twisted.defer.Deferred`` class.
 
-.. attribute:: _loop
+    :param timeout: optional timeout. If greater than zero the deferred will
+        be cancelled after ``timeout`` seconds if no result is available.
+    :param loop: If supplied, it is the :class:`.EventLoop` associated
+        with this :class:`Deferred`. If not supplied, the default event loop
+        is used. The event loop associated with this :class:`Deferred` is
+        accessed via the :attr:`_loop` attribute.
 
-    The event loop associated with this :class:`Deferred`.
+    .. attribute:: _loop
 
-.. attribute:: paused
+        The event loop associated with this :class:`Deferred`.
 
-    Integer indicating the number of times this :class:`Deferred` has been
-    paused because the result of a callback was another :class:`Deferred`.
+    .. attribute:: _paused
 
-.. attribute:: result
+        Integer indicating the number of times this :class:`Deferred` has been
+        paused because the result of a callback was another :class:`Deferred`.
 
-    This is available once the :class:`Deferred` is done. Note,
-    this can be anything, including another :class:`Deferred`. Trying to access
-    this attribute when :meth:`done` is ``False`` will result in an
-    ``AttributeError`` exception.
-"""
-    paused = 0
+    .. attribute:: _result
+
+        This is available once the :class:`Deferred` is done. Note,
+        this can be anything, including another :class:`Deferred`.
+    """
+    _paused = 0
     _runningCallbacks = False
     _suppressAlreadyCalled = False
     _timeout = None
@@ -530,23 +529,18 @@ which will be put off until later. It conforms with the
         '''
         return self._timeout
 
-    def set_timeout(self, timeout, loop=None):
+    def set_timeout(self, timeout):
         '''Set a the :attr:`timeout` for this :class:`Deferred`.
 
-:parameter timeout: a timeout in seconds.
-:parameter loop: optional event loop where to run the callback. If not
-    supplied the :attr:`loop` attribute is used.
-:return: returns ``self`` so that other methods can be concatenated.'''
+        :parameter timeout: a timeout in seconds.
+        :return: ``self`` so that other methods can be concatenated.
+        '''
         if timeout and timeout > 0:
             if self._timeout:
                 self._timeout.cancel()
-            if not loop:
-                loop = self._loop
-            elif self._loop:
-                assert loop == self._loop, "Incompatible event loop"
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
-            self._timeout = loop.call_later(
+            self._timeout = self._loop.call_later(
                 timeout, self.cancel, 'timeout (%s seconds)' % timeout)
         return self
 
@@ -573,11 +567,13 @@ which will be put off until later. It conforms with the
             return False
 
     def add_done_callback(self, fn):
-        '''pep-3156_ API method, Add a callback to be run when the
-:class:`Deferred` becomes done. The callback is called with a single argument,
-the :class:`Deferred` object.'''
+        '''Add a callback to be run when the :class:`Deferred` becomes done.
+
+        The callback is called with a single argument,
+        the :class:`Deferred` object.
+        '''
         callback = lambda r: fn(self)
-        return self.add_callback(callback, callback)
+        self.add_callback(callback, callback)
 
     def set_result(self, result):
         '''pep-3156_ API method, same as :meth:`callback`'''
@@ -718,7 +714,7 @@ the :class:`Deferred` object.'''
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
-        if not self.done() or self._runningCallbacks or self.paused:
+        if self._state == _PENDING or self._runningCallbacks or self._paused:
             return
         loop = self._loop
         while self._callbacks:
@@ -738,23 +734,16 @@ the :class:`Deferred` object.'''
                     # received an asynchronous instance, add a continuation
                     if isinstance(self._result, Deferred):
                         # Add a pause
-                        self._pause()
+                        self._paused += 1
                         # Add a callback to the result to resume callbacks
-                        self._result.add_both(self._continue, self)
+                        self._result.add_callback(self._continue,
+                                                  self._continue)
                         break
-
-    def _pause(self):
-        """Stop processing until :meth:`unpause` is called."""
-        self.paused += 1
-
-    def _unpause(self):
-        """Process all callbacks made since :meth:`pause` was called."""
-        self.paused -= 1
-        self._run_callbacks()
 
     def _continue(self, result):
         self._result = result
-        self._unpause()
+        self._paused -= 1
+        self._run_callbacks()
         return self._result
 
 
@@ -806,7 +795,8 @@ class DeferredTask(Deferred):
             if isinstance(result, Deferred):
                 # async result add callback/errorback and transfer control
                 # to the event loop
-                self._waiting = result.add_both(self._restart)
+                self._waiting = result.add_callback(self._restart,
+                                                    self._restart)
                 return None, True
             elif result == NOT_DONE:
                 # transfer control to the event loop

@@ -190,6 +190,7 @@ _PENDING = 'PENDING'
 _CANCELLED = 'CANCELLED'
 _FINISHED = 'FINISHED'
 
+
 class Future(object):
     _state = _PENDING
     _result = None
@@ -266,19 +267,9 @@ class ReadTransport(BaseTransport):
     """ABC for read-only transports."""
 
     def pause_reading(self):
-        """Pause the receiving end.
-
-        No data will be passed to the protocol's data_received()
-        method until resume_reading() is called.
-        """
         raise NotImplementedError
 
     def resume_reading(self):
-        """Resume the receiving end.
-
-        Data received will once again be passed to the protocol's
-        data_received() method.
-        """
         raise NotImplementedError
 
 
@@ -286,24 +277,6 @@ class WriteTransport(BaseTransport):
     """ABC for write-only transports."""
 
     def set_write_buffer_limits(self, high=None, low=None):
-        """Set the high- and low-water limits for write flow control.
-
-        These two values control when to call the protocol's
-        pause_writing() and resume_writing() methods.  If specified,
-        the low-water limit must be less than or equal to the
-        high-water limit.  Neither value can be negative.
-
-        The defaults are implementation-specific.  If only the
-        high-water limit is given, the low-water limit defaults to a
-        implementation-specific value less than or equal to the
-        high-water limit.  Setting high to zero forces low to zero as
-        well, and causes pause_writing() to be called whenever the
-        buffer becomes non-empty.  Setting low to zero causes
-        resume_writing() to be called only once the buffer is empty.
-        Use of zero for either limit is generally sub-optimal as it
-        reduces opportunities for doing I/O and computation
-        concurrently.
-        """
         raise NotImplementedError
 
     def get_write_buffer_size(self):
@@ -351,25 +324,7 @@ class WriteTransport(BaseTransport):
 
 
 class Transport(ReadTransport, WriteTransport):
-    """ABC representing a bidirectional transport.
-
-    There may be several implementations, but typically, the user does
-    not implement new transports; rather, the platform provides some
-    useful transports that are implemented using the platform's best
-    practices.
-
-    The user never instantiates a transport directly; they call a
-    utility function, passing it a protocol factory and other
-    information necessary to create the transport and protocol.  (E.g.
-    EventLoop.create_connection() or EventLoop.create_server().)
-
-    The utility function will asynchronously create a transport and a
-    protocol and hook them up by calling the protocol's
-    connection_made() method, passing it the transport.
-
-    The implementation here raises NotImplemented for every method
-    except writelines(), which calls write() in a loop.
-    """
+    """ABC representing a bidirectional transport."""
 
 
 class DatagramTransport(BaseTransport):
@@ -396,80 +351,23 @@ class DatagramTransport(BaseTransport):
 
 
 class BaseProtocol:
-    """ABC for base protocol class.
-
-    Usually user implements protocols that derived from BaseProtocol
-    like Protocol or ProcessProtocol.
-
-    The only case when BaseProtocol should be implemented directly is
-    write-only transport like write pipe
-    """
+    """ABC for base protocol class."""
 
     def connection_made(self, transport):
-        """Called when a connection is made.
-
-        The argument is the transport representing the pipe connection.
-        To receive data, wait for data_received() calls.
-        When the connection is closed, connection_lost() is called.
-        """
+        pass
 
     def connection_lost(self, exc):
-        """Called when the connection is lost or closed.
-
-        The argument is an exception object or None (the latter
-        meaning a regular EOF is received or the connection was
-        aborted or closed).
-        """
+        pass
 
     def pause_writing(self):
-        """Called when the transport's buffer goes over the high-water mark.
-
-        Pause and resume calls are paired -- pause_writing() is called
-        once when the buffer goes strictly over the high-water mark
-        (even if subsequent writes increases the buffer size even
-        more), and eventually resume_writing() is called once when the
-        buffer size reaches the low-water mark.
-
-        Note that if the buffer size equals the high-water mark,
-        pause_writing() is not called -- it must go strictly over.
-        Conversely, resume_writing() is called when the buffer size is
-        equal or lower than the low-water mark.  These end conditions
-        are important to ensure that things go as expected when either
-        mark is zero.
-
-        NOTE: This is the only Protocol callback that is not called
-        through EventLoop.call_soon() -- if it were, it would have no
-        effect when it's most needed (when the app keeps writing
-        without yielding until pause_writing() is called).
-        """
+        pass
 
     def resume_writing(self):
-        """Called when the transport's buffer drains below the low-water mark.
-
-        See pause_writing() for details.
-        """
+        pass
 
 
 class Protocol(BaseProtocol):
-    """ABC representing a protocol.
-
-    The user should implement this interface.  They can inherit from
-    this class but don't need to.  The implementations here do
-    nothing (they don't raise exceptions).
-
-    When the user wants to requests a transport, they pass a protocol
-    factory to a utility function (e.g., EventLoop.create_connection()).
-
-    When the connection is made successfully, connection_made() is
-    called with a suitable transport object.  Then data_received()
-    will be called 0 or more times with data (bytes) received from the
-    transport; finally, connection_lost() will be called exactly once
-    with either an exception object or None as an argument.
-
-    State machine of calls:
-
-      start -> CM [-> DR*] [-> ER?] -> CL -> end
-    """
+    """ABC representing a protocol."""
 
     def data_received(self, data):
         """Called when some data is received.
