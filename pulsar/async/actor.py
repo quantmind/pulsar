@@ -6,7 +6,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin, WritelnDecorator
 
 from .eventloop import setid
-from .defer import Failure
+from .defer import in_loop, Failure
 from .events import EventHandler
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
@@ -258,11 +258,29 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    def send(self, target, action, *args, **kw):
+    @in_loop
+    def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
-positional ``args`` and key-valued ``kwargs``.
-Always return a :class:`Deferred`.'''
-        return self._loop.async(self._send(target, action, *args, **kw))
+        positional ``args`` and key-valued ``kwargs``.
+        Always return a :class:`Deferred`.'''
+        target = self.monitor if target == 'monitor' else target
+        mailbox = self.mailbox
+        if isinstance(target, ActorProxyMonitor):
+            mailbox = target.mailbox
+        else:
+            actor = self.get_actor(target)
+            if isinstance(actor, Actor):
+                # this occur when sending a message from arbiter to monitors or
+                # viceversa.
+                return command_in_context(action, self, actor, args, kwargs)
+            elif isinstance(actor, ActorProxyMonitor):
+                mailbox = actor.mailbox
+        if hasattr(mailbox, 'request'):
+            #if not mailbox.closed:
+            return mailbox.request(action, self, target, args, kwargs)
+        else:
+            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
+                               % (action, self, target))
 
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
@@ -406,23 +424,3 @@ This method is invoked when you run the
         finally:
             if exc != -1:
                 self.stop(exc)
-
-    def _send(self, target, action, *args, **kwargs):
-        target = self.monitor if target == 'monitor' else target
-        mailbox = self.mailbox
-        if isinstance(target, ActorProxyMonitor):
-            mailbox = target.mailbox
-        else:
-            actor = self.get_actor(target)
-            if isinstance(actor, Actor):
-                # this occur when sending a message from arbiter to monitors or
-                # viceversa.
-                return command_in_context(action, self, actor, args, kwargs)
-            elif isinstance(actor, ActorProxyMonitor):
-                mailbox = actor.mailbox
-        if hasattr(mailbox, 'request'):
-            #if not mailbox.closed:
-            return mailbox.request(action, self, target, args, kwargs)
-        else:
-            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
-                               % (action, self, target))

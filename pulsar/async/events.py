@@ -98,7 +98,7 @@ class OneTime(Deferred, Event):
                 logger().warning('Event "%s" already fired for %s',
                                  self.name, arg)
             else:
-                assert not kwargs, ("One time events can don't support "
+                assert not kwargs, ("One time events don't support "
                                     "key-value parameters")
                 result = self._events.callback(arg)
                 if isinstance(result, Deferred):

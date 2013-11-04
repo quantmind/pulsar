@@ -44,7 +44,7 @@ import re
 from functools import reduce
 from io import BytesIO
 
-from pulsar import async
+from pulsar import coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
@@ -446,14 +446,12 @@ class WsgiRequest(EnvironMixin):
         else:
             return self._cached_data_and_files
 
-    @async()
     def body_data(self):
         '''A :class:`~.MultiValueDict` containing data from the request body.
         '''
         data, _ = yield self.data_and_files()
-        yield data
+        coroutine_return(data)
 
-    @async()
     def _data_and_files(self):
         if self.method not in ENCODE_URL_METHODS:
             stream = self.environ.get('wsgi.input')
@@ -475,7 +473,7 @@ class WsgiRequest(EnvironMixin):
         else:
             result = {}, None
         self._cached_data_and_files = result
-        yield result
+        coroutine_return(result)
 
     @cached_property
     def url_data(self):

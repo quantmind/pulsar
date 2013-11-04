@@ -29,18 +29,28 @@ EventLoop
 
 .. module:: pulsar.async.defer
 
-Async Discovery Functions
+Async Utilities
 =================================
 
-This section describes the asynchronous discover functions which are used
-throughout the library to access if objects are asynchronous or not.
-There are two important functions: :func:`.maybe_async` and
-:func:`.maybe_failure` for asynchronous exceptions.
+A collection of asynchronous utilities which facilitates manipulation and
+interaction with :ref:`asynchronous components <tutorials-coroutine>`.
+
+Async
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: async
+
 
 Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: maybe_async
+
+
+Safe Async
+~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: safe_async
+
 
 Maybe Failure
 ~~~~~~~~~~~~~~~~~~~~
@@ -58,29 +68,9 @@ Is failure
 .. autofunction:: is_failure
 
 
-Async Utilities
-====================
-
-A collection of asynchronous utilities which facilitates manipulation and
-interaction with :ref:`asynchronous components <tutorials-coroutine>`.
-
-Async
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: async
-
-
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
-
-
-Safe Async
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. function:: safe_async(callable, *args, **kwargs)
-
-    Safely execute a ``callable`` and always return a :class:`Deferred`,
-    even if the ``callable`` is not asynchronous. Never throws.
 
 
 Async Sleep

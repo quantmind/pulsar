@@ -68,7 +68,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar import (Http404, PermissionDenied, HttpException, HttpRedirect,
-                    async, Failure, multi_async)
+                    multi_async)
 
 from .route import Route
 from .utils import wsgi_request
@@ -209,9 +209,6 @@ request, the ``get(self, request)`` method must be implemented.
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            if rparameters.pop('async', False):  # asynchronous method
-                handler = async()(handler)
-                handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
@@ -366,11 +363,11 @@ in the :attr:`response_content_types` list.'''
         else:
             return self, match
 
-    @async(get_result=True)
     def response(self, environ, args):
         '''Once the :meth:`resolve` method has matched the correct
-:class:`Router` for serving the request, this matched router invokes
-this method to produce the WSGI response.'''
+        :class:`Router` for serving the request, this matched router invokes
+        this method to produce the WSGI response.
+        '''
         request = wsgi_request(environ, self, args)
         # Set the response content type
         request.response.content_type = self.content_type(request)
@@ -379,23 +376,9 @@ this method to produce the WSGI response.'''
         if callable is None:
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
-        # make sure cache does not contain asynchronous data
-        async_cache = multi_async(request.cache, raise_on_error=False)
-        cache = yield async_cache
-        if async_cache.num_failures:
-            for key, value in list(cache.items()):
-                if isinstance(value, Failure):
-                    cache.pop(key)
-            environ['pulsar.cache'] = cache
-            yield async_cache.failures
-        else:
-            environ['pulsar.cache'] = cache
-            yield callable(request)
+        return callable(request)
 
-    @async(get_result=True)
     def redirect(self, environ, path):
-        request = wsgi_request(environ, self)
-        environ['pulsar.cache'] = yield multi_async(request.cache)
         raise HttpRedirect(path)
 
     def add_child(self, router):

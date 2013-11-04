@@ -24,7 +24,7 @@ class create_echo_server(object):
     def __call__(self, actor):
         '''Starts an echo server on a newly spawn actor'''
         address = self.address
-        server = TcpServer(actor.event_loop, address[0], address[1],
+        server = TcpServer(actor._loop, address[0], address[1],
                            EchoServerProtocol)
         yield server.start_serving()
         actor.servers['echo'] = server
@@ -61,7 +61,10 @@ class TestProxy(unittest.TestCase):
     def test_actor_coverage(self):
         '''test case for coverage'''
         actor = pulsar.get_actor()
-        d = self.assertRaises(CommandNotFound, send, 'sjdcbhjscbhjdbjsj', 'bla')
+        try:
+            yield send(send, 'sjdcbhjscbhjdbjsj', 'bla')
+        except CommandNotFound:
+            pass
         self.assertRaises(pickle.PicklingError, pickle.dumps, actor)
 
 

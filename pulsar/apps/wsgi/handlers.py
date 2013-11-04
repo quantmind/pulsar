@@ -88,7 +88,7 @@ import sys
 
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_property
-from pulsar import Http404, async, Failure, coroutine_return
+from pulsar import async, Http404, Failure, coroutine_return
 
 from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
@@ -100,34 +100,37 @@ __all__ = ['WsgiHandler', 'LazyWsgi']
 class WsgiHandler(object):
     '''An handler for application conforming to python WSGI_.
 
-.. attribute:: middleware
+    .. attribute:: middleware
 
-    List of :ref:`asynchronous WSGI middleware <wsgi-middleware>` callables
-    which accept ``environ`` and ``start_response`` as arguments.
-    The order matter, since the response returned by the callable
-    is the non ``None`` value returned by a middleware.
+        List of :ref:`asynchronous WSGI middleware <wsgi-middleware>` callables
+        which accept ``environ`` and ``start_response`` as arguments.
+        The order matter, since the response returned by the callable
+        is the non ``None`` value returned by a middleware.
 
-.. attribute:: response_middleware
+    .. attribute:: response_middleware
 
-    List of functions of the form::
+        List of functions of the form::
 
-        def ..(environ, response):
-            ...
+            def ..(environ, response):
+                ...
 
-    where ``response`` is a :ref:`WsgiResponse <wsgi-response>`.
-    Pulsar contains some
-    :ref:`response middlewares <wsgi-response-middleware>`.
+        where ``response`` is a :ref:`WsgiResponse <wsgi-response>`.
+        Pulsar contains some
+        :ref:`response middlewares <wsgi-response-middleware>`.
 
-'''
+    '''
     def __init__(self, middleware=None, response_middleware=None, **kwargs):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
 
-    @async(get_result=True)
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
+        loop = environ['pulsar.connection']._loop
+        return async(self._call(environ, start_response), loop)
+
+    def _call(self, environ, start_response):
         resp = None
         for middleware in self.middleware:
             try:

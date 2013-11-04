@@ -1,26 +1,30 @@
 (function($) {
 
     $.wschat = function(ws) {
-        messages = $('#messages'),
-        message = $('#message');
+        var messages = $('#messages'),
+            users = $('#users'),
+            message = $('#message');
+
         ws.onmessage = function(e) {
             var data = $.parseJSON(e.data),
-              label= 'info">@';
+                channel = data.channel,
+                label = 'info">@',
+                user;
             if (data.user === 'anonymous') {
-              label = 'inverse">';
+                label = 'inverse">';
             }
-            data.user = '<span class="label label-' + label + data.user + '</span>'
-            messages.prepend('<p>' + data.user + '&nbsp;' + data.message + '</p>');
+            user = '<span class="label label-' + label + data.user + '</span>';
+            if (data.channel == 'webchat') {
+                messages.prepend('<p>' + user + '&nbsp;' + data.message + '</p>');
+            } else if (data.channel == 'chatuser') {
+                users.append('<p>' + user + '</p>');
+            }
         };
         $('#publish').click(function () {
             var msg = message.val();
             ws.send(msg);
             message.val('');
         });
-        ws.onopen = function() {
-            // Send empty message so that we connect this client
-            //ws.send('');
-        };
     };
 
 }(jQuery));

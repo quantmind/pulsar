@@ -182,7 +182,7 @@ class ProtocolConsumer(EventHandler):
         result = self.fire_event('post_request', result)
         c = self._connection
         if c and c._current_consumer is self:
-            c._current_consumer = None
+            c.set_consumer()
         return result
 
     def connection_lost(self, exc):
@@ -343,19 +343,23 @@ class Connection(EventHandler, asyncio.Protocol):
         self._timeout = timeout
         self._add_idle_timeout()
 
-    def set_consumer(self, consumer):
+    def set_consumer(self, consumer=None):
         '''Set a new :class:`ProtocolConsumer` for this :class:`Connection`.
 
         If the :attr:`current_consumer` is not ``None`` an exception occurs.
+        :param consumer: optional consumer to set. If not provided the
+            consumer is created from the :attr:`consumer_factory` function.
+        :return: the new :attr:`current_consumer`
         '''
         if consumer is None:
             self._current_consumer = None
-        else:
-            assert self._current_consumer is None, 'Consumer is not None'
-            self._current_consumer = consumer
-            consumer._connection = self
-            self._processed += 1
-            consumer.connection_made(self)
+            consumer = self._consumer_factory()
+        assert self._current_consumer is None, 'Consumer is not None'
+        self._current_consumer = consumer
+        consumer._connection = self
+        self._processed += 1
+        consumer.connection_made(self)
+        return consumer
 
     def connection_made(self, transport):
         '''Override :class:`BaseProtocol.connection_made`.
@@ -380,9 +384,7 @@ class Connection(EventHandler, asyncio.Protocol):
         while data:
             consumer = self._current_consumer
             if consumer is None:
-                # New consumer.
-                consumer = self._consumer_factory()
-                self.set_consumer(consumer)
+                consumer = self.set_consumer()
                 consumer.start()
             # Call the consumer _data_received method
             data = consumer._data_received(data)
@@ -436,9 +438,7 @@ class Connection(EventHandler, asyncio.Protocol):
                                              consumer)
             if build_consumer:
                 consumer.finished()
-                new_consumer = self._consumer_factory()
-                self.set_consumer(new_consumer)
-                return new_consumer
+                return self._current_consumer
 
     ########################################################################
     ##    INTERNALS

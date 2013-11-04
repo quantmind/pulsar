@@ -13,7 +13,7 @@ http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 import sys
 from functools import partial
 
-from pulsar import async, Failure, multi_async, maybe_failure
+from pulsar import Failure, multi_async, maybe_failure
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -40,7 +40,6 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     def __call__(self, request):
         return Json(self._call(request)).http_response(request)
 
-    @async()
     def _call(self, request):
         response = request.response
         data = {}

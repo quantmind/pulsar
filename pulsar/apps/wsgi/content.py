@@ -132,8 +132,7 @@ Html Factory
 from collections import Mapping
 from functools import partial
 
-from pulsar import (multi_async, maybe_async, is_failure, safe_async, async,
-                    Deferred)
+from pulsar import multi_async, maybe_async, is_failure, safe_async, Deferred
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -339,7 +338,6 @@ This method should not be overwritten, instead one should use the
                 else:
                     yield child
 
-    @async()
     def http_response(self, request):
         '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
 This method asynchronously wait for :meth:`content` and subsequently

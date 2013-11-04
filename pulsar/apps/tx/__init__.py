@@ -32,8 +32,7 @@ try:    # pragma    nocover
     import twisted
     from twisted.internet.main import installReactor
     from twisted.internet.posixbase import PosixReactorBase
-    from twisted.internet.defer import Deferred
-    from twisted.python.failure import Failure
+    from twisted.internet.defer import Deferred as TwistedDeferred
 except ImportError:     # pragma    nocover
     # This is for when we build documentation with sphinx in python 3
     import os
@@ -44,29 +43,22 @@ except ImportError:     # pragma    nocover
         raise
 
 import pulsar
-from pulsar import get_event_loop
-from pulsar.async.defer import (default_maybe_async, default_maybe_failure,
-                                set_async)
+from pulsar import get_event_loop, Deferred, Failure
+from pulsar.async.defer import default_async, set_async
 
 
-def _maybe_async(obj, **params):    # pragma    nocover
-    if isinstance(obj, Deferred):
-        d = pulsar.Deferred()
+def _async(coro_or_future, loop=None):    # pragma    nocover
+    if isinstance(coro_or_future, TwistedDeferred):
+        d = Deferred(loop)
         d._twisted_deferred = obj
-        obj.addBoth(d.callback)
-        obj = d
-    return default_maybe_async(obj, **params)
+        obj.addCallbacks(
+            d.callback, lambda e: d.callback(Failure((e.type, e.value, e.tb))))
+        return d
+    return default_async(coro_or_future, loop)
 
 
-def _maybe_failure(e):  # pragma    nocover
-    if isinstance(e, Failure):
-        return pulsar.Failure((e.type, e.value, e.tb))
-    else:
-        return default_maybe_failure(e)
-
-
-# Set the new async discovery functions
-set_async(_maybe_async, _maybe_failure)
+# Set the new async function
+set_async(_async)
 
 
 class PulsarReactor(PosixReactorBase):  # pragma    nocover

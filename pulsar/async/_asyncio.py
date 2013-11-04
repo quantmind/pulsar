@@ -1,5 +1,6 @@
 '''Replicate asyncio basic functionalities'''
 from heapq import heappush
+from inspect import isgeneratorfunction
 
 from pulsar.utils.pep import default_timer, ispy3k
 
@@ -88,6 +89,9 @@ class AbstractEventLoop(object):
     '''This is just a signature'''
 
     def run_in_executor(self, executor, callback, *args):
+        raise NotImplementedError
+
+    def run_until_complete(self, future):
         raise NotImplementedError
 
 
@@ -211,23 +215,23 @@ was cancelled.'''
         '''
         return self._state != _PENDING
 
-    def result(self):
-        """Return the result this future represents.
+    def cancel(self):
+        raise NotImplementedError
 
-        If the future has been cancelled, raises CancelledError.  If the
-        future's result isn't yet available, raises InvalidStateError.  If
-        the future is done and has an exception set, this exception is raised.
-        """
-        if self._state == _CANCELLED:
-            raise CancelledError
-        if self._state != _FINISHED:
-            raise InvalidStateError('Result is not ready.')
-        if self._tb_logger is not None:
-            self._tb_logger.clear()
-            self._tb_logger = None
-        if self._exception is not None:
-            raise self._exception
-        return self._result
+    def result(self):
+        raise NotImplementedError
+
+    def add_done_callback(self, fn):
+        raise NotImplementedError
+
+    def remove_done_callback(self, fn):
+        raise NotImplementedError
+
+    def set_result(self, result):
+        raise NotImplementedError
+
+    def set_exception(self, result):
+        raise NotImplementedError
 
     def __iter__(self):
         if not self.done():

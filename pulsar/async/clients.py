@@ -9,7 +9,7 @@ from pulsar.utils.pep import itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
 from .access import asyncio, new_event_loop
-from .defer import Failure, is_failure, multi_async
+from .defer import async, Failure, is_failure, multi_async
 from .protocols import Producer, ConnectionProducer
 
 __all__ = ['ConnectionPool', 'Client', 'Request']
@@ -476,7 +476,7 @@ class Client(Producer):
             self._closed = True
             event = self.close_connections(async)
             event.add_both(partial(self.fire_event, 'finish'))
-            event.set_timeout(timeout, self.get_event_loop())
+            event.set_timeout(timeout)
         return self.event('finish')
 
     def abort(self):
@@ -526,8 +526,8 @@ class Client(Producer):
                 conn.set_consumer(response)
             if conn.transport is None:
                 # There is no transport, we need to connect with server first
-                loop.async(request.connect(
-                    loop, conn)).add_errback(response.finished)
+                async(request.connect(loop, conn),
+                      loop).add_errback(response.finished)
             else:
                 response.start(request)
             return

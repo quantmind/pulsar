@@ -3,7 +3,7 @@ import sys
 from threading import current_thread
 
 import pulsar
-from pulsar import (Failure, run_in_loop_thread, Deferred,
+from pulsar import (Failure, run_in_loop_thread, Deferred, TimeoutError,
                     asyncio, get_event_loop, new_event_loop)
 from pulsar.apps.test import unittest, mute_failure
 
@@ -171,14 +171,14 @@ class TestEventLoop(unittest.TestCase):
 
     def test_run_until_complete_timeout(self):
         event_loop = new_event_loop(iothreadloop=False)
-        self.assertFalse(event_loop.running)
+        self.assertFalse(event_loop.is_running())
         self.assertFalse(event_loop.iothreadloop)
-        d = pulsar.Deferred()
+        d = Deferred().set_timeout(2)
         event_loop.call_later(10, d.callback, 'OK')
-        self.assertRaises(pulsar.TimeoutError,
-                          event_loop.run_until_complete, d, timeout=2)
-        self.assertFalse(d.done())
-        self.assertFalse(event_loop.running)
+        self.assertRaises(TimeoutError, event_loop.run_until_complete, d)
+        self.assertTrue(d.done())
+        mute_failure(self, d._result)
+        self.assertFalse(event_loop.is_running())
 
     def test_run_in_thread_loop(self):
         event_loop = get_event_loop()

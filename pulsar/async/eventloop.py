@@ -17,7 +17,7 @@ from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_local_data, LOGGER
-from .defer import DeferredTask, Deferred, Failure, TimeoutError
+from .defer import async, DeferredTask, Deferred, Failure
 from .stream import create_connection, start_serving, sock_connect, sock_accept
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
@@ -230,27 +230,26 @@ loop of the thread where it is run.'''
             finally:
                 self._after_run()
 
-    def run_until_complete(self, future, timeout=None):
-        '''Run the event loop until a :class:`Deferred` *future* is done.
-Return the future's result, or raise its exception. If timeout is not
-``None``, run it for at most that long;  if the future is still not done,
-raise TimeoutError (but don't cancel the future).'''
-        if not self.is_running():
-            self.call_soon(future.add_both, self._raise_stop_event_loop)
-            handler = None
-            if timeout:
-                handler = self.call_later(timeout,
-                                          self._raise_stop_event_loop)
-            self.run()
-            if handler:
-                if future.done():
-                    handler.cancel()
-                else:
-                    raise TimeoutError
-            future.cancel()
-            return future.result_or_throw()
+    def run_until_complete(self, future):
+        """Run until the Future is done.
 
-    def stop(self):
+        If the argument is a coroutine, it is wrapped in a Task.
+
+        XXX TBD: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+
+        Return the Future's result, or raise its exception.
+        """
+        future = async(future, self)
+        future.add_done_callback(self.stop)
+        self.run_forever()
+        future.remove_done_callback(self.stop)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+        return future.result()
+
+    def stop(self, deferred=None):
         '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(self._raise_stop_event_loop)
 
@@ -409,7 +408,8 @@ default signal handler ``signal.SIG_DFL``.'''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)
-        return self.async(res, timeout)
+        d = async(res, self)
+        return d.set_timeout(timeout)
 
     def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,

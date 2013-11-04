@@ -58,7 +58,8 @@ class WebSocket(wsgi.Router):
         request.response.content = b''
         request.response.headers.update(headers)
         factory = partial(WebSocketProtocol, request, self.handle, parser)
-        request.environ['pulsar.connection'].upgrade(factory)
+        connection = request.environ['pulsar.connection']
+        connection.upgrade(factory)
         return request.response
 
     def upgrade(self, connection,):
@@ -138,8 +139,6 @@ class WebSocketProtocol(ProtocolConsumer):
     A websocket parser.
 
     '''
-    _started = False
-
     def __init__(self, handshake, handler, parser):
         super(WebSocketProtocol, self).__init__()
         self.bind_event('post_request', self._shut_down)
@@ -149,6 +148,7 @@ class WebSocketProtocol(ProtocolConsumer):
 
     def connection_made(self, connection):
         connection.set_timeout(0)
+        self._loop.maybe_async(self.handler.on_open(self))
 
     def data_received(self, data):
         frame = self.parser.decode(data)
@@ -158,9 +158,6 @@ class WebSocketProtocol(ProtocolConsumer):
                 # done with this, call finished method.
                 self.finished()
                 break
-            elif not self._started:
-                self._started = True
-                async(self.handler.on_open(self))
             if frame.is_message:
                 async(self.handler.on_message(self, frame.body))
             elif frame.is_bytes:

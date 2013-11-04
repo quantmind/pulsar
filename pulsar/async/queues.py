@@ -7,20 +7,6 @@ from .threads import Empty, Full, Lock
 __all__ = ['Queue']
 
 
-class errback:
-    __slots__ = ['error']
-
-    def __init__(self, error):
-        self.error = error
-
-    def __call__(self, failure):
-        if isinstance(failure.error, CancelledError):
-            failure.mute()
-            raise self.error
-        else:
-            return failure
-
-
 class Queue:
     '''Asynchronous FIFO queue.
     '''
@@ -79,8 +65,8 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 # add it to the putters queue if we can wait
                 if self._maxsize and self._maxsize <= self.qsize():
                     if wait:
-                        waiter = Deferred(loop=self._loop, timeout=timeout)
-                        waiter.add_errback(errback(Full))
+                        waiter = Deferred(loop=self._loop)
+                        waiter.set_timeout(timeout, exception_class=Full)
                         self._putters.append((item, waiter))
                     else:
                         raise Full
@@ -138,9 +124,10 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 else:
                     return item
             elif wait:
-                item = Deferred(loop=self._loop, timeout=timeout)
+                item = Deferred(self._loop)
+                item.set_timeout(timeout, exception_class=Empty)
                 self._waiting.append(item)
-                return item.add_errback(errback(Empty))
+                return item
             else:
                 raise Empty
 
