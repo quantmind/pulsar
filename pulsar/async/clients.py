@@ -9,8 +9,9 @@ from pulsar.utils.internet import is_socket_closed
 from .access import asyncio, new_event_loop
 from .defer import async, Failure, multi_async
 from .protocols import Producer, ConnectionProducer
+from .queues import Queue
 
-__all__ = ['ConnectionPool', 'Client', 'Request']
+__all__ = ['Pool', 'ConnectionPool', 'BaseClient', 'Client', 'Request']
 
 
 class Request(object):
@@ -64,6 +65,89 @@ class Request(object):
         yield connection.event('connection_made')
         # starts the new request
         connection.current_consumer.start(self)
+
+
+class Pool(object):
+    '''An asynchronous pool of connections.
+
+    Not thread safe. Must be called in the event loop thread.
+    '''
+    def __init__(self, creator, pool_size=10, loop=None, **kw):
+        self._creator = creator
+        self._pool_size = pool_size
+        self._queue = Queue(loop=loop)
+        self._loop = self._queue._loop
+        self._in_use_connections = set()
+
+    def connect(self):
+        '''Get a connection from the pool.'''
+        return PoolConnection.checkout(self)
+
+    @property
+    def pool_size(self):
+        '''The maximum number of open connections allowed.
+
+        If more connections are requested by a :class:`.Store`, the request
+        is queued and a connection returned as soon as one becomes
+        available.
+        '''
+        return self._pool_size
+
+    @property
+    def size(self):
+        '''The number of connections in use.
+
+        These connections are not available until they are released back
+        to the pool.
+        '''
+        return len(self._in_use_connections)
+
+    def get(self):
+        queue = self._queue
+        connection = None
+        if self.size >= self._pool_size or queue.qsize():
+            connection = yield queue.get()
+        else:
+            connection = yield self._creator()
+        self._in_use_connections.add(connection)
+
+    def put(self, conn):
+        try:
+            self._queue.put(conn, False)
+        except pulsar.Full:
+            conn.close()
+        self._in_use_connections.discard(conn)
+
+
+class PoolConnection(object):
+    __slots__ = ('pool', 'connection')
+
+    def __init__(self, pool, connection):
+        self.pool = pool
+        self.connection = connection
+
+    def close(self):
+        if self.pool is not None:
+            self.pool.put(self.connection)
+            self.connection = None
+            self.pool = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+
+    def __del__(self):
+        self.close()
+
+    @classmethod
+    def checkout(cls, pool):
+        connection = yield pool.get()
+        yield cls(pool, connection)
 
 
 class ConnectionPool(ConnectionProducer):
@@ -181,7 +265,6 @@ def release_response_connection(response):
     request = response.request
     connection = response.connection
     if connection:
-        connection.set_consumer(None)
         if getattr(request, 'release_connection', False):
             key = response.request.key
             pool = response.producer.connection_pools.get(key)
@@ -194,7 +277,23 @@ def release_response_connection(response):
     return response
 
 
-class Client(Producer):
+class BaseClient(Producer):
+
+    def request(self, *args, **params):
+        '''Abstract method for creating a :class:`Request`.
+        '''
+        raise NotImplementedError
+
+    def close(self, async=True, timeout=5):
+        raise NotImplementedError
+
+    def abort(self):
+        ''':meth:`close` all connections without waiting for active
+        connections to finish.'''
+        self.close(async=False)
+
+
+class Client(BaseClient):
     '''A client for several remote servers of the same type.
 
     It is a :class:`Producer` which handles one or more
@@ -354,22 +453,6 @@ class Client(Producer):
         consumer.bind_event('post_request', release_response_connection)
         return consumer
 
-    def request(self, *args, **params):
-        '''Abstract method for creating a :class:`Request`.
-
-        The request is sent to a remote server via the :meth:`response`
-        method. This method **must be implemented by subclasses** and should
-        return a :class:`ProtocolConsumer` via invoking the
-        :meth:`response` method::
-
-            def request(self, ...):
-                ...
-                request = ...
-                return self.response(request)
-
-        '''
-        raise NotImplementedError
-
     def response(self, request, response=None, new_connection=True,
                  connection=None):
         '''Sends a ``request`` to the remote server.
@@ -476,11 +559,6 @@ class Client(Producer):
             event.add_both(partial(self.fire_event, 'finish'))
             event.set_timeout(timeout)
         return self.event('finish')
-
-    def abort(self):
-        ''':meth:`close` all connections without waiting for active connections
-        to finish.'''
-        self.close(async=False)
 
     #def reconnect_time_lag(self, lag):
     #    lag = self.reconnect_time_lag*(math.log(lag) + 1)

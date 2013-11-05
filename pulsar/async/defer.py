@@ -28,7 +28,9 @@ __all__ = ['Deferred',
            'async_while',
            'safe_async',
            'run_in_loop_thread',
-           'in_loop']
+           'in_loop',
+           'in_loop_thread']
+
 
 if not getattr(asyncio, 'fallback', False):
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
@@ -237,22 +239,6 @@ with pulsar :class:`Deferred` and :class:`Failure`.'''
     global _async
     _async = async_callable
 
-
-def in_loop(method):
-    '''Decorator to run a method on the event loop of the bound instance.
-    '''
-    def _(self, *args, **kwargs):
-        try:
-            result = method(self, *args, **kwargs)
-        except Exception:
-            result = sys.exc_info()
-        return maybe_async(result, self._loop, False)
-
-    _.__name__ = method.__name__
-    _.__doc__ = method.__doc__
-    return _
-
-
 def async_sleep(timeout):
     '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
 function within a :ref:`coroutine <coroutine>` when you need to resume
@@ -323,16 +309,45 @@ def run_in_loop_thread(loop, callback, *args, **kwargs):
 
     Return a :class:`.Deferred`
     '''
-    d = Deferred()
+    d = Deferred(loop)
 
     def _():
         try:
             result = yield callback(*args, **kwargs)
         except Exception:
             result = sys.exc_info()
-        d.set_result(result)
+        d.callback(result)
     loop.call_soon_threadsafe(_)
     return d
+
+
+def in_loop(method):
+    '''Decorator to run a method on the event loop of the bound instance.
+    '''
+    def _(self, *args, **kwargs):
+        try:
+            result = method(self, *args, **kwargs)
+        except Exception:
+            result = sys.exc_info()
+        return maybe_async(result, self._loop, False)
+
+    _.__name__ = method.__name__
+    _.__doc__ = method.__doc__
+    return _
+
+
+def in_loop_thread(method):
+    '''Decorator to run a method in the thread of the event loop
+    of the bound instance.
+
+    It uses the :func:`run_in_loop_thread` function.
+    '''
+    def _(self, *args, **kwargs):
+        return run_in_loop_thread(self._loop, method, self, *args, **kwargs)
+
+    _.__name__ = method.__name__
+    _.__doc__ = method.__doc__
+    return _
 
 
 class DoneCallback:

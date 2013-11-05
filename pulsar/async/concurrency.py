@@ -1,17 +1,17 @@
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system
+from pulsar import system, HaltServer
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
 from .access import new_event_loop, get_actor, set_actor, remove_actor, logger
 from .threads import Thread
-from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
+from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure, Deferred
 from .eventloop import signal, StopEventLoop
-from .stream import TcpServer
+from .protocols import Connection, TcpServer
 from .pollers import POLLERS
 from .consts import *
 
@@ -313,13 +313,14 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''Override :meth:`Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(loop, '127.0.0.1', 0,
-                            consumer_factory=MailboxConsumer,
+        mailbox = TcpServer(MailboxProtocol, loop, ('127.0.0.1', 0),
                             name='mailbox')
         # when the mailbox stop, close the event loop too
         mailbox.bind_event('stop', lambda _: loop.stop())
-        mailbox.bind_event('start', lambda _: loop.call_soon_threadsafe(
-            self.hand_shake, actor))
+        mailbox.bind_event(
+            'start',
+            lambda _: loop.call_soon_threadsafe(self.hand_shake, actor),
+            self._bailout)
         mailbox.start_serving()
         return mailbox
 
@@ -363,6 +364,9 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                                   actor.close_actors()))
             active.add_both(partial(self._exit_arbiter, actor))
 
+    def _bailout(self, failure):
+        failure.log()
+        raise HaltServer
 
 def run_actor(self):
     self._actor = actor = self.actor_class(self)

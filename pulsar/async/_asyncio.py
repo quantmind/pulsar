@@ -84,6 +84,20 @@ def new_event_loop(**kwargs):
     return get_event_loop_policy().new_event_loop(**kwargs)
 
 
+class AbstractServer(object):
+    """Abstract server returned by create_server()."""
+
+    def close(self):
+        """Stop serving.
+
+        This leaves existing connections open."""
+        return NotImplemented
+
+    def wait_closed(self):
+        """Wait until service is closed."""
+        return NotImplemented
+
+
 class AbstractEventLoop(object):
     '''This is just a signature'''
 

@@ -47,11 +47,11 @@ from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import FrameParser
 from pulsar.utils.security import gen_unique_id
 
-from .access import get_actor
-from .defer import Failure, Deferred, maybe_async
-from .protocols import ProtocolConsumer
-from .clients import Client, Request
+from .access import asyncio, get_actor
+from .defer import Failure, Deferred, coroutine_return, in_loop
 from .proxy import actorid, get_proxy, get_command, ActorProxy
+from .protocols import Protocol
+from .clients import BaseClient
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
@@ -93,11 +93,10 @@ class ProxyMailbox(object):
         pass
 
 
-class Message(Request):
+class Message(object):
     '''A message which travels from actor to actor.
     '''
-    def __init__(self, data, future=None, address=None, timeout=None):
-        super(Message, self).__init__(address, timeout)
+    def __init__(self, data, future=None):
         self.data = data
         self.future = future
 
@@ -106,8 +105,7 @@ class Message(Request):
     __str__ = __repr__
 
     @classmethod
-    def command(cls, command, sender, target, args, kwargs, address=None,
-                timeout=None):
+    def command(cls, command, sender, target, args, kwargs):
         command = get_command(command)
         data = {'command': command.__name__,
                 'sender': actorid(sender),
@@ -127,26 +125,24 @@ class Message(Request):
         return cls(data)
 
 
-class MailboxConsumer(ProtocolConsumer):
+class MailboxProtocol(Protocol):
     '''The :class:`pulsar.ProtocolConsumer` for internal message passing
 between actors. Encoding and decoding uses the unmasked websocket
 protocol.'''
-    def connection_made(self, connection):
+    def __init__(self, **kw):
+        super(MailboxProtocol, self).__init__(**kw)
         self._pending_responses = {}
         self._parser = FrameParser(kind=2)
         actor = get_actor()
         if actor.is_arbiter():
-            self.connection.bind_event('connection_lost', None,
-                                       self._connection_lost)
+            self.bind_event('connection_lost', None, self._connection_lost)
 
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
         req = Message.command(command, sender, target, args, kwargs)
-        self.start_request(req)
+        self._start(req)
         return req.future
 
-    #######################################################################
-    ##    PROTOCOL CONSUMER IMPLEMENTATION
     def data_received(self, data):
         # Feed data into the parser
         msg = self._parser.decode(data)
@@ -155,23 +151,21 @@ protocol.'''
                 message = pickle.loads(msg.body)
             except Exception as e:
                 raise ProtocolError('Could not decode message body: %s' % e)
-            maybe_async(self._responde(message), loop=self._loop)
+            self._on_message(message)
             msg = self._parser.decode()
-
-    def start_request(self, req=None):
-        if req:
-            if req.future and 'ack' in req.data:
-                self._pending_responses[req.data['ack']] = req.future
-                try:
-                    self._write(req)
-                except Exception as e:
-                    req.future.callback(e)
-            else:
-                self._write(req)
-    start = start_request
 
     ########################################################################
     ##    INTERNALS
+    def _start(self, req):
+        if req.future and 'ack' in req.data:
+            self._pending_responses[req.data['ack']] = req.future
+            try:
+                self._write(req)
+            except Exception:
+                req.future.callback(sys.exc_info())
+        else:
+            self._write(req)
+
     def _connection_lost(self, failure):
         actor = get_actor()
         if actor.is_running():
@@ -180,14 +174,21 @@ protocol.'''
             failure.mute()
         return failure
 
-    def _responde(self, message):
+    @in_loop
+    def _on_message(self, message):
         actor = get_actor()
         command = message.get('command')
-        #actor.logger.debug('handling %s', command)
+        ack = message.get('ack')
         if command == 'callback':
-            # this is a callback
-            yield self._callback(message.get('ack'), message.get('result'))
+            if not ack:
+                raise ProtocolError('A callback without id')
+            try:
+                pending = self._pending_responses.pop(ack)
+            except KeyError:
+                raise KeyError('Callback %s not in pending callbacks' % ack)
+            pending.callback(message.get('result'))
         else:
+            failure = None
             try:
                 target = actor.get_actor(message['target'])
                 if target is None:
@@ -213,19 +214,11 @@ protocol.'''
                     result = yield command(req, message['args'],
                                            message['kwargs'])
             except Exception:
-                result = Failure(sys.exc_info())
-            if message.get('ack'):
-                req = Message.callback(result, message['ack'])
-                self.start_request(req)
-
-    def _callback(self, ack, result):
-        if not ack:
-            raise ProtocolError('A callback without id')
-        try:
-            pending = self._pending_responses.pop(ack)
-        except KeyError:
-            raise KeyError('Callback %s not in pending callbacks' % ack)
-        return pending.callback(result)
+                failure = sys.exc_info()
+            if failure:
+                result = Failure(failure)
+            if ack:
+                self.start(Message.callback(result, ack))
 
     def _write(self, req):
         obj = pickle.dumps(req.data, protocol=2)
@@ -238,16 +231,14 @@ protocol.'''
                 raise
 
 
-class MailboxClient(Client):
-    # mailbox for actors client
-    consumer_factory = MailboxConsumer
-    max_reconnect = 0
-
+class MailboxClient(BaseClient):
+    '''Used by actors to send messages to other actors via the arbiter.
+    '''
     def __init__(self, address, actor, loop):
-        super(MailboxClient, self).__init__(loop=loop)
+        self._loop = loop
         self.address = address
-        self._consumer = None
         self.name = 'Mailbox for %s' % actor
+        self._connection = None
 
     def response(self, request):
         resp = super(MailboxClient, self).response
@@ -257,9 +248,22 @@ class MailboxClient(Client):
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))
 
+    @in_loop
     def request(self, command, sender, target, args, kwargs):
         # the request method
-        req = Message.command(command, sender, target, args, kwargs,
-                              self.address, self.timeout)
-        self.response(req)
-        return req.future
+        if self._connection is None:
+            if isinstance(self.address, tuple):
+                host, port = self.address
+                _, connection = yield loop.create_connection(
+                    MailboxProtocol, host, port)
+            else:
+                raise NotImplementedError
+            self._connection = connection
+        req = Message.command(command, sender, target, args, kwargs)
+        self._connection._start(req)
+        response = yield req.future
+        coroutine_return(response)
+
+    def close(self, async=False, timeout=None):
+        if self._connection:
+            self._connection.close(async=async)

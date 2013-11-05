@@ -29,9 +29,11 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
-from .defer import multi_async, Deferred
-from .internet import SocketTransport, AF_INET6
-from .protocols import Server, logger
+from .access import logger
+from .defer import multi_async, Deferred, coroutine_return, in_loop
+from .events import EventHandler
+from .internet import Server, SocketTransport, AF_INET6
+
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
 # Got this error on pypy
@@ -278,55 +280,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self.abort(failure)
 
 
-class TcpServer(Server):
-    '''A TCP :class:`pulsar.Server`.
-
-    .. attribute:: consumer_factory
-
-        Callable or a :class:`pulsar.ProtocolConsumer` class for producing
-        :class:`ProtocolConsumer` which handle the receiving, decoding and
-        sending of data.
-
-    '''
-    def start_serving(self, backlog=100, sslcontext=None):
-        '''Start serving the Tcp socket.
-
-        :param backlog: Number of maximum connections
-        :param sslcontext: optional SSLContext object.
-        :return: a :class:`pulsar.Deferred` called back when the server is
-            serving the socket.'''
-        if not self.event('start').done():
-            res = self._loop.start_serving(self.protocol_factory,
-                                           host=self._host,
-                                           port=self._port,
-                                           sock=self._sock,
-                                           backlog=backlog,
-                                           ssl=sslcontext)
-            return res.add_callback(self._got_sockets
-                                    ).add_both(partial(self.fire_event,
-                                                       'start'))
-
-    def stop_serving(self):
-        '''Stop serving the :class:`pulsar.Server.sock`'''
-        if self._sock:
-            sock, self._sock = self._sock, None
-            self._loop.call_soon_threadsafe(self._stop_serving, sock)
-
-    def close(self):
-        '''Same as :meth:`stop_serving` method.'''
-        self.stop_serving()
-
-    def _got_sockets(self, sockets):
-        self._sock = sockets[0]
-        self.logger.info('%s serving on %s', self._name,
-                         format_address(self.address))
-        return self
-
-    def _stop_serving(self, sock):
-        self._loop.stop_serving(sock)
-        self.fire_event('stop')
-
-
+##    INTERNALS
 def create_connection(loop, protocol_factory, host, port, ssl,
                       family, proto, flags, sock, local_addr):
     if host is not None or port is not None:
@@ -456,14 +410,15 @@ def start_serving(loop, protocol_factory, host, port, ssl,
         if sock is None:
             raise ValueError(
                 'host and port was not specified and no sock specified')
-        sockets = [sock]
+        sockets = sock if isinstance(sock, list) else [sock]
 
+    server = Server(loop, sockets)
     for sock in sockets:
         sock.listen(backlog)
         sock.setblocking(False)
-        loop.add_reader(sock.fileno(), sock_accept_connection,
-                        loop, protocol_factory, sock, ssl)
-    yield sockets
+        loop.add_reader(sock.fileno(), sock_accept_connection, loop,
+                        protocol_factory, sock, ssl)
+    coroutine_return(server)
 
 
 def sock_connect(loop, sock, address, future=None):

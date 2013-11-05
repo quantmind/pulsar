@@ -4,6 +4,7 @@ from collections import deque
 
 from pulsar.utils.internet import nice_address
 
+from .defer import in_loop
 from .access import asyncio, logger
 
 __all__ = ['SocketTransport']
@@ -15,6 +16,48 @@ if AF_INET6:
     FAMILY_NAME[socket.AF_INET6] = 'TCP6'
 if hasattr(socket, 'AF_UNIX'):
     FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
+
+
+class Server(asyncio.AbstractServer):
+    '''Base class for pulsar socket servers'''
+    def __init__(self, loop, sockets):
+        self._loop = loop
+        self.sockets = sockets
+        self.active_count = 0
+
+    def attach(self, transport):
+        assert self.sockets is not None
+        self.active_count += 1
+
+    def detach(self, transport):
+        assert self.active_count > 0
+        self.active_count -= 1
+        if self.active_count == 0 and self.sockets is None:
+            self._wakeup()
+
+    def close(self):
+        sockets = self.sockets
+        if sockets is not None:
+            self.sockets = None
+            for sock in sockets:
+                self._loop._stop_serving(sock)
+            if self.active_count == 0:
+                self._wakeup()
+
+    def _wakeup(self):
+        waiters = self.waiters
+        self.waiters = None
+        for waiter in waiters:
+            if not waiter.done():
+                waiter.set_result(waiter)
+
+    @in_loop
+    def wait_closed(self):
+        if self.sockets is None or self.waiters is None:
+            return
+        waiter = futures.Future(loop=self.loop)
+        self.waiters.append(waiter)
+        yield waiter
 
 
 class SocketTransport(asyncio.Transport):

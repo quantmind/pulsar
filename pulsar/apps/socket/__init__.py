@@ -95,9 +95,10 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
+from functools import partial
 
 import pulsar
-from pulsar import TcpServer, multi_async
+from pulsar import TcpServer, Connection, multi_async
 from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
                                    format_address)
 from pulsar.utils.config import pass_through
@@ -184,12 +185,12 @@ class SocketServer(pulsar.Application):
     address = None
     cfg = pulsar.Config(apps=['socket'])
 
-    def protocol_consumer(self):
+    def protocol_factory(self):
         '''Factory of :class:`.ProtocolConsumer` used by the server.
 
         By default it returns the :meth:`.Application.callable`.
         '''
-        return self.callable
+        return partial(Connection, self.callable)
 
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
@@ -215,23 +216,20 @@ class SocketServer(pulsar.Application):
             ssl = SSLContext(keyfile=cfg.key_file, certfile=cfg.cert_file)
         address = parse_address(self.cfg.address)
         # First create the sockets
-        sockets = yield loop.start_serving(lambda: None, *address)
+        server = yield loop.create_server(lambda: None, *address)
         addresses = []
-        for sock in sockets:
+        for sock in server.sockets:
             assert loop.remove_reader(sock.fileno()), (
                 "Could not remove reader")
             addresses.append(sock.getsockname())
-        monitor.params.sockets = [WrapSocket(s) for s in sockets]
+        monitor.params.sockets = [WrapSocket(s) for s in server.sockets]
         monitor.params.ssl = ssl
         self.addresses = addresses
         self.address = addresses[0]
 
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''
-        worker.servers[self.name] = servers = []
-        for sock in worker.params.sockets:
-            server = self.create_server(worker, sock.sock)
-            servers.append(server)
+        worker.servers[self.name] = self.create_server(worker)
 
     def worker_stopping(self, worker):
         all = []
@@ -250,15 +248,18 @@ class SocketServer(pulsar.Application):
                 'received_connections': server.received})
 
     #   INTERNALS
-    def create_server(self, worker, sock, ssl=None):
-        '''Create the Server Protocol which will listen for requests. It
-uses the :meth:`protocol_consumer` method as the protocol consumer factory.'''
+    def create_server(self, worker):
+        '''Create the Server which will listen for requests.
+
+        :return: a :class:`.TcpServer`.
+        '''
+        sockets = [sock.sock for sock in worker.params.sockets]
         cfg = self.cfg
-        server = TcpServer(worker._loop,
-                           sock=sock,
-                           consumer_factory=self.protocol_consumer(),
+        server = TcpServer(self.protocol_factory(),
+                           worker._loop,
+                           sockets=sockets,
                            max_connections=cfg.max_requests,
-                           timeout=cfg.keep_alive,
+                           keep_alive=cfg.keep_alive,
                            name=self.name)
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):

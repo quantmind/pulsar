@@ -82,10 +82,26 @@ Async While
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_while
 
-
 Run in loop thread
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: run_in_loop_thread
+
+
+Async Decorators
+=====================
+
+Both the :func:`in_loop` and :func:`in_loop_thread` can be applied to
+member functions of classes for wich instances expose the ``_loop``
+attribute (an instance of an event loop).
+
+In loop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: in_loop
+
+
+In loop thread
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: in_loop_thread
 
 
 Asynchronous Classes

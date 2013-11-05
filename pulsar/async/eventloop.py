@@ -411,7 +411,7 @@ default signal handler ``signal.SIG_DFL``.'''
         d = async(res, self)
         return d.set_timeout(timeout)
 
-    def start_serving(self, protocol_factory, host=None, port=None, ssl=None,
+    def create_server(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
                       sock=None, backlog=100, reuse_address=None):
         """Creates a TCP server bound to ``host`` and ``port``.
@@ -442,14 +442,14 @@ default signal handler ``signal.SIG_DFL``.'''
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
                             family, flags, sock, backlog, reuse_address)
-        return self.async(res)
+        return async(res, self)
 
     def create_datagram_endpoint(self, protocol_factory, local_addr=None,
                                  remote_addr=None, family=socket.AF_UNSPEC,
                                  proto=0, flags=0):
         res = create_datagram_endpoint(self, protocol_factory, local_addr,
                                        remote_addr, family, proto, flags)
-        return self.async(res)
+        return async(res, self)
 
     def stop_serving(self, sock):
         '''The argument should be a socket from the list returned by
@@ -472,8 +472,7 @@ will be stopped.'''
         Returns a :class:`Deferred` whose result on success will be a tuple
         ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
         and ``peer`` is the peer address.'''
-        timeout = timeout or DEFAULT_ACCEPT_TIMEOUT
-        return self.async(sock_accept(self, sock), timeout)
+        return async(sock_accept(self, sock), self)
 
     #################################################    NON PEP METHODS
     def clear(self):
