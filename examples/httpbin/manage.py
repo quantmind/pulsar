@@ -20,7 +20,7 @@ except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
-from pulsar import HttpRedirect, HttpException, version, async, JAPANESE
+from pulsar import HttpRedirect, HttpException, version, JAPANESE
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
@@ -208,9 +208,8 @@ class HttpBin(wsgi.Router):
         scheme = 'wss' if request.is_secure else 'ws'
         host = request.get('HTTP_HOST')
         address = '%s://%s/stats' % (scheme, host)
-        docs = HtmlDocument(title='Live server stats',
-                            media_path='/assets/')
-        docs.head.scripts
+        doc = HtmlDocument(title='Live server stats', media_path='/assets/')
+        #docs.head.scripts
         return doc.http_response(request)
 
     @route('expect', method='post', title='Expectation Failed')
@@ -238,7 +237,6 @@ class HttpBin(wsgi.Router):
         data = self.info_data(request, **params)
         return Json(data).http_response(request)
 
-    @async()
     def info_data(self, request, **params):
         headers = self.getheaders(request)
         data = {'method': request.method,

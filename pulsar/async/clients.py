@@ -1,6 +1,4 @@
-import socket
 import sys
-import math
 import logging
 from functools import partial, reduce
 from threading import Lock
@@ -9,7 +7,7 @@ from pulsar.utils.pep import itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
 from .access import asyncio, new_event_loop
-from .defer import async, Failure, is_failure, multi_async
+from .defer import async, Failure, multi_async
 from .protocols import Producer, ConnectionProducer
 
 __all__ = ['ConnectionPool', 'Client', 'Request']

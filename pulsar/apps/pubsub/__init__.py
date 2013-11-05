@@ -206,36 +206,35 @@ class PubSubBackend(pulsar.Backend):
         return 'pulsar.apps.pubsub.%s' % scheme
 
     def add_client(self, client):
-        '''Add a new ``client`` to the set of all :attr:`clients`. Clients
-must have the ``write`` method available. When a new message is received
-from the publisher, the :meth:`broadcast` method will notify all
-:attr:`clients` via the ``write`` method.'''
+        '''Add a new ``client`` to the set of all :attr:`clients`.'''
         self.clients.add(client)
 
     def remove_client(self, client):
-        '''Remove *client* from the set of all :attr:`clients`.'''
+        '''Remove ``client`` from the set of all :attr:`clients`.'''
         self.clients.discard(client)
 
     def publish(self, channel, message):
         '''Publish a ``message`` into ``channel``.
 
-Must be implemented by subclasses.'''
+        Must be implemented by subclasses.
+        '''
         raise NotImplementedError
 
     def subscribe(self, *channels):
         '''Subscribe to the server which publish messages.
 
-A series of one or more ``channels`` to subscribe to must be passed to this
-method which must be implemented by subclasses.'''
+        A series of one or more ``channels`` to subscribe to must be passed
+        to this method which must be implemented by subclasses.
+        '''
         raise NotImplementedError
 
     def unsubscribe(self, *channels):
         '''Un-subscribe from the server which publish messages.
 
-An optional series of ``channels`` can be passed. If no channels are passed,
-it unsubscribed from all channels.
+        An optional series of ``channels`` can be passed.
+        If no channels are passed, it unsubscribed from all channels.
 
-Must be implemented by subclasses.'''
+        Must be implemented by subclasses.'''
         raise NotImplementedError
 
     def broadcast(self, channel, message):

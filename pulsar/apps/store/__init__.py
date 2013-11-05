@@ -1,5 +1,6 @@
 '''A Key-value store interface
 '''
+from pulsar import coroutine_return
 from pulsar.utils.system import json
 
 dumps = json.dumps
@@ -11,7 +12,12 @@ OK1 = dumps({'type': 0, 'value': 1})
 
 
 class Store(object):
+    pass
 
+
+class PulsarStore(Store):
+    '''A simple Key-Value store for internal pulsar usage.
+    '''
     def __init_(self, loop):
         self._loop = loop
         self._store = {}
@@ -19,8 +25,7 @@ class Store(object):
 
     def get(self, key):
         value = self._store.get(key)
-        return dumps({'type': 1,
-                      'value': value})
+        return dumps({'type': 1, 'value': value})
 
     def set(self, key, value, timeout=None):
         if value:
@@ -54,3 +59,35 @@ class Store(object):
     def _expire(self, key):
         self._timeouts.pop(key, None)
         self._store.pop(key, None)
+
+
+class StoreClient(object):
+
+    def get(self, key):
+        return self.execute_command('get', key)
+
+    def set(self, key, value, timeout=None):
+        return self.execute_command('set', key, value, timeout)
+
+    def execute_command(self, command, *args, **options):
+        result = yield  send(self.name, 'store_command', command, *args)
+        result = loads(result)
+        return result['value']
+
+
+def store_error(msg):
+    return dumps({'type': 0, value: msg})
+
+
+@command()
+def store_command(request, id, command, *args):
+    actor = request.actor
+    if 'key_value_store' not in actor.params:
+        actor.params.key_value_store = PulsarStore(actor._loop)
+    store = actor.params.key_value_store
+    cmnd = getattr(store, command, None)
+    if cmnd:
+        result = yield cmnd(*args)
+    else:
+        result = store_error('COMMANDERR: %s' % command)
+    coroutine_return(result)

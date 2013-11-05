@@ -1,7 +1,6 @@
 from collections import deque
 
-from .defer import CancelledError, Deferred
-from .access import asyncio
+from .defer import Deferred, get_event_loop
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
@@ -11,10 +10,7 @@ class Queue:
     '''Asynchronous FIFO queue.
     '''
     def __init__(self, maxsize=0, loop=None):
-        if loop:
-            self._loop = loop
-        else:
-            self._loop = asyncio.get_event_loop()
+        self._loop = loop or get_event_loop()
         self._lock = Lock()
         self._maxsize = max(maxsize or 0, 0)
         self._queue = deque()

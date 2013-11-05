@@ -3,7 +3,7 @@ import traceback
 from collections import deque, namedtuple, Mapping
 from inspect import isgenerator, istraceback
 
-from pulsar.utils.pep import iteritems, default_timer, ispy3k
+from pulsar.utils.pep import iteritems, default_timer
 
 from .access import asyncio, get_request_loop, get_event_loop, logger
 from .consts import *

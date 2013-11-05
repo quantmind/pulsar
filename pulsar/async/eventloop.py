@@ -1,8 +1,8 @@
 import os
 import sys
 import socket
+import errno
 from heapq import heappop
-from functools import partial
 from collections import deque
 from threading import current_thread
 from inspect import isgenerator
@@ -363,7 +363,7 @@ default signal handler ``signal.SIG_DFL``.'''
             try:
                 signal.set_wakeup_fd(-1)
             except ValueError as exc:
-                logger.info('set_wakeup_fd(-1) failed: %s', exc)
+                self.logger.info('set_wakeup_fd(-1) failed: %s', exc)
 
         return True
 

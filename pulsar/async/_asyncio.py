@@ -1,6 +1,5 @@
 '''Replicate asyncio basic functionalities'''
 from heapq import heappush
-from inspect import isgeneratorfunction
 
 from pulsar.utils.pep import default_timer, ispy3k
 

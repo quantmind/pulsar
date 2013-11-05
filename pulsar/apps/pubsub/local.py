@@ -1,22 +1,16 @@
 import re
-import logging
 
 from pulsar.apps import pubsub
 from pulsar import send, command
 from pulsar.utils.pep import itervalues, iteritems
 
 
-LOGGER = logging.getLogger('pulsar.pubsub')
+LOGGER = pubsub.LOGGER
 
 
 class PubSubBackend(pubsub.PubSubBackend):
     '''Implements :class:`PubSub` in pulsar.
-
-.. attribute:: monitor
-
-    The name of :class:`pulsar.Monitor` (application) which broadcast messages
-    to its workers.
-'''
+    '''
     def publish(self, channel, message):
         return send(self.name, 'pubsub_publish', self.id, channel, message)
 
