@@ -124,6 +124,7 @@ Redis Backend
 '''
 import sys
 import logging
+from time import mktime
 from datetime import datetime, timedelta
 from threading import Lock
 
@@ -160,7 +161,12 @@ def get_datetime(expiry, start):
 
 
 def format_time(dt):
+    if isinstance(dt, (float, int)):
+        dt = datetime.fromtimestamp(dt)
     return dt.isoformat() if dt else '?'
+
+
+totimestamp = lambda dte: mktime(dte.timetuple()) if dte else dte
 
 
 def nice_task_message(req, smart_time=None):
@@ -307,7 +313,12 @@ Lower number higher precedence.'''
 
     def tojson(self):
         '''Convert the task instance into a JSON-serializable dictionary.'''
-        return self.__dict__.copy()
+        data = self.__dict__.copy()
+        data['expiry'] = totimestamp(data['expiry'])
+        data['time_executed'] = totimestamp(data['time_executed'])
+        data['time_started'] = totimestamp(data['time_started'])
+        data['time_ended'] = totimestamp(data['time_ended'])
+        return data
 
 
 class PubSubClient(pubsub.Client):

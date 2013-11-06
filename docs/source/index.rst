@@ -16,6 +16,7 @@ Concurrent framework for Python.
    api/index
    changelog
    settings
+   pics
 
 .. _apps-framework:
 

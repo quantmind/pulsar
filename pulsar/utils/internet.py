@@ -186,11 +186,8 @@ def close_socket(sock):
 
 def nice_address(address, family=None):
     if isinstance(address, tuple):
-        return ':'.join((str(s) for s in address[:2]))
-    elif family:
-        return '%s:%s' % (family, address)
-    else:
-        return address
+        address = ':'.join((str(s) for s in address[:2]))
+    return '%s %s' % (family, address) if family else address
 
 
 def format_address(address):
@@ -205,7 +202,7 @@ def format_address(address):
         return str(address)
 
 
-class WrapSocket:
+class WrapSocket:   # pragma    nocover
 
     def __init__(self, sock):
         self.sock = sock
@@ -237,12 +234,12 @@ class SSLContext:
         if not ssl:
             raise NotImplementedError
         server_hostname = self.server_hostname or server_hostname
-        if not HAS_SNI:
+        if not HAS_SNI:     # pragma    nocover
             server_hostname = None
 
         if _SSLContext:
             wrap = self._wrap3k(sock, server_hostname)
-        else:
+        else:   # pragma    nocover
             wrap = partial(wrap_socket, sock, keyfile=self.keyfile,
                            certfile=self.certfile, ca_certs=self.ca_certs,
                            cert_reqs=self.cert_reqs, ssl_version=self.protocol)
@@ -267,7 +264,7 @@ class SSLContext:
         if HAS_SNI:  # Platform-specific: OpenSSL with enabled SNI
             return partial(context.wrap_socket, sock,
                            server_hostname=server_hostname)
-        else:
+        else:   # pragma    nocover
             return partial(context.wrap_socket, sock)
 
 

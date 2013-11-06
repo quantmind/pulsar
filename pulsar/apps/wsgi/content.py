@@ -1,8 +1,10 @@
 '''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes
 handling asynchronous content on a WSGI server.
 
-A web framework is set of tools working together to concatenate
-``strings`` to return as a response to and HTTP client.
+This module is used by pulsar instead of a template engine, its main
+purpose is to do what a web framework does, to provide a set of tools working
+together to concatenate ``strings`` to return as a response to and HTTP client.
+
 A string can be Html, Json, plain text, XML or any other valid HTTP
 content type.
 
@@ -21,23 +23,22 @@ An :class:`AsyncString` can only be rendered once, and it accepts
 :ref:`asynchronous components  <tutorials-coroutine>`::
 
     >>> a = Deferred()
-    >>> string = AsyncString('Hello ', a)
+    >>> string = AsyncString('Hello, ', a)
     >>> value = string.render()
     >>> value
-    StreamRenderer
+    MultiDeferred (pending)
     >>> value.done()
     False
     >>>
 
-The :class:`StreamRenderer` is a specialised :class:`pulsar.Deferred` which
-results in a string.
+Once the deferred is done, we have the concatenated string::
 
     >>> a.callback('World!')
     'World!'
     >>> value.done()
     True
     >>> value.result
-    'Hello World!'
+    'Hello, World!'
 
 .. note::
 
@@ -77,7 +78,7 @@ Asynchronous Html
 Html Document
 ==================
 
-Html Document
+Document
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: HtmlDocument
@@ -114,7 +115,6 @@ Html Factory
 
 
 '''
-import json
 from collections import Mapping
 from functools import partial
 
@@ -125,6 +125,7 @@ from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
                                csslink, dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
+from pulsar.utils.system import json
 
 from .html import html_visitor
 
@@ -176,8 +177,6 @@ pulsar WSGI servers.
 '''
     content_type = None
     '''Content type for this :class:`AsyncString`'''
-    encoding = None
-    '''Charset encoding for this :class:`AsyncString`'''
     _streamed = False
     _children = None
     _parent = None
@@ -360,17 +359,19 @@ This is useful during testing. It is the synchronous equivalent of
 
 class Json(AsyncString):
     '''An :class:`AsyncString` which renders into a json string.
-The :attr:`AsyncString.content_type` attribute is set to
-``application/json``.
 
-.. attribute:: as_list
+    The :attr:`AsyncString.content_type` attribute is set to
+    ``application/json``.
 
-    If ``True``, the content is always a list of objects. Default ``False``.
+    .. attribute:: as_list
 
-.. attribute:: parameters
+        If ``True``, the content is always a list of objects.
+        Default ``False``.
 
-    Additional dictionary of parameters passed during initialisation.
-'''
+    .. attribute:: parameters
+
+        Additional dictionary of parameters passed during initialisation.
+    '''
     def __init__(self, *children, **params):
         self.as_list = params.pop('as_list', False)
         self.parameters = AttributeDictionary(params)
@@ -378,15 +379,9 @@ The :attr:`AsyncString.content_type` attribute is set to
             self.append(child)
 
     @property
-    def json(self):
-        '''The ``json`` encoder/decoder handler. If a ``json`` entry is not
-provided during initialisation, the standard python ``json`` module
-is used.'''
-        return self.parameters.json or json
-
-    @property
     def content_type(self):
-        return 'application/json'
+        charset = self.parameters.charset or 'utf-8'
+        return 'application/json; charset=%s' % charset
 
     def do_stream(self, request):
         if self._children:
@@ -401,9 +396,9 @@ is used.'''
 
     def to_string(self, stream):
         if len(stream) == 1 and not self.as_list:
-            return self.json.dumps(stream[0])
+            return json.dumps(stream[0])
         else:
-            return self.json.dumps(stream)
+            return json.dumps(stream)
 
 
 def html_factory(tag, **defaults):
@@ -422,7 +417,7 @@ dictionary of ``defaults`` parameters. For example::
 
 
 class Html(AsyncString):
-    '''An :class:`AsyncString` for html strings.
+    '''An :class:`AsyncString` for html content.
 
 The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
 
@@ -451,12 +446,15 @@ Any other keyed-value parameter will be added as attribute, if in the set of
 
     @property
     def content_type(self):
-        return 'text/html'
+        return 'text/html; charset=%s' % self.charset
 
     @property
     def tag(self):
-        '''The tag for this HTML element, ``div``, ``a``, ``table`` and so
-forth. It can be ``None``.'''
+        '''The tag for this HTML element.
+
+        One of ``div``, ``a``, ``table`` and so forth.
+        It can be ``None``.
+        '''
         return self._tag
 
     @property
@@ -520,6 +518,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
 
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
                **params):
+        self.charset = params.get('charset') or 'utf-8'
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
@@ -532,7 +531,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         for name, value in iteritems(params):
             if name in attributes:
                 self.attr(name, value)
-            else:
+            elif name != 'charset':
                 self.data(name, value)
 
     def attr(self, *args):
@@ -869,14 +868,14 @@ The head element is accessed via the :attr:`HtmlDocument.head` attribute.
             'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
 
 '''
-    def __init__(self, media_path=None, title=None, meta=None, charset=None):
-        super(Head, self).__init__('head')
+    def __init__(self, media_path=None, title=None, meta=None, **params):
+        super(Head, self).__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
         self.append(Css(media_path))
         self.append(EmbeddedCss(None))
         self.append(Scripts(media_path))
-        self.add_meta(charset=charset or 'utf-8')
+        self.add_meta(charset=self.charset)
 
     @property
     def meta(self):

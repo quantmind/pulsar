@@ -1,8 +1,7 @@
-import json
-
 from pulsar import Deferred
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
+from pulsar.utils.system import json
 
 
 class TestAsyncContent(unittest.TestCase):
@@ -15,14 +14,16 @@ class TestAsyncContent(unittest.TestCase):
     def test_simple_json(self):
         response = wsgi.Json({'bla': 'foo'})
         self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type, 'application/json')
+        self.assertEqual(response.content_type,
+                         'application/json; charset=utf-8')
         self.assertFalse(response.as_list)
         self.assertEqual(response.render(), json.dumps({'bla': 'foo'}))
 
     def test_simple_json_as_list(self):
         response = wsgi.Json({'bla': 'foo'}, as_list=True)
         self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type, 'application/json')
+        self.assertEqual(response.content_type,
+                         'application/json; charset=utf-8')
         self.assertTrue(response.as_list)
         self.assertEqual(response.render(), json.dumps([{'bla': 'foo'}]))
 
@@ -30,7 +31,8 @@ class TestAsyncContent(unittest.TestCase):
         astr = wsgi.AsyncString('ciao')
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type, 'application/json')
+        self.assertEqual(response.content_type,
+                         'application/json; charset=utf-8')
         self.assertEqual(response.render(), json.dumps({'bla': 'ciao'}))
 
     def test_json_with_async_string2(self):

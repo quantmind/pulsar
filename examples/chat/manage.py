@@ -39,7 +39,6 @@ Implementation
 '''
 import os
 import sys
-import json
 import time
 try:
     import pulsar
@@ -48,6 +47,7 @@ except ImportError:  # pragma nocover
     import pulsar
 from pulsar.utils.path import Path
 from pulsar.apps import ws, wsgi, rpc, pubsub
+from pulsar.utils.system import json
 
 CHAT_DIR = os.path.dirname(__file__)
 
@@ -122,10 +122,14 @@ web-chat example.'''
         self.name = server_name
 
     def setup(self):
-        '''This method is called once only to setup the WSGI application
-handler as described in :ref:`lazy wsgi handler <wsgi-lazy-handler>`
-section. It creates a :ref:`publish/subscribe handler <apps-pubsub>`
-and subscribe it to the ``webchat`` channel.'''
+        '''Called once only to setup the WSGI application handler.
+
+        Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
+        section for further information.
+
+        It creates a :ref:`publish/subscribe handler <apps-pubsub>`
+        and subscribe it to the ``webchat`` channel.
+        '''
         backend = self.cfg.get('backend_server')
         self.pubsub = pubsub.PubSub(backend, name=self.name,
                                     encoder=self.encode_message)

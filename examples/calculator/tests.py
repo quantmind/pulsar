@@ -98,6 +98,16 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
+        monitor = response['monitors'][self.app.name]
+        if 'sockets' in monitor:
+            self.assertEqual(self.concurrency, 'thread')
+            sockets = monitor['sockets']
+            socket = sockets[0]
+            self.assertEqual(socket['address'], '%s:%s' % self.app.address)
+        else:
+            self.assertEqual(self.concurrency, 'process')
+            workers = monitor['workers']
+            self.assertEqual(len(workers), 1)
 
     def testInvalidParams(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)

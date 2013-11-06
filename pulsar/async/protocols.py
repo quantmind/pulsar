@@ -113,14 +113,6 @@ class ProtocolConsumer(EventHandler):
         This is when the ``finish`` event has been fired.'''
         return self.event('post_request').has_fired()
 
-    @property
-    def reconnect_retries(self):
-        ''''Number of times the consumer has tried to reconnect.
-
-        For clients consumer only.
-        '''
-        return self._reconnect_retries
-
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
 
@@ -151,7 +143,7 @@ class ProtocolConsumer(EventHandler):
 
             self.transport.write(self.request.encode())
         '''
-        pass
+        raise NotImplementedError
 
     def start(self, request=None):
         '''Starts processing the request for this protocol consumer.
@@ -203,20 +195,6 @@ class ProtocolConsumer(EventHandler):
         log_failure(exc)
         return self.finished(exc)
 
-    def can_reconnect(self, max_reconnect, exc):
-        conn = self._connection
-        # First we check if this was caused by a stale connection
-        if conn and not self._data_received_count and conn.processed > 1:
-            # switch off logging for this exception
-            exc.logged = True
-            return 1
-        elif self._reconnect_retries < max_reconnect:
-            self._reconnect_retries += 1
-            exc.log()
-            return self._reconnect_retries
-        else:
-            return 0
-
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke
         # the high level data_received method which must be implemented
@@ -227,17 +205,6 @@ class ProtocolConsumer(EventHandler):
         result = self.data_received(data)
         self.fire_event('data_processed', data=data)
         return result
-
-
-def new_connection(producer):
-    if producer:
-        return getattr(producer, '_new_connection', False)
-    else:
-        return True
-
-
-def release_connection(producer):
-    return getattr(producer, '_new_connection', True)
 
 
 class Connection(EventHandler, Protocol):
@@ -323,10 +290,6 @@ class Connection(EventHandler, Protocol):
     def closed(self):
         '''``True`` if the :attr:`transport` is closed.'''
         return self._transport.closing if self._transport else True
-
-    def is_stale(self):
-        '''Check if this connection is stale.'''
-        return self._transport.is_stale() if self._transport else True
 
     def close(self, async=True, exc=None):
         '''Close by closing the :attr:`transport`.'''

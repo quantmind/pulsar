@@ -7,8 +7,9 @@ __all__ = ['PulsarServerCommands']
 
 
 class PulsarServerCommands(JSONRPC):
-    '''Some useful commands to add to your :class:`JSONRPC` handler to get you
-started. It exposes the following functions:'''
+    '''Useful commands to add to your :class:`JSONRPC` handler.
+
+    It exposes the following functions:'''
     def rpc_ping(self, request):
         '''Ping the server.'''
         return 'pong'
@@ -19,7 +20,10 @@ started. It exposes the following functions:'''
 
     def rpc_server_info(self, request):
         '''Return a dictionary of information regarding the server and workers.
-It invokes the :meth:`extra_server_info` for adding custom information.'''
+
+        It invokes the :meth:`extra_server_info` for adding custom
+        information.
+        '''
         info = yield send('arbiter', 'info')
         yield self.extra_server_info(request, info)
 
@@ -37,7 +41,9 @@ It invokes the :meth:`extra_server_info` for adding custom information.'''
         return send('arbiter', 'kill_actor', aid)
 
     def extra_server_info(self, request, info):
-        '''Not an ``rpc`` method, but an internal method which adds additional
-information to the info dictionary. Used by the :meth:`rpc_server_info`
-method.'''
+        '''An internal method.
+
+        Used by the :meth:`rpc_server_info` method to add additional
+        information to the info dictionary.
+        '''
         return info

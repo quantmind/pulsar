@@ -3,7 +3,8 @@ from optparse import make_option
 
 import pulsar
 from pulsar.utils.security import random_string
-from pulsar.apps.wsgi import WSGIServer, LazyWsgi
+from pulsar.apps.wsgi import (WSGIServer, LazyWsgi, WsgiHandler,
+                              wait_for_body_middleware)
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.wsgi import get_wsgi_application
@@ -20,7 +21,8 @@ class Wsgi(LazyWsgi):
 
     def setup(self):
         from django.conf import settings
-        return get_wsgi_application()
+        return WsgiHandler((wait_for_body_middleware,
+                            get_wsgi_application()))
 
 
 class Command(BaseCommand):

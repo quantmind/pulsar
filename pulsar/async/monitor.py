@@ -245,16 +245,13 @@ class Monitor(PoolMixin):
         pass
 
     def info(self):
-        data = {'actor': {'actor_class': self.actor_class.__name__,
-                          'concurrency': self.cfg.concurrency,
-                          'name': self.name,
-                          'age': self.impl.age,
-                          'workers': len(self.managed_actors)}}
-        if not self.started():
-            return data
-        data['workers'] = [a.info for a in itervalues(self.managed_actors)
-                           if a.info]
-        return data
+        info = super(Monitor, self).info()
+        if self.started():
+            info['actor'].update({'concurrency': self.cfg.concurrency,
+                                  'workers': len(self.managed_actors)})
+            info['workers'] = [a.info for a in itervalues(self.managed_actors)
+                               if a.info]
+        return info
 
     def get_actor(self, aid):
         #Delegate get_actor to the arbiter

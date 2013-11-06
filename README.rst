@@ -8,6 +8,7 @@ activities in different threads and/or processes.
 :Documentation: http://packages.python.org/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
+:Mailing list: `google user group`_
 :Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
     task queue, wsgi, websocket, redis, json-rpc
@@ -87,8 +88,8 @@ the following:
 * Distributed task queue.
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
-* Application to run a Django_ site with pulsar.
-* Twisted_ integration (python 2 only).
+* Application to run a django_ site with pulsar.
+* twisted_ integration (python 2 only).
 
 .. _examples:
 
@@ -104,8 +105,8 @@ using pulsar alone. It includes:
 * A taskqueue application with a JSON-RPC interface.
 * Websocket graph.
 * Websocket Web Chat.
-* Django_ web site with a websocket middleware to handle a web chat.
-* A web mail application which uses Twisted_ IMAP4 API.
+* django_ web site with a websocket middleware to handle a web chat.
+* A web mail application which uses twisted_ IMAP4 API.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
 
@@ -129,15 +130,18 @@ More information about design and philosophy in the documentation.
 Add-ons
 =========
 Pulsar checks if some additional libraries are available at runtime, and
-uses them to add additional functionalities.
+uses them to add additional functionalities or improve performance:
 
 * http-parser_: upgrade the HTTP parser to a faster C version.
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application.
 * psutil_: if installed, a ``system`` key is available in the dictionary
   returned by Actor info method.
-* Twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
+* ujson_: if installed it is used instead of the native ``json`` module.
+* twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
   with twisted protocols.
+* django_: required by the ``pulsar.apps.pulse`` application.
+
 
 Running Tests
 ==================
@@ -151,13 +155,17 @@ For options and help type::
 
     python runtests.py -h
 
+pep8_ check (requires pep8 package)::
+
+    python runtests.py --pep8
+
 
 .. _kudo:
 
 Kudos
 ============
 Pulsar project started as a fork of gunicorn_ (from where the arbiter idea)
-and has been developed using ideas from nodejs_ (api design), Twisted_
+and has been developed using ideas from nodejs_ (api design), twisted_
 (the deferred implementation), tornado_ web server (the initial event-loop
 implementation), celery_ (the task queue application) and,
 since version 0.5, tulip_ and PEP-3156_.
@@ -174,10 +182,11 @@ Contributing
 Development of pulsar_ happens at Github. We very much welcome your contribution
 of course. To do so, simply follow these guidelines:
 
-1. Fork pulsar_ on github
-2. Create a topic branch ``git checkout -b my_branch``
-3. Push to your branch ``git push origin my_branch``
-4. Create an issue at https://github.com/quantmind/pulsar/issues with a link to your patch.
+* Fork pulsar_ on github
+* Create a topic branch ``git checkout -b my_branch``
+* Push to your branch ``git push origin my_branch``
+* Create an issue at https://github.com/quantmind/pulsar/issues with pull request
+  for the ``dev`` branch.
 
 
 .. _license:
@@ -190,7 +199,7 @@ file in the top distribution directory for the full license text.
 .. _gunicorn: http://gunicorn.org/
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _nodejs: http://nodejs.org/
-.. _Twisted: http://twistedmatrix.com/trac/
+.. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
 .. _celery: http://celeryproject.org/
 .. _multiprocessing: http://docs.python.org/library/multiprocessing.html
@@ -206,7 +215,10 @@ file in the top distribution directory for the full license text.
 .. _singleton: http://en.wikipedia.org/wiki/Singleton_pattern
 .. _benoitc: https://github.com/benoitc
 .. _werkzeug: http://werkzeug.pocoo.org/
-.. _Django: https://www.djangoproject.com/
+.. _django: https://www.djangoproject.com/
 .. _tulip: https://code.google.com/p/tulip/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/
 .. _cython: http://cython.org/
+.. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
+.. _pep8: http://www.python.org/dev/peps/pep-0008/
+.. _ujson: https://pypi.python.org/pypi/ujson

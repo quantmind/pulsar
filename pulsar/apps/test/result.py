@@ -140,7 +140,7 @@ finished.'''
             return teststr
 
 
-class TestResultProxy(Plugin):
+class TestResultProxy(Plugin):  # pragma    nocover
     result = None
     stream = None
 
@@ -153,7 +153,7 @@ class TestResultProxy(Plugin):
         return self.result.testsRun if self.result else 0
 
 
-class TestStream(TestResultProxy):
+class TestStream(TestResultProxy):  # pragma    nocover
     '''Handle the writing of test results'''
     separator1 = '=' * 70
     separator2 = '-' * 70

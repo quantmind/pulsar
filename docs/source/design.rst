@@ -19,7 +19,7 @@ are:
   as building block.
 * The last layer, built on top of the first two, is based on the higher level
   :class:`apps.Application` class.
-   
+
 .. _async-layer:
 
 Asynchronous Components
@@ -28,7 +28,7 @@ Asynchronous Components
 Pulsar can be used as a stand-alone asynchronous library, without using
 :ref:`actors <design-actor>` to provide parallel execution and more information
 can be found in the :ref:`asynchronous components <tutorials-coroutine>`
-tutorial. 
+tutorial.
 
 .. _eventloop:
 
@@ -48,7 +48,7 @@ will be put off until later. Pulsar has three types of deferred:
   components.
 
 .. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
-    
+
 .. _design-actor:
 
 Actors
@@ -72,7 +72,7 @@ Python has very few implementation and all of them seem quite limited in scope.
     digital computation: in response to a message that it receives, an actor
     can make local decisions, create more actors, send more messages, and
     determine how to respond to the next message received.
-    
+
     -- Wikipedia
 
 **Actor's properties**
@@ -110,7 +110,7 @@ To access the :class:`Arbiter`, from the main process, one can use the
     >>> arbiter = pulsar.arbiter()
     >>> arbiter.running()
     False
-    
+
 .. _concurrency:
 
 Implementation
@@ -120,7 +120,7 @@ at least one running :class:`EventLoop`.
 To obtain the actor controlling the current thread::
 
     actor = pulsar.get_actor()
-    
+
 When a new processed-based actor is created, a new process is started and the
 actor takes control of the main thread of that new process. On the other hand,
 thread-based actors always exist in the master process (the same process
@@ -140,7 +140,7 @@ these threads it returns the event loop of the controlling actor.
     Regardless of the type of concurrency, an actor always controls at least
     one thread, the **actor io thread**. In the case of process-based actors
     this thread is the main thread of the actor process.
-    
+
 Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
 which can be used to register handlers on file descriptors.
 The :attr:`Actor.event_loop` is created just after forking (or after the
@@ -155,7 +155,7 @@ events on file descriptors. An :attr:`Actor.event_loop` tells
 the operating system (through ``epoll`` or ``select``) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
-connections can be served simultaneously. 
+connections can be served simultaneously.
 
 .. _cpubound:
 
@@ -174,7 +174,7 @@ CPU-bound :class:`Actor` have the following properties:
 * The threads in the :attr:`Actor.thread_pool` install an additional :class:`EventLoop`
   which listen for events on a message queue.
   Pulsar refers to this specialised event loop as the **request loop**.
-  
+
 .. note::
 
     A CPU-bound actor controls more than one thread, the :ref:`IO thread <actor-io-thread>`
@@ -205,20 +205,20 @@ Spawning
 ==============
 
 Spawning a new actor is achieved via the :func:`spawn` function::
-    
+
     from pulsar import spawn
-    
+
     class PeriodicTask:
-    
+
         def __call__(self, actor):
             actor.event_loop.call_repeatedly(2, self.task)
-            
+
         def task(self):
             # do something useful here
             ...
-        
+
     ap = spawn(start=PeriodicTask())
-    
+
 The valued returned by :func:`spawn` is an :class:`ActorProxyDeferred` instance,
 a specialised :class:`Deferred`, which has the spawned actor id ``aid`` and
 it is called back once the remote actor has started.
@@ -276,9 +276,9 @@ This snippet spawns a new actor which starts an
 :ref:`Echo server <tutorials-writing-clients>`::
 
     from functools import partial
-    
+
     from pulsar import spawn, TcpServer
-    
+
     def create_echo_server(address, actor, _):
         '''Starts an echo server on a newly spawn actor'''
         server = TcpServer(actor.event_loop, address[0], address[1],
@@ -286,19 +286,12 @@ This snippet spawns a new actor which starts an
         yield server.start_serving()
         actor.servers['echo'] = server
         actor.extra['echo-address'] = server.address
-        
+
     proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
-    
+
 The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
 :ref:`echo server and client tutorial <tutorials-writing-clients>`.
 
-
-.. note::
-
-    Hooks are function accepting two parameters, the actor which
-    invokes them and optional data. Hooks are
-    :ref:`one time events <one-time-event>` for actors.
-    
 **stopping**
 
 Fired when the :class:`Actor` starts stopping.
@@ -306,16 +299,25 @@ Fired when the :class:`Actor` starts stopping.
 **stop**
 
 Fired just before the :class:`Actor` is garbage collected
- 
+
+.. important::
+
+    ``start``, ``stopping`` and ``stop`` hooks are function accepting one
+    parameter only, the actor which invokes them. They are
+    :ref:`one time events <one-time-event>` for actors.
+
 **on_info**
 
 Fired every time the actor status information is accessed via the
 :ref:`info command <actor_info_command>`::
 
-    def extra_info(actor, data):
-        data['message'] = 'Hello'
-        
+    def extra_info(actor, info=None):
+        info['message'] = 'Hello'
+
     proxy = spawn(on_info=extra_info)
+
+The hook must accept the actor as first parameter and the ``key-valued``
+parameter ``info`` (a dictionary).
 
 **on_params**
 
@@ -359,10 +361,10 @@ info
 Request information about a remote actor ``abcd``::
 
     send('abcd', 'info')
-    
+
 The asynchronous result will be called back with the dictionary returned
 by the :meth:`Actor.info` method.
-    
+
 .. _actor_notify_command:
 
 notify
@@ -372,7 +374,7 @@ This message is used periodically by actors, to notify their manager. If an
 actor fails to notify itself on a regular basis, its manager will shut it down.
 The first ``notify`` message is sent to the manager as soon as the actor is up
 and running so that the :ref:`handshake <handshake>` can occur.
- 
+
 
 .. _actor_run_command:
 
@@ -383,9 +385,9 @@ Run a function on a remote actor. The function must accept actor as its initial 
 
     def dosomething(actor, *args, **kwargs):
         ...
-    
+
     send('monitor', 'run', dosomething, *args, **kwargs)
-    
+
 
 .. _actor_stop_command:
 
@@ -395,13 +397,13 @@ stop
 Tell the remote actor ``abc`` to gracefully shutdown::
 
     send('abc', 'stop')
-    
+
 .. _monitor:
 
 Monitors
 ==============
 
-    
+
 .. _exception-design:
 
 Exceptions

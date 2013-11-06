@@ -35,13 +35,13 @@ Implementation
 '''
 import os
 import sys
-import json
 try:
     import pulsar
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
 from pulsar.apps import ws, wsgi
+from pulsar.utils.system import json
 try:
     from pulsar.apps.tx import twisted
     from twisted.internet import protocol, endpoints, reactor

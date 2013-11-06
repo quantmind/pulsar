@@ -56,6 +56,8 @@ For example this could be an asynchronous iterable::
         yield b'World!'
 
 
+.. _wsgi-lazy-handler:
+
 WsgiHandler
 ======================
 
@@ -69,7 +71,8 @@ in the tutorial. It accepts two iterables, a list of
    :members:
    :member-order: bysource
 
-.. _wsgi-lazy-handler:
+
+.. _wsgi-handler:
 
 Lazy Wsgi Handler
 ======================
@@ -99,8 +102,8 @@ class WsgiHandler(object):
 
 .. attribute:: middleware
 
-    List of callable WSGI middleware callable which accept
-    ``environ`` and ``start_response`` as arguments.
+    List of :ref:`asynchronous WSGI middleware <wsgi-middleware>` callables
+    which accept ``environ`` and ``start_response`` as arguments.
     The order matter, since the response returned by the callable
     is the non ``None`` value returned by a middleware.
 
@@ -137,6 +140,7 @@ class WsgiHandler(object):
         if resp is None:
             raise Http404
         if isinstance(resp, WsgiResponse):
+            # The response is a WSGIResponse
             for middleware in self.response_middleware:
                 resp = yield middleware(environ, resp)
             start_response(resp.status, resp.get_headers())

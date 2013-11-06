@@ -38,12 +38,12 @@ Wsgi Response
 
 .. _WSGI: http://www.wsgi.org
 '''
-import json
 import re
 from functools import reduce
 from io import BytesIO
 
 from pulsar import async
+from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
@@ -51,7 +51,6 @@ from pulsar.utils.httpurl import (Headers, SimpleCookie, responses,
                                   ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
                                   remove_double_slash, iri_to_uri)
 
-from .middleware import is_streamed
 from .content import HtmlDocument
 from .utils import (set_wsgi_request_class, set_cookie, query_dict,
                     parse_accept_header)
@@ -161,10 +160,14 @@ class WsgiResponse(object):
                 content = ()
             elif ispy3k:
                 if isinstance(content, str):
-                    content = content.encode(self.encoding or 'utf-8')
+                    if not self.encoding:
+                        self.encoding = 'utf-8'
+                    content = content.encode(self.encoding)
             else:   # pragma    nocover
                 if isinstance(content, unicode):
-                    content = content.encode(self.encoding or 'utf-8')
+                    if not self.encoding:
+                        self.encoding = 'utf-8'
+                    content = content.encode(self.encoding)
             if isinstance(content, bytes):
                 content = (content,)
             self._content = content
@@ -202,17 +205,25 @@ class WsgiResponse(object):
 
     @property
     def is_streamed(self):
-        """If the response is streamed (the response is not an iterable with
-length information) this property is `True`.  In this case streamed
-means that there is no information about the number of iterations.
-This is usually `True` if a generator is passed to the response object."""
-        return is_streamed(self.content)
+        '''Check if the response is streamed.
+
+        A streamed response is an iterable with no length information.
+        In this case streamed means that there is no information about
+        the number of iterations.
+
+        This is usually `True` if a generator is passed to the response object.
+        '''
+        try:
+            len(self.content)
+        except TypeError:
+            return True
+        return False
 
     def __iter__(self):
         if self._started:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self._started = True
-        if is_streamed(self.content):
+        if self.is_streamed:
             return wsgi_encoder(self.content, self.encoding or 'utf-8')
         else:
             return iter(self.content)
@@ -249,8 +260,9 @@ This is usually `True` if a generator is passed to the response object."""
                     self._content = (b'{}',)
                     cl = len(self._content[0])
                 headers['Content-Length'] = str(cl)
-            if not self.content_type:
-                headers['Content-Type'] = 'text/plain'
+            if not self.content_type and self.encoding:
+                headers['Content-Type'] = ('text/plain; charset=%s' %
+                                           self.encoding)
         for c in self.cookies.values():
             headers['Set-Cookie'] = c.OutputString()
         return list(headers)
@@ -439,6 +451,9 @@ data from the request body.'''
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)
                     result = parse_form_data(self.environ, charset)
+                # set the wsgi.input to a readable file-like object for
+                # third-parties application (django or any other web-framework)
+                self.environ['wsgi.input'] = BytesIO(chunk)
             else:
                 result = {}, None
         else:
