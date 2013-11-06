@@ -7,5 +7,4 @@ include docs/Makefile
 recursive-include examples *
 recursive-include pulsar/apps/test/plugins/htmlfiles *
 recursive-include docs/source *
-recursive-include extensions *
-exclude extensions/src/cparser.cpp
+recursive-include extensions *.py *.pxd *.pyx *.h
