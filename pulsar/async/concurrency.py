@@ -247,7 +247,10 @@ class MonitorMixin(object):
         return self.actor.is_alive()
 
     def hand_shake(self, actor):
-        ''':class:`MonitorMixin` doesn't do hand shakes'''
+        ''':class:`MonitorMixin` doesn't do hand shakes.
+
+        Switch state to ``RUN`` and fire the ``start`` event.
+        '''
         actor.state = ACTOR_STATES.RUN
         actor.bind_event('start', self.periodic_task, actor.stop)
         actor.fire_event('start')
@@ -367,6 +370,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
     def _bailout(self, failure):
         failure.log()
         raise HaltServer
+
 
 def run_actor(self):
     self._actor = actor = self.actor_class(self)

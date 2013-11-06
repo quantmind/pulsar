@@ -564,19 +564,21 @@ The list is lazily loaded from the :meth:`build` method.'''
 
     def new_app(self, App, prefix=None, callable=None, **params):
         '''Invoke this method in the :meth:`build` method as many times
-as the number of :class:`Application` required by this :class:`MultiApp`.
+        as the number of :class:`Application` required by this
+        :class:`MultiApp`.
 
-:param App: an :class:`Application` class.
-:param prefix: The prefix to use for the application, the prefix is appended to
-    the application :ref:`config parameters <settings>` and to the
-    application name. Each call to this methjod must use a different value
-    of for this parameter. It can be ``None``.
-:param callable: optional callable (function of object) used during
-    initialisation of *App* (the :class:`Application.callable`).
-:param params: additional key-valued parameters used when creating
-    an instance of *App*.
-:return: a tuple used by the :meth:`apps` method.
-'''
+        :param App: an :class:`Application` class.
+        :param prefix: The prefix to use for the application,
+            the prefix is appended to
+            the application :ref:`config parameters <settings>` and to the
+            application name. Each call to this methjod must use a different
+            value of for this parameter. It can be ``None``.
+        :param callable: optional callable (function of object) used during
+            initialisation of *App* (the :class:`Application.callable`).
+        :param params: additional key-valued parameters used when creating
+            an instance of *App*.
+        :return: a tuple used by the :meth:`apps` method.
+        '''
         params.update(self.cfg.params.copy())
         params.pop('name', None)    # remove the name
         prefix = prefix or ''

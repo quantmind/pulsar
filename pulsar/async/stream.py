@@ -12,7 +12,7 @@ SocketStreamTransport
 TcpServer
 ============================
 
-.. autoclass:: TcpServer
+.. autoclass:: pulsar.async.protocols.TcpServer
    :members:
    :member-order: bysource
 '''

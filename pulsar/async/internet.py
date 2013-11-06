@@ -61,11 +61,11 @@ class Server(asyncio.AbstractServer):
 
 
 class SocketTransport(asyncio.Transport):
-    '''A :class:`Transport` for sockets.
+    '''A ``asyncio.Transport`` for sockets.
 
-    :parameter loop: Set the :attr:`Transport._loop` attribute.
-    :parameter sock: Set the :attr:`sock` attribute.
-    :parameter protocol: set the :class:`Transport.protocol` attribute.
+    :parameter loop: Set the :attr:`_loop` attribute.
+    :parameter sock: Set the :attr:`_sock` attribute.
+    :parameter protocol: set the :attr:`protocol` attribute.
     '''
     SocketError = socket.error
 

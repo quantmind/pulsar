@@ -1,41 +1,52 @@
 '''Actors communicate with each other by sending and receiving messages.
 The :mod:`pulsar.async.mailbox` module implements the message passing layer
 via a bidirectional socket connections between the :class:`pulsar.Arbiter`
-and :class:`pulsar.Actor`.
+and an :class:`pulsar.Actor`.
 
 Message sending is asynchronous and safe, the message is guaranteed to
 eventually reach the recipient, provided that the recipient exists.
 
 The implementation details are outlined below:
 
-* Messages are sent via the :func:`pulsar.send` function, which is a proxy for
-  the :class:`pulsar.Actor.send` method. Here is how you ping actor ``abc``::
+* Messages are sent via the :func:`.send` function, which is a proxy for
+  the :meth:`.Actor.send` method. Here is how you ping actor ``abc``::
 
       from pulsar import send
 
       send('abc', 'ping')
 
-* The :class:`pulsar.Arbiter` mailbox is a TCP :class:`pulsar.Server`
-  accepting :class:`pulsar.Connection` from remote actors.
-* The :attr:`pulsar.Actor.mailbox` is a :class:`pulsar.Client` of the arbiter
+* The :class:`pulsar.Arbiter` mailbox is a :class:`.TcpServer`
+  accepting connections from remote actors.
+* The :attr:`.Actor.mailbox` is a :class:`.MailboxClient` of the arbiter
   mailbox server.
 * When an actor sends a message to another actor, the arbiter mailbox behaves
   as a proxy server by routing the message to the targeted actor.
 * Communication is bidirectional and there is **only one connection** between
   the arbiter and any given actor.
 * Messages are encoded and decoded using the unmasked websocket protocol
-  implemented in :class:`pulsar.utils.websocket.FrameParser`.
+  implemented in :class:`.FrameParser`.
 * If, for some reasons, the connection between an actor and the arbiter
   get broken, the actor will eventually stop running and garbaged collected.
 
 
-Actor mailbox protocol
+Implementation
 =========================
   For the curious this is how the internal protocol is implemented
 
-  .. autoclass:: MailboxConsumer
-   :members:
-   :member-order: bysource
+Protocol
+~~~~~~~~~~~~
+
+.. autoclass:: MailboxProtocol
+  :members:
+  :member-order: bysource
+
+Client
+~~~~~~~~~~~~
+
+.. autoclass:: MailboxClient
+  :members:
+  :member-order: bysource
+
 '''
 import sys
 import logging
@@ -117,7 +128,7 @@ class Message(object):
             data['ack'] = gen_unique_id()[:8]
         else:
             future = None
-        return cls(data, future, address, timeout)
+        return cls(data, future)
 
     @classmethod
     def callback(cls, result, ack):
@@ -126,9 +137,10 @@ class Message(object):
 
 
 class MailboxProtocol(Protocol):
-    '''The :class:`pulsar.ProtocolConsumer` for internal message passing
-between actors. Encoding and decoding uses the unmasked websocket
-protocol.'''
+    '''The :class:`.Protocol` for internal message passing between actors.
+
+    Encoding and decoding uses the unmasked websocket protocol.
+    '''
     def __init__(self, **kw):
         super(MailboxProtocol, self).__init__(**kw)
         self._pending_responses = {}

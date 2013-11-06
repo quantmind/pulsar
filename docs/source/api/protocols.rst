@@ -6,10 +6,9 @@ Protocols/Transports API
 ================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm as well as :class:`Server` and
-:class:`Client` base classes. :class:`Transport`
-and :class:`Protocol` are designed to
-comply with pep-3156_ specification
+implementing the Protocol/Transport paradigm. :class:`SocketTransport`
+and :class:`Protocol` are designed to comply with pep-3156_ specification
+and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
 
 Transports
 ==========================
@@ -28,6 +27,12 @@ SocketTransport
 
 Protocols
 ==========================
+
+Protocol
+~~~~~~~~~~~~~~
+.. autoclass:: Protocol
+   :members:
+   :member-order: bysource
 
 Connection
 ~~~~~~~~~~~~~~
@@ -58,12 +63,6 @@ Producer
 Connection Producer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ConnectionProducer
-   :members:
-   :member-order: bysource
-
-Server
-~~~~~~~~~~~~~~~~
-.. autoclass:: Server
    :members:
    :member-order: bysource
 

@@ -211,9 +211,9 @@ class ProtocolConsumer(EventHandler):
 
 
 class Protocol(EventHandler, asyncio.Protocol):
-    '''An `asyncio.Protocol` for a TCP :class:`.SocketTransport`.
+    '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`.
 
-    A :class:`Protocol` is an :class:`EventHandler` which has
+    A :class:`Protocol` is an :class:`.EventHandler` which has
     two :ref:`one time events <one-time-event>`:
 
     * ``connection_made``
@@ -238,13 +238,13 @@ class Protocol(EventHandler, asyncio.Protocol):
         Passed during initialisation by the :attr:`producer`.
         Usually an integer representing the number of separate connections
         the producer has processed at the time it created this
-        :class:`Connection`.
+        :class:`Protocol`.
         '''
         return self._session
 
     @property
     def transport(self):
-        '''The :class:`SocketTransport` for this connection.
+        '''The :class:`.SocketStreamTransport` for this connection.
 
         Available once the :meth:`connection_made` is called.'''
         return self._transport
@@ -258,7 +258,7 @@ class Protocol(EventHandler, asyncio.Protocol):
 
     @property
     def timeout(self):
-        '''Number of seconds to keep alive this connection when an idle.
+        '''Number of seconds to keep alive this connection when idle.
 
         A value of ``0`` means no timeout.'''
         return self._timeout
@@ -296,9 +296,7 @@ class Protocol(EventHandler, asyncio.Protocol):
             self._transport.close(async=False, exc=exc)
 
     def connection_made(self, transport):
-        '''Override :class:`BaseProtocol.connection_made`.
-
-        Sets the transport, fire the ``connection_made`` event and adds
+        '''Sets the transport, fire the ``connection_made`` event and adds
         a :attr:`timeout` for idle connections.
         '''
         if self._transport is not None:
@@ -309,6 +307,8 @@ class Protocol(EventHandler, asyncio.Protocol):
         self._add_idle_timeout()
 
     def connection_lost(self, exc=None):
+        '''Fires the ``connection_lost`` event.
+        '''
         self.fire_event('connection_lost', exc)
 
     def set_timeout(self, timeout):
@@ -338,9 +338,10 @@ class Protocol(EventHandler, asyncio.Protocol):
 class Connection(Protocol):
     '''A :class:`Protocol` to handle multiple request/response.
 
-    It is a class which acts as bridge between a :class:`SocketTransport`
+    It is a class which acts as bridge between a
+    :class:`.SocketStreamTransport`
     and a :class:`ProtocolConsumer`. It routes data arriving from the
-    :attr:`transport` to the :attr:`current_consumer`.
+    :class:`.SocketStreamTransport` to the :meth:`current_consumer`.
     '''
     _current_consumer = None
 
@@ -369,11 +370,12 @@ class Connection(Protocol):
             return addr
 
     def current_consumer(self):
-        '''Return the :class:`ProtocolConsumer` currently handling incoming
-        data.
+        '''The :class:`ProtocolConsumer` currently handling incoming data.
 
         This instance will receive data when this connection get data
-        from the :attr:`transport` via the :meth:`data_received` method.'''
+        from the :attr:`~Protocol.transport` via the :meth:`data_received`
+        method.
+        '''
         if self._current_consumer is None:
             self._current_consumer = consumer = self._consumer_factory()
             consumer._connection = self
@@ -382,10 +384,10 @@ class Connection(Protocol):
         return self._current_consumer
 
     def data_received(self, data):
-        '''Implements the :meth:`Protocol.data_received` method.
+        '''Delegates handling of data to the :meth:`current_consumer`.
 
-        Delegates handling of data to the :attr:`current_consumer`. Once done
-        set a timeout for idle connctions (when a :attr:`timeout` is given).
+        Once done set a timeout for idle connections when a
+        :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
         self._cancel_timeout()
         while data:
@@ -394,15 +396,13 @@ class Connection(Protocol):
         self._add_idle_timeout()
 
     def connection_lost(self, exc):
-        '''Implements the :meth:`BaseProtocol.connection_lost` method.
+        '''It performs these actions in the following order:
 
-        It performs these actions in the following order:
-
-        * Fire the ``connection_lost`` :ref:`one time event <one-time-event>`
+        * Fires the ``connection_lost`` :ref:`one time event <one-time-event>`
           if not fired before, with ``exc`` as event data.
         * Cancel the idle timeout if set.
         * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
-          :attr:`current_consumer` if available.
+          :meth:`current_consumer`.
           '''
         if self.fire_event('connection_lost', exc):
             self._cancel_timeout()
@@ -677,6 +677,7 @@ class TcpServer(EventHandler):
     ONE_TIME_EVENTS = ('start', 'stop')
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
                          'connection_lost')
+    _server = None
 
     def __init__(self, protocol_factory, loop, address=None,
                  name=None, sockets=None, max_connections=None,
@@ -691,6 +692,15 @@ class TcpServer(EventHandler):
         self._keep_alive = keep_alive
         self._concurrent_connections = set()
         self.logger = logger(loop)
+
+    @property
+    def address(self):
+        '''Address of this :class:`TcpServer`.
+
+        It is obtained from the first socket ``getsockname`` method.
+        '''
+        if self._server is not None:
+            return self._server.sockets[0].getsockname()
 
     @in_loop
     def start_serving(self, backlog=100, sslcontext=None):
