@@ -200,7 +200,7 @@ class ThreadPool(object):
 
         This method create a new task for function ``func`` and adds it to
         the queue.
-        Return a :class:`Deferred` called back once the task has finished.
+        Return a :class:`.Deferred` called back once the task has finished.
         '''
         assert self._state == RUN, 'Pool not running'
         d = Deferred()
@@ -209,7 +209,7 @@ class ThreadPool(object):
     def close(self, timeout=None):
         '''Close the thread pool.
 
-        Return a :class:`Deferred` fired when all threads have exited.
+        Return a :class:`.Deferred` fired when all threads have exited.
         '''
         if self._state == RUN:
             self._state = CLOSE

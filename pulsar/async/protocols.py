@@ -231,6 +231,14 @@ class Protocol(EventHandler, asyncio.Protocol):
         self._timeout = timeout
         self._producer = producer
 
+    def __repr__(self):
+        address = self.address
+        if address:
+            return '%s session %s' % (nice_address(address), self._session)
+        else:
+            return '<pending-connection> session %s' % self._session
+    __str__ = __repr__
+
     @property
     def session(self):
         '''Connection session number.
@@ -255,6 +263,16 @@ class Protocol(EventHandler, asyncio.Protocol):
         '''
         if self._transport:
             return self._transport.sock
+
+    @property
+    def address(self):
+        '''The address of the :attr:`transport`.
+        '''
+        if self._transport:
+            addr = self._transport.get_extra_info('addr')
+            if not addr:
+                addr = self._transport.address
+            return addr
 
     @property
     def timeout(self):
@@ -349,25 +367,6 @@ class Connection(Protocol):
         super(Connection, self).__init__(**kw)
         self._processed = 0
         self._consumer_factory = consumer_factory
-
-    def __repr__(self):
-        address = self.address
-        if address:
-            return '%s session %s' % (nice_address(address), self._session)
-        else:
-            return '<pending-connection> session %s' % self._session
-
-    def __str__(self):
-        return self.__repr__()
-
-    @property
-    def address(self):
-        '''The address of this connection.'''
-        if self._transport:
-            addr = self._transport.get_extra_info('addr')
-            if not addr:
-                addr = self._transport.address
-            return addr
 
     def current_consumer(self):
         '''The :class:`ProtocolConsumer` currently handling incoming data.
@@ -583,88 +582,6 @@ class ConnectionProducer(Producer):
         return exc
 
 
-class Server(ConnectionProducer):
-    '''A base class for Servers listening on a socket.
-
-    An instance of this class is a :class:`Producer` of server sockets and has
-    available two :ref:`one time events <one-time-event>`:
-
-    * ``start`` fired when the server is ready to accept connections.
-    * ``stop`` fired when the server has stopped accepting connections. Once a
-      a server has stopped, it cannot be reused.
-
-    In addition it has four :ref:`many times event <many-times-event>`:
-
-    * ``connection_made`` fired every time a new :class:`Connection` is made.
-    * ``pre_request`` fired every time a new request is made on a
-      given connection.
-    * ``post_request`` fired every time a request is finished on a
-      given connection.
-    * ``connection_lost`` fired every time a :class:`Connection` is gone.
-
-    .. attribute:: consumer_factory
-
-        Factory of :class:`ProtocolConsumer` handling the server sockets.
-    '''
-    ONE_TIME_EVENTS = ('start', 'stop')
-    MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
-                         'connection_lost')
-    consumer_factory = None
-
-    def __init__(self, loop, host=None, port=None,
-                 consumer_factory=None, name=None, sock=None, **kw):
-        super(Server, self).__init__(**kw)
-        self._name = name or self.__class__.__name__
-        self._loop = loop
-        self._host = host
-        self._port = port
-        self._sock = sock
-        self.logger = logger(loop)
-        if consumer_factory:
-            self.consumer_factory = consumer_factory
-        assert hasattr(self.consumer_factory, '__call__'), (
-            'consumer_factory must be a callable')
-
-    def __repr__(self):
-        return '%s %s' % (self.__class__.__name__,
-                          format_address(self.address))
-    __str__ = __repr__
-
-    def close(self):
-        '''Stop serving and close the listening socket.'''
-        raise NotImplementedError
-
-    def protocol_factory(self):
-        '''The protocol factory for a server.'''
-        return self.new_connection(self.build_consumer)
-
-    def build_consumer(self, consumer_factory=None):
-        '''Build a protocol consumer.
-
-        Uses the :meth:`consumer_factory` to build the consumer and add
-        events from the many-times events of this producer.
-
-        :return: a protocol consumer.
-        '''
-        consumer_factory = consumer_factory or self.consumer_factory
-        consumer = consumer_factory()
-        consumer.copy_many_times_events(self)
-        return consumer
-
-    @property
-    def sock(self):
-        '''The socket receiving connections.'''
-        return self._sock
-
-    @property
-    def address(self):
-        '''Server address, where clients send requests to.'''
-        try:
-            return self._sock.getsockname()
-        except Exception:
-            return None
-
-
 class TcpServer(EventHandler):
     '''A TCP server class.
 
@@ -722,13 +639,13 @@ class TcpServer(EventHandler):
             create_server = self._loop.create_server
             try:
                 if sockets:
-                    server = yield create_server(self.create_protocol,
+                    server = yield create_server(self._create_protocol,
                                                  sock=sockets,
                                                  backlog=backlog,
                                                  ssl=sslcontext)
                 else:
                     if isinstance(address, tuple):
-                        server = yield create_server(self.create_protocol,
+                        server = yield create_server(self._create_protocol,
                                                      host=address[0],
                                                      port=address[1],
                                                      backlog=backlog,
@@ -748,11 +665,12 @@ class TcpServer(EventHandler):
         '''Stop serving the :attr:`.Server.sockets`'''
         if self._server:
             server, self._server = self._server, None
-            self._server
-            self._loop.call_soon_threadsafe(self._stop_serving, sock)
+            server.close()
+            self.fire_event('stop')
     close = stop_serving
 
-    def create_protocol(self):
+    ##    INTERNALS
+    def _create_protocol(self):
         self._received = session = self._received + 1
         protocol = self.protocol_factory(session=session,
                                          producer=self,
@@ -764,10 +682,6 @@ class TcpServer(EventHandler):
         if self._max_connections and session >= self._max_connections:
             self.stop_serving()
         return protocol
-
-    def _stop_serving(self, sock):
-        self._loop.stop_serving(sock)
-        self.fire_event('stop')
 
     def _connection_made(self, connection):
         self._concurrent_connections.add(connection)

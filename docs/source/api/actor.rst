@@ -142,14 +142,6 @@ pulsar command
 .. autoclass:: command
 
 
-Mailbox Consumer
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.mailbox.MailboxConsumer
-   :members:
-   :member-order: bysource
-
-
 Concurrency
 ==================
 

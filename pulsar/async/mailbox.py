@@ -224,7 +224,7 @@ class MailboxProtocol(Protocol):
                 else:
                     actor = target
                     command = get_command(command)
-                    req = CommandRequest(target, caller, self.connection)
+                    req = CommandRequest(target, caller, self)
                     result = yield command(req, message['args'],
                                            message['kwargs'])
             except Exception:
@@ -232,7 +232,7 @@ class MailboxProtocol(Protocol):
             if failure:
                 result = Failure(failure)
             if ack:
-                self.start(Message.callback(result, ack))
+                self._start(Message.callback(result, ack))
 
     def _write(self, req):
         obj = pickle.dumps(req.data, protocol=2)
@@ -249,7 +249,7 @@ class MailboxClient(BaseClient):
     '''Used by actors to send messages to other actors via the arbiter.
     '''
     def __init__(self, address, actor, loop):
-        self._loop = loop
+        super(MailboxClient, self).__init__(loop)
         self.address = address
         self.name = 'Mailbox for %s' % actor
         self._connection = None
@@ -259,6 +259,9 @@ class MailboxClient(BaseClient):
         self._consumer = resp(request, self._consumer, False)
         return self._consumer
 
+    def connect(self):
+        return self.create_connection(MailboxProtocol, self.address)
+
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))
 
@@ -266,13 +269,7 @@ class MailboxClient(BaseClient):
     def request(self, command, sender, target, args, kwargs):
         # the request method
         if self._connection is None:
-            if isinstance(self.address, tuple):
-                host, port = self.address
-                _, connection = yield loop.create_connection(
-                    MailboxProtocol, host, port)
-            else:
-                raise NotImplementedError
-            self._connection = connection
+            self._connection = yield self.connect()
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
         response = yield req.future

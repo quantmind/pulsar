@@ -301,7 +301,8 @@ to be spawned.'''
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
-
+    '''Concurrency implementation for the :class:`.Arbiter`
+    '''
     def is_arbiter(self):
         return True
 

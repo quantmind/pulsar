@@ -4,7 +4,7 @@ from collections import deque
 
 from pulsar.utils.internet import nice_address
 
-from .defer import in_loop
+from .defer import Deferred, in_loop
 from .access import asyncio, logger
 
 __all__ = ['SocketTransport']
@@ -23,41 +23,27 @@ class Server(asyncio.AbstractServer):
     def __init__(self, loop, sockets):
         self._loop = loop
         self.sockets = sockets
-        self.active_count = 0
-
-    def attach(self, transport):
-        assert self.sockets is not None
-        self.active_count += 1
-
-    def detach(self, transport):
-        assert self.active_count > 0
-        self.active_count -= 1
-        if self.active_count == 0 and self.sockets is None:
-            self._wakeup()
+        self._waiters = []
 
     def close(self):
         sockets = self.sockets
         if sockets is not None:
             self.sockets = None
+            loop = self._loop
             for sock in sockets:
-                self._loop._stop_serving(sock)
-            if self.active_count == 0:
-                self._wakeup()
+                loop.remove_reader(sock.fileno())
+            waiters = self._waiters
+            self._waiters = None
+            for waiter in waiters:
+                if not waiter.done():
+                    waiter.set_result(self)
 
-    def _wakeup(self):
-        waiters = self.waiters
-        self.waiters = None
-        for waiter in waiters:
-            if not waiter.done():
-                waiter.set_result(waiter)
-
-    @in_loop
     def wait_closed(self):
-        if self.sockets is None or self.waiters is None:
+        if self.sockets is None:
             return
-        waiter = futures.Future(loop=self.loop)
+        waiter = Deferred(loop=self.loop)
         self.waiters.append(waiter)
-        yield waiter
+        return waiter
 
 
 class SocketTransport(asyncio.Transport):
@@ -116,6 +102,8 @@ class SocketTransport(asyncio.Transport):
 
     @property
     def protocol(self):
+        '''The protocol for this socket transport.
+        '''
         return self._protocol
 
     @property
@@ -140,8 +128,8 @@ class SocketTransport(asyncio.Transport):
 
         Buffered data will be flushed asynchronously.  No more data
         will be received.  After all buffered data is flushed, the
-        :class:`BaseProtocol.connection_lost` method will (eventually) called
-        with ``None`` as its argument.
+        :attr:`protocol` ``connection_lost`` method will (eventually) called
+        with ``exc`` as its argument.
         """
         if not self.closing:
             self._closing = True
@@ -157,9 +145,9 @@ class SocketTransport(asyncio.Transport):
     def abort(self, exc=None):
         """Closes the transport immediately.
 
-        Buffered data will be lost.  No more data will be received.
-        The :class:`BaseProtocol.connection_lost` method will (eventually) be
-        called with ``None`` as its argument.
+        Buffered data will be lost. No more data will be received.
+        The :attr:`protocol` ``connection_lost`` method will (eventually) be
+        called with ``exc`` as its argument.
         """
         self.close(async=False, exc=exc)
 

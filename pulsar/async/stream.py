@@ -1,21 +1,3 @@
-'''
-The :mod:`pulsar.async.stream` implements classes and functions for
-handling TCP streams.
-
-SocketStreamTransport
-============================
-
-.. autoclass:: SocketStreamTransport
-   :members:
-   :member-order: bysource
-
-TcpServer
-============================
-
-.. autoclass:: pulsar.async.protocols.TcpServer
-   :members:
-   :member-order: bysource
-'''
 import os
 import sys
 import socket
@@ -55,35 +37,39 @@ The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
     _paused_writing = False
+    _read_buffer = None
 
     def _do_handshake(self):
         self._loop.add_reader(self._sock_fd, self._ready_read)
         self._loop.call_soon(self._protocol.connection_made, self)
 
-    def pause(self):    # pragma    nocover
-        """A :class:`SocketStreamTransport` can be paused and resumed.
-Invoking this method will cause the transport to buffer data coming
-from protocols but not sending it to the :attr:`protocol`. In other words,
-no data will be passed to the :meth:`pulsar.Protocol.data_received` method
-until :meth:`resume` is called."""
+    def pause_reading(self):
+        '''Suspend delivery of data to the protocol until a subsequent
+        :meth:`resume_reading` call.
+
+        Between :meth:`pause_reading` and :meth:`resume_reading`, the
+        protocol's data_received() method will not be called.
+        '''
         if not self._paused_reading:
             self._paused_reading = True
 
-    def resume(self):    # pragma    nocover
-        """Resume the receiving end. Data received will once again be
-passed to the :meth:`pulsar.Protocol.data_received` method."""
+    def resume_reading(self):
+        """Resume the receiving end."""
         if self._paused_reading:
             self._paused_reading = False
             buffer = self._read_buffer
-            self._read_buffer = []
+            self._read_buffer = None
             for chunk in buffer:
-                self._data_received(chunk)
+                self._protocol.data_received(chunk)
 
-    def pause_writing(self):    # pragma    nocover
+    def pause_writing(self):
         '''Suspend sending data to the network until a subsequent
-:meth:`resume_writing` call. Between :meth:`pause_writing` and
-:meth:`resume_writing` the transport's :meth:`write` method will just
-be accumulating data in an internal buffer.'''
+        :meth:`resume_writing` call.
+
+        Between :meth:`pause_writing` and :meth:`resume_writing` the
+        transport's :meth:`write` method will just be accumulating data
+        in an internal buffer.
+        '''
         if not self._paused_writing:
             self._paused_writing = True
             self._loop.remove_writer(self._sock_fd)
@@ -91,9 +77,9 @@ be accumulating data in an internal buffer.'''
     def resume_writing(self):    # pragma    nocover
         '''Restart sending data to the network.'''
         if self._paused_writing:
+            self._paused_writing = False
             if self._write_buffer:
                 self._loop.add_writer(self._sock_fd, self._write_ready)
-            self._paused_writing = False
 
     def write(self, data):
         '''Write chunk of ``data`` to the endpoint.
@@ -124,11 +110,6 @@ be accumulating data in an internal buffer.'''
             self._consecutive_writes += 1
             if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
                 self.abort(TooManyConsecutiveWrite())
-
-    def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport."""
-        for data in list_of_data:
-            self.write(data)
 
     def _write_continue(self, e):
         return e.args[0] in TRY_WRITE_AGAIN
@@ -213,6 +194,8 @@ be accumulating data in an internal buffer.'''
 
 
 class SocketStreamSslTransport(SocketStreamTransport):
+    '''A :class:`SocketStreamTransport` with Transport Layer Security
+    '''
     SocketError = getattr(ssl, 'SSLError', None)
 
     def __init__(self, loop, rawsock, protocol, sslcontext,

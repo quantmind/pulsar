@@ -123,8 +123,7 @@ class ActorProxy(ActorIdentity):
         self.aid = impl.aid
         self.name = impl.name
         self.cfg = impl.cfg
-        if hasattr(impl, 'address'):
-            self.address = impl.address
+        self.address = getattr(impl, 'address', None)
 
     def __repr__(self):
         return '%s(%s)' % (self.name, self.aid)
@@ -168,7 +167,7 @@ class ActorProxyMonitor(ActorProxy):
         This is the connection with the remote actor. It is available once the
         :ref:`actor handshake <handshake>` between the actor and the monitor
         has completed. The :attr:`mailbox` is a server-side
-        :class:`pulsar.async.mailbox.MailboxConsumer` instance and it is used
+        :class:`.MailboxProtocol` instance and it is used
         by the :func:`send` function to send messages to the remote actor.
     '''
     monitor = None

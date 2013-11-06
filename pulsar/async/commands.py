@@ -56,7 +56,7 @@ The command perform the following actions:
     t = time()
     remote_actor = request.caller
     if isinstance(remote_actor, ActorProxyMonitor):
-        remote_actor.mailbox = request.connection.current_consumer
+        remote_actor.mailbox = request.connection
         info['last_notified'] = t
         remote_actor.info = info
         callback = remote_actor.callback

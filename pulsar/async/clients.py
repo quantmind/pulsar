@@ -7,8 +7,9 @@ from pulsar.utils.pep import itervalues, range
 from pulsar.utils.internet import is_socket_closed
 
 from .access import asyncio, new_event_loop
-from .defer import async, Failure, multi_async
-from .protocols import Producer, ConnectionProducer
+from .defer import async, Failure, multi_async, coroutine_return
+from .events import EventHandler
+from .protocols import ConnectionProducer
 from .queues import Queue
 
 __all__ = ['Pool', 'ConnectionPool', 'BaseClient', 'Client', 'Request']
@@ -277,7 +278,23 @@ def release_response_connection(response):
     return response
 
 
-class BaseClient(Producer):
+class BaseClient(EventHandler):
+    '''A client for a remote server.
+    '''
+    ONE_TIME_EVENTS = ('finish',)
+
+    def __init__(self, loop):
+        super(BaseClient, self).__init__()
+        self._loop = loop
+
+    def __repr__(self):
+        return self.__class__.__name__
+    __str__ = __repr__
+
+    def connect(self):
+        '''Abstract method for creating a server connection.
+        '''
+        raise NotImplementedError
 
     def request(self, *args, **params):
         '''Abstract method for creating a :class:`Request`.
@@ -285,12 +302,25 @@ class BaseClient(Producer):
         raise NotImplementedError
 
     def close(self, async=True, timeout=5):
-        raise NotImplementedError
+        ''':meth:`close` all idle connections but wait for active connections
+        to finish.
+        '''
+        return self.fire_event('finish')
 
     def abort(self):
         ''':meth:`close` all connections without waiting for active
-        connections to finish.'''
-        self.close(async=False)
+        connections to finish.
+        '''
+        return self.close(async=False)
+
+    def create_connection(self, protocol_factory, address, **kw):
+        if isinstance(address, tuple):
+            host, port = address
+            _, connection = yield self._loop.create_connection(
+                protocol_factory, host, port, **kw)
+        else:
+            raise NotImplementedError
+        coroutine_return(connection)
 
 
 class Client(BaseClient):
@@ -363,10 +393,8 @@ class Client(BaseClient):
     data.
     '''
     client_version = ''
-    '''An optional version for this client.'''
-    reconnecting_gap = 2
-    '''Reconnecting gap in seconds.'''
-    ONE_TIME_EVENTS = ('finish',)
+    '''An optional version for this client.
+    '''
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
                          'connection_lost')
 
@@ -391,10 +419,6 @@ class Client(BaseClient):
         self.force_sync = force_sync
         self._loop = loop
         self.setup(**params)
-
-    def __repr__(self):
-        return self.__class__.__name__
-    __str__ = __repr__
 
     @property
     def concurrent_connections(self):

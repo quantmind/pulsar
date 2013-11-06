@@ -111,9 +111,9 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: _loop
 
-        An instance of :class:`EventLoop` which listen for input/output events
-        on sockets or socket-like :class:`Transport`. It is the driver of the
-        :class:`Actor`. If the :attr:_loop` stps, the :class:`Actor` stop
+        An :class:`.EventLoop` which listen for input/output events
+        on sockets or socket-like objects. It is the driver of the
+        :class:`Actor`. If the :attr:`_loop` stops, the :class:`Actor` stops
         running and goes out of scope.
 
     .. attribute:: mailbox
@@ -143,7 +143,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: params
 
-        A :class:`pulsar.utils.structures.AttributeDictionary` which contains
+        A :class:.AttributeDictionary` which contains
         parameters which are passed to actors spawned by this actor.
 
     .. attribute:: extra
@@ -246,8 +246,8 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     def start(self):
         '''Called after forking to start the actor's life.
 
-        This is where logging is configured, the :attr:`Actor.mailbox` is
-        registered and the :attr:`Actor._loop` is initialised and
+        This is where logging is configured, the :attr:`mailbox` is
+        registered and the :attr:`_loop` is initialised and
         started. Calling this method more than once does nothing.
         '''
         if self.state == ACTOR_STATES.INITIAL:
@@ -262,7 +262,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.
-        Always return a :class:`Deferred`.'''
+        Always return a :class:`.Deferred`.'''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):

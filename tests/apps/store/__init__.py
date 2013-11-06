@@ -24,3 +24,7 @@ class TestKeyValueStore(unittest.TestCase):
     def test_ping(self):
         result = yield self.client.ping()
         self.assertTrue(result)
+
+    def test_set(self):
+        result = yield self.client.set('bla', 'foo')
+        self.assertEqual(result, b'OK')

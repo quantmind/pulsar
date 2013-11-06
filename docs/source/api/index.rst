@@ -25,9 +25,9 @@ These primitive classes are:
 * :class:`.SocketTransport`: abstract class handling end-to-end communication
   services for applications. Designed to conform with pep-3156_ transport
   interface.
-* :class:`.ProtocolConsumer`: base class for consuming stream of data provided
-  by the :class:`.SocketTransport` via a :class:`.Server` or :class:`.Client`
-  :class:`.Connection`.
+* Classes for consuming TCP streams: :class:`.SocketStreamTransport`,
+  :class:`.Protocol`, :class:`.Connection`, :class:`.ProtocolConsumer`,
+  :class:`.TcpServer` and :class:`.Client`.
 
 .. _pulsar_framework:
 
@@ -51,7 +51,6 @@ Contents
    async
    actor
    protocols
-   stream
    application
    utilities
    exceptions

@@ -6,19 +6,48 @@ Protocols/Transports API
 ================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm. :class:`SocketTransport`
-and :class:`Protocol` are designed to comply with pep-3156_ specification
+implementing the Protocol/Transport paradigm. :class:`.SocketTransport`
+and :class:`.Protocol` are designed to comply with pep-3156_ specification
 and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
+
+.. _eventloop-class:
+
+.. note:: **Event Loop classes**
+
+    An event-loop class create objects with the ``_loop``
+    attribute which is the ``asincio.eventloop`` controlling the event-loop
+    object.
+
 
 Transports
 ==========================
 
-.. module:: pulsar.async.internet
+The :class:`.SocketTransport` is used as base class for all socket transports
+and it is the only class in this section which is also used outside
+TCP sockets.
 
 SocketTransport
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: SocketTransport
+.. autoclass:: pulsar.async.internet.SocketTransport
+   :members:
+   :member-order: bysource
+
+
+.. module:: pulsar.async.stream
+
+SocketStreamTransport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SocketStreamTransport
+   :members:
+   :member-order: bysource
+
+
+SocketStreamSslTransport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SocketStreamSslTransport
    :members:
    :member-order: bysource
 
@@ -66,6 +95,12 @@ Connection Producer
    :members:
    :member-order: bysource
 
+TcpServer
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TcpServer
+   :members:
+   :member-order: bysource
 
 .. module:: pulsar.async.clients
 
@@ -75,12 +110,29 @@ Clients
 =================
 
 This section introduces classes implementing the transport/protocol paradigm
-for clients with several connections to a remote :class:`Server`.
-:class:`Client` is the main class here, and :class:`Client.request`
+for clients with several connections to a remote :class:`.TcpServer`.
+:class:`BaseClient` is the main class here, and :class:`BaseClient.request`
 is the single most important method a subclass must implement.
+
+Base Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: BaseClient
+   :members:
+   :member-order: bysource
+
+
+Pool
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Pool
+   :members:
+   :member-order: bysource
+
 
 Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. autoclass:: Client
    :members:
    :member-order: bysource

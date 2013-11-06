@@ -12,7 +12,8 @@ class Request(object):
         self.args = args
         self.options = options
 
-    def write(self, conn):
+    def write(self, consumer):
+        conn = consumer._connection
         self._data_sent = conn.parser.pack_command(self.command, *self.args)
         conn._transport.write(self._data_sent)
 
@@ -21,23 +22,24 @@ class Request(object):
         parser = conn.parser
         parser.feed(data)
         response = parser.get()
-        connection = self._connection
-        parse = connection.parse_response
         if response is not False:
             if not isinstance(response, Exception):
-                response = parse(response, self.command, **self.options)
+                response = self.parse_response(response)
             elif self.raise_on_error:
                 raise response
             consumer.finished(response)
+
+    def parse_response(self, response):
+        return response
 
 
 class Consumer(ProtocolConsumer):
 
     def start_request(self):
-        self._request.write(self._connection)
+        self._request.write(self)
 
     def data_received(self, data):
-        self._request.data_received(self._connection, data)
+        self._request.data_received(self, data)
 
 
 class PulsarClient(object):
@@ -49,7 +51,10 @@ class PulsarClient(object):
         return self.execute_command('get', key)
 
     def set(self, key, value, timeout=None):
-        return self.execute_command('set', key, value, timeout)
+        pieces = [key, value]
+        if timeout:
+            pieces.append(timeout)
+        return self.execute_command('set', *pieces)
 
     def ping(self):
         return self.execute_command('ping')
@@ -101,8 +106,8 @@ class PulsarStore(Store):
 
     def _new_connection(self):
         self._received = session = self._received + 1
-        return PulsarStoreConnection(self._parser_class, session,
-                                     Consumer, self)
+        return PulsarStoreConnection(self._parser_class, Consumer,
+                                     session=session, producer=self)
 
 
 register_store('pulsar',

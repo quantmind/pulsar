@@ -97,7 +97,7 @@ class LoopingCall(object):
 
     def __call__(self):
         try:
-            result = self._loop.async(self.callback(*self.args))
+            result = async(self.callback(*self.args), self._loop)
         except Exception:
             self.cancel()
             exc_info = sys.exc_info()
@@ -451,19 +451,12 @@ default signal handler ``signal.SIG_DFL``.'''
                                        remote_addr, family, proto, flags)
         return async(res, self)
 
-    def stop_serving(self, sock):
-        '''The argument should be a socket from the list returned by
-:meth:`start_serving` method. The serving loop associated with that socket
-will be stopped.'''
-        self.remove_reader(sock.fileno())
-        sock.close()
-
-    def sock_connect(self, sock, address, timeout=None):
+    def sock_connect(self, sock, address):
         '''Connect ``sock`` to the given ``address``.
 
         Returns a :class:`Deferred` whose result on success will be ``None``.
         '''
-        return self.async(sock_connect(self, sock, address), timeout)
+        return async(sock_connect(self, sock, address), self)
 
     def sock_accept(self, sock, timeout=None):
         '''Accept a connection from a socket ``sock``.
@@ -494,31 +487,6 @@ broken and the ``callback`` won't be called anymore."""
 the ``callback`` is scheduled at every loop. Installing this callback cause
 the event loop to poll with a 0 timeout all the times.'''
         return LoopingCall(self, callback, args)
-
-    def maybe_async(self, value):
-        '''Run ``value`` in this event loop.
-
-        If ``value`` is a :ref:`coroutine <coroutine>`, it is run immediately
-        in this event loop.
-
-        :return: either ``value`` or a :class:`Deferred`
-        '''
-        if isgenerator(value):
-            return self.task_factory(value, loop=self)
-        return value
-
-    def async(self, value, timeout=None):
-        '''Same as :meth:`maybe_asyc` but forcing a :class:`Deferred`
-        return.
-        '''
-        value = self.maybe_async(value)
-        if not isinstance(value, Deferred):
-            d = Deferred()
-            d.callback(value)
-            return d
-        elif timeout:
-            value.set_timeout(timeout)
-        return value
 
     #################################################    INTERNALS
     def _before_run(self):

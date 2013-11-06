@@ -46,11 +46,11 @@ def spawn(cfg=None, **kwargs):
 
     These optional parameters are:
 
-    * ``actor_class`` a custom :class:`Actor` subclass
     * ``aid`` the actor id
     * ``name`` the actor name
     * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
       and ``stop``
+    * ``actor_class`` a custom :class:`Actor` subclass (never used)
 
     :return: an :class:`ActorProxyDeferred`.
 

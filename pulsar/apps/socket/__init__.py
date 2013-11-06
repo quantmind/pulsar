@@ -218,11 +218,12 @@ class SocketServer(pulsar.Application):
         # First create the sockets
         server = yield loop.create_server(lambda: None, *address)
         addresses = []
+        sockets = []
         for sock in server.sockets:
-            assert loop.remove_reader(sock.fileno()), (
-                "Could not remove reader")
             addresses.append(sock.getsockname())
-        monitor.params.sockets = [WrapSocket(s) for s in server.sockets]
+            sockets.append(WrapSocket(sock))
+        server.close()
+        monitor.params.sockets = sockets
         monitor.params.ssl = ssl
         self.addresses = addresses
         self.address = addresses[0]
