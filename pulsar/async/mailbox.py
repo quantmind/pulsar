@@ -1,7 +1,7 @@
 '''Actors communicate with each other by sending and receiving messages.
 The :mod:`pulsar.async.mailbox` module implements the message passing layer
-via a bidirectional socket connections between the :class:`pulsar.Arbiter`
-and an :class:`pulsar.Actor`.
+via a bidirectional socket connections between the :class:`.Arbiter`
+and any :class:`.Actor`.
 
 Message sending is asynchronous and safe, the message is guaranteed to
 eventually reach the recipient, provided that the recipient exists.
@@ -9,13 +9,15 @@ eventually reach the recipient, provided that the recipient exists.
 The implementation details are outlined below:
 
 * Messages are sent via the :func:`.send` function, which is a proxy for
-  the :meth:`.Actor.send` method. Here is how you ping actor ``abc``::
+  the actor :meth:`~pulsar.Actor.send` method.
+  Here is how you ping actor ``abc`` in a coroutine::
 
       from pulsar import send
 
-      send('abc', 'ping')
+      def example():
+          result = yield send('abc', 'ping')
 
-* The :class:`pulsar.Arbiter` mailbox is a :class:`.TcpServer`
+* The :class:`.Arbiter` :attr:`~pulsar.Actor.mailbox` is a :class:`.TcpServer`
   accepting connections from remote actors.
 * The :attr:`.Actor.mailbox` is a :class:`.MailboxClient` of the arbiter
   mailbox server.

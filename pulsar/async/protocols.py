@@ -670,9 +670,14 @@ class TcpServer(EventHandler):
 
     .. attribute:: protocol_factory
 
-        Callable for producing protocols to handle the receiving, decoding and
-        sending of data.
+        Callable for producing :class:`Protocol` to handle the receiving,
+        decoding and sending of data.
 
+    .. attribute:: _server
+
+        A :class:`.Server` managed by this Tcp wrapper.
+
+        Available once the :meth:`start_serving` method has returned.
     '''
     ONE_TIME_EVENTS = ('start', 'stop')
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
@@ -695,7 +700,7 @@ class TcpServer(EventHandler):
 
     @property
     def address(self):
-        '''Address of this :class:`TcpServer`.
+        '''Socket address of this server.
 
         It is obtained from the first socket ``getsockname`` method.
         '''
@@ -704,7 +709,7 @@ class TcpServer(EventHandler):
 
     @in_loop
     def start_serving(self, backlog=100, sslcontext=None):
-        '''Start serving the Tcp socket.
+        '''Start serving.
 
         :param backlog: Number of maximum connections
         :param sslcontext: optional SSLContext object.
@@ -740,9 +745,10 @@ class TcpServer(EventHandler):
                 self.fire_event('start', sys.exc_info())
 
     def stop_serving(self):
-        '''Stop serving the :class:`pulsar.Server.sock`'''
-        if self._sock:
-            sock, self._sock = self._sock, None
+        '''Stop serving the :attr:`.Server.sockets`'''
+        if self._server:
+            server, self._server = self._server, None
+            self._server
             self._loop.call_soon_threadsafe(self._stop_serving, sock)
     close = stop_serving
 

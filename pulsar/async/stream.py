@@ -407,7 +407,7 @@ def start_serving(loop, protocol_factory, host, port, ssl,
                 for sock in sockets:
                     sock.close()
     else:
-        if sock is None:
+        if not sock:
             raise ValueError(
                 'host and port was not specified and no sock specified')
         sockets = sock if isinstance(sock, list) else [sock]
