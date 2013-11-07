@@ -4,7 +4,7 @@ from functools import partial
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address, format_address
 
-from .defer import multi_async, log_failure, in_loop
+from .defer import multi_async, log_failure, in_loop, coroutine_return
 from .events import EventHandler
 from .access import asyncio, logger
 
@@ -335,6 +335,13 @@ class Protocol(EventHandler, asyncio.Protocol):
         self._timeout = timeout
         self._add_idle_timeout()
 
+    def info(self):
+        info = {'connection': self._session,
+                'timeout': self._timeout}
+        if self._producer:
+            info.update(self._producer.info())
+        return info
+
     ########################################################################
     ##    INTERNALS
     def _timed_out(self):
@@ -437,6 +444,11 @@ class Connection(Protocol):
             if build_consumer:
                 consumer.finished()
                 return self._current_consumer
+
+    def info(self):
+        info = super(Connection, self).info()
+        info.update({'request_processed': self._processed})
+        return info
 
 
 class Producer(EventHandler):
@@ -662,12 +674,36 @@ class TcpServer(EventHandler):
                 self.fire_event('start', sys.exc_info())
 
     def stop_serving(self):
-        '''Stop serving the :attr:`.Server.sockets`'''
+        '''Stop serving the :attr:`.Server.sockets`.
+        '''
         if self._server:
             server, self._server = self._server, None
             server.close()
+
+    @in_loop
+    def close(self):
+        '''Stop serving the :attr:`.Server.sockets` and close all
+        concurrent connections.
+        '''
+        if self._server:
+            server, self._server = self._server, None
+            server.close()
+            yield self._close_connections()
             self.fire_event('stop')
-    close = stop_serving
+        coroutine_return(self)
+
+    def info(self):
+        sockets = []
+        info = {'processed_connections': self._received,
+                'concurrent_connections': len(self._concurrent_connections),
+                'max_connections': self._max_connections,
+                'keep_alive': self._keep_alive,
+                'sockets': sockets}
+        if self._server:
+            for sock in self._server.sockets:
+                sockets.append({
+                    'address': format_address(sock.getsockname())})
+        return info
 
     ##    INTERNALS
     def _create_protocol(self):
@@ -694,3 +730,21 @@ class TcpServer(EventHandler):
     def _connection_lost_exc(self, connection, exc):
         self._concurrent_connections.discard(connection)
         return exc
+
+    def _close_connections(self, connection=None, async=True):
+        '''Close ``connection`` if specified, otherwise close all connections.
+
+        Return a list of :class:`Deferred` called back once the connection/s
+        are closed.
+        '''
+        all = []
+        if connection:
+            all.append(connection.event('connection_lost'))
+            connection.transport.close(async)
+        else:
+            for connection in list(self._concurrent_connections):
+                all.append(connection.event('connection_lost'))
+                connection.transport.close(async)
+        if all:
+            self.logger.info('%s closing %d connections', self, len(all))
+        return multi_async(all)

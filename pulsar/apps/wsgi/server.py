@@ -19,7 +19,7 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Deferred, Failure
+from pulsar import HttpException, ProtocolError, Deferred, Failure, in_loop
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -297,8 +297,7 @@ class HttpServerResponse(ProtocolConsumer):
                 self._request_headers = Headers(p.get_headers(), kind='client')
                 stream = StreamReader(self._request_headers, p, self.transport)
                 self.bind_event('data_processed', stream.data_processed)
-                environ = self.wsgi_environ(stream)
-                self._loop.async(self._response(environ))
+                self._response(self.wsgi_environ(stream))
         else:
             # This is a parsing error, the client must have sent
             # bogus data
@@ -408,6 +407,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     ########################################################################
     ##    INTERNALS
+    @in_loop
     def _response(self, environ):
         exc_info = None
         try:

@@ -1,8 +1,6 @@
-from pulsar import get_event_loop, ImproperlyConfigured
+from pulsar import get_event_loop, ImproperlyConfigured, Pool
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
-
-from .pool import Pool
 
 
 _stores = {}

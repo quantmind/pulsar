@@ -27,10 +27,7 @@ class PulsarStoreProtocol(pulsar.ProtocolConsumer):
         conn = self._connection
         transport = conn._transport
         parser = conn.parser
-        store = getattr(conn._producer, '_key_value_store', None)
-        if store is None:
-            store = Storage(transport._loop)
-            conn._producer._key_value_store = store
+        store = conn._producer._key_value_store
         parser.feed(data)
         request = parser.get()
         while request is not False:
@@ -40,7 +37,20 @@ class PulsarStoreProtocol(pulsar.ProtocolConsumer):
             request = parser.get()
 
 
+class TcpServer(pulsar.TcpServer):
+
+    def __init__(self, *args, **kwargs):
+        super(TcpServer, self).__init__(*args, **kwargs)
+        self._key_value_store = Storage(self, self._loop)
+
+    def info(self):
+        info = super(TcpServer, self).info()
+        info['store'] = self._key_value_store._info()
+        return info
+
+
 class KeyValueStore(SocketServer):
+    server_class = TcpServer
 
     def protocol_factory(self):
         consumer_factory = partial(PulsarStoreProtocol, self.cfg)
@@ -55,8 +65,9 @@ class KeyValueStore(SocketServer):
 
 class Storage(object):
 
-    def __init__(self, loop):
-        self._loop = loop
+    def __init__(self, server):
+        self._server = server
+        self._loop = server._loop
         self._data = {}
         self._timeouts = {}
 
@@ -89,3 +100,15 @@ class Storage(object):
         get = self._data.get
         values = [get(k, b'nil') for k in requests[1:]]
         transport.write(pack_command(values))
+
+    def info(self, transport, request):
+        if len(request) != 1:
+            raise BadCommandInput('ping', 'expect no arguments')
+        info = self._server.info()
+        transport.write(pack_command(info))
+
+    ##    INTERNALS
+    def _info(self):
+        info = {'keys': len(self._data),
+                'timeouts': len(self._timeouts)}
+        return info

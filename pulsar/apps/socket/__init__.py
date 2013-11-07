@@ -98,7 +98,7 @@ import os
 from functools import partial
 
 import pulsar
-from pulsar import TcpServer, Connection, multi_async
+from pulsar import TcpServer, Connection
 from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
                                    format_address)
 from pulsar.utils.config import pass_through
@@ -183,6 +183,7 @@ class SocketServer(pulsar.Application):
     '''
     name = 'socket'
     address = None
+    server_class = TcpServer
     cfg = pulsar.Config(apps=['socket'])
 
     def protocol_factory(self):
@@ -233,20 +234,14 @@ class SocketServer(pulsar.Application):
         worker.servers[self.name] = self.create_server(worker)
 
     def worker_stopping(self, worker):
-        all = []
-        for server in worker.servers[self.name]:
-            all.append(server.close_connections())
-        return multi_async(all)
+        server = servers[self.name]
+        return server.close()
 
     def worker_info(self, worker, info):
-        info['sockets'] = sockets = []
-        for server in worker.servers.get(self.name, ()):
-            address = format_address(server.address)
-            sockets.append({
-                'address': format_address(server.address),
-                'read_timeout': server.timeout,
-                'concurrent_connections': server.concurrent_connections,
-                'received_connections': server.received})
+        server = worker.servers.get(self.name)
+        if server:
+            info['tcpserver'] = server.info()
+        return info
 
     #   INTERNALS
     def create_server(self, worker):
@@ -256,12 +251,12 @@ class SocketServer(pulsar.Application):
         '''
         sockets = [sock.sock for sock in worker.params.sockets]
         cfg = self.cfg
-        server = TcpServer(self.protocol_factory(),
-                           worker._loop,
-                           sockets=sockets,
-                           max_connections=cfg.max_requests,
-                           keep_alive=cfg.keep_alive,
-                           name=self.name)
+        server = self.server_class(self.protocol_factory(),
+                                   worker._loop,
+                                   sockets=sockets,
+                                   max_connections=cfg.max_requests,
+                                   keep_alive=cfg.keep_alive,
+                                   name=self.name)
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
             callback = getattr(cfg, event)

@@ -240,7 +240,8 @@ class HttpBin(wsgi.Router):
     def info_data(self, request, **params):
         headers = self.getheaders(request)
         data = {'method': request.method,
-                'headers': headers}
+                'headers': headers,
+                'pulsar': self.pulsar_info(request)}
         if request.method in ENCODE_URL_METHODS:
             data['args'] = dict(request.url_data)
         else:
@@ -264,6 +265,9 @@ class HttpBin(wsgi.Router):
             if k.startswith('HTTP_'):
                 headers[k[5:].replace('_', '-')] = request.environ[k]
         return dict(headers)
+
+    def pulsar_info(self, request):
+        return request.get('pulsar.connection').info()
 
 
 class Graph(ws.WS):
