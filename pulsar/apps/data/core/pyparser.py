@@ -9,6 +9,7 @@ if ispy3k:
 else:   # pragma    nocover
     from itertools import imap as map
 
+nil = b'$-1\r\n'
 
 REPLAY_TYPE = frozenset((b'$',   # REDIS_REPLY_STRING,
                          b'*',   # REDIS_REPLY_ARRAY,
@@ -95,6 +96,12 @@ class Parser(object):
         else:
             return self._get(None)
 
+    def bulk_replay(self, value):
+        if value is None:
+            return nil
+        else:
+            return ('$%d\r\n' % len(value)).encode('utf-8') + value + b'\r\n'
+
     def pack_command(self, *args):
         "Pack a series of arguments into a value Redis command"
         return b''.join(self.__pack_gen(args))
@@ -105,7 +112,6 @@ class Parser(object):
         return b''.join(starmap(pack, (args for args, _ in commands)))
 
     #    INTERNALS
-
     if ispy3k:
         def encode(self, value):
             if isinstance(value, bytes):
@@ -128,11 +134,15 @@ class Parser(object):
     def __pack_gen(self, args):
         e = self.encode
         crlf = b'\r\n'
-        yield e('*%s\r\n' % len(args))
-        for value in map(e, args):
-            yield e('$%s\r\n' % len(value))
-            yield value
-            yield crlf
+        yield ('*%s\r\n' % len(args)).encode('utf-8')
+        for value in args:
+            if value is None:
+                yield nil
+            else:
+                value = e(value)
+                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield value
+                yield crlf
 
     def _get(self, next):
         b = self._inbuffer

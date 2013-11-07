@@ -183,7 +183,6 @@ class SocketServer(pulsar.Application):
     '''
     name = 'socket'
     address = None
-    server_class = TcpServer
     cfg = pulsar.Config(apps=['socket'])
 
     def protocol_factory(self):
@@ -234,14 +233,20 @@ class SocketServer(pulsar.Application):
         worker.servers[self.name] = self.create_server(worker)
 
     def worker_stopping(self, worker):
-        server = servers[self.name]
-        return server.close()
+        server = worker.servers.get(self.name)
+        if server:
+            return server.close()
 
     def worker_info(self, worker, info):
         server = worker.servers.get(self.name)
         if server:
             info['tcpserver'] = server.info()
         return info
+
+    def server_factory(self, *args, **kw):
+        '''Create a :class:`.TcpServer`.
+        '''
+        return TcpServer(*args, **kw)
 
     #   INTERNALS
     def create_server(self, worker):
@@ -251,12 +256,12 @@ class SocketServer(pulsar.Application):
         '''
         sockets = [sock.sock for sock in worker.params.sockets]
         cfg = self.cfg
-        server = self.server_class(self.protocol_factory(),
-                                   worker._loop,
-                                   sockets=sockets,
-                                   max_connections=cfg.max_requests,
-                                   keep_alive=cfg.keep_alive,
-                                   name=self.name)
+        server = self.server_factory(self.protocol_factory(),
+                                     worker._loop,
+                                     sockets=sockets,
+                                     max_connections=cfg.max_requests,
+                                     keep_alive=cfg.keep_alive,
+                                     name=self.name)
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
             callback = getattr(cfg, event)

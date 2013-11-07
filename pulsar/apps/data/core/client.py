@@ -1,9 +1,12 @@
-from pulsar import get_event_loop, ImproperlyConfigured, Pool
+import logging
+from functools import partial
+
+from pulsar import get_event_loop, ImproperlyConfigured, Pool, new_event_loop
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 
-_stores = {}
+data_stores = {}
 
 
 class Compiler(object):
@@ -65,6 +68,10 @@ class Store(object):
     def __repr__(self):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
+
+    def execute(self, *args, **options):
+        '''Execute a command'''
+        raise NotImplementedError
 
     def client(self):
         '''Get a client for the Store'''
@@ -147,32 +154,45 @@ def parse_store_url(url):
     return scheme, host, params
 
 
-def create_store(url, loop=None, **kw):
+def create_store(url, loop=None, force_sync=False, **kw):
     '''Create a new :class:`Store` for a valid ``url``.
 
     A valid ``url`` taks the following forms::
 
-        postgresql://user:password@127.0.0.1:6500/testdb
+        pulsar://user:password@127.0.0.1:6410
         redis://user:password@127.0.0.1:6500/11?namespace=testdb.
+        postgresql://user:password@127.0.0.1:6500/testdb
         couchdb://user:password@127.0.0.1:6500/testdb
 
     :param loop: optional event loop, if not provided it is obtained
         via the ``get_event_loop`` method.
+    :param force_sync: force a synchronous store.
     :param kw: additional key-valued parameters to pass to the :class:`Store`
         initialisation method.
     :return: a :class:`Store`.
     '''
     if isinstance(url, Store):
         return url
-    loop = loop or get_event_loop()
     scheme, address, params = parse_store_url(url)
-    dotted_path = _stores.get(scheme)
+    dotted_path = data_stores.get(scheme)
     if not dotted_path:
         raise ImproperlyConfigured('%s store not available' % scheme)
+    if force_sync:
+        logger = logging.getLogger(dotted_path)
+        loop = new_event_loop(iothreadloop=False, logger=logger)
+    else:
+        loop = loop or get_event_loop()
     store_class = module_attribute(dotted_path)
     params.update(kw)
-    return store_class(scheme, address, loop, **params)
+    store = store_class(scheme, address, loop, **params)
+    if force_sync:
+        store.execute = partial(wait_for_result, loop, store.execute)
+    return store
+
+
+def wait_for_result(loop, callable, *args, **kwargs):
+    return loop.run_until_complete(callable(*args, **kwargs))
 
 
 def register_store(name, dotted_path):
-    _stores[name] = dotted_path
+    data_stores[name] = dotted_path

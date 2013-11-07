@@ -123,7 +123,7 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         self.description = description or 'Pulsar server'
         self.epilog = epilog or 'Have fun!'
         self.version = version or __version__
-        self.update(params)
+        self.update(params, True)
 
     def __iter__(self):
         return iter(self.settings)
@@ -160,12 +160,12 @@ attribute by exposing the :attr:`Setting.name` as attribute.
             raise AttributeError("Invalid access!")
         super(Config, self).__setattr__(name, value)
 
-    def update(self, data):
+    def update(self, data, default=False):
         '''Update this :attr:`Config` with ``data`` which is either an
 instance of Mapping or :class:`Config`.'''
         for name, value in data.items():
             if value is not None:
-                self.set(name, value)
+                self.set(name, value, default)
 
     def get(self, name, default=None):
         '''Get the value at ``name`` for this :class:`Config` container

@@ -33,6 +33,7 @@ located in the :mod:`pulsar.apps` module.
    apps/wsgi/index
    apps/tasks/index
    apps/test
+   apps/data/index
    apps/shell
    apps/rpc
    apps/websockets

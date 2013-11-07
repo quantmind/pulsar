@@ -43,3 +43,8 @@ try:
 except ImportError:     # pragma    nocover
     HAS_C_EXTENSIONS = False
     RedisParser = PyRedisParser
+
+
+def redis_parser(py_redis_parser=False):
+    return PyRedisParser if py_redis_parser else RedisParser
+

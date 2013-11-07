@@ -1,6 +1,7 @@
 import sys
 from functools import partial
 
+import pulsar
 from pulsar import TooManyConnections, ProtocolError
 from pulsar.utils.internet import nice_address, format_address
 
@@ -161,6 +162,10 @@ class ProtocolConsumer(EventHandler):
             raise RuntimeError('Cannot start new request. No connection.')
         if not conn._transport:
             raise RuntimeError('%s has no transport.' % conn)
+        conn._processed += 1
+        if conn._producer:
+            p = getattr(conn._producer, '_requests_processed', 0)
+            conn._producer._requests_processed = p + 1
         self._request = request
         self.fire_event('pre_request')
         if self._request is not None:
@@ -336,8 +341,9 @@ class Protocol(EventHandler, asyncio.Protocol):
         self._add_idle_timeout()
 
     def info(self):
-        info = {'connection': self._session,
-                'timeout': self._timeout}
+        connection = {'session': self._session,
+                      'timeout': self._timeout}
+        info = {'connection': connection}
         if self._producer:
             info.update(self._producer.info())
         return info
@@ -385,7 +391,6 @@ class Connection(Protocol):
         if self._current_consumer is None:
             self._current_consumer = consumer = self._consumer_factory()
             consumer._connection = self
-            self._processed += 1
             consumer.connection_made(self)
         return self._current_consumer
 
@@ -447,7 +452,8 @@ class Connection(Protocol):
 
     def info(self):
         info = super(Connection, self).info()
-        info.update({'request_processed': self._processed})
+        connection = info['connection']
+        connection.update({'request_processed': self._processed})
         return info
 
 
@@ -612,6 +618,7 @@ class TcpServer(EventHandler):
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'post_request',
                          'connection_lost')
     _server = None
+    _started = None
 
     def __init__(self, protocol_factory, loop, address=None,
                  name=None, sockets=None, max_connections=None,
@@ -619,6 +626,7 @@ class TcpServer(EventHandler):
         super(TcpServer, self).__init__()
         self.protocol_factory = protocol_factory
         self._received = 0
+        self._requests_processed = 0
         self._name = name or self.__class__.__name__
         self._loop = loop
         self._params = {'address': address, 'sockets': sockets}
@@ -665,6 +673,7 @@ class TcpServer(EventHandler):
                     else:
                         raise NotImplementedError
                 self._server = server
+                self._started = self._loop.time()
                 for sock in server.sockets:
                     address = sock.getsockname()
                     self.logger.info('%s serving on %s', self._name,
@@ -694,16 +703,21 @@ class TcpServer(EventHandler):
 
     def info(self):
         sockets = []
-        info = {'processed_connections': self._received,
-                'concurrent_connections': len(self._concurrent_connections),
-                'max_connections': self._max_connections,
-                'keep_alive': self._keep_alive,
-                'sockets': sockets}
+        server = {'pulsar_version': pulsar.__version__,
+                  'python_version': sys.version,
+                  'uptime_in_seconds': int(self._loop.time() - self._started),
+                  'sockets': sockets,
+                  'max_connections': self._max_connections,
+                  'keep_alive': self._keep_alive}
+        clients = {'processed_clients': self._received,
+                   'connected_clients': len(self._concurrent_connections),
+                   'requests_processed': self._requests_processed}
         if self._server:
             for sock in self._server.sockets:
                 sockets.append({
                     'address': format_address(sock.getsockname())})
-        return info
+        return {'server': server,
+                'clients': clients}
 
     ##    INTERNALS
     def _create_protocol(self):

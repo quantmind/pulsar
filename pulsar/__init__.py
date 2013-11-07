@@ -54,3 +54,5 @@ del local
 from .apps.tasks.backends import local
 del local
 del get_version
+# Import data stores
+from .apps.data import data_stores
