@@ -170,6 +170,9 @@ class PulsarStore(Store):
         '''Get a client for the Store'''
         return PulsarClient(self)
 
+    def pubsub(self):
+        return PubSub(self)
+
     @in_loop_thread
     def execute(self, command, *args, **options):
         connection = yield self._pool.connect()

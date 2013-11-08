@@ -176,7 +176,7 @@ class Configurator(object):
         attribute.
     :parameter params: a dictionary of configuration parameters which
         overrides the defaults and the :attr:`cfg` class attribute.
-        They will be overritten by a :ref:`config file <setting-config>`
+        They will be overwritten by a :ref:`config file <setting-config>`
         or command line arguments.
 
     .. attribute:: name
@@ -220,12 +220,12 @@ class Configurator(object):
                  script=None,
                  cfg=None,
                  load_config=True,
-                 **kwargs):
+                 **params):
         cls = self.__class__
         self.name = name or cls.name or cls.__name__.lower()
         if load_config or not isinstance(cfg, pulsar.Config):
             cfg = cfg or {}
-            cfg.update(kwargs)
+            cfg.update(params)
             cfg = cls.create_config(cfg)
         self.cfg = cfg
         self.cfg.description = description or self.cfg.description

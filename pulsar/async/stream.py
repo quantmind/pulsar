@@ -435,33 +435,6 @@ def sock_connect(loop, sock, address, future=None):
         return future.callback(exc)
 
 
-def sock_accept(loop, sock, future=None):    # pragma    nocover
-    #TODO
-    #do we need this function?
-    fd = sock.fileno()
-    if future is None:
-        future = Deferred()
-    else:
-        loop.remove_reader(fd)
-    if not future.cancelled():
-        try:
-            conn, address = sock.accept()
-            conn.setblocking(False)
-            future.set_result((conn, address))
-        except socket.error as e:
-            if e.args[0] in TRY_READ_AGAIN:
-                loop.add_reader(fd, sock_accept, loop, sock, future)
-            elif e.args[0] == EPERM:
-                # Netfilter on Linux may have rejected the
-                # connection, but we get told to try to accept() anyway.
-                return sock_accept(loop, sock, future)
-            else:
-                future.callback(e)
-        except Exception as e:
-            future.callback(e)
-    return future
-
-
 def sock_accept_connection(loop, protocol_factory, sock, ssl):
     '''Used by start_serving.'''
     try:

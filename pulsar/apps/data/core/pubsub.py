@@ -103,18 +103,18 @@ PubSub backend
 
 .. _wikipedia: http://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern
 '''
-import logging
-
 import pulsar
-from pulsar import get_actor
 from pulsar.utils.pep import to_string
-from pulsar.utils.log import local_property
+
+from .client import create_store
 
 
-LOGGER = logging.getLogger('pulsar.pubsub')
+def pubsub(store_or_url, protocol=None):
+    store = create_store(store_or_url)
+    return PubSub(store, protocol)
 
 
-class Client(object):
+class PubSubClient(object):
     '''Interface for a client of :class:`PubSub` handler.
 
     Instances of this :class:`Client` are callable object and are
@@ -143,136 +143,70 @@ class PubSub(object):
     A backend handler is a picklable instance and therefore it can be
     passed to different process domains.
     '''
-    def __init__(self, backend=None, encoder=None, **params):
-        be = PubSubBackend.make(backend=backend, **params)
-        self.backend = PubSubBackend.get(be.id, backend=be)
-        self.encoder = encoder
+    def __init__(self, store, protocol=None):
+        self.store = store
+        self._loop = store._loop
+        self._pubsub = store.pubsub()
+        self._pubsub.bind_event('on_message', self._broadcast)
+        self._protocol = protocol
+        self._clients = set()
 
     @property
-    def clients(self):
-        '''Set of all clients for this :class:`PubSub` handler.'''
-        return self.backend.clients
-
-    @property
-    def id(self):
-        return self.backend.id
-
-    @property
-    def name(self):
-        return self.backend.name
+    def dns(self):
+        return self.store.dns
 
     def add_client(self, client):
-        '''Add a new ``client`` to the set of all :attr:`clients`. Clients
-must have the ``write`` method available. When a new message is received
-from the publisher, the :meth:`broadcast` method will notify all
-:attr:`clients` via the ``write`` method.'''
-        self.backend.add_client(client)
+        '''Add a new ``client`` to the set of all :attr:`clients`.
+
+        Clients must be callable. When a new message is received
+        from the publisher, the :meth:`broadcast` method will notify all
+        :attr:`clients` via the ``callable`` method.'''
+        self._clients.add(client)
 
     def remove_client(self, client):
         '''Remove *client* from the set of all :attr:`clients`.'''
-        self.backend.remove_client(client)
+        self._clients.discard(client)
 
     def publish(self, channel, message):
-        '''Publish a ``message`` to ``channel``. It invokes the
-:meth:`PubSubBackend.publish` method after the message has been encoded
-via the :attr:`encoder` callable (if available).'''
-        if self.encoder:
-            message = self.encoder(message)
-        return self.backend.publish(channel, message)
+        '''Publish a ``message`` to ``channel``.'''
+        if self._protocol:
+            message = self._protocol.encode(message)
+        return self._pubsub.publish(channel, message)
 
     def subscribe(self, *channels):
-        '''Invoke the :meth:`PubSubBackend.subscribe` method.'''
-        return self.backend.subscribe(*channels)
+        '''Subscribe to ``channels``.'''
+        return self._pubsub.subscribe(*channels)
 
     def unsubscribe(self, *channels):
-        '''Invoke the :meth:`PubSubBackend.unsubscribe` method.'''
-        return self.backend.unsubscribe(*channels)
+        '''Unsubscribe from ``channels``.'''
+        return self._pubsub.unsubscribe(*channels)
+
+    def psubscribe(self, *patterns):
+        '''Subscribe to channels ``patterns``.'''
+        return self._pubsub.psubscribe(*channels)
+
+    def punsubscribe(self, *patterns):
+        '''Unsubscribe from channel ``patterns``.'''
+        return self._pubsub.unsubscribe(*channels)
 
     def close(self):
         '''Close connections'''
-        return self.backend.close()
+        return self._pubsub.close()
 
-
-class PubSubBackend(pulsar.Backend):
-    '''Publish/Subscribe :class:`pulsar.apps.Backend` interface.
-    '''
-    @local_property
-    def clients(self):
-        '''The set of clients for this :class:`PubSub` handler.'''
-        return set()
-
-    @classmethod
-    def path_from_scheme(cls, scheme):
-        return 'pulsar.apps.pubsub.%s' % scheme
-
-    def add_client(self, client):
-        '''Add a new ``client`` to the set of all :attr:`clients`.'''
-        self.clients.add(client)
-
-    def remove_client(self, client):
-        '''Remove ``client`` from the set of all :attr:`clients`.'''
-        self.clients.discard(client)
-
-    def publish(self, channel, message):
-        '''Publish a ``message`` into ``channel``.
-
-        Must be implemented by subclasses.
-        '''
-        raise NotImplementedError
-
-    def subscribe(self, *channels):
-        '''Subscribe to the server which publish messages.
-
-        A series of one or more ``channels`` to subscribe to must be passed
-        to this method which must be implemented by subclasses.
-        '''
-        raise NotImplementedError
-
-    def unsubscribe(self, *channels):
-        '''Un-subscribe from the server which publish messages.
-
-        An optional series of ``channels`` can be passed.
-        If no channels are passed, it unsubscribed from all channels.
-
-        Must be implemented by subclasses.'''
-        raise NotImplementedError
-
-    def broadcast(self, channel, message):
+    def _broadcast(self, response):
         '''Broadcast ``message`` to all :attr:`clients`.'''
         remove = set()
-        channel = to_string(channel)
-        message = self.decode(message)
-        clients = tuple(self.clients)
-        for client in clients:
+        channel = to_string(response[0])
+        message = response[1]
+        if self._protocol:
+            message = self._protocol.dencode(message)
+        for client in self._clients:
             try:
                 client(channel, message)
             except IOError:
                 remove.add(client)
             except Exception:
-                LOGGER.exception('Exception while processing pub/sub client. '
-                                 'Removing it.')
+                self._loop.logger.exception(
+                    'Exception while processing pub/sub client. Removing it.')
                 remove.add(client)
-        self.clients.difference_update(remove)
-
-    def close(self):
-        '''Close this :class:`PubSubBackend`.'''
-        actor = get_actor()
-        actor.params.pubsub.pop(self.id, None)
-        return self.unsubscribe()
-
-    def decode(self, message):
-        '''Convert message to a string.'''
-        return to_string(message)
-
-    @classmethod
-    def get(cls, id, actor=None, backend=None):
-        actor = actor or get_actor()
-        if not actor:
-            raise RuntimeError('Cannot initialise pubsub when no actor.')
-        if 'pubsub' not in actor.params:
-            actor.params.pubsub = {}
-        be = actor.params.pubsub.get(id)
-        if not be and backend:
-            be = backend
-            actor.params.pubsub[id] = be
-        return be
+        self._clients.difference_update(remove)

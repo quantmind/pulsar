@@ -77,6 +77,10 @@ class Store(object):
         '''Get a client for the Store'''
         raise NotImplementedError
 
+    def pubsub(self):
+        '''Get a publish/subscribe handler for the Store'''
+        raise NotImplementedError
+
     def compiler(self):
         '''Create the command :class:`Compiler` for this :class:`Store`
 

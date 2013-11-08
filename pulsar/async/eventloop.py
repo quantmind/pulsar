@@ -17,8 +17,8 @@ from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_local_data, LOGGER
-from .defer import async, DeferredTask, Deferred, Failure
-from .stream import create_connection, start_serving, sock_connect, sock_accept
+from .defer import maybe_async, async, DeferredTask, Deferred, Failure
+from .stream import create_connection, start_serving, sock_connect
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 from .pollers import DefaultIO
@@ -97,7 +97,8 @@ class LoopingCall(object):
 
     def __call__(self):
         try:
-            result = async(self.callback(*self.args), self._loop)
+            result = maybe_async(self.callback(*self.args), self._loop,
+                                 get_result=False)
         except Exception:
             self.cancel()
             exc_info = sys.exc_info()
@@ -408,8 +409,7 @@ default signal handler ``signal.SIG_DFL``.'''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)
-        d = async(res, self)
-        return d.set_timeout(timeout)
+        return async(res, self).set_timeout(timeout)
 
     def create_server(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
@@ -457,15 +457,6 @@ default signal handler ``signal.SIG_DFL``.'''
         Returns a :class:`Deferred` whose result on success will be ``None``.
         '''
         return async(sock_connect(self, sock, address), self)
-
-    def sock_accept(self, sock, timeout=None):
-        '''Accept a connection from a socket ``sock``.
-
-        The socket must be in listening mode and bound to an address.
-        Returns a :class:`Deferred` whose result on success will be a tuple
-        ``(conn, peer)`` where ``conn`` is a connected non-blocking socket
-        and ``peer`` is the peer address.'''
-        return async(sock_accept(self, sock), self)
 
     #################################################    NON PEP METHODS
     def clear(self):

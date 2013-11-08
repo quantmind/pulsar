@@ -107,6 +107,12 @@ class AbstractEventLoop(object):
     def run_until_complete(self, future):
         raise NotImplementedError
 
+    def sock_connect(self, sock, address):
+        raise NotImplementedError
+
+    def sock_accept(self, sock):
+        raise NotImplementedError
+
 
 class Handle(object):
     _cancelled = False

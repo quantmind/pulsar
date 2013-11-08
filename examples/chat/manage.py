@@ -45,47 +45,47 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.utils.path import Path
-from pulsar.apps import ws, wsgi, rpc, pubsub
+from pulsar.apps import ws, wsgi, rpc
+from pulsar.apps.data import pubsub, PubSubClient
 from pulsar.utils.system import json
 
 CHAT_DIR = os.path.dirname(__file__)
 
-stdnet = Path(__file__).add2python('stdnet', 3, down=['python-stdnet'],
-                                   must_exist=False)
-if stdnet:
-    # Add option to use redis pubsub instead of local pubsub
-    # If we are testsing don't do anything, the setting is already available
-    import pulsar.utils.settings.backend
+
+class BackendServer(pulsar.Setting):
+    app ='chat_example'
+    name = 'pubsub_server'
+    flags = ['--pubsub_server']
+    meta = "CONNECTION STRING"
+    default = 'pulsar://'
+    desc = 'Connection string to a pubsub server'
 
 
-class PubSubClient(pubsub.Client):
+class ChatClient(PubSubClient):
 
     def __init__(self, connection):
         self.connection = connection
 
     def __call__(self, channel, message):
-        if channel == 'webchat':
-            self.connection.write(message)
+        self.connection.write(message)
 
 
 ##    Web Socket Chat handler
 class Chat(ws.WS):
-    '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
-application.
+    '''The websocket handler (:class:`.WS`) managing the chat application.
 
-.. attribute:: pubsub
+    .. attribute:: pubsub
 
-    The :ref:`publish/subscribe handler <apps-pubsub>` created by the wsgi
-    application in the :meth:`WebChat.setup` method.
-'''
+        The :ref:`publish/subscribe handler <apps-pubsub>` created by the wsgi
+        application in the :meth:`WebChat.setup` method.
+    '''
     def __init__(self, pubsub):
         self.pubsub = pubsub
 
     def on_open(self, websocket):
         '''When a new websocket connection is established it creates a
-:ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
-of clients of the :attr:`pubsub` handler.'''
+        new :class:`ChatClient` and adds it to the set of clients of the
+        :attr:`pubsub` handler.'''
         self.pubsub.add_client(PubSubClient(websocket))
 
     def on_message(self, websocket, msg):
@@ -117,7 +117,7 @@ class Rpc(rpc.PulsarServerCommands):
 
 class WebChat(wsgi.LazyWsgi):
     '''This is the :ref:`wsgi application <wsgi-handlers>` for this
-web-chat example.'''
+    web-chat example.'''
     def __init__(self, server_name):
         self.name = server_name
 
@@ -159,9 +159,16 @@ web-chat example.'''
         return actor.cfg
 
 
-def server(callable=None, name=None, **kwargs):
+def server(callable=None, name=None, cfg=None, **params):
     name = name or 'wsgi'
-    return wsgi.WSGIServer(callable=WebChat(name), name=name, **kwargs)
+    # Include the configuration
+    cfg = pulsar.Config(apps=['socket', 'wsgi', 'chat_example'],
+                        server_software=pulsar.SERVER_SOFTWARE)
+    server = wsgi.WSGIServer(callable=WebChat(name), name=name,
+                             cfg=cfg, **params)
+    if server.cfg.pubsub_server == 'pulsar://':   # the pubsub server must be started
+        store = KeyValueStore(bind='127.0.0.1:0')
+    return server
 
 
 if __name__ == '__main__':  # pragma nocover
