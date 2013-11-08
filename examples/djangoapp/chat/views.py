@@ -1,8 +1,8 @@
 import time
 
 from pulsar import get_actor, coroutine_return
-from pulsar.apps import ws, pubsub
-from pulsar.utils.structures import AttributeDictionary
+from pulsar.apps import ws
+from pulsar.apps.data import PubSubClient, start_store
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.system import json
 
@@ -15,7 +15,7 @@ def home(request):
         }, RequestContext(request))
 
 
-class Client(pubsub.Client):
+class ChatClient(PubSubClient):
 
     def __init__(self, connection):
         self.joined = time.time()
@@ -32,11 +32,11 @@ class Chat(ws.WS):
     def get_pubsub(self, websocket):
         if not self.pubsub:
             # ``pulsar.cfg`` is injected by the pulsar server into
-            # the wsgi environ. Here we pick up the name of the wsgi
-            # application running the server. This is **only** needed by the
-            # test suite which tests several servers/clients at once.
-            name = websocket.handshake.environ['pulsar.cfg'].name
-            self.pubsub = pubsub.PubSub(name=name)
+            # the wsgi environ.
+            cfg = websocket.handshake.environ['pulsar.cfg']
+            data_server_dns = cfg.pubsub_server or 'pulsar://127.0.0.1:0'
+            store = yield start_store(data_server_dns, loop=websocket._loop)
+            self.pubsub = store.pubsub()
             yield self.pubsub.subscribe('webchat', 'chatuser')
         coroutine_return(self.pubsub)
 
@@ -45,8 +45,10 @@ class Chat(ws.WS):
 
         Add it to the set of clients listening for messages.
         '''
-        pubsub = yield self.get_pubsub(websocket)
-        pubsub.add_client(Client(websocket))
+        pubsub = self.pubsub
+        if not pubsub:
+            pubsub = yield self.get_pubsub(websocket)
+        pubsub.add_client(ChatClient(websocket))
         self.publish(websocket, 'chatuser')
         self.publish(websocket, 'webchat', 'joined the chat')
 

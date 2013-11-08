@@ -316,7 +316,10 @@ def run_in_loop_thread(loop, callback, *args, **kwargs):
             result = yield callback(*args, **kwargs)
         except Exception:
             result = sys.exc_info()
-        d.callback(result)
+            d.callback(result)
+            raise
+        else:
+            d.callback(result)
     loop.call_soon_threadsafe(_)
     return d
 

@@ -1,9 +1,13 @@
 import logging
+import socket
 from functools import partial
 
-from pulsar import get_event_loop, ImproperlyConfigured, Pool, new_event_loop
+from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
+                    coroutine_return, get_application, send)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
+
+from .server import KeyValueStore
 
 
 data_stores = {}
@@ -81,6 +85,10 @@ class Store(object):
         '''Get a publish/subscribe handler for the Store'''
         raise NotImplementedError
 
+    def queue(self):
+        '''Get a distributed queue for this store'''
+        raise NotImplementedError
+
     def compiler(self):
         '''Create the command :class:`Compiler` for this :class:`Store`
 
@@ -137,6 +145,9 @@ def parse_store_url(url):
     scheme, host, path, query, fr = urlsplit(url)
     assert not fr, 'store url must not have fragment, found %s' % fr
     assert scheme, 'Scheme not provided'
+    # pulsar://
+    if scheme == 'pulsar' and not host:
+        host = '127.0.0.1:0'
     bits = host.split('@')
     assert len(bits) <= 2, 'Too many @ in %s' % url
     params = dict(parse_qsl(query))
@@ -159,7 +170,7 @@ def parse_store_url(url):
 
 
 def create_store(url, loop=None, force_sync=False, **kw):
-    '''Create a new :class:`Store` for a valid ``url``.
+    '''Create a new client :class:`Store` for a valid ``url``.
 
     A valid ``url`` taks the following forms::
 
@@ -192,6 +203,38 @@ def create_store(url, loop=None, force_sync=False, **kw):
     if force_sync:
         store.execute = partial(wait_for_result, loop, store.execute)
     return store
+
+
+def start_store(url, **kw):
+    '''Equivalent to :func:`create_store` for most cases excepts when the
+    ``url`` is for a pulsar store not yet started.
+
+    In this case, the a :class:`.KeyValueStore` is started.
+    '''
+    store = create_store(url, **kw)
+    if store.name == 'pulsar':
+        client = store.client()
+        try:
+            yield client.ping()
+        except socket.error:
+            host = localhost(store._host)
+            if not host:
+                raise
+            app = yield get_application('keyvaluestore')
+            if not app:
+                app = yield send('arbiter', 'run', KeyValueStore(bind=host))
+            store._host = app.address
+            dns = store._buildurl()
+            store = create_store(dns, **kw)
+    coroutine_return(store)
+
+
+def localhost(host):
+    if isinstance(host, tuple):
+        if host[0] in ('127.0.0.1', ''):
+            return ':'.join((str(b) for b in host))
+    else:
+        return host
 
 
 def wait_for_result(loop, callable, *args, **kwargs):

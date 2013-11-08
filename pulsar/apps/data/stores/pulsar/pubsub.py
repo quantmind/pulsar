@@ -29,6 +29,20 @@ class PubsubProtocol(Protocol):
             response = parser.get()
 
 
+class PubSubClient(object):
+    '''Interface for a client of :class:`PubSub` handler.
+
+    Instances of this :class:`Client` are callable object and are
+    called once a new message has arrived from a subscribed channel.
+    The callable accepts two parameters:
+
+    * ``channel`` the channel which originated the message
+    * ``message`` the message
+    '''
+    def __call__(self, channel, message):
+        raise NotImplementedError
+
+
 class PubSub(EventHandler):
     '''Asynchronous Publish/Subscriber handler for pulsar and redis stores.
 
@@ -44,11 +58,14 @@ class PubSub(EventHandler):
     '''
     MANY_TIMES_EVENTS = ('on_message',)
 
-    def __init__(self, store):
+    def __init__(self, store, protocol=None):
         super(PubSub, self).__init__()
         self.store = store
         self._loop = store._loop
+        self._protocol = protocol
         self._connection = None
+        self._clients = set()
+        self.bind_event('on_message', self._broadcast)
 
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
@@ -58,6 +75,18 @@ class PubSub(EventHandler):
         redis publish command).
         '''
         return self.store.execute('PUBLISH', channel, message)
+
+    def add_client(self, client):
+        '''Add a new ``client`` to the set of all :attr:`clients`.
+
+        Clients must be callable. When a new message is received
+        from the publisher, the :meth:`broadcast` method will notify all
+        :attr:`clients` via the ``callable`` method.'''
+        self._clients.add(client)
+
+    def remove_client(self, client):
+        '''Remove *client* from the set of all :attr:`clients`.'''
+        self._clients.discard(client)
 
     def count(self, *channels):
         '''Returns the number of subscribers (not counting clients
@@ -123,5 +152,23 @@ class PubSub(EventHandler):
         coroutine_return()
 
     def _execute(self, command, *args):
-        chunk = self._connection.parser.pack_command(command, *args)
+        chunk = self._connection.parser.multi_bulk(command, *args)
         self._connection._transport.write(chunk)
+
+    def _broadcast(self, response):
+        '''Broadcast ``message`` to all :attr:`clients`.'''
+        remove = set()
+        channel = to_string(response[0])
+        message = response[1]
+        if self._protocol:
+            message = self._protocol.dencode(message)
+        for client in self._clients:
+            try:
+                client(channel, message)
+            except IOError:
+                remove.add(client)
+            except Exception:
+                self._loop.logger.exception(
+                    'Exception while processing pub/sub client. Removing it.')
+                remove.add(client)
+        self._clients.difference_update(remove)

@@ -91,10 +91,11 @@ from datetime import datetime
 import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
+from pulsar.apps.data import start_store
 
 from .models import *
 from .states import *
-from .backends import *
+from .backend import *
 from .rpc import *
 
 
@@ -129,7 +130,7 @@ class ConcurrentTasks(TaskSetting):
 class TaskBackendConnection(TaskSetting):
     name = "task_backend"
     flags = ["--task-backend"]
-    default = "local://"
+    default = "pulsar://"
     desc = '''\
         Task backend.
 
@@ -191,8 +192,9 @@ class TaskQueue(pulsar.Application):
         '''
         if self.callable:
             self.callable()
-        self.backend = TaskBackend.make(
-            self.cfg.task_backend,
+        store = yield start_store(self.cfg.task_backend, loop=monitor._loop)
+        self.backend = TaskBackend(
+            store.dns,
             name=self.name,
             task_paths=self.cfg.task_paths,
             schedule_periodic=self.cfg.schedule_periodic,

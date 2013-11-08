@@ -7,4 +7,5 @@ Data Stores
 .. toctree::
    :maxdepth: 2
 
+   clients
    pulsar

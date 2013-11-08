@@ -52,9 +52,10 @@ Client
 '''
 import sys
 import logging
+import socket
 from collections import namedtuple
 
-from pulsar import ProtocolError, CommandError
+from pulsar import ProtocolError, CommandError, HaltServer
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import FrameParser
@@ -239,10 +240,14 @@ class MailboxProtocol(Protocol):
         data = self._parser.encode(obj, opcode=0x2).msg
         try:
             self.transport.write(data)
-        except IOError:
+        except socket.error:
             actor = get_actor()
             if actor.is_running():
-                raise
+                if actor.is_arbiter():
+                    raise
+                else:
+                    actor.logger.warning('Lost connection with arbiter')
+                    actor._loop.stop()
 
 
 class MailboxClient(BaseClient):

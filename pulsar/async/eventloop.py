@@ -456,7 +456,7 @@ default signal handler ``signal.SIG_DFL``.'''
 
         Returns a :class:`Deferred` whose result on success will be ``None``.
         '''
-        return async(sock_connect(self, sock, address), self)
+        return sock_connect(self, sock, address)
 
     #################################################    NON PEP METHODS
     def clear(self):

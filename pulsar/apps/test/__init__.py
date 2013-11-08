@@ -525,7 +525,7 @@ class TestSuite(tasks.TaskQueue):
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        super(TestSuite, self).monitor_start(monitor)
+        yield super(TestSuite, self).monitor_start(monitor)
         loader = self.local.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels

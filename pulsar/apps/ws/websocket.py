@@ -2,7 +2,7 @@ import base64
 import hashlib
 from functools import partial
 
-from pulsar import HttpException, ProtocolError, ProtocolConsumer
+from pulsar import HttpException, ProtocolError, ProtocolConsumer, maybe_async
 from pulsar.utils.pep import to_bytes, native_str
 from pulsar.utils.httpurl import DEFAULT_CHARSET
 from pulsar.utils.websocket import FrameParser, Frame
@@ -148,24 +148,23 @@ class WebSocketProtocol(ProtocolConsumer):
 
     def connection_made(self, connection):
         connection.set_timeout(0)
-        self._loop.maybe_async(self.handler.on_open(self))
+        maybe_async(self.handler.on_open(self), self._loop)
 
     def data_received(self, data):
         frame = self.parser.decode(data)
-        async = self._loop.maybe_async
         while frame:
             if frame.is_close:
                 # done with this, call finished method.
                 self.finished()
                 break
             if frame.is_message:
-                async(self.handler.on_message(self, frame.body))
+                maybe_async(self.handler.on_message(self, frame.body))
             elif frame.is_bytes:
-                async(self.handler.on_bytes(self, frame.body))
+                maybe_async(self.handler.on_bytes(self, frame.body))
             elif frame.is_ping:
-                async(self.handler.on_ping(self, frame.body))
+                maybe_async(self.handler.on_ping(self, frame.body))
             elif frame.is_pong:
-                async(self.handler.on_pong(self, frame.body))
+                maybe_async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
 
     def write(self, frame):

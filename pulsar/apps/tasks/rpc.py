@@ -18,7 +18,7 @@ TaskQueue Rpc Mixin
 import pulsar
 from pulsar.apps import rpc
 
-from .backends import Task, TaskNotAvailable
+from .backend import Task, TaskNotAvailable
 
 
 __all__ = ['TaskQueueRpcMixin']

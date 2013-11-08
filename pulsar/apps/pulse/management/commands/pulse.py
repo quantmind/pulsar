@@ -2,7 +2,7 @@
 from optparse import make_option
 
 import pulsar
-from pulsar.utils.security import random_string
+from pulsar.utils.importer import module_attribute
 from pulsar.apps.wsgi import (WSGIServer, LazyWsgi, WsgiHandler,
                               wait_for_body_middleware)
 
@@ -15,6 +15,11 @@ pulse_app_name = make_option('--pulse-app-name',
                              dest='pulse-app-name',
                              type='string',
                              default='django_pulsar')
+
+pulse_app_name = make_option('--pubsub-server',
+                             dest='pubsub_server',
+                             type='string',
+                             default='')
 
 
 class Wsgi(LazyWsgi):
@@ -41,5 +46,14 @@ class Command(BaseCommand):
         if options.pop('dryrun', False) is True:    # used for testing
             return callable
         callable.setup()
-        WSGIServer(callable=callable, cfg=options, parse_console=False,
-                   name=name).start()
+        from django.conf import settings
+        # Allow to specify the server factory dotted path in the settings file
+        dotted_path = getattr(settings, 'PULSE_SERVER_FACTORY', None)
+        if dotted_path:
+            server_factory = module_attribute(dotted_path)
+        else:
+            server_factory = WSGIServer
+        PUBSUB_SERVER = getattr(settings, 'PUBSUB_SERVER', None)
+        PUBSUB_SERVER = options.get('pubsub_server') or PUBSUB_SERVER
+        server_factory(callable=callable, cfg=options, parse_console=False,
+                       name=name, data_server=PUBSUB_SERVER).start()

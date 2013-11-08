@@ -409,7 +409,7 @@ def sock_connect(loop, sock, address, future=None):
     connect = False
     if future is None:
         future = Deferred(loop=loop).add_errback(
-            lambda r: loop.remove_connector(fd))
+            partial(remove_connector, loop, fd))
         connect = True
     try:
         if connect:
@@ -462,3 +462,8 @@ def sock_accept_connection(loop, protocol_factory, sock, ssl):
                                       extra={'addr': address})
     except Exception:
         logger(loop).exception('Could not accept new connection')
+
+
+def remove_connector(loop, fd, failure):
+    loop.remove_connector(fd)
+    return failure

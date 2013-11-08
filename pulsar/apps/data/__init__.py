@@ -1,2 +1,2 @@
 from .core import *
-from . import stores
+from .stores.pulsar.pubsub import PubSubClient

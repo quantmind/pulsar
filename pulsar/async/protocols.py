@@ -456,6 +456,16 @@ class Connection(Protocol):
         connection.update({'request_processed': self._processed})
         return info
 
+    def _upgrade(self, consumer_factory, old_consumer):
+        # A factory of protocol for an upgrade of an existing protocol consumer
+        # which didn't have the post_request event fired.
+        if self._producer:
+            consumer = self._producer.build_consumer(consumer_factory)
+        else:
+            consumer = consumer_factory()
+        consumer.chain_event(old_consumer, 'post_request')
+        return consumer
+
 
 class Producer(EventHandler):
     '''An Abstract :class:`EventHandler` class for all producers of
@@ -470,45 +480,21 @@ class Producer(EventHandler):
 
     By default it is set to the :class:`Connection` class.
     '''
-    _timeout = 0
-    _max_connections = 0
-
-    def __init__(self, protocol_factory, timeout=None, max_connections=None):
-        super(Producer, self).__init__()
-        self.protocol_factory = protocol_factory
-        self._timeout = timeout if timeout is not None else self._timeout
-        self._max_connections = max_connections or self._max_connections or BIG
-
-    @property
-    def timeout(self):
-        '''Number of seconds to keep alive an idle connection.
-
-        Passed as key-valued parameter to to the :meth:`connection_factory`.
-        '''
-        return self._timeout
-
-    @property
-    def max_connections(self):
-        '''Maximum number of connections allowed.
-
-        A value of 0 (default) means no limit.
-        '''
-        return self._max_connections
-
     def can_reuse_connection(self, connection, response):
         '''Check if ``connection`` can be reused.
+        '''
+        raise NotImplementedError
 
-        By default it returns ``True``.'''
-        return True
-
-    def build_consumer(self, consumer_factory=None):
+    def build_consumer(self, consumer_factory):
         '''Build a consumer for a connection.
 
         **Must be implemented by subclasses.
 
         :param consumer_factory: optional consumer factory to use.
         '''
-        raise NotImplementedError
+        consumer = consumer_factory()
+        consumer.copy_many_times_events(self)
+        return consumer
 
 
 class ConnectionProducer(Producer):
@@ -600,7 +586,8 @@ class ConnectionProducer(Producer):
         return exc
 
 
-class TcpServer(EventHandler):
+
+class TcpServer(Producer):
     '''A TCP server class.
 
     .. attribute:: protocol_factory
@@ -634,6 +621,10 @@ class TcpServer(EventHandler):
         self._keep_alive = keep_alive
         self._concurrent_connections = set()
         self.logger = logger(loop)
+
+    def __repr__(self):
+        return '%s %s' % (self.__class__.__name__, self.address)
+    __str_ = __repr__
 
     @property
     def address(self):

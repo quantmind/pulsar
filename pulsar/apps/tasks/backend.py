@@ -72,10 +72,6 @@ Task status broadcasting
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
 channels via the :attr:`~TaskBackend.pubsub` handler.
 
-The pubsub handler is constructed using the same
-:attr:`~pulsar.apps.Backend.connection_string` and
-:attr:`~pulsar.apps.Backend.name` as the the :class:`TaskBackend`.
-
 API
 =========
 
@@ -130,15 +126,17 @@ from time import mktime
 from datetime import datetime, timedelta
 from threading import Lock
 
-from pulsar import (maybe_async, EMPTY_TUPLE, EMPTY_DICT, Failure,
-                    PulsarException, Backend, Deferred, coroutine_return)
+from pulsar import (in_loop, EMPTY_TUPLE, EMPTY_DICT, Failure,
+                    PulsarException, Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues
-from pulsar.apps.tasks.models import JobRegistry
-from pulsar.apps.tasks import states, create_task_id
-from pulsar.apps import pubsub
-from pulsar.utils.log import local_property
+from pulsar.apps.data import create_store, PubSubClient
+from pulsar.utils.log import LocalMixin, local_property
 
-__all__ = ['Task', 'Backend', 'TaskBackend', 'TaskNotAvailable',
+from .models import JobRegistry, create_task_id
+from . import states
+
+
+__all__ = ['Task', 'TaskBackend', 'TaskNotAvailable',
            'nice_task_message', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
@@ -328,7 +326,7 @@ Lower number higher precedence.'''
         return data
 
 
-class PubSubClient(pubsub.Client):
+class TaskClient(PubSubClient):
 
     def __init__(self, be):
         self._be = be
@@ -336,11 +334,11 @@ class PubSubClient(pubsub.Client):
 
     def __call__(self, channel, message):
         if channel == self.task_done:
-            maybe_async(self._be.task_done_callback(message))
+            self._be.task_done_callback(message)
 
 
-class TaskBackend(Backend):
-    '''A :class:`.Backend` class for :class:`Task`.
+class TaskBackend(LocalMixin):
+    '''A backend class for :class:`Task`.
 A :class:`TaskBackend` is responsible for creating tasks and put them
 into the distributed queue.
 It also schedules the run of periodic tasks if enabled to do so.
@@ -388,8 +386,10 @@ It also schedules the run of periodic tasks if enabled to do so.
     This value is important in connection with the :attr:`max_tasks` attribute.
 
 '''
-    def setup(self, task_paths=None, schedule_periodic=False, backlog=1,
-              max_tasks=0, poll_timeout=None, **params):
+    def __init__(self, dns, task_paths=None, schedule_periodic=False,
+                 backlog=1, max_tasks=0, name=None, poll_timeout=None):
+        self._store_dns = dns
+        self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
         self.max_tasks = max_tasks
@@ -397,11 +397,11 @@ It also schedules the run of periodic tasks if enabled to do so.
         self.processed = 0
         self.local.schedule_periodic = schedule_periodic
         self.next_run = datetime.now()
-        return params
 
-    @classmethod
-    def path_from_scheme(cls, scheme):
-        return 'pulsar.apps.tasks.backends.%s' % scheme
+    @property
+    def _loop(self):
+        '''Eventloop running this task backend'''
+        return self.store._loop
 
     @property
     def schedule_periodic(self):
@@ -412,31 +412,42 @@ It also schedules the run of periodic tasks if enabled to do so.
         return Lock()
 
     @local_property
+    def store(self):
+        '''Data store where tasks are queued'''
+        return create_store(self._store_dns)
+
+    @local_property
     def pubsub(self):
         '''A :class:`.PubSub` handler which notifies
-and listen tasks execution status. There are three channels:
+        and listen tasks execution status. There are three channels:
 
-* ``<name>_task_created`` published when a new task is created.
-* ``<name>_task_start`` published when the task queue starts executing a task.
-* ``<name>_task_done`` published when a task is done.
+        * ``<name>_task_created`` published when a new task is created.
+        * ``<name>_task_start`` published when the task queue starts
+            executing a task.
+        * ``<name>_task_done`` published when a task is done.
 
-All three messages are composed by the task id only. Here ``<name>`` is
-replaced by the :attr:`.Backend.name` attribute of this task backend.
+        All three messages are composed by the task id only. Here ``<name>``
+        is replaced by the :attr:`.Backend.name` attribute of this task
+        backend.
 
-Check the :ref:`task broadcasting documentation <tasks-pubsub>` for more
-information.
-'''
-        p = pubsub.PubSub(backend=self.connection_string, name=self.name)
-        p.add_client(PubSubClient(self))
+        Check the :ref:`task broadcasting documentation <tasks-pubsub>` for
+        more information.
+        '''
+        p = self.store.pubsub()
+        p.add_client(TaskClient(self))
         c = self.channel
         p.subscribe(c('task_created'), c('task_start'), c('task_done'))
         return p
 
     @local_property
+    def pubsub(self):
+        return store.queue()
+
+    @local_property
     def concurrent_tasks(self):
         '''Concurrent set of task ids.
 
-        The task with id in this set are currentlty being executed
+        The task with id in this set are currently being executed
         by the task queue worker running this :class:`TaskBackend`..'''
         return set()
 
@@ -456,31 +467,69 @@ information.
         return JobRegistry.load(self.task_paths)
 
     def channel(self, name):
-        return '%s_%s' % (self.name, name)
+        return '%s_%s' % (self.name, name) if self.name else name
 
     def run(self, jobname, *args, **kwargs):
         '''A shortcut for :meth:`run_job` without task meta parameters'''
         return self.run_job(jobname, args, kwargs)
 
-    def run_job(self, jobname, targs=None, tkwargs=None, **meta_params):
-        '''Create a new :ref:`task <apps-taskqueue-task>` which may or
-may not be queued. This method returns a :class:`.Deferred` which
-results in the :attr:`Task.id` created.
-If ``jobname`` is not a valid :attr:`.Job.name`,
-a ``TaskNotAvailable`` exception occurs.
+    def run_job(self, jobname, targs=None, tkwargs=None, expiry=None,
+                **meta_params):
+        '''Create a new :ref:`Task` which may or may not be queued.
 
-:parameter jobname: the name of a :class:`.Job`
-    registered with the :class:`.TaskQueue` application.
-:parameter targs: optional tuple used for the positional arguments in the
-    task callable.
-:parameter tkwargs: optional dictionary used for the key-valued arguments
-    in the task callable.
-:parameter meta_params: Additional parameters to be passed to the :class:`Task`
-    constructor (not its callable function).
-:return: a :class:`.Deferred` resulting in a :attr:`Task.id`
-    on success.'''
-        c = self.create_task(jobname, targs, tkwargs, **meta_params)
-        return maybe_async(c, get_result=False).add_callback(self.put_task)
+        This method returns a :class:`.Deferred` which results in the
+        :attr:`Task.id` created. If ``jobname`` is not a valid
+        :attr:`.Job.name`, a ``TaskNotAvailable`` exception occurs.
+
+        :param jobname: the name of a :class:`.Job`
+            registered with the :class:`.TaskQueue` application.
+        :param targs: optional tuple used for the positional arguments in the
+            task callable.
+        :param tkwargs: optional dictionary used for the key-valued arguments
+            in the task callable.
+        :param meta_params: Additional parameters to be passed to the
+            :class:`Task` constructor (not its callable function).
+        :return: a :class:`.Deferred` resulting in a :attr:`Task.id`
+            on success.
+        '''
+        if jobname in self.registry:
+            pubsub = self.pubsub
+            job = self.registry[jobname]
+            targs = targs or EMPTY_TUPLE
+            tkwargs = tkwargs or EMPTY_DICT
+            task_id, overlap_id = job.generate_task_ids(targs, tkwargs)
+            task = None
+            if overlap_id:
+                tasks = yield self.get_tasks(overlap_id=overlap_id)
+                # Tasks with overlap id already available
+                for task in tasks:
+                    if task.done():
+                        yield self.save_task(task.id, overlap_id='')
+                        task = None
+                    else:
+                        break
+            if task:
+                LOGGER.debug('Task %s cannot run.', task)
+                yield None
+            else:
+                if self.entries and job.name in self.entries:
+                    self.entries[job.name].next()
+                time_executed = datetime.now()
+                if expiry is not None:
+                    expiry = get_datetime(expiry, time_executed)
+                elif job.timeout:
+                    expiry = get_datetime(job.timeout, time_executed)
+                LOGGER.debug('Queue new task %s (%s).', job.name, task_id)
+                yield self.save_task(task_id, overlap_id=overlap_id,
+                                     name=job.name,
+                                     time_executed=time_executed,
+                                     expiry=expiry, args=targs,
+                                     kwargs=tkwargs,
+                                     status=states.PENDING, **params)
+                pubsub.publish(self.channel('task_created'), task_id)
+        else:
+            raise TaskNotAvailable(jobname)
+        self.queue.put(task_id)
 
     def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
@@ -528,7 +577,7 @@ its execution. It returns a :class:`.Deferred`.'''
     def put_task(self, task_id):
         '''Put the ``task_id`` into the queue.
 
-:parameter task_id: the task id.
+:param task_id: the task id.
 :return: an :ref:`asynchronous component <tutorial-coroutine>` which results
     in the ``task_id`` added.
 

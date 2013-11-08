@@ -75,7 +75,7 @@ class WSGIServer(SocketServer):
     '''A WSGI :class:`.SocketServer`.
     '''
     name = 'wsgi'
-    cfg = pulsar.Config(apps=['socket', 'wsgi'],
+    cfg = pulsar.Config(apps=['socket'],
                         server_software=pulsar.SERVER_SOFTWARE)
 
     def protocol_factory(self):

@@ -247,6 +247,21 @@ class FrozenDict(dict):
             return False
 
 
+class Hash(dict):
+    type = 'hash'
+
+    def mget(self, fields):
+        return [self.get(f) for f in fields]
+
+    def flat(self):
+        # TODO: this is slow, make it faster
+        result = []
+        for k, v in self.items():
+            result.append(k)
+            result.append(v)
+        return result
+
+
 def merge_prefix(deque, size):
     """Replace the first entries in a deque of bytes with a single
 string of up to *size* bytes."""

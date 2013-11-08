@@ -40,6 +40,12 @@ JAPANESE = b'\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc'.decode('utf-8')
 CHINESE = b'\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f'.decode('utf-8')
 SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
+HAS_C_EXTENSIONS = True
+try:
+    from .utils import extensions
+except ImportError:
+    HAS_C_EXTENSIONS = False
+
 from .utils.exceptions import *
 from .utils import system
 platform = system.platform
@@ -47,12 +53,6 @@ from .utils.config import *
 from .async import *
 from .apps import *
 #
-# Import pubsub local backend for commands
-from .apps.pubsub import local
-del local
-# Import tasks local backend for commands
-from .apps.tasks.backends import local
-del local
 del get_version
 # Import data stores
 from .apps.data import data_stores

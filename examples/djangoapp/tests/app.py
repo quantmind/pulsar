@@ -41,7 +41,7 @@ class TestDjangoChat(unittest.TestCase):
                 '--bind', '127.0.0.1:0',
                 '--concurrency', cls.concurrency,
                 '--pulse-app-name', name,
-                '-s', 'local://?name=%s' % name]
+                '--pubsub-server', 'pulsar://?namespace=%s' % name]
         cls.app = yield send('arbiter', 'run', start_server, name, argv)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)

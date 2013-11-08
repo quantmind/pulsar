@@ -96,13 +96,13 @@ class Parser(object):
         else:
             return self._get(None)
 
-    def bulk_replay(self, value):
+    def bulk(self, value):
         if value is None:
             return nil
         else:
             return ('$%d\r\n' % len(value)).encode('utf-8') + value + b'\r\n'
 
-    def pack_command(self, *args):
+    def multi_bulk(self, *args):
         "Pack a series of arguments into a value Redis command"
         return b''.join(self.__pack_gen(args))
 
