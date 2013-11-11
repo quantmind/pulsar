@@ -4,13 +4,14 @@ import re
 import time
 import math
 from functools import partial, reduce
-from collections import namedtuple
+from collections import namedtuple, deque
 from marshal import dump, load
 
 import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
-from pulsar.utils.structures import Hash
+from pulsar.utils.structures import Hash, Zset
+from pulsar.utils.pep import map, range, zip
 
 
 from .parser import redis_parser
@@ -35,11 +36,6 @@ NOTIFY_ALL = (NOTIFY_GENERIC | NOTIFY_STRING | NOTIFY_LIST | NOTIFY_SET |
 MULTI  = (1 << 3)
 BLOCKED = (1 << 4)
 
-DEL = ('del',)
-EXPIRE = ('expire',)
-SREM = ('srem',)
-SADD = ('sadd',)
-
 
 class RedisParserSetting(Global):
     name = "py_redis_parser"
@@ -58,6 +54,22 @@ class KeyValuePairSetting(pulsar.Setting):
     section = "Key-value pair server"
 
 
+def validate_list_of_pairs(val):
+    new_val = []
+    if val:
+        if not isinstance(val, (list, tuple)):
+            raise TypeError("Not a list: %s" % val)
+        for elem in val:
+            if not isinstance(elem, (list, tuple)):
+                raise TypeError("Not a list: %s" % elem)
+            if not len(elem) == 2:
+                raise TypeError("Not a pair: %s" % str(elem))
+            new_val.append((int(elem[0]), int(elem[1])))
+    return new_val
+
+###############################################################################
+##    CONFIGURATION PARAMETERS
+
 class KeyValueDatabases(KeyValuePairSetting):
     name = "key_value_databases"
     flags = ["--key-value-databases"]
@@ -71,6 +83,23 @@ class KeyValuePassword(KeyValuePairSetting):
     flags = ["--key-value-password"]
     default=''
     desc='Optional password for the database.'
+
+
+class KeyValueSave(KeyValuePairSetting):
+    name = "key_value_save"
+    default = [(900, 1), (300, 10), (60, 10000)]
+    validator = validate_list_of_pairs
+    desc=''''
+        Will save the DB if both the given number of seconds and the given
+        number of write operations against the DB occurred.
+
+        The default behaviour will be to save:
+        after 900 sec (15 min) if at least 1 key changed
+        after 300 sec (5 min) if at least 10 keys changed
+        after 60 sec if at least 10000 keys changed
+
+        You can disable saving at all by setting an ampty list
+    '''
 
 
 class KeyValueFileName(KeyValuePairSetting):
@@ -90,9 +119,13 @@ class CommandError(Exception):
             self.error_type = error_type
 
 
+class WrongType(CommandError):
+    error_type = 'WRONGTYPE'
+    message = 'Operation against a key holding the wrong kind of value'
+
+
 class PulsarStoreClient(pulsar.Protocol):
     '''Used both by client and server'''
-    bpop = None
     flag = 0
     def __init__(self, cfg, *args, **kw):
         super(PulsarStoreClient, self).__init__(*args, **kw)
@@ -100,10 +133,12 @@ class PulsarStoreClient(pulsar.Protocol):
         self.parser = self._producer._parser_class()
         self.store = self._producer._key_value_store
         self.database = 0
-        self.channels = None
-        self.patterns = None
+        self.channels = set()
+        self.patterns = set()
         self.transaction = None
-        self.password = ''
+        self.watched_keys = None
+        self.blocked = None
+        self.password = b''
 
     @property
     def db(self):
@@ -111,6 +146,9 @@ class PulsarStoreClient(pulsar.Protocol):
 
     def int_reply(self, value):
         self.write((':%d\r\n' % value).encode('utf-8'))
+
+    def error_reply(self, value):
+        self.write(('-ERR %s\r\n' % value).encode('utf-8'))
 
     def write(self, response):
         if self.transaction is not None:
@@ -121,25 +159,67 @@ class PulsarStoreClient(pulsar.Protocol):
     def data_received(self, data):
         self.parser.feed(data)
         request = self.parser.get()
-        if request is not False:
-            server = self._producer
-            try:
-                command = request[0].decode('utf-8').lower()
+        while request is not False:
+            self._execute(request)
+            request = self.parser.get()
+
+    def _execute(self, request):
+        if request:
+            request[0] = command = request[0].decode('utf-8').lower()
+        else:
+            command = None
+        #
+        if self.channels or self.patterns:
+            if command not in self.store.SUBSCRIBE_COMMANDS:
+                self.write(self.store.PUBSUB_ONLY)
+                return
+        if self.blocked:
+            self.write(self.store.BLOCKED)
+            return
+        if self.transaction is not None and command != 'exec':
+            self.transaction.append(request)
+            self._transport.write(self.store.QUEUED)
+            return
+        self.execute(request)
+
+    def execute(self, request):
+        try:
+            if request:
+                command = request[0]
                 name = COMMAND_NAMES.get(command, command)
-                handle = getattr(server._key_value_store, name, None)
+                handle = getattr(self.store, name, None)
                 if not handle:
-                    raise CommandError("unknown command '%s'" % command)
-                if server.password != self.password:
+                    return self.error_reply("unknown command '%s'" % command)
+                if self.store._password != self.password:
                     if command != 'auth':
-                        raise CommandError("not authenticated")
+                        return self.write(self.store.NOAUTH)
                 handle(self, request, len(request) - 1)
-            except CommandError as e:
-                msg = '-%s %s\r\n' % (e.error_type, e)
-                self.write(msg.encode('utf-8'))
-            except Exception as e:
-                msg = '-SERVERERR %s\r\n' % e
-                self.write(msg.encode('utf-8'))
-                raise
+            else:
+                self.error_reply("no command")
+        except CommandError as e:
+            msg = '-%s %s\r\n' % (e.error_type, e)
+            self.write(msg.encode('utf-8'))
+        except Exception:
+            self._loop.logger.exception("Server error on '%s' command",
+                                        command)
+            self.write(self.store.SERVER_ERROR)
+
+
+class Blocked:
+
+    def __init__(self, connection, timeout):
+        self.keys = set()
+        if timeout:
+            self.handle = connection._loop.call_later(timeout, self.unblock,
+                                                      connection)
+        else:
+            self.handle = None
+
+    def unblock(self, connection):
+        if self.handle:
+            self.handle.cancel()
+        connection.blocked = None
+        connection.write(connection.store.EMPTY_ARRAY)
 
 
 class TcpServer(pulsar.TcpServer):
@@ -148,8 +228,7 @@ class TcpServer(pulsar.TcpServer):
         super(TcpServer, self).__init__(*args, **kwargs)
         self.cfg = cfg
         self._parser_class = redis_parser(cfg.py_redis_parser)
-        self._key_value_store = Storage(self, cfg.key_value_databases)
-        self.password = cfg.key_value_password
+        self._key_value_store = Storage(self, cfg)
 
     def info(self):
         info = super(TcpServer, self).info()
@@ -201,38 +280,56 @@ def check_input(request, failed):
 
 class Storage(object):
 
-    def __init__(self, server, databases, password=None):
-        self._password = password
+    def __init__(self, server, cfg):
+        self.cfg = cfg
+        self._password = cfg.key_value_password.encode('utf-8')
+        self._filename = cfg.key_value_filename
         self._server = server
         self._loop = server._loop
         self._parser = server._parser_class()
         self._missed_keys = 0
         self._hit_keys = 0
+        self._expired_keys = 0
+        self._dirty = 0
         self._bpop_blocked_clients = 0
+        self._last_save = time.time()
         self._channels = {}
         self._patterns = {}
-        self._event_handlers = {}
+        self._event_handlers = {NOTIFY_LIST: self._list_event}
         self._set_options = (b'ex', b'px', 'nx', b'xx')
+        self._unblock_commands = ('lpush', 'lpushx', 'rpush', 'rpushx')
         self.OK = b'+OK\r\n'
         self.PONG = b'+PONG\r\n'
+        self.QUEUED = b'+QUEUED\r\n'
         self.ZERO = b':0\r\n'
         self.ONE = b':1\r\n'
         self.NIL = b'$-1\r\n'
         self.EMPTY_ARRAY = b'*0\r\n'
         self.WRONG_TYPE = (b'-WRONGTYPE Operation against a key holding '
                            b'the wrong kind of value\r\n')
+        self.NOAUTH = b'-NOAUTH Authentication required\r\n'
+        self.SERVER_ERROR = b'-ERR Server error\r\n'
+        self.INVALID_TIMEOUT = b'-ERR invalid expire time'
+        self.PUBSUB_ONLY = (b'-ERR only (P)SUBSCRIBE / (P)UNSUBSCRIBE / QUIT '
+                            b'allowed in this context\r\n')
+        self.BLOCKED = b'-ERR blocked client cannot request\r\n'
+        self.INVALID_SCORE = b'-ERR Invalid score value\r\n'
+        self.SUBSCRIBE_COMMANDS = ('psubscribe', 'punsubscribe', 'subscribe',
+                                   'unsubscribe', 'quit')
         self.hashtype = Hash
-        self.list_type = list
+        self.list_type = deque
+        self.zset_type = Zset
         self.databases = dict(((num, Db(num, self))
-                               for num in range(databases)))
+                               for num in range(cfg.key_value_databases)))
+        self._loop.call_repeatedly(1, self._cron)
 
     ###########################################################################
     ##    KEYS COMMANDS
     @command_name('del')
     def delete(self, connection, request, N):
         check_input(request, not N)
-        pop = connection.db.pop
-        result = reduce(lambda x, y: x + pop(key), requests[1:])
+        rem = connection.db.rem
+        result = reduce(lambda x, y: x + rem(connection, y), request[1:], 0)
         connection.int_reply(result)
 
     def exists(self, connection, request, N):
@@ -247,52 +344,94 @@ class Storage(object):
         try:
             timeout = int(request[2])
         except ValueError:
-            raise CommandError('invalid expire time')
-        if timeout:
-            if timeout < 0:
-                raise CommandError('invalid expire time')
-            if connection.db.expire(request[1], timeout):
-                return connection.write(self.ONE)
-        connection.write(self.ZERO)
+            connection.write(self.INVALID_TIMEOUT)
+        else:
+            if timeout:
+                if timeout < 0:
+                    return connection.write(self.INVALID_TIMEOUT)
+                if connection.db.expire(request[1], timeout):
+                    return connection.write(self.ONE)
+            connection.write(self.ZERO)
 
     ###########################################################################
     ##    STRING COMMANDS
     def append(self, connection, request, N):
         check_input(request, N != 2,)
         key = request[1]
-        value = self._data.get(key)
+        db = connection.db
+        value = db.get(key)
         if value is None:
             value = request[2]
-            self._data[key] = value
         elif not isinstance(value, bytes):
-            raise WrongType
+            return connection.write(self.WRONG_TYPE)
         else:
             value = value + request[2]
-            self._data[key] = value
-        self._storage._signal(NOTIFY_STRING, request, self, key, 1)
+        db._data[key] = value
+        self._signal(NOTIFY_STRING, connection, request[0], key, 1)
         connection.int_reply(len(value))
 
     def get(self, connection, request, N):
         check_input(request, N != 1)
-        value = self._get(request[1])
-        connection.write(self._parser.bulk(value))
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.NIL)
+        elif isinstance(value, bytes):
+            connection.write(self._parser.bulk(value))
+        else:
+            connection.write(self.WRONG_TYPE)
 
     def getset(self, connection, request, N):
         check_input(request, N != 2)
         key = request[1]
         db = connection.db
         value = db.get(key)
-        if key in self._expires:
-            self._expires.pop(key).cancel()
-        self._data[key] = request[2]
-        self._storage._signal(NOTIFY_STRING, request, self, key, 1)
-        connection.write(self._parser.bulk(value))
+        if value is None or isinstance(value, bytes):
+            db.pop(key)
+            db._data[key] = request[2]
+            self._signal(NOTIFY_STRING, connection, 'set', key, 1)
+            connection.write(self._parser.bulk(value))
+        else:
+            connection.write(self.WRONG_TYPE)
 
     def mget(self, connection, request, N):
         check_input(request, not N)
-        get = self._get
-        values = tuple((get(k) for k in request[1:]))
+        get = connection.db.get
+        values = []
+        for key in request[1:]:
+            value = get(key)
+            if value is None or isinstance(value, bytes):
+                values.append(value)
+            else:
+                return connection.write(self.WRONG_TYPE)
         connection.write(self._parser.multi_bulk(*values))
+
+    def mset(self, connection, request, N):
+        D = N // 2
+        check_input(request, N < 2 or D * 2 != N)
+        db = connection.db
+        for key, value in zip(request[1::2], request[2::2]):
+            db.pop(key)
+            db._data[key] = value
+            self._signal(NOTIFY_STRING, connection, 'set', key, 1)
+        connection.write(self.OK)
+
+    def msetnx(self, connection, request, N):
+        D = N // 2
+        check_input(request, N < 2 or D * 2 != N)
+        db = connection.db
+        keys = request[1::2]
+        exist = False
+        for key in keys:
+            exist = db.exists(key)
+            if exist:
+                break
+        if exist:
+            connection.write(self.ZERO)
+        else:
+            for key, value in zip(keys, request[2::2]):
+                db._data[key] = value
+                self._signal(NOTIFY_STRING, connection, 'set', key, 1)
+            connection.write(self.ONE)
 
     def set(self, connection, request, N):
         check_input(request, N < 2 or N > 8)
@@ -320,162 +459,208 @@ class Storage(object):
                 else:
                     xx = True
         if seconds < 0 or milliseconds < 0:
-            raise CommandError('invalid expire time')
-        timeout = seconds + milliseconds
-        exists = db.exists(key)
-        skip = (exists and nx) or (not exists and xx)
-        if not skip:
-            db.pop(key, notify=False)
-            if key in self._expires:
-                self._expires.pop(key).cancel()
-            if timeout > 0:
-                self._expires[key] = self._loop.call_later(
-                    timeout, self._pop, key)
-                self._storage._signal(NOTIFY_STRING, EXPIRE, self, key)
-            self._data[key] = value
-            self._storage._signal(NOTIFY_STRING, request, self, key, 1)
-        connection.write(self.OK)
+            connection.error_reply('invalid expire time')
+        else:
+            timeout = seconds + milliseconds
+            exists = db.exists(key)
+            skip = (exists and nx) or (not exists and xx)
+            if not skip:
+                if exists:
+                    db.pop(key)
+                if timeout > 0:
+                    db._expires[key] = (self._loop.call_later(
+                        timeout, self.pop, key), value)
+                    self._signal(NOTIFY_STRING, connection, 'expire', key)
+                else:
+                    db._data[key] = value
+                self._signal(NOTIFY_STRING, connection, request[0], key, 1)
+            connection.write(self.OK)
+
+    def setbit(self, connection, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        try:
+            offset = int(request[1])
+            if offset < 0:
+                raise ValueError
+        except Exception:
+            connection.error_reply("Wrong offset in '%s' command" % request[0])
+        try:
+            value = int(request[2])
+            if value not in (0, 1):
+                raise ValueError
+        except:
+            connection.error_reply("Wrong value in '%s' command" % request[0])
+        db = connection.db
+        string = db.get(key)
+        if string is None:
+            string = bytearray(b'\x00')
+            self._data[key] = string
+        elif not isinstance(value, bytearray):
+            return connection.write(self.WRONG_TYPE)
+        N = len(string)
+        if N < offset:
+            string.extend((offset- N)*b'\x00')
+        orig = string[offset]
+        string[offset] = b'\x01' if value else b'\x00'
+        self._signal(NOTIFY_STRING, connection, request[0], key, 1)
+        connection.int_reply(orig)
+
+    def strlen(self, connection, request, N):
+        check_input(request, N != 1)
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.ZERO)
+        elif isinstance(value, bytes):
+            connection.int_reply(len(value))
+        else:
+            return connection.write(self.WRONG_TYPE)
 
     ###########################################################################
     ##    HASHES COMMANDS
     def hdel(self, connection, request, N):
         check_input(request, N < 2)
         key = request[1]
-        value = self._get(key)
+        db = connection.db
+        value = db.get(key)
         if value is None:
-            rem = 0
+            connection.write(self.ZERO)
         elif getattr(value, 'datatype', 'hash'):
+            rem = 0
             for field in request[2:]:
                 rem += 0 if value.pop(field, None) is None else 1
-            self._storage._signal(NOTIFY_HASH, request, self, key, rem)
-            if self._pop(key, value):
-                self._storage._signal(NOTIFY_GENERIC, DEL, self, key)
+            self._signal(NOTIFY_HASH, connection, request[0], key, rem)
+            if db.pop(key, value) is not None:
+                self._signal(NOTIFY_GENERIC, connection, 'del', key)
+            connection.int_reply(rem)
         else:
-            raise WrongType
-        connection.int_reply(rem)
+            connection.write(self.WRONG_TYPE)
 
     def hexists(self, connection, request, N):
         check_input(request, N != 2)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            rem = 0
+            connection.write(self.ZERO)
         elif getattr(value, 'datatype', 'hash'):
-            rem = int(request[2] in value)
+            connection.int_reply(int(request[2] in value))
         else:
-            raise WrongType
-        connection.int_reply(rem)
+            connection.write(self.WRONG_TYPE)
 
     def hget(self, connection, request, N):
         check_input(request, N != 2)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = None
+            connection.write(self.NIL)
         elif getattr(value, 'datatype', 'hash'):
-            result = value.get(request[2])
+            connection.write(self._parser.bulk(value.get(request[2])))
         else:
-            raise WrongType
-        connection.write(self._parser.bulk(result))
+            connection.write(self.WRONG_TYPE)
 
     def hgetall(self, connection, request, N):
         check_input(request, N != 1)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = ()
+            connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            result = value.flat()
+            connection.write(self._parser.multi_bulk(value.flat()))
         else:
-            raise WrongType
-        connection.write(self._parser.multi_bulk(result))
+            connection.write(self.WRONG_TYPE)
 
-    def hincrby(self, connection, request):
-        result = self._hincrby('hincrby', request, int)
+    def hincrby(self, connection, request, N):
+        result = self._hincrby(connection, request, N, int)
         connection.int_reply(result)
 
-    def hincrbyfloat(self, connection, request):
-        result = self._hincrby('hincrbyfloat', request, float)
-        result = str(result).encode('utf-8')
-        connection.write(self._parser.bulk(result))
+    def hincrbyfloat(self, connection, request, N):
+        result = self._hincrby(connection, request, N, float)
+        connection.write(self._parser.bulk(str(result).encode('utf-8')))
 
     def hkeys(self, connection, request, N):
         check_input(request, N != 1)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = ()
+            connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            result = tuple(value)
+            connection.write(self._parser.multi_bulk(value))
         else:
-            raise WrongType
-        connection.write(self._parser.multi_bulk(result))
+            connection.write(self.WRONG_TYPE)
 
     def hlen(self, connection, request, N):
         check_input(request, N != 1)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = 0
+            connection.write(self.ZERO)
         elif getattr(value, 'datatype', 'hash'):
-            result = len(value)
+            connection.int_reply(len(value))
         else:
-            raise WrongType
-        connection.int_reply(result)
+            connection.write(self.WRONG_TYPE)
 
     def hmget(self, connection, request, N):
         check_input(request, N < 3)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = self.EMPTY_ARRAY
+            connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
             result = value.mget(request[2:])
-            result = self._parser.multi_bulk(result)
+            connection.write(self._parser.multi_bulk(result))
         else:
-            result = self.WRONG_TYPE
-        connection.write(result)
+            connection.write(self.WRONG_TYPE)
 
     def hmset(self, connection, request, N):
-        check_input(request, N < 3 or (N-1) // 2 * 2 == N-1)
-        value = self._get(request[1])
+        D = (N - 1) // 2
+        check_input(request, N < 3 or D * 2 != N - 1)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
         if value is None:
             value = self.hashtype()
-            self._data[request[1]] = value
+            db._data[key] = value
         elif not getattr(value, 'datatype', 'hash'):
-            raise WrongType
+            return connection.write(self.WRONG_TYPE)
         value.update(zip(request[2::2], request[3::2]))
+        self._signal(NOTIFY_HASH, connection, request[0], key, D)
         connection.write(self.OK)
 
     def hset(self, connection, request, N):
         check_input(request, N != 3)
-        value = self._get(request[1])
+        key, field = request[1], request[2]
+        db = connection.db
+        value = db.get(key)
         if value is None:
             value = self.hashtype()
-            self._data[request[1]] = value
+            db._data[key] = value
         elif not getattr(value, 'datatype', 'hash'):
-            raise WrongType
-        result = int(request[3] in value)
-        value[request[2]] = request[3]
-        connection.int_reply(result)
+            return connection.write(self.WRONG_TYPE)
+        result = self.ZERO if field in value else self.ONE
+        value[field] = request[3]
+        self._signal(NOTIFY_HASH, connection, request[0], key, 1)
+        connection.write(result)
 
     def hsetnx(self, connection, request, N):
         check_input(request, N != 3)
-        value = self._get(request[1])
+        key, field = request[1], request[2]
+        db = connection.db
+        value = db.get(key)
         if value is None:
             value = self.hashtype()
-            self._data[request[1]] = value
+            db._data[key] = value
         elif not getattr(value, 'datatype', 'hash'):
-            raise WrongType
-        result = int(request[3] in value)
-        if not result:
-            value[request[2]] = request[3]
-        connection.int_reply(result)
+            return connection.write(self.WRONG_TYPE)
+        if field in value:
+            connection.write(self.ZERO)
+        else:
+            value[field] = request[3]
+            self._signal(NOTIFY_HASH, connection, request[0], key, 1)
+            connection.write(self.ONE)
 
     def hvals(self, connection, request, N):
         check_input(request, N != 1)
-        value = self._get(request[1])
+        value = connection.db.get(request[1])
         if value is None:
-            result = ()
+            connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            result = tuple(value.values())
+            connection.write(self._parser.multi_bulk(tuple(value.values())))
         else:
-            raise WrongType
-        connection.write(self._parser.multi_bulk(result))
+            connection.write(self.WRONG_TYPE)
 
     ###########################################################################
     ##    LIST COMMANDS
@@ -483,17 +668,16 @@ class Storage(object):
         check_input(request, N < 2)
         timeout = max(0, int(request[-1]))
         keys = request[1:-1]
-        if not self._lpop(connection, request, keys, 'pop_left'):
-            self.wait_for_keys(timeout, keys, self._lpop, connection, keys,
-                               'pop_left')
+        if not self._bpop(connection, request, keys):
+            self.wait_for_keys(connection, timeout, keys)
+    brpop = blpop
 
-    def brpop(self, connection, request, N):
+    def brpoplpush(self, connection, request, N):
         check_input(request, N < 2)
         timeout = max(0, int(request[-1]))
         keys = request[1:-1]
-        if not self._lpop(connection, request, keys, 'pop'):
-            self.wait_for_keys(timeout, keys, self._lpop, connection, keys,
-                               'pop')
+        if not self._bpop(connection, request, keys):
+            self.wait_for_keys(connection, timeout, keys)
 
     def lindex(self, connection, request, N):
         check_input(request, N != 2)
@@ -521,6 +705,26 @@ class Storage(object):
             raise WrongType
         connection.int_reply(result)
 
+    def lpop(self, connection, request, N):
+        check_input(request, N != 1)
+        db = connection.db
+        key = request[1]
+        value = db.get(key)
+        if value is None:
+            connection.write(self.NIL)
+        elif isinstance(value, self.list_type):
+            if request[1] == 'lpop':
+                result = value.popleft()
+            else:
+                result = value.pop()
+            self._signal(NOTIFY_LIST, connection, request[0], key, 1)
+            if db.pop(key, value) is not None:
+                self._signal(NOTIFY_GENERIC, connection, 'del', key)
+            connection.write(self._parser.bulk(result))
+        else:
+            connection.write(self.WRONG_TYPE)
+    rpop = lpop
+
     def lpush(self, connection, request, N):
         check_input(request, N < 2)
         key = request[1]
@@ -530,29 +734,56 @@ class Storage(object):
             value = self.list_type()
             db._data[key] = value
         elif not isinstance(value, self.list_type):
-            raise WrongType
+            return connection.write(self.WRONG_TYPE)
         if request[0] == 'lpush':
-            value.extend_left(requests[2:])
+            value.extendleft(request[2:])
         else:
-            value.extend(requests[2:])
+            value.extend(request[2:])
         connection.int_reply(len(value))
-        self._signal(NOTIFY_LIST, connection, request, key, N - 1)
+        self._signal(NOTIFY_LIST, connection, request[0], key, N - 1)
     rpush = lpush
 
-    def _lpop(self, connection, request, keys, method):
-        list_type = self.list_type
-        for key in keys:
-            value = self._get(key)
-            if isinstance(value, list_type):
-                result = (key, geattr(value, mehod)())
-                self._storage._signal(NOTIFY_LIST, connection, request, key, 1)
-                if self._pop(key, value):
-                    self._storage._signal(NOTIFY_GENERIC, connection, DEL, key)
-                connection.write(self._parser.multi_bulk(result))
-                return True
-            elif value is not None:
-                connection.write(self.WRONG_TYPE)
-        return False
+    def lpushx(self, connection, request, N):
+        check_input(request, N != 2)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
+        if value is None:
+            connection.write(self.ZERO)
+        elif not isinstance(value, self.list_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            if request[0] == 'lpush':
+                value.appendleft(request[2])
+            else:
+                value.append(request[2])
+            connection.int_reply(len(value))
+            self._signal(NOTIFY_LIST, connection, request[0], key, 1)
+    rpushx = lpushx
+
+    def rpoplpush(self, connection, request, N):
+        check_input(request, N != 2)
+        key1, key2 = request[1], request[2]
+        db = connection.db
+        orig = db.get(key1)
+        dest = db.get(key2)
+        if orig is None:
+            connection.write(self.NIL)
+        elif not isinstance(orig, self.list_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            if dest is None:
+                dest = self.list_type()
+                db._data[key2] = dest
+            elif not isinstance(dest, self.list_type):
+                return connection.write(self.WRONG_TYPE)
+            value = orig.pop()
+            self._signal(NOTIFY_LIST, connection, 'rpop', key1, 1)
+            dest.appendleft(value)
+            self._signal(NOTIFY_LIST, connection, 'lpush', key2, 1)
+            if db.pop(key1, orig) is not None:
+                self._signal(NOTIFY_GENERIC, connection, 'del', key1)
+            connection.write(self._parser.bulk(value))
 
     ###########################################################################
     ##    SETS COMMANDS
@@ -563,18 +794,18 @@ class Storage(object):
         value = db.get(key)
         if value is None:
             value = set()
-            self._data[key] = value
+            db._data[key] = value
         elif not isinstance(value, set):
             return connection.write(self.WRONG_TYPE)
         n = len(value)
         value.update(request[2:])
         n = len(value) - n
-        self._signal(NOTIFY_SET, connection, request, key, n)
+        self._signal(NOTIFY_SET, connection, request[0], key, n)
         connection.int_reply(n)
 
     def scard(self, connection, request, N):
         check_input(request, N != 1)
-        value = connection.db.get(key)
+        value = connection.db.get(request[1])
         if value is None:
             connection.write(self.ZERO)
         elif not isinstance(value, set):
@@ -600,7 +831,7 @@ class Storage(object):
 
     def sismemeber(self, connection, request, N):
         check_input(request, N != 2)
-        value = connection.db(request[1])
+        value = connection.db.get(request[1])
         if value is None:
             connection.write(self.ZERO)
         elif not isinstance(value, set):
@@ -610,7 +841,7 @@ class Storage(object):
 
     def smembers(self, connection, request, N):
         check_input(request, N != 1)
-        value = connection.db(request[1])
+        value = connection.db.get(request[1])
         if value is None:
             connection.write(self.EMPTY_ARRAY)
         elif not isinstance(value, set):
@@ -640,11 +871,10 @@ class Storage(object):
                     return connection.write(self.WRONG_TYPE)
                 orig.remove(member)
                 dest.add(member)
-                self._signal(NOTIFY_SET, connection, SREM, key1)
-                self._signal(NOTIFY_SET, connection, SADD, key2, 1)
-                if not orig:
-                    db.raw_pop(key1)
-                    self._signal(NOTIFY_GENERIC, connection, DEL, key1)
+                self._signal(NOTIFY_SET, connection, 'srem', key1)
+                self._signal(NOTIFY_SET, connection, 'sadd', key2, 1)
+                if db.pop(key1, orig) is not None:
+                    self._signal(NOTIFY_GENERIC, connection, 'del', key1)
                 connection.write(self.ONE)
             else:
                 connection.write(self.ZERO)
@@ -652,26 +882,24 @@ class Storage(object):
     def spop(self, connection, request, N):
         check_input(request, N != 1)
         key = request[1]
-        value = connection.db.get(key)
+        db = connection.db
+        value = db.get(key)
         if value is None:
             connection.write(self.NIL)
         elif not isinstance(value, set):
             connection.write(self.WRONG_TYPE)
         else:
             result = value.pop()
-            self._signal(NOTIFY_SET, connection, request, key, 1)
-            if not value:
-                db.raw_pop(key)
-                self._signal(NOTIFY_GENERIC, connection, DEL, key)
+            self._signal(NOTIFY_SET, connection, request[0], key, 1)
+            if db.pop(key, value) is not None:
+                self._signal(NOTIFY_GENERIC, connection, 'del', key)
             connection.write(self._parser.bulk(result))
 
     def srandmember(self, connection, request, N):
         check_input(request, N < 1 or N > 2)
-        value = self._get(request[1])
-        if value is None:
-            result = None
-        elif not isinstance(value, set):
-            raise WrongType
+        value = connection.db.get(request[1])
+        if value is not None and not isinstance(value, set):
+            return connection.write(self.WRONG_TYPE)
         if N == 2:
             count = int(request[1])
             if count < 0:
@@ -709,18 +937,21 @@ class Storage(object):
 
     def srem(self, connection, request, N):
         check_input(request, N < 2)
-        value = self._get(request[1])
+        db = connection.db
+        key = request[1]
+        value = db.get(key)
         if value is None:
-            result = 0
+            connection.write(self.ZERO)
         elif not isinstance(value, set):
-            raise WrongType
+            connection.write(self.WRONG_TYPE)
         else:
-            members = request[2:]
-            result = reduce(lambda x, y: x + int(y in value), members)
-            value.difference_update(members)
-            if not value:
-                self._data.pop(request[1])
-        connection.write((':%d\r\n' % result).encode('utf-8'))
+            start = len(value)
+            value.difference_update(request[2:])
+            removed = start - len(value)
+            self._signal(NOTIFY_SET, connection, request[0], key, removed)
+            if db.pop(key, value) is not None:
+                self._signal(NOTIFY_GENERIC, connection, 'del', key)
+            connection.int_reply(removed)
 
     def sunion(self, connection, request, N):
         check_input(request, N < 1)
@@ -731,78 +962,228 @@ class Storage(object):
         self._setoper(connection, 'union', request[2:], request[1])
 
     ###########################################################################
+    ##    SORTED SETS COMMANDS
+    def zadd(self, connection, request, N):
+        D = (N - 1) // 2
+        check_input(request, N < 3 or D * 2 != N - 1)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
+        if value is None:
+            value = self.zset_type()
+            db._data[key] = value
+        elif not isinstance(value, self.zset_type):
+            return connection.write(self.WRONG_TYPE)
+        start = len(value)
+        value.update(zip(map(float, request[2::2]), request[3::2]))
+        result = len(value) - start
+        self._signal(NOTIFY_ZSET, connection, request[0], key, result)
+        connection.int_reply(result)
+
+    def zcard(self, connection, request, N):
+        check_input(request, N != 1)
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.ZERO)
+        elif not isinstance(value, self.zset_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            connection.int_reply(len(value))
+
+    def zcount(self, connection, request, N):
+        check_input(request, N != 3)
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.ZERO)
+        elif not isinstance(value, self.zset_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            try:
+                mmin = float(request[2])
+                mmax = float(request[3])
+            except Exception:
+                connection.write(self.INVALID_SCORE)
+            else:
+                connection.int_reply(value.count(mmin, mmax))
+
+    def zincrby(self, connection, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
+        if value is None:
+            db._data[key] = value = self.zset_type()
+        elif not isinstance(value, self.zset_type):
+            return connection.write(self.WRONG_TYPE)
+        try:
+            increment = float(request[2])
+        except Exception:
+            connection.write(self.INVALID_SCORE)
+        else:
+            member = request[3]
+            score = value.score(member, 0) + increment
+            value.add(score, member)
+            self._signal(NOTIFY_ZSET, connection, request[0], key, 1)
+            connection.write(self._parser.bulk(str(score).encode('utf-8')))
+
+
+    ###########################################################################
     ##    PUBSUB COMMANDS
     def psubscribe(self, connection, request, N):
         check_input(request, not N)
-        self._storage._psubscribe(connection, request[1:])
+        for pattern in request[1:]:
+            p = self._patterns.get(pattern)
+            if not p:
+                p = pubsub_patterns(re.compile(pattern.decode('utf-8')), set())
+                self._patterns[pattern] = p
+            p.clients.add(connection)
+            connection.patterns.add(pattern)
+            count = reduce(lambda x, y: x + int(connection in y.clients),
+                           self._patterns.values())
+            chunk = self._parser.multi_bulk(b'psubscribe', pattern, count)
+            connection.write(chunk)
 
     def pubsub(self, connection, request, N):
         check_input(request, not N)
         subcommand = request[1].decode('utf-8').lower()
         if subcommand == 'channels':
-            if N == 2:
-                pattern = request[2]
-            elif N > 2:
+            if N > 2:
                 check_input(request, False)
+            elif N == 2:
+                pre = re.compile(request[2].decode('utf-8', errors='ignore'))
+                channels = []
+                for channel in self._channels:
+                    if pre.match(channel.decode('utf-8', errors='ignore')):
+                        channels.append(channel)
             else:
-                pattern = None
-            self._storage._pubsub_channels(connection, pattern)
+                channels = list(self._channels)
+            connection.write(self._parser.multi_bulk(*channels))
         elif subcommand == 'numsub':
-            self._storage._pubsub_numsub(connection, request[2:])
-        elif subcommand == 'numpat':
             check_input(request, N > 1)
-            self._storage._pubsub_numpat(connection, request[2:])
+            count = []
+            for channel in request[2:]:
+                clients = self._channels.get(channel, ())
+                count.append(en(clients))
+            connection.write(self._parser.multi_bulk(*count))
+        elif subcommand == 'numpat':
+            check_input(request, N == 1)
+            count = reduce(lambda x, y: x + len(y.clients),
+                           self._patterns.values())
+            connection.int_reply(count)
         else:
             raise CommandError("unknown command 'pubsub %s'" % subcommand)
 
     def publish(self, connection, request, N):
         check_input(request, N != 2)
-        self._storage._publish(connection, request[1], request[2])
+        channel, message = request[1:]
+        ch = channel.decode('utf-8')
+        clients = self._channels.get(channel)
+        msg = self._parser.multi_bulk(b'message', channel, message)
+        count = self._publish_clients(msg, self._channels.get(channel, ()))
+        for pattern in self._patterns.values():
+            g = pattern.re.match(ch)
+            if g:
+                count += self._publish_clients(msg, pattern.clients)
+        connection.int_reply(count)
 
     def punsubscribe(self, connection, request, N):
         check_input(request, not N)
-        self._storage._punsubscribe(connection, request[1:])
+        patterns = list(self._patterns) if N==1 else request[1:]
+        for pattern in patterns:
+            if pattern in self._patterns:
+                p = self._patterns[pattern]
+                if connection in p.clients:
+                    connection.patterns.discard(pattern)
+                    p.clients.remove(connection)
+                    if not p.clients:
+                        self._patterns.pop(pattern)
+                    chunk = self._parser.multi_bulk(b'punsubscribe', pattern)
+                    connection.write(chunk)
 
     def subscribe(self, connection, request, N):
         check_input(request, not N)
-        self._storage._subscribe(connection, request[1:])
+        for channel in request[1:]:
+            clients = self._channels.get(channel)
+            if not clients:
+                self._channels[channel] = clients = set()
+            clients.add(connection)
+            connection.channels.add(channel)
+            chunk = self._parser.multi_bulk(b'subscribe', channel,
+                                            len(clients))
+            connection.write(chunk)
 
     def unsubscribe(self, connection, request, N):
         check_input(request, not N)
-        self._storage._unsubscribe(connection, request[1:])
+        channels = list(self._channels) if N==1 else request[1:]
+        for channel in channels:
+            if channel in self._channels:
+                clients = self._channels[channel]
+                if connection in clients:
+                    connection.channels.discard(channel)
+                    clients.remove(connection)
+                    if not clients:
+                        self._channels.pop(channel)
+                    chunk = self._parser.multi_bulk(b'unsubscribe', channel)
+                    connection.write(chunk)
 
     ###########################################################################
-    ##    CONNECTION COMMANDS
+    ##    TRANSACTION COMMANDS
+    @command_name('exec')
     def execute(self, connection, request, N):
-        check_input(request, not N)
-        connection.transaction = []
-        connection.transaction.append(ok)
+        check_input(request, N)
+        if connection.transaction is None:
+            connection.error_reply("EXEC without MULTI")
+        else:
+            requests = connection.transaction
+            connection.transaction = []
+            for request in requests:
+                connection.execute(request)
+            result = connection.transaction
+            connection.transaction = None
+            connection.write(self._parser.multi_bulk(*result))
 
     def multi(self, connection, request, N):
+        check_input(request, N)
+        connection.write(self.OK)
+        if connection.transaction is None:
+            connection.transaction = []
+
+    def watch(self, connection, request, N):
         check_input(request, not N)
-        connection.transaction = []
-        connection.transaction.append(ok)
+        if connection.transaction:
+            connection.error_reply("WATCH inside MULTI is not allowed")
+        else:
+            wkeys = connection.watched_keys
+            if not wkeys:
+                connection.watched_keys = wkeys = set()
+            wkeys.update(request[1:])
+            connection.write(self.OK)
+
+    def unwatch(self, connection, request, N):
+        check_input(request, N)
+        connection.watched_keys = None
+        connection.write(self.OK)
 
     ###########################################################################
     ##    CONNECTION COMMANDS
     def auth(self, connection, request, N):
         check_input(request, N != 1)
-        conn.password = request[1].encode('utf-8')
+        conn.password = request[1]
         if conn.password != conn._producer.password:
-            raise CommandError("wrong password")
-        connection.write(self.OK)
+            connection.error_reply("wrong password")
+        else:
+            connection.write(self.OK)
 
     def echo(self, connection, request, N):
         check_input(request, N != 1)
         connection.write(self._parser.bulk(request[1]))
 
-    def ping(self, connection, request):
-        check_input(request, not N)
+    def ping(self, connection, request, N):
+        check_input(request, N)
         connection.write(self.PONG)
 
-    def quit(self, connection, request):
-        if len(request) != 1:
-            raise CommandError("'quit' expect no arguments")
+    def quit(self, connection, request, N):
+        check_input(request, N)
         connection.write(self.OK)
         connection.close()
 
@@ -831,6 +1212,37 @@ class Storage(object):
         else:
             raise CommandError("unknown command 'client %s'" % subcommand)
         connection.write(value)
+
+    def config(self, connection, request, N):
+        check_input(request, not N)
+        subcommand = request[1].decode('utf-8').lower()
+        if subcommand == 'get':
+            if N != 2:
+                connection.error_reply("'config get' no argument")
+            else:
+                value = self._get_config(request[2].decode('utf-8'))
+                connection.write(self._parser.bulk(value))
+        elif subcommand == 'rewrite':
+            connection.write(self.OK)
+        elif subcommand  == 'set':
+            try:
+                if N != 3:
+                    raise ValueError("'config set' no argument")
+                self._set_config(request[2].decode('utf-8'))
+            except Exception as e:
+                connection.error_reply(str(e))
+            else:
+                connection.write(self.OK)
+        elif subcommand == 'resetstat':
+            self._hit_keys = 0
+            self._missed_keys = 0
+            self._expired_keys = 0
+            server = connection._producer
+            server._received = 0
+            server._requests_processed = 0
+            connection.write(self.OK)
+        else:
+            connection.error_reply("'config %s' not valid" % subcommand)
 
     def dbsize(self, connection, request, N):
         check_input(request, N != 0)
@@ -863,18 +1275,45 @@ class Storage(object):
 
     ###########################################################################
     ##    INTERNALS
-    def wait_for_keys(self, connection, keys, timeout, callback, *args):
-        bpop = connection.bpop
-        connection.bpop = bpop = TimeHandle(timeout, callback, args)
+    def wait_for_keys(self, connection, timeout, keys):
+        db = connection.db
+        connection.blocked = b = Blocked(connection, timeout)
         for key in keys:
-            if key not in bpop.keys:
-                clients = self._blocking_keys.get(key)
+            if key not in b.keys:
+                clients = db._blocking_keys.get(key)
                 if clients is None:
-                    clients = []
-                    self._blocking_keys[key] = clients
+                    db._blocking_keys[key] = clients = []
                 clients.append(connection)
-        connection.flags |= BLOCKED
-        self._storage._bpop_blocked_clients += 1
+        self._bpop_blocked_clients += 1
+
+    def _cron(self):
+        dirty = self._dirty
+        if dirty:
+            now = time.time()
+            gap = now - self._last_save
+            for interval, changes in self.cfg.key_value_save:
+                if gap >= interval and dirty >= changes:
+                    self._save()
+                    break
+
+    def _bpop(self, connection, request, keys):
+        list_type = self.list_type
+        db = connection.db
+        name = request[0][1:]
+        method = 'popleft' if name == 'lpop' else 'pop'
+        for key in keys:
+            value = db.get(key)
+            if isinstance(value, list_type):
+                result = (key, getattr(value, method)())
+                self._signal(NOTIFY_LIST, connection, name, key, 1)
+                if db.pop(key, value) is not None:
+                    self._signal(NOTIFY_GENERIC, connection, 'del', key)
+                connection.write(self._parser.multi_bulk(result))
+                return True
+            elif value is not None:
+                connection.write(self.WRONG_TYPE)
+                return True
+        return False
 
     def _flat_info(self):
         info = self._server.info()
@@ -893,23 +1332,24 @@ class Storage(object):
                         value = e(value)
                     yield '%s:%s' % (key, value)
 
-    def _info(self):
-        return {'keys': len(self._data),
-                'expires': len(self._expires)}
+    def _get_config(self, name):
+        return b''
+
+    def _set_config(self, name, value):
+        pass
 
     def _encode_info_value(self, value):
         return str(value).replace('=',
                                   ' ').replace(',',
                                                ' ').replace('\n', ' - ')
 
-    def _hincrby(self, name, request, type, N):
+    def _hincrby(self, connection, request, N, type):
         check_input(request, N != 3)
-        key = request[1]
-        field = request[2]
-        increment = type(request[3])
-        hash = self._get(key)
+        key, field, increment = request[1], request[2], type(request[3])
+        db = connection.db
+        hash = db.get(key)
         if hash is None:
-            self._data[key] = self.hashtype(field=increment)
+            db._data[key] = self.hashtype(field=increment)
             result = increment
         elif getattr(hash, 'datatype', 'hash'):
             if not field in hash:
@@ -936,7 +1376,7 @@ class Storage(object):
             else:
                 result = getattr(result, oper)(value)
         if dest is not None:
-            db._raw_pop(dest)
+            db.pop(dest)
             if result:
                 db._data[dest] = result
                 connection.int_reply(len(result))
@@ -948,98 +1388,29 @@ class Storage(object):
     def _info(self):
         keyspace = {}
         stats = {'keyspace_hits': self._hit_keys,
-                 'keyspace_misses': self._missed_keys}
+                 'keyspace_misses': self._missed_keys,
+                 'expired_keys': self._expired_keys,
+                 'keys_changed': self._dirty,
+                 'pubsub_channels': len(self._channels),
+                 'pubsub_patterns': len(self._patterns),
+                 'blocked_clients': self._bpop_blocked_clients}
         for db in self.databases.values():
-            if db._data:
-                keyspace[str(db)] = db._info()
+            if len(db):
+                keyspace[str(db)] = db.info()
         return {'keyspace': keyspace, 'stats': stats}
 
     def _save(self):
-        dbs = [db for db in self.databases.values() if db.size]
-        with open(self._server.cfg.key_value_filename, 'w') as file:
-            dump(dbs, file)
+        self._dirty = 0
+        data = StorageData(self)
+        data.save(self._filename)
 
-    def _signal(self, type, connection, request, key, dirty=0):
+    def _signal(self, type, connection, command, key, dirty=0):
         self._dirty += dirty
-        event = request[0]
-        handles = self._event_handlers.get(type)
-        if handles:
-            for handle in handles:
-                handle(event, db, key)
+        handle = self._event_handlers.get(type)
+        if handle:
+            handle(connection, key, command)
 
-    ##    PUBSUB
-    def _pubsub_channels(self, connection, pattern):
-        if pattern:
-            pre = re.compile(pattern.decode('utf-8', errors='ignore'))
-            channels = []
-            for channel in self._channels:
-                if pre.match(channel.decode('utf-8', errors='ignore')):
-                    channels.append(channel)
-        else:
-            channels = list(self._channels.values())
-        chunk = self._parser.multi_bulk(*channels)
-        connection.write(chunk)
-
-    def _pubsub_numsub(self, connection, channels):
-        count = 0
-        for channel in channels:
-            clients = self._channels.get(channel, ())
-            count += len(clients)
-        connection.write((':%d\r\n' % count).encode('utf-8'))
-
-    def _pubsub_numpat(self, connection):
-        count = reduce(lambda x, y: x + len(y.clients),
-                       self._patterns.values())
-        connection.write((':%d\r\n' % count).encode('utf-8'))
-
-    def _publish(self, connection, channel, message):
-        ch = channel.decode('utf-8')
-        clients = self._channels.get(channel)
-        msg = self._parser.multi_bulk(b'message', channel, message)
-        count = self.__publish_clients(msg, self._channels.get(channel, ()))
-        for pattern in self._patterns.values():
-            g = pattern.re.match(ch)
-            if g:
-                count += self.__publish_clients(msg, pattern.clients)
-        connection.write((':%d\r\n' % count).encode('utf-8'))
-
-    def _psubscribe(self, connection, patterns):
-        for pattern in patterns:
-            p = self._patterns.get(pattern)
-            if not p:
-                p = pubsub_patterns(re.compile(pat.decode('utf-8')), set())
-                self._patterns[pattern] = p
-            p.clients.add(connection)
-            count = reduce(lambda x, y: x + int(connection in y.clients),
-                           self._patterns.values())
-            chunk = self._parser.packcommand(b'psubscribe', pattern, count)
-            connection.write(chunk)
-
-    def _punsubscribe(self, connection, patterns):
-        for pattern in patterns:
-            pattern = pattren.decode('utf-8')
-            clients = self._patterns.get(pattern)
-            if not clients:
-                clients = set()
-                self._patterns[pattern] = clients
-            clients.add(connection)
-
-    def _subscribe(self, connection, channels):
-        for channel in channels:
-            clients = self._channels.get(channel)
-            if not clients:
-                clients = set()
-                self._channels[channel] = clients
-            clients.add(connection)
-
-    def _unsubscribe(self, connection, channels):
-        channels = channels or self._channels
-        for channel in channels:
-            clients = self._channels.get(channel)
-            if clients:
-                clients.discard(connection)
-
-    def __publish_clients(self, msg, clients):
+    def _publish_clients(self, msg, clients):
         remove = set()
         count = 0
         for client in clients:
@@ -1052,6 +1423,14 @@ class Storage(object):
             clients.difference_update(remove)
         return count
 
+    # EVENT HANDLERS
+    def _list_event(self, connection, key, command):
+        db = connection.db
+        if key in db._blocking_keys:
+            if command in self._unblock_commands:
+                for client in db._blocking_keys.pop(key):
+                    client.blocked.callback()
+
 
 class Db(object):
     '''The database.
@@ -1059,9 +1438,11 @@ class Db(object):
     def __init__(self, num, storage):
         self._num = num
         self._storage = storage
+        self._loop = storage._loop
         self._data = {}
         self._expires = {}
         self._events = {}
+        self._blocking_keys = {}
 
     def __repr__(self):
         return 'db%s' % self._num
@@ -1100,27 +1481,52 @@ class Db(object):
         else:
             return False
         self._expires[key] = (self._loop.call_later(
-            timeout, self.pop, key), value)
+            timeout, self._do_expire, key), value)
         return True
 
-    def pop(self, key, value=None, dirty=1):
-        if not value:
-            st = self._storage
-            if self.raw_pop(key) is None:
-                st._missed_keys += 1
-                return 0
-            else:
-                st._hit_keys += 1
-                st._signal(NOTIFY_GENERIC, DEL, self, key, dirty)
-                return 1
-        return 0
+    def info(self):
+        return {'keys': len(self._data),
+                'expires': len(self._expires)}
 
-    def raw_pop(self, key):
+    def pop(self, key, value=None):
+        if not value:
+            if key in self._data:
+                value = self._data.pop(key)
+                return value
+            elif key in self._expires:
+                handle, value, self._expires.pop(key)
+                handle.cancel()
+                return value
+
+    def rem(self, connection, key):
         if key in self._data:
-            value = self._data.pop(key)
-            return value
+            self._storage._hit_keys += 1
+            self._data.pop(key)
+            self._storage._signal(NOTIFY_GENERIC, connection, 'del', key, 1)
+            return 1
         elif key in self._expires:
-            handle, value, self._expires.pop(key).cancel()
+            self._storage._hit_keys += 1
+            handle, _, self._expires.pop(key)
             handle.cancel()
-            return value
-        return None
+            self._storage._signal(NOTIFY_GENERIC, connection, 'del', key, 1)
+            return 1
+        else:
+            self._storage._missed_keys += 1
+            return 0
+
+    def _do_expire(self, key):
+        if key in self._expires:
+            handle, value, = self._expires.pop(key)
+            handle.cancel()
+            self._storage._expired_keys += 1
+
+
+class StorageData:
+
+    def __init__(self, storage):
+        self.version = 1
+        self.dbs = [db for db in storage.databases.values() if db.size]
+
+    def save(self, filename):
+        with open(filename, 'w') as file:
+            dump(self, file)
