@@ -70,7 +70,7 @@ class Request(object):
 
     def write(self, consumer):
         conn = consumer._connection
-        self._data_sent = conn.parser.pack_command(self.command, *self.args)
+        self._data_sent = conn.parser.multi_bulk(self.command, *self.args)
         conn._transport.write(self._data_sent)
 
     def data_received(self, consumer, data):
