@@ -3,6 +3,7 @@
 import re
 import time
 import math
+from itertools import islice
 from functools import partial, reduce
 from collections import namedtuple, deque
 from marshal import dump, load
@@ -35,6 +36,8 @@ NOTIFY_ALL = (NOTIFY_GENERIC | NOTIFY_STRING | NOTIFY_LIST | NOTIFY_SET |
 
 MULTI  = (1 << 3)
 BLOCKED = (1 << 4)
+
+STRING_LIMIT = 2**32
 
 
 class RedisParserSetting(Global):
@@ -132,6 +135,7 @@ class PulsarStoreClient(pulsar.Protocol):
         self.cfg = cfg
         self.parser = self._producer._parser_class()
         self.store = self._producer._key_value_store
+        self.started = time.time()
         self.database = 0
         self.channels = set()
         self.patterns = set()
@@ -139,6 +143,7 @@ class PulsarStoreClient(pulsar.Protocol):
         self.watched_keys = None
         self.blocked = None
         self.password = b''
+        self.last_command = ''
 
     @property
     def db(self):
@@ -167,7 +172,7 @@ class PulsarStoreClient(pulsar.Protocol):
         if request:
             request[0] = command = request[0].decode('utf-8').lower()
         else:
-            command = None
+            command = ''
         #
         if self.channels or self.patterns:
             if command not in self.store.SUBSCRIBE_COMMANDS:
@@ -195,7 +200,8 @@ class PulsarStoreClient(pulsar.Protocol):
                         return self.write(self.store.NOAUTH)
                 handle(self, request, len(request) - 1)
             else:
-                self.error_reply("no command")
+                command = ''
+                return self.error_reply("no command")
         except CommandError as e:
             msg = '-%s %s\r\n' % (e.error_type, e)
             self.write(msg.encode('utf-8'))
@@ -203,6 +209,8 @@ class PulsarStoreClient(pulsar.Protocol):
             self._loop.logger.exception("Server error on '%s' command",
                                         command)
             self.write(self.store.SERVER_ERROR)
+        finally:
+            self.last_command = command
 
 
 class Blocked:
@@ -361,12 +369,12 @@ class Storage(object):
         db = connection.db
         value = db.get(key)
         if value is None:
-            value = request[2]
-        elif not isinstance(value, bytes):
+            value = bytearray(request[2])
+            db._data[key] = value
+        elif not isinstance(value, bytearray):
             return connection.write(self.WRONG_TYPE)
         else:
-            value = value + request[2]
-        db._data[key] = value
+            value.extend(request[2])
         self._signal(NOTIFY_STRING, connection, request[0], key, 1)
         connection.int_reply(len(value))
 
@@ -375,8 +383,8 @@ class Storage(object):
         value = connection.db.get(request[1])
         if value is None:
             connection.write(self.NIL)
-        elif isinstance(value, bytes):
-            connection.write(self._parser.bulk(value))
+        elif isinstance(value, bytearray):
+            connection.write(self._parser.bulk(bytes(value)))
         else:
             connection.write(self.WRONG_TYPE)
 
@@ -385,13 +393,52 @@ class Storage(object):
         key = request[1]
         db = connection.db
         value = db.get(key)
-        if value is None or isinstance(value, bytes):
-            db.pop(key)
-            db._data[key] = request[2]
+        if value is None:
+            db._data[key] = bytearray(request[2])
             self._signal(NOTIFY_STRING, connection, 'set', key, 1)
-            connection.write(self._parser.bulk(value))
+            connection.write(self.NIL)
+        elif isinstance(value, bytearray):
+            db.pop(key)
+            db._data[key] = bytearray(request[2])
+            self._signal(NOTIFY_STRING, connection, 'set', key, 1)
+            connection.write(self._parser.bulk(bytes(value)))
         else:
             connection.write(self.WRONG_TYPE)
+
+    def incr(self, connection, request, N):
+        check_input(request, N != 1)
+        r = self._incrby(connection, request[0], request[1], b'1', int)
+        connection.int_reply(r)
+
+    def incrby(self, connection, request, N):
+        check_input(request, N != 2)
+        r = self._incrby(connection, request[0], request[1], request[2], int)
+        connection.int_reply(r)
+
+    def incrbyfloat(self, connection, request, N):
+        check_input(request, N != 2)
+        r = self._incrby(connection, request[0], request[1], request[2], float)
+        connection.write(self._parser.bulk(str(r).encode('utf-8')))
+
+    def _incrby(self, connection, name, key, value, type):
+        try:
+            tv = type(value)
+        except Exception:
+            return connection.error_reply('invalid increment')
+        db = connection.db
+        cur = db.get(key)
+        if cur is None:
+            db._data[key] = bytearray(value)
+        elif isinstance(cur, bytearray):
+            try:
+                tv += type(cur)
+            except Exception:
+                return connection.error_reply('invalid increment')
+            db._data[key] = bytearray(str(tv).encode('utf-8'))
+        else:
+            return connection.write(self.WRONG_TYPE)
+        self._signal(NOTIFY_STRING, connection, name, key, 1)
+        return tv
 
     def mget(self, connection, request, N):
         check_input(request, not N)
@@ -399,8 +446,10 @@ class Storage(object):
         values = []
         for key in request[1:]:
             value = get(key)
-            if value is None or isinstance(value, bytes):
+            if value is None:
                 values.append(value)
+            elif isinstance(value, bytearray):
+                values.append(bytes(value))
             else:
                 return connection.write(self.WRONG_TYPE)
         connection.write(self._parser.multi_bulk(*values))
@@ -411,7 +460,7 @@ class Storage(object):
         db = connection.db
         for key, value in zip(request[1::2], request[2::2]):
             db.pop(key)
-            db._data[key] = value
+            db._data[key] = bytearray(value)
             self._signal(NOTIFY_STRING, connection, 'set', key, 1)
         connection.write(self.OK)
 
@@ -429,14 +478,13 @@ class Storage(object):
             connection.write(self.ZERO)
         else:
             for key, value in zip(keys, request[2::2]):
-                db._data[key] = value
+                db._data[key] = bytearray(value)
                 self._signal(NOTIFY_STRING, connection, 'set', key, 1)
             connection.write(self.ONE)
 
     def set(self, connection, request, N):
         check_input(request, N < 2 or N > 8)
         db = connection.db
-        key, value = request[1], request[2]
         it = 2
         extra = set(self._set_options)
         seconds = 0
@@ -450,61 +498,152 @@ class Storage(object):
                 extra.remove(opt)
                 if opt == b'ex':
                     it += 1
-                    seconds = int(request[it])
+                    seconds = request[it]
                 elif opt == b'px':
                     it += 1
-                    milliseconds = 0.000001*int(request[it])
+                    milliseconds = request[it]
                 elif opt == b'nx':
                     nx = True
                 else:
                     xx = True
-        if seconds < 0 or milliseconds < 0:
-            connection.error_reply('invalid expire time')
+        self._set(connection, request[1], request[2], seconds,
+                  milliseconds, nx, xx)
+
+    def psetex(self, connection, request, N):
+        check_input(request, N != 3)
+        self._set(connection, request[1], request[3], milliseconds=request[2])
+
+    def setex(self, connection, request, N):
+        check_input(request, N != 3)
+        self._set(connection, request[1], request[3], seconds=request[2])
+
+    def setnx(self, connection, request, N):
+        check_input(request, N != 2)
+        self._set(connection, request[1], request[2], nx=True)
+
+    def _set(self, connection, key, value,
+             seconds=0, milliseconds=0, nx=False, xx=False):
+        try:
+            seconds = int(seconds)
+            milliseconds = 0.000001*int(milliseconds)
+            if seconds < 0 or milliseconds < 0:
+                raise ValueError
+        except Exception:
+            return connection.error_reply('invalid expire time')
         else:
             timeout = seconds + milliseconds
-            exists = db.exists(key)
-            skip = (exists and nx) or (not exists and xx)
-            if not skip:
-                if exists:
-                    db.pop(key)
-                if timeout > 0:
-                    db._expires[key] = (self._loop.call_later(
-                        timeout, self.pop, key), value)
-                    self._signal(NOTIFY_STRING, connection, 'expire', key)
-                else:
-                    db._data[key] = value
-                self._signal(NOTIFY_STRING, connection, request[0], key, 1)
-            connection.write(self.OK)
+        db = connection.db
+        exists = db.exists(key)
+        skip = (exists and nx) or (not exists and xx)
+        if not skip:
+            if exists:
+                db.pop(key)
+            if timeout > 0:
+                db._expires[key] = (self._loop.call_later(
+                    timeout, db._do_expire, key), bytearray(value))
+                self._signal(NOTIFY_STRING, connection, 'expire', key)
+            else:
+                db._data[key] = bytearray(value)
+            self._signal(NOTIFY_STRING, connection, 'set', key, 1)
+        connection.write(self.OK)
+
+    def getbit(self, connection, request, N):
+        check_input(request, N != 2)
+        try:
+            offset = int(request[2])
+            if offset < 0 or offset >= STRING_LIMIT:
+                raise ValueError
+        except Exception:
+            return connection.error_reply("Wrong offset in '%s' command" %
+                                          request[0])
+        string = connection.db.get(request[1])
+        if string is None:
+            connection.write(self.ZERO)
+        elif not isinstance(string, bytearray):
+            connection.write(self.WRONG_TYPE)
+        else:
+            v = string[offset] if offset < len(string) else 0
+            connection.int_reply(v)
 
     def setbit(self, connection, request, N):
         check_input(request, N != 3)
         key = request[1]
         try:
-            offset = int(request[1])
-            if offset < 0:
+            offset = int(request[2])
+            if offset < 0 or offset >= STRING_LIMIT:
                 raise ValueError
         except Exception:
-            connection.error_reply("Wrong offset in '%s' command" % request[0])
+            return connection.error_reply("Wrong offset in '%s' command" %
+                                          request[0])
         try:
-            value = int(request[2])
+            value = int(request[3])
             if value not in (0, 1):
                 raise ValueError
-        except:
-            connection.error_reply("Wrong value in '%s' command" % request[0])
+        except Exception:
+            return connection.error_reply("Wrong value in '%s' command" %
+                                          request[0])
         db = connection.db
         string = db.get(key)
         if string is None:
             string = bytearray(b'\x00')
-            self._data[key] = string
-        elif not isinstance(value, bytearray):
+            db._data[key] = string
+        elif not isinstance(string, bytearray):
             return connection.write(self.WRONG_TYPE)
         N = len(string)
         if N < offset:
-            string.extend((offset- N)*b'\x00')
+            string.extend((offset + 1 - N)*b'\x00')
         orig = string[offset]
-        string[offset] = b'\x01' if value else b'\x00'
+        string[offset] = value
         self._signal(NOTIFY_STRING, connection, request[0], key, 1)
         connection.int_reply(orig)
+
+    def getrange(self, connection, request, N):
+        check_input(request, N != 3)
+        try:
+            start = int(request[2])
+            end = int(request[3])
+        except Exception:
+            return connection.error_reply("Wrong offset in '%s' command" %
+                                          request[0])
+        string = connection.db.get(request[1])
+        if string is None:
+            connection.write(self.NIL)
+        elif not isinstance(string, bytearray):
+            connection.write(self.WRONG_TYPE)
+        else:
+            if start < 0:
+                start = len(string) + start
+            if end < 0:
+                end = len(string) + end + 1
+            else:
+                end += 1
+            connection.write(self._parser.bulk(bytes(string[start:end])))
+
+    def setrange(self, connection, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        value = request[3]
+        try:
+            offset = int(request[2])
+            T = offset + len(value)
+            if offset < 0 or T >= STRING_LIMIT:
+                raise ValueError
+        except Exception:
+            return connection.error_reply("Wrong offset in '%s' command" %
+                                          request[0])
+        db = connection.db
+        string = db.get(key)
+        if string is None:
+            string = bytearray(b'\x00')
+            db._data[key] = string
+        elif not isinstance(string, bytearray):
+            return connection.write(self.WRONG_TYPE)
+        N = len(string)
+        if N < T:
+            string.extend((T + 1 - N)*b'\x00')
+        string[offset:T] = value
+        self._signal(NOTIFY_STRING, connection, request[0], key, 1)
+        connection.int_reply(len(string))
 
     def strlen(self, connection, request, N):
         check_input(request, N != 1)
@@ -562,7 +701,7 @@ class Storage(object):
         if value is None:
             connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            connection.write(self._parser.multi_bulk(value.flat()))
+            connection.write(self._parser.multi_bulk(*value.flat()))
         else:
             connection.write(self.WRONG_TYPE)
 
@@ -580,7 +719,7 @@ class Storage(object):
         if value is None:
             connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            connection.write(self._parser.multi_bulk(value))
+            connection.write(self._parser.multi_bulk(*tuple(value)))
         else:
             connection.write(self.WRONG_TYPE)
 
@@ -658,7 +797,7 @@ class Storage(object):
         if value is None:
             connection.write(self.EMPTY_ARRAY)
         elif getattr(value, 'datatype', 'hash'):
-            connection.write(self._parser.multi_bulk(tuple(value.values())))
+            connection.write(self._parser.multi_bulk(*tuple(value.values())))
         else:
             connection.write(self.WRONG_TYPE)
 
@@ -760,6 +899,29 @@ class Storage(object):
             connection.int_reply(len(value))
             self._signal(NOTIFY_LIST, connection, request[0], key, 1)
     rpushx = lpushx
+
+    def lrange(self, connection, request, N):
+        check_input(request, N != 3)
+        try:
+            start = int(request[2])
+            end = int(request[3])
+        except Exception:
+            return connection.error_reply('invalid range')
+        db = connection.db
+        key = request[1]
+        value = db.get(key)
+        if value is None:
+            connection.write(self.EMPTY_ARRAY)
+        elif not isinstance(value, self.list_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            if start < 0:
+                start = len(value) + start
+            if end < 0:
+                end = len(value) + end + 1
+            elems = islice(value, start, end)
+            chunk = self._parser.multi_bulk(*tuple(elems))
+            connection.write(chunk)
 
     def rpoplpush(self, connection, request, N):
         check_input(request, N != 2)
@@ -1203,15 +1365,14 @@ class Storage(object):
     ###########################################################################
     ##    SERVER COMMANDS
     def client(self, connection, request, N):
-        check_input(request, N < 2)
+        check_input(request, not N)
         subcommand = request[1].decode('utf-8').lower()
         if subcommand == 'list':
-            if len(request) > 2:
-                raise CommandError("'client list' no arguments")
-            value = self._parser.multi_bulk(tuple(self._client_list))
+            check_input(request, N != 1)
+            value = '\n'.join(self._client_list(connection))
+            connection.write(self._parser.bulk(value.encode('utf-8')))
         else:
             raise CommandError("unknown command 'client %s'" % subcommand)
-        connection.write(value)
 
     def config(self, connection, request, N):
         check_input(request, not N)
@@ -1399,6 +1560,19 @@ class Storage(object):
                 keyspace[str(db)] = db.info()
         return {'keyspace': keyspace, 'stats': stats}
 
+    def _client_list(self, connection):
+        for client in connection._producer._concurrent_connections:
+            yield ' '.join(self._client_info(client))
+
+    def _client_info(self, client):
+        yield 'addr=%s:%s' % client._transport.get_extra_info('addr')
+        yield 'fd=%s' % client._transport._sock_fd
+        yield 'age=%s' % int(time.time() - client.started)
+        yield 'db=%s' % client.database
+        yield 'sub=%s' % len(client.channels)
+        yield 'psub=%s' % len(client.patterns)
+        yield 'cmd=%s' % client.last_command
+
     def _save(self):
         self._dirty = 0
         data = StorageData(self)
@@ -1418,7 +1592,7 @@ class Storage(object):
                 client.write(msg)
                 count += 1
             except Exception:
-                remove.append(client)
+                remove.add(client)
         if remove:
             clients.difference_update(remove)
         return count
@@ -1525,7 +1699,7 @@ class StorageData:
 
     def __init__(self, storage):
         self.version = 1
-        self.dbs = [db for db in storage.databases.values() if db.size]
+        self.dbs = [db for db in storage.databases.values() if len(db._data)]
 
     def save(self, filename):
         with open(filename, 'w') as file:

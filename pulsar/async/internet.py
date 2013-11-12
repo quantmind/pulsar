@@ -121,7 +121,10 @@ class SocketTransport(asyncio.Transport):
     def get_extra_info(self, name, default=None):
         if name == 'socket':
             name = 'sock'
-        return self.__dict__.get('_%s' % name, default)
+        if name in self._extra:
+            return self._extra[name]
+        else:
+            return self.__dict__.get('_%s' % name, default)
 
     def close(self, async=True, exc=None):
         """Closes the transport.
