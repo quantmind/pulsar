@@ -27,6 +27,7 @@ FrozenDict
    :member-order: bysource
 '''
 from copy import copy
+from itertools import islice
 from collections import *
 
 from .pep import ispy26, ispy3k, iteritems
@@ -249,7 +250,6 @@ class FrozenDict(dict):
 
 
 class Hash(dict):
-    type = 'hash'
 
     def mget(self, fields):
         return [self.get(f) for f in fields]
@@ -261,6 +261,59 @@ class Hash(dict):
             result.append(k)
             result.append(v)
         return result
+
+
+class Deque(deque):
+
+    def insert_before(self, pivot, value):
+        l = list(self)
+        try:
+            index = l.index(pivot)
+        except ValueError:
+            pass
+        else:
+            l.insert(index, value)
+            self.clear()
+            self.extend(l)
+
+    def insert_after(self, pivot, value):
+        l = list(self)
+        try:
+            index = l.index(pivot)
+        except ValueError:
+            pass
+        else:
+            l.insert(index+1, value)
+            self.clear()
+            self.extend(l)
+
+    def remove(self, elem, count=1):
+        rev = False
+        if count:
+            if count < 0:
+                rev = True
+                count = -count
+                l = list(reversed(self))
+            else:
+                l = list(self)
+            while count:
+                try:
+                    index = l.remove(elem)
+                    count -= 1
+                except ValueError:
+                    break
+        else:
+            l = [v for v in self if v != elem]
+        removed = len(self) - len(l)
+        if removed:
+            self.clear()
+            self.extend(reversed(l) if rev else l)
+        return removed
+
+    def trim(self, start, end):
+        slice = list(islice(self, start, end))
+        self.clear()
+        self.extend(slice)
 
 
 class Zset(object):
@@ -280,6 +333,14 @@ class Zset(object):
     def __iter__(self):
         for _, value in self._sl:
             yield value
+
+    def __getstate__(self):
+        return self._dict
+
+    def __setstate__(self, state):
+        self._dict = state
+        self._sl = Skiplist(((score, member) for member, score
+                             in iteritems(state)))
 
     def items(self):
         '''Iterable over ordered score, value pairs of this :class:`zset`

@@ -12,7 +12,7 @@ from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
 from .access import logger
-from .defer import multi_async, Deferred, coroutine_return, in_loop
+from .defer import Failure, multi_async, Deferred, coroutine_return, in_loop
 from .events import EventHandler
 from .internet import Server, SocketTransport, AF_INET6
 
@@ -182,7 +182,7 @@ advantage of specific capabilities in some transport mechanisms.'''
         except Exception:
             failure = sys.exc_info()
         if failure:
-            self.abort(failure)
+            self.abort(Failure(failure))
 
     def mute_read_error(self, error):
         '''Return ``True`` if a socket error from a read operation is muted.
