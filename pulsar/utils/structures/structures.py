@@ -28,13 +28,11 @@ FrozenDict
 '''
 from copy import copy
 from itertools import islice
-from collections import *
+import collections
 
-from .pep import ispy26, ispy3k, iteritems
-from .skiplist import Skiplist
+from ..pep import ispy3k, iteritems
 
-if ispy26:    # pragma    nocover
-    from .fallbacks._collections import *
+Mapping = collections.Mapping
 
 
 def mapping_iterator(iterable):
@@ -149,7 +147,7 @@ Raises KeyError if key is not found."""
             self.extend(key, aslist(val))
 
 
-class AttributeDictionary(Mapping):
+class AttributeDictionary(collections.Mapping):
     '''A :class:`Mapping` structures which exposes keys as attributes.'''
     def __init__(self, *iterable, **kwargs):
         if iterable:
@@ -249,21 +247,7 @@ class FrozenDict(dict):
             return False
 
 
-class Hash(dict):
-
-    def mget(self, fields):
-        return [self.get(f) for f in fields]
-
-    def flat(self):
-        # TODO: this is slow, make it faster
-        result = []
-        for k, v in self.items():
-            result.append(k)
-            result.append(v)
-        return result
-
-
-class Deque(deque):
+class Deque(collections.deque):
 
     def insert_before(self, pivot, value):
         l = list(self)
@@ -314,86 +298,6 @@ class Deque(deque):
         slice = list(islice(self, start, end))
         self.clear()
         self.extend(slice)
-
-
-class Zset(object):
-    '''Ordered-set equivalent of redis zset.
-    '''
-    def __init__(self):
-        self._sl = Skiplist()
-        self._dict = {}
-
-    def __repr__(self):
-        return repr(self._sl)
-    __str__ = __repr__
-
-    def __len__(self):
-        return len(self._dict)
-
-    def __iter__(self):
-        for _, value in self._sl:
-            yield value
-
-    def __getstate__(self):
-        return self._dict
-
-    def __setstate__(self, state):
-        self._dict = state
-        self._sl = Skiplist(((score, member) for member, score
-                             in iteritems(state)))
-
-    def items(self):
-        '''Iterable over ordered score, value pairs of this :class:`zset`
-        '''
-        return iter(self._sl)
-
-    def score(self, member, default=None):
-        '''The score of a given member'''
-        return self._dict.get(member, default)
-
-    def count(self, mmin, mmax):
-        raise NotImplementedError
-
-    def add(self, score, val):
-        r = 1
-        if val in self._dict:
-            sc = self._dict[val]
-            if sc == score:
-                return 0
-            self._sl.remove(sc)
-            r = 0
-        self._dict[val] = score
-        self._sl.insert(score, val)
-        return r
-
-    def update(self, score_vals):
-        '''Update the :class:`zset` with an iterable over pairs of
-scores and values.'''
-        add = self.add
-        for score, value in score_vals:
-            add(score, value)
-
-    def remove(self, item):
-        '''Remove ``item`` for the :class:`zset` it it exists.
-If found it returns the score of the item removed.'''
-        score = self._dict.pop(item, None)
-        if score is not None:
-            self._sl.remove(score)
-            return score
-
-    def clear(self):
-        '''Clear this :class:`zset`.'''
-        self._sl = skiplist()
-        self._dict.clear()
-
-    def rank(self, item):
-        '''Return the rank (index) of ``item`` in this :class:`zset`.'''
-        score = self._dict.get(item)
-        if score is not None:
-            return self._sl.rank(score)
-
-    def flat(self):
-        return self._sl.flat()
 
 
 def merge_prefix(deque, size):

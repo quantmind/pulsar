@@ -17,29 +17,12 @@ from pulsar.utils.pep import map, range, zip, pickle
 
 
 from .parser import redis_parser
+from .sort import sort_command
 
 
 DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
 
 # Keyspace changes notification classes
-NOTIFY_KEYSPACE = (1<<0)
-NOTIFY_KEYEVENT = (1<<1)
-NOTIFY_GENERIC = (1<<2)
-NOTIFY_STRING = (1<<3)
-NOTIFY_LIST = (1<<4)
-NOTIFY_SET = (1<<5)
-NOTIFY_HASH = (1<<6)
-NOTIFY_ZSET = (1<<7)
-NOTIFY_EXPIRED = (1<<8)
-NOTIFY_EVICTED = (1<<9)
-NOTIFY_ALL = (NOTIFY_GENERIC | NOTIFY_STRING | NOTIFY_LIST | NOTIFY_SET |
-              NOTIFY_HASH | NOTIFY_ZSET | NOTIFY_EXPIRED | NOTIFY_EVICTED)
-
-MONITOR = (1 << 2)
-MULTI  = (1 << 3)
-BLOCKED = (1 << 4)
-DIRTY_CAS = (1 << 5)
-
 STRING_LIMIT = 2**32
 
 nan = float('nan')
@@ -230,20 +213,39 @@ class PulsarStoreClient(pulsar.Protocol):
 
 
 class Blocked:
-
-    def __init__(self, connection, timeout):
-        self.keys = set()
+    '''Handle blocked keys for a client
+    '''
+    def __init__(self, connection, command, keys, timeout, dest=None):
+        self.command = command
+        self.keys = set(keys)
+        self.dest = dest
+        self._called = False
+        db = connection.db
+        for key in self.keys:
+            clients = db._blocking_keys.get(key)
+            if clients is None:
+                db._blocking_keys[key] = clients = []
+            clients.append(connection)
+        connection.store._bpop_blocked_clients += 1
         if timeout:
-            self.handle = connection._loop.call_later(timeout, self.unblock,
-                                                      connection)
+            self.handle = connection._loop.call_later(
+                timeout, self.unblock, connection)
         else:
             self.handle = None
 
-    def unblock(self, connection):
-        if self.handle:
-            self.handle.cancel()
-        connection.blocked = None
-        connection.write(connection.store.EMPTY_ARRAY)
+    def unblock(self, connection, key=None, value=None):
+        if not self._called:
+            self._called = True
+            if self.handle:
+                self.handle.cancel()
+            store = connection.store
+            connection.blocked = None
+            store._bpop_blocked_clients -= 1
+            if value is None:
+                connection.write(store.NULL_ARRAY)
+            else:
+                store._block_callback(connection, self.command, key,
+                                      value, self.dest)
 
 
 class TcpServer(pulsar.TcpServer):
@@ -329,14 +331,34 @@ class Storage(object):
         self._watching = set()
         # The set of connections which issued the monitor command
         self._monitors = set()
-        self._event_handlers = {NOTIFY_GENERIC: self._generic_event,
-                                NOTIFY_STRING: self._string_event,
-                                NOTIFY_SET: self._set_event,
-                                NOTIFY_HASH: self._hash_event,
-                                NOTIFY_LIST: self._list_event,
-                                NOTIFY_ZSET: self._zset_event}
+        #
+        self.NOTIFY_KEYSPACE = (1<<0)
+        self.NOTIFY_KEYEVENT = (1<<1)
+        self.NOTIFY_GENERIC = (1<<2)
+        self.NOTIFY_STRING = (1<<3)
+        self.NOTIFY_LIST = (1<<4)
+        self.NOTIFY_SET = (1<<5)
+        self.NOTIFY_HASH = (1<<6)
+        self.NOTIFY_ZSET = (1<<7)
+        self.NOTIFY_EXPIRED = (1<<8)
+        self.NOTIFY_EVICTED = (1<<9)
+        self.NOTIFY_ALL = (self.NOTIFY_GENERIC | self.NOTIFY_STRING |
+                           self.NOTIFY_LIST | self.NOTIFY_SET |
+                           self.NOTIFY_HASH | self.NOTIFY_ZSET |
+                           self.NOTIFY_EXPIRED | self.NOTIFY_EVICTED)
+
+        self.MONITOR = (1 << 2)
+        self.MULTI  = (1 << 3)
+        self.BLOCKED = (1 << 4)
+        self.DIRTY_CAS = (1 << 5)
+        #
+        self._event_handlers = {self.NOTIFY_GENERIC: self._generic_event,
+                                self.NOTIFY_STRING: self._string_event,
+                                self.NOTIFY_SET: self._set_event,
+                                self.NOTIFY_HASH: self._hash_event,
+                                self.NOTIFY_LIST: self._list_event,
+                                self.NOTIFY_ZSET: self._zset_event}
         self._set_options = (b'ex', b'px', 'nx', b'xx')
-        self._unblock_commands = ('lpush', 'lpushx', 'rpush', 'rpushx')
         self.OK = b'+OK\r\n'
         self.PONG = b'+PONG\r\n'
         self.QUEUED = b'+QUEUED\r\n'
@@ -361,11 +383,11 @@ class Storage(object):
         self.hash_type = Hash
         self.list_type = Deque
         self.zset_type = Zset
-        self._type_event_map = {bytearray: NOTIFY_STRING,
-                                self.hash_type: NOTIFY_HASH,
-                                self.list_type: NOTIFY_LIST,
-                                set: NOTIFY_SET,
-                                self.zset_type: NOTIFY_ZSET}
+        self._type_event_map = {bytearray: self.NOTIFY_STRING,
+                                self.hash_type: self.NOTIFY_HASH,
+                                self.list_type: self.NOTIFY_LIST,
+                                set: self.NOTIFY_SET,
+                                self.zset_type: self.NOTIFY_ZSET}
         self._type_name_map = {bytearray: 'string',
                                self.hash_type: 'hash',
                                self.list_type: 'list',
@@ -451,7 +473,7 @@ class Storage(object):
         if db2.exists(key) or value is None:
             return connection.write(self.ZERO)
         db.pop(key)
-        self._signal(NOTIFY_GENERIC, db, 'del', key, 1)
+        self._signal(self.NOTIFY_GENERIC, db, 'del', key, 1)
         db2._data[key] = value
         self._signal(self._type_event_map[type(value)], db2, 'set', key, 1)
         connection.write(self.ONE)
@@ -493,7 +515,7 @@ class Storage(object):
                 db.rem(key2)
             db.pop(key1)
             event = self._type_event_map[type(value)]
-            dirty = 1 if event == NOTIFY_STRING else len(value)
+            dirty = 1 if event == self.NOTIFY_STRING else len(value)
             db._data[key2] = value
             self._signal(event, db, request[0], key2, dirty)
             connection.write(result)
@@ -505,77 +527,12 @@ class Storage(object):
     @command('sort', True)
     def sort(self, connection, request, N):
         check_input(request, not N)
-        key = request[1]
-        db = connection.db
-        value = db.get(key)
+        value = connection.db.get(request[1])
         if value is None:
-            pass
+            value = self.list_type()
         elif not isinstance(value, (set, self.list_type, self.zset_type)):
             return connection.write(self.WRONG_TYPE)
-        sort_type = type(value)
-        stype = self._type_event_map[sort_type]
-        right = 0
-        desc = None
-        alpha = None
-        offset = None
-        count = None
-        storekey = None
-        sortby = None
-        donsort = False
-        getops = []
-        N = len(request)
-        j = 2
-        while j < N:
-            val = request[j].lower()
-            right = N - j
-            if val == b'asc':
-                desc = False
-            elif val == b'desc':
-                desc = True
-            elif val == b'alpha':
-                alpha = True
-            elif val == b'limit' and right >= 2:
-                try:
-                    offset = int(request[j+1])
-                    count = int(request[j+2])
-                except Exception:
-                    return connection.write(self.SYNTAX_ERROR)
-                j += 2
-            elif val == b'store' and right >= 1:
-                storekey = request[j+1]
-                j += 1
-            elif val == b'by' and right >= 1:
-                sortby = request[j+1]
-                if b'*' not in sortby:
-                    donsort = True
-                j += 1
-            elif val == b'get' and right >= 1:
-                getops.append(request[j+1])
-                j += 1
-            else:
-                return connection.write(self.SYNTAX_ERROR)
-            j += 1
-
-    if sort_type is self.zset_type and dontsort:
-        donsort = False
-        alpha = True
-        sortby = None
-
-    vlen = len(value)
-    vector = []
-
-    if not dontsort:
-        for val in sorting_value:
-            if sortby:
-                byval = lookup(sortby, val)
-            else:
-                byval = val
-            if not alpha:
-                try:
-                    byval = float(byval)
-                except Excetion:
-                    byval = nan
-            vector.append(byval)
+        sort_command(self, connection, request, value)
 
     @command('keys', True)
     def ttl(self, connection, request, N):
@@ -607,7 +564,7 @@ class Storage(object):
             return connection.write(self.WRONG_TYPE)
         else:
             value.extend(request[2])
-        self._signal(NOTIFY_STRING, db, request[0], key, 1)
+        self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         connection.int_reply(len(value))
 
     @command('strings', True)
@@ -687,12 +644,12 @@ class Storage(object):
         value = db.get(key)
         if value is None:
             db._data[key] = bytearray(request[2])
-            self._signal(NOTIFY_STRING, db, 'set', key, 1)
+            self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
             connection.write(self.NIL)
         elif isinstance(value, bytearray):
             db.pop(key)
             db._data[key] = bytearray(request[2])
-            self._signal(NOTIFY_STRING, db, 'set', key, 1)
+            self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
             connection.write(self._parser.bulk(bytes(value)))
         else:
             connection.write(self.WRONG_TYPE)
@@ -738,7 +695,7 @@ class Storage(object):
         for key, value in zip(request[1::2], request[2::2]):
             db.pop(key)
             db._data[key] = bytearray(value)
-            self._signal(NOTIFY_STRING, db, 'set', key, 1)
+            self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
         connection.write(self.OK)
 
     @command('strings', True)
@@ -757,7 +714,7 @@ class Storage(object):
         else:
             for key, value in zip(keys, request[2::2]):
                 db._data[key] = bytearray(value)
-                self._signal(NOTIFY_STRING, db, 'set', key, 1)
+                self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
             connection.write(self.ONE)
 
     @command('strings', True)
@@ -823,7 +780,7 @@ class Storage(object):
             string.extend((offset + 1 - N)*b'\x00')
         orig = string[offset]
         string[offset] = value
-        self._signal(NOTIFY_STRING, db, request[0], key, 1)
+        self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         connection.int_reply(orig)
 
     @command('strings', True)
@@ -861,7 +818,7 @@ class Storage(object):
         if N < T:
             string.extend((T + 1 - N)*b'\x00')
         string[offset:T] = value
-        self._signal(NOTIFY_STRING, db, request[0], key, 1)
+        self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         connection.int_reply(len(string))
 
     @command('strings')
@@ -889,9 +846,9 @@ class Storage(object):
             rem = 0
             for field in request[2:]:
                 rem += 0 if value.pop(field, None) is None else 1
-            self._signal(NOTIFY_HASH, db, request[0], key, rem)
+            self._signal(self.NOTIFY_HASH, db, request[0], key, rem)
             if db.pop(key, value) is not None:
-                self._signal(NOTIFY_GENERIC, db, 'del', key)
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             connection.int_reply(rem)
         else:
             connection.write(self.WRONG_TYPE)
@@ -986,7 +943,7 @@ class Storage(object):
         elif not isinstance(value, self.hash_type):
             return connection.write(self.WRONG_TYPE)
         value.update(zip(request[2::2], request[3::2]))
-        self._signal(NOTIFY_HASH, db, request[0], key, D)
+        self._signal(self.NOTIFY_HASH, db, request[0], key, D)
         connection.write(self.OK)
 
     @command('hashes', True)
@@ -1002,7 +959,7 @@ class Storage(object):
             return connection.write(self.WRONG_TYPE)
         result = self.ZERO if field in value else self.ONE
         value[field] = request[3]
-        self._signal(NOTIFY_HASH, db, request[0], key, 1)
+        self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
         connection.write(result)
 
     @command('hashes', True)
@@ -1020,7 +977,7 @@ class Storage(object):
             connection.write(self.ZERO)
         else:
             value[field] = request[3]
-            self._signal(NOTIFY_HASH, db, request[0], key, 1)
+            self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
             connection.write(self.ONE)
 
     @command('hashes')
@@ -1039,10 +996,14 @@ class Storage(object):
     @command('lists', True)
     def blpop(self, connection, request, N):
         check_input(request, N < 2)
-        timeout = max(0, int(request[-1]))
+        try:
+            timeout = max(0, int(request[-1]))
+        except Exception:
+            return connection.write(self.SYNTAX_ERROR)
         keys = request[1:-1]
-        if not self._bpop(connection, request, keys):
-            self.wait_for_keys(connection, timeout, keys)
+        if not self._bpop(connection, request[0], keys):
+            connection.blocked = Blocked(connection, request[0], keys,
+                                         timeout)
 
     @command('lists', True)
     def brpop(self, connection, request, N):
@@ -1050,11 +1011,16 @@ class Storage(object):
 
     @command('lists', True)
     def brpoplpush(self, connection, request, N):
-        check_input(request, N < 2)
-        timeout = max(0, int(request[-1]))
-        keys = request[1:-1]
-        if not self._bpop(connection, request, keys):
-            self.wait_for_keys(connection, timeout, keys)
+        check_input(request, N != 3)
+        try:
+            timeout = max(0, int(request[-1]))
+        except Exception:
+            return connection.write(self.SYNTAX_ERROR)
+        key, dest = request[1:-1]
+        keys = (key,)
+        if not self._bpop(connection, request[0], keys, dest):
+            connection.blocked = Blocked(connection, request[0], keys,
+                                         timeout, dest)
 
     @command('lists')
     def lindex(self, connection, request, N):
@@ -1093,7 +1059,7 @@ class Storage(object):
                 value.insert_after(request[3], request[4])
             else:
                 return connection.error_reply('cannot insert to list')
-            self._signal(NOTIFY_LIST, db, request[0], key, 1)
+            self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
             connection.int_reply(len(value))
 
     @command('lists')
@@ -1121,9 +1087,9 @@ class Storage(object):
                 result = value.popleft()
             else:
                 result = value.pop()
-            self._signal(NOTIFY_LIST, db, request[0], key, 1)
+            self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
             if db.pop(key, value) is not None:
-                self._signal(NOTIFY_GENERIC, db, 'del', key)
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             connection.write(self._parser.bulk(result))
         else:
             connection.write(self.WRONG_TYPE)
@@ -1148,7 +1114,7 @@ class Storage(object):
         else:
             value.extend(request[2:])
         connection.int_reply(len(value))
-        self._signal(NOTIFY_LIST, db, request[0], key, N - 1)
+        self._signal(self.NOTIFY_LIST, db, request[0], key, N - 1)
 
     @command('lists', True)
     def rpush(self, connection, request, N):
@@ -1170,7 +1136,7 @@ class Storage(object):
             else:
                 value.append(request[2])
             connection.int_reply(len(value))
-            self._signal(NOTIFY_LIST, db, request[0], key, 1)
+            self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
     rpushx = lpushx
 
     @command('lists', True)
@@ -1211,7 +1177,7 @@ class Storage(object):
                 return connection.error_reply('cannot remove from list')
             removed = value.remove(request[3], count)
             if removed:
-                self._signal(NOTIFY_LIST, db, request[0], key, removed)
+                self._signal(self.NOTIFY_LIST, db, request[0], key, removed)
             connection.int_reply(removed)
 
     @command('lists', True)
@@ -1231,7 +1197,7 @@ class Storage(object):
                 index = -1
             if index >= 0 and index < len(value):
                 value[index] = request[3]
-                self._signal(NOTIFY_LIST, db, request[0], key, 1)
+                self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
                 connection.write(self.OK)
             else:
                 connection.write(self.OUT_OF_BOUND)
@@ -1254,7 +1220,8 @@ class Storage(object):
             start = len(value)
             value.trim(start, end)
             connection.write(self.OK)
-            self._signal(NOTIFY_LIST, db, request[0], key, start-len(value))
+            self._signal(self.NOTIFY_LIST, db, request[0], key,
+                         start-len(value))
             connection.write(self.OK)
 
     @command('lists', True)
@@ -1275,11 +1242,11 @@ class Storage(object):
             elif not isinstance(dest, self.list_type):
                 return connection.write(self.WRONG_TYPE)
             value = orig.pop()
-            self._signal(NOTIFY_LIST, db, 'rpop', key1, 1)
+            self._signal(self.NOTIFY_LIST, db, 'rpop', key1, 1)
             dest.appendleft(value)
-            self._signal(NOTIFY_LIST, db, 'lpush', key2, 1)
+            self._signal(self.NOTIFY_LIST, db, 'lpush', key2, 1)
             if db.pop(key1, orig) is not None:
-                self._signal(NOTIFY_GENERIC, db, 'del', key1)
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key1)
             connection.write(self._parser.bulk(value))
 
     ###########################################################################
@@ -1298,7 +1265,7 @@ class Storage(object):
         n = len(value)
         value.update(request[2:])
         n = len(value) - n
-        self._signal(NOTIFY_SET, db, request[0], key, n)
+        self._signal(self.NOTIFY_SET, db, request[0], key, n)
         connection.int_reply(n)
 
     @command('sets')
@@ -1377,10 +1344,10 @@ class Storage(object):
                     return connection.write(self.WRONG_TYPE)
                 orig.remove(member)
                 dest.add(member)
-                self._signal(NOTIFY_SET, db, 'srem', key1)
-                self._signal(NOTIFY_SET, db, 'sadd', key2, 1)
+                self._signal(self.NOTIFY_SET, db, 'srem', key1)
+                self._signal(self.NOTIFY_SET, db, 'sadd', key2, 1)
                 if db.pop(key1, orig) is not None:
-                    self._signal(NOTIFY_GENERIC, db, 'del', key1)
+                    self._signal(self.NOTIFY_GENERIC, db, 'del', key1)
                 connection.write(self.ONE)
             else:
                 connection.write(self.ZERO)
@@ -1397,9 +1364,9 @@ class Storage(object):
             connection.write(self.WRONG_TYPE)
         else:
             result = value.pop()
-            self._signal(NOTIFY_SET, db, request[0], key, 1)
+            self._signal(self.NOTIFY_SET, db, request[0], key, 1)
             if db.pop(key, value) is not None:
-                self._signal(NOTIFY_GENERIC, db, 'del', key)
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             connection.write(self._parser.bulk(result))
 
     @command('sets')
@@ -1460,9 +1427,9 @@ class Storage(object):
             start = len(value)
             value.difference_update(request[2:])
             removed = start - len(value)
-            self._signal(NOTIFY_SET, db, request[0], key, removed)
+            self._signal(self.NOTIFY_SET, db, request[0], key, removed)
             if db.pop(key, value) is not None:
-                self._signal(NOTIFY_GENERIC, db, 'del', key)
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             connection.int_reply(removed)
 
     @command('sets')
@@ -1492,7 +1459,7 @@ class Storage(object):
         start = len(value)
         value.update(zip(map(float, request[2::2]), request[3::2]))
         result = len(value) - start
-        self._signal(NOTIFY_ZSET, db, request[0], key, result)
+        self._signal(self.NOTIFY_ZSET, db, request[0], key, result)
         connection.int_reply(result)
 
     @command('Sorted sets')
@@ -1541,9 +1508,66 @@ class Storage(object):
             member = request[3]
             score = value.score(member, 0) + increment
             value.add(score, member)
-            self._signal(NOTIFY_ZSET, db, request[0], key, 1)
+            self._signal(self.NOTIFY_ZSET, db, request[0], key, 1)
             connection.write(self._parser.bulk(str(score).encode('utf-8')))
 
+    @command('Sorted sets')
+    def zrange(self, connection, request, N):
+        check_input(request, N < 3 or N > 4)
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.EMPTY_ARRAY)
+        elif not isinstance(value, self.zset_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            try:
+                start, end = self._range_values(value, request[2], request[3])
+            except exception:
+                return connection.write(self.SYNTAX_ERROR)
+            if N == 4:
+                if range[4].lower() == b'withscores':
+                    result = []
+                    [result.extend(vs) for vs in
+                     value.range(start, end, scores=True)]
+                else:
+                    return connection.write(self.SYNTAX_ERROR)
+            else:
+                result = list(value.range(start, end))
+            connection.write(self._parser.multi_bulk(result))
+
+    @command('Sorted sets')
+    def zrank(self, connection, request, N):
+        check_input(request, N != 2)
+        value = connection.db.get(request[1])
+        if value is None:
+            connection.write(self.NIL)
+        elif not isinstance(value, self.zset_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            rank = value.rank(request[2])
+            if rank is not None:
+                connection.int_reply(rank)
+            else:
+                connection.write(self.NIL)
+
+    @command('Sorted sets', True)
+    def zrem(self, connection, request, N):
+        check_input(request, N < 2)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
+        if value is None:
+            connection.write(self.ZERO)
+        elif not isinstance(value, self.zset_type):
+            connection.write(self.WRONG_TYPE)
+        else:
+            removed = value.remove_items(request[2:])
+            if removed:
+                self._signal(self.NOTIFY_ZSET, db, request[0], key, removed)
+            if not value:
+                db.pop()
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
+            connection.int_reply(removed)
 
     ###########################################################################
     ##    PUBSUB COMMANDS
@@ -1668,7 +1692,7 @@ class Storage(object):
             connection.error_reply("EXEC without MULTI")
         else:
             requests = connection.transaction
-            if connection.flag & DIRTY_CAS:
+            if connection.flag & self.DIRTY_CAS:
                 self._close_transaction(connection)
                 connection.write(self.EMPTY_ARRAY)
             else:
@@ -1850,17 +1874,6 @@ class Storage(object):
 
     ###########################################################################
     ##    INTERNALS
-    def wait_for_keys(self, connection, timeout, keys):
-        db = connection.db
-        connection.blocked = b = Blocked(connection, timeout)
-        for key in keys:
-            if key not in b.keys:
-                clients = db._blocking_keys.get(key)
-                if clients is None:
-                    db._blocking_keys[key] = clients = []
-                clients.append(connection)
-        self._bpop_blocked_clients += 1
-
     def _cron(self):
         dirty = self._dirty
         if dirty:
@@ -1892,10 +1905,10 @@ class Storage(object):
             if timeout > 0:
                 db._expires[key] = (self._loop.call_later(
                     timeout, db._do_expire, key), bytearray(value))
-                self._signal(NOTIFY_STRING, db, 'expire', key)
+                self._signal(self.NOTIFY_STRING, db, 'expire', key)
             else:
                 db._data[key] = bytearray(value)
-            self._signal(NOTIFY_STRING, db, 'set', key, 1)
+            self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
             connection.write(OK or self.OK)
         else:
             connection.write(SKIP or self.NULL_ARRAY)
@@ -1917,27 +1930,47 @@ class Storage(object):
             db._data[key] = bytearray(str(tv).encode('utf-8'))
         else:
             return connection.write(self.WRONG_TYPE)
-        self._signal(NOTIFY_STRING, db, name, key, 1)
+        self._signal(self.NOTIFY_STRING, db, name, key, 1)
         return tv
 
-    def _bpop(self, connection, request, keys):
+    def _bpop(self, connection, request, keys, dest=None):
         list_type = self.list_type
         db = connection.db
-        name = request[0][1:]
-        method = 'popleft' if name == 'lpop' else 'pop'
         for key in keys:
             value = db.get(key)
             if isinstance(value, list_type):
-                result = (key, getattr(value, method)())
-                self._signal(NOTIFY_LIST, db, name, key, 1)
-                if db.pop(key, value) is not None:
-                    self._signal(NOTIFY_GENERIC, db, 'del', key)
-                connection.write(self._parser.multi_bulk(result))
+                self._block_callback(connection, request[0], key, value, dest)
                 return True
             elif value is not None:
                 connection.write(self.WRONG_TYPE)
                 return True
         return False
+
+    def _block_callback(self, connection, command, key, value, dest):
+        db = connection.db
+        if command[:2] == 'br':
+            if dest is not None:
+                dval = db.get(dest)
+                if dval is None:
+                    dval = self.list_type()
+                    db._data[dest] = dval
+                elif not isinstance(dval, self.list_type):
+                    return connection.write(self.WRONG_TYPE)
+            elem = value.pop()
+            self._signal(self.NOTIFY_LIST, db, 'rpop', key, 1)
+            if dest is not None:
+                dval.appendleft(elem)
+                self._signal(self.NOTIFY_LIST, db, 'lpush', dest, 1)
+        else:
+            elem = value.popleft()
+            self._signal(self.NOTIFY_LIST, db, 'lpop', key, 1)
+        if not value:
+            db.pop(key)
+            self._signal(self.NOTIFY_GENERIC, db, 'del', key, 1)
+        if dest is None:
+            connection.write(self._parser.multi_bulk(key, elem))
+        else:
+            connection.write(self._parser.bulk(elem))
 
     def _range_values(self, value, start, end):
         start = int(start)
@@ -1954,7 +1987,7 @@ class Storage(object):
     def _close_transaction(self, connection):
         connection.transaction = None
         connection.watched_keys = None
-        connection.flag &= ~DIRTY_CAS
+        connection.flag &= ~self.DIRTY_CAS
         self._watching.discard(connection)
 
     def _flat_info(self):
@@ -2092,7 +2125,7 @@ class Storage(object):
     def _modified_key(self, key):
         for client in self._watching:
             if key is None or key in client.watched_keys:
-                client.flag |= DIRTY_CAS
+                client.flag |= self.DIRTY_CAS
 
     def _generic_event(self, db, key, command):
         if command.write:
@@ -2107,9 +2140,14 @@ class Storage(object):
         if command.write:
             self._modified_key(key)
         if key in db._blocking_keys:
-            if command in self._unblock_commands:
-                for client in db._blocking_keys.pop(key):
-                    client.blocked.callback()
+            if key in db._data:
+                value = db._data[key]
+            elif key in self._expires:
+                value = db._expires[key]
+            else:
+                value = None
+            for client in db._blocking_keys.pop(key):
+                client.blocked.unblock(client, key, value)
 
     def _remove_connection(self, client, _):
         self._monitors.discard(client)
@@ -2142,10 +2180,10 @@ class Storage(object):
 class Db(object):
     '''The database.
     '''
-    def __init__(self, num, storage):
+    def __init__(self, num, store):
+        self.store = store
         self._num = num
-        self._storage = storage
-        self._loop = storage._loop
+        self._loop = store._loop
         self._data = {}
         self._expires = {}
         self._events = {}
@@ -2168,17 +2206,18 @@ class Db(object):
         self._data.clear()
         [handle.cancel() for handle, _ in self._expires.values()]
         self._expires.clear()
-        self._storage._signal(NOTIFY_GENERIC, self, 'flushdb', dirty=removed)
+        self.store._signal(self.store.NOTIFY_GENERIC, self, 'flushdb',
+                           dirty=removed)
 
     def get(self, key, default=None):
         if key in self._data:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             return self._data[key]
         elif key in self._expires:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             return self._expires[key]
         else:
-            self._storage._missed_keys += 1
+            self.store._missed_keys += 1
             return default
 
     def exists(self, key):
@@ -2210,27 +2249,27 @@ class Db(object):
 
     def persist(self, key):
         if key in self._expires:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             handle, value = self._expires.pop(key)
             handle.cancel()
             self._data[key] = value
             return True
         elif key in self._data:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
         else:
-            self._storage._missed_keys += 1
+            self.store._missed_keys += 1
         return False
 
     def ttl(self, key):
         if key in self._expires:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             handle, value = self._expires[key]
             return max(0, int(handle._when - self._loop.time()))
         elif key in self._data:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             return -1
         else:
-            self._storage._missed_keys += 1
+            self.store._missed_keys += 1
             return -2
 
     def info(self):
@@ -2249,25 +2288,25 @@ class Db(object):
 
     def rem(self, key):
         if key in self._data:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             self._data.pop(key)
-            self._storage._signal(NOTIFY_GENERIC, self, 'del', key, 1)
+            self.store._signal(self.store.NOTIFY_GENERIC, self, 'del', key, 1)
             return 1
         elif key in self._expires:
-            self._storage._hit_keys += 1
+            self.store._hit_keys += 1
             handle, _, self._expires.pop(key)
             handle.cancel()
-            self._storage._signal(NOTIFY_GENERIC, self, 'del', key, 1)
+            self.store._signal(self.store.NOTIFY_GENERIC, self, 'del', key, 1)
             return 1
         else:
-            self._storage._missed_keys += 1
+            self.store._missed_keys += 1
             return 0
 
     def _do_expire(self, key):
         if key in self._expires:
             handle, value, = self._expires.pop(key)
             handle.cancel()
-            self._storage._expired_keys += 1
+            self.store._expired_keys += 1
 
 
 class StorageData:

@@ -290,11 +290,13 @@ import sys
 import pulsar
 from pulsar import EventHandler, maybe_failure
 from pulsar.apps import tasks
+from pulsar.apps.data import KeyValueStore
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
 from pulsar.utils.pep import default_timer
 
 from .case import *
+from .populate import populate
 from .result import *
 from .plugins.base import *
 from .loader import *
@@ -525,7 +527,16 @@ class TestSuite(tasks.TaskQueue):
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        yield super(TestSuite, self).monitor_start(monitor)
+        # Create a datastore for this test suite
+        store = KeyValueStore(bind='127.0.0.1:0', workers=0,
+                              key_value_save=[],
+                              name='%s_store' % self.name)
+        yield store()
+        self.backend = tasks.TaskBackend(
+            'pulsar://%s:%s' % (store.address),
+            name=self.name,
+            task_paths=self.cfg.task_paths,
+            backlog=self.cfg.concurrent_tasks)
         loader = self.local.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
@@ -591,3 +602,4 @@ class TestSuite(tasks.TaskQueue):
             else:
                 exit_code = 0
             raise pulsar.HaltServer(exit_code=exit_code)
+

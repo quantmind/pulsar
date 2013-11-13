@@ -20,8 +20,6 @@ Implementation
 When creating a new :class:`TaskBackend` there are six methods which must
 be implemented:
 
-* The :meth:`~TaskBackend.put_task` method, invoked when putting a new
-  :class:`Task.id` into the distributed task queue, whatever that is.
 * The :meth:`~TaskBackend.get_task` method, invoked when retrieving
   a :class:`Task` from the backend server.
 * The :meth:`~TaskBackend.get_tasks` method, invoked when retrieving
@@ -129,7 +127,7 @@ from threading import Lock
 from pulsar import (in_loop, EMPTY_TUPLE, EMPTY_DICT, Failure,
                     PulsarException, Deferred, coroutine_return)
 from pulsar.utils.pep import itervalues
-from pulsar.apps.data import create_store, PubSubClient
+from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import LocalMixin, local_property
 
 from .models import JobRegistry, create_task_id
@@ -221,66 +219,18 @@ class TaskConsumer(object):
         self.task_id = task_id
 
 
-class Task(object):
-    '''Interface for tasks which are produced by
-    :ref:`jobs or periodic jobs <apps-taskqueue-job>`.
-
-    .. attribute:: id
-
-        :class:`Task` unique id.
-
-    .. attribute:: name
-
-        :class:`Job` name.
-
-    .. attribute:: status
-
-        The current :ref:`status string <task-state>` of task.
-
-    .. attribute:: time_executed
-
-        date time when the task was executed.
-
-    .. attribute:: time_start
-
-        date-time when the task calculation has started.
-
-    .. attribute:: time_end
-
-        date-time when the task has finished.
-
-    .. attribute:: expiry
-
-        optional date-time indicating when the task should expire.
-
-    .. attribute:: timeout
-
-        A datetime or ``None`` indicating whether a timeout has occurred.
-
-    .. attribute:: from_task
-
-        Optional :attr:`Task.id` for the :class:`Task` which queued
-        this :class:`Task`. This is a usuful for monitoring the creation
-        of tasks within other tasks.
-    '''
-    stack_trace = None
-
-    def __init__(self, id, overlap_id='', name=None, time_executed=None,
-                 expiry=None, args=None, kwargs=None, status=None,
-                 from_task=None, result=None, **params):
-        self.id = id
-        self.overlap_id = overlap_id
-        self.name = name
-        self.time_executed = time_executed
-        self.from_task = from_task
-        self.time_started = None
-        self.time_ended = None
-        self.expiry = expiry
-        self.args = args
-        self.kwargs = kwargs
-        self.status = status
-        self.result = result
-        self.params = params
+class Task(odm.Model):
+    id = odm.UUIDField()
+    overlap_id = odm.UUIDField(unique=True)
+    name = odm.CharField(index=True)
+    status = odm.IntegerField(index=True)
+    time_queued = odm.FloatField()
+    time_started = odm.FloatField(required=False)
+    time_ended = odm.FloatField(required=False)
+    expiry = odm.FloatField(required=False)
+    from_task = odm.UUIDField(required=False)
+    kwargs = odm.JSONField(required=False)
+    result = odm.JSONField(required=False)
 
     def __repr__(self):
         return '%s (%s)' % (self.name, self.id)
@@ -338,54 +288,58 @@ class TaskClient(PubSubClient):
 
 
 class TaskBackend(LocalMixin):
-    '''A backend class for :class:`Task`.
-A :class:`TaskBackend` is responsible for creating tasks and put them
-into the distributed queue.
-It also schedules the run of periodic tasks if enabled to do so.
+    '''A backend class for running :class:`.Task`.
+    A :class:`TaskBackend` is responsible for creating tasks and put them
+    into the distributed queue.
+    It also schedules the run of periodic tasks if enabled to do so.
 
-.. attribute:: task_paths
+    .. attribute:: task_paths
 
-    List of paths where to upload :ref:`jobs <app-taskqueue-job>` which
-    are factory of tasks. Passed by the task-queue application
-    :ref:`task paths setting <setting-task_paths>`.
+        List of paths where to upload :ref:`jobs <app-taskqueue-job>` which
+        are factory of tasks. Passed by the task-queue application
+        :ref:`task paths setting <setting-task_paths>`.
 
-.. attribute:: schedule_periodic
+    .. attribute:: schedule_periodic
 
-    `True` if this :class:`TaskBackend` can schedule periodic tasks. Passed
-    by the task-queue application
-    :ref:`schedule-periodic setting <setting-schedule_periodic>`.
+        `True` if this :class:`TaskBackend` can schedule periodic tasks.
 
-.. attribute:: backlog
+        Passed by the task-queue application
+        :ref:`schedule-periodic setting <setting-schedule_periodic>`.
 
-    The maximum number of concurrent tasks running on a task-queue
-    for an :class:`.Actor`. A number in the order of 5 to 10 is normally
-    used. Passed by the task-queue application
-    :ref:`concurrent tasks setting <setting-concurrent_tasks>`.
+    .. attribute:: backlog
 
-.. attribute:: max_tasks
+        The maximum number of concurrent tasks running on a task-queue
+        for an :class:`.Actor`. A number in the order of 5 to 10 is normally
+        used. Passed by the task-queue application
+        :ref:`concurrent tasks setting <setting-concurrent_tasks>`.
 
-    The maximum number of tasks a worker will process before restarting.
-    Passed by the task-queue application
-    :ref:`max requests setting <setting-max_requests>`.
+    .. attribute:: max_tasks
 
-.. attribute:: poll_timeout
+        The maximum number of tasks a worker will process before restarting.
+        Passed by the task-queue application
+        :ref:`max requests setting <setting-max_requests>`.
 
-    The (asynchronous) timeout for polling tasks from the task queue. It is
-    always a positive number and it can be specified via the backend
-    connection string::
+    .. attribute:: poll_timeout
 
-        local://?poll_timeout=3
+        The (asynchronous) timeout for polling tasks from the task queue.
 
-    There shouldn't be any reason to modify the default value.
+        It is always a positive number and it can be specified via the
+        backend connection string::
 
-    Default: ``2``.
+            local://?poll_timeout=3
 
-.. attribute:: processed
+        There shouldn't be any reason to modify the default value.
 
-    The number of tasks processed (so far) by the worker running this backend.
-    This value is important in connection with the :attr:`max_tasks` attribute.
+        Default: ``2``.
 
-'''
+    .. attribute:: processed
+
+        The number of tasks processed (so far) by the worker running this
+        backend.
+        This value is important in connection with the :attr:`max_tasks`
+        attribute.
+
+    '''
     def __init__(self, dns, task_paths=None, schedule_periodic=False,
                  backlog=1, max_tasks=0, name=None, poll_timeout=None):
         self._store_dns = dns
@@ -473,6 +427,7 @@ It also schedules the run of periodic tasks if enabled to do so.
         '''A shortcut for :meth:`run_job` without task meta parameters'''
         return self.run_job(jobname, args, kwargs)
 
+    @in_loop
     def run_job(self, jobname, targs=None, tkwargs=None, expiry=None,
                 **meta_params):
         '''Create a new :ref:`Task` which may or may not be queued.
@@ -574,31 +529,25 @@ its execution. It returns a :class:`.Deferred`.'''
     ########################################################################
     ##    ABSTRACT METHODS
     ########################################################################
-    def put_task(self, task_id):
-        '''Put the ``task_id`` into the queue.
-
-:param task_id: the task id.
-:return: an :ref:`asynchronous component <tutorial-coroutine>` which results
-    in the ``task_id`` added.
-
-**Must be implemented by subclasses.**'''
-        raise NotImplementedError
-
     def num_tasks(self):
         '''Retrieve the number of tasks in the task queue.'''
-        raise NotImplementedError
+        raise self.tasks.count()
 
     def get_task(self, task_id=None, when_done=False):
-        '''Retrieve a :class:`Task` from a ``task_id``. Must be implemented
-by subclasses.
+        '''Retrieve a :class:`Task` from a ``task_id``.
 
-:param task_id: the :attr:`Task.id` of the task to retrieve.
-:param when_done: if ``True`` return only when the task is in a ready state.
-:return: a :class:`Task` or ``None``.
-
-**Must be implemented by subclasses.**
-'''
-        raise NotImplementedError
+        :param task_id: the :attr:`Task.id` of the task to retrieve.
+        :param when_done: if ``True`` return only when the task is in a
+            ready state.
+        :return: a :class:`Task` or ``None``.
+        '''
+        if not task_id:
+            try:
+                task_id = yield self.queue.get(self.poll_timeout)
+            except Empty:
+                coroutine_return()
+        task = yield self.tasks.get(id=task_id)
+        coroutine_return(task)
 
     def get_tasks(self, **filters):
         '''Retrieve a group of :class:`Task` from the backend.

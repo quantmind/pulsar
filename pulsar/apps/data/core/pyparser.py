@@ -102,6 +102,9 @@ class Parser(object):
         else:
             return ('$%d\r\n' % len(value)).encode('utf-8') + value + b'\r\n'
 
+    def multi_bulk_len(self, len):
+        return ('*%s\r\n' % len).encode('utf-8')
+
     def multi_bulk(self, *args):
         "Pack a series of arguments into a value Redis command"
         return b''.join(self.__pack_gen(args))
