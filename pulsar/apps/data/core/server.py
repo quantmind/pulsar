@@ -42,6 +42,8 @@ DIRTY_CAS = (1 << 5)
 
 STRING_LIMIT = 2**32
 
+nan = float('nan')
+
 
 class RedisParserSetting(Global):
     name = "py_redis_parser"
@@ -341,6 +343,7 @@ class Storage(object):
         self.ZERO = b':0\r\n'
         self.ONE = b':1\r\n'
         self.NIL = b'$-1\r\n'
+        self.NULL_ARRAY = b'*-1\r\n'
         self.EMPTY_ARRAY = b'*0\r\n'
         self.WRONG_TYPE = (b'-WRONGTYPE Operation against a key holding '
                            b'the wrong kind of value\r\n')
@@ -352,6 +355,7 @@ class Storage(object):
         self.BLOCKED = b'-ERR blocked client cannot request\r\n'
         self.INVALID_SCORE = b'-ERR Invalid score value\r\n'
         self.OUT_OF_BOUND = b'-ERR Out of bound\r\n'
+        self.SYNTAX_ERROR = b'-ERR Syntax error\r\n'
         self.SUBSCRIBE_COMMANDS = ('psubscribe', 'punsubscribe', 'subscribe',
                                    'unsubscribe', 'quit')
         self.hash_type = Hash
@@ -433,6 +437,26 @@ class Storage(object):
         connection.write(self._parser.multi_bulk(*result))
 
     @command('keys', True)
+    def move(self, connection, request, N):
+        check_input(request, N != 2)
+        key = request[1]
+        try:
+            db2 = self.databases.get(int(request[2]))
+            if not db:
+                raise ValueError
+        except Exception:
+            return connection.error_reply('Invalid database')
+        db = connection.db
+        value = db.get(key)
+        if db2.exists(key) or value is None:
+            return connection.write(self.ZERO)
+        db.pop(key)
+        self._signal(NOTIFY_GENERIC, db, 'del', key, 1)
+        db2._data[key] = value
+        self._signal(self._type_event_map[type(value)], db2, 'set', key, 1)
+        connection.write(self.ONE)
+
+    @command('keys', True)
     def persist(self, connection, request, N):
         check_input(request, N != 1)
         if connection.db.persist(request[1]):
@@ -450,7 +474,7 @@ class Storage(object):
             connection.write(self.NIL)
 
     @command('keys', True)
-    def rename(self, connection, request, N):
+    def rename(self, connection, request, N, ex=False):
         check_input(request, N != 2)
         key1, key2 = request[1], request[2]
         db = connection.db
@@ -460,13 +484,98 @@ class Storage(object):
         elif key1 == key2:
             connection.error_reply('Cannot rename key')
         else:
+            if ex:
+                if db.exists(key2):
+                    return connection.write(self.ZERO)
+                result = self.ONE
+            else:
+                result = self.OK
+                db.rem(key2)
             db.pop(key1)
-            db.rem(key2)
             event = self._type_event_map[type(value)]
             dirty = 1 if event == NOTIFY_STRING else len(value)
             db._data[key2] = value
             self._signal(event, db, request[0], key2, dirty)
-            connection.write(self.OK)
+            connection.write(result)
+
+    @command('keys', True)
+    def renameex(self, connection, request, N):
+        self.rename(connection, request, N, True)
+
+    @command('sort', True)
+    def sort(self, connection, request, N):
+        check_input(request, not N)
+        key = request[1]
+        db = connection.db
+        value = db.get(key)
+        if value is None:
+            pass
+        elif not isinstance(value, (set, self.list_type, self.zset_type)):
+            return connection.write(self.WRONG_TYPE)
+        sort_type = type(value)
+        stype = self._type_event_map[sort_type]
+        right = 0
+        desc = None
+        alpha = None
+        offset = None
+        count = None
+        storekey = None
+        sortby = None
+        donsort = False
+        getops = []
+        N = len(request)
+        j = 2
+        while j < N:
+            val = request[j].lower()
+            right = N - j
+            if val == b'asc':
+                desc = False
+            elif val == b'desc':
+                desc = True
+            elif val == b'alpha':
+                alpha = True
+            elif val == b'limit' and right >= 2:
+                try:
+                    offset = int(request[j+1])
+                    count = int(request[j+2])
+                except Exception:
+                    return connection.write(self.SYNTAX_ERROR)
+                j += 2
+            elif val == b'store' and right >= 1:
+                storekey = request[j+1]
+                j += 1
+            elif val == b'by' and right >= 1:
+                sortby = request[j+1]
+                if b'*' not in sortby:
+                    donsort = True
+                j += 1
+            elif val == b'get' and right >= 1:
+                getops.append(request[j+1])
+                j += 1
+            else:
+                return connection.write(self.SYNTAX_ERROR)
+            j += 1
+
+    if sort_type is self.zset_type and dontsort:
+        donsort = False
+        alpha = True
+        sortby = None
+
+    vlen = len(value)
+    vector = []
+
+    if not dontsort:
+        for val in sorting_value:
+            if sortby:
+                byval = lookup(sortby, val)
+            else:
+                byval = val
+            if not alpha:
+                try:
+                    byval = float(byval)
+                except Excetion:
+                    byval = nan
+            vector.append(byval)
 
     @command('keys', True)
     def ttl(self, connection, request, N):
@@ -725,7 +834,8 @@ class Storage(object):
     @command('strings', True)
     def setnx(self, connection, request, N):
         check_input(request, N != 2)
-        self._set(connection, request[1], request[2], nx=True)
+        self._set(connection, request[1], request[2], nx=True,
+                  OK=self.ONE, SKIP=self.ZERO)
 
     @command('strings', True)
     def setrange(self, connection, request, N):
@@ -1242,7 +1352,7 @@ class Storage(object):
         elif not isinstance(value, set):
             connection.write(self.WRONG_TYPE)
         else:
-            connection.write(self._parser.multi_bulk(value))
+            connection.write(self._parser.multi_bulk(*value))
 
     @command('sets', True)
     def smove(self, connection, request, N):
@@ -1762,7 +1872,8 @@ class Storage(object):
                     break
 
     def _set(self, connection, key, value,
-             seconds=0, milliseconds=0, nx=False, xx=False):
+             seconds=0, milliseconds=0, nx=False, xx=False,
+             OK=None, SKIP=None):
         try:
             seconds = int(seconds)
             milliseconds = 0.000001*int(milliseconds)
@@ -1785,7 +1896,9 @@ class Storage(object):
             else:
                 db._data[key] = bytearray(value)
             self._signal(NOTIFY_STRING, db, 'set', key, 1)
-        connection.write(self.OK)
+            connection.write(OK or self.OK)
+        else:
+            connection.write(SKIP or self.NULL_ARRAY)
 
     def _incrby(self, connection, name, key, value, type):
         try:
@@ -1912,7 +2025,7 @@ class Storage(object):
             else:
                 connection.write(self.ZERO)
         else:
-            connection.write(self._parser.multi_bulk(result))
+            connection.write(self._parser.multi_bulk(*result))
 
     def _info(self):
         keyspace = {}
@@ -2091,7 +2204,7 @@ class Db(object):
             value = self._data.pop(key)
         else:
             return False
-        self._expires[key] = (self._loop.call_at(
+        self._expires[key] = (self._loop.call_later(timeout - time.time(),
             timeout, self._do_expire, key), value)
         return True
 
