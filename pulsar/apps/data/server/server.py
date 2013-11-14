@@ -16,7 +16,7 @@ from pulsar.utils.structures import Hash, Zset, Deque
 from pulsar.utils.pep import map, range, zip, pickle
 
 
-from .parser import redis_parser
+from ..core.parser import redis_parser
 from .sort import sort_command
 
 
@@ -224,8 +224,8 @@ class Blocked:
         for key in self.keys:
             clients = db._blocking_keys.get(key)
             if clients is None:
-                db._blocking_keys[key] = clients = []
-            clients.append(connection)
+                db._blocking_keys[key] = clients = set()
+            clients.add(connection)
         connection.store._bpop_blocked_clients += 1
         if timeout:
             self.handle = connection._loop.call_later(
@@ -241,6 +241,19 @@ class Blocked:
             store = connection.store
             connection.blocked = None
             store._bpop_blocked_clients -= 1
+            #
+            # make sure to remove the client from the set of blocked
+            # clients in the database associated with key
+            if key is None:
+                bkeys = connection.db._blocking_keys
+                for key in self.keys:
+                    clients = bkeys.get(key)
+                    if clients:
+                        clients.discard(connection)
+                        if not clients:
+                            bkeys.pop(key)
+            #
+            # send the response
             if value is None:
                 connection.write(store.NULL_ARRAY)
             else:
@@ -1027,16 +1040,15 @@ class Storage(object):
         check_input(request, N != 2)
         value = connection.db.get(request[1])
         if value is None:
-            result = None
+            connection.write(self.NIL)
         elif isinstance(value, self.list_type):
             index = int(request[2])
             if index >= 0 and index < len(value):
-                result = value[index]
+                connection.write(self._parser.bulk(value[index]))
             else:
-                result = None
+                connection.write(self.NIL)
         else:
-            raise WrongType
-        connection.write(self._parser.bulk(result))
+            connection.write(self.WRONG_TYPE)
 
     @command('lists', True)
     def linsert(self, connection, request, N):
@@ -1067,12 +1079,11 @@ class Storage(object):
         check_input(request, N != 1)
         value = connection.db.get(request[1])
         if value is None:
-            result = 0
+            connection.write(self.ZERO)
         elif isinstance(value, self.list_type):
-            result = len(value)
+            connection.int_reply(len(value))
         else:
-            raise WrongType
-        connection.int_reply(result)
+            connection.write(self.WRONG_TYPE)
 
     @command('lists', True)
     def lpop(self, connection, request, N):
@@ -1525,7 +1536,7 @@ class Storage(object):
             except exception:
                 return connection.write(self.SYNTAX_ERROR)
             if N == 4:
-                if range[4].lower() == b'withscores':
+                if request[4].lower() == b'withscores':
                     result = []
                     [result.extend(vs) for vs in
                      value.range(start, end, scores=True)]
@@ -2139,6 +2150,7 @@ class Storage(object):
     def _list_event(self, db, key, command):
         if command.write:
             self._modified_key(key)
+        # the key is blocking clients
         if key in db._blocking_keys:
             if key in db._data:
                 value = db._data[key]

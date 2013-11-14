@@ -2,7 +2,7 @@ from .query import AbstractQuery, Query
 
 
 class Manager(AbstractQuery):
-    '''Links a :class:`.Model` with a :class:`.Store`.
+    '''Links a database model/table with a data :class:`.Store`.
 
     Used by the :class:`.Router` to :ref:`register <tutorial-registration>`
     a :class:`.Model` with a :class:`.Store`. For example::
@@ -38,7 +38,7 @@ class Manager(AbstractQuery):
     '''
     query_class = Query
 
-    def __init__(self, meta, model_class=None, store=None,
+    def __init__(self, model, store=None,
                  read_store=None, router=None):
         self._meta = meta
         self._model_class = model_class or meta.model_class

@@ -73,6 +73,10 @@ class Store(object):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
 
+    def connect(self):
+        '''Connect with store server'''
+        raise NotImplementedError
+
     def execute(self, *args, **options):
         '''Execute a command'''
         raise NotImplementedError
