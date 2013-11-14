@@ -11,7 +11,7 @@ from psycopg2.extensions import (connection as base_connection,
                                  TRANSACTION_STATUS_IDLE)
 
 import pulsar
-from pulsar import coroutine_return, Deferred
+from pulsar import coroutine_return, Deferred, Pool
 from pulsar.apps.data import register_store, sql
 
 try:
@@ -116,10 +116,10 @@ class PostgreSql(sql.SqlDB):
         self._pool = Pool(self.connect, pool_size=pool_size)
 
     def connect(self):
-        '''Create a new Redis connection'''
+        '''Create a new connection'''
         kw['async'] = 1
         kw['cursor_factory'] = partial(Cursor, self._event_loop)
-        conn = Connection(self._event_loop, self.dbapi.connect(*args, **kw))
+        conn = Connection(self._loop, self.dbapi.connect(*args, **kw))
         future = Deferred()
         conn.wait(lambda: future.callback(conn), future.callback)
         return future
