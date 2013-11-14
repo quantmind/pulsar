@@ -220,60 +220,13 @@ class TaskConsumer(object):
 
 
 class Task(odm.Model):
-    id = odm.UUIDField()
-    overlap_id = odm.UUIDField(unique=True)
-    name = odm.CharField(index=True)
-    status = odm.IntegerField(index=True)
-    time_queued = odm.FloatField()
-    time_started = odm.FloatField(required=False)
-    time_ended = odm.FloatField(required=False)
-    expiry = odm.FloatField(required=False)
-    from_task = odm.UUIDField(required=False)
-    kwargs = odm.JSONField(required=False)
-    result = odm.JSONField(required=False)
-
-    def __repr__(self):
-        return '%s (%s)' % (self.name, self.id)
-    __str__ = __repr__
-
-    @property
-    def status_code(self):
-        '''Integer indicating :attr:`status` precedence.
-Lower number higher precedence.'''
-        return states.PRECEDENCE_MAPPING.get(self.status, states.UNKNOWN_STATE)
 
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed.
 
         Its status is one of :ref:`READY_STATES <task-ready-state>`.
         '''
-        return self.status in states.READY_STATES
-
-    def execute2start(self):
-        if self.time_start:
-            return self.time_start - self.time_executed
-
-    def execute2end(self):
-        if self.time_end:
-            return self.time_ended - self.time_executed
-
-    def duration(self):
-        '''The :class:`Task` duration.
-
-        Only available if the task status is in
-        :ref:`FULL_RUN_STATES <task-run-state>`.
-        '''
-        if self.time_end and self.time_started:
-            return self.time_ended - self.time_started
-
-    def tojson(self):
-        '''Convert the task instance into a JSON-serializable dictionary.'''
-        data = self.__dict__.copy()
-        data['expiry'] = totimestamp(data['expiry'])
-        data['time_executed'] = totimestamp(data['time_executed'])
-        data['time_started'] = totimestamp(data['time_started'])
-        data['time_ended'] = totimestamp(data['time_ended'])
-        return data
+        return self.get('state') in self.READY_STATES
 
 
 class TaskClient(PubSubClient):
@@ -455,14 +408,11 @@ class TaskBackend(LocalMixin):
             task_id, overlap_id = job.generate_task_ids(targs, tkwargs)
             task = None
             if overlap_id:
-                tasks = yield self.get_tasks(overlap_id=overlap_id)
-                # Tasks with overlap id already available
-                for task in tasks:
-                    if task.done():
-                        yield self.save_task(task.id, overlap_id='')
+                running_id = yield self.is_running(overlap_id)
+                if running_id:
+                    task = yield self.get_task(running_id)
+                    if task and task.done():
                         task = None
-                    else:
-                        break
             if task:
                 LOGGER.debug('Task %s cannot run.', task)
                 yield None
@@ -475,16 +425,15 @@ class TaskBackend(LocalMixin):
                 elif job.timeout:
                     expiry = get_datetime(job.timeout, time_executed)
                 LOGGER.debug('Queue new task %s (%s).', job.name, task_id)
-                yield self.save_task(task_id, overlap_id=overlap_id,
-                                     name=job.name,
-                                     time_executed=time_executed,
-                                     expiry=expiry, args=targs,
-                                     kwargs=tkwargs,
-                                     status=states.PENDING, **params)
+                with self.models.transaction() as t:
+                    t.add(self.models.task(id=task_id, name=job.name,
+                                           time_executed=time_executed,
+                                           expiry=expiry, kwargs=tkwargs,
+                                           status=states.QUEUED, **params))
                 pubsub.publish(self.channel('task_created'), task_id)
+                self.queue.put(task_id)
         else:
             raise TaskNotAvailable(jobname)
-        self.queue.put(task_id)
 
     def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
@@ -527,12 +476,8 @@ its execution. It returns a :class:`.Deferred`.'''
             worker.logger.debug('stopped polling tasks')
 
     ########################################################################
-    ##    ABSTRACT METHODS
+    ##    OVERRIDABLE METHODS
     ########################################################################
-    def num_tasks(self):
-        '''Retrieve the number of tasks in the task queue.'''
-        raise self.tasks.count()
-
     def get_task(self, task_id=None, when_done=False):
         '''Retrieve a :class:`Task` from a ``task_id``.
 
@@ -549,30 +494,16 @@ its execution. It returns a :class:`.Deferred`.'''
         task = yield self.tasks.get(id=task_id)
         coroutine_return(task)
 
-    def get_tasks(self, **filters):
-        '''Retrieve a group of :class:`Task` from the backend.
-
-        **Must be implemented by subclasses.**'''
-        raise NotImplementedError
+    def is_running(self, running_id):
+        return self.store.get(running_id)
 
     def save_task(self, task_id, **params):
         '''Create or update a :class:`Task` with ``task_id`` and key-valued
-parameters ``params``.
+        parameters ``params``.
 
 **Must be implemented by subclasses.**'''
-        raise NotImplementedError
 
-    def delete_tasks(self, task_ids=None):
-        '''Delete a group of task. Must be implemented by subclasses.
 
-        **Must be implemented by subclasses.**'''
-        raise NotImplementedError
-
-    def flush(self):
-        '''Flush task backend by removing all tasks and clearing the queue.
-
-        **Must be implemented by subclasses.**'''
-        raise NotImplementedError
 
     ########################################################################
     ##    PRIVATE METHODS
@@ -600,56 +531,6 @@ value ``now`` can be passed.'''
         self.next_run = now or datetime.now()
         if remaining_times:
             self.next_run += timedelta(seconds=min(remaining_times))
-
-    def create_task(self, jobname, targs=None, tkwargs=None, expiry=None,
-                    **params):
-        '''Create a new :class:`Task` from ``jobname``, positional arguments
-``targs``, key-valued arguments ``tkwargs`` and :class:`Task` meta parameters
-``params``. This method can be called by any process domain.
-
-:param jobname: the name of the :class:`Job` which create the task.
-:param targs: task positional arguments (a ``tuple`` or ``None``).
-:param tkwargs: task key-valued arguments (a ``dict`` or ``None``).
-:return: a :ref:`coroutine <coroutine>` resulting in a :attr:`Task.id`
-    or ``None`` if no task was created.
-'''
-        if jobname in self.registry:
-            pubsub = self.pubsub
-            job = self.registry[jobname]
-            targs = targs or EMPTY_TUPLE
-            tkwargs = tkwargs or EMPTY_DICT
-            task_id, overlap_id = job.generate_task_ids(targs, tkwargs)
-            task = None
-            if overlap_id:
-                tasks = yield self.get_tasks(overlap_id=overlap_id)
-                # Tasks with overlap id already available
-                for task in tasks:
-                    if task.done():
-                        yield self.save_task(task.id, overlap_id='')
-                        task = None
-                    else:
-                        break
-            if task:
-                LOGGER.debug('Task %s cannot run.', task)
-                yield None
-            else:
-                if self.entries and job.name in self.entries:
-                    self.entries[job.name].next()
-                time_executed = datetime.now()
-                if expiry is not None:
-                    expiry = get_datetime(expiry, time_executed)
-                elif job.timeout:
-                    expiry = get_datetime(job.timeout, time_executed)
-                LOGGER.debug('Queue new task %s (%s).', job.name, task_id)
-                yield self.save_task(task_id, overlap_id=overlap_id,
-                                     name=job.name,
-                                     time_executed=time_executed,
-                                     expiry=expiry, args=targs,
-                                     kwargs=tkwargs,
-                                     status=states.PENDING, **params)
-                pubsub.publish(self.channel('task_created'), task_id)
-        else:
-            raise TaskNotAvailable(jobname)
 
     def job_list(self, jobnames=None):
         registry = self.registry

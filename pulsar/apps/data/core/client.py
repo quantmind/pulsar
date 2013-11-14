@@ -26,6 +26,31 @@ class Compiler(object):
         raise NotImplementedError
 
 
+class Queue(object):
+
+    def __init__(self, store, id):
+        self.store = store
+        self._loop = store._loop
+        self.id = id
+
+    def get(self, timeout=None):
+        raise NotImplementedError
+
+    def put(self, item):
+        raise NotImplementedError
+
+    def qsize(self):
+        raise NotImplementedError
+
+    def full(self):
+        return False
+
+    @in_loop
+    def empty(self):
+        size = yield self.qsize()
+        coroutine_return(not size)
+
+
 class Store(object):
     '''Base class for an asynchronous :ref:`data stores <data-stores>`.
     '''

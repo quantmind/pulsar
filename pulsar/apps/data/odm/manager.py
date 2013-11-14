@@ -65,6 +65,8 @@ class Manager(AbstractQuery):
     __repr__ = __str__
 
     def __call__(self, *args, **kwargs):
+        '''Create a new model without commiting to database.
+        '''
         return self._model(*args, **kwargs)
 
     def query(self):

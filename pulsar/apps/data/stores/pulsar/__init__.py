@@ -148,7 +148,7 @@ class PulsarClient(object):
 
 
 class PulsarStore(Store):
-    '''Redis :class:`.Store` implementation.
+    '''Pulsar :class:`.Store` implementation.
     '''
     def _init(self, namespace=None, parser_class=None, pool_size=50,
               decode_responses=False, **kwargs):
@@ -172,6 +172,10 @@ class PulsarStore(Store):
 
     def pubsub(self):
         return PubSub(self)
+
+    def queue(self, id):
+        '''Create a districuted queue'''
+        return Queue(self, id)
 
     @in_loop_thread
     def execute(self, command, *args, **options):
