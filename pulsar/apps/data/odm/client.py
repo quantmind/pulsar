@@ -3,11 +3,11 @@ import socket
 from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    coroutine_return, get_application, send)
+                    coroutine_return, get_application, in_loop, send)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
-from .server import KeyValueStore
+from ..server import KeyValueStore
 
 
 data_stores = {}
@@ -69,6 +69,7 @@ class Store(object):
         self._urlparams = {}
         self._init(**kw)
         self._dns = self._buildurl()
+        self.logger = loop.logger
 
     @property
     def name(self):
@@ -162,6 +163,7 @@ class Store(object):
         host = self._host
         if isinstance(host, tuple):
             host = '%s:%s' % host
+        host = '%s%s' % (pre, host)
         path = '/%s' % self._database if self._database else ''
         query = urlencode(self._urlparams)
         return urlunparse((self._name, host, path, '', query, ''))

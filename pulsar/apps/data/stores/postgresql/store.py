@@ -2,6 +2,7 @@
 import os
 import sys
 from functools import partial
+from collections import deque
 
 import psycopg2
 from psycopg2 import ProgrammingError, OperationalError
@@ -11,8 +12,12 @@ from psycopg2.extensions import (connection as base_connection,
                                  TRANSACTION_STATUS_IDLE)
 
 import pulsar
-from pulsar import coroutine_return, Deferred, Pool
-from pulsar.apps.data import register_store, sql
+from pulsar import coroutine_return, Deferred, Pool, Failure
+from pulsar.apps.data import register_store
+
+from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
+
+from ...odm import sql
 
 try:
     psycopg2.extensions.POLL_OK
@@ -22,16 +27,18 @@ except AttributeError:
         'You need at least version 2.2.0 of Psycopg2.')
 
 
-class Async(AsyncBase):
+class Async(object):
 
     def wait(self, callback, errback=None, registered=False):
         exc = None
+        loop = self._loop
         try:
             state = self.connection.poll()
         except Exception:
             exc = sys.exc_info()
+            if registered:
+                loop.remove_connector(self._sock_fd)
         else:
-            loop = self._loop
             if state == POLL_OK:
                 if registered:
                     loop.remove_connector(self._sock_fd)
@@ -40,7 +47,8 @@ class Async(AsyncBase):
                 loop.add_connector(self._sock_fd, self.wait, callback,
                                    errback, True)
             return
-        self.close(exc)
+        self.close()
+        exc = Failure(exc)
         if errback:
             errback(exc)
 
@@ -49,8 +57,10 @@ class Cursor(base_cursor, Async):
     '''Asynchronous Cursor
     '''
     def __init__(self, loop, *args, **kw):
-        self._loop = loop
         super(Cursor, self).__init__(*args, **kw)
+        self._sock_fd = self.connection.fileno()
+        self._loop = loop
+        self.waiting = None
 
     def begin(self):
         return self.execute('BEGIN')
@@ -62,45 +72,20 @@ class Cursor(base_cursor, Async):
         return self.execute('ROLLBACK')
 
     def execute(self, *args, **kw):
+        self.waiting = waiting = Deferred(self._loop)
         super(Cursor, self).execute(*args, **kw)
-        future = Deferred()
-        conn.wait(lambda: future.callback, future.callback)
-        return future
+        self.wait(self._result, self._error)
+        return waiting
+
+    def _result(self):
+        self.waiting.callback(None)
+
+    def _error(self, exc):
+        self.waiting.callback(exc)
 
 
-class Connection(Async):
+class Connection(sql.SqlConnection, Async):
     '''A wrapper for a psycopg2 connection'''
-    def __init__(self, loop, conn):
-        self._loop = _loop
-        self._connection = conn
-        self._closing = False
-        self._sock_fd = conn.fileno()
-
-    @property
-    def info(self):
-        return self._connection.info
-
-    def close(self, exc=None):
-        """Closes the transport.
-
-        Buffered data will be flushed asynchronously.  No more data
-        will be received.  After all buffered data is flushed, the
-        :class:`BaseProtocol.connection_lost` method will (eventually) called
-        with ``None`` as its argument.
-        """
-        if not self._closing:
-            self._closing = True
-            try:
-                self.connection.close()
-            except Exception:
-                pass
-            self._event_loop.remove_connector(self._sock_fd)
-            self.connection = None
-            self._sock_fd = None
-
-    def cursor(self, **kwargs):
-        return self.connection.cursor(**kwargs)
-
     def __getattr__(self, name):
         return getattr(self.connection, name)
 
@@ -108,22 +93,33 @@ class Connection(Async):
 class PostgreSql(sql.SqlDB):
     dbapi = psycopg2
 
-    def _init(self, pool_size=50, **kwargs):
+    def _init(self, pool_size=50, namespace=None, **kwargs):
         self._received = 0
-        self.dbapi = psycopg2
+        self.dialect = PGDialect_psycopg2()
         if namespace:
             self._urlparams['namespace'] = namespace
-        self._pool = Pool(self.connect, pool_size=pool_size)
+        self._pool = Pool(self.connect, loop=self._loop, pool_size=pool_size)
 
     def connect(self):
         '''Create a new connection'''
-        kw['async'] = 1
-        kw['cursor_factory'] = partial(Cursor, self._event_loop)
-        conn = Connection(self._loop, self.dbapi.connect(*args, **kw))
+        conn = Connection(self, self.raw_connection())
         future = Deferred()
         conn.wait(lambda: future.callback(conn), future.callback)
         return future
 
+    def raw_connection(self):
+        cursor_factory = partial(Cursor, self._loop)
+        host, port = self._host
+        database=  self._database or 'postgres'
+        return self.dbapi.connect(host=host,
+                                  port=port,
+                                  user=self._user,
+                                  password=self._password,
+                                  database=self._database or 'postgres',
+                                  async=1,
+                                  cursor_factory=cursor_factory)
 
-register_store('pulsar',
-               'pulsar.apps.data.stores.postgresql.PostgreSql')
+
+
+register_store('postgresql',
+               'pulsar.apps.data.stores.postgresql.store.PostgreSql')

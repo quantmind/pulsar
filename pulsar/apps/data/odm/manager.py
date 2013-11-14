@@ -1,4 +1,14 @@
+from pulsar import EventHandler
+
 from .query import AbstractQuery, Query
+from .transaction import ModelDictionary
+from .model import ModelMeta
+from .client import create_store
+
+try:
+    from sqlalchemy import Table
+except EmportError:
+    Table = ModelMeta
 
 
 class Manager(AbstractQuery):
@@ -38,22 +48,11 @@ class Manager(AbstractQuery):
     '''
     query_class = Query
 
-    def __init__(self, model, store=None,
-                 read_store=None, router=None):
-        self._meta = meta
-        self._model_class = model_class or meta.model_class
+    def __init__(self, model, store=None, read_store=None, router=None):
+        self._model = model
         self._store = store
         self._read_store = read_store or store
         self._router = router
-
-    def __getattr__(self, attrname):
-        if attrname.startswith('__'):  # required for copy
-            raise AttributeError
-        else:
-            result = getattr(self.model, attrname)
-            if isinstance(result, LazyProxy):
-                return result.load_from_manager(self)
-            return result
 
     def __str__(self):
         if self.store:
@@ -71,6 +70,9 @@ class Manager(AbstractQuery):
 
     def query(self):
         return self.query_class(self)
+
+    def create_table(self):
+        return self._store.create_table(self._model)
 
     #    QUERY IMPLEMENTATION
     def filter(self, **kwargs):
@@ -92,10 +94,10 @@ class Manager(AbstractQuery):
         return self.query().count()
 
     def all(self):
-        return self.query().count()
+        return self.query().all()
 
 
-class Router(object):
+class Router(EventHandler):
     '''A router is a mapping of :class:`.Model` to a :class:`Manager`.
 
     The :class:`Manager` are registered with a :class:`.Store`::
@@ -142,15 +144,16 @@ class Router(object):
 
             models.post_delete.bind(callback, sender=MyModel)
     '''
-    def __init__(self, default_store):
+    MANY_TIMES_EVENTS = ('pre_commit', 'pre_delete',
+                         'post_commit', 'post_delete')
+
+    def __init__(self, default_store, **kw):
+        super(Router, self).__init__()
         self._registered_models = ModelDictionary()
         self._registered_names = {}
-        self._default_store = default_store
+        self._default_store = create_store(default_store, **kw)
+        self._loop = self._default_store._loop
         self._search_engine = None
-        self.pre_commit = Event()
-        self.pre_delete = Event()
-        self.post_commit = Event()
-        self.post_delete = Event()
 
     @property
     def default_store(self):
@@ -222,7 +225,8 @@ tutorial for information.'''
         if read_store:
             read_store = create_store(read_store, *params)
         registered = 0
-        for model in models_from_model(model, include_related=include_related):
+        for model in self.models_from_model(model,
+                                            include_related=include_related):
             if model in self._registered_models:
                 continue
             registered += 1
@@ -230,12 +234,8 @@ tutorial for information.'''
             manager_class = getattr(model, 'manager_class', default_manager)
             manager = manager_class(model, store, read_store, self)
             self._registered_models[model] = manager
-            if is_model_type(model):
-                attr_name = model._meta.name
-            else:
-                attr_name = model.__name__.lower()
-            if attr_name not in self._registered_names:
-                self._registered_names[attr_name] = manager
+            if model.name not in self._registered_names:
+                self._registered_names[model.name] = manager
         if registered:
             return store
 
@@ -356,3 +356,22 @@ method for::
                 kwargs = kwargs.copy()
             if self.register(model, include_related=False, **kwargs):
                 yield model
+
+    def models_from_model(self, model, include_related=False, exclude=None):
+        '''Generator of all model in model.'''
+        if exclude is None:
+            exclude = set()
+        if self.valid_model(model) and model not in exclude:
+            exclude.add(model)
+            yield model
+            if include_related:
+                for column in model.columns:
+                    for fk in column.foreign_keys:
+                        for model in (fk.column.table,):
+                            for m in self.models_from_model(
+                                    model, include_related=include_related,
+                                    exclude=exclude):
+                                yield m
+
+    def valid_model(self, model):
+        return isinstance(model, (ModelMeta, Table))

@@ -408,9 +408,11 @@ class Failure(object):
 
     def __init__(self, exc_info):
         self.exc_info = as_async_exec_info(exc_info)
+        self._mute = False
 
     def __del__(self):
-        self.log()
+        if not self._mute:
+            self.log()
 
     def __repr__(self):
         return ''.join(self.exc_info[2])
@@ -447,6 +449,8 @@ class Failure(object):
             __skip_traceback__ = True
             return gen.throw(self.exc_info[0], self.exc_info[1])
         else:
+            # mute only this Failure, not the error
+            self._mute = True
             raise self.exc_info[1]
 
     def log(self, log=None, msg=None, level=None):

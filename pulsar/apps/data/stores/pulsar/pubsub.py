@@ -1,6 +1,5 @@
 from functools import partial
 
-from pulsar.apps import data
 from pulsar import in_loop_thread, Protocol, EventHandler, coroutine_return
 
 
@@ -173,12 +172,3 @@ class PubSub(EventHandler):
                     'Exception while processing pub/sub client. Removing it.')
                 remove.add(client)
         self._clients.difference_update(remove)
-
-
-class Queue(data.Queue):
-
-    def get(self, timeout=None):
-        return self.store.execute('brpop', self.id)
-
-    def put(self, item):
-        return self.store.execute('lpush', item)

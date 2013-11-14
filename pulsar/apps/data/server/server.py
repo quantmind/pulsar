@@ -16,7 +16,7 @@ from pulsar.utils.structures import Hash, Zset, Deque
 from pulsar.utils.pep import map, range, zip, pickle
 
 
-from ..core.parser import redis_parser
+from .parser import redis_parser
 from .sort import sort_command
 
 

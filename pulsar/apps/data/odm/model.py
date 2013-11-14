@@ -4,11 +4,7 @@ from copy import copy
 from collections import OrderedDict
 
 from pulsar import ImproperlyConfigured
-from pulsar.utils.structure import Hash
-
-from .fields import Field, AutoIdField
-from .related import class_prepared
-from .utils import hashmodel, orderinginfo
+from pulsar.utils.structures import Hash
 
 
 def get_fields(bases, attrs):
@@ -322,80 +318,4 @@ of fields names and a list of field attribute names.'''
                 'multi_fields': [field.name for field in self.multifields],
                 'indices': dict(((idx.attname, idx.unique)
                                  for idx in self.indices))}
-
-
-class ModelType(type):
-    '''Model metaclass'''
-    def __new__(cls, name, bases, attrs):
-        meta = attrs.pop('Meta', None)
-        if isclass(meta):
-            meta = dict(((k, v) for k, v in meta.__dict__.items()
-                         if not k.startswith('__')))
-        else:
-            meta = meta or {}
-        cls.extend_meta(meta, attrs)
-        fields = get_fields(bases, attrs)
-        new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
-        ModelMeta(new_class, fields, **meta)
-        class_prepared.fire(new_class)
-        return new_class
-
-    @classmethod
-    def extend_meta(cls, meta, attrs):
-        for name in ('register', 'abstract', 'attributes'):
-            if name in attrs:
-                meta[name] = attrs.pop(name)
-
-
-class Model(ModelType('ModelBase', (Hash,), {'abstract': True})):
-    '''A :class:`Model` which contains data in :class:`.Field`.'''
-    abstract = True
-
-    @classmethod
-    def create_model(cls, name, **fields):
-        return ModelType(name, (cls,), fields)
-
-
-class autoincrement(object):
-    '''An :class:`autoincrement` is used in a :class:`StdModel` Meta
-class to specify a model with :ref:`incremental sorting <incremental-sorting>`.
-
-.. attribute:: incrby
-
-    The amount to increment the score by when a duplicate element is saved.
-
-    Default: 1.
-
-For example, the :class:`stdnet.apps.searchengine.Word` model is defined as::
-
-    class Word(odm.StdModel):
-        id = odm.SymbolField(primary_key = True)
-
-        class Meta:
-            ordering = -autoincrement()
-
-This means every time we save a new instance of Word, and that instance has
-an id already available, the score of that word is incremented by the
-:attr:`incrby` attribute.
-
-'''
-    def __init__(self, incrby=1, desc=False):
-        self.incrby = incrby
-        self._asce = -1 if desc else 1
-
-    def __neg__(self):
-        c = copy(self)
-        c._asce *= -1
-        return c
-
-    @property
-    def desc(self):
-        return True if self._asce == -1 else False
-
-    def __repr__(self):
-        return ('' if self._asce == 1 else '-'
-                ) + '{0}({1})'.format(self.__class__.__name__, self.incrby)
-
-    def __str__(self):
-        return self.__repr__()
 

@@ -1,7 +1,7 @@
 from pulsar import (coroutine_return, in_loop_thread, Connection,
                     ProtocolConsumer, Pool)
 from pulsar.utils.pep import native_str
-from pulsar.apps.data import register_store, Store, redis_parser
+from pulsar.apps.data import register_store, Store, redis_parser, Queue
 
 from .pubsub import PubSub
 
@@ -101,6 +101,16 @@ class Consumer(ProtocolConsumer):
         self._request.data_received(self, data)
 
 
+class PulsarQueue(Queue):
+
+    def get(self, timeout=None):
+        return self.store.execute('brpop', self.id)
+
+    def put(self, item):
+        return self.store.execute('lpush', item)
+
+
+
 class PulsarClient(object):
 
     def __init__(self, store):
@@ -175,7 +185,7 @@ class PulsarStore(Store):
 
     def queue(self, id):
         '''Create a districuted queue'''
-        return Queue(self, id)
+        return PulsarQueue(self, id)
 
     @in_loop_thread
     def execute(self, command, *args, **options):

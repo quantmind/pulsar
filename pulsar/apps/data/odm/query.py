@@ -141,12 +141,6 @@ class Query(object):
     def join(self):
         raise NotImplementedError
 
-    def compiled(self):
-        if not self._execution:
-            cm = self._manager.read_store.compiler()
-            self._execution = cm.compile_query(self)
-        return self._execution
-
     def count(self):
         '''Count the number of objects selected by this :class:`Query`.
 
@@ -154,6 +148,16 @@ class Query(object):
         receive any data from the server apart from the number of
         matched elements.'''
         return self.compiled().count()
+
+    def all(self):
+        '''All objects selected by this :class:`Query`.
+        '''
+        return self.compiled().all()
+
+    def compiled(self):
+        if not self._execution:
+            self._execution = self._manager._read_store.compile_query(self)
+        return self._execution
 
     def _clone(self):
         cls = self.__class__

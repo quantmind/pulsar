@@ -2,14 +2,18 @@ import pulsar
 
 from .pyparser import Parser
 
+
 class ResponseError(pulsar.PulsarException):
     pass
+
 
 class InvalidResponse(pulsar.PulsarException):
     pass
 
+
 class NoScriptError(ResponseError):
     pass
+
 
 EXCEPTION_CLASSES = {
     'ERR': ResponseError,
@@ -28,6 +32,7 @@ def response_error(response):
 
 
 PyRedisParser = lambda: Parser(InvalidResponse, response_error)
+
 
 if pulsar.HAS_C_EXTENSIONS:
     from pulsar.utils.extensions import RedisParser as _RedisParser
