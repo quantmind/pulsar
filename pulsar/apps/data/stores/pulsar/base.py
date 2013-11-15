@@ -3,8 +3,10 @@ import socket
 from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
-                    coroutine_return, get_application, in_loop, send)
+                    coroutine_return, get_application, in_loop, send,
+                    EventHandler)
 from pulsar.utils.importer import module_attribute
+from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
 from ...server import KeyValueStore
@@ -24,31 +26,6 @@ class Compiler(object):
 
     def create_table(self, model_class):
         raise NotImplementedError
-
-
-class Queue(object):
-
-    def __init__(self, store, id):
-        self.store = store
-        self._loop = store._loop
-        self.id = id
-
-    def get(self, timeout=None):
-        raise NotImplementedError
-
-    def put(self, item):
-        raise NotImplementedError
-
-    def qsize(self):
-        raise NotImplementedError
-
-    def full(self):
-        return False
-
-    @in_loop
-    def empty(self):
-        size = yield self.qsize()
-        coroutine_return(not size)
 
 
 class Store(object):
@@ -172,6 +149,127 @@ class Store(object):
         return Pool
 
 
+class PubSubClient(object):
+    '''Interface for a client of :class:`PubSub` handler.
+
+    Instances of this :class:`Client` are callable object and are
+    called once a new message has arrived from a subscribed channel.
+    The callable accepts two parameters:
+
+    * ``channel`` the channel which originated the message
+    * ``message`` the message
+    '''
+    def __call__(self, channel, message):
+        raise NotImplementedError
+
+
+class PubSub(EventHandler):
+    '''Asynchronous Publish/Subscriber handler interface.
+
+    To listen for messages you can bind to the ``on_message`` event::
+
+        pubsub = client.pubsub()
+        pubsub.bind_event('on_message', handle_messages)
+        pubsub.subscribe('mychannel')
+
+    You can bind as many handlers to the ``on_message`` event as you like.
+    The handlers receive one parameter only, a two-elements tuple
+    containing the ``channel`` and the ``message``.
+    '''
+    MANY_TIMES_EVENTS = ('on_message',)
+
+    def __init__(self, store, protocol=None):
+        super(PubSub, self).__init__()
+        self.store = store
+        self._loop = store._loop
+        self._protocol = protocol
+        self._connection = None
+        self._clients = set()
+        self.bind_event('on_message', self._broadcast)
+
+    def publish(self, channel, message):
+        '''Publish a new ``message`` to a ``channel``.
+
+        This method return a pulsar Deferred which results in the number of
+        subscribers that will receive the message (the same behaviour as
+        redis publish command).
+        '''
+        raise NotImplementedError
+
+    def count(self, *channels):
+        '''Returns the number of subscribers (not counting clients
+        subscribed to patterns) for the specified channels.
+        '''
+        raise NotImplementedError
+
+    def channels(self, pattern=None):
+        '''Lists the currently active channels.
+
+        An active channel is a Pub/Sub channel with one ore more subscribers
+        (not including clients subscribed to patterns).
+        If no ``pattern`` is specified, all the channels are listed,
+        otherwise if ``pattern`` is specified only channels matching the
+        specified glob-style pattern are listed.
+        '''
+        raise NotImplementedError
+
+    def psubscribe(self, pattern, *patterns):
+        '''Subscribe to a list of ``patterns``.
+        '''
+        raise NotImplementedError
+
+    def punsubscribe(self, *channels):
+        '''Unsubscribe from a list of ``patterns``.
+        '''
+        raise NotImplementedError
+
+    def subscribe(self, channel, *channels):
+        '''Subscribe to a list of ``channels``.
+        '''
+        raise NotImplementedError
+
+    def unsubscribe(self, *channels):
+        '''Un-subscribe from a list of ``channels``.
+        '''
+        raise NotImplementedError
+
+    def close(self):
+        '''Stop listening for messages.
+        '''
+        raise NotImplementedError
+
+    def add_client(self, client):
+        '''Add a new ``client`` to the set of all :attr:`clients`.
+
+        Clients must be callable. When a new message is received
+        from the publisher, the :meth:`broadcast` method will notify all
+        :attr:`clients` via the ``callable`` method.'''
+        self._clients.add(client)
+
+    def remove_client(self, client):
+        '''Remove *client* from the set of all :attr:`clients`.'''
+        self._clients.discard(client)
+
+    ##    INTERNALS
+    def _broadcast(self, response):
+        '''Broadcast ``message`` to all :attr:`clients`.'''
+        remove = set()
+        channel = to_string(response[0])
+        message = response[1]
+        if self._protocol:
+            message = self._protocol.dencode(message)
+        for client in self._clients:
+            try:
+                client(channel, message)
+            except IOError:
+                remove.add(client)
+            except Exception:
+                self._loop.logger.exception(
+                    'Exception while processing pub/sub client. Removing it.')
+                remove.add(client)
+        self._clients.difference_update(remove)
+
+
 def parse_store_url(url):
     scheme, host, path, query, fr = urlsplit(url)
     assert not fr, 'store url must not have fragment, found %s' % fr
@@ -230,10 +328,7 @@ def create_store(url, loop=None, force_sync=False, **kw):
         loop = loop or get_event_loop()
     store_class = module_attribute(dotted_path)
     params.update(kw)
-    store = store_class(scheme, address, loop, **params)
-    if force_sync:
-        store.execute = partial(wait_for_result, loop, store.execute)
-    return store
+    return store_class(scheme, address, loop, **params)
 
 
 def start_store(url, **kw):
@@ -266,10 +361,6 @@ def localhost(host):
             return ':'.join((str(b) for b in host))
     else:
         return host
-
-
-def wait_for_result(loop, callable, *args, **kwargs):
-    return loop.run_until_complete(callable(*args, **kwargs))
 
 
 def register_store(name, dotted_path):

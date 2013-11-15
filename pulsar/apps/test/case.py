@@ -42,7 +42,7 @@ sequentially rather than in an asynchronous fashion.'''
 class Test(tasks.Job):
     '''A :ref:`Job <job-callable>` for running tests on a task queue.
     '''
-    def __call__(self, consumer, testcls, tag):
+    def __call__(self, consumer, testcls=None, tag=None):
         # The callable method. Return a coroutine.
         suite = consumer.worker.app
         suite.local.pop('runner')

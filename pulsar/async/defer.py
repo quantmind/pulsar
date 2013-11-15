@@ -315,12 +315,14 @@ def run_in_loop_thread(loop, callback, *args, **kwargs):
         try:
             result = yield callback(*args, **kwargs)
         except Exception:
-            result = sys.exc_info()
-            d.callback(result)
+            d.callback(sys.exc_info())
             raise
         else:
             d.callback(result)
+
     loop.call_soon_threadsafe(_)
+    if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+        return loop.run_until_complete(d)
     return d
 
 
@@ -481,6 +483,9 @@ back to perform logging and propagate the failure. For example::
                 msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
             handler(msg)
         return self
+
+    def critical(self, msg):
+        return self.log(msg=msg, level='critical')
 
     def mute(self):
         '''Mute logging and return self.'''

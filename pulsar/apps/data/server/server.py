@@ -955,7 +955,8 @@ class Storage(object):
             db._data[key] = value
         elif not isinstance(value, self.hash_type):
             return connection.write(self.WRONG_TYPE)
-        value.update(zip(request[2::2], request[3::2]))
+        it = iter(request[2:])
+        value.update(zip(it, it))
         self._signal(self.NOTIFY_HASH, db, request[0], key, D)
         connection.write(self.OK)
 
@@ -1707,12 +1708,10 @@ class Storage(object):
                 self._close_transaction(connection)
                 connection.write(self.EMPTY_ARRAY)
             else:
-                connection.transaction = []
+                self._close_transaction(connection)
+                connection.write(self._parser.multi_bulk_len(len(requests)))
                 for handle, request in requests:
                     connection.execute(handle, request)
-                result = connection.transaction
-                self._close_transaction(connection)
-                connection.write(self._parser.multi_bulk(*result))
 
     @command('transactions')
     def multi(self, connection, request, N):

@@ -80,20 +80,14 @@ Job registry
 
 '''
 from datetime import datetime, date
-from hashlib import sha1
 import logging
 
 from pulsar.utils.pep import iteritems
 from pulsar.utils.importer import import_modules
-from pulsar.utils.security import gen_unique_id
 
 
 __all__ = ['JobMetaClass', 'Job', 'PeriodicJob',
-           'anchorDate', 'JobRegistry', 'create_task_id']
-
-
-def create_task_id():
-    return gen_unique_id()[:8]
+           'anchorDate', 'JobRegistry']
 
 
 class JobRegistry(dict):
@@ -228,36 +222,6 @@ id of the task invoking the method.
 '''
         return consumer.backend.run_job(jobname, args, kwargs,
                                         from_task=consumer.task_id)
-
-    def generate_task_ids(self, args, kwargs):
-        '''Generate a task unique identifiers.
-
-:parameter args: tuple of positional arguments passed to the
-    :ref:`job callable <job-callable>` method.
-:parameter kwargs: dictionary of key-valued parameters passed to the
-    :ref:`job callable <job-callable>` method.
-:return: a two-elements tuple containing the unique id and an
-    identifier for overlapping tasks if the :attr:`can_overlap` results
-    in ``False``.
-
-Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when creating
-a new task.
-'''
-        can_overlap = self.can_overlap
-        if hasattr(can_overlap, '__call__'):
-            can_overlap = can_overlap(*args, **kwargs)
-        id = create_task_id()
-        if can_overlap:
-            return id, None
-        else:
-            suffix = ''
-            if args:
-                suffix = ' args(%s)' % ', '.join((str(a) for a in args))
-            if kwargs:
-                suffix += ' kwargs(%s)' % ', '.join(
-                    ('%s=%s' % (k, kwargs[k]) for k in sorted(kwargs)))
-            name = '%s%s' % (self.name, suffix)
-            return id, sha1(name.encode('utf-8')).hexdigest()[:8]
 
 
 class PeriodicJob(Job):

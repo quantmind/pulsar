@@ -288,12 +288,12 @@ Utilities
 import sys
 
 import pulsar
-from pulsar import EventHandler, maybe_failure
+from pulsar import EventHandler, maybe_failure, multi_async, Failure
 from pulsar.apps import tasks
-from pulsar.apps.data import KeyValueStore
+from pulsar.apps.data import KeyValueStore, create_store
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
-from pulsar.utils.pep import default_timer
+from pulsar.utils.pep import default_timer, to_string
 
 from .case import *
 from .populate import populate
@@ -528,15 +528,12 @@ class TestSuite(tasks.TaskQueue):
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         # Create a datastore for this test suite
-        store = KeyValueStore(bind='127.0.0.1:0', workers=0,
+        server = KeyValueStore(bind='127.0.0.1:0', workers=0,
                               key_value_save=[],
                               name='%s_store' % self.name)
-        yield store()
-        self.backend = tasks.TaskBackend(
-            'pulsar://%s:%s' % (store.address),
-            name=self.name,
-            task_paths=self.cfg.task_paths,
-            backlog=self.cfg.concurrent_tasks)
+        yield server()
+        store = create_store('pulsar://%s:%s' % (server.address))
+        self._create_backend(store)
         loader = self.local.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
@@ -558,17 +555,25 @@ class TestSuite(tasks.TaskQueue):
                 self.fire_event('tests', tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
+                queued = []
+                self._tests_done = set()
+                self._tests_queued = None
+                self.backend.bind_event('task_done', self._test_done)
                 for tag, testcls in self.local.tests:
-                    self.backend.run('test', testcls, tag)
-                monitor._loop.call_repeatedly(1, self._check_queue)
+                    r = self.backend.queue_task('test', testcls=testcls,
+                                                tag=tag)
+                    queued.append(r)
+                queued = yield multi_async(queued)
+                self._tests_queued = set((task['id'] for task in queued))
+                yield self._test_done()
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:   # pragma    nocover
-            self.logger.critical('Error occurred before starting tests',
-                                 exc_info=True)
+            Failure(sys.exc_info()).critical(
+                'Error occurred while starting tests')
             monitor.arbiter.stop()
 
     @local_property
@@ -586,20 +591,24 @@ class TestSuite(tasks.TaskQueue):
             cfg.settings.update(plugin.config.settings)
         return cfg
 
-    def _check_queue(self):
+    def _test_done(self, task_id=None):
         runner = self.runner
-        tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
-        if len(tests) == len(self.local.tests):
-            self.logger.info('All tests have finished.')
-            time_taken = default_timer() - self._time_start
-            for task in tests:
-                runner.add(task.result)
-            runner.on_end()
-            runner.printSummary(time_taken)
-            # Shut down the arbiter
-            if runner.result.errors or runner.result.failures:
-                exit_code = 2
-            else:
-                exit_code = 0
-            raise pulsar.HaltServer(exit_code=exit_code)
+        if task_id:
+            self._tests_done.add(to_string(task_id))
+        if self._tests_queued is not None:
+            left = self._tests_queued.difference(self._tests_done)
+            if not left:
+                tests = yield self.backend.get_tasks(self._tests_done)
+                self.logger.info('All tests have finished.')
+                time_taken = default_timer() - self._time_start
+                for task in tests:
+                    runner.add(task['result'])
+                runner.on_end()
+                runner.printSummary(time_taken)
+                # Shut down the arbiter
+                if runner.result.errors or runner.result.failures:
+                    exit_code = 2
+                else:
+                    exit_code = 0
+                raise pulsar.HaltServer(exit_code=exit_code)
 

@@ -1,9 +1,9 @@
 '''Tests the tools and utilities in pulsar.utils.'''
-from pulsar.utils.html import lazy_string
+from pulsar.utils.log import lazy_string
 from pulsar.apps.test import unittest
 
 class TestTextUtils(unittest.TestCase):
-    
+
     def testLazy(self):
         @lazy_string
         def blabla(n):

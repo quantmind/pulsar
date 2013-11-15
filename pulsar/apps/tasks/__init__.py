@@ -94,8 +94,7 @@ from pulsar.utils.config import section_docs
 from pulsar.apps.data import start_store
 
 from .models import *
-from .states import *
-from .backend import *
+from .backend import task_backends
 from .rpc import *
 
 
@@ -193,13 +192,7 @@ class TaskQueue(pulsar.Application):
         if self.callable:
             self.callable()
         store = yield start_store(self.cfg.task_backend, loop=monitor._loop)
-        self.backend = TaskBackend(
-            store.dns,
-            name=self.name,
-            task_paths=self.cfg.task_paths,
-            schedule_periodic=self.cfg.schedule_periodic,
-            max_tasks=self.cfg.max_requests,
-            backlog=self.cfg.concurrent_tasks)
+        self._create_backend(store)
 
     def monitor_task(self, monitor):
         '''Override the :meth:`.Application.monitor_task` callback.
@@ -224,6 +217,19 @@ class TaskQueue(pulsar.Application):
         tasks = {'concurrent': list(be.concurrent_tasks),
                  'processed': be.processed}
         info['tasks'] = tasks
+
+    def _create_backend(self, store):
+        task_backend = task_backends.get(store.name)
+        if not task_backend:
+            raise pulsar.ImproperlyConfigured(
+                'Task backend for %s not available' % store.name)
+        self.backend = task_backend(
+            store.dns,
+            name=self.name,
+            task_paths=self.cfg.task_paths,
+            schedule_periodic=self.cfg.schedule_periodic,
+            max_tasks=self.cfg.max_requests,
+            backlog=self.cfg.concurrent_tasks)
 
 
 @command()

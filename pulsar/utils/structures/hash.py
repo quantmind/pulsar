@@ -66,7 +66,7 @@ class Hash(collections.MutableMapping):
         n = 2 ** n.bit_length()                     # round-up to power-of-two
         self.indices = self._make_index(n)
         for index, hashvalue in enumerate(self.hashlist):
-            for i in Dict._gen_probes(hashvalue, n-1):
+            for i in Hash._gen_probes(hashvalue, n-1):
                 if self.indices[i] == FREE:
                     break
             self.indices[i] = index
@@ -172,9 +172,7 @@ class Hash(collections.MutableMapping):
     def flat(self):
         # TODO: this is slow, make it faster
         result = []
-        for k, v in self.items():
-            result.append(k)
-            result.append(v)
+        [result.extend(pair) for pair in self.items()]
         return result
 
     def show_structure(self, stdout=None):

@@ -120,17 +120,20 @@ Redis Backend
 '''
 import sys
 import logging
-from time import mktime
-from datetime import datetime, timedelta
-from threading import Lock
+import time
+from datetime import timedelta
+from hashlib import sha1
 
-from pulsar import (in_loop, EMPTY_TUPLE, EMPTY_DICT, Failure,
-                    PulsarException, Deferred, coroutine_return)
-from pulsar.utils.pep import itervalues
+from pulsar import (in_loop, Failure, EventHandler, PulsarException,
+                    Deferred, coroutine_return, run_in_loop_thread,
+                    in_loop_thread)
+from pulsar.utils.pep import itervalues, pickle, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
-from pulsar.utils.log import LocalMixin, local_property
+from pulsar.utils.log import (LocalMixin, local_property, local_method,
+                              lazy_string)
+from pulsar.utils.security import gen_unique_id
 
-from .models import JobRegistry, create_task_id
+from .models import JobRegistry
 from . import states
 
 
@@ -138,6 +141,7 @@ __all__ = ['Task', 'TaskBackend', 'TaskNotAvailable',
            'nice_task_message', 'LOGGER']
 
 LOGGER = logging.getLogger('pulsar.tasks')
+task_backends = {}
 
 
 if hasattr(timedelta, "total_seconds"):
@@ -149,22 +153,17 @@ else:   # pragma    nocover
         return delta.days * 86400 + delta.seconds + (delta.microseconds / 10e5)
 
 
-def get_datetime(expiry, start):
-    if isinstance(expiry, datetime):
-        return expiry
-    elif isinstance(expiry, timedelta):
+def get_time(expiry, start):
+    if isinstance(expiry, timedelta):
         return start + expiry
     else:
-        return datetime.fromtimestamp(expiry)
+        return start + expiry
 
 
 def format_time(dt):
     if isinstance(dt, (float, int)):
         dt = datetime.fromtimestamp(dt)
     return dt.isoformat() if dt else '?'
-
-
-totimestamp = lambda dte: mktime(dte.timetuple()) if dte else dte
 
 
 def nice_task_message(req, smart_time=None):
@@ -220,6 +219,15 @@ class TaskConsumer(object):
 
 
 class Task(odm.Model):
+    id = odm.CharField(primary_key=True)
+    lock_id = odm.CharField(unique=True)
+    time_queued = odm.FloatField()
+    time_started = odm.FloatField()
+    time_finished = odm.FloatField()
+    expiry = odm.FloatField()
+    status = odm.IntegerField()
+    kwargs = odm.PickleField()
+    result = odm.PickleField()
 
     def done(self):
         '''Return ``True`` if the :class:`Task` has finshed.
@@ -228,16 +236,25 @@ class Task(odm.Model):
         '''
         return self.get('state') in self.READY_STATES
 
+    def info(self):
+        state = states.CODES.get(task.get('state'), 'UNKNOWN')
+        return 'task.%s(%s)' % (task.get('name'), task.get('id'))
+
+    def lazy_info(self):
+        return lazy_string(self.info)
+
+    def load_kwargs(self):
+        kwargs = self.get('kwargs')
+        return pickle.loads(kwargs) if kwargs else {}
+
 
 class TaskClient(PubSubClient):
 
     def __init__(self, be):
         self._be = be
-        self.task_done = be.channel('task_done')
 
     def __call__(self, channel, message):
-        if channel == self.task_done:
-            self._be.task_done_callback(message)
+        self._be.events.fire_event(channel, message)
 
 
 class TaskBackend(LocalMixin):
@@ -293,9 +310,9 @@ class TaskBackend(LocalMixin):
         attribute.
 
     '''
-    def __init__(self, dns, task_paths=None, schedule_periodic=False,
+    def __init__(self, store_dns, task_paths=None, schedule_periodic=False,
                  backlog=1, max_tasks=0, name=None, poll_timeout=None):
-        self._store_dns = dns
+        self._store_dns = store_dns
         self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
@@ -303,7 +320,14 @@ class TaskBackend(LocalMixin):
         self.poll_timeout = max(poll_timeout or 0, 2)
         self.processed = 0
         self.local.schedule_periodic = schedule_periodic
-        self.next_run = datetime.now()
+        self.next_run = time.time()
+
+    @local_property
+    def events(self):
+        c = self.channel
+        return EventHandler(many_times_events=(c('task_queued'),
+                                               c('task_started'),
+                                               c('task_done')))
 
     @property
     def _loop(self):
@@ -314,41 +338,14 @@ class TaskBackend(LocalMixin):
     def schedule_periodic(self):
         return self.local.schedule_periodic
 
-    @local_property
-    def lock(self):
-        return Lock()
+    @property
+    def logger(self):
+        return self.store._loop.logger
 
     @local_property
     def store(self):
         '''Data store where tasks are queued'''
         return create_store(self._store_dns)
-
-    @local_property
-    def pubsub(self):
-        '''A :class:`.PubSub` handler which notifies
-        and listen tasks execution status. There are three channels:
-
-        * ``<name>_task_created`` published when a new task is created.
-        * ``<name>_task_start`` published when the task queue starts
-            executing a task.
-        * ``<name>_task_done`` published when a task is done.
-
-        All three messages are composed by the task id only. Here ``<name>``
-        is replaced by the :attr:`.Backend.name` attribute of this task
-        backend.
-
-        Check the :ref:`task broadcasting documentation <tasks-pubsub>` for
-        more information.
-        '''
-        p = self.store.pubsub()
-        p.add_client(TaskClient(self))
-        c = self.channel
-        p.subscribe(c('task_created'), c('task_start'), c('task_done'))
-        return p
-
-    @local_property
-    def pubsub(self):
-        return store.queue()
 
     @local_property
     def concurrent_tasks(self):
@@ -373,17 +370,16 @@ class TaskBackend(LocalMixin):
         '''
         return JobRegistry.load(self.task_paths)
 
-    def channel(self, name):
-        return '%s_%s' % (self.name, name) if self.name else name
+    @local_property
+    def callbacks(self):
+        return {}
 
-    def run(self, jobname, *args, **kwargs):
-        '''A shortcut for :meth:`run_job` without task meta parameters'''
-        return self.run_job(jobname, args, kwargs)
+    def channel(self, name):
+        return '%s_%s' % (self.name, name)
 
     @in_loop
-    def run_job(self, jobname, targs=None, tkwargs=None, expiry=None,
-                **meta_params):
-        '''Create a new :ref:`Task` which may or may not be queued.
+    def queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
+        '''Try to queue a new :ref:`Task`.
 
         This method returns a :class:`.Deferred` which results in the
         :attr:`Task.id` created. If ``jobname`` is not a valid
@@ -391,56 +387,50 @@ class TaskBackend(LocalMixin):
 
         :param jobname: the name of a :class:`.Job`
             registered with the :class:`.TaskQueue` application.
-        :param targs: optional tuple used for the positional arguments in the
-            task callable.
-        :param tkwargs: optional dictionary used for the key-valued arguments
+        :param kwargs: optional dictionary used for the key-valued arguments
             in the task callable.
         :param meta_params: Additional parameters to be passed to the
             :class:`Task` constructor (not its callable function).
-        :return: a :class:`.Deferred` resulting in a :attr:`Task.id`
-            on success.
+        :return: a :class:`.Deferred` resulting in a task id on success.
         '''
+        pubsub = self.pubsub()
         if jobname in self.registry:
-            pubsub = self.pubsub
             job = self.registry[jobname]
-            targs = targs or EMPTY_TUPLE
-            tkwargs = tkwargs or EMPTY_DICT
-            task_id, overlap_id = job.generate_task_ids(targs, tkwargs)
-            task = None
-            if overlap_id:
-                running_id = yield self.is_running(overlap_id)
-                if running_id:
-                    task = yield self.get_task(running_id)
-                    if task and task.done():
-                        task = None
+            task_id, lock_id = self.generate_task_ids(job, kwargs)
+            queued = time.time()
+            if expiry is not None:
+                expiry = get_time(expiry, queued)
+            elif job.timeout:
+                expiry = get_time(job.timeout, queued)
+            kwargs = pickle.dumps(kwargs, protocol=2)
+            meta_params = meta_params or {}
+            task = Task(id=task_id, lock_id=lock_id, name=job.name,
+                        time_queued=queued, expiry=expiry, kwargs=kwargs,
+                        status=states.QUEUED)
+            if meta_params:
+                task.update(meta_params)
+            task = yield self.maybe_queue_task(task)
             if task:
-                LOGGER.debug('Task %s cannot run.', task)
-                yield None
-            else:
+                pubsub.publish(self.channel('task_queued'), task['id'])
                 if self.entries and job.name in self.entries:
                     self.entries[job.name].next()
-                time_executed = datetime.now()
-                if expiry is not None:
-                    expiry = get_datetime(expiry, time_executed)
-                elif job.timeout:
-                    expiry = get_datetime(job.timeout, time_executed)
-                LOGGER.debug('Queue new task %s (%s).', job.name, task_id)
-                with self.models.transaction() as t:
-                    t.add(self.models.task(id=task_id, name=job.name,
-                                           time_executed=time_executed,
-                                           expiry=expiry, kwargs=tkwargs,
-                                           status=states.QUEUED, **params))
-                pubsub.publish(self.channel('task_created'), task_id)
-                self.queue.put(task_id)
+                self.logger.debug('%s', lazy_string(task.info))
+            else:
+                self.logger.debug('%s cannot queue new task', jobname)
         else:
             raise TaskNotAvailable(jobname)
 
+    def bind_event(self, name, handler):
+        self.events.bind_event(self.channel(name), handler)
+
     def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
-its execution. It returns a :class:`.Deferred`.'''
-        # make sure we are subscribed to the task_done channel
+        its execution.
+        '''
+        # make sure pubsub is implemented
+        self.pubsub()
+
         def _():
-            self.pubsub
             task = yield self.get_task(task_id)
             if task:
                 if task.done():  # task done, simply return it
@@ -449,8 +439,46 @@ its execution. It returns a :class:`.Deferred`.'''
                         when_done.callback(task)
                     yield task
                 else:
-                    yield self.get_callback(task_id)
-        return maybe_async(_(), timeout=timeout, get_result=False)
+                    callbacks = self.callbacks
+                    when_done = callbacks.get(task_id)
+                    if not when_done:
+                        # No deferred, create one
+                        callbacks[task_id] = when_done = Deferred()
+                    yield when_done
+
+        return run_in_loop_thread(_(), self._loop).set_timeout(timeout)
+
+    ########################################################################
+    ##    ABSTRACT METHODS
+    ########################################################################
+    def maybe_queue_task(self, task):
+        '''Actually queue a ``task``.
+        '''
+        raise NotImplementedError
+
+    def get_task(self, task_id=None, when_done=False):
+        '''Asynchronously retrieve a :class:`Task` from a ``task_id``.
+
+        :param task_id: the ``id`` of the task to retrieve.
+        :param when_done: if ``True`` return only when the task is in a
+            ready state.
+        :return: a :class:`Task` or ``None``.
+        '''
+        raise NotImplementedError
+
+    def get_tasks(self, ids):
+        raise NotImplementedError
+
+    def save_task(self, task_id, **params):
+        '''Create or update a :class:`Task` with ``task_id`` and key-valued
+        parameters ``params``.
+        '''
+        raise NotImplementedError
+
+    def pubsub(self):
+        '''The publish/subscribe handler.
+        '''
+        raise NotImplementedError
 
     ########################################################################
     ##    START/CLOSE METHODS FOR TASK WORKERS
@@ -476,38 +504,35 @@ its execution. It returns a :class:`.Deferred`.'''
             worker.logger.debug('stopped polling tasks')
 
     ########################################################################
-    ##    OVERRIDABLE METHODS
-    ########################################################################
-    def get_task(self, task_id=None, when_done=False):
-        '''Retrieve a :class:`Task` from a ``task_id``.
-
-        :param task_id: the :attr:`Task.id` of the task to retrieve.
-        :param when_done: if ``True`` return only when the task is in a
-            ready state.
-        :return: a :class:`Task` or ``None``.
-        '''
-        if not task_id:
-            try:
-                task_id = yield self.queue.get(self.poll_timeout)
-            except Empty:
-                coroutine_return()
-        task = yield self.tasks.get(id=task_id)
-        coroutine_return(task)
-
-    def is_running(self, running_id):
-        return self.store.get(running_id)
-
-    def save_task(self, task_id, **params):
-        '''Create or update a :class:`Task` with ``task_id`` and key-valued
-        parameters ``params``.
-
-**Must be implemented by subclasses.**'''
-
-
-
-    ########################################################################
     ##    PRIVATE METHODS
     ########################################################################
+    def generate_task_ids(self, job, kwargs):
+        '''Generate task unique identifiers.
+
+        :parameter job: The :class:`.Job` creating the task.
+        :parameter kwargs: dictionary of key-valued parameters passed to the
+            :ref:`job callable <job-callable>` method.
+        :return: a two-elements tuple containing the unique id and an
+            identifier for overlapping tasks if the :attr:`can_overlap`
+            results in ``False``.
+
+        Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when
+        creating a new task.
+        '''
+        can_overlap = job.can_overlap
+        if hasattr(can_overlap, '__call__'):
+            can_overlap = can_overlap(**kwargs)
+        tid = gen_unique_id()[:8]
+        if can_overlap:
+            return tid, None
+        else:
+            if kwargs:
+                kw = ('%s=%s' % (k, kwargs[k]) for k in sorted(kwargs))
+                name = '%s %s' % (self.name, ', '.join(kw))
+            else:
+                name = self.name
+            return tid, sha1(name.encode('utf-8')).hexdigest()
+
     def tick(self, now=None):
         '''Run a tick, that is one iteration of the scheduler. This
 method only works when :attr:`schedule_periodic` is ``True`` and
@@ -584,10 +609,10 @@ value ``now`` can be passed.'''
             return (jobnames, None)
 
     def may_pool_task(self, worker):
-        '''Called in the ``worker`` event loop.
-
-        It pools a new task if possible, and add it to the queue of
-        tasks consumed by the ``worker`` CPU-bound thread.'''
+        #Called in the ``worker`` event loop.
+        #
+        # It pools a new task if possible, and add it to the queue of
+        # tasks consumed by the ``worker`` CPU-bound thread.'''
         next_time = 0
         if worker.is_running():
             thread_pool = worker.thread_pool
@@ -604,7 +629,7 @@ value ``now`` can be passed.'''
                     task = yield self.get_task()
                     if task:    # Got a new task
                         self.processed += 1
-                        self.concurrent_tasks.add(task.id)
+                        self.concurrent_tasks.add(task['id'])
                         thread_pool.apply(self._execute_task, worker, task)
             else:
                 worker.logger.info('%s concurrent requests. Cannot poll.',
@@ -615,49 +640,49 @@ value ``now`` can be passed.'''
     def _execute_task(self, worker, task):
         #Asynchronous execution of a Task. This method is called
         #on a separate thread of execution from the worker event loop thread.
-        pubsub = self.pubsub
-        task_id = task.id
-        result = None
-        status = None
-        consumer = None
-        time_ended = datetime.now()
+        pubsub = self.pubsub()
+        task_id = task['id']
+        time_ended = time.time()
         try:
-            job = self.registry.get(task.name)
+            job = self.registry.get(task.get('name'))
             consumer = TaskConsumer(self, worker, task_id, job)
             if not consumer.job:
-                raise RuntimeError('Task "%s" not in registry %s' %
-                                   (task.name, self.registry))
-            if task.status_code > states.PRECEDENCE_MAPPING[states.STARTED]:
-                if task.expiry and time_ended > task.expiry:
+                raise RuntimeError('%s not in registry %s' %
+                                   (task.lazy_info(), self.registry))
+            if task['status'] > states.STARTED:
+                if task['expiry'] and time_ended > task['expiry']:
                     raise TaskTimeout
                 else:
-                    worker.logger.info('starting task %s', task)
+                    worker.logger.info('starting task %s', task.lazy_info())
                     yield self.save_task(task_id, status=states.STARTED,
-                                         time_started=time_ended)
-                    pubsub.publish(self.channel('task_start'), task_id)
-                    result = yield job(consumer, *task.args, **task.kwargs)
-                    time_ended = datetime.now()
+                                         time_started=time_ended,
+                                         worker=worker.aid)
+                    pubsub.publish(self.channel('task_started'), task_id)
+                    kwargs = task.load_kwargs()
+                    result = yield job(consumer, **kwargs)
+                    status = states.SUCCESS
             else:
-                consumer = None
+                worker.logger.error('Invalid status for %s', task.lazy_info())
+                self.concurrent_tasks.discard(task_id)
+                coroutine_return(task_id)
         except TaskTimeout:
-            worker.logger.info('Task %s timed-out', task)
+            worker.logger.info('%s timed-out', task.lazy_info())
+            result = None
             status = states.REVOKED
         except Exception:
-            result = Failure(sys.exc_info())
-        if isinstance(result, Failure):
-            result.log(msg='Failure in task %s' % task, log=worker.logger)
+            failure = Failure(sys.exc_info())
+            failure.log(msg='Failure in %s' % task.info(),
+                        log=worker.logger)
+            result = str(failure)
             status = states.FAILURE
-            result = str(result)
-        elif not status:
-            status = states.SUCCESS
-        if consumer:
-            yield self.save_task(task_id, time_ended=time_ended,
-                                 status=status, result=result)
-            worker.logger.info('Finished task %s', task)
-            # PUBLISH task_done
-            pubsub.publish(self.channel('task_done'), task.id)
-        self.concurrent_tasks.discard(task.id)
-        yield task_id
+        #
+        time_ended = time.time()
+        yield self.save_task(task_id, time_ended=time.time(),
+                             status=status, result=result)
+        worker.logger.info('Finished task %s', task_id)
+        self.concurrent_tasks.discard(task_id)
+        pubsub.publish(self.channel('task_done'), task_id)
+        coroutine_return(task_id)
 
     def _setup_schedule(self):
         if not self.local.schedule_periodic:
@@ -677,36 +702,21 @@ value ``now`` can be passed.'''
             raise ValueError('Schedule %s is not a timedelta' % s)
         return Schedule(s, anchor)
 
+    @in_loop_thread
     def task_done_callback(self, task_id):
         '''Got a task_id from the ``<name>_task_done`` channel.
 
-Check if a ``callback`` is available in the :attr:`callbacks` dictionary. If
-so fire the callback with the ``task`` instance corresponsding to the input
-``task_id``.
+        Check if a ``callback`` is available in the :attr:`callbacks`
+        dictionary. If so fire the callback with the ``task`` instance
+        corresponsding to the input ``task_id``.
 
-If a callback is not available, it must have been fired already.'''
+        If a callback is not available, it must have been fired already.
+        '''
         task = yield self.get_task(task_id)
         if task:
-            when_done = self.pop_callback(task.id)
+            when_done = self.callbacks.pop(task_id, None)
             if when_done:
                 when_done.callback(task)
-
-    def pop_callback(self, task_id):
-        with self.lock:
-            return self.callbacks.pop(task_id, None)
-
-    def get_callback(self, task_id):
-        with self.lock:
-            callbacks = self.callbacks
-            when_done = callbacks.get(task_id)
-            if not when_done:
-                # No deferred, create one and check again
-                callbacks[task_id] = when_done = Deferred()
-            return when_done
-
-    @local_property
-    def callbacks(self):
-        return {}
 
 
 class Schedule(object):
@@ -804,3 +814,67 @@ class SchedulerEntry(object):
 
     def is_due(self, now=None):
         return self.schedule.is_due(self.scheduled_last_run_at, now=now)
+
+
+class PulsarTaskBackend(TaskBackend):
+
+    @local_property
+    def store_client(self):
+        return self.store.client()
+
+    @local_method
+    def pubsub(self):
+        pubsub = self.store.pubsub()
+        pubsub.add_client(TaskClient(self))
+        pubsub.subscribe(*tuple(self.events.events))
+        self.bind_event('task_done', self.task_done_callback)
+        return pubsub
+
+    def maybe_queue_task(self, task):
+        free = True
+        store = self.store
+        c = self.channel
+        if task['lock_id']:
+            free = yield store.execute('hsetnx', c('locks'),
+                                       task['lock_id'], task['id'])
+        if free:
+            pipe = store.pipeline()
+            pipe.hmset(c('task:%s' % task['id']), task)
+            pipe.lpush(c('inqueue'), task['id'])
+            result = yield pipe.commit()
+            coroutine_return(task)
+        else:
+            coroutine_return()
+
+    def get_task(self, task_id=None, when_done=False):
+        store = self.store
+        if not task_id:
+            inq = self.channel('inqueue')
+            ouq = self.channel('outqueue')
+            task_id = yield store.execute('brpoplpush', inq, ouq,
+                                          self.poll_timeout)
+            if not task_id:
+                coroutine_return()
+        key = self.channel('task:%s' % task_id.decode('utf-8'))
+        task = yield store.execute('hgetall', key, factory=self._build_task)
+        coroutine_return(task or None)
+
+    def get_tasks(self, ids):
+        pipe = self.store.pipeline()
+        c = self.channel
+        for task_id in ids:
+            key = c('task:%s' % to_string(task_id))
+            pipe.execute('hgetall', key, factory=self._build_task)
+        result = yield pipe.commit()
+        coroutine_return(result)
+
+    def save_task(self, task_id, **params):
+        client = self.store_client
+        return client.hmset(self.channel('task:%s' % task_id), params)
+
+    def _build_task(self, iterable):
+        return Task(Task.decode(iterable))
+
+
+task_backends['pulsar'] = PulsarTaskBackend
+task_backends['redis'] = PulsarTaskBackend

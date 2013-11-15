@@ -41,6 +41,12 @@ def mapping_iterator(iterable):
     return iterable
 
 
+def inverse_mapping(iterable):
+    if isinstance(iterable, Mapping):
+        iterable = iteritems(iterable)
+    return ((value, key) for key, value in iterable)
+
+
 def isgenerator(value):
     return hasattr(value, '__iter__') and not hasattr(value, '__len__')
 

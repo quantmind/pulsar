@@ -1,10 +1,9 @@
-from itertools import chain
-
 from pulsar import (coroutine_return, in_loop_thread, Connection,
                     ProtocolConsumer, Pool)
-from pulsar.utils.pep import native_str
+from pulsar.utils.pep import native_str, zip
 
-from .base import register_store, Store, Queue
+from .base import register_store, Store
+from .client import Client, Pipeline
 from .pubsub import PubSub
 from ...server import redis_parser
 
@@ -13,6 +12,15 @@ def dict_merge(*dicts):
     merged = {}
     [merged.update(d) for d in dicts]
     return merged
+
+
+def pairs_to_object(response, factory=None):
+    it = iter(response)
+    return (factory or dict)(zip(it, it))
+
+
+def string_keys_to_dict(key_string, callback):
+    return dict.fromkeys(key_string.split(), callback)
 
 
 def parse_info(response):
@@ -53,19 +61,24 @@ class PulsarStoreConnection(Connection):
         consumer.start(Request(command, args, **options))
         return consumer.on_finished
 
-    def execute_pipeline(self, commands):
+    def execute_pipeline(self, commands, raise_on_error):
         consumer = self.current_consumer()
-        consumer.start(PipelineRequest(commands))
+        consumer.start(PipelineRequest(commands, raise_on_error))
         return consumer.on_finished
 
 
 class Request(object):
     RESPONSE_CALLBACKS = dict_merge(
+        string_keys_to_dict(
+            'FLUSHALL FLUSHDB HMSET LSET LTRIM MSET RENAME '
+            'SAVE SELECT SHUTDOWN SLAVEOF SET WATCH UNWATCH',
+            lambda r: r == b'OK'
+        ),
         {
          'PING': lambda r: r == b'PONG',
-         'SET': lambda r: r == b'OK',
          'INFO': parse_info,
          'TIME': lambda x: (int(x[0]), int(x[1])),
+         'HGETALL': pairs_to_object
          }
     )
 
@@ -88,7 +101,7 @@ class Request(object):
         if response is not False:
             if not isinstance(response, Exception):
                 response = self.parse_response(response, self.command,
-                                               **self.options)
+                                               self.options)
                 if response is None:
                     consumer.bind_event('post_request', lambda r: None)
             else:
@@ -96,7 +109,7 @@ class Request(object):
             consumer.finished(response)
 
     def parse_response(self, response, command, options):
-        callback = self.RESPONSE_CALLBACKS.get(command)
+        callback = self.RESPONSE_CALLBACKS.get(command.upper())
         return callback(response, **options) if callback else response
 
 
@@ -125,10 +138,14 @@ class PipelineRequest(Request):
             response = parser.get()
         if len(self.responses) == len(self.commands):
             response = []
-            for cmds, response in zip(self.commands[1:-1], self.responses[-1]):
+            error = None
+            for cmds, resp in zip(self.commands[1:-1], self.responses[-1]):
                 args, options = cmds
-                response.append(self.parse_response(response, args[0],
-                                                    **options))
+                if isinstance(resp, Exception) and not error:
+                    error = resp
+                response.append(self.parse_response(resp, args[0], options))
+            if error and self.raise_on_error:
+                raise error
             consumer.finished(response)
 
 
@@ -139,59 +156,6 @@ class Consumer(ProtocolConsumer):
 
     def data_received(self, data):
         self._request.data_received(self, data)
-
-
-class PulsarQueue(Queue):
-
-    def get(self, timeout=None):
-        return self.store.execute('brpop', self.id)
-
-    def put(self, item):
-        return self.store.execute('lpush', item)
-
-
-class Client(object):
-
-    def __init__(self, store):
-        self.store = store
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.store)
-    __str__ = __repr__
-
-    def pubsub(self):
-        return PubSub(self.store)
-
-    def pipeline(self):
-        return Pipeline(self.store)
-
-    def execute(self, command, *args, **options):
-        return self.store.execute(command, *args, **options)
-    execute_command = execute
-
-
-class Pipeline(Client):
-
-    def __init__(self, store):
-        self.store = store
-        self.reset()
-
-    def execute(self, *args, **kwargs):
-        self.command_stak.append((args, kwargs))
-    execute_command = execute
-
-    def execute_command(self, command, *args, **options):
-        return self.store.execute(command, *args, **options)
-
-    def reset(self):
-        self.command_stack = []
-        self.scripts = set()
-
-    def commit(self, raise_on_error=True):
-        cmds = list(chain([(('MULTI', ), {})],
-                          self.command_stack, [(('EXEC', ), {})]))
-        self.reset()
-        return self.store.execute_pipeline(cmds)
 
 
 class PulsarStore(Store):
@@ -205,6 +169,7 @@ class PulsarStore(Store):
         if namespace:
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size)
+        self.loaded_scripts = {}
 
     @property
     def pool(self):
@@ -224,10 +189,6 @@ class PulsarStore(Store):
     def pubsub(self):
         return PubSub(self)
 
-    def queue(self, id):
-        '''Create a districuted queue'''
-        return PulsarQueue(self, id)
-
     @in_loop_thread
     def execute(self, command, *args, **options):
         connection = yield self._pool.connect()
@@ -236,10 +197,10 @@ class PulsarStore(Store):
             coroutine_return(result)
 
     @in_loop_thread
-    def execute_pipeline(self, commands):
-        connection = yield self._pool.connect()
-        with connection:
-            result = yield connection.execute_pipeline(commands)
+    def execute_pipeline(self, commands, raise_on_error=True):
+        conn = yield self._pool.connect()
+        with conn:
+            result = yield conn.execute_pipeline(commands, raise_on_error)
             coroutine_return(result)
 
     def connect(self, protocol_factory=None):
