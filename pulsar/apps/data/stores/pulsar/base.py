@@ -7,7 +7,7 @@ from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
-from ..server import KeyValueStore
+from ...server import KeyValueStore
 
 
 data_stores = {}

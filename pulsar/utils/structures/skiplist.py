@@ -88,7 +88,7 @@ class Skiplist(object):
         else:
             return -1 - rank
 
-    def range(self, start=0, end=None):
+    def range(self, start=0, end=None, scores=False):
         raise NotImplementedError
 
     def range_by_score(self, minvalue=neg_inf, maxvalue=inf):
