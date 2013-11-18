@@ -94,7 +94,7 @@ from pulsar.utils.config import section_docs
 from pulsar.apps.data import start_store
 
 from .models import *
-from .backend import task_backends
+from .backend import task_backends, Task, TaskBackend
 from .rpc import *
 
 

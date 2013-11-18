@@ -217,10 +217,40 @@ class PulsarStore(Store):
             yield connection.execute('SELECT', self._database)
         coroutine_return(connection)
 
+    def execute_transaction(self, commands):
+        pipe = self.pipeline()
+        for command in commands:
+            action = command.action
+            if not action:
+                pipe.execute(*command.args)
+            elif action == 1:
+                model = command.args
+                key = '%s:%s' % (model._meta.table_name,
+                                 model.pkvalue() or '')
+                pipe.hmset(key, model._to_store(self))
+            else:
+                raise NotImplementedError
+        return pipe.commit()
+
+    def get_model(self, model, pk):
+        key = '%s:%s' % (model._meta.table_name, pk)
+        return self.execute('hgetall', key, factory=model)
+
+    def compile_query(self, query):
+        pipe = self.pipeline()
+        meta = query._meta
+        if query._filters:
+
+        for task_id in ids:
+            key = c('task:%s' % to_string(task_id))
+            pipe.execute('hgetall', key, factory=Task)
+        result = yield pipe.commit()
+        coroutine_return(result)
+
     def _new_connection(self):
         self._received = session = self._received + 1
         return PulsarStoreConnection(Consumer, session=session, producer=self)
 
 
 register_store('pulsar',
-               'pulsar.apps.data.stores.pulsar.store.PulsarStore')
+               'pulsar.apps.data.stores.pulsarstore.store.PulsarStore')

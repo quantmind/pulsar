@@ -10,14 +10,14 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
 
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
-    
+
 try:
     import numpy
     include_dirs = [numpy.get_include()]
 except ImportError:
     include_dirs = []
-    
-ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError) 
+
+ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 if sys.platform == 'win32' and sys.version_info > (2, 6):
    # 2.6's distutils.msvc9compiler can raise an IOError when failing to
    # find the compiler
@@ -34,7 +34,7 @@ class BuildFailed(Exception):
 class tolerant_build_ext(build_ext):
     # This class allows C extension building to fail. From SQLAlchemy
 
-    def run(self): 
+    def run(self):
         try:
             build_ext.run(self)
         except DistutilsPlatformError:
@@ -61,10 +61,10 @@ extra_compile_args = []
 #    #extra_compile_args.extend(('-std=c++11',))
 #elif os.name != 'nt':
 #    extra_compile_args.append('-std=gnu++0x')
-    
 
-extension = Extension('pulsar.apps.redis.cparser',
-                      [os.path.join(lib_path, 'src', 'cparser.pyx')],
+
+extension = Extension('pulsar.utils.libs.hash',
+                      [os.path.join(lib_path, 'src', 'hash.pyx')],
                       language='c++',
                       #extra_compile_args=extra_compile_args,
                       include_dirs=include_dirs)

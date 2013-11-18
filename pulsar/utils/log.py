@@ -8,6 +8,8 @@ import logging
 from threading import Lock
 from multiprocessing import current_process
 
+from .pep import force_native_str
+
 win32 = sys.platform == "win32"
 
 if sys.version_info < (2, 7):    # pragma    nocover
@@ -96,8 +98,24 @@ def local_property(f):
 
 def lazy_string(f):
     def _(*args, **kwargs):
-        return _lazy(f, args, kwargs)
+        return LazyString(f, *args, **kwargs)
     return _
+
+
+class LazyString:
+    __slots__ = ('value', 'f', 'args', 'kwargs')
+
+    def __init__(self, f, *args, **kwargs):
+        self.value = None
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        if self.value is None:
+            self.value = force_native_str(self.f(*self.args, **self.kwargs))
+        return self.value
+    __repr__ = __str__
 
 
 class WritelnDecorator(object):
@@ -257,21 +275,6 @@ class LogginMixin(LocalMixin):
                               'handlers': handlers,
                               'config': config}
             self.local.logger = logging.getLogger(logger)
-
-
-class _lazy:
-
-    def __init__(self, f, args, kwargs):
-        self._value = None
-        self._f = f
-        self.args = args
-        self.kwargs = kwargs
-
-    def __str__(self):
-        if self._value is None:
-            self._value = native_str(self._f(*self.args, **self.kwargs) or '')
-        return self._value
-    __repr__ = __str__
 
 
 WHITE = 37

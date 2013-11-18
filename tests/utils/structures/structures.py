@@ -3,6 +3,7 @@ from pulsar.utils.structures import MultiValueDict, merge_prefix, deque,\
                                     AttributeDictionary
 from pulsar.apps.test import unittest
 
+
 class TestMultiValueDict(unittest.TestCase):
 
     def testConstructor(self):

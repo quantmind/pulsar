@@ -10,7 +10,3 @@ cdef extern from "parser.h":
 
     object pack_command(object)
 
-
-cdef extern from "websocket.h":
-
-    object websocket_frame(const char*, const char*, bool)

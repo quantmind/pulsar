@@ -127,10 +127,10 @@ from hashlib import sha1
 from pulsar import (in_loop, Failure, EventHandler, PulsarException,
                     Deferred, coroutine_return, run_in_loop_thread,
                     in_loop_thread)
-from pulsar.utils.pep import itervalues, pickle, to_string
+from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import (LocalMixin, local_property, local_method,
-                              lazy_string)
+                              LazyString)
 from pulsar.utils.security import gen_unique_id
 
 from .models import JobRegistry
@@ -221,6 +221,7 @@ class TaskConsumer(object):
 class Task(odm.Model):
     id = odm.CharField(primary_key=True)
     lock_id = odm.CharField(unique=True)
+    name = odm.CharField(index=True)
     time_queued = odm.FloatField()
     time_started = odm.FloatField()
     time_finished = odm.FloatField()
@@ -237,15 +238,11 @@ class Task(odm.Model):
         return self.get('state') in self.READY_STATES
 
     def info(self):
-        state = states.CODES.get(task.get('state'), 'UNKNOWN')
-        return 'task.%s(%s)' % (task.get('name'), task.get('id'))
+        state = states.CODES.get(self.get('state'), 'UNKNOWN')
+        return 'task.%s(%s)' % (self.get('name'), self.get('id'))
 
     def lazy_info(self):
-        return lazy_string(self.info)
-
-    def load_kwargs(self):
-        kwargs = self.get('kwargs')
-        return pickle.loads(kwargs) if kwargs else {}
+        return LazyString(self.info)
 
 
 class TaskClient(PubSubClient):
@@ -348,6 +345,12 @@ class TaskBackend(LocalMixin):
         return create_store(self._store_dns)
 
     @local_property
+    def models(self):
+        models = odm.Router(self.store)
+        models.register(Task)
+        return models
+
+    @local_property
     def concurrent_tasks(self):
         '''Concurrent set of task ids.
 
@@ -382,7 +385,7 @@ class TaskBackend(LocalMixin):
         '''Try to queue a new :ref:`Task`.
 
         This method returns a :class:`.Deferred` which results in the
-        :attr:`Task.id` created. If ``jobname`` is not a valid
+        task ``id`` created. If ``jobname`` is not a valid
         :attr:`.Job.name`, a ``TaskNotAvailable`` exception occurs.
 
         :param jobname: the name of a :class:`.Job`
@@ -402,11 +405,10 @@ class TaskBackend(LocalMixin):
                 expiry = get_time(expiry, queued)
             elif job.timeout:
                 expiry = get_time(job.timeout, queued)
-            kwargs = pickle.dumps(kwargs, protocol=2)
             meta_params = meta_params or {}
-            task = Task(id=task_id, lock_id=lock_id, name=job.name,
-                        time_queued=queued, expiry=expiry, kwargs=kwargs,
-                        status=states.QUEUED)
+            task = self.models.task(id=task_id, lock_id=lock_id, name=job.name,
+                                    time_queued=queued, expiry=expiry,
+                                    kwargs=kwargs, status=states.QUEUED)
             if meta_params:
                 task.update(meta_params)
             task = yield self.maybe_queue_task(task)
@@ -414,9 +416,9 @@ class TaskBackend(LocalMixin):
                 pubsub.publish(self.channel('task_queued'), task['id'])
                 if self.entries and job.name in self.entries:
                     self.entries[job.name].next()
-                self.logger.debug('%s', lazy_string(task.info))
+                self.logger.debug('%s', task.lazy_info())
             else:
-                self.logger.debug('%s cannot queue new task', jobname)
+                self.logger.debug('%s cannot queue new task. Locked', jobname)
         else:
             raise TaskNotAvailable(jobname)
 
@@ -448,6 +450,14 @@ class TaskBackend(LocalMixin):
 
         return run_in_loop_thread(_(), self._loop).set_timeout(timeout)
 
+    def get_tasks(self, ids):
+        base = self.models.task._meta.table_name
+        pipeline = self.models.task._read_store.pipeline()
+        for pk in ids:
+            pipeline.hgetall('%s:%s' % (base, pk), factory=Task)
+        return pipeline.execute()
+        #return self.models.task.filter(id=ids).all()
+
     ########################################################################
     ##    ABSTRACT METHODS
     ########################################################################
@@ -469,10 +479,7 @@ class TaskBackend(LocalMixin):
     def get_tasks(self, ids):
         raise NotImplementedError
 
-    def save_task(self, task_id, **params):
-        '''Create or update a :class:`Task` with ``task_id`` and key-valued
-        parameters ``params``.
-        '''
+    def finish_task(self, task_id, lock_id):
         raise NotImplementedError
 
     def pubsub(self):
@@ -642,6 +649,7 @@ value ``now`` can be passed.'''
         #on a separate thread of execution from the worker event loop thread.
         pubsub = self.pubsub()
         task_id = task['id']
+        lock_id = task.get('lock_id')
         time_ended = time.time()
         try:
             job = self.registry.get(task.get('name'))
@@ -654,11 +662,12 @@ value ``now`` can be passed.'''
                     raise TaskTimeout
                 else:
                     worker.logger.info('starting task %s', task.lazy_info())
-                    yield self.save_task(task_id, status=states.STARTED,
-                                         time_started=time_ended,
-                                         worker=worker.aid)
+                    kwargs = task.get('kwargs') or {}
+                    task.clear_update(id=task_id, status=states.STARTED,
+                                      time_started=time_ended,
+                                      worker=worker.aid)
+                    yield self.models.task.update(task)
                     pubsub.publish(self.channel('task_started'), task_id)
-                    kwargs = task.load_kwargs()
                     result = yield job(consumer, **kwargs)
                     status = states.SUCCESS
             else:
@@ -671,16 +680,21 @@ value ``now`` can be passed.'''
             status = states.REVOKED
         except Exception:
             failure = Failure(sys.exc_info())
-            failure.log(msg='Failure in %s' % task.info(),
+            failure.log(msg='Failure in %s' % task.lazy_info(),
                         log=worker.logger)
             result = str(failure)
             status = states.FAILURE
         #
-        time_ended = time.time()
-        yield self.save_task(task_id, time_ended=time.time(),
-                             status=status, result=result)
+        task.clear_update(id=task_id, time_ended=time.time(),
+                          status=status, result=result)
+        try:
+            yield self.models.task.update(task)
+        finally:
+            self.concurrent_tasks.discard(task_id)
+            yield self.finish_task(task_id, lock_id)return [queryset(self, name=name, underlying=field_lookups[name])
+                for name in sorted(field_lookups)]
+
         worker.logger.info('Finished task %s', task_id)
-        self.concurrent_tasks.discard(task_id)
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)
 
@@ -838,10 +852,10 @@ class PulsarTaskBackend(TaskBackend):
             free = yield store.execute('hsetnx', c('locks'),
                                        task['lock_id'], task['id'])
         if free:
-            pipe = store.pipeline()
-            pipe.hmset(c('task:%s' % task['id']), task)
-            pipe.lpush(c('inqueue'), task['id'])
-            result = yield pipe.commit()
+            with self.models.begin() as t:
+                t.add(task)
+                t.execute('lpush', c('inqueue'), task['id'])
+            yield t.wait()
             coroutine_return(task)
         else:
             coroutine_return()
@@ -855,25 +869,16 @@ class PulsarTaskBackend(TaskBackend):
                                           self.poll_timeout)
             if not task_id:
                 coroutine_return()
-        key = self.channel('task:%s' % task_id.decode('utf-8'))
-        task = yield store.execute('hgetall', key, factory=self._build_task)
+        task = yield self.models.task.get(task_id.decode('utf-8'))
         coroutine_return(task or None)
 
-    def get_tasks(self, ids):
-        pipe = self.store.pipeline()
-        c = self.channel
-        for task_id in ids:
-            key = c('task:%s' % to_string(task_id))
-            pipe.execute('hgetall', key, factory=self._build_task)
-        result = yield pipe.commit()
-        coroutine_return(result)
-
-    def save_task(self, task_id, **params):
-        client = self.store_client
-        return client.hmset(self.channel('task:%s' % task_id), params)
-
-    def _build_task(self, iterable):
-        return Task(Task.decode(iterable))
+    def finish_task(self, task_id, lock_id):
+        store = self.store
+        pipe = store.pipeline()
+        if lock_id:
+            pipe.hdel(c('locks'), lock_id)
+        pipe.lrem(task_id)
+        return pipe.execute()
 
 
 task_backends['pulsar'] = PulsarTaskBackend

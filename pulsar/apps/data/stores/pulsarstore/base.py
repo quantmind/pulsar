@@ -76,30 +76,30 @@ class Store(object):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
 
+    def router(self):
+        '''Create a :class:`.Router` with this :class:`.Store` as
+        default store.
+        '''
+        from asyncstore import odm
+        return odm.Router(self)
+
     def connect(self):
-        '''Connect with store server'''
+        '''Connect with store server
+        '''
         raise NotImplementedError
 
     def execute(self, *args, **options):
-        '''Execute a command'''
+        '''Execute a command
+        '''
         raise NotImplementedError
 
     def client(self):
-        '''Get a client for the Store'''
+        '''Get a client for the Store
+        '''
         raise NotImplementedError
 
     def pubsub(self):
-        '''Get a publish/subscribe handler for the Store'''
-        raise NotImplementedError
-
-    def queue(self):
-        '''Get a distributed queue for this store'''
-        raise NotImplementedError
-
-    def compiler(self):
-        '''Create the command :class:`Compiler` for this :class:`Store`
-
-        Must be implemented by subclasses.
+        '''Get a publish/subscribe handler for the Store
         '''
         raise NotImplementedError
 
@@ -113,17 +113,22 @@ class Store(object):
 
     def create_table(self, model_class):
         '''Create the table for ``model_class``.
-
-        This method is supported by sql :class:`.SqlDB`.
         '''
         pass
 
-    def router(self):
-        '''Create a :class:`.Router` with this :class:`.Store` as
-        default store.
+    def execute_transaction(self, commands):
+        '''Execute a list of ``commands`` in a transaction
         '''
-        from asyncstore import odm
-        return odm.Router(self)
+        raise NotImplementedError
+
+    def compile_query(self, query):
+        raise NotImplementedError
+
+    def get_model(self, model, pk):
+        '''Fetch an instance of a ``model`` with primary key ``pk``.
+        '''
+        raise NotImplementedError
+
 
     def _init(self, **kw):  # pragma    nocover
         pass

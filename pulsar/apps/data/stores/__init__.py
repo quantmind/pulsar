@@ -1,5 +1,5 @@
 from pulsar.utils.importer import import_module
-from .pulsar import *
+from .pulsarstore import *
 
 for name in ['redis']:
     try:

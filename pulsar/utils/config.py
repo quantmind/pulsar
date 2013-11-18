@@ -690,6 +690,20 @@ class Daemon(Global):
         """
 
 
+class Noisy(Global):
+    name = "noisy"
+    flags = ["--noisy"]
+    validator = validate_bool
+    action = "store_true"
+    default = False
+    desc = """\
+        Log Failures as soon as they occur.
+
+        This option is really need during development when
+        needing to find difficult bugs
+        """
+
+
 class Pidfile(Global):
     name = "pidfile"
     flags = ["-p", "--pid"]

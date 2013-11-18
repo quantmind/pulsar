@@ -108,6 +108,7 @@ class Field(UnicodeMixin):
 
     def __init__(self, unique=False, primary_key=False, required=True,
                  index=None, hidden=None, as_cache=False, **extras):
+        self.foreign_keys = ()
         self.primary_key = primary_key
         index = index if index is not None else self.index
         if primary_key:
@@ -147,6 +148,8 @@ class Field(UnicodeMixin):
         meta = model._meta
         self.meta = meta
         meta.dfields[name] = self
+        if self.to_python:
+            meta.converters[name] = self.to_python
         if self.primary_key:
             model._meta.pk = self
 
@@ -167,8 +170,12 @@ class Field(UnicodeMixin):
 
 class CharField(Field):
 
-    def to_python(self, value):
-         return value.decode('utf-8', errors='ignore')
+    def to_python(self, value, store=None):
+        if isinstance(value, bytes):
+            return value.decode('utf-8', errors='ignore')
+        elif value is not None:
+            return str(value)
+    to_store = to_python
 
 
 class AutoIdField(Field):
@@ -177,32 +184,34 @@ class AutoIdField(Field):
 
 class IntegerField(Field):
 
-    def to_python(self, value):
+    def to_python(self, value, store=None):
         try:
             return int(value)
         except Exception:
             return None
+    to_store = to_python
 
 
 class FloatField(Field):
 
-    def to_python(self, value):
+    def to_python(self, value, store=None):
         try:
             return float(value)
         except Exception:
             return None
+    to_store = to_python
 
 
 class PickleField(Field):
 
-    def to_python(self, value):
+    def to_python(self, value, store=None):
         try:
             return pickle.loads(value)
-        except exception:
+        except Exception:
             return None
 
-    def to_store(self, value):
+    def to_store(self, value, store=None):
         try:
             return pickle.dumps(value, protocol=2)
-        except exception:
+        except Exception:
             return None

@@ -130,7 +130,7 @@ def is_failure(obj, *classes):
     return False
 
 
-def maybe_failure(value):
+def maybe_failure(value, noisy=False):
     '''Convert ``value`` into a :class:`Failure` if it needs to.
 
     The conversion happen only if ``value`` is a stack trace or an
@@ -150,9 +150,10 @@ def maybe_failure(value):
                 exc_info = sys.exc_info()
         return Failure(exc_info)
     elif is_exc_info(value):
-        return Failure(value)
-    else:
-        return value
+        value = Failure(value)
+    if isinstance(value, Failure) and noisy:
+        value.log()
+    return value
 
 
 def default_async(coro_or_future, loop=None):
@@ -677,7 +678,7 @@ class Deferred(asyncio.Future):
                 self._suppressAlreadyCalled = False
                 return self._result
             raise InvalidStateError('Already called')
-        self._result = maybe_failure(result)
+        self._result = maybe_failure(result, getattr(self._loop, 'noisy', False))
         if not state:
             state = (_CANCELLED if is_failure(self._result, CancelledError)
                      else _FINISHED)
@@ -856,7 +857,7 @@ class DeferredTask(Deferred):
                 return None, True
         if conclude:
             if failure:
-                result = maybe_failure(result)
+                result = maybe_failure(result, self._loop.noisy)
                 if isinstance(result, Failure):
                     if result.exc_info[1] is not failure.exc_info[1]:
                         failure.mute()

@@ -1,11 +1,17 @@
 import sys
 from inspect import isclass
 from copy import copy
-from collections import OrderedDict
+from collections import OrderedDict, Mapping
 
 from pulsar import ImproperlyConfigured
 from pulsar.utils.structures import Hash
 from pulsar.async.events import ManyEvent
+from pulsar.utils.pep import ispy3k, itervalues, iteritems
+
+try:
+    from pulsar.utils.libs import Model as CModelBase
+except ImportError:
+    CModelBase = None
 
 from . import Field, AutoIdField
 
@@ -66,7 +72,7 @@ class ModelMeta(object):
     :parameter ordering: Check the :attr:`ordering` attribute.
     :parameter app_label: Check the :attr:`app_label` attribute.
     :parameter name: Check the :attr:`name` attribute.
-    :parameter modelkey: Check the :attr:`modelkey` attribute.
+    :parameter table_name: Check the :attr:`table_name` attribute.
     :parameter attributes: Check the :attr:`attributes` attribute.
 
     This is the list of attributes and methods available. All attributes,
@@ -92,9 +98,9 @@ class ModelMeta(object):
         (if at top level) containing the :class:`Model` definition. It can be
         customised.
 
-    .. attribute:: modelkey
+    .. attribute:: table_name
 
-        The modelkey which is by default given by ``app_label.name``.
+        The table_name which is by default given by ``app_label.name``.
 
     .. attribute:: ordering
 
@@ -148,6 +154,7 @@ class ModelMeta(object):
         self.model = model
         self.abstract = abstract
         self.dfields = {}
+        self.converters = {}
         self.model._meta = self
         self.app_label = app_label
         self.name = (name or model.__name__).lower()
@@ -198,7 +205,7 @@ class ModelMeta(object):
                 obj.dbdata[pk.name] = pkvalue
 
     def __repr__(self):
-        return self.modelkey
+        return self.table_name
 
     def __str__(self):
         return self.__repr__()
@@ -292,7 +299,76 @@ of fields names and a list of field attribute names.'''
         return names, atts
 
 
-class ModelType(type(Hash)):
+
+class PyModelBase(dict):
+
+    def __init__(self, *args, **kwargs):
+        self._access_cache = set()
+        self._modified = 0
+        self.update(*args, **kwargs)
+        self._modified = 0
+
+    def __getitem__(self, field):
+        field = mstr(field)
+        value = super(PyModelBase, self).__getitem__(field)
+        if field not in self._access_cache:
+            self._access_cache.add(field)
+            if field in self._meta.converters:
+                value = self._meta.converters[field](value)
+                super(PyModelBase, self).__setitem__(field, value)
+        return value
+
+    def __setitem__(self, field, value):
+        field = mstr(field)
+        self._access_cache.discard(field)
+        super(PyModelBase, self).__setitem__(field, value)
+        self._modified = 1
+
+    def get(self, field, default=None):
+        try:
+            return self.__getitem__(field)
+        except KeyError:
+            return default
+
+    def update(self, *args, **kwargs):
+        if len(args) == 1:
+            iterable = args[0]
+            if isinstance(iterable, Mapping):
+                iterable = itervalues(iterable)
+            super(PyModelBase, self).update(((mstr(k), v)
+                                             for k, v in iterable))
+            self._modified = 1
+        elif args:
+            raise TypeError('expected at most 1 arguments, got %s' % len(args))
+        if kwargs:
+            super(PyModelBase, self).update(**kwargs)
+            self._modified = 1
+
+    def clear(self):
+        if self:
+            self._modified = 1
+            super(PyModelBase, self).clear()
+
+    def clear_update(self, *args, **kwargs):
+        self.clear()
+        self.update(*args, **kwargs)
+
+    def to_store(self, store):
+        return dict(self._to_store(store))
+
+    def pkvalue(self):
+        pk = self._meta.pk.name
+        if pk in self:
+            return self[pk]
+
+    def _to_store(self, store):
+        for key, value in iteritems(self):
+            if key in self._meta.dfields:
+                value = self._meta.dfields[key].to_store(value, store)
+            yield key, value
+
+
+class ModelType(type(dict)):
     '''Model metaclass'''
     def __new__(cls, name, bases, attrs):
         meta = attrs.pop('Meta', None)
@@ -315,19 +391,30 @@ class ModelType(type(Hash)):
                 meta[name] = attrs.pop(name)
 
 
-class Model(ModelType('ModelBase', (Hash,), {'abstract': True})):
+class PyModel(ModelType('_PyModelBase', (PyModelBase,), {'abstract': True})):
     abstract = True
 
-    def get(self, field, default=None):
-        if not hasattr(self, '_fields_cache'):
-            self._field_cache = set()
-        cache = self._field_cache
-        if name not in cache:
-            cache.add(name)
-            if name in self:
-                value = self[name]
-                if name in self._meta.converters:
-                    self[name] = value = self._meta.converters[name](value)
-                return value
-        return self.get(name, default)
 
+if CModelBase:
+    class Model(ModelType('_ModelBase', (CModelBase,), {'abstract': True})):
+        abstract = True
+
+else:
+    Model = PyModel
+
+
+if ispy3k:
+    def mstr(s):
+        if isinstance(s, bytes):
+            return s.decode('utf-8')
+        elif not isinstance(s, str):
+            return str(s)
+        else:
+            return s
+
+else:
+    def mstr(s):
+        if isinstance(s, (bytes, unicode)):
+            return s
+        else:
+            return str(s)

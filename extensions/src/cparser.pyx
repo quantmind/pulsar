@@ -43,4 +43,3 @@ cdef class RedisParser:
     def pack_pipeline(self, commands):
         pack = lambda *args: common.pack_command(args)
         return b''.join(starmap(pack, (args for args, _ in commands)))
-
