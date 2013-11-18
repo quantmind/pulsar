@@ -3,6 +3,7 @@ from hashlib import sha1
 
 import pulsar
 from pulsar.utils.structures import mapping_iterator
+from pulsar.utils.pep import native_str, zip
 
 from .pubsub import PubSub
 from ...server import COMMANDS_INFO
@@ -23,8 +24,104 @@ class Executor:
         self.client = client
         self.command = command
 
-    def __call__(self, *args):
-        return self.client.execute(self.command, *args)
+    def __call__(self, *args, **options):
+        return self.client.execute(self.command, *args, **options)
+
+
+def dict_merge(*dicts):
+    merged = {}
+    [merged.update(d) for d in dicts]
+    return merged
+
+
+def pairs_to_object(response, factory=None):
+    it = iter(response)
+    return (factory or dict)(zip(it, it))
+
+
+def values_to_object(response, fields=None, factory=None):
+    if fields is not None:
+        return (factory or dict)(zip(fields, response))
+    else:
+        return response
+
+
+def string_keys_to_dict(key_string, callback):
+    return dict.fromkeys(key_string.split(), callback)
+
+
+def parse_info(response):
+    info = {}
+    response = native_str(response)
+
+    def get_value(value):
+        if ',' not in value or '=' not in value:
+            try:
+                if '.' in value:
+                    return float(value)
+                else:
+                    return int(value)
+            except ValueError:
+                return value
+        else:
+            sub_dict = {}
+            for item in value.split(','):
+                k, v = item.rsplit('=', 1)
+                sub_dict[k] = get_value(v)
+            return sub_dict
+
+    for line in response.splitlines():
+        if line and not line.startswith('#'):
+            key, value = line.split(':', 1)
+            info[key] = get_value(value)
+    return info
+
+
+class Request(object):
+    RESPONSE_CALLBACKS = dict_merge(
+        string_keys_to_dict(
+            'FLUSHALL FLUSHDB HMSET LSET LTRIM MSET RENAME '
+            'SAVE SELECT SHUTDOWN SLAVEOF SET WATCH UNWATCH',
+            lambda r: r == b'OK'
+        ),
+        {
+         'PING': lambda r: r == b'PONG',
+         'INFO': parse_info,
+         'TIME': lambda x: (int(x[0]), int(x[1])),
+         'HGETALL': pairs_to_object,
+         'HMGET': values_to_object
+         }
+    )
+
+    def __init__(self, command, args, **options):
+        self.command = command.upper()
+        self.args = args
+        self.options = options
+
+    def write(self, consumer):
+        conn = consumer._connection
+        chunk = conn.parser.multi_bulk(self.command, *self.args)
+        conn._transport.write(chunk)
+        return chunk
+
+    def data_received(self, consumer, data):
+        conn = consumer._connection
+        parser = conn.parser
+        parser.feed(data)
+        response = parser.get()
+        if response is not False:
+            if not isinstance(response, Exception):
+                response = self.parse_response(response, self.command,
+                                               self.options)
+                if response is None:
+                    consumer.bind_event('post_request', lambda r: None)
+            else:
+                raise response
+            consumer.finished(response)
+
+    def parse_response(self, response, command, options):
+        callback = self.RESPONSE_CALLBACKS.get(command.upper())
+        return callback(response, **options) if callback else response
 
 
 class Client(object):
@@ -46,6 +143,9 @@ class Client(object):
     def execute(self, command, *args, **options):
         return self.store.execute(command, *args, **options)
     execute_command = execute
+
+    def hmget(self, key, *fields):
+        return self.execute('hmget', key, *fields, fields=fields)
 
     def hmset(self, key, iterable):
         args = []

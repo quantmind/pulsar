@@ -86,7 +86,7 @@ Task queue application
 
 .. _celery: http://celeryproject.org/
 '''
-from datetime import datetime
+import time
 
 import pulsar
 from pulsar import command
@@ -200,7 +200,7 @@ class TaskQueue(pulsar.Application):
         Check if the :attr:`backend` needs to schedule new tasks.
         '''
         if self.backend and monitor.is_running():
-            if self.backend.next_run <= datetime.now():
+            if self.backend.next_run <= time.time():
                 self.backend.tick()
 
     def worker_start(self, worker):

@@ -409,9 +409,11 @@ class Failure(object):
     '''
     _msg = 'Pulsar Asynchronous Failure'
 
-    def __init__(self, exc_info):
+    def __init__(self, exc_info, noisy=False):
         self.exc_info = as_async_exec_info(exc_info)
         self._mute = False
+        if noisy:
+            self.log()
 
     def __del__(self):
         if not self._mute:
@@ -678,7 +680,8 @@ class Deferred(asyncio.Future):
                 self._suppressAlreadyCalled = False
                 return self._result
             raise InvalidStateError('Already called')
-        self._result = maybe_failure(result, getattr(self._loop, 'noisy', False))
+        self._result = maybe_failure(result,
+                                     getattr(self._loop, 'noisy', False))
         if not state:
             state = (_CANCELLED if is_failure(self._result, CancelledError)
                      else _FINISHED)
@@ -773,6 +776,7 @@ class Deferred(asyncio.Future):
         if self._state == _PENDING or self._runningCallbacks or self._paused:
             return
         loop = self._loop
+        noisy = getattr(loop, 'noisy', False)
         while self._callbacks:
             callbacks = self._callbacks.popleft()
             cbk = callbacks[isinstance(self._result, Failure)]
@@ -784,7 +788,7 @@ class Deferred(asyncio.Future):
                     finally:
                         self._runningCallbacks = False
                 except Exception:
-                    self._result = Failure(sys.exc_info())
+                    self._result = Failure(sys.exc_info(), noisy)
                 else:
                     # received an asynchronous instance, add a continuation
                     if isinstance(self._result, Deferred):

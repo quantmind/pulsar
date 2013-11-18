@@ -129,6 +129,9 @@ class Store(object):
         '''
         raise NotImplementedError
 
+    def close(self):
+        '''Close all open connections.'''
+        raise NotImplementedError
 
     def _init(self, **kw):  # pragma    nocover
         pass

@@ -12,7 +12,7 @@ from collections import namedtuple
 import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
-from pulsar.utils.structures import Hash, Zset, Deque
+from pulsar.utils.structures import Dict, Zset, Deque
 from pulsar.utils.pep import map, range, zip, pickle
 
 
@@ -393,7 +393,7 @@ class Storage(object):
         self.SYNTAX_ERROR = b'-ERR Syntax error\r\n'
         self.SUBSCRIBE_COMMANDS = ('psubscribe', 'punsubscribe', 'subscribe',
                                    'unsubscribe', 'quit')
-        self.hash_type = Hash
+        self.hash_type = Dict
         self.list_type = Deque
         self.zset_type = Zset
         self._type_event_map = {bytearray: self.NOTIFY_STRING,

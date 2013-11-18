@@ -89,6 +89,21 @@ class Skiplist(object):
             return -1 - rank
 
     def range(self, start=0, end=None, scores=False):
+        N = len(self)
+        if start < 0:
+            start = N +  start
+        if start >= N:
+            return []
+        if end is None:
+            end = N
+        elif end < 0:
+            end = N + end
+        if start < end:
+            return []
+        node = self.__head.next[0]
+        while node:
+            yield node.score, node.value
+            node = node.next[0]
         raise NotImplementedError
 
     def range_by_score(self, minvalue=neg_inf, maxvalue=inf):

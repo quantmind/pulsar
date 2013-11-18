@@ -275,6 +275,8 @@ class MailboxClient(BaseClient):
         # the request method
         if self._connection is None:
             self._connection = yield self.connect()
+            self._connection.bind_event('connection_lost',
+                                        self._lost, self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
         response = yield req.future
@@ -283,3 +285,7 @@ class MailboxClient(BaseClient):
     def close(self, async=False, timeout=None):
         if self._connection:
             self._connection.close(async=async)
+
+    def _lost(self, exc=None):
+        self._loop.stop()
+        return exc

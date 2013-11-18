@@ -27,14 +27,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __READIS_PARSER_H__
-#define __READIS_PARSER_H__
+#ifndef __REDIS_PARSER_H__
+#define __REDIS_PARSER_H__
 
-#include <Python.h>
-#include <cstdlib>
-#include <string>
-#include <sstream>
-#include <list>
+#include "utils.h"
 
 #define CRLF "\r\n"
 #define RESPONSE_INTEGER  ':'
@@ -46,35 +42,6 @@
 class Task;
 class StringTask;
 class ArrayTask;
-typedef std::string string;
-typedef long long integer;
-
-
-#if PY_MAJOR_VERSION == 2
-    #define BYTES_FORMAT "s#"
-
-    inline string to_bytes(PyObject* value) {
-        if (PyFloat_Check(value)) {
-            value = PyObject_Repr(value);
-        } else if (PyUnicode_Check(value)) {
-            value = PyUnicode_AsUTF8String(value);
-        } else if (!PyString_Check(value)) {
-            value = PyObject_Str(value);
-        }
-        return string(PyString_AS_STRING(value), PyString_GET_SIZE(value));
-    }
-#else
-    #define BYTES_FORMAT "y#"
-
-    inline string to_bytes(PyObject* value) {
-        if (PyFloat_Check(value)) {
-            value = PyUnicode_AsUTF8String(PyObject_Repr(value));
-        } else if (!PyBytes_Check(value)) {
-            value = PyUnicode_AsUTF8String(PyObject_Str(value));
-        }
-        return string(PyBytes_AS_STRING(value), PyBytes_GET_SIZE(value));
-    }
-#endif
 
 
 class RedisParser {
@@ -228,7 +195,7 @@ inline PyObject* RedisParser::get_buffer() const {
 }
 
 inline PyObject* StringTask::_decode(RedisParser& parser, PyObject* result) {
-	parser._current = NULL;
+    parser._current = NULL;
     if (this->length == -1) {
         return Py_BuildValue("");
     } else if (parser.buffer.size() >= this->length+2) {
@@ -243,15 +210,15 @@ inline PyObject* StringTask::_decode(RedisParser& parser, PyObject* result) {
         parser.buffer.erase(0, this->length+2);
         return result;
     } else {
-    	parser._current = this;
+        parser._current = this;
         return NULL;
     }
 }
 
 inline PyObject* ArrayTask::_decode(RedisParser& parser, PyObject* result) {
-	if (this->length == -1) {
-		return Py_BuildValue("");
-	} else if (result) {
+    if (this->length == -1) {
+        return Py_BuildValue("");
+    } else if (result) {
         this->length--;
         PyList_Append(this->array, result);
     }
@@ -264,10 +231,10 @@ inline PyObject* ArrayTask::_decode(RedisParser& parser, PyObject* result) {
         PyList_Append(this->array, result);
     }
     if (!this->length) {
-    	parser._current = NULL;
-    	return this->array;
+        parser._current = NULL;
+        return this->array;
     } else if (!parser._current) {
-    	parser._current = this;
+        parser._current = this;
     }
     return NULL;
 }
@@ -285,4 +252,4 @@ inline  PyObject* pack_command(PyObject* args) {
 }
 
 
-#endif	//	__READIS_PARSER_H__
+#endif	//	__REDIS_PARSER_H__

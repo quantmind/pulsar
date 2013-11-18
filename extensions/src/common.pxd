@@ -9,4 +9,3 @@ cdef extern from "parser.h":
         void set_encoding(const char*)
 
     object pack_command(object)
-

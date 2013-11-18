@@ -5,7 +5,7 @@ from ..pep import ispy26
 if ispy26:    # pragma    nocover
     from ..fallbacks._collections import *
 
-from .hash import Hash
+from .hash import Hash, Dict
 from .skiplist import Skiplist
 from .zset import Zset
 from .structures import (MultiValueDict, AttributeDictionary, FrozenDict,

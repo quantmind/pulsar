@@ -451,12 +451,7 @@ class TaskBackend(LocalMixin):
         return run_in_loop_thread(_(), self._loop).set_timeout(timeout)
 
     def get_tasks(self, ids):
-        base = self.models.task._meta.table_name
-        pipeline = self.models.task._read_store.pipeline()
-        for pk in ids:
-            pipeline.hgetall('%s:%s' % (base, pk), factory=Task)
-        return pipeline.execute()
-        #return self.models.task.filter(id=ids).all()
+        return self.models.task.filter(id=ids).all()
 
     ########################################################################
     ##    ABSTRACT METHODS
@@ -474,9 +469,6 @@ class TaskBackend(LocalMixin):
             ready state.
         :return: a :class:`Task` or ``None``.
         '''
-        raise NotImplementedError
-
-    def get_tasks(self, ids):
         raise NotImplementedError
 
     def finish_task(self, task_id, lock_id):
@@ -508,7 +500,10 @@ class TaskBackend(LocalMixin):
         '''
         if self.local.task_poller:
             self.local.task_poller.cancel()
+            self.local.task_poller = None
             worker.logger.debug('stopped polling tasks')
+            #self.pubsub.close()
+            #self.store.close()
 
     ########################################################################
     ##    PRIVATE METHODS
@@ -541,28 +536,26 @@ class TaskBackend(LocalMixin):
             return tid, sha1(name.encode('utf-8')).hexdigest()
 
     def tick(self, now=None):
-        '''Run a tick, that is one iteration of the scheduler. This
-method only works when :attr:`schedule_periodic` is ``True`` and
-the arbiter context.
+        '''Run a tick, that is one iteration of the scheduler.
 
-Executes all due tasks and calculate the time in seconds to wait before
-running a new :meth:`tick`. For testing purposes a :class:`datetime.datetime`
-value ``now`` can be passed.'''
+        Available when :attr:`schedule_periodic` is ``True``.
+
+        Queues all due tasks and calculate the time in seconds to wait before
+        running a new :meth:`tick`.
+        For testing purposes a value ``now`` can be passed.
+        '''
         if not self.schedule_periodic:
             return
         remaining_times = []
-        try:
-            for entry in itervalues(self.entries):
-                is_due, next_time_to_run = entry.is_due(now=now)
-                if is_due:
-                    self.run_job(entry.name)
-                if next_time_to_run:
-                    remaining_times.append(next_time_to_run)
-        except Exception:
-            LOGGER.exception('Unhandled error in task backend')
-        self.next_run = now or datetime.now()
+        for entry in itervalues(self.entries):
+            is_due, next_time_to_run = entry.is_due(now=now)
+            if is_due:
+                self.run_job(entry.name)
+            if next_time_to_run:
+                remaining_times.append(next_time_to_run)
+        self.next_run = now or time.time()
         if remaining_times:
-            self.next_run += timedelta(seconds=min(remaining_times))
+            self.next_run += min(remaining_times)
 
     def job_list(self, jobnames=None):
         registry = self.registry
@@ -691,9 +684,8 @@ value ``now`` can be passed.'''
             yield self.models.task.update(task)
         finally:
             self.concurrent_tasks.discard(task_id)
-            yield self.finish_task(task_id, lock_id)return [queryset(self, name=name, underlying=field_lookups[name])
-                for name in sorted(field_lookups)]
-
+            yield self.finish_task(task_id, lock_id)
+        #
         worker.logger.info('Finished task %s', task_id)
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)
@@ -879,6 +871,13 @@ class PulsarTaskBackend(TaskBackend):
             pipe.hdel(c('locks'), lock_id)
         pipe.lrem(task_id)
         return pipe.execute()
+
+    def get_tasks(self, ids):
+        base = self.models.task._meta.table_name
+        pipeline = self.models.task._read_store.pipeline()
+        for pk in ids:
+            pipeline.hgetall('%s:%s' % (base, pk), factory=Task)
+        return pipeline.commit()
 
 
 task_backends['pulsar'] = PulsarTaskBackend

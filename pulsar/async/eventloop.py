@@ -251,7 +251,7 @@ loop of the thread where it is run.'''
             raise RuntimeError('Event loop stopped before Future completed.')
         return future.result()
 
-    def stop(self, deferred=None):
+    def stop(self):
         '''Stop the loop after the current event loop iteration is complete'''
         self.call_soon_threadsafe(self._raise_stop_event_loop)
 

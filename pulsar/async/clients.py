@@ -119,6 +119,16 @@ class Pool(object):
             conn.close()
         self._in_use_connections.discard(conn)
 
+    def close(self):
+        queue = self._queue
+        while queue.qsize():
+            connection = queue.get_nowait()
+            connection.close()
+        in_use = self._in_use_connections
+        self._in_use_connections = set()
+        for connection in in_use:
+            connection.close()
+
 
 class PoolConnection(object):
     __slots__ = ('pool', 'connection')

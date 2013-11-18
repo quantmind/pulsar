@@ -1,11 +1,18 @@
 from random import randint
 
 from pulsar.utils.structures import Zset
-from pulsar.apps.test import unittest
+from pulsar.apps.test import unittest, populate
 
 
 class TestZset(unittest.TestCase):
     zset = Zset
+
+    def random(self):
+        string = populate('string', size=100)
+        values = populate('float', size=100, min=-10, max=10)
+        s = self.zset()
+        s.update(zip(values, string))
+        return s
 
     def test_add(self):
         s = self.zset()
@@ -32,10 +39,7 @@ class TestZset(unittest.TestCase):
         self.assertEqual(s.rank('xxxx'), None)
 
     def test_update(self):
-        string = test.populate('string', size=100)
-        values = test.populate('float', size=100)
-        s = zset()
-        s.update(zip(values,string))
+        s = self.random()
         self.assertTrue(s)
         prev = None
         for score, _ in s.items():
@@ -55,3 +59,7 @@ class TestZset(unittest.TestCase):
             self.assertFalse(val in s)
         self.assertFalse(s)
 
+    def test_range(self):
+        s = self.random()
+        values = s.range(3,10)
+        self.assertTrue(values)
