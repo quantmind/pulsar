@@ -1,10 +1,5 @@
 from pulsar.apps.test import unittest
-
-from . import client
-
-if client.available:
-    from redis.exceptions import InvalidResponse, NoScriptError, ResponseError
-
+from pulsar.apps.data import redis_parser
 
 lua_nested_table = '''
 local s = ''
@@ -24,7 +19,10 @@ return result
 '''
 
 
-class TestParser(client.RedisTest):
+class TestParser(unittest.TestCase):
+
+    def parser(self):
+        return redis_parser()
 
     def test_null(self):
         test = b'$-1\r\n'
@@ -105,6 +103,6 @@ class TestParser(client.RedisTest):
         self.assertEqual(result, b'')
 
 
-@unittest.skipUnless(client.HAS_C_EXTENSIONS , 'Requires cython extensions')
-class TestPythonParser(client.PythonParser, TestParser):
-    pass
+#@unittest.skipUnless(client.HAS_C_EXTENSIONS , 'Requires cython extensions')
+#class TestPythonParser(client.PythonParser, TestParser):
+#    pass

@@ -35,6 +35,7 @@ class RedisCommands(object):
         self.assertIsInstance(t, tuple)
         total = t[0] + 0.000001*t[1]
 
+class d:
     ###########################################################################
     ##    KEYS
     def test_append(self):
@@ -131,8 +132,8 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
                                bind='127.0.0.1:0',
                                concurrency=cls.concurrency)
         cls.app = yield send('arbiter', 'run', server)
-        cls.store = create_store('pulsar://%s:%s' % cls.app.address)
-        cls.sync_store = create_store('pulsar://%s:%s' % cls.app.address,
+        cls.store = create_store('pulsar://%s:%s/9' % cls.app.address)
+        cls.sync_store = create_store('pulsar://%s:%s/10' % cls.app.address,
                                       force_sync=True)
         cls.client = cls.store.client()
 

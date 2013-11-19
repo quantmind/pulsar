@@ -61,5 +61,17 @@ class TestZset(unittest.TestCase):
 
     def test_range(self):
         s = self.random()
-        values = s.range(3,10)
+        values = list(s.range(3, 10))
         self.assertTrue(values)
+        self.assertEqual(len(values), 7)
+        all = list(s)[3:10]
+        self.assertEqual(all, values)
+
+    def test_range_scores(self):
+        s = self.random()
+        values = list(s.range(3, 10, True))
+        self.assertTrue(values)
+        self.assertEqual(len(values), 7)
+        all = list(s)[3:10]
+        all2 = [v for s, v in values]
+        self.assertEqual(all, all2)

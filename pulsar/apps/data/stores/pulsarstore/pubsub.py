@@ -12,6 +12,10 @@ class PubsubProtocol(Protocol):
         self.parser = self._producer._parser_class()
         self.handler = handler
 
+    def execute(self, *args):
+        chunk = self.parser.multi_bulk(*args)
+        self._transport.write(chunk)
+
     def data_received(self, data):
         parser = self.parser
         parser.feed(data)
@@ -53,7 +57,7 @@ class PubSub(base.PubSub):
     @in_loop_thread
     def punsubscribe(self, *channels):
         if self._connection:
-            self._execute('PUNSUBSCRIBE', *patterns)
+            self._connection.execute('PUNSUBSCRIBE', *patterns)
 
     @in_loop_thread
     def subscribe(self, channel, *channels):
@@ -64,15 +68,15 @@ class PubSub(base.PubSub):
         '''Un-subscribe from a list of ``channels``.
         '''
         if self._connection:
-            self._execute('UNSUBSCRIBE', *channels)
+            self._connection.execute('UNSUBSCRIBE', *channels)
 
     @in_loop_thread
     def close(self):
         '''Stop listening for messages.
         '''
         if self._connection:
-            self._execute('PUNSUBSCRIBE')
-            self._execute('UNSUBSCRIBE')
+            self._connection.execute('PUNSUBSCRIBE')
+            self._connection.execute('UNSUBSCRIBE')
 
     ##    INTERNALS
     def _subscribe(self, *args):
@@ -80,9 +84,5 @@ class PubSub(base.PubSub):
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
             self._connection = yield self.store.connect(protocol_factory)
-            self._execute(*args)
+            self._connection.execute(*args)
         coroutine_return()
-
-    def _execute(self, command, *args):
-        chunk = self._connection.parser.multi_bulk(command, *args)
-        self._connection._transport.write(chunk)
