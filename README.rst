@@ -88,6 +88,7 @@ the following:
 * Distributed task queue.
 * Shell for asynchronous scripting.
 * Asynchronous test suite.
+* Asynchronous data stores.
 * Application to run a django_ site with pulsar.
 * twisted_ integration (python 2 only).
 
