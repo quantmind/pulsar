@@ -51,29 +51,31 @@ class tolerant_build_ext(build_ext):
                 raise BuildFailed
             raise
 
-################################################################################
-##    EXTENSIONS
-lib_path = os.path.dirname(__file__)
-extra_compile_args = []
-#if sys.platform == 'darwin':
-#    #extra_compile_args.extend(('-std=c++11', '-stdlib=libc++'))
-#    extra_compile_args.extend(('-std=c++11', '-stdlib=libc++'))
-#    #extra_compile_args.extend(('-std=c++11',))
-#elif os.name != 'nt':
-#    extra_compile_args.append('-std=gnu++0x')
-
-
-extension = Extension('pulsar.utils.libs.hash',
-                      [os.path.join(lib_path, 'src', 'hash.pyx')],
-                      language='c++',
-                      #extra_compile_args=extra_compile_args,
-                      include_dirs=include_dirs)
-
-include_dirs.append(os.path.join(lib_path, 'src'))
+def extension():
+    # lua
+    lib_path = os.path.dirname(__file__)
+    path = os.path.join(lib_path, 'lua', 'src')
+    include_dirs.append(path)
+    src = []
+    luaskip = ['lua.c']
+    for file in os.listdir(path):
+        if file.endswith('.c') and file not in luaskip:
+            src.append(os.path.join(path, file))
+    #
+    path = os.path.join(lib_path, 'lib')
+    include_dirs.append(path)
+    #src.append(os.path.join(path, 'scripting.c'))
+    src.append(os.path.join(path, 'lib.pyx'))
+    #
+    # Extension
+    return Extension('pulsar.utils.lib',
+                     src,
+                     #language='c++',
+                     include_dirs=include_dirs)
 
 
 libparams = {
-             'ext_modules': cythonize(extension),
+             'ext_modules': cythonize(extension()),
              'cmdclass': {'build_ext' : tolerant_build_ext},
              'include_dirs': include_dirs
              }

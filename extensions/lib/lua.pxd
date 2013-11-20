@@ -1,6 +1,5 @@
 
 cdef extern from "lua.h" nogil:
-    char* LUA_VERSION
     char* LUA_RELEASE
     int LUA_MULTRET
 
@@ -30,6 +29,11 @@ cdef extern from "lua.h" nogil:
 
 
     void  lua_close (lua_State *L)
+    void  lua_newtable (lua_State *L)
+    void  lua_settable (lua_State *L, int index)
+    void lua_pushcfunction (lua_State *L, lua_CFunction f)
+    const char *lua_pushstring (lua_State *L, const char *s)
+    void lua_setglobal (lua_State *L, const char *name)
 
     # iteration
     int   lua_next (lua_State *L, int idx)
@@ -51,6 +55,9 @@ cdef extern from "lua.h" nogil:
 
     # push functions (C -> stack)
     void  lua_pushnil (lua_State *L)
+    void  lua_pushboolean (lua_State *L, int b)
+    void  lua_pushnumber (lua_State *L, float n)
+    const char *lua_pushlstring (lua_State *L, const char *s, size_t len)
 
     # get/set Lua/stack functions
     void  lua_rawgeti (lua_State *L, int idx, int n)
@@ -76,12 +83,7 @@ cdef extern from "lauxlib.h" nogil:
 
 cdef extern from "lualib.h":
 
-    ctypedef struct luaL_Reg:
-        char *name
-        lua_CFunction func
-
-    void luaL_openlib (lua_State *L, char *libname, luaL_Reg *l, int nup)
     lua_State *luaL_newstate ()
     void luaL_openlibs(lua_State *L)
-    int   luaL_newmetatable (lua_State *L, char *tname)
-
+    void luaL_requiref (lua_State *L, const char *modname,
+                        lua_CFunction openf, int glb)
