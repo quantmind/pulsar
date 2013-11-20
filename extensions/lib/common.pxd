@@ -9,3 +9,8 @@ cdef extern from "parser.h":
         void set_encoding(const char*)
 
     object pack_command(object)
+
+
+cdef extern from "websocket.h":
+    const char* websocket_mask(const char* chunk, const char* key,
+                               size_t chunk_length, size_t mask_length)

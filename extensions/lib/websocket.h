@@ -1,30 +1,18 @@
 #ifndef     __PULSAR_WEBSOCKET__
 #define     __PULSAR_WEBSOCKET__
 
+#include <Python.h>
 
-inline PyObject* websocket_mask(PyObject* self, PyObject* args) {
-    const char* mask;
-    int mask_len;
-    const char* data;
-    int data_len;
-    int i;
 
-    if (!PyArg_ParseTuple(args, "s#s#", &mask, &mask_len, &data, &data_len)) {
-        return NULL;
+inline const char *websocket_mask(const char* chunk, const char* key,
+        size_t chunk_length, size_t mask_length) {
+    char *buf = (char*)chunk;
+    size_t i;
+    for (i = 0; i < chunk_length; i++) {
+        buf[i] = chunk[i] ^ key[i % mask_length];
     }
-
-    PyObject* result = PyBytes_FromStringAndSize(NULL, data_len);
-    if (!result) {
-        return NULL;
-    }
-    char* buf = PyBytes_AsString(result);
-    for (i = 0; i < data_len; i++) {
-        buf[i] = data[i] ^ mask[i % 4];
-    }
-
-    return result;
+    return buf;
 }
 
 
-
-#endif      __PULSAR_WEBSOCKET__
+#endif  //  __PULSAR_WEBSOCKET__

@@ -14,6 +14,34 @@ cdef extern from *:
 
 DEF POBJECT = "POBJECT" # as used by LunaticPython
 
+if PY_MAJOR_VERSION < 3:
+    string_type = unicode
+else:
+    string_type = str
+
+
+cdef inline bytes to_bytes(object value, str encoding):
+    if isinstance(value, bytes):
+        return bytes
+    elif isinstance(value, string_type):
+        return value.encode(encoding)
+    else:
+        raise TypeError('Requires bytes or string')
+
+
+cdef inline object native_str(object value):
+    if PY_MAJOR_VERSION < 3:
+        if isinstance(value, unicode):
+            return value.encode('utf-8')
+        else:
+            return value
+    else:
+        if isinstance(value, bytes):
+            return value.decode('utf-8')
+        else:
+            return value
+
+
 class LuaError(Exception):
     """Base class for errors in the Lua runtime.
     """
@@ -81,10 +109,7 @@ cdef class Lua:
     cdef _push_method(self, handler, method):
         cdef bytes name = to_bytes(method, self.charset)
         lua.lua_pushlstring(self.state, name, len(name))
-        if self.convert:
-            lua.lua_pushcfunction(self.state, pycall(handler, method, None))
-        else:
-            lua.lua_pushcfunction(self.state, pycall(handler, method, self))
+        lua.lua_pushcclosure(self.state, py_call, 1)
         lua.lua_settable(self.state, -3)
 
     def openlibs(self):
@@ -154,6 +179,7 @@ cdef class _PyCall(_RuntimeObject):
 
     cdef int call(self, lua_State *state):
         # called from lua
+        print('here %s' % self)
         cdef tuple args = _unpack(state)
         cdef object result = self.handler(*args)
         return _py_to_lua(state, result, self.runtime)

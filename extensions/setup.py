@@ -51,31 +51,37 @@ class tolerant_build_ext(build_ext):
                 raise BuildFailed
             raise
 
-def extension():
-    # lua
-    lib_path = os.path.dirname(__file__)
+lib_path = os.path.dirname(__file__)
+
+
+def lua_extension():
+    src = []
     path = os.path.join(lib_path, 'lua', 'src')
     include_dirs.append(path)
-    src = []
     luaskip = ['lua.c']
     for file in os.listdir(path):
         if file.endswith('.c') and file not in luaskip:
             src.append(os.path.join(path, file))
+    src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
-    path = os.path.join(lib_path, 'lib')
-    include_dirs.append(path)
-    #src.append(os.path.join(path, 'scripting.c'))
-    src.append(os.path.join(path, 'lib.pyx'))
-    #
-    # Extension
-    return Extension('pulsar.utils.lib',
+    return Extension('pulsar.utils.lua',
                      src,
-                     #language='c++',
                      include_dirs=include_dirs)
 
 
+def lib_extension():
+    path = os.path.join(lib_path, 'lib')
+    include_dirs.append(path)
+    return Extension('pulsar.utils.lib',
+                     [os.path.join(path, 'lib.pyx')],
+                     language='c++',
+                     include_dirs=include_dirs)
+
+
+extensions = [lib_extension(), lua_extension()]
+
 libparams = {
-             'ext_modules': cythonize(extension()),
+             'ext_modules': cythonize(extensions),
              'cmdclass': {'build_ext' : tolerant_build_ext},
              'include_dirs': include_dirs
              }
