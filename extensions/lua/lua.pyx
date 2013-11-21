@@ -1,7 +1,11 @@
+# This file is part of pulsar released under the BSD license.
+# See the LICENSE for more information.
 cimport lua
 from lua cimport lua_State
 
 cimport cpython
+cimport cpython.float
+cimport cpython.long
 cimport cpython.ref
 cimport cpython.tuple
 from cpython.version cimport PY_MAJOR_VERSION
@@ -12,7 +16,6 @@ from collections import Mapping, Iterable
 cdef extern from *:
     ctypedef char* const_char_ptr "const char*"
 
-DEF POBJECT = "POBJECT" # as used by LunaticPython
 
 if PY_MAJOR_VERSION < 3:
     string_type = unicode
@@ -69,11 +72,13 @@ cdef class Lua:
     cdef bint convert
     cdef object lock
     cdef dict scripts
+    cdef dict _libs
 
     def __cinit__(self, encoding=None, load_libs=True, charset=None):
         self.state = lua.luaL_newstate()
         if self.state is NULL:
             raise LuaError("Failed to initialise Lua runtime")
+        self._libs = {}
         self.scripts = {}
         self.charset = charset or 'utf-8'
         self.encoding = encoding
@@ -97,20 +102,24 @@ cdef class Lua:
         """
         return self._run_lua(to_bytes(lua_code, self.charset))
 
-    def register(self, str lib_name, object handler, str method, *methods):
-        cdef bytes lname = to_bytes(lib_name, self.charset)
-        lua.lua_newtable(self.state)
-        self._push_method(handler, method)
-        for method in methods:
-            self._push_method(handler, method)
-        lua.lua_setglobal(self.state, lname)
-        return True
-
-    cdef _push_method(self, handler, method):
-        cdef bytes name = to_bytes(method, self.charset)
-        lua.lua_pushlstring(self.state, name, len(name))
-        lua.lua_pushcclosure(self.state, py_call, 1)
-        lua.lua_settable(self.state, -3)
+    def register(self, str lib_name, object handler, *methods):
+        '''Register a python object as a lua table.'''
+        cdef bytes lname
+        cdef dict callables = {}
+        if not methods:
+            return
+        with self:
+            if lib_name in self._libs:
+                raise KeyError('Lib %s already registered' % lib_name)
+            lua.lua_newtable(self.state)
+            for method in methods:
+                if method not in callables:
+                    callables[method] = self._push_method(handler, method)
+            lname = to_bytes(lib_name, self.charset)
+            lua.lua_setglobal(self.state, lname)
+            # increase the reference count of the handler
+            self._libs[lib_name] = (handler, callables)
+            return True
 
     def openlibs(self):
         lua.luaL_openlibs(self.state)
@@ -121,6 +130,18 @@ cdef class Lua:
     def __exit__(self, *args):
         lua.lua_settop(self.state, 0)
         self.lock.release()
+
+    cdef object _push_method(self, handler, method):
+        cdef bytes name = to_bytes(method, self.charset)
+        cdef object callable = getattr(handler, method, None)
+        if not hasattr(callable, '__call__'):
+            raise TypeError('%s is an invalid callable for %s' %
+                            (method, handler))
+        lua.lua_pushlstring(self.state, name, len(name))
+        lua.lua_pushlightuserdata(self.state, <void*>callable)
+        lua.lua_pushcclosure(self.state, <lua.lua_CFunction>py_call, 1)
+        lua.lua_settable(self.state, -3)
+        return callable
 
     cdef inline object _run_lua(self, bytes lua_code):
         cdef int result, nargs
@@ -144,45 +165,17 @@ cdef class Lua:
             else:
                 return None
 
+
 ##    INTERNALS
-
-cdef lua.lua_CFunction pycall(handler, method, Lua runtime):
-    cdef _PyCall py = _PyCall.__new__(_PyCall)
-    if runtime is not None:
-        py._init(runtime)
-    py.handler = getattr(handler, method)
-    return <lua.lua_CFunction>py.call
+cdef int py_call(lua_State *state) nogil:
+    return py_call_with_gil(state)
 
 
-cdef class _RuntimeObject:
-    cdef Lua runtime
-
-    def __init__(self):
-        raise RuntimeError('Cannot initialise')
-
-    def _init__(self, runtime):
-        self.runtime = runtime
-        cpython.ref.Py_INCREF(runtime)
-
-    cdef _dealloc(self):
-        pass
-
-    def __dealloc__(self):
-        self._dealloc()
-        if self.runtime:
-            cpython.ref.Py_DECREF(self.runtime)
-            self.runtime = None
-
-
-cdef class _PyCall(_RuntimeObject):
-    cdef object handler
-
-    cdef int call(self, lua_State *state):
-        # called from lua
-        print('here %s' % self)
-        cdef tuple args = _unpack(state)
-        cdef object result = self.handler(*args)
-        return _py_to_lua(state, result, self.runtime)
+cdef int py_call_with_gil(lua_State* state) with gil:
+    cdef tuple args = _unpack(state)
+    cdef const void* ptr = lua.lua_topointer(state, lua.lua_upvalueindex(1))
+    cdef object method = <object>ptr
+    return _py_to_lua(state, method(*args))
 
 
 cdef str _lua_error_message(lua_State *state, str err_message, int n):
@@ -273,22 +266,22 @@ cdef inline _py_to_lua(lua_State *state, object o, Lua runtime=None):
     cdef bytes b
     if type(o) is bool:
         lua.lua_pushboolean(state, <bint>o)
-        pushed = 1
+        return 1
     elif type(o) is float:
         lua.lua_pushnumber(state,
                            <float>cpython.float.PyFloat_AS_DOUBLE(o))
-        pushed = 1
+        return 1
     elif isinstance(o, long):
         lua.lua_pushnumber(state, <float>cpython.long.PyLong_AsDouble(o))
-        pushed = 1
+        return 1
     elif isinstance(o, bytes):
         lua.lua_pushlstring(state, <char*>(<bytes>o), len(<bytes>o))
-        pushed = 1
+        return 1
     elif ((PY_MAJOR_VERSION < 3 and isinstance(o, unicode)) or
           (PY_MAJOR_VERSION > 2 and isinstance(o, str))):
         b = o.encode('utf-8')
         lua.lua_pushlstring(state, <char*>(<bytes>o), len(<bytes>o))
-        pushed = 1
+        return 1
     elif runtime is None:
         if isinstance(o, Mapping):
             lua.lua_newtable(state);

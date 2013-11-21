@@ -31,7 +31,6 @@ cdef extern from "lua.h" nogil:
     void  lua_close (lua_State *L)
     void  lua_newtable (lua_State *L)
     void  lua_settable (lua_State *L, int index)
-    void lua_pushcfunction (lua_State *L, lua_CFunction f)
     const char *lua_pushstring (lua_State *L, const char *s)
     void lua_setglobal (lua_State *L, const char *name)
 
@@ -52,12 +51,17 @@ cdef extern from "lua.h" nogil:
     float   lua_tonumber (lua_State *L, int idx)
     bint    lua_toboolean (lua_State *L, int idx)
     char   *lua_tolstring (lua_State *L, int idx, size_t *len)
+    char   *lua_tostring (lua_State *L, int idx)
+    int     lua_upvalueindex (int i)
+    const void *lua_topointer (lua_State *L, int index)
 
     # push functions (C -> stack)
     void  lua_pushnil (lua_State *L)
     void  lua_pushboolean (lua_State *L, int b)
     void  lua_pushnumber (lua_State *L, float n)
+    void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n)
     const char *lua_pushlstring (lua_State *L, const char *s, size_t len)
+    void lua_pushlightuserdata (lua_State *L, void *p)
 
     # get/set Lua/stack functions
     void  lua_rawgeti (lua_State *L, int idx, int n)

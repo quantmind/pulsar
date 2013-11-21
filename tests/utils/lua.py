@@ -1,9 +1,9 @@
 from pulsar.apps.test import unittest
 
 try:
-    from pulsar.utils import lib
+    from pulsar.utils.lua import Lua
 except ImportError:
-    lib = None
+    Lua = None
 
 
 class Handler():
@@ -13,9 +13,16 @@ class Handler():
         return args
 
 
-@unittest.skipUnless(lib , 'Requires cython extensions')
+@unittest.skipUnless(Lua , 'Requires cython extensions')
 class TestLuaRuntime(unittest.TestCase):
 
     def test_python_lib(self):
-        lua = lib.LuaRuntime()
+        lua = Lua()
         lua.register('pytest', Handler(), 'call')
+        result = lua.execute('return type(pytest)')
+        self.assertEqual(result, b'table')
+        result = lua.execute('return type(pytest.call)')
+        self.assertEqual(result, b'function')
+        result = lua.execute('return pytest.call()')
+        self.assertEqual(result, b'call')
+
