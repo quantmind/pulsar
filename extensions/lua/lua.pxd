@@ -3,8 +3,6 @@ cdef extern from "lua.h" nogil:
     char* LUA_RELEASE
     int LUA_MULTRET
 
-    int LUA_REGISTRYINDEX
-
     enum:
         LUA_YIELD      # 1
         LUA_ERRRUN     # 2
@@ -23,6 +21,9 @@ cdef extern from "lua.h" nogil:
         LUA_TFUNCTION         # 6
         LUA_TUSERDATA         # 7
         LUA_TTHREAD           # 8
+
+    ctypedef float lua_Number  # type of numbers in Lua
+    ctypedef int lua_Integer   # type for integer functions
 
     ctypedef struct lua_State
     ctypedef int (*lua_CFunction) (lua_State *L)
@@ -82,13 +83,10 @@ cdef extern from "lauxlib.h" nogil:
 
     int luaL_loadbuffer (lua_State *L, char *buff, size_t sz, char *name)
     int luaL_ref (lua_State *L, int t)
-    void luaL_unref (lua_State *L, int t, int ref)
 
 
 cdef extern from "lualib.h":
 
     lua_State *luaL_newstate ()
     void luaL_openlibs(lua_State *L)
-    void luaL_requiref (lua_State *L, const char *modname,
-                        lua_CFunction openf, int glb)
 

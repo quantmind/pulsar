@@ -1,6 +1,7 @@
 import os
 from struct import pack, unpack
 
+cimport cython
 from common cimport websocket_mask
 
 
@@ -33,55 +34,126 @@ cdef class Frame:
         return self._masking_key
 
 
-cdef class EncodedFrame:
-
-    def __init__(self, message, opcode=None, version=None,
-                 masking_key=None, final=False, rsv1=0, rsv2=0, rsv3=0):
-        pass
-
-
 cdef class FrameParser:
-    '''Cython wrapper for websocket FrameParser.'''
+    '''Encoder and decoder of WebSocket frames.
+
+    * kind = 0, server (decode masked messages, encode unmasked messages)
+    * kind = 1, client (decode unmasked messages, encode masked messages)
+    * kind = 2, unmasked both encoding and decoding
+    * kind = 3, masked both encoding and decoding
+    '''
     cdef Frame frame
     cdef object buffer
     cdef object ProtocolError
-    cdef int _mask_length
+    cdef int kind
+    cdef int _version
+    cdef int _decode_mask_length
+    cdef int _encode_mask_length
+    cdef tuple _opcodes
+    cdef object _extensions
+    cdef object _protocols
+    cdef cython.ulonglong _max_payload
 
-    def __cinit__(self, int version, int kind, object ProtocolError):
-        self.version = version
+    def __cinit__(self, int version, int kind, object ProtocolError,
+                  extensions=None, protocols=None):
+        self._version = version
         self.kind = kind
         self.frame
         self.buffer = bytearray()
         self.ProtocolError = ProtocolError
-        self._mask_length = 4 if self.kind == 0 else 0
+        self._opcodes = (0, 1, 2, 8, 9, 10)
+        self._encode_mask_length = 0
+        self._decode_mask_length = 0
+        if kind == 0:
+            self._decode_mask_length = 4
+        elif kind == 1:
+            self._encode_mask_length = 4
+        elif kind == 3:
+            self._decode_mask_length = 4
+            self._encode_mask_length = 4
+        self._max_payload = 1 << 63
+        self._extensions = extensions
+        self._protocols = protocols
 
-    def mask_length(self):
-        return self._mask_length
+    @property
+    def version(self):
+        return self._version
+
+    @property
+    def max_payload(self):
+        return self._max_payload
+
+    @property
+    def decode_mask_length(self):
+        return self._decode_mask_length
+
+    @property
+    def encode_mask_length(self):
+        return self._encode_mask_length
 
     def ping(self, body=None):
         '''return a `ping` :class:`Frame`.'''
-        return self.encode(body, opcode=0x9)
+        return self.encode(body, opcode=9)
 
-    def encode(self, data, final=True, masking_key=None, **params):
-        if self._mask_length:
-            masking_key = masking_key or os.urandom(4)
-            assert len(masking_key) == 4, "bad masking key"
-            params['masking_key'] = None
-        return EncodedFrame(data, final=final, **params)
+    def pong(self, body=None):
+        '''return a `pong` :class:`Frame`.'''
+        return self.encode(body, opcode=10)
+
+    def close(self, body=None):
+        '''return a `close` :class:`Frame`.'''
+        return self.encode(body, opcode=8)
+
+    def continuation(self, body, final=True):
+        '''return a `continuation` :class:`Frame`.'''
+        return self.encode(body, opcode=0, final=final)
+
+    def encode(self, message, final=True, bytes masking_key=None,
+               int opcode=-1, int rsv1=0, int rsv2=0, int rsv3=0):
+        '''Encode a ``message`` for writing into the wire.
+
+        The message length cannot exceed :attr:`max_payload`
+        To produce several frames for a given large message use
+        :meth:`multi_encode'.
+        '''
+        cdef bytes data
+        cdef int fin = 1 if final else 0
+        opcode, masking_key, data = self._info(message, opcode, masking_key)
+        return self._encode(data, opcode, masking_key, fin,
+                            rsv1, rsv2, rsv3)
+
+    def multi_encode(self, message, bytes masking_key=None, int opcode=-1,
+                     int rsv1=0, int rsv2=0, int rsv3=0, int max_payload=0):
+        '''Encode a ``message`` into several frames depending on size.
+
+        Returns a generator of bytes to be sent over the wire.
+        '''
+        cdef bytes data
+        cdef bytes chunk
+        cdef int fin
+        max_payload = max(2, max_payload or self._max_payload)
+        opcode, masking_key, data = self._info(message, opcode, masking_key)
+        #
+        while data:
+            if data >= max_payload:
+                chunk, data, final = (chunk[:max_payload],
+                                      chunk[max_payload:], 0)
+            else:
+                chunk, data, fin = data, b'', 1
+            yield self._encode(chunk, opcode, masking_key, fin,
+                               rsv1, rsv2, rsv3)
 
     def decode(self, bytes data):
         cdef int fin, rsv1, rsv2, rsv3, opcode, payload_length
         cdef Frame frame = self.frame
-        cdef object buffer = self.buffer
-        cdef int mask_length = self._mask_length
+        cdef int mask_length = self._decode_mask_length
         cdef bytes chunk
         #
         if data:
-            buffer.extend(data)
+            self.buffer.extend(data)
         if frame is None:
-            if len(buffer) < 2:
+            if len(self.buffer) < 2:
                 return
-            first_byte, second_byte = unpack("BB", data[:2])
+            first_byte, second_byte = unpack("BB", self.buffer[:2])
             fin = (first_byte >> 7) & 1
             rsv1 = (first_byte >> 6) & 1
             rsv2 = (first_byte >> 5) & 1
@@ -97,8 +169,13 @@ cdef class FrameParser:
             payload_length = second_byte & 0x7f
             # All control frames MUST have a payload length of 125 bytes
             # or less
-            if opcode > 0x7 and payload_length > 125:
-                raise self.ProtocolError('WEBSOCKET frame too large')
+            if opcode > 7:
+                if payload_length > 125:
+                    raise self.ProtocolError(
+                        'WEBSOCKET control frame too large')
+                elif not fin:
+                    raise self.ProtocolError(
+                        'WEBSOCKET control frame fragmented')
             chunk = self._chunk(2)
             self.frame = frame = Frame(opcode, <bint>fin, payload_length)
 
@@ -107,35 +184,85 @@ cdef class FrameParser:
             # or less
             d = None
             if frame._payload_length == 0x7e:  # 126
-                if len(buffer) < 2 + mask_length:  # 2 + 4 for mask
-                    return self.save_buf(frame, buffer)
+                if len(self.buffer) < 2 + mask_length:  # 2 + 4 for mask
+                    return
                 chunk = self._chunk(2)
                 frame._payload_length = unpack("!H", chunk)[0]
             elif frame._payload_length == 0x7f:  # 127
-                if len(buffer) < 8 + mask_length:  # 8 + 4 for mask
-                    return self.save_buf(frame, buffer)
+                if len(self.buffer) < 8 + mask_length:  # 8 + 4 for mask
+                    return
                 chunk = self._chunk(8)
                 frame._payload_length = unpack("!Q", chunk)[0]
-            elif len(buffer) < mask_length:
+            elif len(self.buffer) < mask_length:
                 return
             if mask_length:
                 frame._masking_key = self._chunk(mask_length)
             else:
                 frame._masking_key = b''
 
-        if len(buffer) >= frame._payload_length:
+        if len(self.buffer) >= frame._payload_length:
             self.frame = None
             chunk = self._chunk(frame._payload_length)
-            #for extension in self.extensions:
-            #    data = extension.receive(frame, self.buffer)
+            if self._extensions:
+                for extension in self._extensions:
+                    chunk = extension.receive(frame, self.buffer)
             if frame._masking_key:
                 chunk = websocket_mask(chunk, frame._masking_key,
                                        len(chunk), len(frame._masking_key))
-            if frame.opcode == 0x1:
-                frame.body = chunk.decode("utf-8", "replace")
+            if frame.opcode == 1:
+                frame._body = chunk.decode("utf-8", "replace")
             else:
-                frame.body = chunk
+                frame._body = chunk
             return frame
+
+    cdef bytes _encode(self, bytes data, int opcode, bytes masking_key,
+                       int fin, int rsv1, int rsv2, int rsv3):
+        cdef object buffer = bytearray()
+        cdef cython.longlong length = len(data)
+        cdef int mask_bit = 128 if masking_key else 0
+
+        buffer.append(((fin << 7) | (rsv1 << 6) | (rsv2 << 5) |
+                       (rsv3 << 4) | opcode))
+
+        if length < 126:
+            buffer.append(mask_bit | length)
+        elif length < 65536:
+            buffer.append(mask_bit | 126)
+            buffer.extend(pack('!H', length))
+        elif length < self._max_payload:
+            buffer.append(mask_bit | 127)
+            buffer.extend(pack('!Q', length))
+        else:
+            raise self.ProtocolError('WEBSOCKET frame too large')
+        if masking_key:
+            buffer.extend(masking_key)
+            buffer.extend(websocket_mask(data, masking_key,
+                                         length, len(masking_key)))
+        else:
+            buffer.extend(data)
+        return bytes(buffer)
+
+    cdef tuple _info(self, message, int opcode, bytes masking_key):
+        cdef Frame frame
+        cdef int mask_length = self._encode_mask_length
+        #
+        if mask_length:
+            masking_key = masking_key or os.urandom(4)
+            assert len(masking_key) == mask_length, "bad masking key"
+        else:
+            masking_key = b''
+        if opcode == -1:
+            opcode = 1 if isinstance(message, string_type) else 2
+        data = to_bytes(message or b'', 'utf-8')
+        if opcode not in self._opcodes:
+            raise self.ProtocolError('WEBSOCKET opcode a reserved value')
+        elif opcode > 7:
+            if len(data) > 125:
+                raise self.ProtocolError('WEBSOCKET control frame too large')
+            if opcode == 8:
+                #TODO CHECK CLOSE FRAME STATUS CODE
+                pass
+        return opcode, masking_key, data
 
     cdef bytes _chunk(self, int length):
         cdef bytes chunk = bytes(self.buffer[:length])

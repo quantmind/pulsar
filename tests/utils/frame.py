@@ -1,58 +1,80 @@
 from random import randint
 import struct
 
-from pulsar import ProtocolError
+from pulsar import ProtocolError, HAS_C_EXTENSIONS
 from pulsar.apps.test import unittest
-from pulsar.utils.websocket import Frame, int2bytes, i2b, FrameParser
+from pulsar.utils.websocket import Frame, frame_parser
 import pulsar.apps.ws
+
+i2b = lambda args: bytes(bytearray(args))
 
 
 class FrameTest(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
-        cls.bdata = b''.join((i2b(randint(0,255)) for v in range(256)))
-        SIZE = 64*1024
-        cls.large_bdata = b''.join((i2b(randint(0,255)) for v in range(SIZE)))
-        
-    def testBadFrame(self):
-        self.assertRaises(ProtocolError, Frame, version=809)
-        self.assertRaises(ProtocolError, Frame, opcode=56)
-        self.assertRaises(ProtocolError, Frame)
-        self.assertRaises(ProtocolError, Frame, 'bla',
-                          masking_key='foo')
-        self.assertRaises(ProtocolError, Frame, 'bla',
-                          masking_key='fooox')
-        
+        cls.bdata = i2b((randint(0, 255) for v in range(256)))
+        cls.large_bdata = i2b((randint(0, 255) for v in range(64*1024)))
+
+    def parser(self, **kw):
+        kw['pyparser'] = 'new'
+        return frame_parser(**kw)
+
+    def test_server(self):
+        server = self.parser()
+        self.assertEqual(server.decode_mask_length, 4)
+        self.assertEqual(server.encode_mask_length, 0)
+        self.assertEqual(server.max_payload, 1 << 63)
+
     def testControlFrames(self):
-        parser = FrameParser()
-        f = parser.close()
-        self.assertEqual(f.opcode, 0x8)
-        self.assertTrue(f.payload_length <= 125)
-        f = parser.ping('Hello')
-        self.assertEqual(f.opcode, 0x9)
-        self.assertEqual(int2bytes(0x89,0x05,0x48,0x65,0x6c,0x6c,0x6f), f.msg)
-        self.assertTrue(f.payload_length <= 125)
-        r = parser.replay_to(f)
-        self.assertTrue(r)
-        self.assertEqual(r.opcode, 0xA)
-        f = parser.pong()
-        self.assertEqual(f.opcode, 0xA)
-        self.assertTrue(f.payload_length <= 125)
-        
+        s = self.parser()
+        c = self.parser(kind=1)
+        #
+        chunk = s.close('bye')
+        frame = c.decode(chunk)
+        self.assertEqual(frame.opcode, 8)
+        self.assertEqual(frame.body, b'bye')
+        self.assertRaises(ProtocolError, s.close, self.bdata)
+        #
+        chunk = s.ping('Hello')
+        frame = c.decode(chunk)
+        self.assertEqual(frame.opcode, 9)
+        self.assertEqual(i2b((0x89,0x05,0x48,0x65,0x6c,0x6c,0x6f)), chunk)
+        self.assertEqual(frame.body, b'Hello')
+        self.assertRaises(ProtocolError, s.ping, self.bdata)
+        #
+        chunk = s.pong('Hello')
+        frame = c.decode(chunk)
+        self.assertEqual(frame.opcode, 10)
+        self.assertEqual(frame.body, b'Hello')
+        self.assertRaises(ProtocolError, s.pong, self.bdata)
+
+    def test_conntrol_frames_fragmented(self):
+        s = self.parser()
+        c = self.parser(kind=1)
+        for opcode in (8, 9, 10):
+            chunk = c.encode('test', opcode=opcode, final=False)
+            try:
+                s.decode(chunk)
+            except ProtocolError as e:
+                pass
+            else:
+                raise Exception('Protocol error not raised')
+
     def testUnmaskedDataFrame(self):
-        parser = FrameParser(kind=2)
-        f = parser.encode('Hello')
-        self.assertEqual(f.opcode, 0x1)
-        self.assertEqual(f.payload_length, 5)
-        self.assertFalse(f.masked)
-        self.assertEqual(len(f.msg), 7)
-        self.assertEqual(int2bytes(0x81,0x05,0x48,0x65,0x6c,0x6c,0x6f), f.msg)
+        parser = self.parser(kind=2)
+        data = parser.encode('Hello')
+        f = parser.decode(data)
+        self.assertEqual(f.opcode, 1)
+        self.assertEqual(len(f.body), 5)
+        self.assertFalse(f.masking_key)
+        #
+        self.assertEqual(i2b((0x81,0x05,0x48,0x65,0x6c,0x6c,0x6f)), data)
         f1 = parser.encode('Hel', final=False)
         f2 = parser.continuation('lo', final=True)
-        self.assertEqual(int2bytes(0x01,0x03,0x48,0x65,0x6c), f1.msg)
-        self.assertEqual(int2bytes(0x80,0x02,0x6c,0x6f), f2.msg)
-        
+        self.assertEqual(i2b((0x01,0x03,0x48,0x65,0x6c)), f1)
+        self.assertEqual(i2b((0x80,0x02,0x6c,0x6f)), f2)
+
     def testBinaryDataFrame(self):
         f = Frame(self.bdata, opcode=0x2, final=True)
         self.assertEqual(f.opcode, 0x2)
@@ -67,56 +89,45 @@ class FrameTest(unittest.TestCase):
         self.assertEqual(len(f.msg), len(self.large_bdata)+10)
         self.assertEqual(struct.pack('!BBQ',0x82,0x7F,0x0000000000010000),
                          f.msg[:10])
-            
+
     def testMaskData(self):
-        masking_key = int2bytes(0x37,0xfa,0x21,0x3d)
-        f = Frame('Hello', masking_key=masking_key, final=True)
-        self.assertTrue(f.final)
-        msg = int2bytes(0x81,0x85,0x37,0xfa,0x21,0x3d,0x7f,0x9f,0x4d,0x51,0x58)
-        self.assertTrue(f.masked)
-        self.assertEqual(msg, f.msg)
-        
-    def testParser(self):
-        p = FrameParser()
-        self.assertEqual(p.decode(b''), None)
-        frame = Frame('Hello', final=True)
-        self.assertRaises(ProtocolError, p.decode, frame.msg)
-        frame = Frame('Hello', masking_key='ciao', final=True)
-        pframe = p.decode(frame.msg)
-        self.assertTrue(pframe)
-        self.assertEqual(pframe.body, 'Hello')
-        self.assertEqual(pframe.payload_length, 5)
-        self.assertEqual(pframe.masking_key, b'ciao')
-    
+        client = self.parser(kind=1)
+        masking_key = i2b((0x37, 0xfa, 0x21, 0x3d))
+        chunk = client.encode('Hello', masking_key=masking_key)
+        msg = i2b((0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f,
+                   0x4d, 0x51, 0x58))
+        self.assertEqual(chunk, msg)
+
     def testParserBinary(self):
-        p = FrameParser()
-        frame = Frame(self.bdata, opcode=0x2, final=True, masking_key='ciao')
-        pframe = p.decode(frame.msg)
-        self.assertTrue(pframe)
-        self.assertEqual(pframe.payload_length, 256)
-        self.assertEqual(pframe.body, self.bdata)
-        frame = Frame(self.large_bdata, opcode=0x2, final=True,
-                      masking_key='ciao')
-        pframe = p.decode(frame.msg)
-        self.assertTrue(pframe)
-        self.assertEqual(pframe.payload_length, len(self.large_bdata))
-        self.assertEqual(pframe.body, self.large_bdata)
-        
+        s = self.parser()
+        c = self.parser(kind=1)
+        chunk = c.encode(self.bdata, opcode=2)
+        frame = s.decode(chunk)
+        self.assertTrue(frame)
+        self.assertEqual(frame.body, self.bdata)
+        #
+        # Now try different masking key
+        chunk = c.encode(self.large_bdata, opcode=2, masking_key=b'ciao')
+        frame = s.decode(chunk)
+        self.assertTrue(frame)
+        self.assertEqual(frame.body, self.large_bdata)
+
     def testPartialParsing(self):
-        p = FrameParser()
-        frame = Frame(self.large_bdata, opcode=0x2, final=True,
-                      masking_key='ciao')
-        self.assertEqual(p.decode(frame.msg[:1]), None)
-        self.assertEqual(p.decode(frame.msg[1:5]), None)
-        self.assertEqual(p.decode(frame.msg[5:50]), None)
-        pframe = p.decode(frame.msg[50:])
-        self.assertTrue(pframe)
-        self.assertEqual(pframe.payload_length, len(self.large_bdata))
-        self.assertEqual(pframe.body, self.large_bdata)
-        
-        
-class Extensions(unittest.TestCase):
-    
-    def testDeflate(self):
-        parser = FrameParser(extensions=['x-webkit-deflate-frame'])
-        pass
+        s = self.parser()
+        c = self.parser(kind=1)
+        chunk = s.encode(self.large_bdata, opcode=2)
+        #
+        self.assertEqual(c.decode(chunk[:1]), None)
+        self.assertEqual(c.decode(chunk[1:5]), None)
+        self.assertEqual(c.decode(chunk[5:50]), None)
+        frame = c.decode(chunk[50:])
+        self.assertTrue(frame)
+        self.assertEqual(frame.body, self.large_bdata)
+        self.assertEqual(frame.opcode, 2)
+
+
+#@unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
+#class PyFrameTest(unittest.TestCase):
+class d:
+    def parser(self):
+        return frame_parser(pyparser=True)

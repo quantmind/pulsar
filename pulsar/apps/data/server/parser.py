@@ -35,7 +35,7 @@ PyRedisParser = lambda: Parser(InvalidResponse, response_error)
 
 
 if pulsar.HAS_C_EXTENSIONS:
-    from pulsar.utils.extensions import RedisParser as _RedisParser
+    from pulsar.utils.lib import RedisParser as _RedisParser
     RedisParser = lambda: _RedisParser(InvalidResponse, ResponseError)
 else:
     RedisParser = PyRedisParser

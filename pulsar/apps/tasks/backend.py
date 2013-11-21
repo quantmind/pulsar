@@ -868,7 +868,7 @@ class PulsarTaskBackend(TaskBackend):
         store = self.store
         pipe = store.pipeline()
         if lock_id:
-            pipe.hdel(c('locks'), lock_id)
+            pipe.hdel(self.channel('locks'), lock_id)
         pipe.lrem(task_id)
         return pipe.execute()
 

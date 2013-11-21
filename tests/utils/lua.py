@@ -23,6 +23,6 @@ class TestLuaRuntime(unittest.TestCase):
         self.assertEqual(result, b'table')
         result = lua.execute('return type(pytest.call)')
         self.assertEqual(result, b'function')
-        result = lua.execute('return pytest.call()')
-        self.assertEqual(result, b'call')
+        result = lua.execute('return pytest.call(1,3)')
+        self.assertEqual(result, [1, 3])
 

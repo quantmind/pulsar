@@ -42,7 +42,7 @@ SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
 HAS_C_EXTENSIONS = True
 try:
-    from .utils import extensions
+    from .utils import lib
 except ImportError:
     HAS_C_EXTENSIONS = False
 

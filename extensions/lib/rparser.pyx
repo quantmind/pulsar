@@ -3,6 +3,9 @@ from itertools import starmap
 cimport common
 
 
+cdef bytes nil = b'$-1\r\n'
+
+
 cdef class RedisParser:
     '''Cython wrapper for Hiredis protocol parser.'''
 
@@ -37,7 +40,16 @@ cdef class RedisParser:
     def on_disconnect(self):
         pass
 
-    def pack_command(self, *args):
+    def bulk(self, bytes value=None):
+        if value is None:
+            return nil
+        else:
+            return ('$%d\r\n' % len(value)).encode('utf-8') + value + b'\r\n'
+
+    def multi_bulk_len(self, len):
+        return ('*%s\r\n' % len).encode('utf-8')
+
+    def multi_bulk(self, *args):
         return common.pack_command(args)
 
     def pack_pipeline(self, commands):

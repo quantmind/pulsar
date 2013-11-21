@@ -114,7 +114,7 @@ cdef class Lua:
             lua.lua_newtable(self.state)
             for method in methods:
                 if method not in callables:
-                    callables[method] = self._push_method(handler, method)
+                    callables[method] = self._add_method(handler, method)
             lname = to_bytes(lib_name, self.charset)
             lua.lua_setglobal(self.state, lname)
             # increase the reference count of the handler
@@ -131,7 +131,7 @@ cdef class Lua:
         lua.lua_settop(self.state, 0)
         self.lock.release()
 
-    cdef object _push_method(self, handler, method):
+    cdef object _add_method(self, handler, method):
         cdef bytes name = to_bytes(method, self.charset)
         cdef object callable = getattr(handler, method, None)
         if not hasattr(callable, '__call__'):
@@ -172,9 +172,9 @@ cdef int py_call(lua_State *state) nogil:
 
 
 cdef int py_call_with_gil(lua_State* state) with gil:
-    cdef tuple args = _unpack(state)
     cdef const void* ptr = lua.lua_topointer(state, lua.lua_upvalueindex(1))
     cdef object method = <object>ptr
+    cdef tuple args = _unpack(state)
     return _py_to_lua(state, method(*args))
 
 
@@ -197,7 +197,7 @@ cdef inline tuple _unpack(lua_State *state, Lua runtime=None):
     cdef tuple args = cpython.tuple.PyTuple_New(nargs)
     cdef int i
     for i in range(nargs):
-        arg = _py_from_lua(state, i+1, runtime)
+        arg = _py_from_lua(state, i+1)
         cpython.ref.Py_INCREF(arg)
         cpython.tuple.PyTuple_SET_ITEM(args, i, arg)
     return args
@@ -259,44 +259,43 @@ cdef object _py_from_lua_table(lua_State *state, int n, Lua runtime=None):
         lua.lua_pop(state, 1)
 
 
-cdef inline _py_to_lua(lua_State *state, object o, Lua runtime=None):
+cdef inline int _py_to_lua(lua_State *state, object o, Lua runtime=None):
     '''called to convert a python object when a python callable is
     called in lua'''
-    cdef int n, pushed = 0
+    cdef int n
     cdef bytes b
     if type(o) is bool:
         lua.lua_pushboolean(state, <bint>o)
-        return 1
     elif type(o) is float:
-        lua.lua_pushnumber(state,
-                           <float>cpython.float.PyFloat_AS_DOUBLE(o))
-        return 1
+        lua.lua_pushnumber(state, <float>cpython.float.PyFloat_AS_DOUBLE(o))
     elif isinstance(o, long):
         lua.lua_pushnumber(state, <float>cpython.long.PyLong_AsDouble(o))
-        return 1
     elif isinstance(o, bytes):
-        lua.lua_pushlstring(state, <char*>(<bytes>o), len(<bytes>o))
-        return 1
+        b = <bytes>o
+        lua.lua_pushlstring(state, b, len(b))
     elif ((PY_MAJOR_VERSION < 3 and isinstance(o, unicode)) or
           (PY_MAJOR_VERSION > 2 and isinstance(o, str))):
         b = o.encode('utf-8')
-        lua.lua_pushlstring(state, <char*>(<bytes>o), len(<bytes>o))
-        return 1
+        lua.lua_pushlstring(state, b, len(b))
     elif runtime is None:
         if isinstance(o, Mapping):
             lua.lua_newtable(state);
             for key in o:
-                n = _py_to_lua(state, key)
-                n += _py_to_lua(state, o[key])
-                lua.lua_settable(state, -1-n)
-            return 1
+                if _py_to_lua(state, key):
+                    if _py_to_lua(state, o[key]):
+                        lua.lua_settable(state, -3)
+                    else:
+                        lua.lua_pop(state, 1)
         elif isinstance(o, Iterable):
             lua.lua_newtable(state);
-            for value in o:
-                n = _py_to_lua(state, value)
-                lua.lua_settable(state, -1-n)
-            return 1
+            for n, value in enumerate(o, 1):
+                lua.lua_pushnumber(state, <float>n)
+                if _py_to_lua(state, value):
+                    lua.lua_settable(state, -3)
+                else:
+                    lua.lua_pop(state, 1)
         else:
             return 0
     else:
         return 0
+    return 1

@@ -27,6 +27,10 @@ class CommandNotFound(CommandError):
 class ProtocolError(PulsarException):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''
+    status_code = None
+    def ProtocolError(self, msg=None, status_code=None):
+        super(ProtocolError, self).__init__(msg)
+        self.status_code = status_code
 
 
 class TooManyConnections(PulsarException):

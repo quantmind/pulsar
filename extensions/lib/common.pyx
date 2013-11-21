@@ -31,12 +31,12 @@ ispy3k = sys.version_info >= (3, 0)
 if ispy3k:
     string_type = str
 else:
-    string_type = unicode
+    string_type = basestring
 
 
 cdef inline bytes to_bytes(object value, str encoding):
     if isinstance(value, bytes):
-        return bytes
+        return value
     elif isinstance(value, string_type):
         return value.encode(encoding)
     else:

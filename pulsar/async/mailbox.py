@@ -26,7 +26,7 @@ The implementation details are outlined below:
 * Communication is bidirectional and there is **only one connection** between
   the arbiter and any given actor.
 * Messages are encoded and decoded using the unmasked websocket protocol
-  implemented in :class:`.FrameParser`.
+  implemented in :class:`.frame_parser`.
 * If, for some reasons, the connection between an actor and the arbiter
   get broken, the actor will eventually stop running and garbaged collected.
 
@@ -58,7 +58,7 @@ from collections import namedtuple
 from pulsar import ProtocolError, CommandError, HaltServer
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import nice_address
-from pulsar.utils.websocket import FrameParser
+from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
 from .access import asyncio, get_actor
@@ -147,7 +147,7 @@ class MailboxProtocol(Protocol):
     def __init__(self, **kw):
         super(MailboxProtocol, self).__init__(**kw)
         self._pending_responses = {}
-        self._parser = FrameParser(kind=2)
+        self._parser = frame_parser(kind=2, pyparser=True)
         actor = get_actor()
         if actor.is_arbiter():
             self.bind_event('connection_lost', None, self._connection_lost)
