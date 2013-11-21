@@ -31,9 +31,9 @@ nan = float('nan')
 class RedisParserSetting(Global):
     name = "py_redis_parser"
     flags = ["--py-redis-parser"]
-    action="store_true"
-    default=False
-    desc='Use the python redis parser rather the C++ implementation.'
+    action = "store_true"
+    default = False
+    desc = 'Use the python redis parser rather the C++ implementation.'
 
     def parser_class(self):
         return PyRedisParser if self.value else RedisParser
@@ -58,29 +58,29 @@ def validate_list_of_pairs(val):
             new_val.append((int(elem[0]), int(elem[1])))
     return new_val
 
+
 ###############################################################################
 ##    CONFIGURATION PARAMETERS
-
 class KeyValueDatabases(KeyValuePairSetting):
     name = "key_value_databases"
     flags = ["--key-value-databases"]
-    type=int
-    default=16
-    desc='Number of databases for the key value store.'
+    type = int
+    default = 16
+    desc = 'Number of databases for the key value store.'
 
 
 class KeyValuePassword(KeyValuePairSetting):
     name = "key_value_password"
     flags = ["--key-value-password"]
-    default=''
-    desc='Optional password for the database.'
+    default = ''
+    desc = 'Optional password for the database.'
 
 
 class KeyValueSave(KeyValuePairSetting):
     name = "key_value_save"
     default = [(900, 1), (300, 10), (60, 10000)]
     validator = validate_list_of_pairs
-    desc=''''
+    desc = ''''
         Will save the DB if both the given number of seconds and the given
         number of write operations against the DB occurred.
 
@@ -96,8 +96,8 @@ class KeyValueSave(KeyValuePairSetting):
 class KeyValueFileName(KeyValuePairSetting):
     name = "key_value_filename"
     flags = ["--key-value-filename"]
-    default='pulsarkv.rdb'
-    desc='The filename where to dump the DB.'
+    default = 'pulsarkv.rdb'
+    desc = 'The filename where to dump the DB.'
 
 
 class StoreError(Exception):
@@ -345,23 +345,23 @@ class Storage(object):
         # The set of connections which issued the monitor command
         self._monitors = set()
         #
-        self.NOTIFY_KEYSPACE = (1<<0)
-        self.NOTIFY_KEYEVENT = (1<<1)
-        self.NOTIFY_GENERIC = (1<<2)
-        self.NOTIFY_STRING = (1<<3)
-        self.NOTIFY_LIST = (1<<4)
-        self.NOTIFY_SET = (1<<5)
-        self.NOTIFY_HASH = (1<<6)
-        self.NOTIFY_ZSET = (1<<7)
-        self.NOTIFY_EXPIRED = (1<<8)
-        self.NOTIFY_EVICTED = (1<<9)
+        self.NOTIFY_KEYSPACE = (1 << 0)
+        self.NOTIFY_KEYEVENT = (1 << 1)
+        self.NOTIFY_GENERIC = (1 << 2)
+        self.NOTIFY_STRING = (1 << 3)
+        self.NOTIFY_LIST = (1 << 4)
+        self.NOTIFY_SET = (1 << 5)
+        self.NOTIFY_HASH = (1 << 6)
+        self.NOTIFY_ZSET = (1 << 7)
+        self.NOTIFY_EXPIRED = (1 << 8)
+        self.NOTIFY_EVICTED = (1 << 9)
         self.NOTIFY_ALL = (self.NOTIFY_GENERIC | self.NOTIFY_STRING |
                            self.NOTIFY_LIST | self.NOTIFY_SET |
                            self.NOTIFY_HASH | self.NOTIFY_ZSET |
                            self.NOTIFY_EXPIRED | self.NOTIFY_EVICTED)
 
         self.MONITOR = (1 << 2)
-        self.MULTI  = (1 << 3)
+        self.MULTI = (1 << 3)
         self.BLOCKED = (1 << 4)
         self.DIRTY_CAS = (1 << 5)
         #
@@ -1646,7 +1646,7 @@ class Storage(object):
     @command('Pub/Sub')
     def punsubscribe(self, connection, request, N):
         check_input(request, not N)
-        patterns = list(self._patterns) if N==1 else request[1:]
+        patterns = list(self._patterns) if N == 1 else request[1:]
         for pattern in patterns:
             if pattern in self._patterns:
                 p = self._patterns[pattern]
@@ -1674,7 +1674,7 @@ class Storage(object):
     @command('Pub/Sub')
     def unsubscribe(self, connection, request, N):
         check_input(request, not N)
-        channels = list(self._channels) if N==1 else request[1:]
+        channels = list(self._channels) if N == 1 else request[1:]
         for channel in channels:
             if channel in self._channels:
                 clients = self._channels[channel]
@@ -1815,7 +1815,7 @@ class Storage(object):
                 connection.write(self._parser.bulk(value))
         elif subcommand == 'rewrite':
             connection.write(self.OK)
-        elif subcommand  == 'set':
+        elif subcommand == 'set':
             try:
                 if N != 3:
                     raise ValueError("'config set' no argument")
@@ -2254,8 +2254,8 @@ class Db(object):
             value = self._data.pop(key)
         else:
             return False
-        self._expires[key] = (self._loop.call_later(timeout - time.time(),
-            timeout, self._do_expire, key), value)
+        self._expires[key] = (self._loop.call_later(
+            timeout - time.time(), self._do_expire, key), value)
         return True
 
     def persist(self, key):

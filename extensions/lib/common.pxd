@@ -12,5 +12,5 @@ cdef extern from "parser.h":
 
 
 cdef extern from "websocket.h":
-    const char* websocket_mask(const char* chunk, const char* key,
-                               size_t chunk_length, size_t mask_length)
+    object websocket_mask(const char* chunk, const char* key,
+                          size_t chunk_length, size_t mask_length)

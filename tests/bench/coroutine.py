@@ -12,22 +12,23 @@ def sub_sub(loop, num):
     a = yield async_func(loop, num)
     b = yield async_func(loop, num)
     yield a+b
- 
+
 def sub(loop, num):
     a = yield async_func(loop, num)
     b = yield async_func(loop, num)
     c = yield sub_sub(loop, num)
     yield a+b+c
- 
+
 def main(d, loop, num):
     a = yield async_func(loop, num)
     b = yield sub(loop, num)
     c = yield sub(loop, num)
     d.callback(a+b+c)
-    
-    
+
+
 class TestCoroutine(unittest.TestCase):
-    
+    __benchmark__ = True
+
     def test_coroutine(self):
         loop = new_event_loop(iothreadloop=False)
         d= Deferred()

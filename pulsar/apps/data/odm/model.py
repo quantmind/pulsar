@@ -51,8 +51,8 @@ def make_app_label(new_class, app_label=None):
 
 class ModelMeta(object):
     '''A class for storing meta data for a :class:`.Model` class.
-    To override default behaviour you can specify the ``Meta`` class as an inner
-    class of :class:`.Model` in the following way::
+    To override default behaviour you can specify the ``Meta`` class
+    as an inner class of :class:`.Model` in the following way::
 
         from datetime import datetime
         from stdnet import odm
@@ -105,8 +105,9 @@ class ModelMeta(object):
     .. attribute:: ordering
 
         Optional name of a :class:`Field` in the :attr:`model`.
-        If provided, model indices will be sorted with respect to the value of the
-        specified field. It can also be a :class:`autoincrement` instance.
+        If provided, model indices will be sorted with respect to the value
+        of the specified field. It can also be a :class:`autoincrement`
+        instance.
         Check the :ref:`sorting <sorting>` documentation for more details.
 
         Default: ``None``.
@@ -121,9 +122,9 @@ class ModelMeta(object):
 
     .. attribute:: scalarfields
 
-        Ordered list of all :class:`Field` which are not :class:`.StructureField`.
-        The order is the same as in the :class:`Model` definition. The :attr:`pk`
-        field is not included.
+        Ordered list of all :class:`Field` which are not
+        :class:`.StructureField`.
+        The order is the same as in the :class:`Model` definition.
 
     .. attribute:: indices
 
@@ -136,8 +137,8 @@ class ModelMeta(object):
 
     .. attribute:: related
 
-        Dictionary of :class:`related.RelatedManager` for the :attr:`model`. It is
-        created at runtime by the object data mapper.
+        Dictionary of :class:`related.RelatedManager` for the :attr:`model`.
+        It is created at runtime by the object data mapper.
 
     .. attribute:: manytomany
 
@@ -297,7 +298,6 @@ of fields names and a list of field attribute names.'''
                         names.append(name)
                         atts.append(name)
         return names, atts
-
 
 
 class PyModelBase(dict):

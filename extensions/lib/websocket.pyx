@@ -58,7 +58,7 @@ cdef class FrameParser:
                   extensions=None, protocols=None):
         self._version = version
         self.kind = kind
-        self.frame
+        self.frame = None
         self.buffer = bytearray()
         self.ProtocolError = ProtocolError
         self._opcodes = (0, 1, 2, 8, 9, 10)
@@ -134,15 +134,15 @@ cdef class FrameParser:
         opcode, masking_key, data = self._info(message, opcode, masking_key)
         #
         while data:
-            if data >= max_payload:
-                chunk, data, final = (chunk[:max_payload],
-                                      chunk[max_payload:], 0)
+            if len(data) >= max_payload:
+                chunk, data, fin = (data[:max_payload],
+                                    data[max_payload:], 0)
             else:
                 chunk, data, fin = data, b'', 1
             yield self._encode(chunk, opcode, masking_key, fin,
                                rsv1, rsv2, rsv3)
 
-    def decode(self, bytes data):
+    def decode(self, bytes data=None):
         cdef int fin, rsv1, rsv2, rsv3, opcode, payload_length
         cdef Frame frame = self.frame
         cdef int mask_length = self._decode_mask_length
@@ -180,15 +180,12 @@ cdef class FrameParser:
             self.frame = frame = Frame(opcode, <bint>fin, payload_length)
 
         if frame._masking_key is None:
-            # All control frames MUST have a payload length of 125 bytes
-            # or less
-            d = None
-            if frame._payload_length == 0x7e:  # 126
+            if frame._payload_length == 126:
                 if len(self.buffer) < 2 + mask_length:  # 2 + 4 for mask
                     return
                 chunk = self._chunk(2)
                 frame._payload_length = unpack("!H", chunk)[0]
-            elif frame._payload_length == 0x7f:  # 127
+            elif frame._payload_length == 127:
                 if len(self.buffer) < 8 + mask_length:  # 8 + 4 for mask
                     return
                 chunk = self._chunk(8)
@@ -243,7 +240,6 @@ cdef class FrameParser:
         return bytes(buffer)
 
     cdef tuple _info(self, message, int opcode, bytes masking_key):
-        cdef Frame frame
         cdef int mask_length = self._encode_mask_length
         #
         if mask_length:

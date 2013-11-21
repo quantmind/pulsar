@@ -13,6 +13,7 @@ Ver. 0.8.0 - Development
   called back once the callable has a result/exception.
 * Added the new :class:`.Pool` class for managing a pool of asynchronous
   connection with a server.
+* Websocket C extensions for faster parsing.
 * **821 regression tests**, **91% coverage**.
 
 Ver. 0.7.2 - 2013-Oct-16
