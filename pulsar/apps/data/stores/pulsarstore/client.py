@@ -152,6 +152,12 @@ class Client(object):
         [args.extend(pair) for pair in mapping_iterator(iterable)]
         return self.execute('hmset', key, *args)
 
+    def eval(self, script, keys=None, args=None):
+        return self._eval('eval', script, keys, args)
+
+    def evalsha(self, sha, keys=None, args=None):
+        return self._eval('evalsha', sha, keys, args)
+
     def __getattr__(self, name):
         command = INVERSE_COMMANDS_INFO.get(name)
         if command:
@@ -159,6 +165,13 @@ class Client(object):
         else:
             raise AttributeError("'%s' object has no attribute '%s'" %
                                  (type(self), name))
+
+    def _eval(self, command, script, keys, args):
+        all = keys if keys is not None else ()
+        num_keys = len(all)
+        if args:
+            all = tuple(chain(all, args))
+        return self.execute(command, script, num_keys, *all)
 
 
 class Pipeline(Client):
@@ -175,8 +188,8 @@ class Pipeline(Client):
         self.command_stack = []
 
     def commit(self, raise_on_error=True):
-        cmds = list(chain([(('multi', ), {})],
-                          self.command_stack, [(('exec', ), {})]))
+        cmds = list(chain([(('multi',), {})],
+                          self.command_stack, [(('exec',), {})]))
         self.reset()
         return self.store.execute_pipeline(cmds, raise_on_error)
 

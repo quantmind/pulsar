@@ -135,17 +135,33 @@ class Parser(object):
                 return str(value)
 
     def __pack_gen(self, args):
+        ltd = (list, tuple, dict)
+        di = dict
         e = self.encode
         crlf = b'\r\n'
         yield ('*%s\r\n' % len(args)).encode('utf-8')
         for value in args:
             if value is None:
                 yield nil
+            elif isinstance(value, ltd):
+                if isinstance(value, dict):
+                    yield b''.join(self.__pack_gen(self._lua_dict(value)))
+                else:
+                    yield b''.join(self.__pack_gen(value))
             else:
                 value = e(value)
                 yield ('$%s\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf
+
+    def _lua_dict(self, d):
+        index = 0
+        while True:
+            index += 1
+            v = d.get(index)
+            if v is None:
+                break
+            yield v
 
     def _get(self, next):
         b = self._inbuffer

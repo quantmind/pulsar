@@ -9,6 +9,21 @@ class RedisCommands(object):
     def randomkey(self):
         return random_string()
 
+    def test_eval(self):
+        result = yield self.client.eval('return "Hello"')
+        self.assertEqual(result, b'Hello')
+        result = yield self.client.eval("return {ok='OK'}")
+        self.assertEqual(result, b'OK')
+
+    def test_eval_with_keys(self):
+        result = yield self.client.eval("return {KEYS, ARGV}",
+                                        ('a', 'b'),
+                                        ('first', 'second', 'third'))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], [b'a', b'b'])
+        self.assertEqual(result[1], [b'first', b'second', b'third'])
+
+class d:
     ###########################################################################
     ##    CONNECTION
     def test_ping(self):
@@ -35,7 +50,6 @@ class RedisCommands(object):
         self.assertIsInstance(t, tuple)
         total = t[0] + 0.000001*t[1]
 
-class d:
     ###########################################################################
     ##    KEYS
     def test_append(self):

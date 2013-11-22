@@ -25,7 +25,7 @@ else:
 
 cdef inline bytes to_bytes(object value, str encoding):
     if isinstance(value, bytes):
-        return bytes
+        return value
     elif isinstance(value, string_type):
         return value.encode(encoding)
     else:
@@ -123,6 +123,18 @@ cdef class Lua:
 
     def openlibs(self):
         lua.luaL_openlibs(self.state)
+
+    def set_global(self, name, value):
+        '''Set a global variable
+
+        ``value`` must be a number, a Mapping or an Iterable
+        '''
+        cdef bytes bname
+        if _py_to_lua(self.state, value):
+            bname = to_bytes(name, 'utf-8')
+            lua.lua_setglobal(self.state, bname)
+        else:
+            raise RuntimeError('Could not set global variable %s' % name)
 
     def __enter__(self):
         self.lock.acquire()
