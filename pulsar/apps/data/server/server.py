@@ -14,6 +14,10 @@ from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
 from pulsar.utils.pep import map, range, zip, pickle
+try:
+    from pulsar.utils.lua import Lua
+except ImportError:
+    Lua = None
 
 
 from .parser import redis_parser
@@ -296,6 +300,13 @@ class KeyValueStore(SocketServer):
         return super(KeyValueStore, self).monitor_start(monitor)
 
 
+class RedisLua:
+
+    def call(self, *args):
+        if not args:
+            raise ValueError('redis.call require a command as first argument')
+
+
 ###############################################################################
 ##    DATA STORE
 pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
@@ -408,6 +419,12 @@ class Storage(object):
                                self.zset_type: 'zset'}
         self.databases = dict(((num, Db(num, self))
                                for num in range(cfg.key_value_databases)))
+        # Initialise lua
+        if Lua:
+            self.lua = Lua()
+            self.lua.register('redis', RedisLua(), 'call')
+        else:
+            self.lua = None
         self._loaddb()
         self._loop.call_repeatedly(1, self._cron)
 
@@ -1742,6 +1759,64 @@ class Storage(object):
         self._close_transaction(connection)
         connection.transaction = transaction
         connection.write(self.OK)
+
+    ###########################################################################
+    ##    SCRIPTING
+    @command('scripting')
+    def eval(self, connection, request, N):
+        check_input(request, N < 2)
+        if not self.lua:
+            return connection.write(self.SYNTAX_ERROR)
+        script = request[1]
+        self._eval_script(connection, script, request)
+
+    def _eval_script(self, connection, script, request):
+        try:
+            numkeys = int(request[2])
+            if numkeys > 0:
+                keys = request[3:3+numkeys]
+                if len(keys) < numkey:
+                    raise ValueError
+            elif numkeys < 0:
+                raise ValueError
+            else:
+                keys = []
+        except Exception:
+            return connection.write(self.SYNTAX_ERROR)
+        args = request[3+numkey:]
+        self.lua.set_global('KEYS', keys)
+        self.lua.set_global('ARGV', args)
+        result = self.lua.execute(script)
+        if isinstance(result, dict):
+            if len(result) == 1:
+                key = tuple(result)[0]
+                keyu = key.upper()
+                if keyu == b'OK':
+                    return connection.write(self.OK)
+                elif keyu == b'ERR':
+                    return connection.error_reply(result[key])
+                else:
+                    return connection.write(self.EMPTY_ARRAY)
+            else:
+                array = []
+                index = 0
+                while result:
+                    index += 1
+                    value = result.pop(index, None)
+                    if value is None:
+                        break
+                    array.append(value)
+                result = array
+        if isinstance(result, list):
+            connection.write(self._lua_array(result))
+        elif result == True:
+            connection.write(self.ONE)
+        elif result == False:
+            connection.write(self.NIL)
+        elif isinstance(result, (int, float)):
+            connection.int_reply(int(result))
+        else:
+            connection.write(self._parser.bulk(result))
 
     ###########################################################################
     ##    CONNECTION COMMANDS
