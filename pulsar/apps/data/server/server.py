@@ -24,7 +24,7 @@ except ImportError:
 from .parser import redis_parser
 from .sort import sort_command
 from .client import (command, PulsarStoreClient, LuaClient, Blocked,
-                     COMMANDS_INFO, check_input)
+                     COMMANDS_INFO, check_input, redis_to_py_pattern)
 
 
 DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
@@ -231,8 +231,10 @@ class Storage(object):
             self.scripts = {}
             self.lua.register('redis', LuaClient(self),
                               'call', 'pcall', 'error_reply', 'status_reply')
+            self.version = '2.6.16'
         else:
             self.lua = None
+            self.version = '2.4.10'
         self._loaddb()
         self._loop.call_repeatedly(1, self._cron)
 
@@ -291,7 +293,7 @@ class Storage(object):
         allkeys = pattern == '*'
         gr = None
         if not allkeys:
-            gr = re.compile(pattern)
+            gr = re.compile(redis_to_py_pattern(pattern))
         result = [key for key in client.db if allkeys or
                   gr.search(key.decode('utf-8', err))]
         client.reply_multibulk(result)
@@ -559,6 +561,7 @@ class Storage(object):
     def psetex(self, client, request, N):
         check_input(request, N != 3)
         self._set(client, request[1], request[3], milliseconds=request[2])
+        client.reply_ok()
 
     @command('strings', True)
     def set(self, client, request, N):
@@ -585,8 +588,11 @@ class Storage(object):
                     nx = True
                 else:
                     xx = True
-        self._set(client, request[1], request[2], seconds,
-                  milliseconds, nx, xx)
+        if self._set(client, request[1], request[2], seconds,
+                     milliseconds, nx, xx):
+            client.reply_ok()
+        else:
+            client.reply_bulk()
 
     @command('strings', True)
     def setbit(self, client, request, N):
@@ -625,12 +631,15 @@ class Storage(object):
     def setex(self, client, request, N):
         check_input(request, N != 3)
         self._set(client, request[1], request[3], seconds=request[2])
+        client.reply_ok()
 
     @command('strings', True)
     def setnx(self, client, request, N):
         check_input(request, N != 2)
-        self._set(client, request[1], request[2], nx=True,
-                  OK=self.ONE, SKIP=self.ZERO)
+        if self._set(client, request[1], request[2], nx=True):
+            client.reply_one()
+        else:
+            client.reply_zero()
 
     @command('strings', True)
     def setrange(self, client, request, N):
@@ -1434,14 +1443,13 @@ class Storage(object):
                 channels = list(self._channels)
             client.reply_multibulk(channels)
         elif subcommand == 'numsub':
-            check_input(request, N > 1)
             count = []
             for channel in request[2:]:
                 clients = self._channels.get(channel, ())
-                count.append(en(clients))
+                count.append(len(clients))
             client.reply_multibulk(count)
         elif subcommand == 'numpat':
-            check_input(request, N == 1)
+            check_input(request, N > 1)
             count = reduce(lambda x, y: x + len(y.clients),
                            self._patterns.values())
             client.reply_int(count)
@@ -1754,9 +1762,8 @@ class Storage(object):
                     self._save()
                     break
 
-    def _set(self, client, key, value,
-             seconds=0, milliseconds=0, nx=False, xx=False,
-             OK=None, SKIP=None):
+    def _set(self, client, key, value, seconds=0, milliseconds=0,
+             nx=False, xx=False):
         try:
             seconds = int(seconds)
             milliseconds = 0.000001*int(milliseconds)
@@ -1779,9 +1786,7 @@ class Storage(object):
             else:
                 db._data[key] = bytearray(value)
             self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
-            connection.write(OK or self.OK)
-        else:
-            connection.write(SKIP or self.NULL_ARRAY)
+            return True
 
     def _incrby(self, client, name, key, value, type):
         try:
@@ -1862,7 +1867,7 @@ class Storage(object):
 
     def _flat_info(self):
         info = self._server.info()
-        info['server']['redis_version'] = '2.4.10'
+        info['server']['redis_version'] = self.version
         e = self._encode_info_value
         for k, values in info.items():
             if isinstance(values, dict):

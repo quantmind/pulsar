@@ -144,8 +144,8 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
     def reply_ok(self):
         self._write(self.store.OK)
 
-    def reply_status(self, status):
-        self._write(('-%s\r\n' % value).encode('utf-8'))
+    def reply_status(self, value):
+        self._write(('+%s\r\n' % value).encode('utf-8'))
 
     def reply_int(self, value):
         self._write((':%d\r\n' % value).encode('utf-8'))
@@ -314,3 +314,33 @@ class Blocked:
             else:
                 store._block_callback(client, self.command, key,
                                       value, self.dest)
+
+
+def redis_to_py_pattern(pattern):
+    return ''.join(_redis_to_py_pattern(pattern))
+
+
+def _redis_to_py_pattern(pattern):
+    clear, esc = False, False
+    s, q, op, cp, e = '*', '?', '[', ']', '\\'
+
+    for v in pattern:
+        if v == s and not esc:
+            yield '(.*)'
+        elif v == q and not esc:
+            yield '.'
+        elif v == op and not esc:
+            esc = True
+            yield v
+        elif v == cp and esc:
+            esc = False
+            yield v
+        elif v == e:
+            clear, esc = True
+            yield v
+        elif clear:
+            clear, esc = False, False
+            yield v
+        else:
+            yield v
+    yield '$'

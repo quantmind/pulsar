@@ -1,6 +1,7 @@
 from functools import partial
 
-from pulsar import in_loop_thread, Protocol, EventHandler, coroutine_return
+from pulsar import (in_loop_thread, Protocol, EventHandler,
+                    coroutine_return)
 
 from . import base
 
@@ -42,9 +43,12 @@ class PubSub(base.PubSub):
         return self.store.execute('PUBLISH', channel, message)
 
     def count(self, *channels):
-        return self.store.execute('PUBSUB', 'NUMSUB', *channels)
+        d = self.store.execute('PUBSUB', 'NUMSUB', *channels)
+        return d.add_callback(lambda r: tuple((int(v) for v in r)))
 
     def channels(self, pattern=None):
+        '''Lists the currently active channels matching ``pattern``
+        '''
         if pattern:
             return self.store.execute('PUBSUB', 'CHANNELS', pattern)
         else:

@@ -9,21 +9,85 @@ class RedisCommands(object):
     def randomkey(self):
         return random_string()
 
-    def test_eval(self):
-        result = yield self.client.eval('return "Hello"')
-        self.assertEqual(result, b'Hello')
-        result = yield self.client.eval("return {ok='OK'}")
-        self.assertEqual(result, b'OK')
+    ###########################################################################
+    ##    STRINGS
+    def test_append(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.append(key, 'a1'), 2)
+        yield eq(c.get(key), b'a1')
+        yield eq(c.append(key, 'a2'), 4)
+        yield eq(c.get(key), b'a1a2')
 
-    def test_eval_with_keys(self):
-        result = yield self.client.eval("return {KEYS, ARGV}",
-                                        ('a', 'b'),
-                                        ('first', 'second', 'third'))
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0], [b'a', b'b'])
-        self.assertEqual(result[1], [b'first', b'second', b'third'])
+    def test_decr(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.decr(key), -1)
+        yield eq(c.get(key), b'-1')
+        yield eq(c.decr(key), -2)
+        yield eq(c.get(key), b'-2')
+        yield eq(c.decr(key, 5), -7)
+        yield eq(c.get(key), b'-7')
 
-class d:
+    def test_incr(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.incr(key), 1)
+        yield eq(c.get(key), b'1')
+        yield eq(c.incr(key), 2)
+        yield eq(c.get(key), b'2')
+        yield eq(c.incr(key, 5), 7)
+        yield eq(c.get(key), b'7')
+
+    def test_get(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield c.set(key, 'foo')
+        yield eq(c.get(key), b'foo')
+        yield eq(c.get('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), None)
+
+    def test_mget(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        key3 = key2 + 'y'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.set(key1, 'foox'), True)
+        yield eq(c.set(key2, 'fooxx'), True)
+        yield eq(c.mget(key1, key2, key3), [b'foox', b'fooxx', None])
+
+    ###########################################################################
+    ##    HASHES
+
+    ###########################################################################
+    ##    LISTS
+    def test_blpop(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        bk1 = key1.encode('utf-8')
+        bk2 = key2.encode('utf-8')
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.rpush(key1, 1, 2), 2)
+        yield eq(c.rpush(key2, 3, 4), 2)
+        yield eq(c.blpop((key2, key1), 1), (bk2, b'3'))
+        yield eq(c.blpop((key2, key1), 1), (bk2, b'4'))
+        yield eq(c.blpop((key2, key1), 1), (bk1, b'1'))
+        yield eq(c.blpop((key2, key1), 1), (bk1, b'2'))
+        yield eq(c.blpop((key2, key1), 1), None)
+        yield eq(c.rpush(key1, '1'), 1)
+        yield eq(c.blpop(key1, 1), (bk1, b'1'))
+
+    ###########################################################################
+    ##    SETS
+
+    ###########################################################################
+    ##    ORDERED SETS
+
     ###########################################################################
     ##    CONNECTION
     def test_ping(self):
@@ -51,36 +115,6 @@ class d:
         total = t[0] + 0.000001*t[1]
 
     ###########################################################################
-    ##    KEYS
-    def test_append(self):
-        c = self.client
-        key = self.randomkey()
-        yield self.async.assertEqual(c.append(key, 'a1'), 2)
-        yield self.async.assertEqual(c[key], b'a1')
-        yield self.async.assertEqual(c.append(key, 'a2'), 4)
-        yield self.async.assertEqual(c[key], b'a1a2')
-
-    def test_set(self):
-        result = yield self.client.set('bla', 'foo')
-        self.assertTrue(result)
-
-    def test_get(self):
-        yield self.client.set('blax', 'foo')
-        result = yield self.client.get('blax')
-        self.assertEqual(result, b'foo')
-        result = yield self.client.get('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-        self.assertEqual(result, None)
-
-    def test_mget(self):
-        yield self.client.set('blaxx', 'foox')
-        yield self.client.set('blaxxx', 'fooxx')
-        result = yield self.client.mget('blaxx', 'blaxxx', 'xxxxxxxxxxxxxx')
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0], b'foox')
-        self.assertEqual(result[1], b'fooxx')
-        self.assertEqual(result[2], None)
-
-    ###########################################################################
     ##    PUBSUB
     def test_handler(self):
         client = self.client
@@ -90,17 +124,18 @@ class d:
         self.assertEqual(pubsub._connection, None)
 
     def test_subscribe_one(self):
+        key = self.randomkey()
         pubsub1 = self.client.pubsub()
         self.assertFalse(pubsub1._connection)
         # Subscribe to one channel
-        yield pubsub1.subscribe('blaaaaaa')
-        count = yield pubsub1.count('blaaaaaa')
-        self.assertEqual(count, 1)
+        yield pubsub1.subscribe(key)
+        count = yield pubsub1.count(key)
+        self.assertEqual(count, (1,))
         #
         pubsub2 = self.client.pubsub()
-        yield pubsub2.subscribe('blaaaaaa')
-        count = yield pubsub1.count('blaaaaaa')
-        self.assertEqual(count, 2)
+        yield pubsub2.subscribe(key)
+        count = yield pubsub1.count(key)
+        self.assertEqual(count, (2,))
 
     def test_subscribe_many(self):
         pubsub = self.client.pubsub()
@@ -108,11 +143,11 @@ class d:
         channels = yield pubsub.channels('fooo*')
         self.assertEqual(len(channels), 3)
         count = yield pubsub.count('foooo1')
-        self.assertEqual(count, 1)
+        self.assertEqual(count, (1,))
         count = yield pubsub.count('foooo2')
-        self.assertEqual(count, 1)
+        self.assertEqual(count, (1,))
         count = yield pubsub.count('foooo3')
-        self.assertEqual(count, 1)
+        self.assertEqual(count, (1,))
 
     def test_publish(self):
         pubsub = self.client.pubsub()
@@ -128,6 +163,22 @@ class d:
         result = yield pubsub.publish('chat', 'Hello')
         self.assertTrue(result>=0)
         self.assertTrue(self.called)
+
+    ###########################################################################
+    ##    SCRIPTING
+    def test_eval(self):
+        result = yield self.client.eval('return "Hello"')
+        self.assertEqual(result, b'Hello')
+        result = yield self.client.eval("return {ok='OK'}")
+        self.assertEqual(result, b'OK')
+
+    def test_eval_with_keys(self):
+        result = yield self.client.eval("return {KEYS, ARGV}",
+                                        ('a', 'b'),
+                                        ('first', 'second', 'third'))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], [b'a', b'b'])
+        self.assertEqual(result[1], [b'first', b'second', b'third'])
 
     ###########################################################################
     ##    SYNCHRONOUS CLIENT

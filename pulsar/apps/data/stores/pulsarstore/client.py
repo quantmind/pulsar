@@ -3,11 +3,16 @@ from hashlib import sha1
 
 import pulsar
 from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.pep import native_str, zip
+from pulsar.utils.pep import native_str, zip, ispy3k
 
 from .pubsub import PubSub
 from ...server import COMMANDS_INFO
 
+
+if ispy3k:
+    str_or_bytes = (bytes, str)
+else:   # pragma    nocover
+    str_or_bytes = basestring
 
 INVERSE_COMMANDS_INFO = dict(((i.method_name, i.name)
                               for i in COMMANDS_INFO.values()))
@@ -84,6 +89,7 @@ class Request(object):
             'SAVE SELECT SHUTDOWN SLAVEOF SET WATCH UNWATCH',
             lambda r: r == b'OK'
         ),
+        string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
         {
          'PING': lambda r: r == b'PONG',
          'INFO': parse_info,
@@ -144,6 +150,22 @@ class Client(object):
         return self.store.execute(command, *args, **options)
     execute_command = execute
 
+    # special commands
+
+    # STRINGS
+    def decr(self, key, ammount=None):
+        if ammount is None:
+            return self.execute('decr', key)
+        else:
+            return self.execute('decrby', key, ammount)
+
+    def incr(self, key, ammount=None):
+        if ammount is None:
+            return self.execute('incr', key)
+        else:
+            return self.execute('incrby', key, ammount)
+
+    # HASHES
     def hmget(self, key, *fields):
         return self.execute('hmget', key, *fields, fields=fields)
 
@@ -151,6 +173,27 @@ class Client(object):
         args = []
         [args.extend(pair) for pair in mapping_iterator(iterable)]
         return self.execute('hmset', key, *args)
+
+    # LISTS
+    def blpop(self, keys, timeout=0):
+        if timeout is None:
+            timeout = 0
+        if isinstance(keys, str_or_bytes):
+            keys = [keys]
+        else:
+            keys = list(keys)
+        keys.append(timeout)
+        return self.execute_command('BLPOP', *keys)
+
+    def brpop(self, keys, timeout=0):
+        if timeout is None:
+            timeout = 0
+        if isinstance(keys, str_or_bytes):
+            keys = [keys]
+        else:
+            keys = list(keys)
+        keys.append(timeout)
+        return self.execute_command('BRPOP', *keys)
 
     def eval(self, script, keys=None, args=None):
         return self._eval('eval', script, keys, args)
