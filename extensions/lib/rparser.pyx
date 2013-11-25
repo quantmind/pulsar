@@ -4,6 +4,7 @@ cimport common
 
 
 cdef bytes nil = b'$-1\r\n'
+cdef bytes null_array = b'*-1\r\n'
 
 
 cdef class RedisParser:
@@ -49,8 +50,11 @@ cdef class RedisParser:
     def multi_bulk_len(self, len):
         return ('*%s\r\n' % len).encode('utf-8')
 
-    def multi_bulk(self, *args):
-        return common.pack_command(args)
+    def multi_bulk(self, args):
+        if args is None:
+            return null_array
+        else:
+            return common.pack_command(args)
 
     def pack_pipeline(self, commands):
         pack = lambda *args: common.pack_command(args)

@@ -1,3 +1,8 @@
+'''
+Tha main component for pulsar datastore clients is the :class:`.Store`
+class which encapsulates the essential API for communicating and executing
+commands on remote servers.
+'''
 import logging
 import socket
 from functools import partial

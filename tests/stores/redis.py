@@ -7,9 +7,9 @@ class TestRedisStore(RedisCommands, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.store = cls.create_store('redis://127.0.0.1:6379/9')
-        cls.sync_store = cls.create_store('redis://127.0.0.1:6379/9',
-                                          force_sync=True)
+        addr = 'redis://%s' % cls.cfg.redis_server
+        cls.store = cls.create_store(addr)
+        cls.sync_store = cls.create_store(addr, force_sync=True)
         cls.client = cls.store.client()
 
 

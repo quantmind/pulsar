@@ -38,6 +38,7 @@
 #define RESPONSE_ARRAY  '*'
 #define RESPONSE_STATUS  '+'
 #define RESPONSE_ERROR  '-'
+#define NIL string("$-1\r\n")
 
 class Task;
 class StringTask;
@@ -75,12 +76,12 @@ private:
 
 class Task {
 public:
-    Task(integer length, Task* next):next(next), length(length) {}
+    Task(size_t length, Task* next):next(next), length(length) {}
     virtual ~Task() {}
     virtual PyObject* _decode(RedisParser& parser, PyObject*) = 0;
     Task* next;
 protected:
-    integer length;
+    size_t length;
 private:
     Task();
     Task(const Task&);
@@ -241,43 +242,93 @@ inline PyObject* ArrayTask::_decode(RedisParser& parser, PyObject* result) {
 
 string obj_multibulk(PyObject* obj);
 
-inline string tuple_multibulk(PyObject* args) {
-  std::stringstream str;
-  size_t size = PyTuple_Size(args);
-  str << "*" << size << CRLF;
-  for (size_t index=0; index<size; ++index) {
-    str << obj_multibulk(PyTuple_GET_ITEM(args, index));
-  }
-  return str.str();
-}
-
 inline string list_multibulk(PyObject* args) {
-  std::stringstream str;
-  size_t size = PyList_Size(args);
-  str << "*" << size << CRLF;
-  for (size_t index=0; index<size; ++index) {
-    str << obj_multibulk(PyList_GET_ITEM(args, index));
-  }
-  return str.str();
+    std::stringstream str;
+    size_t size = PySequence_Fast_GET_SIZE(args);
+    str << "*" << size << CRLF;
+    for (size_t index=0; index<size; ++index) {
+        str << obj_multibulk(PySequence_ITEM(args, index));
+    }
+    return str.str();
 }
 
-inline string obj_multibulk(PyObject* obj) {
-  std::stringstream str;
-  if (obj == Py_None) {
-    return string("$-1\r\n");
-  } else if PyList_Check(obj) {
-    return list_multibulk(obj);
-  } else if PyTuple_Check(obj) {
-    return tuple_multibulk(obj);
-  } else {
-    string value(to_bytes(obj));
+inline string dict_multibulk(PyObject* mapping) {
+    std::stringstream str;
+    stdpylist list;
+    size_t index = 0;
+    PyObject *o, *key;
+    while (true) {
+        key = PyInt_FromSsize_t(++index);
+        if (key == NULL)
+            break;
+        o = PyObject_GetItem(mapping, key);
+        Py_DECREF(key);
+        if (o)
+            list.push_back(o);
+        else {
+            PyErr_Clear();
+            break;
+        }
+    }
+    str << "*" << list.size() << CRLF;
+    for (stdpylist::const_iterator it=list.begin(); it!=list.end(); ++it) {
+        str << obj_multibulk(*it);
+    }
+    return str.str();
+}
+
+inline string obj_bulk(const string& value) {
+    std::stringstream str;
     str << '$' << value.size() << CRLF << value << CRLF;
     return str.str();
-  }
 }
 
-inline PyObject* pack_command(PyObject* args) {
-  string result(tuple_multibulk(args));
+#if PY_MAJOR_VERSION == 2
+    inline string obj_multibulk(PyObject* obj) {
+        if (obj == Py_None) {
+            return NIL;
+        } else if (PyString_Check(obj)) {
+            string value(PyString_AS_STRING(obj), PyString_GET_SIZE(obj));
+            return obj_bulk(value);
+        } else if (PyUnicode_Check(obj)) {
+            PyObject *o = PyUnicode_AsUTF8String(obj);
+            string value(PyString_AS_STRING(o), PyString_GET_SIZE(o));
+            Py_DECREF(o);
+            return obj_bulk(value);
+        } else if (PyList_Check(obj) || PyTuple_Check(obj)) {
+            return list_multibulk(obj);
+        } else if (PyMapping_Check(obj)) {
+            return dict_multibulk(obj);
+        } else {
+            string value(to_bytes(obj));
+            return obj_bulk(value);
+        }
+    }
+#else
+    inline string obj_multibulk(PyObject* obj) {
+        if (obj == Py_None) {
+            return NIL;
+        } else if (PyBytes_Check(obj)) {
+            string value(PyBytes_AS_STRING(obj), PyBytes_GET_SIZE(obj));
+            return obj_bulk(value);
+        } else if (PyUnicode_Check(obj)) {
+            PyObject *o = PyUnicode_AsUTF8String(obj);
+            string value(PyBytes_AS_STRING(o), PyBytes_GET_SIZE(o));
+            Py_DECREF(o);
+            return obj_bulk(value);
+        } else if (PyList_Check(obj) || PyTuple_Check(obj)) {
+            return list_multibulk(obj);
+        } else if (PyMapping_Check(obj)) {
+            return dict_multibulk(obj);
+        } else {
+            string value(to_bytes(obj));
+            return obj_bulk(value);
+        }
+    }
+#endif
+
+inline PyObject* pack_command(PyObject* obj) {
+    string result(obj_multibulk(obj));
     return PyBytes_FromStringAndSize(result.c_str(), result.size());
 }
 

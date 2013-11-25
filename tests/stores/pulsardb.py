@@ -1,32 +1,23 @@
-from pulsar import send
+import binascii
+
+import pulsar
 from pulsar.utils.security import random_string
 from pulsar.apps.test import unittest
 from pulsar.apps.data import KeyValueStore, create_store, redis_parser
 
 
 class RedisCommands(object):
-    redis_parser = True
+    redis_py_parser = False
 
     @classmethod
     def create_store(cls, address, **kw):
-        if redis_parser:
+        if cls.redis_py_parser:
             kw['parser_class'] = redis_parser(True)
         return create_store(address, **kw)
 
     def randomkey(self):
         return random_string()
 
-    def test_mget(self):
-        key1 = self.randomkey()
-        key2 = key1 + 'x'
-        key3 = key2 + 'y'
-        eq = self.async.assertEqual
-        c = self.client
-        yield eq(c.set(key1, 'foox'), True)
-        yield eq(c.set(key2, 'fooxx'), True)
-        yield eq(c.mget(key1, key2, key3), [b'foox', b'fooxx', None])
-
-class d:
     ###########################################################################
     ##    STRINGS
     def test_append(self):
@@ -37,6 +28,93 @@ class d:
         yield eq(c.get(key), b'a1')
         yield eq(c.append(key, 'a2'), 4)
         yield eq(c.get(key), b'a1a2')
+
+    def test_bitcount(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.setbit(key, 5, 1), 0)
+        yield eq(c.bitcount(key), 1)
+        yield eq(c.setbit(key, 6, 1), 0)
+        yield eq(c.bitcount(key), 2)
+        yield eq(c.setbit(key, 5, 0), 1)
+        yield eq(c.bitcount(key), 1)
+        yield eq(c.setbit(key, 9, 1), 0)
+        yield eq(c.setbit(key, 17, 1), 0)
+        yield eq(c.setbit(key, 25, 1), 0)
+        yield eq(c.setbit(key, 33, 1), 0)
+        yield eq(c.bitcount(key), 5)
+        yield eq(c.bitcount(key, 0, -1), 5)
+        yield eq(c.bitcount(key, 2, 3), 2)
+        yield eq(c.bitcount(key, 2, -1), 3)
+        yield eq(c.bitcount(key, -2, -1), 2)
+        yield eq(c.bitcount(key, 1, 1), 1)
+
+    def test_bitop_not_empty_string(self):
+        key = self.randomkey()
+        des =  key + 'd'
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.set(key, ''), True)
+        yield eq(c.bitop('not', des, key), 0)
+        yield eq(c.get(des), None)
+
+    def test_bitop_not(self):
+        key = self.randomkey()
+        des = key + 'd'
+        c = self.client
+        eq = self.async.assertEqual
+        test_str = b'\xAA\x00\xFF\x55'
+        correct = ~0xAA00FF55 & 0xFFFFFFFF
+        yield eq(c.set(key, test_str), True)
+        yield eq(c.bitop('not', des, key), 4)
+        result = yield c.get(des)
+        self.assertEqual(int(binascii.hexlify(result), 16), correct)
+
+    def test_bitop_not_in_place(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        test_str = b'\xAA\x00\xFF\x55'
+        correct = ~0xAA00FF55 & 0xFFFFFFFF
+        yield eq(c.set(key, test_str), True)
+        yield eq(c.bitop('not', key, key), 4)
+        result = yield c.get(key)
+        assert int(binascii.hexlify(result), 16) == correct
+
+    def test_bitop_single_string(self):
+        key = self.randomkey()
+        des = key + 'd'
+        c = self.client
+        eq = self.async.assertEqual
+        test_str = b'\x01\x02\xFF'
+        yield eq(c.set(key, test_str), True)
+        yield eq(c.bitop('and', key+'1', key), 3)
+        yield eq(c.bitop('or', key+'2', key), 3)
+        yield eq(c.bitop('xor', key+'3', key), 3)
+        yield eq(c.get(key + '1'), test_str)
+        yield eq(c.get(key + '2'), test_str)
+        yield eq(c.get(key + '3'), test_str)
+
+    def test_bitop_string_operands(self):
+        c = self.client
+        eq = self.async.assertEqual
+        key1 = self.randomkey()
+        key2 = key1 + '2'
+        des1 = key1 + 'd1'
+        des2 = key1 + 'd2'
+        des3 = key1 + 'd3'
+        yield eq(c.set(key1, b'\x01\x02\xFF\xFF'), True)
+        yield eq(c.set(key2, b'\x01\x02\xFF'), True)
+        yield eq(c.bitop('and', des1, key1, key2), 4)
+        yield eq(c.bitop('or', des2, key1, key2), 4)
+        yield eq(c.bitop('xor', des3, key1, key2), 4)
+        res1 = yield c.get(des1)
+        res2 = yield c.get(des2)
+        res3 = yield c.get(des3)
+        self.assertEqual(int(binascii.hexlify(res1), 16), 0x0102FF00)
+        self.assertEqual(int(binascii.hexlify(res2), 16), 0x0102FFFF)
+        self.assertEqual(int(binascii.hexlify(res3), 16), 0x000000FF)
 
     def test_decr(self):
         key = self.randomkey()
@@ -230,8 +308,8 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         server = KeyValueStore(name=cls.__name__.lower(),
                                bind='127.0.0.1:0',
                                concurrency=cls.concurrency,
-                               py_redis_parser=cls.redis_parser)
-        cls.app = yield send('arbiter', 'run', server)
+                               redis_py_parser=cls.redis_py_parser)
+        cls.app = yield pulsar.send('arbiter', 'run', server)
         cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)
         cls.sync_store = cls.create_store(
             'pulsar://%s:%s/10' % cls.app.address, force_sync=True)
@@ -240,4 +318,9 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+            yield pulsar.send('arbiter', 'kill_actor', cls.app.name)
+
+
+#@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
+#class TestPulsarStorePyParser(TestPulsarStore):
+#    redis_py_parser = True

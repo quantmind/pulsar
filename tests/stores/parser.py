@@ -4,13 +4,13 @@ from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
                               InvalidResponse)
 
 def lua_nested_table(nesting):
-    s = ''.join(('1234567890' for n in range(100)))
+    s = b''.join((b'1234567890' for n in range(100)))
     pres = [100, s]
     result = pres
     for i in range(nesting):
-        res = (-8, s)
+        res = [-8, s]
         pres.extend((res, res))
-        pres = list(res)
+        pres = res
     return result
 
 
@@ -84,10 +84,12 @@ class TestParser(unittest.TestCase):
     def test_nested(self):
         p = self.parser()
         result = lua_nested_table(2)
-        chunk = p.multi_bulk(*result)
+        chunk = p.multi_bulk(result)
         p.feed(chunk)
         res2 = p.get()
         self.assertEqual(len(res2), len(result))
+        self.assertEqual(res2[0], b'100')
+        self.assertEqual(res2[1], result[1])
 
     def test_empty_string(self):
         p = self.parser()

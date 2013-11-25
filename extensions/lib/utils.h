@@ -9,7 +9,7 @@
 
 typedef std::string string;
 typedef long long integer;
-
+typedef std::list<PyObject*>    stdpylist;
 
 #if PY_MAJOR_VERSION == 2
     #define BYTES_FORMAT "s#"

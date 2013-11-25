@@ -14,7 +14,7 @@ class PubsubProtocol(Protocol):
         self.handler = handler
 
     def execute(self, *args):
-        chunk = self.parser.multi_bulk(*args)
+        chunk = self.parser.multi_bulk(args)
         self._transport.write(chunk)
 
     def data_received(self, data):

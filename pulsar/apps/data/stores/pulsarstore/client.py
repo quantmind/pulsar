@@ -92,7 +92,9 @@ def pubsub_callback(response, subcommand=None):
     else:
         return response
 
-class Request(object):
+
+class Consumer(pulsar.ProtocolConsumer):
+
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
             'FLUSHALL FLUSHDB HMSET LSET LTRIM MSET RENAME '
@@ -112,35 +114,54 @@ class Request(object):
          }
     )
 
-    def __init__(self, args, options):
-        self.command = args[0].upper()
-        self.args = args
-        self.options = options
-
-    def write(self, consumer):
-        conn = consumer._connection
-        chunk = conn.parser.multi_bulk(self.args)
+    def start_request(self):
+        conn = self._connection
+        args = self._request[0]
+        if len(self._request) == 2:
+            chunk = conn.parser.multi_bulk(args)
+        else:
+            chunk = conn.parser.pack_pipeline(args)
         conn._transport.write(chunk)
-        return chunk
-
-    def data_received(self, consumer, data):
-        conn = consumer._connection
-        parser = conn.parser
-        parser.feed(data)
-        response = parser.get()
-        if response is not False:
-            if not isinstance(response, Exception):
-                response = self.parse_response(response, self.command,
-                                               self.options)
-                if response is None:
-                    consumer.bind_event('post_request', lambda r: None)
-            else:
-                raise response
-            consumer.finished(response)
 
     def parse_response(self, response, command, options):
         callback = self.RESPONSE_CALLBACKS.get(command.upper())
         return callback(response, **options) if callback else response
+
+    def data_received(self, data):
+        conn = self._connection
+        parser = conn.parser
+        parser.feed(data)
+        response = parser.get()
+        request = self._request
+        if len(request) == 2:
+            if response is not False:
+                if not isinstance(response, Exception):
+                    cmnd = request[0][0]
+                    response = self.parse_response(response, cmnd, request[1])
+                    if response is None:
+                        self.bind_event('post_request', lambda r: None)
+                else:
+                    raise response
+                self.finished(response)
+        else:
+            commands, raise_on_error, responses = request
+            while response is not False:
+                if isinstance(response, Exception) and raise_on_error:
+                    raise response
+                responses.append(response)
+                response = parser.get()
+            if len(responses) == len(commands):
+                response = []
+                error = None
+                for cmds, resp in zip(commands[1:-1], responses[-1]):
+                    args, options = cmds
+                    if isinstance(resp, Exception) and not error:
+                        error = resp
+                    resp = self.parse_response(resp, args[0], options)
+                    response.append(resp)
+                if error and raise_on_error:
+                    raise error
+                self.finished(response)
 
 
 class Client(object):

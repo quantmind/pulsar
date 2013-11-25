@@ -1,9 +1,9 @@
-from pulsar import (coroutine_return, in_loop_thread, Connection,
-                    ProtocolConsumer, Pool)
+from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
+                    get_actor)
 from pulsar.utils.pep import zip
 
 from .base import register_store, Store
-from .client import Request, Client, Pipeline
+from .client import Client, Pipeline, Consumer
 from .pubsub import PubSub
 from ...server import redis_parser
 
@@ -16,58 +16,13 @@ class PulsarStoreConnection(Connection):
 
     def execute(self, *args, **options):
         consumer = self.current_consumer()
-        consumer.start(Request(args, options))
+        consumer.start((args, options))
         return consumer.on_finished
 
-    def execute_pipeline(self, commands, raise_on_error):
+    def execute_pipeline(self, commands, raise_on_error=True):
         consumer = self.current_consumer()
-        consumer.start(PipelineRequest(commands, raise_on_error))
+        consumer.start((commands, raise_on_error, []))
         return consumer.on_finished
-
-
-class PipelineRequest(Request):
-
-    def __init__(self, commands, raise_on_error):
-        self.commands = commands
-        self.responses = []
-        self.raise_on_error = raise_on_error
-
-    def write(self, consumer):
-        conn = consumer._connection
-        chunk = conn.parser.pack_pipeline(self.commands)
-        conn._transport.write(chunk)
-        return chunk
-
-    def data_received(self, consumer, data):
-        conn = consumer._connection
-        parser = conn.parser
-        parser.feed(data)
-        response = parser.get()
-        while response is not False:
-            if isinstance(response, Exception) and self.raise_on_error:
-                raise response
-            self.responses.append(response)
-            response = parser.get()
-        if len(self.responses) == len(self.commands):
-            response = []
-            error = None
-            for cmds, resp in zip(self.commands[1:-1], self.responses[-1]):
-                args, options = cmds
-                if isinstance(resp, Exception) and not error:
-                    error = resp
-                response.append(self.parse_response(resp, args[0], options))
-            if error and self.raise_on_error:
-                raise error
-            consumer.finished(response)
-
-
-class Consumer(ProtocolConsumer):
-
-    def start_request(self):
-        self._request.write(self)
-
-    def data_received(self, data):
-        self._request.data_received(self, data)
 
 
 class PulsarStore(Store):
@@ -77,7 +32,11 @@ class PulsarStore(Store):
               decode_responses=False, **kwargs):
         self._received = 0
         self._decode_responses = decode_responses
-        self._parser_class = parser_class or redis_parser()
+        if not parser_class:
+            actor = get_actor()
+            pyparser = actor.cfg.redis_py_parser if actor else False
+            parser_class = redis_parser(pyparser)
+        self._parser_class = parser_class
         if namespace:
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size)

@@ -10,6 +10,7 @@ else:   # pragma    nocover
     from itertools import imap as map
 
 nil = b'$-1\r\n'
+null_array = b'*-1\r\n'
 
 REPLAY_TYPE = frozenset((b'$',   # REDIS_REPLY_STRING,
                          b'*',   # REDIS_REPLY_ARRAY,
@@ -108,11 +109,11 @@ class Parser(object):
     def multi_bulk(self, args):
         '''Multi bulk encoding for list/tuple ``args``
         '''
-        return b''.join(self.__pack_gen(args))
+        return null_array if args is None else b''.join(self._pack(args))
 
     def pack_pipeline(self, commands):
         '''Packs pipeline commands into bytes.'''
-        pack = lambda *args: b''.join(self.__pack_gen(args))
+        pack = lambda *args: b''.join(self._pack(args))
         return b''.join(starmap(pack, (args for args, _ in commands)))
 
     #    INTERNALS
@@ -135,7 +136,7 @@ class Parser(object):
             else:
                 return str(value)
 
-    def __pack_gen(self, args):
+    def _pack(self, args):
         ltd = (list, tuple, dict)
         di = dict
         e = self.encode
@@ -144,13 +145,11 @@ class Parser(object):
         for value in args:
             if value is None:
                 yield nil
-            elif isinstance(value, int):
-                yield (':%d\r\n' % value).encode('utf-8')
             elif isinstance(value, ltd):
                 if isinstance(value, dict):
-                    yield b''.join(self.__pack_gen(self._lua_dict(value)))
+                    yield b''.join(self._pack(self._lua_dict(value)))
                 else:
-                    yield b''.join(self.__pack_gen(value))
+                    yield b''.join(self._pack(value))
             else:
                 value = e(value)
                 yield ('$%s\r\n' % len(value)).encode('utf-8')

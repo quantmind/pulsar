@@ -25,7 +25,7 @@ if ispy3k:
     string_type = str
 
 else:  # pragma    nocover
-    string_type = base_string
+    string_type = basestring
 
 
 def get_version(version):

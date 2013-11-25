@@ -14,7 +14,7 @@ import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
-from pulsar.utils.pep import map, range, zip, pickle
+from pulsar.utils.pep import map, range, zip, pickle, ispy3k
 try:
     from pulsar.utils.lua import Lua
 except ImportError:
@@ -22,7 +22,7 @@ except ImportError:
 
 
 from .parser import redis_parser
-from .sort import sort_command
+from .utils import sort_command, count_bytes, and_op, or_op, xor_op
 from .client import (command, PulsarStoreClient, LuaClient, Blocked,
                      COMMANDS_INFO, check_input, redis_to_py_pattern)
 
@@ -34,16 +34,29 @@ STRING_LIMIT = 2**32
 
 nan = float('nan')
 
+if ispy3k:
+    from itertools import zip_longest
+else:   # pragma    nocover
+    from itertools import izip_longest as zip_longest
+
 
 class RedisParserSetting(Global):
-    name = "py_redis_parser"
-    flags = ["--py-redis-parser"]
+    name = "redis_py_parser"
+    flags = ["--redis-py-parser"]
     action = "store_true"
     default = False
-    desc = 'Use the python redis parser rather the C++ implementation.'
+    desc = 'Use the python redis parser rather the C implementation.'
 
     def parser_class(self):
         return PyRedisParser if self.value else RedisParser
+
+
+class RedisServer(pulsar.Setting):
+    name = 'redis_server'
+    flags = ['--redis-server']
+    meta = "CONNECTION STRING"
+    default = '127.0.0.1:6379/9'
+    desc = 'Connection string for the default redis server'
 
 
 class KeyValuePairSetting(pulsar.Setting):
@@ -112,7 +125,7 @@ class TcpServer(pulsar.TcpServer):
     def __init__(self, cfg, *args, **kwargs):
         super(TcpServer, self).__init__(*args, **kwargs)
         self.cfg = cfg
-        self._parser_class = redis_parser(cfg.py_redis_parser)
+        self._parser_class = redis_parser(cfg.redis_py_parser)
         self._key_value_store = Storage(self, cfg)
 
     def info(self):
@@ -296,7 +309,7 @@ class Storage(object):
             gr = re.compile(redis_to_py_pattern(pattern))
         result = [key for key in client.db if allkeys or
                   gr.search(key.decode('utf-8', err))]
-        client.reply_multibulk(result)
+        client.reply_multi_bulk(result)
 
     @command('keys', True)
     def move(self, client, request, N):
@@ -312,6 +325,7 @@ class Storage(object):
         value = db.get(key)
         if db2.exists(key) or value is None:
             return client.reply_zero()
+        assert value
         db.pop(key)
         self._signal(self.NOTIFY_GENERIC, db, 'del', key, 1)
         db2._data[key] = value
@@ -346,6 +360,7 @@ class Storage(object):
         elif key1 == key2:
             client.reply_error('Cannot rename key')
         else:
+            assert value
             if ex:
                 if db.exists(key2):
                     return client.reply_zero()
@@ -403,9 +418,72 @@ class Storage(object):
         elif not isinstance(value, bytearray):
             return client.reply_wrongtype()
         else:
+            assert value
             value.extend(request[2])
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_int(len(value))
+
+    @command('strings')
+    def bitcount(self, client, request, N):
+        check_input(request, N < 1 or N > 3)
+        key = request[1]
+        db = client.db
+        value = db.get(key)
+        if value is None:
+            client.reply_int(0)
+        elif not isinstance(value, bytearray):
+            return client.reply_wrongtype()
+        else:
+            assert value
+            if N > 1:
+                start = request[2]
+                end = request[3] if N == 3 else -1
+                start, end = self._range_values(value, start, end)
+                value = value[start:end]
+            client.reply_int(count_bytes(value))
+
+    @command('strings', True)
+    def bitop(self, client, request, N):
+        check_input(request, N < 3)
+        db = client.db
+        op = request[1].lower()
+        if op == b'and':
+            reduce_op = and_op
+        elif op == b'or':
+            reduce_op = or_op
+        elif op == b'xor':
+            reduce_op = xor_op
+        elif op == b'not':
+            reduce_op = None
+            check_input(request, N != 3)
+        else:
+            return client.reply_error('bad command')
+        empty = bytearray()
+        keys = []
+        for key in request[3:]:
+            value = db.get(key)
+            if value is None:
+                keys.append(empty)
+            elif isinstance(value, bytearray):
+                keys.append(value)
+            else:
+                return client.reply_wrongtype()
+        result = bytearray()
+        if reduce_op == None:
+            for value in keys[0]:
+                result.append(~value & 255)
+        else:
+            for values in zip_longest(*keys, **{'fillvalue': 0}):
+                result.append(reduce(reduce_op, values))
+        if result:
+            dest = request[2]
+            if db.pop(dest):
+                self._signal(self.NOTIFY_GENERIC, db, 'del', dest)
+            db._data[dest] = result
+            self._signal(self.NOTIFY_STRING, db, 'set', dest, 1)
+            client.reply_int(len(result))
+        else:
+            client.reply_zero()
 
     @command('strings', True)
     def decr(self, client, request, N):
@@ -430,6 +508,7 @@ class Storage(object):
         if value is None:
             client.reply_bulk()
         elif isinstance(value, bytearray):
+            assert value
             client.reply_bulk(bytes(value))
         else:
             client.reply_wrongtype()
@@ -438,20 +517,26 @@ class Storage(object):
     def getbit(self, client, request, N):
         check_input(request, N != 2)
         try:
-            offset = int(request[2])
-            if offset < 0 or offset >= STRING_LIMIT:
+            bitoffset = int(request[2])
+            if bitoffset < 0 or bitoffset >= STRING_LIMIT:
                 raise ValueError
         except Exception:
-            return client.reply_error("Wrong offset in '%s' command" %
-                                      request[0])
+            return client.reply_error(
+                "bit offset is not an integer or out of range")
         string = client.db.get(request[1])
         if string is None:
             client.reply_zero()
         elif not isinstance(string, bytearray):
             client.reply_wrongtype()
         else:
-            v = string[offset] if offset < len(string) else 0
-            client.reply_int(v)
+            assert string
+            byte = bitoffset >> 3;
+            if len(string) > byte:
+                bit = 7 - (bitoffset & 7);
+                v = string[byte] & (1 << bit)
+                client.reply_int(v)
+            else:
+                client.reply_zero()
 
     @command('strings')
     def getrange(self, client, request, N):
@@ -525,7 +610,7 @@ class Storage(object):
                 values.append(bytes(value))
             else:
                 return client.reply_wrongtype()
-        client.reply_multibulk(values)
+        client.reply_multi_bulk(values)
 
     @command('strings', True)
     def mset(self, client, request, N):
@@ -599,33 +684,46 @@ class Storage(object):
         check_input(request, N != 3)
         key = request[1]
         try:
-            offset = int(request[2])
-            if offset < 0 or offset >= STRING_LIMIT:
+            bitoffset = int(request[2])
+            if bitoffset < 0 or bitoffset >= STRING_LIMIT:
                 raise ValueError
         except Exception:
-            return client.reply_error("Wrong offset in '%s' command" %
-                                      request[0])
+            return client.reply_error(
+                "bit offset is not an integer or out of range")
         try:
             value = int(request[3])
             if value not in (0, 1):
                 raise ValueError
         except Exception:
-            return client.reply_error("Wrong value in '%s' command" %
-                                      request[0])
+            return client.reply_error("bit is not an integer or out of range")
         db = client.db
         string = db.get(key)
         if string is None:
-            string = bytearray(b'\x00')
+            string = bytearray()
             db._data[key] = string
         elif not isinstance(string, bytearray):
             return client.reply_wrongtype()
-        N = len(string)
-        if N < offset:
-            string.extend((offset + 1 - N)*b'\x00')
-        orig = string[offset]
-        string[offset] = value
+        else:
+            assert string
+
+        # grow value to the right if necessary
+        byte = bitoffset >> 3;
+        num_bytes = len(string)
+        if byte >= num_bytes:
+            string.extend((byte + 1 - num_bytes)*b'\x00')
+
+        # get current value
+        byteval = string[byte]
+        bit = 7 - (bitoffset & 7)
+        bitval = byteval & (1 << bit)
+
+        # update with new value
+        byteval &= ~(1 << bit);
+        byteval |= ((value & 1) << bit);
+        string[byte] = byteval
+
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
-        client.reply_int(orig)
+        client.reply_one() if bitval else client.reply_zero()
 
     @command('strings', True)
     def setex(self, client, request, N):
@@ -727,9 +825,9 @@ class Storage(object):
         check_input(request, N != 1)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif isinstance(value, self.hash_type):
-            client.reply_multibulk(value.flat())
+            client.reply_multi_bulk(value.flat())
         else:
             client.reply_wrongtype()
 
@@ -750,9 +848,9 @@ class Storage(object):
         check_input(request, N != 1)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif isinstance(value, self.hash_type):
-            client.reply_multibulk(value)
+            client.reply_multi_bulk(value)
         else:
             client.reply_wrongtype()
 
@@ -772,10 +870,10 @@ class Storage(object):
         check_input(request, N < 3)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif isinstance(value, self.hash_type):
             result = value.mget(request[2:])
-            client.reply_multibulk(result)
+            client.reply_multi_bulk(result)
         else:
             client.reply_wrongtype()
 
@@ -834,9 +932,9 @@ class Storage(object):
         check_input(request, N != 1)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif isinstance(value, self.hash_type):
-            client.reply_multibulk(tuple(value.values()))
+            client.reply_multi_bulk(tuple(value.values()))
         else:
             client.reply_wrongtype()
 
@@ -876,6 +974,7 @@ class Storage(object):
         if value is None:
             client.reply_bulk()
         elif isinstance(value, self.list_type):
+            assert value
             index = int(request[2])
             if index >= 0 and index < len(value):
                 client.reply_bulk(value[index])
@@ -897,6 +996,7 @@ class Storage(object):
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
+            assert value
             where = request[2].lower()
             pivot = request[3]
             if where == b'before':
@@ -915,6 +1015,7 @@ class Storage(object):
         if value is None:
             client.reply_zero()
         elif isinstance(value, self.list_type):
+            assert value
             client.reply_int(len(value))
         else:
             client.reply_wrongtype()
@@ -927,8 +1028,11 @@ class Storage(object):
         value = db.get(key)
         if value is None:
             client.reply_bulk()
-        elif isinstance(value, self.list_type):
-            if request[1] == 'lpop':
+        elif not isinstance(value, self.list_type):
+            client.reply_wrongtype()
+        else:
+            assert value
+            if request[0] == 'lpop':
                 result = value.popleft()
             else:
                 result = value.pop()
@@ -936,8 +1040,6 @@ class Storage(object):
             if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_bulk(result)
-        else:
-            client.reply_wrongtype()
 
     @command('lists', True)
     def rpop(self, client, request, N):
@@ -954,6 +1056,8 @@ class Storage(object):
             db._data[key] = value
         elif not isinstance(value, self.list_type):
             return client.reply_wrongtype()
+        else:
+            assert value
         if request[0] == 'lpush':
             value.extendleft(request[2:])
         else:
@@ -976,13 +1080,17 @@ class Storage(object):
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
+            assert value
             if request[0] == 'lpush':
                 value.appendleft(request[2])
             else:
                 value.append(request[2])
             client.reply_int(len(value))
             self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
-    rpushx = lpushx
+
+    @command('lists', True)
+    def rpushx(self, client, request, N):
+        return self.lpushx(client, request, N)
 
     @command('lists', True)
     def lrange(self, client, request, N):
@@ -995,11 +1103,12 @@ class Storage(object):
         except Exception:
             return client.reply_error('invalid range')
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
-            client.reply_multibulk(tuple(islice(value, start, end)))
+            assert value
+            client.reply_multi_bulk(tuple(islice(value, start, end)))
 
     @command('lists', True)
     def lrem(self, client, request, N):
@@ -1014,6 +1123,7 @@ class Storage(object):
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
+            assert value
             try:
                 count = int(request[2])
             except Exception:
@@ -1022,6 +1132,8 @@ class Storage(object):
             if removed:
                 self._signal(self.NOTIFY_LIST, db, request[0], key, removed)
             client.reply_int(removed)
+            if db.pop(key, value) is not None:
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
 
     @command('lists', True)
     def lset(self, client, request, N):
@@ -1034,6 +1146,7 @@ class Storage(object):
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
+            assert value
             try:
                 index = int(request[2])
             except Exception:
@@ -1060,12 +1173,15 @@ class Storage(object):
         elif not isinstance(value, self.list_type):
             client.reply_wrongtype()
         else:
+            assert value
             start = len(value)
             value.trim(start, end)
             client.reply_ok()
             self._signal(self.NOTIFY_LIST, db, request[0], key,
                          start-len(value))
             client.reply_ok()
+            if db.pop(key, value) is not None:
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
 
     @command('lists', True)
     def rpoplpush(self, client, request, N):
@@ -1079,11 +1195,14 @@ class Storage(object):
         elif not isinstance(orig, self.list_type):
             client.reply_wrongtype()
         else:
+            assert orig
             if dest is None:
                 dest = self.list_type()
                 db._data[key2] = dest
             elif not isinstance(dest, self.list_type):
                 return client.reply_wrongtype()
+            else:
+                assert dest
             value = orig.pop()
             self._signal(self.NOTIFY_LIST, db, 'rpop', key1, 1)
             dest.appendleft(value)
@@ -1158,11 +1277,11 @@ class Storage(object):
         check_input(request, N != 1)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif not isinstance(value, set):
             client.reply_wrongtype()
         else:
-            client.reply_multibulk(value)
+            client.reply_multi_bulk(value)
 
     @command('sets', True)
     def smove(self, client, request, N):
@@ -1247,7 +1366,7 @@ class Storage(object):
                     value.update(result)
             else:
                 result = []
-            client.reply_multibulk(result)
+            client.reply_multi_bulk(result)
         else:
             if not value:
                 result = None
@@ -1359,7 +1478,7 @@ class Storage(object):
         check_input(request, N < 3 or N > 4)
         value = client.db.get(request[1])
         if value is None:
-            client.reply_multibulk(())
+            client.reply_multi_bulk(())
         elif not isinstance(value, self.zset_type):
             client.reply_wrongtype()
         else:
@@ -1376,7 +1495,7 @@ class Storage(object):
                     return client.reply_error(self.SYNTAX_ERROR)
             else:
                 result = list(value.range(start, end))
-            client.reply_multibulk(result)
+            client.reply_multi_bulk(result)
 
     @command('Sorted sets')
     def zrank(self, client, request, N):
@@ -1427,7 +1546,7 @@ class Storage(object):
             client.patterns.add(pattern)
             count = reduce(lambda x, y: x + int(client in y.clients),
                            self._patterns.values())
-            client.reply_multibulk((b'psubscribe', pattern, count))
+            client.reply_multi_bulk((b'psubscribe', pattern, count))
 
     @command('Pub/Sub')
     def pubsub(self, client, request, N):
@@ -1444,13 +1563,13 @@ class Storage(object):
                         channels.append(channel)
             else:
                 channels = list(self._channels)
-            client.reply_multibulk(channels)
+            client.reply_multi_bulk(channels)
         elif subcommand == 'numsub':
             count = []
             for channel in request[2:]:
                 clients = self._channels.get(channel, ())
                 count.extend((channel, len(clients)))
-            client.reply_multibulk(count)
+            client.reply_multi_bulk(count)
         elif subcommand == 'numpat':
             check_input(request, N > 1)
             count = reduce(lambda x, y: x + len(y.clients),
@@ -1465,7 +1584,7 @@ class Storage(object):
         channel, message = request[1:]
         ch = channel.decode('utf-8')
         clients = self._channels.get(channel)
-        msg = self._parser.multi_bulk(b'message', channel, message)
+        msg = self._parser.multi_bulk((b'message', channel, message))
         count = self._publish_clients(msg, self._channels.get(channel, ()))
         for pattern in self._patterns.values():
             g = pattern.re.match(ch)
@@ -1485,7 +1604,7 @@ class Storage(object):
                     p.clients.remove(client)
                     if not p.clients:
                         self._patterns.pop(pattern)
-                    client.reply_multibulk((b'punsubscribe', pattern))
+                    client.reply_multi_bulk((b'punsubscribe', pattern))
 
     @command('Pub/Sub', script=0)
     def subscribe(self, client, request, N):
@@ -1496,7 +1615,7 @@ class Storage(object):
                 self._channels[channel] = clients = set()
             clients.add(client)
             client.channels.add(channel)
-            client.reply_multibulk((b'subscribe', channel, len(clients)))
+            client.reply_multi_bulk((b'subscribe', channel, len(clients)))
 
     @command('Pub/Sub', script=0)
     def unsubscribe(self, client, request, N):
@@ -1510,7 +1629,7 @@ class Storage(object):
                     clients.remove(client)
                     if not clients:
                         self._channels.pop(channel)
-                    client.reply_multibulk((b'unsubscribe', channel))
+                    client.reply_multi_bulk((b'unsubscribe', channel))
 
     ###########################################################################
     ##    TRANSACTION COMMANDS
@@ -1532,10 +1651,10 @@ class Storage(object):
             requests = client.transaction
             if client.flag & self.DIRTY_CAS:
                 self._close_transaction(client)
-                client.reply_multibulk(())
+                client.reply_multi_bulk(())
             else:
                 self._close_transaction(client)
-                client.reply_multibulk_len(len(requests))
+                client.reply_multi_bulk_len(len(requests))
                 for handle, request in requests:
                     client._execute_command(handle, request)
 
@@ -1600,7 +1719,7 @@ class Storage(object):
         if subcommand == b'EXISTS':
             check_input(request, N < 2)
             result = [int(sha in scripts) for sha in requests[2:]]
-            client.reply_multibulk(result)
+            client.reply_multi_bulk(result)
         elif subcommand == b'FLUSH':
             check_input(request, N != 1)
             scripts.clear()
@@ -1732,6 +1851,11 @@ class Storage(object):
         info = '\n'.join(self._flat_info())
         client.reply_bulk(info.encode('utf-8'))
 
+    @command('server')
+    def lastsave(self, client, request, N):
+        check_input(request, N)
+        client.reply_int(self._last_save)
+
     @command('server', script=0)
     def monitor(self, client, request, N):
         check_input(request, N)
@@ -1751,7 +1875,7 @@ class Storage(object):
         t = time.time()
         seconds = math.floor(t)
         microseconds = int(1000000*(t-seconds))
-        client.reply_multibulk((seconds, microseconds))
+        client.reply_multi_bulk((seconds, microseconds))
 
     ###########################################################################
     ##    INTERNALS
@@ -1846,7 +1970,7 @@ class Storage(object):
             db.pop(key)
             self._signal(self.NOTIFY_GENERIC, db, 'del', key, 1)
         if dest is None:
-            client.reply_multibulk((key, elem))
+            client.reply_multi_bulk((key, elem))
         else:
             client.reply_bulk(elem)
 
@@ -2093,7 +2217,7 @@ class Storage(object):
                 elif keyu == b'ERR':
                     return client.reply_error(result[key])
                 else:
-                    return client.reply_multibulk(())
+                    return client.reply_multi_bulk(())
             else:
                 array = []
                 index = 0
@@ -2105,7 +2229,7 @@ class Storage(object):
                     array.append(value)
                 result = array
         if isinstance(result, list):
-            client.reply_multibulk(result)
+            client.reply_multi_bulk(result)
         elif result == True:
             client.reply_one()
         elif result == False:

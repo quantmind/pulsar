@@ -75,6 +75,7 @@ class ClientMixin(object):
             if request:
                 command = request[0]
                 if not handle:
+                    self._loop.logger.info("unknown command '%s'" % command)
                     return self.reply_error("unknown command '%s'" % command)
                 if self.store._password != self.password:
                     if command != 'auth':
@@ -117,10 +118,10 @@ class ClientMixin(object):
     def reply_bulk(self, value):
         raise NotImplementedError
 
-    def reply_multibulk(self, value):
+    def reply_multi_bulk(self, value):
         raise NotImplementedError
 
-    def reply_multibulk_len(self, len):
+    def reply_multi_bulk_len(self, len):
         raise NotImplementedError
 
 
@@ -171,13 +172,10 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
         else:
             self._write(self.store._parser.bulk(value))
 
-    def reply_multibulk(self, value=None):
-        if value is None:
-            self._write(self.store.NULL_ARRAY)
-        else:
-            self._write(self.store._parser.multi_bulk(*value))
+    def reply_multi_bulk(self, value=None):
+        self._write(self.store._parser.multi_bulk(value))
 
-    def reply_multibulk_len(self, value):
+    def reply_multi_bulk_len(self, value):
         self._write(self.store._parser.multi_bulk_len(value))
 
     # Connection Implementaton
@@ -238,7 +236,7 @@ class LuaClient(ClientMixin):
     def reply_int(self, value):
         self.result = value
     reply_bulk = reply_int
-    reply_multibulk = reply_int
+    reply_multi_bulk = reply_int
 
     def reply_one(self):
         self.result = 1

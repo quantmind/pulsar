@@ -89,7 +89,7 @@ def sort_command(store, client, request, value):
                     gval = lookup(store, db, getv, val)
                     result.append(gval)
             vector = result
-        client.reply_multibulk(vector)
+        client.reply_multi_bulk(vector)
     else:
         if getops:
             vals = store.list_type()
@@ -155,3 +155,25 @@ class SortableDesc:
             return True
         else:
             return self.value > other.value
+
+
+def count_bytes(array):
+    '''Count the number of bits in a byte ``array``.
+
+    It uses the Hamming weight popcount algorithm
+    '''
+    # this algorithm can be rewritten as
+    # for i in array:
+    #     count += sum(b=='1' for b in bin(i)[2:])
+    # but this version is almost 2 times faster
+    count = 0
+    for i in array:
+        i = i - ((i >> 1) & 0x55555555);
+        i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+        count += (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
+    return count
+
+
+and_op = lambda x, y: x & y
+or_op = lambda x, y: x | y
+xor_op = lambda x, y: x ^ y
