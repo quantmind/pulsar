@@ -4,6 +4,9 @@
 Data Stores
 =================
 
+.. automodule:: pulsar.apps.data
+
+
 .. toctree::
    :maxdepth: 2
 

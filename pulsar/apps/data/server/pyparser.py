@@ -105,8 +105,9 @@ class Parser(object):
     def multi_bulk_len(self, len):
         return ('*%s\r\n' % len).encode('utf-8')
 
-    def multi_bulk(self, *args):
-        "Pack a series of arguments into a value Redis command"
+    def multi_bulk(self, args):
+        '''Multi bulk encoding for list/tuple ``args``
+        '''
         return b''.join(self.__pack_gen(args))
 
     def pack_pipeline(self, commands):
@@ -143,6 +144,8 @@ class Parser(object):
         for value in args:
             if value is None:
                 yield nil
+            elif isinstance(value, int):
+                yield (':%d\r\n' % value).encode('utf-8')
             elif isinstance(value, ltd):
                 if isinstance(value, dict):
                     yield b''.join(self.__pack_gen(self._lua_dict(value)))

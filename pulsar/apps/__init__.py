@@ -284,25 +284,31 @@ script which runs the application.'''
 
     def load_config(self):
         '''Load the application configuration from a file and/or
-from the command line. Called during application initialization.
-The parameters overriding order is the following:
+        from the command line.
 
- * default parameters.
- * the *params* passed in the initialization.
- * the parameters in the optional configuration file
- * the parameters passed in the command line.
-'''
+        Called during application initialisation. The parameters
+        overriding order is the following:
+
+         * default parameters.
+         * the *params* passed in the initialisation.
+         * the parameters in the optional configuration file
+         * the parameters passed in the command line.
+        '''
         # get the actor if available and override default cfg values with those
         # from the actor
         actor = get_actor()
+        cfg = self.cfg
         if actor and actor.is_running():
             # actor available and running. unless argv is set, skip parsing
             if self.argv is None:
                 self.parsed_console = False
             # copy global settings
-            for setting in actor.cfg.settings.values():
-                if setting.is_global:
-                    self.cfg.set(setting.name, setting.get())
+            for name, setting in actor.cfg.settings.items():
+                csetting = self.cfg.settings.get(name)
+                if (setting.is_global and csetting is not None and
+                        setting.default == csetting.default and
+                        csetting.value ==  csetting.default):
+                    csetting.set(setting.get())
         for name in list(self.cfg.params):
             if name in self.cfg.settings:
                 value = self.cfg.params.pop(name)
@@ -338,7 +344,7 @@ The parameters overriding order is the following:
             cfg = cls.cfg.copy(name=name, prefix=prefix)
             # update with latest settings
             cfg.update_settings()
-            cfg.update(params)
+            cfg.update(params, default=True)
         else:
             cfg = pulsar.Config(name=name, prefix=prefix, **params)
         return cfg

@@ -1,28 +1,23 @@
+import pulsar
 from pulsar.apps.test import unittest
-from pulsar.apps.data import redis_parser
+from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
+                              InvalidResponse)
 
-lua_nested_table = '''
-local s = ''
-for i=1,100 do
-    s = s .. '1234567890'
-end
-local nesting = ARGV[1]
-local pres = {100, s}
-local result = pres
-for i=1,nesting do
-    local res = {-8, s}
-    pres[3] = res
-    pres[4] = res
-    pres = res
-end
-return result
-'''
+def lua_nested_table(nesting):
+    s = ''.join(('1234567890' for n in range(100)))
+    pres = [100, s]
+    result = pres
+    for i in range(nesting):
+        res = (-8, s)
+        pres.extend((res, res))
+        pres = list(res)
+    return result
 
 
 class TestParser(unittest.TestCase):
 
     def parser(self):
-        return redis_parser()
+        return redis_parser()()
 
     def test_null(self):
         test = b'$-1\r\n'
@@ -86,23 +81,23 @@ class TestParser(unittest.TestCase):
         self.assertEqual(p.get(), b'QUEUED')
         self.assertEqual(p.get(), [None, 1, 39])
 
-    def test_nested10(self):
-        client = self.client()
-        result = yield client.eval(lua_nested_table, 0, 10)
-        self.assertEqual(len(result), 4)
-
-    def test_nested2(self):
-        client = self.client()
-        result = yield client.eval(lua_nested_table, 0, 2)
-        self.assertEqual(len(result), 4)
+    def test_nested(self):
+        p = self.parser()
+        result = lua_nested_table(2)
+        chunk = p.multi_bulk(*result)
+        p.feed(chunk)
+        res2 = p.get()
+        self.assertEqual(len(res2), len(result))
 
     def test_empty_string(self):
-        client = self.client()
-        yield client.set('ghghg', '')
-        result = yield client.get('ghghg')
-        self.assertEqual(result, b'')
+        p = self.parser()
+        chunk = p.bulk(None)
+        self.assertEqual(chunk, b'$-1\r\n')
 
 
-#@unittest.skipUnless(client.HAS_C_EXTENSIONS , 'Requires cython extensions')
-#class TestPythonParser(client.PythonParser, TestParser):
-#    pass
+
+@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires C extensions')
+class TestPythonParser(TestParser):
+
+    def parser(self):
+        return redis_parser(True)()

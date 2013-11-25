@@ -14,9 +14,9 @@ class PulsarStoreConnection(Connection):
         super(PulsarStoreConnection, self).__init__(*args, **kw)
         self.parser = self._producer._parser_class()
 
-    def execute(self, command, *args, **options):
+    def execute(self, *args, **options):
         consumer = self.current_consumer()
-        consumer.start(Request(command, args, **options))
+        consumer.start(Request(args, options))
         return consumer.on_finished
 
     def execute_pipeline(self, commands, raise_on_error):

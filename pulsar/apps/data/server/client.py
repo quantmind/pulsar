@@ -75,7 +75,7 @@ class ClientMixin(object):
             if request:
                 command = request[0]
                 if not handle:
-                    return self.error_reply("unknown command '%s'" % command)
+                    return self.reply_error("unknown command '%s'" % command)
                 if self.store._password != self.password:
                     if command != 'auth':
                         return self.reply_error(
@@ -83,7 +83,7 @@ class ClientMixin(object):
                 handle(self, request, len(request) - 1)
             else:
                 command = ''
-                return self.error_reply("no command")
+                return self.reply_error("no command")
         except CommandError as e:
             self.reply_error(str(e))
         except Exception:
@@ -207,13 +207,13 @@ class LuaClient(ClientMixin):
         try:
             return self._call(*args)
         except Exception:
-            return self.error_reply(str(e))
+            return self.reply_error(str(e))
 
     def pcall(self, *args):
         try:
             return self._call(*args)
         except Exception:
-            return self.error_reply(str(e))
+            return self.reply_error(str(e))
 
     def error_reply(self, error_string, prefix=None):
         prefix = (prefix or 'err').lower()
@@ -263,7 +263,7 @@ class LuaClient(ClientMixin):
             self.execute(handle, request)
             return self.result
         except Exception as e:
-            return self.error_reply(str(e))
+            return self.reply_error(str(e))
 
 
 

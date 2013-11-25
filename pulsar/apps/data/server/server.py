@@ -245,7 +245,7 @@ class Storage(object):
         check_input(request, not N)
         rem = client.db.rem
         result = reduce(lambda x, y: x + rem(y), request[1:], 0)
-        client.int_reply(result)
+        client.reply_int(result)
 
     @command('keys')
     def exists(self, client, request, N):
@@ -736,12 +736,14 @@ class Storage(object):
     @command('hashes', True)
     def hincrby(self, client, request, N):
         result = self._hincrby(client, request, N, int)
-        client.reply_int(result)
+        if result is not None:
+            client.reply_int(result)
 
     @command('hashes', True)
     def hincrbyfloat(self, client, request, N):
         result = self._hincrby(client, request, N, float)
-        client.reply_bulk(str(result).encode('utf-8'))
+        if result is not None:
+            client.reply_bulk(str(result).encode('utf-8'))
 
     @command('hashes')
     def hkeys(self, client, request, N):
@@ -1418,7 +1420,8 @@ class Storage(object):
         for pattern in request[1:]:
             p = self._patterns.get(pattern)
             if not p:
-                p = pubsub_patterns(re.compile(pattern.decode('utf-8')), set())
+                pre = redis_to_py_pattern(pattern.decode('utf-8'))
+                p = pubsub_patterns(re.compile(pre), set())
                 self._patterns[pattern] = p
             p.clients.add(client)
             client.patterns.add(pattern)
@@ -1431,10 +1434,10 @@ class Storage(object):
         check_input(request, not N)
         subcommand = request[1].decode('utf-8').lower()
         if subcommand == 'channels':
-            if N > 2:
-                check_input(request, False)
-            elif N == 2:
-                pre = re.compile(request[2].decode('utf-8', errors='ignore'))
+            check_input(request, N > 2)
+            if N == 2:
+                pre = re.compile(redis_to_py_pattern(
+                    request[2].decode('utf-8')))
                 channels = []
                 for channel in self._channels:
                     if pre.match(channel.decode('utf-8', errors='ignore')):
@@ -1446,7 +1449,7 @@ class Storage(object):
             count = []
             for channel in request[2:]:
                 clients = self._channels.get(channel, ())
-                count.append(len(clients))
+                count.extend((channel, len(clients)))
             client.reply_multibulk(count)
         elif subcommand == 'numpat':
             check_input(request, N > 1)
@@ -1895,19 +1898,31 @@ class Storage(object):
 
     def _hincrby(self, client, request, N, type):
         check_input(request, N != 3)
-        key, field, increment = request[1], request[2], type(request[3])
+        key, field = request[1], request[2]
+        try:
+            increment = type(request[3])
+        except Exception:
+            client.reply_error(
+                'value is not an %s or out of range' % type.__name__)
+            return
         db = client.db
         hash = db.get(key)
         if hash is None:
-            db._data[key] = self.hash_type(field=increment)
+            db._data[key] = self.hash_type({field: increment})
             result = increment
         elif getattr(hash, 'datatype', 'hash'):
             if not field in hash:
-                hash[field] = increment
+                hash[field] = str(increment).encode('utf-8')
                 result = increment
             else:
-                result = type(hash[field]) + increment
-                hash[field] = result
+                try:
+                    value = type(hash[field])
+                except Exception:
+                    client.reply_error(
+                        'hash value is not an %s' % type.__name__)
+                    return
+                result = value + increment
+                hash[field] = str(result).encode('utf-8')
         else:
             client.reply_wrongtype()
         return result

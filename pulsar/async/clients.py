@@ -103,14 +103,25 @@ class Pool(object):
         '''
         return len(self._in_use_connections)
 
+    @property
+    def available(self):
+        '''Number of available connections in the pool.
+        '''
+        return self._queue.qsize()
+
     def get(self):
         queue = self._queue
         connection = None
         if self.size >= self._pool_size or queue.qsize():
             connection = yield queue.get()
+            if is_socket_closed(connection.sock):
+                if connection._transport:
+                    connection._transport.close()
+                connection = yield self.get()
         else:
             connection = yield self._creator()
         self._in_use_connections.add(connection)
+        coroutine_return(connection)
 
     def put(self, conn):
         try:

@@ -1,12 +1,16 @@
 import pulsar
-from pulsar.apps.test import unittest
-from pulsar.apps.data import data_stores
 
-from .pulsardb import RedisCommands
+from .pulsardb import unittest, RedisCommands, create_store
 
 
 class TestRedisStore(RedisCommands, unittest.TestCase):
-    pass
+
+    @classmethod
+    def setUpClass(cls):
+        cls.store = cls.create_store('redis://127.0.0.1:6379/9')
+        cls.sync_store = cls.create_store('redis://127.0.0.1:6379/9',
+                                          force_sync=True)
+        cls.client = cls.store.client()
 
 
 #@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')

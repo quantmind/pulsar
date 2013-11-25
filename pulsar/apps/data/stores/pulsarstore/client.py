@@ -82,6 +82,16 @@ def parse_info(response):
     return info
 
 
+def pubsub_callback(response, subcommand=None):
+    if subcommand == 'numsub':
+        it = iter(response)
+        return dict(((k, int(v)) for k, v in zip(it, it)))
+        return pairs_to_object(response)
+    elif subcommand == 'numpat':
+        return int(response)
+    else:
+        return response
+
 class Request(object):
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
@@ -92,21 +102,24 @@ class Request(object):
         string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
         {
          'PING': lambda r: r == b'PONG',
+         'PUBSUB': pubsub_callback,
          'INFO': parse_info,
          'TIME': lambda x: (int(x[0]), int(x[1])),
          'HGETALL': pairs_to_object,
-         'HMGET': values_to_object
+         'HINCRBYFLOAT': lambda r: float(r),
+         'HMGET': values_to_object,
+         'TYPE': lambda r: r.decode('utf-8')
          }
     )
 
-    def __init__(self, command, args, **options):
-        self.command = command.upper()
+    def __init__(self, args, options):
+        self.command = args[0].upper()
         self.args = args
         self.options = options
 
     def write(self, consumer):
         conn = consumer._connection
-        chunk = conn.parser.multi_bulk(self.command, *self.args)
+        chunk = conn.parser.multi_bulk(self.args)
         conn._transport.write(chunk)
         return chunk
 

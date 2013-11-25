@@ -1,6 +1,6 @@
 
 
-def sort_command(store, connection, request, value):
+def sort_command(store, client, request, value):
     sort_type = type(value)
     right = 0
     desc = False
@@ -27,7 +27,7 @@ def sort_command(store, connection, request, value):
                 start = max(0, int(request[j+1]))
                 count = int(request[j+2])
             except Exception:
-                return connection.write(self.SYNTAX_ERROR)
+                return client.error_reply(self.SYNTAX_ERROR)
             end = len(value) if count <= 0 else start + count
             j += 2
         elif val == b'store' and right >= 1:
@@ -42,10 +42,10 @@ def sort_command(store, connection, request, value):
             getops.append(request[j+1])
             j += 1
         else:
-            return connection.write(self.SYNTAX_ERROR)
+            return client.error_reply(self.SYNTAX_ERROR)
         j += 1
 
-    db = connection.db
+    db = client.db
     if sort_type is store.zset_type and dontsort:
         dontsort = False
         alpha = True
@@ -81,18 +81,15 @@ def sort_command(store, connection, request, value):
         if start is not None:
             vector = sorting_value[start:end]
 
-    p = store._parser
-    NIL = store.NIL
     if storekey is None:
-        if not getops:
-            connection.write(p.multi_bulk(*vector))
-        else:
-            write = connection.write
-            write(p.multi_bulk_len(len(vector)*len(getops)))
+        if getops:
+            result = []
             for val in vector:
                 for getv in getops:
                     gval = lookup(store, db, getv, val)
-                    write(NIL) if gval is None else write(p.bulk(gval))
+                    result.append(gval)
+            vector = result
+        client.reply_multibulk(vector)
     else:
         if getops:
             vals = store.list_type()
@@ -108,7 +105,7 @@ def sort_command(store, connection, request, value):
         if result:
             db._data[storekey] = vals
             store._signal(store.NOTIFY_LIST, db, 'sort', storekey, result)
-        connection.int_reply(result)
+        client.reply_int(result)
 
 
 def lookup(store, db, pattern, repl):

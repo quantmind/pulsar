@@ -1,14 +1,32 @@
 from pulsar import send
 from pulsar.utils.security import random_string
 from pulsar.apps.test import unittest
-from pulsar.apps.data import KeyValueStore, create_store
+from pulsar.apps.data import KeyValueStore, create_store, redis_parser
 
 
 class RedisCommands(object):
+    redis_parser = True
+
+    @classmethod
+    def create_store(cls, address, **kw):
+        if redis_parser:
+            kw['parser_class'] = redis_parser(True)
+        return create_store(address, **kw)
 
     def randomkey(self):
         return random_string()
 
+    def test_mget(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        key3 = key2 + 'y'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.set(key1, 'foox'), True)
+        yield eq(c.set(key2, 'fooxx'), True)
+        yield eq(c.mget(key1, key2, key3), [b'foox', b'fooxx', None])
+
+class d:
     ###########################################################################
     ##    STRINGS
     def test_append(self):
@@ -62,6 +80,16 @@ class RedisCommands(object):
 
     ###########################################################################
     ##    HASHES
+    def test_hdel(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}), True)
+        yield eq(c.hdel(key, 'f1', 'f2', 'gh'), 2)
+        yield eq(c.hdel(key, 'fgf'), 0)
+        yield eq(c.type(key), 'hash')
+        yield eq(c.hdel(key, 'f3'), 1)
+        yield eq(c.type(key), 'none')
 
     ###########################################################################
     ##    LISTS
@@ -130,24 +158,30 @@ class RedisCommands(object):
         # Subscribe to one channel
         yield pubsub1.subscribe(key)
         count = yield pubsub1.count(key)
-        self.assertEqual(count, (1,))
+        self.assertEqual(len(count), 1)
+        self.assertEqual(count[key.encode('utf-8')], 1)
         #
         pubsub2 = self.client.pubsub()
         yield pubsub2.subscribe(key)
         count = yield pubsub1.count(key)
-        self.assertEqual(count, (2,))
+        self.assertEqual(len(count), 1)
+        self.assertEqual(count[key.encode('utf-8')], 2)
 
     def test_subscribe_many(self):
+        base = self.randomkey()
+        key1 = base + '_a'
+        key2 = base + '_b'
+        key3 = base + '_c'
+        key4 = base + 'x'
         pubsub = self.client.pubsub()
-        yield pubsub.subscribe('foooo1', 'foooo2', 'foooo3')
-        channels = yield pubsub.channels('fooo*')
+        yield pubsub.subscribe(key1, key2, key3, key4)
+        channels = yield pubsub.channels(base + '_*')
         self.assertEqual(len(channels), 3)
-        count = yield pubsub.count('foooo1')
-        self.assertEqual(count, (1,))
-        count = yield pubsub.count('foooo2')
-        self.assertEqual(count, (1,))
-        count = yield pubsub.count('foooo3')
-        self.assertEqual(count, (1,))
+        count = yield pubsub.count(key1, key2, key3)
+        self.assertEqual(len(count), 3)
+        self.assertEqual(count[key1.encode('utf-8')], 1)
+        self.assertEqual(count[key2.encode('utf-8')], 1)
+        self.assertEqual(count[key3.encode('utf-8')], 1)
 
     def test_publish(self):
         pubsub = self.client.pubsub()
@@ -195,11 +229,12 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     def setUpClass(cls):
         server = KeyValueStore(name=cls.__name__.lower(),
                                bind='127.0.0.1:0',
-                               concurrency=cls.concurrency)
+                               concurrency=cls.concurrency,
+                               py_redis_parser=cls.redis_parser)
         cls.app = yield send('arbiter', 'run', server)
-        cls.store = create_store('pulsar://%s:%s/9' % cls.app.address)
-        cls.sync_store = create_store('pulsar://%s:%s/10' % cls.app.address,
-                                      force_sync=True)
+        cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)
+        cls.sync_store = cls.create_store(
+            'pulsar://%s:%s/10' % cls.app.address, force_sync=True)
         cls.client = cls.store.client()
 
     @classmethod

@@ -239,17 +239,46 @@ inline PyObject* ArrayTask::_decode(RedisParser& parser, PyObject* result) {
     return NULL;
 }
 
-inline  PyObject* pack_command(PyObject* args) {
-    size_t size = PyTuple_Size(args);
-    std::stringstream str;
-    str << "*" << size << CRLF;
-    for (size_t index=0; index<size; ++index) {
-        string value(to_bytes(PyTuple_GET_ITEM(args, index)));
-        str << '$' << value.size() << CRLF << value << CRLF;
-    }
-    string result(str.str());
-    return PyBytes_FromStringAndSize(result.c_str(), result.size());
+string obj_multibulk(PyObject* obj);
+
+inline string tuple_multibulk(PyObject* args) {
+  std::stringstream str;
+  size_t size = PyTuple_Size(args);
+  str << "*" << size << CRLF;
+  for (size_t index=0; index<size; ++index) {
+    str << obj_multibulk(PyTuple_GET_ITEM(args, index));
+  }
+  return str.str();
 }
 
+inline string list_multibulk(PyObject* args) {
+  std::stringstream str;
+  size_t size = PyList_Size(args);
+  str << "*" << size << CRLF;
+  for (size_t index=0; index<size; ++index) {
+    str << obj_multibulk(PyList_GET_ITEM(args, index));
+  }
+  return str.str();
+}
+
+inline string obj_multibulk(PyObject* obj) {
+  std::stringstream str;
+  if (obj == Py_None) {
+    return string("$-1\r\n");
+  } else if PyList_Check(obj) {
+    return list_multibulk(obj);
+  } else if PyTuple_Check(obj) {
+    return tuple_multibulk(obj);
+  } else {
+    string value(to_bytes(obj));
+    str << '$' << value.size() << CRLF << value << CRLF;
+    return str.str();
+  }
+}
+
+inline PyObject* pack_command(PyObject* args) {
+  string result(tuple_multibulk(args));
+    return PyBytes_FromStringAndSize(result.c_str(), result.size());
+}
 
 #endif	//	__REDIS_PARSER_H__

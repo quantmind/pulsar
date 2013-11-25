@@ -43,8 +43,8 @@ class PubSub(base.PubSub):
         return self.store.execute('PUBLISH', channel, message)
 
     def count(self, *channels):
-        d = self.store.execute('PUBSUB', 'NUMSUB', *channels)
-        return d.add_callback(lambda r: tuple((int(v) for v in r)))
+        kw = {'subcommand': 'numsub'}
+        return self.store.execute('PUBSUB', 'NUMSUB', *channels, **kw)
 
     def channels(self, pattern=None):
         '''Lists the currently active channels matching ``pattern``
