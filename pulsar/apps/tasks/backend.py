@@ -104,18 +104,6 @@ Scheduler Entry
    :members:
    :member-order: bysource
 
-
-Local Backend
-==================
-
-.. automodule:: pulsar.apps.tasks.backends.local
-
-Redis Backend
-==================
-
-.. automodule:: pulsar.apps.tasks.backends.redis
-
-
 .. _redis: http://redis.io/
 '''
 import sys
@@ -859,10 +847,8 @@ class PulsarTaskBackend(TaskBackend):
         if not task_id:
             inq = self.channel('inqueue')
             ouq = self.channel('outqueue')
-            print('pool task')
             task_id = yield store.execute('brpoplpush', inq, ouq,
                                           self.poll_timeout)
-            print('Got task %s' % task_id)
             if not task_id:
                 coroutine_return()
         task = yield self.models.task.get(task_id.decode('utf-8'))

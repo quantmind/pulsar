@@ -6,33 +6,6 @@ from pulsar.utils.pep import default_timer, ispy3k
 fallback = True
 
 
-if ispy3k:
-    from concurrent.futures._base import Error, CancelledError, TimeoutError
-else:   # pragma    nocover
-    class Error(Exception):
-        '''Raised when no other information is available on a Failure'''
-
-    class CancelledError(Error):
-        pass
-
-    class TimeoutError(Error):
-        pass
-
-
-class InvalidStateError(Error):
-    """The operation is not allowed in this state."""
-
-
-class CoroutineReturn(BaseException):
-
-    def __init__(self, value):
-        self.value = value
-
-
-def coroutine_return(value=None):
-    raise CoroutineReturn(value)
-
-
 class AbstractEventLoopPolicy(object):
     """Abstract policy for accessing the event loop."""
 
@@ -207,57 +180,6 @@ class BaseEventLoop(AbstractEventLoop):
             heappush(self._scheduled, handle)
         else:
             self._ready.append(handle)
-
-
-_PENDING = 'PENDING'
-_CANCELLED = 'CANCELLED'
-_FINISHED = 'FINISHED'
-
-
-class Future(object):
-    _state = _PENDING
-    _result = None
-    _exception = None
-    _loop = None
-    _blocking = False  # proper use of future (yield vs yield from)
-    _tb_logger = None
-
-    def cancelled(self):
-        '''pep-3156_ API method, it returns ``True`` if the :class:`Deferred`
-was cancelled.'''
-        return self._state == _CANCELLED
-
-    def done(self):
-        '''Returns ``True`` if the :class:`Deferred` is done.
-
-        This is the case when it was called or cancelled.
-        '''
-        return self._state != _PENDING
-
-    def cancel(self):
-        raise NotImplementedError
-
-    def result(self):
-        raise NotImplementedError
-
-    def add_done_callback(self, fn):
-        raise NotImplementedError
-
-    def remove_done_callback(self, fn):
-        raise NotImplementedError
-
-    def set_result(self, result):
-        raise NotImplementedError
-
-    def set_exception(self, result):
-        raise NotImplementedError
-
-    def __iter__(self):
-        if not self.done():
-            self._blocking = True
-            yield self  # This tells Task to wait for completion.
-        assert self.done(), "yield from wasn't used with future"
-        coroutine_return(self.result())  # May raise too.
 
 
 ###########################################################################

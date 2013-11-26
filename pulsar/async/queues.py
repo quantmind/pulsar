@@ -1,6 +1,7 @@
 from collections import deque
 
-from .defer import Deferred, get_event_loop
+from .access import get_event_loop
+from .defer import Deferred
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']

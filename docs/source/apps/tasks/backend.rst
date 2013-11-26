@@ -4,4 +4,4 @@
 Task Backend
 ======================
 
-.. automodule:: pulsar.apps.tasks.backends
+.. automodule:: pulsar.apps.tasks.backend

@@ -210,18 +210,18 @@ long a test function can wait for results. This is what the
 Set the test timeout to 10 seconds.
 
 
-Plugins
+Test Plugins
 ==================
-A :class:`TestPlugin` is a way to extend the test suite with additional
+A :class:`.TestPlugin` is a way to extend the test suite with additional
 :ref:`options <test-suite-options>` and behaviours implemented in
 the various plugin's callbacks.
 There are two basic rules for plugins:
 
-* Plugin classes should subclass :class:`TestPlugin`.
-* Plugins may implement any of the methods described in the class
-  :class:`result.Plugin` interface.
+* Test plugin classes should subclass :class:`.TestPlugin`.
+* Test plugins may implement any of the methods described in the class
+  :class:`.Plugin` interface.
 
-Pulsar ships with two plugins:
+Pulsar ships with two battery-included plugins:
 
 .. _bench-plugin:
 
@@ -260,19 +260,34 @@ Test Loader
 .. automodule:: pulsar.apps.test.loader
 
 
-Plugins
-~~~~~~~~~~~~~~~~~~~~~~~
+Plugin
+~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: pulsar.apps.test.result
+.. autoclass:: pulsar.apps.test.result.Plugin
+   :members:
+   :member-order: bysource
 
 
-.. module:: pulsar.apps.test
+Test Runner
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestRunner
+   :members:
+   :member-order: bysource
+
+
+Test Result
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestResult
+   :members:
+   :member-order: bysource
 
 
 Test Plugin
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestPlugin
+.. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
    :members:
    :member-order: bysource
 
@@ -284,6 +299,7 @@ Utilities
 
 .. automodule:: pulsar.apps.test.utils
     :members:
+
 '''
 import sys
 
@@ -458,11 +474,11 @@ class TestSuite(tasks.TaskQueue):
 
         If not provided it is set as default to ``["tests"]`` which loads all
         python module from the tests module in a recursive fashion.
-        Check the the :class:`TestLoader` for detailed information.
+        Check the the :class:`.TestLoader` for detailed information.
 
     :parameter result_class: Optional class for collecting test results.
-        By default it used the standard ``unittest.TextTestResult``.
-    :parameter plugins: Optional list of :class:`TestPlugin` instances.
+        By default it used the standard :class:`.TestResult`.
+    :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
@@ -472,7 +488,8 @@ class TestSuite(tasks.TaskQueue):
 
     @local_property
     def runner(self):
-        '''The :class:`TestRunner` driving the test case.'''
+        '''The :class:`.TestRunner` driving test cases.
+        '''
         if unittest is None:    # pragma    nocover
             raise ImportError('python %s requires unittest2 library for '
                               'pulsar test suite application' % pyver)
@@ -578,7 +595,7 @@ class TestSuite(tasks.TaskQueue):
 
     @local_property
     def events(self):
-        '''Events for the application: ``ready```, ``start``, ``stop``.'''
+        '''Events for the application: ``ready``, ``start``, ``stop``.'''
         return EventHandler(one_time_events=('ready', 'start', 'stop'),
                             many_times_events=('tests',))
 

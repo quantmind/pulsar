@@ -52,10 +52,6 @@ MONITOR_TASK_PERIOD = 2
 '''Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`
 periodic task.'''
 #
-# SPECIAL objects for Deferred
-CONTINUE = object()
-NOT_DONE = object()
-
 DEFAULT_CONNECT_TIMEOUT = 10
 DEFAULT_ACCEPT_TIMEOUT = 10
 NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1

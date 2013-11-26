@@ -9,7 +9,7 @@ class TestTextUtils(unittest.TestCase):
         def blabla(n):
             return 'AAAAAAAAAAAAAAAAAAAA %s' % n
         r = blabla(3)
-        self.assertEqual(r._value, None)
+        self.assertEqual(r.value, None)
         v = str(r)
         self.assertEqual(v, 'AAAAAAAAAAAAAAAAAAAA 3')
-        self.assertEqual(r._value, v)
+        self.assertEqual(r.value, v)

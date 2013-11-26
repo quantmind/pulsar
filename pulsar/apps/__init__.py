@@ -42,13 +42,6 @@ Get application
 
 .. autofunction:: get_application
 
-
-Backend
-===================
-
-.. autoclass:: Backend
-   :members:
-   :member-order: bysource
 '''
 import os
 import sys

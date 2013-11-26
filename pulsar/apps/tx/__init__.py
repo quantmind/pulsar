@@ -9,8 +9,8 @@ for several protocols which can be used in pulsar by importing the
 The implementation replaces the twisted reactor with a proxy for
 :class:`pulsar.EventLoop`.
 Twisted Deferred and Failures are made compatible with pulsar
-by installing two different discovery functions via the
-:func:`pulsar.set_async` function.
+by installing twisted asynchronous binding via the
+:func:`.add_async_binding` function.
 
 Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.
@@ -43,22 +43,20 @@ except ImportError:     # pragma    nocover
         raise
 
 import pulsar
-from pulsar import get_event_loop, Deferred, Failure
-from pulsar.async.defer import default_async, set_async
+from pulsar import get_event_loop, Deferred, Failure, add_async_binding
 
 
-def _async(coro_or_future, loop=None):    # pragma    nocover
+def check_twisted (coro_or_future, loop):
     if isinstance(coro_or_future, TwistedDeferred):
         d = Deferred(loop)
         d._twisted_deferred = obj
         obj.addCallbacks(
             d.callback, lambda e: d.callback(Failure((e.type, e.value, e.tb))))
         return d
-    return default_async(coro_or_future, loop)
 
 
 # Set the new async function
-set_async(_async)
+add_async_binding(check_twisted)
 
 
 class PulsarReactor(PosixReactorBase):  # pragma    nocover

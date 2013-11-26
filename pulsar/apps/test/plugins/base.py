@@ -95,53 +95,51 @@ class TestPluginMeta(type):
 
 class TestPlugin(TestPluginMeta('TestPluginBase',
                                 (Plugin,), {'virtual': True})):
-    '''Base class for :class:`result.Plugin` which can be added to a
-:class:`TestSuite` to extend its functionalities. :ref:`Settings <settings>`
-can be specified as class attributes and collected into the
-:attr:`config` attribute.
+    '''Base class for :class:`.Plugin` which can be added to a
+    :class:`.TestSuite` to extend its functionalities.
 
-If the class attribute :attr:`name` is not specified or its value validate as
-``True``, an additional :ref:`setting <settings>` is added to the
-configuration.
-In addition, a :class:`TestPlugin` can specify several additional
-:ref:`settings <settings>` as class attributes. For example, the
-:ref:`benchmark plugin <bench-plugin>` has an additional setting
-for controlling the number of repetitions::
+    If the class attribute :attr:`name` is not specified or its value validate
+    as ``True``, an additional :ref:`setting <settings>` is added to the
+    configuration.
+    In addition, a :class:`TestPlugin` can specify several additional
+    :ref:`settings <settings>` as class attributes. For example, the
+    :ref:`benchmark plugin <bench-plugin>` has an additional setting
+    for controlling the number of repetitions::
 
-    class Bench(TestPlugin):
-        desc = "Run benchmarks function flagged with __benchmark__ attribute"
-        repeat = pulsar.Setting(type=int,
-                            default=1,
-                            validator=pulsar.validate_pos_int,
-                            desc="Default number of repetition")
+        class Bench(TestPlugin):
+            desc = "Run benchmarks function flagged with __benchmark__ attribute"
+            repeat = pulsar.Setting(type=int,
+                                default=1,
+                                validator=pulsar.validate_pos_int,
+                                desc="Default number of repetition")
 
 
-.. attribute:: name
+    .. attribute:: name
 
-    Class attribute used for adding the default plugin
-    :ref:`setting <settings>`
-    to the configuration container of the test suite application.
-    If the attribute is not set, the class name in lower case is used.
-    If set and validate as not ``True``, no new :ref:`setting <settings>`
-    is added to the test suite configuration parameters. For example::
+        Class attribute used for adding the default plugin
+        :ref:`setting <settings>`
+        to the configuration container of the test suite application.
+        If the attribute is not set, the class name in lower case is used.
+        If set and validate as not ``True``, no new :ref:`setting <settings>`
+        is added to the test suite configuration parameters. For example::
 
-        class MyPlugin(TestPlugin):
-            name = None
+            class MyPlugin(TestPlugin):
+                name = None
 
-    won't add the default plugin :ref:`setting <settings>`.
+        won't add the default plugin :ref:`setting <settings>`.
 
-.. attribute:: desc
+    .. attribute:: desc
 
-    Class attribute used as the description of the :ref:`setting <settings>`.
-    If :attr:`name` is disabled, this attribute is not relevant.
+        Class attribute used as the description of the :ref:`setting <settings>`.
+        If :attr:`name` is disabled, this attribute is not relevant.
 
-.. attribute:: config
+    .. attribute:: config
 
-    A :class:`pulsar.utils.config.Config` container created by th
-    :class:`TestPlugin` metaclass. It collects the default setting, if
-    available, and any additional :ref:`settings <settings>` specified
-    as class attributes.
-'''
+        A :class:`.Config` container created by the :class:`TestPlugin`
+        metaclass. It collects the default setting, if
+        available, and any additional :ref:`settings <settings>` specified
+        as class attributes.
+    '''
     virtual = True
 
     def __new__(cls):

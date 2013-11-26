@@ -1,9 +1,8 @@
 '''test classes for socket clients.'''
 import socket
 
-from pulsar import Deferred
+from pulsar import Deferred, get_event_loop
 from pulsar.apps.test import unittest
-from pulsar.utils.pep import get_event_loop
 
 from examples.echo.manage import Echo, EchoProtocol
 

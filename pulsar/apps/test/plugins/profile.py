@@ -1,6 +1,19 @@
 '''
-A test plugin for profiling test cases and generating Html reports. It uses
-the ``cProfiler`` from the standard libraries.
+:class:`Profile` is a :class:`.TestPlugin` for profiling
+test cases and generating Html reports.
+It uses the :mod:`cProfile` module from the standard library.
+
+To use the plugin follow these two steps:
+
+* Included it in the test Suite::
+
+    from pulsar.apps.test import TestSuite
+    from pulsar.apps.test.plugins import profile
+
+    def suite():
+        TestSuite(..., plugins=(..., profile.Profile()))
+
+* Run the test suite with the ``--profile`` command line option.
 
 .. autoclass:: Profile
    :members:

@@ -6,7 +6,7 @@ from multiprocessing import current_process
 try:
     import asyncio
 except ImportError:  # pragma    nocover
-    from . import _asyncio as asyncio
+    from .fallbacks import asyncio
 
 
 __all__ = ['get_request_loop',

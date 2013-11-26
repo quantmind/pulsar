@@ -1,5 +1,33 @@
 '''
-A test plugin for benchmarking test cases.
+:class:`.BenchMark` is a :class:`.TestPlugin` for benchmarking test functions.
+
+To use the plugin follow these three steps:
+
+* Included it in the test Suite::
+
+    from pulsar.apps.test import TestSuite
+    from pulsar.apps.test.plugins import bench
+
+    def suite():
+        TestSuite(..., plugins=(..., bench.BenchMark()))
+
+* Flag a ``unittest.TestCase`` class with the ``__benchmark__ = True``
+  class attribute::
+
+      class MyBenchmark(unittest.TestCase):
+          __benchmark__ = True
+
+          def test_mybenchmark_function1(self):
+              ...
+
+          def test_mybenchmark_function2(self):
+              ...
+
+* Run the test suite with the ``--benchmark`` command line option.
+
+
+.. autoclass:: BenchMark
+
 '''
 import sys
 import time
@@ -18,12 +46,11 @@ from pulsar.utils.pep import range
 from pulsar.apps import test
 
 
-BENCHMARK_TEMPLATE = '\nRepeated {0[number]} times.\
- Average {0[mean]} secs, Stdev {0[std]}.'
+BENCHMARK_TEMPLATE = ('{0[name]}: repeated {0[number]} times, '
+                      'average {0[mean]} secs, stdev {0[std]}')
 
 
 class BenchTest(test.WrapTest):
-    __benchmark__ = True
 
     def __init__(self, test, number):
         super(BenchTest, self).__init__(test)
@@ -46,7 +73,7 @@ class BenchTest(test.WrapTest):
         testGetSummary = getattr(self.test, 'getSummary', simple)
         t = 0
         t2 = 0
-        info = {}
+        info = {'name': testMethod.__name__}
         for r in range(self.number):
             testStartUp()
             start = default_timer()
@@ -99,4 +126,30 @@ class BenchMark(test.TestPlugin):
                                    BENCHMARK_TEMPLATE)
                 stream.writeln(template.format(result))
                 stream.flush()
+                self.result.addSuccess(test)
                 return True
+
+    def addError(self, test, err):
+        msg = self._msg(test, 'ERROR')
+        if msg:
+            self.result.addError(test, err)
+            return msg
+
+    def addFailure(self, test, err):
+        msg = self._msg(test, 'FAILURE')
+        if msg:
+            self.result.addFailure(test, err)
+            return msg
+
+    def addSkip(self, test, reason):
+        msg = self._msg(test, err, "skipped {0!r}".format(reason))
+        if msg:
+            self.result.addSkip(test, err)
+            return msg
+
+    def _msg(self, test, msg):
+        if self.config.benchmark and self.stream:
+            stream = self.stream.handler('benchmark')
+            stream.writeln('%s: %s' % (test, msg))
+            stream.flush()
+            return True

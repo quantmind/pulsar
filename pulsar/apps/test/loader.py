@@ -23,16 +23,18 @@ def issubclass_safe(cls, base_cls):
 
 
 class TestLoader(object):
-    '''Classes used by the :class:`TestSuite` to aggregate tests
-from a list of paths. The way it works is simple,
-you give a *root* directory and a list of submodules where to look for tests.
+    '''Classes used by the :class:`.TestSuite` to aggregate tests
+    from a list of paths.
 
-:parameter root: root path passed by the :class:`TestSuite`.
-:parameter modules: list (or tuple) of entries where to look for tests.
-    Check :ref:`loading test documentation <apps-test-loading>` for
-    more information.
-:parameter runner: The test suite runner.
-'''
+    The way it works is simple, you give a *root* directory and a list
+    of submodules where to look for tests.
+
+    :parameter root: root path passed by the :class:`.TestSuite`.
+    :parameter modules: list (or tuple) of entries where to look for tests.
+        Check :ref:`loading test documentation <apps-test-loading>` for
+        more information.
+    :parameter runner: The :class:`.TestRunner` passed by the test suite.
+    '''
     def __init__(self, root, modules, runner, logger=None):
         self.runner = runner
         self.logger = logger or LOGGER

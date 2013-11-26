@@ -3,10 +3,9 @@ import os
 from threading import current_thread
 
 import pulsar
-from pulsar import send, multi_async, is_failure
+from pulsar import send, multi_async, is_failure, get_event_loop
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
-from pulsar.utils.pep import get_event_loop, default_timer
 from pulsar.utils.version import get_version
 
 
@@ -15,9 +14,9 @@ def simple_function(actor):
 
 
 def wait(actor, period=0.5):
-    start = default_timer()
+    start = actor._loop.time()
     yield pulsar.async_sleep(period)
-    yield default_timer() - start
+    yield actor._loop.time() - start
 
 
 class TestTestWorker(unittest.TestCase):
