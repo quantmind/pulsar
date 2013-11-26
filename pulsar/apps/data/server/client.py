@@ -269,6 +269,7 @@ class Blocked:
     '''Handle blocked keys for a client
     '''
     def __init__(self, client, command, keys, timeout, dest=None):
+        print('blocking')
         self.command = command
         self.keys = set(keys)
         self.dest = dest
@@ -281,6 +282,7 @@ class Blocked:
             clients.add(client)
         client.store._bpop_blocked_clients += 1
         if timeout:
+            print('set unblocking in %s' % timeout)
             self.handle = client._loop.call_later(
                 timeout, self.unblock, client)
         else:

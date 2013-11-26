@@ -80,10 +80,10 @@ you give a *root* directory and a list of submodules where to look for tests.
             return 2
 
     def testclasses(self, tags=None, exclude_tags=None):
-        pt = ', '.join(tags) if tags else 'all'
-        ex = ((' excluding %s' % ', '.join(exclude_tags)) if
-              exclude_tags else '')
-        self.logger.info('Load test classes for %s tags%s', pt, ex)
+        pt = ', '.join(('"%s"' % t for t in tags)) if tags else 'all'
+        ex = ((' excluding %s' % ', '.join(('"%s"' % t for t in exclude_tags)))
+              if exclude_tags else '')
+        self.logger.info('Load test classes for %s %s', pt, ex)
         for tag, mod in self.testmodules(tags, exclude_tags):
             if tags:
                 skip = True
@@ -110,13 +110,14 @@ you give a *root* directory and a list of submodules where to look for tests.
 
     def _testmodules(self, tags, exclude_tags):
         for name, pattern, tag in self.modules:
+            names = name.split('.') if name else ()
+            absolute_path = pattern_path = os.path.join(self.root, *names)
             if pattern == '*':
                 pattern = None
             if pattern:
+                pattern_path = os.path.join(pattern_path, pattern)
                 pattern = re.compile(pattern.replace('*', '(.*)'))
-            names = name.split('.') if name else ()
-            absolute_path = os.path.join(self.root, *names)
-            self.logger.debug('Loading from "%s"', absolute_path)
+            self.logger.debug('Loading from "%s"', pattern_path)
             if os.path.isdir(absolute_path):
                 pathbase = os.path.dirname(absolute_path)
                 if pathbase not in sys.path:

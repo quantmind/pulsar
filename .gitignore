@@ -22,3 +22,4 @@ pulsar.egg-info
 extensions/lua/lua.c
 extensions/lib/lib.cpp
 .coveralls.yml
+*.rdb

@@ -219,6 +219,8 @@ class TaskConsumer(object):
 
 
 class Task(odm.Model):
+    '''A model containing task execution data.
+    '''
     id = odm.CharField(primary_key=True)
     lock_id = odm.CharField(unique=True)
     name = odm.CharField(index=True)
@@ -457,7 +459,7 @@ class TaskBackend(LocalMixin):
     ##    ABSTRACT METHODS
     ########################################################################
     def maybe_queue_task(self, task):
-        '''Actually queue a ``task``.
+        '''Actually queue a ``task`` if possible.
         '''
         raise NotImplementedError
 
@@ -857,8 +859,10 @@ class PulsarTaskBackend(TaskBackend):
         if not task_id:
             inq = self.channel('inqueue')
             ouq = self.channel('outqueue')
+            print('pool task')
             task_id = yield store.execute('brpoplpush', inq, ouq,
                                           self.poll_timeout)
+            print('Got task %s' % task_id)
             if not task_id:
                 coroutine_return()
         task = yield self.models.task.get(task_id.decode('utf-8'))
