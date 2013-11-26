@@ -1,4 +1,5 @@
 import sys
+import logging
 from traceback import format_exception as tb_format_exception
 from types import TracebackType, GeneratorType
 from collections import deque
@@ -10,6 +11,7 @@ cdef int _CANCELLED = 2
 cdef dict _states = {_PENDING: 'PENDING',
                      _FINISHED: 'FINISHED',
                      _CANCELLED: 'CANCELLED'}
+cdef tuple log_exc_info = ('error', 'critical')
 
 
 NOT_DONE = object()
@@ -57,9 +59,25 @@ cdef class Failure:
         self._exc_info = exc_info
         self._mute = False
 
+    def __dealloc__(self):
+        if not self._mute:
+            self.log()
+
+    def __repr__(self):
+        return ''.join(self.exc_info[2])
+    __str__ = __repr__
+
+    @property
+    def exc_info(self):
+        return self._exc_info[1]
+
     @property
     def error(self):
         return self._exc_info[1]
+
+    @property
+    def logged(self):
+        return getattr(self._exc_info[1], '_failure_logged', False)
 
     def throw(self, gen=None):
         if gen:
@@ -70,8 +88,31 @@ cdef class Failure:
             raise self._exc_info[1]
 
     cpdef bint isinstance(self, classes):
-        '''Check if :attr:`error` is an instance of exception ``classes``.'''
         return isinstance(self._exc_info[1], classes)
+
+    cpdef log(self, log=None, msg=None, level=None):
+        if not self.logged:
+            self.mute()
+            msg = msg or 'Pulsar Asynchronous Failure'
+            log = log or _async.logger()
+            level = level or 'error'
+            handler = getattr(log, level)
+            if level in log_exc_info:
+                if self._exc_info[2]:
+                    c = '\n'
+                    emsg = ''.join(self._exc_info[2])
+                else:
+                    c = ': '
+                    emsg = str(self._exc_info[1])
+                msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
+            handler(msg)
+        return self
+
+    def critical(self, msg):
+        return self.log(msg=msg, level='critical')
+
+    cpdef mute(self):
+        setattr(self._exc_info[1], '_failure_logged', True)
 
 
 cdef inline bint is_relevant_tb(object tb):
@@ -111,7 +152,7 @@ cdef inline bint is_exc_info(exc_info):
     return False
 
 
-cdef inline bint _maybe_failure(object value):
+cdef inline object _maybe_failure(object value):
     if isinstance(value, BaseException):
         exc_info = sys.exc_info()
         if value is not exc_info[1]:
@@ -184,6 +225,29 @@ cdef class Deferred:
             self._result.throw()
         else:
             return self._result
+
+    def add_done_callback(self, fn):
+        '''Add a callback to be run when the :class:`Deferred` becomes done.
+
+        The callback is called with a single argument,
+        the :class:`Deferred` object.
+        '''
+        callback = DoneCallback(self, fn)
+        self.add_callback(callback, callback)
+
+    def remove_done_callback(self, fn):
+        """Remove all instances of a callback from the "call when done" list.
+
+        Returns the number of callbacks removed.
+        """
+        cdef list callbacks = self._callbacks
+        removed_count = 0
+        if callbacks:
+            for i, callback_errback in enumerate(tuple(callbacks)):
+                if callback_errback[0] == fn:
+                    del callbacks[i]
+                    removed_count += 1
+        return removed_count
 
     cpdef Deferred add_callback(self, callback, errback=None):
         if not (callback or errback):
@@ -270,6 +334,24 @@ cdef class Deferred:
                         break
 
 
+class DoneCallback:
+
+    def __init__(self, fut, fn):
+        self.fut = fut
+        self.fn = fn
+
+    def __call__(self, result):
+        fut = self.fut
+        self.fn(fut)
+        return fut._result
+
+    def __eq__(self, fn):
+        return self.fn == fn
+
+    def __ne__(self, fn):
+        return self.fn != fn
+
+
 cdef class DeferredTask(Deferred):
     cdef object _gen
     cdef Deferred _waiting
@@ -354,18 +436,6 @@ cdef class AsyncBindings:
         self._bindings.append(callable)
 
     def __call__(self, coro_or_future, loop=None):
-        '''Handle an asynchronous ``coro_or_future``.
-
-        Equivalent to the ``asyncio.async`` function but returns a
-        :class:`.Deferred`. Raises :class:`FutureTypeError` if ``value``
-        is not a generator nor a :class:`.Future`.
-
-        This function can be overwritten by the :func:`set_async` function.
-
-        :parameter value: the value to convert to a :class:`.Deferred`.
-        :parameter loop: optional :class:`.EventLoop`.
-        :return: a :class:`Deferred`.
-        '''
         cdef DeferredTask task
         if self._bindings:
             for binding in self._bindings:
@@ -383,21 +453,6 @@ cdef class AsyncBindings:
             raise FutureTypeError('A Future or coroutine is required')
 
     def maybe(self, value, loop=None, get_result=True):
-        '''Handle a possible asynchronous ``value``.
-
-        Return an :ref:`asynchronous instance <tutorials-coroutine>`
-        only if ``value`` is a generator, a :class:`Deferred` or ``get_result``
-        is set to ``False``.
-
-        :parameter value: the value to convert to an asynchronous instance
-            if it needs to.
-        :parameter loop: optional :class:`.EventLoop`.
-        :parameter get_result: optional flag indicating if to get the result in
-            case the return value is a :class:`Deferred` already done.
-            Default: ``True``.
-        :return: a :class:`Deferred` or  a :class:`Failure` or a synchronous
-            value.
-        '''
         cdef Deferred d
         try:
             d = self(value, loop)
@@ -411,6 +466,13 @@ cdef class AsyncBindings:
                 d = Deferred(loop)
                 d.callback(value)
                 return d
+
+    def logger(self):
+        logger = getattr(self.get_request_loop(), 'logger', None)
+        if not logger:
+            logger = logging.getLogger('pulsar')
+        return logger
+
 
 cdef AsyncBindings _async = AsyncBindings()
 

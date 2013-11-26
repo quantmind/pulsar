@@ -5,7 +5,7 @@ from functools import partial
 from pulsar import HttpException, ProtocolError, ProtocolConsumer, maybe_async
 from pulsar.utils.pep import to_bytes, native_str
 from pulsar.utils.httpurl import DEFAULT_CHARSET
-from pulsar.utils.websocket import FrameParser, Frame
+from pulsar.utils.websocket import frame_parser
 from pulsar.apps import wsgi
 
 from . import extensions
@@ -36,14 +36,13 @@ class WebSocket(wsgi.Router):
 
         A factory of websocket frame parsers
     """
-    parser_factory = FrameParser
+    parser_factory = frame_parser
     _name = 'websocket'
 
     def __init__(self, route, handle, parser_factory=None, **kwargs):
         super(WebSocket, self).__init__(route, **kwargs)
         self.handle = handle
-        if parser_factory:
-            self.parser_factory = parser_factory
+        self.parser_factory = parser_factory or frame_parser
 
     @property
     def name(self):
@@ -167,30 +166,23 @@ class WebSocketProtocol(ProtocolConsumer):
                 maybe_async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
 
-    def write(self, frame):
-        '''Write a new ``frame`` into the wire.
-
-        A ``frame`` can be:
-
-        * ``bytes`` - converted to a byte Frame
-        * ``string`` - converted to a string Frame
-        * a :class:`pulsar.utils.websocket.Frame`
+    def write(self, message, opcode=None, **kw):
+        '''Write a new ``message`` into the wire.
          '''
-        if not isinstance(frame, Frame):
-            frame = self.parser.encode(frame)
-        self.transport.write(frame.msg)
-        if frame.is_close:
+        chunk = self.parser.encode(message, opcode=None, **kw)
+        self.transport.write(chunk)
+        if opcode == 8:
             self.finish()
 
     def ping(self, body=None):
         '''Write a ping ``frame``.
         '''
-        self.write(self.parser.ping(body))
+        self.transport.write(self.parser.ping(msg))
 
     def pong(self, body=None):
         '''Write a pong ``frame``.
         '''
-        self.write(self.parser.pong(body))
+        self.transport.write(self.parser.pong(msg))
 
     def _shut_down(self, result):
         # Callback for _post_request. Must return the result

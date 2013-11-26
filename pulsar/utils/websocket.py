@@ -51,7 +51,8 @@ def frame_parser(version=None, kind=0, extensions=None, protocols=None,
                  pyparser=False):
     version = get_version(version)
     Parser = PyFrameParser if pyparser else FrameParser
-    return Parser(version, kind, ProtocolError, extensions, protocols)
+    # extensions, protocols
+    return Parser(version, kind, ProtocolError, None, None)
 
 
 def websocket_mask(data, masking_key):
@@ -87,6 +88,26 @@ class Frame:
     @property
     def masking_key(self):
         return self._masking_key
+
+    @property
+    def is_message(self):
+        return self._opcode == 1
+
+    @property
+    def is_bytes(self):
+        return self._opcode == 2
+
+    @property
+    def is_close(self):
+        return self._opcode == 8
+
+    @property
+    def is_ping(self):
+        return self._opcode == 8
+
+    @property
+    def is_pong(self):
+        return self._opcode == 8
 
 
 class PyFrameParser(object):
@@ -134,6 +155,14 @@ class PyFrameParser(object):
     @property
     def encode_mask_length(self):
         return self._encode_mask_length
+
+    @property
+    def extensions(self):
+        return self._extensions
+
+    @property
+    def protocols(self):
+        return self._protocols
 
     def ping(self, body=None):
         '''return a `ping` :class:`Frame`.'''

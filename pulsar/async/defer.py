@@ -2,6 +2,7 @@ import sys
 from collections import Mapping
 
 from .access import get_event_loop, get_request_loop
+from .consts import MAX_ASYNC_WHILE
 
 try:
     from pulsar.utils.lib import (Deferred, DeferredTask, Failure, async,

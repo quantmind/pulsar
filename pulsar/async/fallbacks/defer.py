@@ -6,7 +6,6 @@ from inspect import isgenerator, istraceback
 from pulsar.utils.pep import iteritems, default_timer
 
 from ..access import asyncio, get_request_loop, get_event_loop, logger
-from ..consts import *
 
 
 NOT_DONE = object()
@@ -97,23 +96,6 @@ def is_exc_info(exc_info):
     return False
 
 
-def multi_async(iterable, **kwargs):
-    '''This is an utility function to convert an *iterable* into a
-:class:`MultiDeferred` element.'''
-    return MultiDeferred(iterable, **kwargs).lock()
-
-
-def is_failure(obj, *classes):
-    '''Check if ``obj`` is a :class:`Failure`.
-
-    If optional ``classes`` are given, it checks if the error is an instance
-    of those classes.
-    '''
-    if isinstance(obj, Failure):
-        return obj.isinstance(classes) if classes else True
-    return False
-
-
 def maybe_failure(value, noisy=False):
     '''Convert ``value`` into a :class:`Failure` if it needs to.
 
@@ -136,17 +118,6 @@ def maybe_failure(value, noisy=False):
     elif is_exc_info(value):
         value = Failure(value)
     if isinstance(value, Failure) and noisy:
-        value.log()
-    return value
-
-
-def log_failure(value):
-    '''Lag a :class:`Failure` if ``value`` is one.
-
-    Return ``value``.
-    '''
-    value = maybe_failure(value)
-    if isinstance(value, Failure):
         value.log()
     return value
 
@@ -188,14 +159,9 @@ class Failure(object):
         return ''.join(self.exc_info[2])
     __str__ = __repr__
 
-    def _get_logged(self):
+    @property
+    def logged(self):
         return getattr(self.error, '_failure_logged', False)
-
-    def _set_logged(self, value):
-        err = self.error
-        if err:
-            setattr(err, '_failure_logged', value)
-    logged = property(_get_logged, _set_logged)
 
     @property
     def error(self):
@@ -235,7 +201,7 @@ back to perform logging and propagate the failure. For example::
     .add_errback(lambda failure: failure.log())
 '''
         if not self.logged:
-            self.logged = True
+            self.mute()
             msg = msg or self._msg
             log = log or logger()
             level = level or 'error'
@@ -257,8 +223,25 @@ back to perform logging and propagate the failure. For example::
 
     def mute(self):
         '''Mute logging and return self.'''
-        self.logged = True
-        return self
+        setattr(self.exc_info[1], '_failure_logged', True)
+
+
+class DoneCallback:
+
+    def __init__(self, fut, fn):
+        self.fut = fut
+        self.fn = fn
+
+    def __call__(self, result):
+        fut = self.fut
+        self.fn(fut)
+        return fut._exception if fut._exception is not None else fut._result
+
+    def __eq__(self, fn):
+        return self.fn == fn
+
+    def __ne__(self, fn):
+        return self.fn != fn
 
 
 ############################################################### Deferred
@@ -361,8 +344,9 @@ class Deferred(asyncio.Future):
             self._suppressAlreadyCalled = True
             exception_class = exception_class or CancelledError
             self.callback(exception_class(msg))
-            if mute and is_failure(self._result, exception_class):
-                self._result.mute()
+            if mute and isinstance(self._result, Failure):
+                if self._result.isinstance(exception_class):
+                    self._result.mute()
             return True
         elif isinstance(self._result, Deferred):
             return self._result.cancel(msg, mute, exception_class)
@@ -460,8 +444,11 @@ class Deferred(asyncio.Future):
         self._result = maybe_failure(result,
                                      getattr(self._loop, 'noisy', False))
         if not state:
-            state = (_CANCELLED if is_failure(self._result, CancelledError)
-                     else _FINISHED)
+            if isinstance(self._result, Failure):
+                state = (_CANCELLED if self._result.isinstance(CancelledError)
+                         else _FINISHED)
+            else:
+                state = _FINISHED
         self._state = state
         if self._callbacks:
             self._run_callbacks()

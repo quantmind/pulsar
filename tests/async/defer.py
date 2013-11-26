@@ -6,7 +6,6 @@ from pulsar import (InvalidStateError, Deferred, NOT_DONE,
                     is_failure, MultiDeferred, maybe_async, CancelledError,
                     async_sleep, Failure, safe_async, InvalidStateError,
                     coroutine_return, async, TimeoutError)
-from pulsar.async.defer import is_exc_info
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import unittest, mute_failure
 
@@ -321,16 +320,6 @@ class TestDeferred(unittest.TestCase):
         self.assertEqual(result, 'a')
         result = yield f(10)
         self.assertEqual(result, 'a')
-
-    def test_is_exc_info(self):
-        self.assertFalse(is_exc_info(None))
-        self.assertFalse(is_exc_info((1, 2)))
-        self.assertFalse(is_exc_info((1, 2, 3)))
-        self.assertFalse(is_exc_info((None, None, None)))
-        try:
-            raise ValueError
-        except:
-            self.assertTrue(is_exc_info(sys.exc_info()))
 
     def test_async_error(self):
         d = async(simple_error())
