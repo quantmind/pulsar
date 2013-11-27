@@ -2,7 +2,8 @@
 from multiprocessing.queues import Queue
 
 import pulsar
-from pulsar import send, get_actor, CommandNotFound, async_while, TcpServer
+from pulsar import (send, get_actor, CommandNotFound, async_while, TcpServer,
+                    coroutine_return)
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import (unittest, ActorTestMixin, run_on_arbiter,
                               dont_run_with_thread, mute_failure)
@@ -24,17 +25,16 @@ class create_echo_server(object):
     def __call__(self, actor):
         '''Starts an echo server on a newly spawn actor'''
         address = self.address
-        server = TcpServer(actor._loop, address[0], address[1],
-                           EchoServerProtocol)
+        server = TcpServer(EchoServerProtocol, actor._loop, self.address)
         yield server.start_serving()
         actor.servers['echo'] = server
         actor.extra['echo-address'] = server.address
         actor.bind_event('stopping', self._stop_server)
-        yield actor
+        coroutine_return(actor)
 
     def _stop_server(self, actor):
         yield actor.servers['echo'].close_connections()
-        yield actor
+        coroutine_return(actor)
 
 
 class TestProxy(unittest.TestCase):

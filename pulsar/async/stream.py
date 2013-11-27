@@ -278,7 +278,7 @@ def create_connection(loop, protocol_factory, host, port, ssl,
                 *local_addr, family=family,
                 type=socket.SOCK_STREAM, proto=proto, flags=flags))
         #
-        fs = yield multi_async(fs)
+        fs = yield multi_async(fs, loop=loop)
         if len(fs) == 2:
             laddr_infos = fs[1]
             if not laddr_infos:

@@ -3,9 +3,8 @@ from inspect import isclass
 from copy import copy
 from collections import OrderedDict, Mapping
 
-from pulsar import ImproperlyConfigured
+from pulsar import ImproperlyConfigured, Event
 from pulsar.utils.structures import Hash
-from pulsar.async.events import ManyEvent
 from pulsar.utils.pep import ispy3k, itervalues, iteritems
 
 try:
@@ -16,7 +15,7 @@ except ImportError:
 from . import Field, AutoIdField
 
 
-class_prepared = ManyEvent('class_prepared')
+class_prepared = Event()
 
 
 def get_fields(bases, attrs):

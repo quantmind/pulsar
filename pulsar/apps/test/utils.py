@@ -5,6 +5,7 @@ from contextlib import contextmanager
 
 import pulsar
 from pulsar import safe_async, get_actor, send, multi_async, TcpServer
+from pulsar.async.proxy import ActorProxyDeferred
 
 
 __all__ = ['run_on_arbiter',
@@ -157,7 +158,7 @@ class ActorTestMixin(object):
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
-        self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
+        self.assertTrue(isinstance(ad, ActorProxyDeferred))
         proxy = yield ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)

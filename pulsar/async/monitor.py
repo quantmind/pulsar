@@ -4,7 +4,7 @@ from time import time
 import pulsar
 from pulsar.utils.pep import iteritems, itervalues, range
 
-from . import proxy
+from .proxy import actor_proxy_deferred
 from .actor import Actor
 from .defer import async_while
 from .concurrency import concurrency
@@ -58,7 +58,7 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
     else:
         actor_proxy.monitor = monitor
         monitor.managed_actors[actor_proxy.aid] = actor_proxy
-        deferred = proxy.ActorProxyDeferred(actor_proxy)
+        deferred = actor_proxy_deferred(actor_proxy)
         actor_proxy.start()
         return deferred
 

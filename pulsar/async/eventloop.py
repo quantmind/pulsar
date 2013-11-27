@@ -2,10 +2,10 @@ import os
 import sys
 import socket
 import errno
+from types import GeneratorType
 from heapq import heappop
 from collections import deque
 from threading import current_thread
-from inspect import isgenerator
 try:
     import signal
 except ImportError:     # pragma    nocover
@@ -148,7 +148,7 @@ class EventLoop(BaseEventLoop):
         self.clear()
 
     def setup_loop(self, io=None, logger=None, poll_timeout=None,
-                   iothreadloop=True, noisy=False):
+                   iothreadloop=False, noisy=False):
         self._io = io or DefaultIO()
         self._signal_handlers = {}
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
@@ -297,15 +297,16 @@ loop of the thread where it is run.'''
         return handler
 
     def remove_reader(self, fd):
-        '''Cancels the current read callback for file descriptor fd,
-if one is set. A no-op if no callback is currently set for the file
-descriptor.'''
+        '''Cancels the current read handler for file descriptor ``fd``.
+
+        A no-op if no callback is currently set for the file descriptor.'''
         return self._io.remove_reader(file_descriptor(fd))
 
     def remove_writer(self, fd):
-        '''Cancels the current write callback for file descriptor fd,
-if one is set. A no-op if no callback is currently set for the file
-descriptor.'''
+        '''Cancels the current write callback for file descriptor ``fd``.
+
+        A no-op if no callback is currently set for the file descriptor.
+        '''
         return self._io.remove_writer(file_descriptor(fd))
 
     def remove_connector(self, fd):
@@ -488,7 +489,6 @@ the event loop to poll with a 0 timeout all the times.'''
             asyncio.set_event_loop(self)
 
     def _after_run(self):
-        self.logger.info('Exiting %s', self)
         self._name = None
         self.tid = None
 
@@ -537,8 +537,8 @@ the event loop to poll with a 0 timeout all the times.'''
             try:
                 if not handle._cancelled:
                     value = handle._callback(*handle._args)
-                    if isgenerator(value):
-                        self.task_factory(value, loop=self)
+                    if isinstance(value, GeneratorType):
+                        async(value, self)
             except socket.error as e:
                 if self._raise_loop_error(e):
                     exc_info = sys.exc_info()

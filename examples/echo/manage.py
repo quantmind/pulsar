@@ -102,6 +102,8 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
+from pulsar import (coroutine_return, Pool, in_loop_thread, get_event_loop,
+                    new_event_loop, Connection)
 from pulsar.apps.socket import SocketServer
 
 
@@ -135,12 +137,13 @@ class EchoProtocol(pulsar.ProtocolConsumer):
     def start_request(self):
         '''Override :meth:`pulsar.Protocol.start_request` to write
 the message ended by the :attr:`separator` into the transport.'''
-        self.transport.write(self.request.message + self.separator)
+        self.transport.write(self._request + self.separator)
 
     def response(self, data):
         '''Clients return the message so that the
-:attr:`pulsar.ProtocolConsumer.on_finished` deferred is called back with the
-message value, while servers sends the message back to the client.'''
+        :attr:`.ProtocolConsumer.on_finished` is called back with the
+        message value, while servers sends the message back to the client.
+        '''
         return data[:-len(self.separator)]
 
 
@@ -159,7 +162,7 @@ class EchoServerProtocol(EchoProtocol):
         return data
 
 
-class Echo(pulsar.Client):
+class Echo(object):
     '''Echo :class:`pulsar.Client`.
 
     .. attribute:: full_response
@@ -171,28 +174,34 @@ class Echo(pulsar.Client):
 
         Default: ``False``
     '''
-    consumer_factory = EchoProtocol
-
-    def setup(self, full_response=False, **params):
+    def __init__(self, address, full_response=False, pool_size=10):
+        self._loop = get_event_loop() or new_event_loop()
+        self._received = 0
+        self.address = address
         self.full_response = full_response
+        self.pool = Pool(self.connect, pool_size, self._loop)
 
-    def client(self, address):
-        '''Utility for returning a function which interact with one server.
-        '''
-        return partial(self.request, address)
+    def connect(self):
+        host, port = self.address
+        _, connection = yield self._loop.create_connection(
+            self._new_connection, host, port)
+        coroutine_return(connection)
 
-    def request(self, address, message):
+    @in_loop_thread
+    def __call__(self, message):
         '''Build the client request send it to the server.
         '''
-        request = pulsar.Request(address, self.timeout)
-        request.message = message
-        response = self.response(request)
-        if self.full_response:
-            return response
-        elif response.on_finished.done():
-            return response.buffer
-        else:
-            return response.on_finished.add_callback(lambda r: r.buffer)
+        connection = yield self.pool.connect()
+        with connection:
+            consumer = connection.current_consumer()
+            consumer.start(message)
+            result = yield consumer.on_finished
+            result = consumer if self.full_response else consumer.buffer
+            coroutine_return(result)
+
+    def _new_connection(self):
+        self._received = session = self._received + 1
+        return Connection(EchoProtocol, session=session, producer=self)
 
 
 def server(description=None, **kwargs):

@@ -49,7 +49,7 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import get_actor, EventHandler
+from pulsar import get_actor, EventHandler, coroutine_return
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import (parse_connection_string,
@@ -83,32 +83,40 @@ def _get_app(arbiter, name):
 
 def monitor_start(self):
     app = self.params.app
-    self.app = app
-    self.bind_event('on_params', monitor_params)
-    self.bind_event('on_info', monitor_info)
-    self.bind_event('stopping', monitor_stopping)
-    self.bind_event('stop', monitor_stop)
-    self.monitor_task = lambda: app.monitor_task(self)
-    yield self.app.monitor_start(self)
-    if not self.cfg.workers:
-        yield self.app.worker_start(self)
-    self.app.fire_event('start')
-    yield self  # yield self as last. Part of the start event chain
+    try:
+        self.app = app
+        self.bind_event('on_params', monitor_params)
+        self.bind_event('on_info', monitor_info)
+        self.bind_event('stopping', monitor_stopping)
+        self.bind_event('stop', monitor_stop)
+        self.monitor_task = lambda: app.monitor_task(self)
+        yield app.monitor_start(self)
+        if not self.cfg.workers:
+            yield app.worker_start(self)
+        result = app
+    except Exception:
+        result = sys.exc_info()
+        raise
+    finally:
+        yield app.fire_event('start', result)
+    coroutine_return(self)
 
 
 def monitor_stopping(self):
     if not self.cfg.workers:
         yield self.app.worker_stopping(self)
     yield self.app.monitor_stopping(self)
-    yield self
+    coroutine_return(self)
 
 
 def monitor_stop(self):
-    if not self.cfg.workers:
-        yield self.app.worker_stop(self)
-    yield self.app.monitor_stop(self)
-    yield self.app.fire_event('stop')
-    yield self
+    try:
+        if not self.cfg.workers:
+            yield self.app.worker_stop(self)
+        yield self.app.monitor_stop(self)
+    finally:
+        yield self.app.fire_event('stop')
+    coroutine_return(self)
 
 
 def monitor_info(self, info=None):
@@ -120,9 +128,7 @@ def monitor_info(self, info=None):
 
 def monitor_params(self, params=None):
     app = self.app
-    if self.cfg.concurrency == 'thread':
-        app = pickle.loads(pickle.dumps(app))
-    params.update({'app': app,
+    params.update({'app': pickle.loads(pickle.dumps(app)),
                    'name': '{0}-worker'.format(app.name),
                    'start': worker_start})
     app.actorparams(self, params)
@@ -415,9 +421,13 @@ class Application(Configurator, pulsar.Pulsar):
         '''
         return get_actor().stream
 
-    def fire_event(self, name, **kw):
+    def fire_event(self, name, *args, **kw):
         '''Fire event ``name``.'''
-        return self.events.fire_event(name, self, **kw)
+        if len(args) > 2:
+            raise TypeError('fire_event takes at most 1 argument (%s given)'
+                            % len(args))
+        arg = args[0] if args else self
+        return self.events.fire_event(name, arg, **kw)
 
     def bind_event(self, name, callback):
         '''Bind ``callback`` to event ``name``.'''

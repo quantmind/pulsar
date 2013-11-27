@@ -4,8 +4,7 @@ from pulsar.utils.pep import default_timer
 from .defer import Deferred
 from .consts import *
 
-__all__ = ['ActorProxyDeferred',
-           'ActorProxy',
+__all__ = ['ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
            'command',
@@ -66,6 +65,18 @@ class ActorIdentity(object):
         return self.aid
 
 
+def actor_proxy_deferred(aid, msg=None):
+    self = ActorProxyDeferred()
+    if isinstance(aid, ActorProxyMonitor):
+        aid.callback = self
+        self.aid = aid.aid
+    else:
+        self.aid = aid
+        # Listen for the callbacks and errorbacks
+        msg.add_callback(self.callback, self.callback)
+    return self
+
+
 class ActorProxyDeferred(Deferred, ActorIdentity):
     '''A :class:`Deferred` for an :class:`ActorProxy`.
 
@@ -77,16 +88,6 @@ class ActorProxyDeferred(Deferred, ActorIdentity):
         The the remote :attr:`Actor` id
 
     '''
-    def __init__(self, aid, msg=None):
-        super(ActorProxyDeferred, self).__init__()
-        if isinstance(aid, ActorProxyMonitor):
-            aid.callback = self
-            self.aid = aid.aid
-        else:
-            self.aid = aid
-            # Listen for the callbacks and errorbacks
-            msg.add_both(self.callback)
-
     def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
     __str__ = __repr__

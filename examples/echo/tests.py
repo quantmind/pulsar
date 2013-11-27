@@ -14,8 +14,7 @@ class TestEchoServerThread(unittest.TestCase):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
         cls.server = yield send('arbiter', 'run', s)
-        cls.pool = Echo()
-        cls.echo = cls.pool.client(cls.server.address)
+        cls.client = Echo(cls.server.address)
 
     @classmethod
     def tearDownClass(cls):
@@ -28,16 +27,16 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(self.server.address)
 
     def test_ping(self):
-        result = yield self.echo(b'ciao luca')
+        result = yield self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
 
     def test_large(self):
         '''Echo a 3MB message'''
         msg = b''.join((b'a' for x in range(2**13)))
-        result = yield self.echo(msg)
+        result = yield self.client(msg)
         self.assertEqual(result, msg)
 
-    def testTimeIt(self):
+    def __testTimeIt(self):
         msg = b''.join((b'a' for x in range(2**10)))
         response = self.pool.timeit(10, self.server.address, msg)
         yield response
@@ -46,9 +45,9 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(response.num_failures, 0)
 
     def test_multi(self):
-        result = yield multi_async((self.echo(b'ciao'),
-                                    self.echo(b'pippo'),
-                                    self.echo(b'foo')))
+        result = yield multi_async((self.client(b'ciao'),
+                                    self.client(b'pippo'),
+                                    self.client(b'foo')))
         self.assertEqual(len(result), 3)
         self.assertTrue(b'ciao' in result)
         self.assertTrue(b'pippo' in result)
@@ -56,10 +55,9 @@ class TestEchoServerThread(unittest.TestCase):
 
     # TESTS FOR PROTOCOLS AND CONNECTIONS
     def test_client(self):
-        c = self.pool
         yield self.test_multi()
-        self.assertTrue(len(c.connection_pools), 1)
-        self.assertTrue(c.available_connections)
+        c = self.client
+        self.assertTrue(c.pool.available)
 
     def test_info(self):
         info = yield send(self.server.name, 'info')
@@ -68,11 +66,8 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(info['actor']['concurrency'], self.concurrency)
 
     def test_connection(self):
-        pool = Echo(full_response=True)
-        echo = pool.client(self.server.address)
-        response = echo(b'test connection')
-        self.assertTrue(str(response.connection))
-        yield response.on_finished
+        client = Echo(self.server.address, full_response=True)
+        response = yield client(b'test connection')
         self.assertEqual(response.buffer, b'test connection')
         connection = response.connection
         self.assertTrue(str(connection))

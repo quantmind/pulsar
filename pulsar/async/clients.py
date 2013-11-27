@@ -481,7 +481,7 @@ class Client(BaseClient):
             return self._loop
         elif self.force_sync:
             logger = logging.getLogger(('pulsar.%s' % self).lower())
-            self._loop = new_event_loop(iothreadloop=False, logger=logger)
+            self._loop = new_event_loop(logger=logger)
             return self._loop
         else:
             return asyncio.get_event_loop()

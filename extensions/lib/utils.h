@@ -49,4 +49,4 @@ inline PyObject* to_py_bytes(const string& value) {
     return PyBytes_FromStringAndSize(value.c_str(), value.size());
 }
 
-#endif __PULSAR_UTILS_H__
+#endif	//	__PULSAR_UTILS_H__

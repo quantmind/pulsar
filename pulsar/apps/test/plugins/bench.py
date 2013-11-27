@@ -25,6 +25,15 @@ To use the plugin follow these three steps:
 
 * Run the test suite with the ``--benchmark`` command line option.
 
+The test class can implement additional methods to fine-tune how the
+benchmark plugin evaluate the perfomance and display results:
+
+* When implemented, the ``startUp`` method is invoked before each run
+  of a test function.
+* The time taken to run a test once can be modified by implementing
+  the ``getTime`` method which receives as only argument the time interval
+  taken.
+  By default it returns the same time interval.
 
 .. autoclass:: BenchMark
 
@@ -142,9 +151,9 @@ class BenchMark(test.TestPlugin):
             return msg
 
     def addSkip(self, test, reason):
-        msg = self._msg(test, err, "skipped {0!r}".format(reason))
+        msg = self._msg(test, 'SKIPPED')
         if msg:
-            self.result.addSkip(test, err)
+            self.result.addSkip(test, reason)
             return msg
 
     def _msg(self, test, msg):

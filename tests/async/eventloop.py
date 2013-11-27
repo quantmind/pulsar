@@ -158,7 +158,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(has_callback(ioloop, periodic.handler))
 
     def test_run_until_complete(self):
-        event_loop = new_event_loop(iothreadloop=False)
+        event_loop = new_event_loop()
         self.assertFalse(event_loop.running)
         self.assertFalse(event_loop.iothreadloop)
         self.assertEqual(str(event_loop), '<not running> pulsar')
@@ -170,7 +170,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(event_loop.running)
 
     def test_run_until_complete_timeout(self):
-        event_loop = new_event_loop(iothreadloop=False)
+        event_loop = new_event_loop()
         self.assertFalse(event_loop.is_running())
         self.assertFalse(event_loop.iothreadloop)
         d = Deferred().set_timeout(2)

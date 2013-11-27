@@ -114,12 +114,11 @@ from hashlib import sha1
 
 from pulsar import (in_loop, Failure, EventHandler, PulsarException,
                     Deferred, coroutine_return, run_in_loop_thread,
-                    in_loop_thread)
+                    in_loop_thread, get_request_loop)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import (LocalMixin, local_property, local_method,
                               LazyString)
-from pulsar.utils.security import gen_unique_id
 
 from .models import JobRegistry
 from . import states
@@ -204,6 +203,7 @@ class TaskConsumer(object):
         self.worker = worker
         self.job = job
         self.task_id = task_id
+        self.logger = get_request_loop().logger
 
 
 class Task(odm.Model):
@@ -482,6 +482,7 @@ class TaskBackend(LocalMixin):
         self.local.task_poller = worker._loop.call_soon(
             self.may_pool_task, worker)
         worker.logger.debug('started polling tasks')
+        store = self.store
 
     def close(self, worker):
         '''Close this :class:`TaskBackend`.
@@ -514,7 +515,7 @@ class TaskBackend(LocalMixin):
         can_overlap = job.can_overlap
         if hasattr(can_overlap, '__call__'):
             can_overlap = can_overlap(**kwargs)
-        tid = gen_unique_id()[:8]
+        tid = job.create_id(kwargs)
         if can_overlap:
             return tid, None
         else:
@@ -622,8 +623,8 @@ class TaskBackend(LocalMixin):
                         self.concurrent_tasks.add(task['id'])
                         thread_pool.apply(self._execute_task, worker, task)
             else:
-                worker.logger.info('%s concurrent requests. Cannot poll.',
-                                   self.num_concurrent_tasks)
+                worker.logger.debug('%s concurrent requests. Cannot poll.',
+                                    self.num_concurrent_tasks)
                 next_time = 1
         worker._loop.call_later(next_time, self.may_pool_task, worker)
 
@@ -634,17 +635,17 @@ class TaskBackend(LocalMixin):
         task_id = task['id']
         lock_id = task.get('lock_id')
         time_ended = time.time()
+        job = self.registry.get(task.get('name'))
+        consumer = TaskConsumer(self, worker, task_id, job)
+        task_info = task.lazy_info()
         try:
-            job = self.registry.get(task.get('name'))
-            consumer = TaskConsumer(self, worker, task_id, job)
             if not consumer.job:
-                raise RuntimeError('%s not in registry %s' %
-                                   (task.lazy_info(), self.registry))
+                raise RuntimeError('%s not in registry' % task_info)
             if task['status'] > states.STARTED:
                 if task['expiry'] and time_ended > task['expiry']:
                     raise TaskTimeout
                 else:
-                    worker.logger.info('starting task %s', task.lazy_info())
+                    consumer.logger.info('starting %s', task_info)
                     kwargs = task.get('kwargs') or {}
                     task.clear_update(id=task_id, status=states.STARTED,
                                       time_started=time_ended,
@@ -654,17 +655,16 @@ class TaskBackend(LocalMixin):
                     result = yield job(consumer, **kwargs)
                     status = states.SUCCESS
             else:
-                worker.logger.error('Invalid status for %s', task.lazy_info())
+                consumer.logger.error('Invalid status for %s', task_info)
                 self.concurrent_tasks.discard(task_id)
                 coroutine_return(task_id)
         except TaskTimeout:
-            worker.logger.info('%s timed-out', task.lazy_info())
+            consumer.logger.info('%s timed-out', task_info)
             result = None
             status = states.REVOKED
         except Exception:
             failure = Failure(sys.exc_info())
-            failure.log(msg='Failure in %s' % task.lazy_info(),
-                        log=worker.logger)
+            failure.log(msg='Failure in %s' % task_info, log=consumer.logger)
             result = str(failure)
             status = states.FAILURE
         #
@@ -676,7 +676,7 @@ class TaskBackend(LocalMixin):
             self.concurrent_tasks.discard(task_id)
             yield self.finish_task(task_id, lock_id)
         #
-        worker.logger.info('Finished task %s', task_id)
+        consumer.logger.info('Finished %s', task_info)
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)
 

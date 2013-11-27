@@ -88,7 +88,7 @@ class IOqueue(Poller):
     @property
     def cpubound(self):
         '''Required by the :class:`EventLoop` so that the event loop
-install itself as a request loop rather than the IO event loop.'''
+        install itself as a request loop rather than the IO event loop.'''
         return True
 
     def poll(self, timeout=0.5):
@@ -294,6 +294,7 @@ class ThreadPool(object):
         # Create the event loop which get tasks from the task queue
         logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
                                                      self.worker_name))
-        loop = new_event_loop(io=poller, poll_timeout=1, logger=logger)
+        loop = new_event_loop(io=poller, poll_timeout=1, logger=logger,
+                              iothreadloop=True)
         loop.add_reader(poller.fileno(), poller.handle_events)
         loop.run_forever()

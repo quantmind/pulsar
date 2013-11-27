@@ -1,10 +1,11 @@
 import sys
 from collections import Mapping
 
+from pulsar import HAS_C_EXTENSIONS
 from .access import get_event_loop, get_request_loop
 from .consts import MAX_ASYNC_WHILE
 
-try:
+if HAS_C_EXTENSIONS:
     from pulsar.utils.lib import (Deferred, DeferredTask, Failure, async,
                                   maybe_async, maybe_failure, NOT_DONE,
                                   add_async_binding, set_access,
@@ -13,7 +14,7 @@ try:
                                   InvalidStateError, FutureTypeError)
 
     set_access(get_event_loop, get_request_loop)
-except ImportError:
+else:
     from .fallbacks.defer import (Deferred, DeferredTask, Failure, async,
                                   maybe_async, maybe_failure, NOT_DONE,
                                   add_async_binding,
@@ -22,7 +23,6 @@ except ImportError:
                                   InvalidStateError, FutureTypeError)
 
 __all__ = ['Deferred',
-           'MultiDeferred',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
@@ -58,10 +58,11 @@ for a list.'''
         return enumerate(stream, start)
 
 
-def multi_async(iterable, **kwargs):
+def multi_async(iterable=None, loop=None, lock=True, **kwargs):
     '''This is an utility function to convert an *iterable* into a
 :class:`MultiDeferred` element.'''
-    return MultiDeferred(iterable, **kwargs).lock()
+    m = MultiDeferred.make(loop, iterable, **kwargs)
+    return m.lock() if lock else m
 
 
 def is_failure(obj, *classes):
@@ -212,8 +213,10 @@ class MultiDeferred(Deferred):
     _time_locked = None
     _time_finished = None
 
-    def __init__(self, data=None, type=None, raise_on_error=True,
-                 mute_failures=False, **kwargs):
+    @classmethod
+    def make(cls, loop, data, type=None, raise_on_error=True,
+             mute_failures=False, **kwargs):
+        self = cls(loop)
         self._deferred = {}
         self._failures = []
         self._mute_failures = mute_failures
@@ -223,10 +226,10 @@ class MultiDeferred(Deferred):
         if not issubclass(type, (list, Mapping)):
             type = list
         self._stream = type()
-        super(MultiDeferred, self).__init__(**kwargs)
         self._time_start = self._loop.time()
         if data:
             self.update(data)
+        return self
 
     @property
     def raise_on_error(self):

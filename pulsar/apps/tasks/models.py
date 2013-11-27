@@ -84,6 +84,7 @@ import logging
 
 from pulsar.utils.pep import iteritems
 from pulsar.utils.importer import import_modules
+from pulsar.utils.security import gen_unique_id
 
 
 __all__ = ['JobMetaClass', 'Job', 'PeriodicJob',
@@ -222,6 +223,17 @@ id of the task invoking the method.
 '''
         return consumer.backend.run_job(jobname, args, kwargs,
                                         from_task=consumer.task_id)
+
+    def create_id(self, kwargs):
+        '''Create a unique id for a task.
+
+        Called by the :class:`.TaskBackend` when a new task is about to be
+        queued.
+
+        :parameter kwargs: dictionary of parameters passed to the callable
+            method.
+        '''
+        return gen_unique_id()[:8]
 
 
 class PeriodicJob(Job):

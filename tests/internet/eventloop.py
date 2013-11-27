@@ -2,7 +2,7 @@
 import socket
 
 from pulsar import (Connection, Protocol, TcpServer, async_while,
-                    get_event_loop, new_event_loop)
+                    get_event_loop)
 from pulsar.utils.pep import ispy3k
 from pulsar.utils.internet import is_socket_closed, format_address
 from pulsar.apps.test import unittest, run_test_server

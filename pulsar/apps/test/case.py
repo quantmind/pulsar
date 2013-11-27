@@ -51,13 +51,17 @@ class Test(tasks.Job):
             testcls = testcls()
         testcls.tag = tag
         testcls.cfg = consumer.worker.cfg
-        suite.logger.debug('Testing %s', testcls.__name__)
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
             return self.run(runner, testcls, all_tests, consumer.worker.cfg)
         else:
             return runner.result
+
+    def create_id(self, kwargs):
+        tid = super(Test, self).create_id(kwargs)
+        testcls = kwargs.get('testcls')
+        return '%s_%s' % (testcls.__name__, tid) if testcls else tid
 
     def run(self, runner, testcls, all_tests, cfg):
         '''Run all test functions from the :attr:`testcls`.

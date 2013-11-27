@@ -51,7 +51,7 @@ class TestFailure(unittest.TestCase):
 
     def testRemote(self):
         failure = maybe_failure(Exception('testRemote'))
-        failure.logged = True
+        failure.mute()
         remote = pickle.loads(pickle.dumps(failure))
         self.assertTrue(remote.logged)
 
@@ -71,7 +71,7 @@ class TestFailure(unittest.TestCase):
         failure2 = maybe_failure(failure)
         self.assertEqual(failure, failure2)
         self.assertEqual(failure.exc_info, failure2.exc_info)
-        failure.logged = True
+        failure.mute()
         self.assertRaises(ValueError, failure.throw)
 
     def testLog(self):

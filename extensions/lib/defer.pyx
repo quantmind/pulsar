@@ -43,16 +43,12 @@ class CoroutineReturn(BaseException):
         self.value = value
 
 
-class Traceback(tuple):
-    pass
-
-
 cdef class Failure:
     cdef tuple _exc_info
     cdef bint _mute
 
     def __cinit__(self, tuple exc_info):
-        if not isinstance(exc_info[2], Traceback):
+        if isinstance(exc_info[2], TracebackType):
             exctype, value, tb = exc_info
             trace = format_exception(exctype, value, tb)
             exc_info = (exctype, value, trace)
@@ -64,12 +60,12 @@ cdef class Failure:
             self.log()
 
     def __repr__(self):
-        return ''.join(self.exc_info[2])
+        return ''.join(self._exc_info[2])
     __str__ = __repr__
 
     @property
     def exc_info(self):
-        return self._exc_info[1]
+        return self._exc_info
 
     @property
     def error(self):
@@ -80,6 +76,7 @@ cdef class Failure:
         return getattr(self._exc_info[1], '_failure_logged', False)
 
     def throw(self, gen=None):
+        __skip_traceback__ = True
         if gen:
             return gen.throw(self._exc_info[0], self._exc_info[1])
         else:
@@ -143,16 +140,19 @@ cdef inline object format_exception(exctype, value, tb):
             tb = trace
     value.__async_traceback__ = tb
     value.__traceback__ = None
-    return Traceback(tb)
+    return tb
 
 
 cdef inline bint is_exc_info(exc_info):
     if isinstance(exc_info, tuple) and len(exc_info) == 3:
-        return isinstance(exc_info[2], (Traceback, Traceback))
+        return (isinstance(exc_info[0], type) and
+                isinstance(exc_info[1], exc_info[0]) and
+                isinstance(exc_info[2], (TracebackType, list)))
     return False
 
 
 cdef inline object _maybe_failure(object value):
+    __skip_traceback__ = True
     if isinstance(value, BaseException):
         exc_info = sys.exc_info()
         if value is not exc_info[1]:
@@ -198,6 +198,27 @@ cdef class Deferred:
     def _chained_to(self):
         return self.__chained_to
 
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @property
+    def has_callbacks(self):
+        return len(self._callbacks) > 0 if self._callbacks else False
+
+    def __repr__(self):
+        v = self.__class__.__name__
+        if self._state_code == _CANCELLED:
+            v += ' (cancelled)'
+        elif self._state_code != _PENDING:
+            v += ' (done)'
+        else:
+            v += ' (pending)'
+        return v
+
+    def __str__(self):
+        return self. __repr__()
+
     def done(self):
         return self._state_code != _PENDING
 
@@ -226,6 +247,15 @@ cdef class Deferred:
         else:
             return self._result
 
+    def exception(self):
+        if self._state_code == _PENDING:
+            raise InvalidStateError('Result is not ready.')
+        if self._state_code == _CANCELLED:
+            self._result.throw()
+        if isinstance(self._result, Failure):
+            self._result.mute()
+            return self._result
+
     def add_done_callback(self, fn):
         '''Add a callback to be run when the :class:`Deferred` becomes done.
 
@@ -240,7 +270,7 @@ cdef class Deferred:
 
         Returns the number of callbacks removed.
         """
-        cdef list callbacks = self._callbacks
+        callbacks = self._callbacks
         removed_count = 0
         if callbacks:
             for i, callback_errback in enumerate(tuple(callbacks)):
@@ -268,21 +298,6 @@ cdef class Deferred:
     def add_both(self, callback):
         return self.add_callback(callback, callback)
 
-    cpdef Deferred chain(self, Deferred deferred):
-        deferred.__chained_to = self
-        return self.add_callback(deferred.callback, deferred.callback)
-
-    def then(self, deferred=None):
-        if deferred is None:
-            deferred = Deferred(loop=self._loop)
-
-        def cbk(result):
-            deferred.callback(result)
-            return result
-
-        self.add_callback(cbk, cbk)
-        return deferred
-
     cpdef object callback(self, result, state=None):
         if isinstance(result, Deferred):
             raise RuntimeError('Received a deferred instance from '
@@ -305,6 +320,35 @@ cdef class Deferred:
         return self._result
     set_result = callback
     set_exception = callback
+
+    def set_timeout(self, timeout, mute=False, exception_class=None):
+        if timeout and timeout > 0:
+            if self._timeout:
+                self._timeout.cancel()
+            # create the timeout. We don't cancel the timeout after
+            # a callback is received since the result may be still asynchronous
+            exception_class = exception_class or TimeoutError
+            self._timeout = self._loop.call_later(
+                timeout, self.cancel, 'timeout (%s seconds)' % timeout,
+                mute, exception_class)
+        return self
+
+    cpdef Deferred chain(self, Deferred deferred):
+        deferred.__chained_to = self
+        return self.add_callback(deferred.callback, deferred.callback)
+
+    def then(self, deferred=None):
+        if deferred is None:
+            deferred = Deferred(loop=self._loop)
+
+        def cbk(result):
+            deferred.callback(result)
+            return result
+
+        self.add_callback(cbk, cbk)
+        return deferred
+
+    # INTERNALS
 
     cdef _run_callbacks(self):
         if (self._state_code == _PENDING or self._runningCallbacks or
@@ -333,6 +377,12 @@ cdef class Deferred:
                                                   self._continue)
                         break
 
+    def _continue(self, result):
+        self._result = result
+        self._paused -= 1
+        self._run_callbacks()
+        return self._result
+
 
 class DoneCallback:
 
@@ -341,7 +391,7 @@ class DoneCallback:
         self.fn = fn
 
     def __call__(self, result):
-        fut = self.fut
+        cdef Deferred fut = self.fut
         self.fn(fut)
         return fut._result
 
@@ -369,6 +419,7 @@ cdef class DeferredTask(Deferred):
     cdef tuple _step(self, object result):
         cdef Failure failure = None
         cdef bint conclude = False
+        __skip_traceback__ = True
         try:
             if isinstance(result, Failure):
                 failure, result = result, None
@@ -400,7 +451,7 @@ cdef class DeferredTask(Deferred):
             if failure:
                 result = _maybe_failure(result)
                 if isinstance(result, Failure):
-                    if result.exc_info[1] is not failure.exc_info[1]:
+                    if result.exc_info[1] is not failure._exc_info[1]:
                         failure.mute()
                 else:
                     failure.mute()
@@ -449,6 +500,7 @@ cdef class AsyncBindings:
             task_factory = getattr(loop, 'task_factory', DeferredTask)
             task = task_factory(loop)
             task.start(coro_or_future)
+            return task
         else:
             raise FutureTypeError('A Future or coroutine is required')
 
@@ -457,7 +509,7 @@ cdef class AsyncBindings:
         try:
             d = self(value, loop)
             if get_result and d._state_code != _PENDING:
-                return value._result
+                return d._result
             return d
         except FutureTypeError:
             if get_result:

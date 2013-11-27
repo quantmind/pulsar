@@ -52,7 +52,6 @@ cdef class FrameParser:
     cdef tuple _opcodes
     cdef object _extensions
     cdef object _protocols
-    cdef cython.ulonglong _max_payload
 
     def __cinit__(self, int version, int kind, object ProtocolError,
                   extensions=None, protocols=None):
@@ -71,7 +70,6 @@ cdef class FrameParser:
         elif kind == 3:
             self._decode_mask_length = 4
             self._encode_mask_length = 4
-        self._max_payload = 1 << 63
         self._extensions = extensions
         self._protocols = protocols
 
@@ -81,7 +79,7 @@ cdef class FrameParser:
 
     @property
     def max_payload(self):
-        return self._max_payload
+        return 1 << 63
 
     @property
     def decode_mask_length(self):
@@ -122,7 +120,8 @@ cdef class FrameParser:
                             rsv1, rsv2, rsv3)
 
     def multi_encode(self, message, bytes masking_key=None, int opcode=-1,
-                     int rsv1=0, int rsv2=0, int rsv3=0, int max_payload=0):
+                     int rsv1=0, int rsv2=0, int rsv3=0,
+                     cython.ulonglong max_payload=0):
         '''Encode a ``message`` into several frames depending on size.
 
         Returns a generator of bytes to be sent over the wire.
@@ -130,7 +129,7 @@ cdef class FrameParser:
         cdef bytes data
         cdef bytes chunk
         cdef int fin
-        max_payload = max(2, max_payload or self._max_payload)
+        max_payload = max(2, max_payload or 1 << 63)
         opcode, masking_key, data = self._info(message, opcode, masking_key)
         #
         while data:
@@ -226,7 +225,7 @@ cdef class FrameParser:
         elif length < 65536:
             buffer.append(mask_bit | 126)
             buffer.extend(pack('!H', length))
-        elif length < self._max_payload:
+        elif length < (1 << 63):
             buffer.append(mask_bit | 127)
             buffer.extend(pack('!Q', length))
         else:

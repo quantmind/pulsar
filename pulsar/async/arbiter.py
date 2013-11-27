@@ -12,7 +12,7 @@ from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, Monitor, _spawn_actor
 from .defer import multi_async
 from .access import get_actor, set_actor
-from . import proxy
+from .proxy import actor_proxy_deferred
 
 
 __all__ = ['arbiter', 'spawn', 'Arbiter']
@@ -75,7 +75,7 @@ def spawn(cfg=None, **kwargs):
     if not isinstance(actor, Arbiter):
         # send the request to the arbiter
         msg = actor.send('arbiter', 'spawn', **kwargs)
-        return proxy.ActorProxyDeferred(aid, msg)
+        return actor_proxy_deferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
 

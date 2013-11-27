@@ -1,15 +1,15 @@
 from inspect import isgenerator
 
-from pulsar.utils.pep import itervalues
+from pulsar.utils.pep import iteritems
 
 from .defer import Deferred, maybe_async
 from .access import logger
 
 
-__all__ = ['EventHandler', 'Event']
+__all__ = ['EventHandler', 'Event', 'OneTime']
 
 
-class Event(object):
+class EventBase(object):
     '''An event managed by an :class:`EventHandler` class.'''
     _silenced = False
 
@@ -51,10 +51,9 @@ class Event(object):
         raise NotImplementedError
 
 
-class ManyEvent(Event):
+class Event(EventBase):
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self._handlers = []
 
     def __repr__(self):
@@ -62,7 +61,8 @@ class ManyEvent(Event):
     __str__ = __repr__
 
     def bind(self, callback, errback=None):
-        assert errback is None, 'errback not supported in many-times events'
+        if errback:
+            raise ValueError('errback not supported in many-times events')
         self._handlers.append(callback)
 
     def fire(self, arg, **kwargs):
@@ -71,19 +71,17 @@ class ManyEvent(Event):
                 try:
                     g = hnd(arg, **kwargs)
                 except Exception:
-                    logger().exception('Exception while firing "%s" '
-                                       'event for %s', self.name, arg)
+                    logger().exception('Exception while firing event')
                 else:
                     if isgenerator(g):
                         # Add it to the event loop
                         maybe_async(g)
 
 
-class OneTime(Deferred, Event):
+class OneTime(Deferred, EventBase):
 
-    def __init__(self, name):
+    def __init__(self):
         super(OneTime, self).__init__()
-        self.name = name
         self._events = Deferred()
 
     def bind(self, callback, errback=None):
@@ -95,11 +93,11 @@ class OneTime(Deferred, Event):
     def fire(self, arg, **kwargs):
         if not self._silenced:
             if self._events.done():
-                logger().warning('Event "%s" already fired for %s',
-                                 self.name, arg)
+                logger().warning('Event already fired')
+            elif kwargs:
+                raise ValueError(("One time events don't support "
+                                  "key-value parameters"))
             else:
-                assert not kwargs, ("One time events don't support "
-                                    "key-value parameters")
                 result = self._events.callback(arg)
                 if isinstance(result, Deferred):
                     # a deferred, add a check at the end of the callback pile
@@ -108,7 +106,7 @@ class OneTime(Deferred, Event):
                     return self.callback(result)
 
     def _check(self, result):
-        if self._events._callbacks:
+        if self._events.has_callbacks:
             # other callbacks have been added,
             # put another check at the end of the pile
             return self._events.add_callback(self._check, self._check)
@@ -132,12 +130,12 @@ class EventHandler(object):
         if one_time_events:
             one = set(one)
             one.update(one_time_events)
-        events = dict(((e, OneTime(e)) for e in one))
+        events = dict(((name, OneTime()) for name in one))
         many = self.MANY_TIMES_EVENTS
         if many_times_events:
             many = set(many)
             many.update(many_times_events)
-        events.update(((e, ManyEvent(e)) for e in many))
+        events.update(((name, Event()) for name in many))
         self._events = events
 
     @property
@@ -167,7 +165,7 @@ class EventHandler(object):
         :return: nothing.
         '''
         if name not in self._events:
-            self._events[name] = ManyEvent(name)
+            self._events[name] = Event()
         event = self._events[name]
         if isinstance(callback, (list, tuple)):
             assert errback is None, "list of callbacks with errback"
@@ -234,9 +232,9 @@ class EventHandler(object):
         '''
         if isinstance(other, EventHandler):
             events = self._events
-            for event in itervalues(other._events):
-                if isinstance(event, ManyEvent):
-                    ev = events.get(event.name)
+            for name, event in iteritems(other._events):
+                if isinstance(event, Event):
+                    ev = events.get(name)
                     # If the event is available add it
                     if ev:
                         for callback in event._handlers:

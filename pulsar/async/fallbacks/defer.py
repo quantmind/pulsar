@@ -137,10 +137,7 @@ class Failure(object):
 
     .. attribute:: logged
 
-        Check if the :attr:`error` was logged. It can be used for switching off
-        logging for certain errors by setting::
-
-            failure.logged = True
+        Check if the :attr:`error` was logged.
 
     '''
     _msg = 'Pulsar Asynchronous Failure'
@@ -235,7 +232,7 @@ class DoneCallback:
     def __call__(self, result):
         fut = self.fut
         self.fn(fut)
-        return fut._exception if fut._exception is not None else fut._result
+        return fut._result
 
     def __eq__(self, fn):
         return self.fn == fn
@@ -245,7 +242,7 @@ class DoneCallback:
 
 
 ############################################################### Deferred
-class Deferred(asyncio.Future):
+class Deferred(object):
     """The main class of pulsar asynchronous engine.
 
     It is a ``asyncio.Future`` with an implementation similar to the
@@ -284,6 +281,7 @@ class Deferred(asyncio.Future):
     _timeout = None
     _callbacks = None
     _chained_to = None
+    _state = _PENDING
 
     def __init__(self, loop=None):
         self._loop = loop or get_event_loop()
@@ -309,6 +307,12 @@ class Deferred(asyncio.Future):
         Available only when a timeout is set.
         '''
         return self._timeout
+
+    @property
+    def has_callbacks(self):
+        '''``True`` if this :class:`Deferred` has callbacks.
+        '''
+        return bool(self._callbacks)
 
     # Future methods, PEP 3156
 
@@ -361,7 +365,7 @@ class Deferred(asyncio.Future):
         else:
             return self._result
 
-    def exeption(self):
+    def exception(self):
         if self._state == _PENDING:
             raise InvalidStateError('Result is not ready.')
         if self._state == _CANCELLED:
