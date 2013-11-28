@@ -687,7 +687,7 @@ the event loop to poll with a 0 timeout all the times.'''
                     self.task_factory(value, event_loop=self)
             if exc_info:
                 Failure(exc_info).log(
-                    msg='Unhadled exception in event loop callback.')
+                    msg='Unhandled exception in event loop callback.')
 
     def _poll(self, timeout):
         callbacks = self._callbacks
