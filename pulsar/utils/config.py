@@ -162,30 +162,45 @@ attribute by exposing the :attr:`Setting.name` as attribute.
 
     def update(self, data, default=False):
         '''Update this :attr:`Config` with ``data`` which is either an
-instance of Mapping or :class:`Config`.'''
+        instance of Mapping or :class:`Config`.'''
         for name, value in data.items():
             if value is not None:
                 self.set(name, value, default)
 
+    def copy_globals(self, cfg):
+        '''Copy global settings from ``cfg`` to this config.
+
+        The settings are copied only if they were not already modified.
+        '''
+        for name, setting in cfg.settings.items():
+            csetting = self.settings.get(name)
+            if (setting.is_global and csetting is not None and
+                    not csetting.modified):
+                csetting.set(setting.get())
+
     def get(self, name, default=None):
         '''Get the value at ``name`` for this :class:`Config` container
-following this algorithm:
 
-* returns the ``name`` value in the :attr:`settings` dictionary if available.
-* returns the ``name`` value in the :attr:`params` dictionary if available.
-* returns the ``default`` value.
-'''
+        The returned value is obtained from:
+
+        * the value at ``name`` in the :attr:`settings` dictionary
+            if available.
+        * the value at ``name`` in the :attr:`params` dictionary
+            if available.
+        * the ``default`` value.
+        '''
         try:
             return self._get(name, default)
         except KeyError:
             return default
 
     def set(self, name, value, default=False):
-        '''Set the configuration :class:`Setting` at *name* with a new
-*value*. If the *name* is not in this container, an :class:`AttributeError`
-is raised. If ``default`` is ``True``, the :attr:`Setting.default` is
-also set.'''
+        '''Set the :class:`Setting` at ``name`` with a new ``value``.
+
+        If ``default`` is ``True``, the :attr:`Setting.default` is also set.
+        '''
         if name not in self.settings:
+            # not in settings, check if this is a prefixed name
             if self.prefix:
                 prefix_name = '%s_%s' % (self.prefix, name)
                 if prefix_name in self.settings:
@@ -436,6 +451,7 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         self.nargs = nargs or self.nargs
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
+        self.modified = False
         if self.default is not None:
             self.set(self.default)
         if self.app and not self.section:
@@ -473,6 +489,7 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
+        self.modified = True
         if default:
             self.default = val
 

@@ -155,7 +155,7 @@ def arbiter_config(cfg):
 
 
 class Configurator(object):
-    '''A mixin for configuring and loading a pulsar server.
+    '''A mixin for configuring and loading a pulsar application server.
 
     :parameter name: to override the class :attr:`name` attribute.
     :parameter description: to override the class :attr:`cfg.description`
@@ -253,12 +253,13 @@ class Configurator(object):
         return self.__repr__()
 
     def python_path(self, script):
-        '''Called during initialization to obtain the ``script`` name and
-to add the :attr:`script` directory to the python path if not in the
-path already.
-If ``script`` does not evalueate to ``True`` it is evaluated from
-the ``__main__`` import. Returns the real path of the python
-script which runs the application.'''
+        '''Called during initialisation to obtain the ``script`` name and
+        to add the :attr:`script` directory to the python path if not in the
+        path already.
+        If ``script`` does not evalueate to ``True`` it is evaluated from
+        the ``__main__`` import. Returns the real path of the python
+        script which runs the application.
+        '''
         if not script:
             try:
                 import __main__
@@ -302,12 +303,8 @@ script which runs the application.'''
             if self.argv is None:
                 self.parsed_console = False
             # copy global settings
-            for name, setting in actor.cfg.settings.items():
-                csetting = self.cfg.settings.get(name)
-                if (setting.is_global and csetting is not None and
-                        setting.default == csetting.default and
-                        csetting.value ==  csetting.default):
-                    csetting.set(setting.get())
+            self.cfg.copy_globals(actor.cfg)
+        #
         for name in list(self.cfg.params):
             if name in self.cfg.settings:
                 value = self.cfg.params.pop(name)
@@ -343,7 +340,7 @@ script which runs the application.'''
             cfg = cls.cfg.copy(name=name, prefix=prefix)
             # update with latest settings
             cfg.update_settings()
-            cfg.update(params, default=True)
+            cfg.update(params)
         else:
             cfg = pulsar.Config(name=name, prefix=prefix, **params)
         return cfg
