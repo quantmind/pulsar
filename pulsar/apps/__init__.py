@@ -28,6 +28,8 @@ Application
    :members:
    :member-order: bysource
 
+   .. automethod:: __call__
+
 
 Multi App
 ===============================
@@ -49,7 +51,7 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import get_actor, EventHandler, coroutine_return
+from pulsar import get_actor, EventHandler, coroutine_return, Config
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import (parse_connection_string,
@@ -143,17 +145,6 @@ def worker_start(self):
     return app.worker_start(self)
 
 
-def arbiter_config(cfg):
-    cfg = cfg.copy()
-    for setting in list(cfg.settings.values()):
-        if setting.app:  # Don't include application specific settings
-            cfg.settings.pop(setting.name)
-        elif not setting.is_global:
-            if not getattr(setting, 'inherit', False):
-                setting.set(setting.default)
-    return cfg
-
-
 class Configurator(object):
     '''A mixin for configuring and loading a pulsar application server.
 
@@ -189,7 +180,7 @@ class Configurator(object):
 
     .. attribute:: cfg
 
-        The :class:`pulsar.utils.config.Config` for this :class:`Configurator`.
+        The :class:`.Config` for this :class:`Configurator`.
         If set as class attribute it will be replaced during initialisation.
 
         Default: ``None``.
@@ -204,7 +195,7 @@ class Configurator(object):
         Evaluated during initialization via the :meth:`python_path` method.
     '''
     name = None
-    cfg = None
+    cfg = Config()
 
     def __init__(self,
                  name=None,
@@ -219,7 +210,7 @@ class Configurator(object):
                  **params):
         cls = self.__class__
         self.name = name or cls.name or cls.__name__.lower()
-        if load_config or not isinstance(cfg, pulsar.Config):
+        if load_config or not isinstance(cfg, Config):
             cfg = cfg or {}
             cfg.update(params)
             cfg = cls.create_config(cfg)
@@ -290,7 +281,7 @@ class Configurator(object):
         overriding order is the following:
 
          * default parameters.
-         * the *params* passed in the initialisation.
+         * the key-valued params passed in the initialisation.
          * the parameters in the optional configuration file
          * the parameters passed in the command line.
         '''
@@ -299,7 +290,8 @@ class Configurator(object):
         actor = get_actor()
         cfg = self.cfg
         if actor and actor.is_running():
-            # actor available and running. unless argv is set, skip parsing
+            # actor available and running.
+            # Unless argv is set, skip parsing
             if self.argv is None:
                 self.parsed_console = False
             # copy global settings
@@ -333,16 +325,15 @@ class Configurator(object):
 
     @classmethod
     def create_config(cls, params, prefix=None, name=None):
-        '''Create a new :class:`pulsar.utils.config.Config` container.
+        '''Create a new :class:`.Config` container.
 
-        Overrides defaults with ``params``.'''
-        if cls.cfg:
-            cfg = cls.cfg.copy(name=name, prefix=prefix)
-            # update with latest settings
-            cfg.update_settings()
-            cfg.update(params)
-        else:
-            cfg = pulsar.Config(name=name, prefix=prefix, **params)
+        Invoked during initialisation, it overrides defaults
+        with ``params`` and apply the ``prefix`` to non global
+        settings.
+        '''
+        cfg = cls.cfg.copy(name=name, prefix=prefix)
+        cfg.update_settings()
+        cfg.update(params)
         return cfg
 
 
@@ -350,27 +341,29 @@ class Application(Configurator, pulsar.Pulsar):
     """An application interface.
 
     Applications can be of any sorts or forms and the library is shipped with
-    several battery included examples in the :mod:`pulsar.apps` framework
-    module.
+    several battery included examples in the :mod:`pulsar.apps` module.
 
     These are the most important facts about a pulsar :class:`Application`:
 
     * It derives from :class:`Configurator` so that it has all the
       functionalities to parse command line arguments and setup the
-      :attr:`Configurator.cfg`.
-    * Instances must be picklable. If non-picklable data needs to be added
-      on an :class:`Application` instance, it should be stored on the
-      ``local`` attribute dictionary (:class:`Application` derives
-      from :class:`pulsar.utils.log.LocalMixin`).
+      :attr:`~Configurator.cfg` placeholder of :class:`.Setting`.
+    * Instances must be picklable. If non-picklable data needs to be accessed
+      in an :class:`Application` instance, it should be stored on the
+      ``local`` attribute dictionary via the :func:`.local_property`
+      or or :func:`.local_method` decorators (:class:`Application` derives
+      from :class:`.LocalMixin`).
     * Instances of an :class:`Application` are callable objects accepting
-      the calling actor as only argument.
+      the calling actor as only argument. The callable method should
+      not be overwritten, instead one should overwrites the application
+      hooks available.
     * When an :class:`Application` is called for the first time,
-      a new :class:`pulsar.Monitor` instance is added to the
-      :class:`pulsar.Arbiter`, ready to perform its duties.
+      a new :class:`.Monitor` instance is added to the
+      :class:`.Arbiter`, ready to perform its duties.
 
-    :parameter callable: Initialise the :attr:`Application.callable` attribute.
-    :parameter load_config: If ``False`` the :meth:`Configurator.load_config`
-        is not invoked. Default ``True``.
+    :parameter callable: Initialise the :attr:`callable` attribute.
+    :parameter load_config: If ``False`` the :meth:`~Configurator.load_config`
+        method is not invoked. Default ``True``.
     :parameter params: Passed to the :class:`Configurator` initialiser.
 
     .. attribute:: callable
@@ -387,7 +380,34 @@ class Application(Configurator, pulsar.Pulsar):
         if load_config:
             self.load_config()
 
+    @local_property
+    def events(self):
+        '''One time events for the application: ``ready``,
+        ``start``, ``stop``.
+        '''
+        return EventHandler(one_time_events=('ready', 'start', 'stop'))
+
+    @property
+    def stream(self):
+        '''Actor stream handler.
+        '''
+        return get_actor().stream
+
     def __call__(self, actor=None):
+        '''Register this application with the (optional) calling ``actor``.
+
+        If an ``actor`` is available (either via the function argument or via
+        the :func:`.get_actor` function) it must be :class:`.Arbiter`,
+        otherwise this call is no-op.
+
+        If no actor is available, it means this application starts
+        pulsar engine by creating the :class:`.Arbiter` with its
+        :ref:`global settings <setting-section-global-server-settings>`
+        copied to the arbiter :class:`.Config` container.
+
+        :return: the ``start`` one time event fired once this application
+            has fired it.
+        '''
         if actor is None:
             actor = get_actor()
         monitor = None
@@ -397,26 +417,18 @@ class Application(Configurator, pulsar.Pulsar):
             self.cfg.on_start()
             self.configure_logging()
             self.fire_event('ready')
-            arbiter = pulsar.arbiter(cfg=arbiter_config(self.cfg))
-            if self.on_config(arbiter) is not False:
-                if arbiter.started():
-                    self._add_to_arbiter(arbiter)
+            if not actor:
+                cfg = Config()
+                cfg.update(self.arbiter_params())
+                actor = pulsar.arbiter(cfg=cfg)
+            if self.on_config(actor) is not False:
+                if actor.started():
+                    self._add_to_arbiter(actor)
                 else:   # the arbiter has not yet started.
-                    arbiter.bind_event('start', self._add_to_arbiter)
+                    actor.bind_event('start', self._add_to_arbiter)
             else:
                 return
         return self.event('start')
-
-    @local_property
-    def events(self):
-        '''Events for the application: ``ready```, ``start``, ``stop``.'''
-        return EventHandler(one_time_events=('ready', 'start', 'stop'))
-
-    @property
-    def stream(self):
-        '''Actor stream handler.
-        '''
-        return get_actor().stream
 
     def fire_event(self, name, *args, **kw):
         '''Fire event ``name``.'''
@@ -482,11 +494,13 @@ class Application(Configurator, pulsar.Pulsar):
         '''Callback by the monitor at each event loop.'''
         pass
 
-    def start(self):
-        '''Start the :class:`pulsar.Arbiter` if it wasn't already started.
+    def arbiter_params(self):
+        return dict(((s.name, s.value) for s in self.cfg.settings.values()
+                     if s.is_global))
 
-        Calling this method when the :class:`pulsar.Arbiter` is already
-        running has no effect.
+    def start(self):
+        '''Invoked the application callable method and start
+        the :class:`.Arbiter` if it wasn't already started.
         '''
         on_start = self()
         arbiter = pulsar.arbiter()
@@ -504,34 +518,44 @@ class Application(Configurator, pulsar.Pulsar):
 
 class MultiApp(Configurator):
     '''A :class:`MultiApp` is a tool for creating several :class:`Application`
-and starting them at once. It makes sure all :ref:`settings <settings>` for the
-applications created are available in the command line.
-The :meth:`build` is the only method which must be implemented by subclasses.
-Check the :class:`examples.taskqueue.manage.server` class in the
-:ref:`taskqueue example <tutorials-taskqueue>` for an example.
-The :class:`MultiApp` derives from :class:`Configurator` and therefore
-supports all its configuration utilities.
+    and starting them at once.
 
-A minimal example usage::
+    It makes sure all :ref:`settings <settings>` for the
+    applications created are available in the command line.
+    Check the :class:`~examples.taskqueue.manage.server` class in the
+    :ref:`taskqueue example <tutorials-taskqueue>` for an actual
+    implementation.
 
-    import pulsar
+    :class:`MultiApp` derives from :class:`Configurator` and therefore
+    supports all its configuration utilities,
+    :meth:`build` is the only method which must be implemented by
+    subclasses.
 
-    class Server(pulsar.MultiApp):
-        def build(self):
-            yield self.new_app(TaskQueue)
-            yield self.new_app(WSGIserver, prefix="rpc", callable=..., ...)
-            yield self.new_app(WSGIserver, prefix="web", callable=..., ...)
-'''
+    A minimal example usage::
+
+        import pulsar
+
+        class Server(pulsar.MultiApp):
+
+            def build(self):
+                yield self.new_app(TaskQueue)
+                yield self.new_app(WSGIserver, prefix="rpc", callable=..., ...)
+                yield self.new_app(WSGIserver, prefix="web", callable=..., ...)
+    '''
     _apps = None
 
     def build(self):
         '''Virtual method, must be implemented by subclasses and return an
-iterable over results obtained from calls to the :meth:`new_app` method.'''
+        iterable over results obtained from calls to the
+        :meth:`new_app` method.
+        '''
         raise NotImplementedError
 
     def apps(self):
         '''List of :class:`Application` for this :class:`MultiApp`.
-The list is lazily loaded from the :meth:`build` method.'''
+
+        The list is lazily loaded from the :meth:`build` method.
+        '''
         if self._apps is None:
             # Add non-default settings values to the list of cfg params
             self.cfg.params.update(((s.name, s.value) for s in

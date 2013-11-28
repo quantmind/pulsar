@@ -78,7 +78,11 @@ class ProtocolConsumer(EventHandler):
 
     @property
     def request(self):
-        ''':class:`Request` instance (used for clients only).'''
+        '''The request.
+
+        Used for clients only and available only after the
+        :meth:`start` method is invoked.
+        '''
         return getattr(self, '_request', None)
 
     @property
@@ -111,7 +115,7 @@ class ProtocolConsumer(EventHandler):
         '''``True`` if consumer has finished consuming data.
 
         This is when the ``finish`` event has been fired.'''
-        return self.event('post_request').has_fired()
+        return bool(self.event('post_request').fired())
 
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
@@ -376,7 +380,7 @@ class Connection(Protocol):
     '''
     _current_consumer = None
 
-    def __init__(self, consumer_factory, **kw):
+    def __init__(self, consumer_factory=None, **kw):
         super(Connection, self).__init__(**kw)
         self._processed = 0
         self._consumer_factory = consumer_factory
@@ -388,11 +392,15 @@ class Connection(Protocol):
         from the :attr:`~Protocol.transport` via the :meth:`data_received`
         method.
         '''
-        if self._current_consumer is None:
-            self._current_consumer = consumer = self._consumer_factory()
-            consumer._connection = self
-            consumer.connection_made(self)
+        if self._current_consumer is None and self._consumer_factory:
+            self.set_consumer(self._consumer_factory())
         return self._current_consumer
+
+    def set_consumer(self, consumer):
+        assert self._current_consumer is None, 'Consumer is not None'
+        self._current_consumer = consumer
+        consumer._connection = self
+        consumer.connection_made(self)
 
     def data_received(self, data):
         '''Delegates handling of data to the :meth:`current_consumer`.

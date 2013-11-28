@@ -1,7 +1,7 @@
 .. _application-api:
 
 ========================
-Applications API
+Application API
 ========================
 
 .. automodule:: pulsar.apps

@@ -127,7 +127,7 @@ Synchronous Mode
 
 Can be used in :ref:`synchronous mode <tutorials-synchronous>`::
 
-    client = HttpClient(force_sync=True)
+    client = HttpClient(loop=new_event_loop())
 
 Events
 ==============
@@ -212,7 +212,8 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import is_failure
+from pulsar import (is_failure, EventHandler, Pool, coroutine_return,
+                    Connection)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
@@ -248,6 +249,7 @@ def guess_filename(obj):
 
 class RequestBase(object):
     inp_params = None
+    release_connection = True
     history = None
     full_url = None
     scheme = None
@@ -336,7 +338,7 @@ class HttpTunnel(RequestBase):
         self.headers.pop(header_name, None)
 
 
-class HttpRequest(pulsar.Request, RequestBase):
+class HttpRequest(RequestBase):
     '''An :class:`HttpClient` request for an HTTP resource.
 
     :param files: optional dictionary of name, file-like-objects.
@@ -785,7 +787,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
             raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
 
 
-class HttpClient(pulsar.Client):
+class HttpClient(EventHandler):
     '''A :class:`~pulsar.Client` for HTTP/HTTPS servers.
 
     As any :class:`~pulsar.Client` it handles
@@ -823,10 +825,12 @@ class HttpClient(pulsar.Client):
         Default headers for this :class:`HttpClient`
 
     '''
-    MANY_TIMES_EVENTS = pulsar.Client.MANY_TIMES_EVENTS + ('on_headers',)
+    MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
+                         'post_request', 'connection_lost')
     consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
+    connection_pool = Pool
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
@@ -853,12 +857,17 @@ class HttpClient(pulsar.Client):
     # by specifying the "no" key in the proxy_info dictionary
     no_proxy = set(('localhost', urllibr.localhost(), platform.node()))
 
-    def setup(self, proxy_info=None, cache=None, headers=None,
-              encode_multipart=True, multipart_boundary=None,
-              keyfile=None, certfile=None, cert_reqs=CERT_NONE,
-              ca_certs=None, cookies=None, store_cookies=True,
-              max_redirects=10, decompress=True, version=None,
-              websocket_handler=None, parser=None):
+    def __init__(self, proxy_info=None, cache=None, headers=None,
+                 encode_multipart=True, multipart_boundary=None,
+                 keyfile=None, certfile=None, cert_reqs=CERT_NONE,
+                 ca_certs=None, cookies=None, store_cookies=True,
+                 max_redirects=10, decompress=True, version=None,
+                 websocket_handler=None, parser=None, trust_env=True,
+                 loop=None, client_version=None):
+        super(HttpClient, self).__init__(loop)
+        self.client_version = client_version or self.client_version
+        self.connection_pools = {}
+        self.trust_env = trust_env
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookiejar_from_dict(cookies)
@@ -883,6 +892,8 @@ class HttpClient(pulsar.Client):
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
         self.http_parser = parser or http_parser
+        self.sessions = 0
+        self._requests_processed = 0
         # Add hooks
         self.bind_event('pre_request', Tunneling())
         self.bind_event('on_headers', handle_101)
@@ -971,7 +982,10 @@ class HttpClient(pulsar.Client):
         :rtype: a :class:`HttpResponse` object.
         '''
         request = self._build_request(method, url, response, params)
-        return self.response(request, response)
+        if response is None or response.has_finished:
+            response = self.build_consumer()
+        self._loop.call_soon_threadsafe(self._request, response, request)
+        return response
 
     def again(self, response, method=None, url=None, params=None,
               history=False, new_response=None, request=None):
@@ -1001,6 +1015,16 @@ class HttpClient(pulsar.Client):
         connection = new_response.connection or response.connection
         return self.response(request, new_response, connection=connection)
 
+    def close(self, async=True, timeout=5):
+        '''Close all connections.
+
+        Fire the ``finish`` :ref:`one time event <one-time-event>` once done.
+        Return the :class:`Deferred` fired by the ``finish`` event.
+        '''
+        for p in self.connection_pools.values():
+            p.close()
+        self.connection_pools.clear()
+
     def add_basic_authentication(self, username, password):
         '''Add a :class:`HTTPBasicAuth` handler to the ``pre_requests`` hook.
         '''
@@ -1015,6 +1039,18 @@ class HttpClient(pulsar.Client):
     #    self.bind_event('pre_request', OAuth2(client_id, client_secret))
 
     #    INTERNALS
+
+    def build_consumer(self, consumer_factory=None):
+        '''Override the :meth:`Producer.build_consumer` method.
+
+        Add a ``post_request`` handler to release the connection back to
+        the connection pool.
+        '''
+        consumer_factory = consumer_factory or self.consumer_factory
+        consumer = consumer_factory()
+        consumer.copy_many_times_events(self)
+        consumer.bind_event('post_request', release_response_connection)
+        return consumer
 
     def _build_request(self, method, url, response, params):
         nparams = self.update_parameters(self.request_parameters, params)
@@ -1063,3 +1099,28 @@ class HttpClient(pulsar.Client):
         if response and response.headers:
             return response.headers.has('connection', 'keep-alive')
         return False
+
+    def _request(self, response, request):
+        try:
+            pool = self.connection_pools.get(request.key)
+            if pool is None:
+                host, port = self.address
+                pool = self.connection_pool(
+                    partial(self.connect, host, port, request.ssl),
+                    pool_size=self.pool_size, loop=self._loop)
+                self.connection_pools[request.key] = pool
+            conn = yield pool.connect()
+            conn.set_consumer(response)
+            response.start(request)
+        except Exception:
+            response.finished(sys.exc_info())
+
+    def _connect(self, host, port, ssl):
+        _, connection = yield self._loop.create_connection(
+            self._new_connection, host, port, ssl)
+        yield connection.event('connection_made')
+        coroutine_return(connection)
+
+    def _new_connection(self):
+        self.sessions = session = self.sessions + 1
+        return Connection(session=session, producer=self)

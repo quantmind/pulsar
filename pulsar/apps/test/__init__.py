@@ -451,6 +451,14 @@ class TestCoveralls(TestOption):
     desc = """Send coverage report to coveralls.io."""
 
 
+class RedisServer(TestOption):
+    name = 'redis_server'
+    flags = ['--redis-server']
+    meta = "CONNECTION_STRING"
+    default = '127.0.0.1:6379/9'
+    desc = 'Connection string for the redis server used in testing'
+
+
 pyver = '%s.%s' % (sys.version_info[:2])
 
 
@@ -607,6 +615,11 @@ class TestSuite(tasks.TaskQueue):
         for plugin in cfg.params['plugins']:
             cfg.settings.update(plugin.config.settings)
         return cfg
+
+    def arbiter_params(self):
+        params = super(TestSuite, self).arbiter_params()
+        params['concurrency'] = self.cfg.concurrency
+        return params
 
     def _test_done(self, task_id=None):
         runner = self.runner

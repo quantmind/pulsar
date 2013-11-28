@@ -6,11 +6,25 @@ and therefore the :class:`EchoProtocol` will also be used as based class for
 The code for this example is located in the :mod:`examples.echo.manage`
 module.
 
+Run The example
+====================
+
+To run the server::
+
+    python manage.py
+
+Open a new shell, in this directory, launch python and type::
+
+    >>> from manage import Echo
+    >>> echo = Echo(('localhost',8060))
+    >>> echo(b'Hello!')
+    b'Hello!`
+
 Writing the Client
 =========================
-
-There are two classes one needs to implement in order to have a flexible client
-for Echo servers, or for any TCP servers.
+The first step is to write a small class handling a connection
+pool with the remote server. The :class:`Echo` class does just that,
+it uses the asynchronous :class:`.Pool` of connections as backbone.
 
 The first class implements the :class:`pulsar.ProtocolConsumer` as it is
 described in the next session, while the second class implements the
@@ -20,7 +34,7 @@ pool of connections to remote servers.
 The protocol consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first step is to subclass :class:`pulsar.ProtocolConsumer` to create the
+The first step is to subclass :class:`.ProtocolConsumer` to create the
 :class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed
 for two reasons:
 
@@ -42,26 +56,6 @@ client class, used in all interactions with the echo server::
     >>> echo = pool.client(('127,0,0,1', 8080))
     >>> response = echo(b'Hello!')
 
-
-Run The example
-====================
-
-To run the server::
-
-    python manage.py
-
-Open a new shell, in this directory, launch python and type::
-
-    >>> from manage import Echo
-    >>> echo = Echo(force_sync=True).client(('localhost',8060))
-
-The `force_sync` set to ``True``, force the client to wait for results rather
-than returning a :class:`pulsar.Deferred`.
-Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial
-for further information.
-
-    >>> echo(b'Hello')
-    b'Hello'
 
 Implementation
 ==================
@@ -86,6 +80,8 @@ Echo Client
 .. autoclass:: Echo
    :members:
    :member-order: bysource
+
+   .. automethod:: __call__
 
 Echo Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,25 +159,52 @@ class EchoServerProtocol(EchoProtocol):
 
 
 class Echo(object):
-    '''Echo :class:`pulsar.Client`.
+    '''A client for the echo server.
+
+    :param address: set the :attr:`address` attribute
+    :param full_response: set the :attr:`full_response` attribute
+    :param pool_size: used when initialising the connetion :attr:`pool`.
+    :param loop: Optional event loop to set the :attr:`_loop` attribute.
+
+    .. attribute:: _loop
+
+        The event loop used by the client IO requests.
+
+        The event loop is store at this attribute so that asynchronous
+        method decorators such as :func:`.in_loop_thread` can be used.
+
+    .. attribute:: address
+
+        remote server TCP address.
+
+    .. attribute:: pool
+
+        Asynchronous connection :class:`.Pool`.
 
     .. attribute:: full_response
 
-        Flag indicating if the :meth:`request` method should return the
+        Flag indicating if the callable method should result into the
         :class:`EchoProtocol` handling the request (``True``) or a
-        :class:`Deferred` which will result in the server response message
-        (``False``).
+        the server response message (``False``).
 
         Default: ``False``
     '''
-    def __init__(self, address, full_response=False, pool_size=10):
-        self._loop = get_event_loop() or new_event_loop()
-        self._received = 0
+    def __init__(self, address, full_response=False, pool_size=10, loop=None):
+        self._loop = loop or get_event_loop() or new_event_loop()
+        self.sessions = 0
+        self._requests_processed = 0
         self.address = address
         self.full_response = full_response
         self.pool = Pool(self.connect, pool_size, self._loop)
 
     def connect(self):
+        '''Create a new connection with the server.
+
+        This method is not thread safe. It is used by the
+        connection :attr:`pool` whent it needs a new connection.
+
+        :return: a coroutine
+        '''
         host, port = self.address
         _, connection = yield self._loop.create_connection(
             self._new_connection, host, port)
@@ -189,7 +212,9 @@ class Echo(object):
 
     @in_loop_thread
     def __call__(self, message):
-        '''Build the client request send it to the server.
+        '''Send a ``message`` to the server and wait for a response.
+
+        :return: a :class:`.Deferred`
         '''
         connection = yield self.pool.connect()
         with connection:
@@ -200,13 +225,14 @@ class Echo(object):
             coroutine_return(result)
 
     def _new_connection(self):
-        self._received = session = self._received + 1
+        self.sessions = session = self.sessions + 1
         return Connection(EchoProtocol, session=session, producer=self)
 
 
 def server(description=None, **kwargs):
-    '''Create the :class:`pulsar.apps.socket.SocketServer` instance with
-:class:`EchoServerProtocol` as protocol factory.'''
+    '''Create the :class:`.SocketServer` with :class:`EchoServerProtocol`
+    as protocol factory.
+    '''
     description = description or 'Echo Server'
     return SocketServer(EchoServerProtocol, description=description, **kwargs)
 

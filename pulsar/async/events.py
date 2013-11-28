@@ -2,42 +2,36 @@ from inspect import isgenerator
 
 from pulsar.utils.pep import iteritems
 
-from .defer import Deferred, maybe_async
+from .defer import Deferred, async
 from .access import logger
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
 
 
-class EventBase(object):
-    '''An event managed by an :class:`EventHandler` class.'''
+class AbstractEvent(object):
+    '''Abstract event handler.'''
     _silenced = False
 
     @property
     def silenced(self):
         '''Boolean indicating if this event is silenced.
 
-        To silence an event one uses the :meth:`EventHandler.silence_event`
-        method.
+        To silence an event one uses the :meth:`silence` method.
         '''
         return self._silenced
 
     def bind(self, callback, errback=None):
-        '''Bind a ``callback`` for ``caller`` to this :class:`Event`.'''
-        pass
-
-    def has_fired(self):
-        '''Check if this event has fired.
-
-        This only make sense for one time events.
+        '''Bind a ``callback`` and an optional ``errback`` to this event.
         '''
-        return True
+        raise NotImplementedError
+
+    def fired(self):
+        '''The number of times this event has fired'''
+        raise NotImplementedError
 
     def fire(self, arg, **kwargs):
-        '''Fire this event.
-
-        This method is called by the :meth:`EventHandler.fire_event` method.
-        '''
+        '''Fire this event.'''
         raise NotImplementedError
 
     def silence(self):
@@ -47,14 +41,13 @@ class EventBase(object):
         '''
         self._silenced = True
 
-    def chain(self, event):
-        raise NotImplementedError
 
-
-class Event(EventBase):
-
+class Event(AbstractEvent):
+    '''The default implementation of :class:`AbstractEvent`.
+    '''
     def __init__(self):
         self._handlers = []
+        self._fired = 0
 
     def __repr__(self):
         return repr(self._handlers)
@@ -65,8 +58,12 @@ class Event(EventBase):
             raise ValueError('errback not supported in many-times events')
         self._handlers.append(callback)
 
+    def fired(self):
+        return self._fired
+
     def fire(self, arg, **kwargs):
         if not self._silenced:
+            self._fired += 1
             for hnd in self._handlers:
                 try:
                     g = hnd(arg, **kwargs)
@@ -75,11 +72,17 @@ class Event(EventBase):
                 else:
                     if isgenerator(g):
                         # Add it to the event loop
-                        maybe_async(g)
+                        async(g)
 
 
-class OneTime(Deferred, EventBase):
+class OneTime(Deferred, AbstractEvent):
+    '''An :class:`AbstractEvent` which can be fired once only.
 
+    This event handler is a :class:`.Deferred`.
+
+    Implemented mainly for the one time events of the :class:`EventHandler`.
+    There shouldn't be any reason to use this class on its own.
+    '''
     def __init__(self):
         super(OneTime, self).__init__()
         self._events = Deferred()
@@ -87,8 +90,8 @@ class OneTime(Deferred, EventBase):
     def bind(self, callback, errback=None):
         self._events.add_callback(callback, errback)
 
-    def has_fired(self):
-        return self._events.done()
+    def fired(self):
+        return int(self._events.done())
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
@@ -117,9 +120,8 @@ class OneTime(Deferred, EventBase):
 class EventHandler(object):
     '''A Mixin for handling events.
 
-    It handles one time events and events that occur several
-    times. This mixin is used in :class:`Protocol` and :class:`Producer`
-    for scheduling connections and requests.
+    It handles :class:`OneTime` events and :class:`Event` that occur
+    several times.
     '''
     ONE_TIME_EVENTS = ()
     '''Event names which occur once only.'''

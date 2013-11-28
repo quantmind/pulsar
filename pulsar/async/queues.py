@@ -8,7 +8,10 @@ __all__ = ['Queue']
 
 
 class Queue:
-    '''Asynchronous FIFO queue.
+    '''Asynchronous `FIFO queue`_ with same interface as Queue class
+    in the standard python library.
+
+    .. _`FIFO queue`: http://en.wikipedia.org/wiki/FIFO
     '''
     def __init__(self, maxsize=0, loop=None):
         self._loop = loop or get_event_loop()
@@ -20,10 +23,12 @@ class Queue:
 
     @property
     def maxsize(self):
-        '''Integer representing the upper bound limit on the number of items
-that can be placed in the queue.
+        '''Integer representing the upper bound limit on the number
+        of items that can be placed in the queue.
 
-If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
+        If :attr:`maxsize` is less than or equal to zero, there is no
+        upper bound.
+        '''
         return self._maxsize
 
     def qsize(self):

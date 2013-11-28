@@ -45,18 +45,13 @@ class RedisParserSetting(Global):
     flags = ["--redis-py-parser"]
     action = "store_true"
     default = False
-    desc = 'Use the python redis parser rather the C implementation.'
+    desc = '''Use the python redis parser rather the C implementation.
+
+    Mainly used for benchmarking purposes.
+    '''
 
     def parser_class(self):
         return PyRedisParser if self.value else RedisParser
-
-
-class RedisServer(pulsar.Setting):
-    name = 'redis_server'
-    flags = ['--redis-server']
-    meta = "CONNECTION STRING"
-    default = '127.0.0.1:6379/9'
-    desc = 'Connection string for the default redis server'
 
 
 class KeyValuePairSetting(pulsar.Setting):

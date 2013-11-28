@@ -36,14 +36,6 @@ class TestEchoServerThread(unittest.TestCase):
         result = yield self.client(msg)
         self.assertEqual(result, msg)
 
-    def __testTimeIt(self):
-        msg = b''.join((b'a' for x in range(2**10)))
-        response = self.pool.timeit(10, self.server.address, msg)
-        yield response
-        self.assertTrue(response.locked_time >= 0)
-        self.assertTrue(response.total_time >= response.locked_time)
-        self.assertEqual(response.num_failures, 0)
-
     def test_multi(self):
         result = yield multi_async((self.client(b'ciao'),
                                     self.client(b'pippo'),
@@ -72,6 +64,63 @@ class TestEchoServerThread(unittest.TestCase):
         connection = response.connection
         self.assertTrue(str(connection))
         self.assertEqual(str(connection.transport)[:4], 'TCP ')
+
+    def test_connection_pool(self):
+        client = Echo(self.server.address, pool_size=2)
+        self.assertEqual(client.pool.pool_size, 2)
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 0)
+        self.assertEqual(client.sessions, 0)
+        self.assertEqual(client._requests_processed, 0)
+        #
+        response = yield client(b'test connection')
+        self.assertEqual(response, b'test connection')
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 1)
+        self.assertEqual(client.sessions, 1)
+        self.assertEqual(client._requests_processed, 1)
+        #
+        response = yield client(b'test connection 2')
+        self.assertEqual(response, b'test connection 2')
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 1)
+        self.assertEqual(client.sessions, 1)
+        self.assertEqual(client._requests_processed, 2)
+        #
+        result = yield multi_async((client(b'ciao'),
+                                    client(b'pippo'),
+                                    client(b'foo')))
+        self.assertEqual(len(result), 3)
+        self.assertTrue(b'ciao' in result)
+        self.assertTrue(b'pippo' in result)
+        self.assertTrue(b'foo' in result)
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 2)
+        self.assertEqual(client.sessions, 2)
+        self.assertEqual(client._requests_processed, 5)
+        #
+        # drop a connection
+        conn1 = client.pool._queue.get_nowait()
+        conn1.close()
+        conn2 = client.pool._queue.get_nowait()
+        client.pool._queue.put_nowait(conn1)
+        client.pool._queue.put_nowait(conn2)
+        #
+        result = yield multi_async((client(b'ciao'),
+                                    client(b'pippo'),
+                                    client(b'foo')))
+        self.assertEqual(len(result), 3)
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 2)
+        self.assertEqual(client.sessions, 3)
+        self.assertEqual(client._requests_processed, 8)
+        #
+        client.pool.close()
+        self.assertEqual(client.pool.in_use, 0)
+        self.assertEqual(client.pool.available, 0)
+        self.assertEqual(client.sessions, 3)
+        self.assertEqual(client._requests_processed, 8)
+
 
 
 @dont_run_with_thread

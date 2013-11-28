@@ -18,8 +18,8 @@ from .proxy import actor_proxy_deferred
 __all__ = ['arbiter', 'spawn', 'Arbiter']
 
 
-def arbiter(commands_set=None, **params):
-    '''Obtain the :class:`Arbiter`.
+def arbiter(**params):
+    '''Obtain the :class:`.Arbiter`.
 
     It returns the arbiter instance only if we are on the arbiter
     context domain, otherwise it returns nothing.
@@ -32,13 +32,12 @@ def arbiter(commands_set=None, **params):
         return arbiter
 
 
-# TODO: why cfg is set to None?
-def spawn(cfg=None, **kwargs):
-    '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
+def spawn(**kwargs):
+    '''Spawn a new :class:`Actor` and return an :class:`.ActorProxyDeferred`.
 
-    This method can be used from any :class:`Actor`.
-    If not in the :class:`Arbiter` domain, the method sends a request
-    to the :class:`Arbiter` to spawn a new actor.
+    This method can be used from any :class:`.Actor`.
+    If not in the :class:`.Arbiter` domain, the method sends a request
+    to the :class:`.Arbiter` to spawn a new actor.
     Once the arbiter creates the actor it returns the ``proxy`` to the
     original caller.
 

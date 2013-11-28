@@ -40,4 +40,3 @@ located in the :mod:`pulsar.apps` module.
    apps/http
    apps/twisted
    apps/pulse
-   apps/green

@@ -10,98 +10,47 @@ from .access import asyncio, new_event_loop
 from .defer import async, Failure, multi_async, coroutine_return
 from .events import EventHandler
 from .protocols import ConnectionProducer
-from .queues import Queue
+from .queues import Queue, Full
 
-__all__ = ['Pool', 'ConnectionPool', 'BaseClient', 'Client', 'Request']
-
-
-class Request(object):
-    '''A :class:`Client` request.
-
-    A request object is hashable an it is used to select
-    the appropriate :class:`ConnectionPool` for the client request.
-
-    .. attribute:: address
-
-        The socket address of the remote server
-
-    .. attribute:: release_connection
-
-        When ``True`` a protocol consumer release the connection back to the
-        :class:`ConnectionPool` once done with the request.
-
-        Default: ``True``
-    '''
-    inp_params = None
-    release_connection = True
-
-    def __init__(self, address, timeout=0):
-        self.address = address
-        self.timeout = timeout
-
-    @property
-    def key(self):
-        '''Attribute used for selecting the appropriate
-:class:`ConnectionPool`'''
-        return (self.address, self.timeout)
-
-    @property
-    def ssl(self):
-        '''A transport layer security context or ``True``.
-
-        Used to create SSL/TLS connections.
-        '''
-        return False
-
-    def encode(self):
-        raise NotImplementedError
-
-    def connect(self, loop, connection):
-        '''Called by a :class:`Client` when a new connection is needed.
-        '''
-        host, port = self.address
-        _, connection = yield loop.create_connection(
-            lambda: connection, host, port, ssl=self.ssl)
-        # wait for the connection_made event
-        yield connection.event('connection_made')
-        # starts the new request
-        connection.current_consumer.start(self)
+__all__ = ['Pool', 'ConnectionPool', 'AbstractClient']
 
 
 class Pool(object):
-    '''An asynchronous pool of connections.
+    '''An asynchronous pool of open connections.
 
-    Not thread safe. Must be called in the event loop thread.
+    Open connections are either :attr:`in_use` or :attr:`available`
+    to be used. Available connection are placed in an
+    asynchronous  :class:`.Queue`.
+
+    This class is not thread safe.
     '''
-    def __init__(self, creator, pool_size=10, loop=None, **kw):
+    def __init__(self, creator, pool_size=10, loop=None, timeout=None, **kw):
         self._creator = creator
-        self._pool_size = pool_size
-        self._queue = Queue(loop=loop)
+        self._closed = False
+        self._timeout = timeout
+        self._queue = Queue(loop=loop, maxsize=pool_size)
         self._loop = self._queue._loop
+        self._waiting = 0
         self._in_use_connections = set()
-
-    def connect(self):
-        '''Get a connection from the pool.'''
-        return PoolConnection.checkout(self)
 
     @property
     def pool_size(self):
         '''The maximum number of open connections allowed.
 
-        If more connections are requested by a :class:`.Store`, the request
+        If more connections are requested, the request
         is queued and a connection returned as soon as one becomes
         available.
         '''
-        return self._pool_size
+        return self._queue._maxsize
 
     @property
-    def size(self):
+    def in_use(self):
         '''The number of connections in use.
 
         These connections are not available until they are released back
         to the pool.
         '''
-        return len(self._in_use_connections)
+        return len(self._in_use_connections) + self._waiting
 
     @property
     def available(self):
@@ -109,28 +58,21 @@ class Pool(object):
         '''
         return self._queue.qsize()
 
-    def get(self):
-        queue = self._queue
-        connection = None
-        if self.size >= self._pool_size or queue.qsize():
-            connection = yield queue.get()
-            if is_socket_closed(connection.sock):
-                if connection._transport:
-                    connection._transport.close()
-                connection = yield self.get()
-        else:
-            connection = yield self._creator()
-        self._in_use_connections.add(connection)
-        coroutine_return(connection)
+    def connect(self):
+        '''Get a connection from the pool.
 
-    def put(self, conn):
-        try:
-            self._queue.put(conn, False)
-        except pulsar.Full:
-            conn.close()
-        self._in_use_connections.discard(conn)
+        The connection is either a new one or retrieved from the
+        :attr:`available` connections in the pool.
+
+        :return: a :class:`.Deferred` resulting in the connection.
+        '''
+        assert not self._closed
+        return PoolConnection.checkout(self)
 
     def close(self):
+        '''Close all :attr:`available` and :attr:`in_use` connections.
+        '''
+        self._closed = True
         queue = self._queue
         while queue.qsize():
             connection = queue.get_nowait()
@@ -139,6 +81,42 @@ class Pool(object):
         self._in_use_connections = set()
         for connection in in_use:
             connection.close()
+
+    def _get(self):
+        queue = self._queue
+        connection = None
+        # all available connections are in use or there are some available
+        if self.in_use >= self._queue._maxsize or self._queue.qsize():
+            connection = yield queue.get(timeout=self._timeout)
+            if is_socket_closed(connection.sock):
+                if connection._transport:
+                    connection._transport.close()
+                connection = yield self._get()
+            else:
+                self._in_use_connections.add(connection)
+        else:
+            self._waiting += 1
+            connection = yield self._creator()
+            self._in_use_connections.add(connection)
+            self._waiting -= 1
+        coroutine_return(connection)
+
+    def _put(self, conn):
+        if not self._closed:
+            try:
+                self._queue.put_nowait(conn)
+            except Full:
+                conn.close()
+        self._in_use_connections.discard(conn)
+
+    def info(self, message=None, level=None):   # pragma    nocover
+        if self._queue._maxsize != 2:
+            return
+        message = '%s: ' % message if message else ''
+        self._loop.logger.log(level or 10,
+                              '%smax size %s, in_use %s, available %s',
+                              message, self._queue._maxsize, self.in_use,
+                              self.available)
 
 
 class PoolConnection(object):
@@ -150,9 +128,9 @@ class PoolConnection(object):
 
     def close(self):
         if self.pool is not None:
-            self.pool.put(self.connection)
-            self.connection = None
+            self.pool._put(self.connection)
             self.pool = None
+            self.connection = None
 
     def __enter__(self):
         return self
@@ -168,7 +146,7 @@ class PoolConnection(object):
 
     @classmethod
     def checkout(cls, pool):
-        connection = yield pool.get()
+        connection = yield pool._get()
         yield cls(pool, connection)
 
 
@@ -299,13 +277,13 @@ def release_response_connection(response):
     return response
 
 
-class BaseClient(EventHandler):
+class AbstractClient(EventHandler):
     '''A client for a remote server.
     '''
     ONE_TIME_EVENTS = ('finish',)
 
     def __init__(self, loop):
-        super(BaseClient, self).__init__()
+        super(AbstractClient, self).__init__()
         self._loop = loop
 
     def __repr__(self):
@@ -344,7 +322,7 @@ class BaseClient(EventHandler):
         coroutine_return(connection)
 
 
-class Client(BaseClient):
+class _Old_Client:
     '''A client for several remote servers of the same type.
 
     It is a :class:`Producer` which handles one or more
@@ -523,7 +501,7 @@ class Client(BaseClient):
         inp_params = request.inp_params
         if isinstance(inp_params, dict):
             response.bind_events(**inp_params)
-        if response.event('pre_request').has_fired():
+        if response.event('pre_request').fired():
             # pre request event already fired, this is an updated request
             # TODO: document this feature.
             # Used by redis client for example

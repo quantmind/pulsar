@@ -65,7 +65,7 @@ from .access import asyncio, get_actor
 from .defer import Failure, Deferred, coroutine_return, in_loop
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
-from .clients import BaseClient
+from .clients import AbstractClient
 
 
 LOGGER = logging.getLogger('pulsar.mailbox')
@@ -250,7 +250,7 @@ class MailboxProtocol(Protocol):
                     actor._loop.stop()
 
 
-class MailboxClient(BaseClient):
+class MailboxClient(AbstractClient):
     '''Used by actors to send messages to other actors via the arbiter.
     '''
     def __init__(self, address, actor, loop):

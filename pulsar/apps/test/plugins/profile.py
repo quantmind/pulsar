@@ -125,7 +125,7 @@ def copy_file(filename, target, context=None):
 
 class Profile(test.TestPlugin):
     ''':class:`pulsar.apps.test.TestPlugin` for profiling test cases.'''
-    desc = '''Profile tests using the cProfile'''
+    desc = '''Profile tests using the cProfile module'''
     profile_stats_path = pulsar.Setting(
         flags=['--profile-stats-path'],
         default='htmlprof',

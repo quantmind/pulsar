@@ -19,7 +19,6 @@ Setting
 
 .. _argparser: http://docs.python.org/dev/library/argparse.html
 '''
-import copy
 import inspect
 import argparse
 import os
@@ -79,39 +78,46 @@ def ordered_settings():
 
 class Config(object):
     '''A dictionary-like container of :class:`Setting` parameters for
-fine tuning pulsar servers. It provides easy access to :attr:`Setting.value`
-attribute by exposing the :attr:`Setting.name` as attribute.
+    fine tuning pulsar servers.
 
-:param description: description used when parsing the command line, same usage
-    as in the :class:`argparse.ArgumentParser` class.
-:param epilog: epilog used when parsing the command line, same usage
-    as in the :class:`argparse.ArgumentParser` class.
-:param version: version used when parsing the command line, same usage
-    as in the :class:`argparse.ArgumentParser` class.
-:param apps: list of application namespaces to include in the :attr:`settings`
-    attribute.
+    It provides easy access to :attr:`Setting.value`
+    attribute by exposing the :attr:`Setting.name` as attribute.
 
-.. attribute:: settings
+    :param description: description used when parsing the command line,
+        same usage as in the :class:`argparse.ArgumentParser` class.
+    :param epilog: epilog used when parsing the command line, same usage
+        as in the :class:`argparse.ArgumentParser` class.
+    :param version: version used when parsing the command line, same usage
+        as in the :class:`argparse.ArgumentParser` class.
+    :param apps: list of application namespaces to include in the
+        :attr:`settings` dictionary. For example if ``apps`` is set to
+        ``['socket', 'tasks']``, the
+        :ref:`socket server <setting-section-socket-servers>` and
+        :ref:`task queue <setting-section-task-consumer>` settings are
+        loaded in addition to the standard
+        :ref:`global settings <setting-section-global-server-settings>`,
+        :ref:`worker settings <setting-section-worker-processes>` and
+        :ref:`hook settings <setting-section-application-hooks>`.
 
-    Dictionary of all :class:`Setting` instances available in this
-    :class:`Config` container. Keys are given by the :attr:`SettingBase.name`
-    attribute.
+    .. attribute:: settings
 
-.. attribute:: params
+        Dictionary of all :class:`Setting` instances available in this
+        :class:`Config` container.
 
-    Dictionary of additional parameters which cannot be parsed in the
-    command line.
-'''
+        Keys are given by the :attr:`Setting.name` attribute.
+
+    .. attribute:: params
+
+        Dictionary of additional parameters which cannot be parsed in the
+        command line.
+    '''
     exclude_from_config = set(('config',))
 
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
                  name=None, **params):
-        if settings is None:
-            self.settings = {}
-        else:
-            self.settings = settings
+        self.settings = {} if settings is None else settings
         self.name = name
         self.prefix = prefix
         self.include = set(include or ())
@@ -161,8 +167,14 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         super(Config, self).__setattr__(name, value)
 
     def update(self, data, default=False):
-        '''Update this :attr:`Config` with ``data`` which is either an
-        instance of Mapping or :class:`Config`.'''
+        '''Update this :attr:`Config` with ``data``.
+
+        :param data: must be a ``Mapping`` like object exposing the ``item``
+            method for iterating through key-value pairs.
+        :param default: if ``True`` the updated :attr:``settings`` will also
+            set their :attr:``~Setting.default`` attribute with the
+            updating value (provided it is a valid one).
+        '''
         for name, value in data.items():
             if value is not None:
                 self.set(name, value, default)
@@ -184,9 +196,8 @@ attribute by exposing the :attr:`Setting.name` as attribute.
         The returned value is obtained from:
 
         * the value at ``name`` in the :attr:`settings` dictionary
-            if available.
-        * the value at ``name`` in the :attr:`params` dictionary
-            if available.
+          if available.
+        * the value at ``name`` in the :attr:`params` dictionary if available.
         * the ``default`` value.
         '''
         try:
@@ -211,10 +222,10 @@ attribute by exposing the :attr:`Setting.name` as attribute.
 
     def parser(self):
         '''Create the argparser_ for this configuration by adding all
-settings via the :meth:`Setting.add_argument` method.
+        settings via the :meth:`Setting.add_argument` method.
 
-:rtype: an instance of :class:`argparse.ArgumentParser`.
-'''
+        :rtype: an instance of :class:`ArgumentParser`.
+        '''
         kwargs = {
             "description": self.description,
             "epilog": self.epilog
@@ -226,6 +237,8 @@ settings via the :meth:`Setting.add_argument` method.
         return self.add_to_parser(parser)
 
     def add_to_parser(self, parser):
+        '''Add this container :attr:`settings`` to an existing ``parser``.
+        '''
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
         for k in sorted(setts, key=sorter):
@@ -267,8 +280,9 @@ settings via the :meth:`Setting.add_argument` method.
     @property
     def address(self):
         '''An address to bind to, only available if a
-:ref:`bind <setting-bind>` setting has been added to this :class:`Config`
-container.'''
+        :ref:`bind <setting-bind>` setting has been added to this
+        :class:`Config` container.
+        '''
         bind = self.settings.get('bind')
         if bind:
             return parse_address(to_bytes(bind.get()))
@@ -298,16 +312,17 @@ container.'''
                 return pn.get()
 
     def copy(self, name=None, prefix=None):
-        '''A deep copy of this :class:`Config` container. If ``prefix``
-is given, it prefixes all non
-:ref:`global settings <setting-section-global-server-settings>` with it.'''
+        '''A copy of this :class:`Config` container.
+
+        If ``prefix`` is given, it prefixes all non
+        :ref:`global settings <setting-section-global-server-settings>`
+        with it. Used when multiple applications are loaded.
+        '''
         cls = self.__class__
         me = cls.__new__(cls)
         me.__dict__.update(self.__dict__)
         if prefix:
             me.prefix = prefix
-        # Important, don't use the prefix from me.prefix!
-        #        prefix = me.prefix
         settings = me.settings
         me.settings = {}
         for setting in settings.values():
@@ -320,7 +335,7 @@ is given, it prefixes all non
         return self.copy()
 
     def __deepcopy__(self, memo):
-        return self.__copy__()
+        return self.copy()
 
     ########################################################################
     ##    INTERNALS
@@ -348,7 +363,7 @@ is given, it prefixes all non
 
 class SettingMeta(type):
     '''A metaclass which collects all setting classes and put them
-in the global ``KNOWN_SETTINGS`` list.'''
+    in the global ``KNOWN_SETTINGS`` list.'''
     def __new__(cls, name, bases, attrs):
         super_new = super(SettingMeta, cls).__new__
         #parents = [b for b in bases if isinstance(b, SettingMeta)]
@@ -380,9 +395,10 @@ in the global ``KNOWN_SETTINGS`` list.'''
 
 # This works for Python 2 and Python 3
 class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
-    '''A configuration parameter for pulsar.
+    '''Class for creating :ref:`pulsar settings <pulsar.utils.config>`.
 
-    Parameters can be specified on the command line or on a config file.
+    Most parameters can be specified on the command line,
+    all of them on a ``config`` file.
     '''
     creation_count = 0
     virtual = True
@@ -426,12 +442,8 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
     desc = None
     '''Description string'''
     is_global = False
-    '''Flag used by pulsar :ref:`application framework <apps-framework>`
-    when multiple application are used in a running server. If ``False``
-    additional settings will be added to the :class:`Config` container.
-    These settings are clones of this :class:`Setting` with
-    name given by each application name and underacsore ``_``
-    prefixing this :attr:`name`.'''
+    '''``True`` only for
+    :ref:`global settings <setting-section-global-server-settings>`.'''
     orig_name = None
 
     def __init__(self, name=None, flags=None, action=None, type=None,
@@ -489,9 +501,9 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         if hasattr(self.validator, '__call__'):
             val = self.validator(val)
         self.value = val
-        self.modified = True
         if default:
             self.default = val
+        self.modified = True
 
     def add_argument(self, parser, set_default=False):
         '''Add this :class:`Setting` to the ``parser``.
@@ -504,10 +516,10 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         kwargs.update(self.extra)
         if self.flags:
             args = tuple(self.flags)
-            kwargs.update({"dest": self.name,
-                           "action": self.action or "store",
-                           "default": default,
-                           "help": "%s [%s]" % (self.short, self.default)})
+            kwargs.update({'dest': self.name,
+                           'action': self.action or "store",
+                           'default': default,
+                           'help': "%s [%s]" % (self.short, self.default)})
             if kwargs["action"] != "store":
                 kwargs.pop("type", None)
                 kwargs.pop("nargs", None)
@@ -518,11 +530,15 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         else:
             # Not added to argparser
             return
+        if self.meta:
+            kwargs['metavar'] = self.meta
         parser.add_argument(*args, **kwargs)
 
     def copy(self, name=None, prefix=None):
         '''Copy this :class:`SettingBase`'''
-        setting = copy.copy(self)
+        setting = self.__class__.__new__(self.__class__)
+        setting.__dict__.update(self.__dict__)
+        setting.modified = False
         if prefix and not setting.is_global:
             flags = setting.flags
             if flags and flags[-1].startswith('--'):
@@ -533,6 +549,12 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         if name and not setting.is_global:
             setting.short = '%s application. %s' % (name, setting.short)
         return setting
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
 
 
 def validate_bool(val):
@@ -669,9 +691,10 @@ class HttpParser(Global):
     flags = ["--http-py-parser"]
     action = "store_true"
     default = False
-    desc = """\
-    Set the python parser as default HTTP parser.
-        """
+    desc = '''Set the python parser as default HTTP parser.
+
+    Only used for benchmarking pourposes.
+    '''
 
     def on_start(self):
         if self.value:  # pragma    nocover
@@ -700,7 +723,7 @@ class Daemon(Global):
     action = "store_true"
     default = False
     desc = """\
-        Daemonize the Pulsar process (posix only).
+        Daemonize the pulsar process (posix only).
 
         Detaches the server from the controlling terminal and enters the
         background.
@@ -775,19 +798,22 @@ class Group(Global):
 class Loglevel(Global):
     name = "loglevel"
     flags = ["--log-level"]
-    meta = "LEVEL"
-    validator = validate_string
-    default = "info"
-    desc = """The granularity of log outputs.
+    choices = ('debug', 'info', 'warning', 'error', 'critical', 'none')
+    default = 'info'
+    desc = '''
+        The granularity of log outputs.
 
-            Valid level names are:
+        This setting controls loggers with ``pulsar`` namespace
+        and the the root logger (if not already set).
+        Valid level names are:
 
-             * debug
-             * info
-             * warning
-             * error
-             * critical
-             """
+        * debug
+        * info
+        * warning
+        * error
+        * critical
+        * none
+        '''
 
 
 class LogHandlers(Global):
@@ -795,7 +821,7 @@ class LogHandlers(Global):
     flags = ["--log-handlers"]
     default = ['console']
     validator = validate_list
-    desc = """log handlers for pulsar server"""
+    desc = '''Log handlers for pulsar server'''
 
 
 class LogConfig(Global):
@@ -805,7 +831,8 @@ class LogConfig(Global):
     desc = '''
     The logging configuration dictionary.
 
-    This settings can only be specified on a config file
+    This settings can only be specified on a config file and therefore
+    no command-line parameter is available.
     '''
 
 
@@ -853,6 +880,9 @@ section_docs['Worker Processes'] = '''
 This group of configuration parameters control the number of actors
 for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
 other actor-specific parameters.
+
+They are available to all applications and, unlike global settings,
+each application can specify different values.
 '''
 
 
@@ -873,14 +903,12 @@ class Workers(Setting):
 
 
 class Concurrency(Setting):
-    inherit = True  # Inherited by the arbiter
     name = "concurrency"
     section = "Worker Processes"
+    choices = ('process', 'thread')
     flags = ["--concurrency"]
     default = "process"
-    desc = """\
-        The type of concurrency to use: ``process`` or ``thread``.
-        """
+    desc = """The type of concurrency to use."""
 
 
 class MaxRequests(Setting):
@@ -939,7 +967,10 @@ These tasks can be scheduled when events occurs or at every event loop of
 the various components of a pulsar application.
 
 All application hooks are functions which accept one parameter only, the actor
-invoking the function.'''
+invoking the function.
+
+Like worker process settings, each application can specify their own.
+'''
 
 
 class Postfork(Setting):

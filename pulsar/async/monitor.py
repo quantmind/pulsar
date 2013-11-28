@@ -104,7 +104,8 @@ during its life time.
 
     def spawn(self, actor_class=None, **params):
         '''Spawn a new :class:`Actor` and return its
-:class:`ActorProxyMonitor`.'''
+        :class:`.ActorProxyMonitor`.
+        '''
         actor_class = actor_class or self.actor_class
         return _spawn_actor(actor_class, self, **params)
 

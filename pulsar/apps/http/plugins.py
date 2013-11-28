@@ -16,10 +16,15 @@ class TooManyRedirects(PulsarException):
 
 
 class WebSocketClient(WebSocketProtocol):
+    status_code = 101
 
     @property
-    def request(self):
+    def _request(self):
         return self.handshake._request
+
+    @property
+    def headers(self):
+        return self.handshake.headers
 
     def __getattr__(self, name):
         if not name.startswith('__'):
@@ -115,8 +120,10 @@ def handle_101(response):
         parser = FrameParser(kind=1)
         if not handler:
             handler = WS()
-        factory = partial(WebSocketClient, response, handler, parser)
-        response = connection.upgrade(factory, True)
+        consumer = WebSocketClient(response, handler, parser)
+        connection._current_consumer = None
+        connection.set_consumer(consumer)
+        response.finished(consumer)
     return response
 
 
