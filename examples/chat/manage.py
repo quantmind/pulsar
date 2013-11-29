@@ -60,12 +60,14 @@ if stdnet:
 
 
 class PubSubClient(pubsub.Client):
+    __slots__ = ('connection', 'channel')
 
-    def __init__(self, connection):
+    def __init__(self, connection, channel):
         self.connection = connection
+        self.channel = channel
 
     def __call__(self, channel, message):
-        if channel == 'webchat':
+        if channel == self.channel:
             self.connection.write(message)
 
 
@@ -86,7 +88,8 @@ application.
         '''When a new websocket connection is established it creates a
 :ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
 of clients of the :attr:`pubsub` handler.'''
-        self.pubsub.add_client(PubSubClient(websocket))
+        channel = self.pubsub.channel('webchat')
+        self.pubsub.add_client(PubSubClient(websocket, channel))
 
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
