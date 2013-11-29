@@ -167,7 +167,7 @@ class Tunneling:
                                              request._ssl, server_side=False,
                                              server_hostname=request._netloc)
         connection._transport = transport
-        # silnce connection made since it will be called again when the
+        # silence connection made since it will be called again when the
         # ssl handshake occurs. This is just to avoid unwanted logging.
         connection.silence_event('connection_made')
         response.start(request)
