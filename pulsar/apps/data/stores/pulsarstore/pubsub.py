@@ -40,6 +40,8 @@ class PubSub(base.PubSub):
     '''Asynchronous Publish/Subscriber handler for pulsar and redis stores.
     '''
     def publish(self, channel, message):
+        if self._protocol:
+            message = self._protocol.encode(message)
         return self.store.execute('PUBLISH', channel, message)
 
     def count(self, *channels):

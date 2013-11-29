@@ -210,10 +210,12 @@ class Configurator(object):
                  **params):
         cls = self.__class__
         self.name = name or cls.name or cls.__name__.lower()
-        if load_config or not isinstance(cfg, Config):
+        if not isinstance(cfg, Config):
             cfg = cfg or {}
             cfg.update(params)
             cfg = cls.create_config(cfg)
+        else:
+            cfg.update(params)
         self.cfg = cfg
         self.cfg.description = description or self.cfg.description
         self.cfg.epilog = epilog or self.cfg.epilog

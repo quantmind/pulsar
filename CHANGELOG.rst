@@ -4,13 +4,11 @@ Ver. 0.8.0 - Development
   works with all supported python versions.
 * This version brings some backward incompatible changes for internals classes
   since we needed to bring in line the :class:`.Deferred` class with asyncio_.
-* :class:`.Deferred` is a now subclass of ``asyncio.Future``.
-* Renamed ``Task`` as :class:`.DeferredTask`. No conflict with the
-  :class:`.Task` class in the :ref:`task queue application <apps-taskqueue>`.
-  No problem in doing so since a deferred task is never initialised directly.
 * Added :func:`.run_in_loop_thread` high level function. This utility function
   runs a callable in the event loop thread and returns a :class:`.Deferred`
   called back once the callable has a result/exception.
+* Added :func:`.in_loop` and :func:`.in_loop_thread` decorators for
+  member functions of objects exposing the ``_loop`` attribute.
 * Added the new :class:`.Pool` class for managing a pool of asynchronous
   connection with a server.
 * Websocket C extensions for faster parsing.

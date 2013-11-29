@@ -82,10 +82,10 @@ def local_method(f):
     '''
     name = f.__name__
 
-    def _(self):
+    def _(self, *args):
         local = self.local
         if name not in local:
-            setattr(local, name, f(self))
+            setattr(local, name, f(self, *args))
         return getattr(local, name)
     return _
 
@@ -93,7 +93,15 @@ def local_method(f):
 def local_property(f):
     '''Decorator to be used in conjunction with :class:`LocalMixin` methods.
     '''
-    return property(local_method(f), doc=f.__doc__)
+    name = f.__name__
+
+    def _(self):
+        local = self.local
+        if name not in local:
+            setattr(local, name, f(self))
+        return getattr(local, name)
+
+    return property(_, doc=f.__doc__)
 
 
 def lazy_string(f):

@@ -46,7 +46,7 @@ import pulsar
 from pulsar import get_event_loop, Deferred, Failure, add_async_binding
 
 
-def check_twisted (coro_or_future, loop):
+def check_twisted(coro_or_future, loop):
     if isinstance(coro_or_future, TwistedDeferred):
         d = Deferred(loop)
         d._twisted_deferred = obj
@@ -55,7 +55,6 @@ def check_twisted (coro_or_future, loop):
         return d
 
 
-# Set the new async function
 add_async_binding(check_twisted)
 
 

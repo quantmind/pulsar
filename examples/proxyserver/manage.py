@@ -45,7 +45,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import HttpException, Queue, Empty, Deferred
+from pulsar import HttpException, Queue, Empty, async, coroutine_return
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -85,32 +85,32 @@ An headers middleware is a callable which accepts two parameters, the wsgi
 
     def __call__(self, environ, start_response):
         # The WSGI thing
-        if environ.get('HTTP_EXPECT') == '100-continue':
-            return self._call(environ, start_response)
-        stream = environ.get('wsgi.input') or io.BytesIO()
-        data = stream.read()
-        # handle asynchronous body data
-        if isinstance(data, Deferred):
-            return data.add_callback(partial(self._call, environ,
-                                             start_response))
-        else:
-            return self._call(environ, start_response, data)
+        loop = environ['pulsar.connection']._loop
+        return async(self._call(environ, start_response), loop)
 
-    def _call(self, environ, start_response, data=None):
+    def _call(self, environ, start_response):
         uri = environ['RAW_URI']
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
+        if environ.get('HTTP_EXPECT') != '100-continue':
+            stream = environ.get('wsgi.input') or io.BytesIO()
+            data = yield stream.read()
+        else:
+            data = None
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
-        response = self.http_client.request(method, uri,
-                                            data=data,
-                                            headers=request_headers,
-                                            version=environ['SERVER_PROTOCOL'])
-        #
+        events = {}
         if method == 'CONNECT':
-            return ProxyTunnel(environ, start_response, response)
+            response = ProxyTunnel(environ, start_response)
         else:
-            return ProxyResponse(environ, start_response, response)
+            response = ProxyResponse(environ, start_response)
+            events['data_processed'] = response.data_processed
+        events['pre_request'] = response.connection_made
+        self.http_client.request(method, uri, data=data,
+                                 headers=request_headers,
+                                 version=environ['SERVER_PROTOCOL'],
+                                 **events)
+        coroutine_return(response)
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and
@@ -131,21 +131,22 @@ The returned headers will be sent to the target uri.'''
         return headers
 
 
+###############################################################################
+##    RESPONSE OBJECTS
 class ProxyResponse(object):
     '''Asynchronous wsgi response.
     '''
     _headers = None
     _done = False
 
-    def __init__(self, environ, start_response, response):
+    def __init__(self, environ, start_response):
         self.environ = environ
         self.start_response = start_response
         self.queue = Queue()
-        response.on_finished.add_errback(self.error)
-        self.setup(response)
 
-    def setup(self, response):
-        response.bind_event('data_processed', self.data_processed)
+    def connection_made(self, response):
+        response.bind_event('post_request', None, self.error)
+        return response
 
     def __iter__(self):
         while True:

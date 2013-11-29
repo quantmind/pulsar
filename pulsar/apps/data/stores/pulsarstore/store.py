@@ -57,8 +57,8 @@ class PulsarStore(Store):
         '''Get a client for the Store'''
         return Pipeline(self)
 
-    def pubsub(self):
-        return PubSub(self)
+    def pubsub(self, protocol=None):
+        return PubSub(self, protocol=protocol)
 
     @in_loop_thread
     def execute(self, command, *args, **options):

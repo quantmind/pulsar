@@ -2,6 +2,44 @@
 Tha main component for pulsar datastore clients is the :class:`.Store`
 class which encapsulates the essential API for communicating and executing
 commands on remote servers.
+
+Implement a Store
+==================
+
+When implementing a new :class:`.Store` there are several methods which need
+to be covered:
+
+ * :meth:`Store.connect` to create a new connection
+ * :meth:`Store.execute` to execute a command on the store server
+
+API
+============
+
+create store
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: create_store
+
+
+start store
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: start_store
+
+
+Store
+~~~~~~~~~~~~~~~
+
+.. autoclass:: Store
+   :members:
+   :member-order: bysource
+
+PubSub
+~~~~~~~~~~~~~~~
+
+.. autoclass:: PubSub
+   :members:
+   :member-order: bysource
 '''
 import logging
 import socket
@@ -103,8 +141,8 @@ class Store(object):
         '''
         raise NotImplementedError
 
-    def pubsub(self):
-        '''Get a publish/subscribe handler for the Store
+    def pubsub(self, **kw):
+        '''Get a :class:``PubSub` handler for the Store
         '''
         raise NotImplementedError
 
@@ -178,6 +216,10 @@ class PubSubClient(object):
 
 class PubSub(EventHandler):
     '''Asynchronous Publish/Subscriber handler interface.
+
+    A :class:`PubSub` handler is never initialised directly, instead,
+    the :meth:`~Store.pubsub` method of a data :class:`.Store`
+    is used.
 
     To listen for messages you can bind to the ``on_message`` event::
 
@@ -270,7 +312,7 @@ class PubSub(EventHandler):
         channel = to_string(response[0])
         message = response[1]
         if self._protocol:
-            message = self._protocol.dencode(message)
+            message = self._protocol.decode(message)
         for client in self._clients:
             try:
                 client(channel, message)

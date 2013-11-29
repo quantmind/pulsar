@@ -278,7 +278,7 @@ class Graph(ws.WS):
 
 class Site(wsgi.LazyWsgi):
 
-    def setup(self):
+    def setup(self, environ):
         router = HttpBin('/')
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,

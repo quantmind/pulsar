@@ -987,7 +987,7 @@ class HttpClient(EventHandler):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, response=None, **params):
+    def request(self, method, url, wait=None, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns an :class:`HttpResponse` object.
@@ -1003,7 +1003,7 @@ class HttpClient(EventHandler):
         :rtype: a :class:`HttpResponse` object.
         '''
         return run_in_loop_thread(
-            self._loop, self._request, method, url, params)
+            self._loop, self._request, method, url, params, wait)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.
@@ -1065,7 +1065,7 @@ class HttpClient(EventHandler):
                     raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
 
-    def _request(self,  method, url, params):
+    def _request(self,  method, url, params, wait=None):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
                         self.request_parameters if name not in params))
@@ -1080,8 +1080,10 @@ class HttpClient(EventHandler):
         conn = yield pool.connect()
         with conn:
             consumer = conn.current_consumer()
+            # bind request-specific events
+            consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            response = yield consumer.event('post_request')
+            response = yield consumer.event(wait or 'post_request')
         if isinstance(response, request_again):
             response = yield self._request(*response)
         coroutine_return(response)

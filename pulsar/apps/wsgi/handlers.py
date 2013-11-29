@@ -87,7 +87,7 @@ Lazy Wsgi Handler
 import sys
 
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.log import LocalMixin, local_property
+from pulsar.utils.log import LocalMixin, local_method
 from pulsar import async, Http404, Failure, coroutine_return
 
 from .utils import handle_wsgi_error
@@ -152,24 +152,30 @@ class WsgiHandler(object):
 
 class LazyWsgi(LocalMixin):
     '''A :ref:`wsgi handler <wsgi-handlers>` which loads the actual
-handler the first time it is called. Subclasses must implement
-the :meth:`setup` method.
-Useful when working in multiprocessing mode when the application
-handler must be a ``picklable`` instance. This handler can rebuild
-its wsgi :attr:`handler` every time is pickled and un-pickled without
-causing serialisation issues.'''
+    handler the first time it is called.
+
+    Subclasses must implement the :meth:`setup` method.
+    Useful when working in multiprocessing mode when the application
+    handler must be a ``picklable`` instance. This handler can rebuild
+    its wsgi :attr:`handler` every time is pickled and un-pickled without
+    causing serialisation issues.
+    '''
     def __call__(self, environ, start_response):
-        return self.handler(environ, start_response)
+        return self.handler(environ)(environ, start_response)
 
-    @local_property
-    def handler(self):
+    @local_method
+    def handler(self, environ):
         '''The :ref:`wsgi application handler <wsgi-handlers>` which
-is loaded via the :meth:`setup` method, once only, when first accessed.'''
-        return self.setup()
+        is loaded via the :meth:`setup` method, once only,
+        when first accessed.
+        '''
+        return self.setup(environ)
 
-    def setup(self):
-        '''The setup function for this :class:`LazyWsgi`. Called once only
-the first time this application handler is invoked. This **must** be
-implemented by subclasses and **must** return a
-:ref:`wsgi application handler <wsgi-handlers>`.'''
+    def setup(self, environ):
+        '''The setup function for this :class:`LazyWsgi`.
+
+        Called once only the first time this application handler is invoked.
+        This **must** be implemented by subclasses and **must** return a
+        :ref:`wsgi application handler <wsgi-handlers>`.
+        '''
         raise NotImplementedError

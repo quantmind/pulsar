@@ -166,10 +166,10 @@ class WebSocketProtocol(ProtocolConsumer):
                 maybe_async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
 
-    def write(self, message, opcode=None, **kw):
+    def write(self, message, opcode=-1, **kw):
         '''Write a new ``message`` into the wire.
          '''
-        chunk = self.parser.encode(message, opcode=None, **kw)
+        chunk = self.parser.encode(message, opcode=-1, **kw)
         self.transport.write(chunk)
         if opcode == 8:
             self.finish()

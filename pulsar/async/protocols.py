@@ -14,7 +14,6 @@ __all__ = ['ProtocolConsumer',
            'Protocol',
            'Connection',
            'Producer',
-           'ConnectionProducer',
            'TcpServer']
 
 
@@ -479,6 +478,9 @@ class Producer(EventHandler):
     '''An Abstract :class:`EventHandler` class for all producers of
     connections.
     '''
+    _requests_processed = 0
+    _sessions = 0
+
     protocol_factory = None
     '''A callable producing protocols.
 
@@ -488,111 +490,25 @@ class Producer(EventHandler):
 
     By default it is set to the :class:`Connection` class.
     '''
-    def can_reuse_connection(self, connection, response):
-        '''Check if ``connection`` can be reused.
-        '''
-        raise NotImplementedError
+
+    @property
+    def sessions(self):
+        '''Total number of connection handled'''
+        return self._sessions
+
+    @property
+    def requests_processed(self):
+        '''Total number of requests processed'''
+        return self._requests_processed
 
     def build_consumer(self, consumer_factory):
         '''Build a consumer for a connection.
-
-        **Must be implemented by subclasses.
 
         :param consumer_factory: optional consumer factory to use.
         '''
         consumer = consumer_factory()
         consumer.copy_many_times_events(self)
         return consumer
-
-
-class ConnectionProducer(Producer):
-    '''A Producer of connections with remote servers or clients.
-
-    It is the base class for both :class:`.TcpServer` and
-    :class:`ConnectionPool`.
-    The main method in this class is :meth:`new_connection` where a new
-    connection is created and added to the set of
-    :attr:`concurrent_connections`.
-    '''
-    def __init__(self, protocol_factory, **kw):
-        super(ConnectionProducer, self).__init__(protocol_factory, **kw)
-        self._received = 0
-        self._concurrent_connections = set()
-
-    @property
-    def received(self):
-        '''Total number of connections created.'''
-        return self._received
-
-    @property
-    def concurrent_connections(self):
-        '''Number of concurrent active connections.'''
-        return len(self._concurrent_connections)
-
-    def new_connection(self, producer=None):
-        '''Called when a new connection is created.
-
-        The ``producer`` is either a :class:`Server` or a :class:`Client`.
-        If the number of :attr:`concurrent_connections` is greater or equal
-        :attr:`max_connections` a
-        :class:`pulsar.utils.exceptions.TooManyConnections` is raised.
-
-        Once a new connection is created, all the many times events of the
-        producer are added to the connection.
-
-        :param consumer_factory: The protocol consumer factory passed to the
-            :meth:`connection_factory` callable as second positional
-            argument.
-        :param producer: The producer of the connection. If not specified it
-            is set to ``self``. Passed as third positional argument to the
-            :meth:`connection_factory` callable.
-        :return: the result of the :meth:`connection_factory` call.
-        '''
-        if self._max_connections and self._received >= self._max_connections:
-            raise TooManyConnections('Too many connections')
-        # increased the connections counter
-        self._received = session = self._received + 1
-        # new connection - not yet connected!
-        producer = producer or self
-        conn = self.connection_factory(session, consumer_factory, producer,
-                                       timeout=self.timeout)
-        # When the connection is made, add it to the set of
-        # concurrent connections
-        conn.bind_event('connection_made',
-                        partial(self._connection_made, conn))
-        conn.copy_many_times_events(producer)
-        close = partial(self._connection_lost, conn)
-        conn.bind_event('connection_lost', close, close)
-        return conn
-
-    def close_connections(self, connection=None, async=True):
-        '''Close ``connection`` if specified, otherwise close all connections.
-
-        Return a list of :class:`Deferred` called back once the connection/s
-        are closed.
-        '''
-        all = []
-        if connection:
-            all.append(connection.event('connection_lost'))
-            connection.transport.close(async)
-        else:
-            for connection in list(self._concurrent_connections):
-                all.append(connection.event('connection_lost'))
-                connection.transport.close(async)
-        if all:
-            logger().info('%s closing %d connections', self, len(all))
-        return multi_async(all)
-
-    #   INTERNALS
-    def _connection_made(self, connection, _):
-        self._concurrent_connections.add(connection)
-        return _
-
-    def _connection_lost(self, connection, exc):
-        # Called when the connection is lost
-        self._concurrent_connections.discard(connection)
-        return exc
-
 
 
 class TcpServer(Producer):
@@ -620,8 +536,6 @@ class TcpServer(Producer):
                  keep_alive=None):
         super(TcpServer, self).__init__()
         self.protocol_factory = protocol_factory
-        self._received = 0
-        self._requests_processed = 0
         self._name = name or self.__class__.__name__
         self._loop = loop
         self._params = {'address': address, 'sockets': sockets}
@@ -708,7 +622,7 @@ class TcpServer(Producer):
                   'sockets': sockets,
                   'max_connections': self._max_connections,
                   'keep_alive': self._keep_alive}
-        clients = {'processed_clients': self._received,
+        clients = {'processed_clients': self._sessions,
                    'connected_clients': len(self._concurrent_connections),
                    'requests_processed': self._requests_processed}
         if self._server:
@@ -720,7 +634,7 @@ class TcpServer(Producer):
 
     ##    INTERNALS
     def _create_protocol(self):
-        self._received = session = self._received + 1
+        self._sessions = session = self._sessions + 1
         protocol = self.protocol_factory(session=session,
                                          producer=self,
                                          timeout=self._keep_alive)
