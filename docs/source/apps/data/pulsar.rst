@@ -1,18 +1,7 @@
-.. _apps-data-pulsar:
+.. _pulsar-data-store:
 
 =====================
 Pulsar data store
 =====================
 
-
-.. module:: pulsar.apps.data.core.server
-
-API
-=========
-
-Key Value Store Application
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: KeyValueStore
-   :members:
-   :member-order: bysource
+.. automodule:: pulsar.apps.data.server.server

@@ -6,6 +6,8 @@ from base64 import b64encode
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
                                   urlparse, native_str, DEFAULT_CHARSET)
 
+from .plugins import request_again
+
 
 __all__ = ['Auth',
            'HTTPBasicAuth',
@@ -137,7 +139,7 @@ class HTTPDigestAuth(Auth):
                 headers.append(('authorization', self.encode(
                     request.method, request.full_url)))
                 params['headers'] = headers
-                return client.again(response, params=params)
+                return request_again(request.method, request.full_url, params)
         return response
 
     def hex(self, x):

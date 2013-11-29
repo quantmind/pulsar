@@ -89,11 +89,6 @@ Producer
    :members:
    :member-order: bysource
 
-Connection Producer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionProducer
-   :members:
-   :member-order: bysource
 
 TcpServer
 ~~~~~~~~~~~~~~~~~
@@ -114,10 +109,10 @@ for clients with several connections to a remote :class:`.TcpServer`.
 :class:`BaseClient` is the main class here, and :class:`BaseClient.request`
 is the single most important method a subclass must implement.
 
-Base Client
+Abstract Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseClient
+.. autoclass:: AbstractClient
    :members:
    :member-order: bysource
 
@@ -126,27 +121,6 @@ Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: Pool
-   :members:
-   :member-order: bysource
-
-
-Client
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Client
-   :members:
-   :member-order: bysource
-
-
-Client Connection Pool
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionPool
-   :members:
-   :member-order: bysource
-
-Request
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Request
    :members:
    :member-order: bysource
 

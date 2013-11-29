@@ -79,13 +79,17 @@ class WS(object):
     :class:`WebSocketProtocol` created during the handshake.
     '''
     def on_open(self, websocket):
-        """Invoked when a new WebSocket is opened."""
+        '''Invoked when a new ``websocket`` is opened.
+
+        A web socket is opened straight after the upgrade headers are
+        sent (servers) or received (clients).
+        '''
         pass
 
     def on_message(self, websocket, message):
         '''Handles incoming messages on the WebSocket.
 
-        This method must be overloaded.
+        This method should be overwritten
         '''
         pass
 

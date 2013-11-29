@@ -18,13 +18,19 @@ API
 create store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: create_store
+.. autofunction:: create_store
 
 
 start store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: start_store
+.. autofunction:: start_store
+
+
+register a new store
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: register_store
 
 
 Store
@@ -419,4 +425,7 @@ def localhost(host):
 
 
 def register_store(name, dotted_path):
+    '''Register a new :class:`.Store` with schema ``name`` which
+    can be found at the python ``dotted_path``.
+    '''
     data_stores[name] = dotted_path

@@ -207,7 +207,7 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (is_failure, EventHandler, Pool, coroutine_return,
+from pulsar import (is_failure, Producer, Pool, coroutine_return,
                     Connection, run_in_loop_thread, get_event_loop,
                     new_event_loop)
 from pulsar.utils.system import json
@@ -654,8 +654,9 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
     @property
     def parser(self):
-        if self._request:
-            return self._request.parser
+        request = self.request
+        if request:
+            return request.parser
 
     def __str__(self):
         return '%s' % (self.status_code or '<None>')
@@ -673,13 +674,15 @@ class HttpResponse(pulsar.ProtocolConsumer):
     @property
     def url(self):
         '''The request full url.'''
-        if self._request is not None:
-            return self._request.full_url
+        request = self.request
+        if request:
+            return request.full_url
 
     @property
     def history(self):
-        if self._request is not None:
-            return self._request.history
+        request = self.request
+        if request:
+            return request.history
 
     @property
     def headers(self):
@@ -797,7 +800,7 @@ class HttpPool(Pool):
         self._in_use_connections.discard(conn)
 
 
-class HttpClient(EventHandler):
+class HttpClient(Producer):
     '''A client for HTTP/HTTPS servers.
 
     It handles pool of asynchronous connections.
@@ -913,8 +916,6 @@ class HttpClient(EventHandler):
                                'cert_reqs': cert_reqs,
                                'ca_certs': ca_certs}
         self.http_parser = parser or http_parser
-        self.sessions = 0
-        self._requests_processed = 0
         # Add hooks
         self.bind_event('pre_request', Tunneling())
         self.bind_event('on_headers', handle_101)
@@ -1095,7 +1096,7 @@ class HttpClient(EventHandler):
         coroutine_return(connection)
 
     def _new_connection(self):
-        self.sessions = session = self.sessions + 1
+        self._sessions = session = self._sessions + 1
         return Connection(self._build_consumer, session=session, producer=self)
 
     def _build_consumer(self, consumer_factory=None):

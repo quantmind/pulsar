@@ -2,7 +2,7 @@ from inspect import isgenerator
 
 from pulsar.utils.pep import iteritems
 
-from .defer import Deferred, async
+from .defer import Deferred, async, InvalidStateError
 from .access import logger
 
 
@@ -95,9 +95,7 @@ class OneTime(Deferred, AbstractEvent):
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
-            if self._events.done():
-                logger().warning('Event already fired')
-            elif kwargs:
+            if kwargs:
                 raise ValueError(("One time events don't support "
                                   "key-value parameters"))
             else:
@@ -200,7 +198,10 @@ class EventHandler(object):
         if arg is None:
             arg = self
         if name in self._events:
-            return self._events[name].fire(arg, **kwargs)
+            try:
+                return self._events[name].fire(arg, **kwargs)
+            except InvalidStateError:
+                logger().error('Event %s already fired' % name)
         else:
             logger().warning('Unknown event "%s" for %s', name, self)
 

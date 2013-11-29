@@ -1,7 +1,6 @@
 '''Tests asynchronous HttpClient.'''
 import os
 import sys
-from functools import partial
 from base64 import b64decode
 
 import examples
@@ -14,12 +13,8 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 
-def dodgyhook(test, response):
-    try:
-        raise ValueError('Dodgy header hook')
-    except ValueError:
-        mute_failure(test, Failure(sys.exc_info()))
-        raise
+def dodgyhook(response):
+    raise ValueError('Dodgy header hook')
 
 
 class TestHttpClientBase:
@@ -92,7 +87,7 @@ class TestHttpClientBase:
             pool = http.connection_pools[response.request.key]
             self.assertEqual(http.sessions, sessions)
             self.assertEqual(pool.available, available)
-            self.assertEqual(http.request_processed, processed)
+            self.assertEqual(http.requests_processed, processed)
 
     def _after(self, method, response):
         '''Check for a after_%s % method to test the response.'''
@@ -109,22 +104,6 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def test_200_get(self):
-        http = self.client()
-        response = yield http.get(self.httpbin())
-        self._check_pool(http, response)
-        self.assertEqual(str(response), '200')
-        self.assertEqual(repr(response), 'HttpResponse(200)')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_status(), '200 OK')
-        self.assertTrue(response.get_content())
-        self.assertEqual(response.url, self.httpbin())
-        self._check_pool(http, response)
-        response = yield http.get(self.httpbin('get'))
-        self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response, processed=2)
-
-class d:
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin())
@@ -138,14 +117,9 @@ class d:
 
     def test_dodgy_on_header_event(self):
         client = HttpClient()
-        hook = partial(dodgyhook, self)
-        response = client.get(self.httpbin(), on_headers=hook)
-        try:
-            yield response
-        except ValueError:
-            pass
+        response = yield client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
-        self.assertIsInstance(response.on_headers.result(), Failure)
+        self.assertIsInstance(response.on_headers.exception(), Failure)
 
     def test_request_object(self):
         http = self.client()
@@ -262,7 +236,7 @@ class d:
         response = yield http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         # for tunneling this fails sometimes
-        self._check_pool(http, response, sessions=2)
+        self._check_pool(http, response, sessions=2, processed=2)
 
     def test_large_response(self):
         if pypy:

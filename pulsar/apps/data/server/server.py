@@ -1,4 +1,41 @@
-'''Classes for the pulsar Key-Value store server
+'''
+Pulsar-ds is a python implementation of the popular redis_
+data store. It uses pulsar_ asynchronous framework to create a
+single-threaded workers responding to TCP-requests in the same way
+as redis does.
+
+To run a stand alone server create a script with the following code::
+
+
+    from pulsar.apps.data import KeyValueStore
+
+    if __name__ == '__main__':
+        KeyValueStore().start()
+
+
+More information on the :ref:`pulsar data store example <tutorials-pulsards>`.
+
+
+Implementation
+===========================
+
+Key Value Store Application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: KeyValueStore
+   :members:
+   :member-order: bysource
+
+
+Storage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Storage
+   :members:
+   :member-order: bysource
+
+
+.. _redis: http://redis.io/
 '''
 import os
 import re
@@ -156,7 +193,7 @@ pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 
 
 class Storage(object):
-
+    '''Implement redis commands.'''
     def __init__(self, server, cfg):
         self.cfg = cfg
         self._password = cfg.key_value_password.encode('utf-8')

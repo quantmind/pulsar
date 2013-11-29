@@ -1,17 +1,47 @@
 Ver. 0.8.0 - Development
 ===========================
-* asyncio_ integration with several changes in internals. The integration
-  works with all supported python versions.
-* This version brings some backward incompatible changes for internals classes
-  since we needed to bring in line the :class:`.Deferred` class with asyncio_.
-* Added :func:`.run_in_loop_thread` high level function. This utility function
-  runs a callable in the event loop thread and returns a :class:`.Deferred`
-  called back once the callable has a result/exception.
-* Added :func:`.in_loop` and :func:`.in_loop_thread` decorators for
-  member functions of objects exposing the ``_loop`` attribute.
-* Added the new :class:`.Pool` class for managing a pool of asynchronous
-  connection with a server.
-* Websocket C extensions for faster parsing.
+* **Asyncio Integration**
+
+  * asyncio_ integration with several changes in internals. The integration
+    works with all supported python versions.
+  * This version brings some backward incompatible changes for internals
+    classes since we needed to bring in line the :class:`.Deferred` class
+    with asyncio_.
+  * Asyncio event loop functions :func:`.get_event_loop`, :func:`.new_event_loop`,
+    are available from pulsar top level module as well as asyncio
+    (if available). In other words ``from pulsar import get_event_loop`` and
+    ``from asyncio import get_event_loop`` are equivalent (provided pulsar is
+    imported first).
+
+* **Core library**
+
+  * Added :func:`.run_in_loop_thread` high level function. This utility
+    runs a callable in the event loop thread and returns a :class:`.Deferred`
+    called back once the callable has a result/exception.
+  * Added :func:`.in_loop` and :func:`.in_loop_thread` decorators for
+    member functions of objects exposing the ``_loop`` attribute.
+  * Added the new :class:`.Pool` class for managing a pool of asynchronous
+    connection with a server.
+  * Embedding third-party asynchronous frameworks can be achieved via the
+    new :func:`.add_async_binding` function.
+
+* **New data store module**
+
+  * New :mod:`pulsar.apps.data` module for managing asynchronous data stores.
+  * Two stores available: redis_ and :ref:`pulsar-ds <pulsar-data-store>`.
+  * Additional stores can be created by subclassing the :class:`.Store`
+    abstract class and registering it via the :func:`.register_store` function.
+  * The :ref:`pulsar-ds <pulsar-data-store>` is a python implementation of
+    the popular redis server. It implements most redis commands including
+    scripting.
+
+* **Websockets**
+
+  * the web socket :meth:`~pulsar.apps.ws.WS.on_open` method is invoked soon
+    after upgrade headers are sent. No need to send an message from the client
+    to kick start the bidirectional communication.
+  * Websocket C extensions for faster parsing.
+
 * **821 regression tests**, **91% coverage**.
 
 Ver. 0.7.2 - 2013-Oct-16

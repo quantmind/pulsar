@@ -11,7 +11,16 @@ from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
 from pulsar import PulsarException
 
 
-request_again = namedtuple('request_again', 'method url params')
+class request_again(namedtuple('request_again', 'method url params')):
+
+    @property
+    def status_code(self):
+        return -1
+
+    @property
+    def headers(self):
+        return ()
+
 
 
 class TooManyRedirects(PulsarException):
