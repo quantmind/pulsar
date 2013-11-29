@@ -1,4 +1,6 @@
 from functools import partial
+from collections import namedtuple
+from copy import copy
 
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import FrameParser
@@ -7,6 +9,9 @@ from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
                                   requote_uri, parse_cookie)
 
 from pulsar import PulsarException
+
+
+request_again = namedtuple('request_again', 'method url params')
 
 
 class TooManyRedirects(PulsarException):
@@ -60,18 +65,20 @@ def _do_redirect(response):
                       # Compliant with RFC3986, we percent
                       # encode the url.
                       requote_uri(url))
-    history = response._history
+    history = request.history
     if history and len(history) >= request.max_redirects:
         raise TooManyRedirects(response)
     #
+    params = request.inp_params.copy()
+    params['history'] = copy(history) if history else []
+    params['history'].append(response)
     if response.status_code == 303:
-        params = request.inp_params.copy()
         method = 'GET'
         params.pop('data', None)
         params.pop('files', None)
-        return client.again(response, method, url, params, True)
     else:
-        return client.again(response, url=url, history=True)
+        method = request.method
+    return request_again(method, url, params)
 
 
 def handle_cookies(response):

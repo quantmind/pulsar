@@ -147,9 +147,9 @@ class EventHandler(object):
         return self._events
 
     def event(self, name):
-        '''Return the :class:`Event` for ``name``.
+        '''Returns the :class:`Event` at ``name``.
 
-        If no event is registered returns nothing.
+        If no event is registered for ``name`` returns nothing.
         '''
         return self._events.get(name)
 

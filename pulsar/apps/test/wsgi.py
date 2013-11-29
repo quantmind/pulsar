@@ -34,7 +34,7 @@ server :attr:`connection`.'''
         return self.connection.address
 
 
-class DummyConnectionPool(pulsar.ConnectionPool):
+class DummyConnectionPool:
     '''A class for simulating a client connection with a server'''
     def get_or_create_connection(self, producer):
         client = self.connection_factory(self.address, 1, 0,

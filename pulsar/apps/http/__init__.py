@@ -20,16 +20,10 @@ Pulsar HTTP client has no dependencies and an API similar to requests_::
 
     from pulsar.apps import http
     client = http.HttpClient()
-    resp = client.get('https://github.com/timeline.json')
+    resp = yield client.get('https://github.com/timeline.json')
 
 ``resp`` is a :class:`HttpResponse` object which contains all the information
 about the request and, once finished, the result.
-
-The ``resp`` is finished once the ``on_finished`` attribute
-(a :class:`.Deferred`) is fired. In a :ref:`coroutine <coroutine>` one
-can obtained a full response by yielding ``on_finished``::
-
-    resp = yield client.get('https://github.com/timeline.json').on_finished
 
 Cookie support
 ================
@@ -207,13 +201,15 @@ HTTP Response
 '''
 import os
 import platform
+from functools import partial
 from collections import namedtuple
 from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import (is_failure, EventHandler, Pool, coroutine_return,
-                    Connection, in_thread_loop)
+                    Connection, run_in_loop_thread, get_event_loop,
+                    new_event_loop)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
@@ -231,7 +227,7 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
-                      Tunneling, TooManyRedirects)
+                      Tunneling, TooManyRedirects, request_again)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
@@ -652,7 +648,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _has_proxy = False
     _content = None
     _data_sent = None
-    _history = None
     _status_code = None
     _cookies = None
     ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
@@ -683,7 +678,8 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
     @property
     def history(self):
-        return self._history
+        if self._request is not None:
+            return self._request.history
 
     @property
     def headers(self):
@@ -778,13 +774,27 @@ class HttpResponse(pulsar.ProtocolConsumer):
         if request.parser.execute(data, len(data)) == len(data):
             if request.parser.is_headers_complete():
                 self._status_code = request.parser.get_status_code()
-                if not self.event('on_headers').done():
+                if not self.event('on_headers').fired():
                     self.fire_event('on_headers')
-                if (not self.has_finished and
+                if (not self.event('post_request').fired() and
                         request.parser.is_message_complete()):
-                    self.finished()
+                    self.fire_event('post_request')
         else:
             raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
+
+
+class HttpPool(Pool):
+
+    def _put(self, conn):
+        if not self._closed:
+            response = conn._current_consumer
+            if response and response.headers.has('connection', 'keep-alive'):
+                conn._current_consumer = None
+                try:
+                    self._queue.put_nowait(conn)
+                except Full:
+                    conn.close()
+        self._in_use_connections.discard(conn)
 
 
 class HttpClient(EventHandler):
@@ -837,7 +847,7 @@ class HttpClient(EventHandler):
     consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
-    connection_pool = Pool
+    connection_pool = HttpPool
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
@@ -872,7 +882,8 @@ class HttpClient(EventHandler):
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None,
                  pool_size=10):
-        super(HttpClient, self).__init__(loop)
+        super(HttpClient, self).__init__()
+        self._loop = loop or get_event_loop() or new_event_loop()
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size
@@ -976,7 +987,6 @@ class HttpClient(EventHandler):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    @in_thread_loop
     def request(self, method, url, response=None, **params):
         '''Constructs and sends a request to a remote server.
 
@@ -992,47 +1002,8 @@ class HttpClient(EventHandler):
 
         :rtype: a :class:`HttpResponse` object.
         '''
-        request = self._build_request(method, url, response, params)
-        pool = self.connection_pools.get(request.key)
-        if pool is None:
-            host, port = self.address
-            pool = self.connection_pool(
-                partial(self.connect, host, port, request.ssl),
-                pool_size=self.pool_size, loop=self._loop)
-            self.connection_pools[request.key] = pool
-        conn = yield pool.connect()
-        consumer = conn.currenct_consumer()
-        response.start(request)
-        response = yield response.event('post_request')
-        coroutine_return(response)
-
-    def again(self, response, method=None, url=None, params=None,
-              history=False, new_response=None, request=None):
-        '''Create a new request from ``response``.
-
-        The input ``response`` must be done.
-        '''
-        assert response.has_finished, 'response has not finished'
-        if not new_response:
-            new_response = self.build_consumer()
-        new_response.chain_event(response, 'post_request')
-        if history:
-            new_response._history = []
-            new_response._history.extend(response._history or ())
-            new_response._history.append(response)
-        #
-        if not request:
-            request = response.request
-            if params is None:
-                params = request.inp_params.copy()
-            if not method:
-                method = request.method
-            if not url:
-                url = request.full_url
-            request = self._build_request(method, url, new_response, params)
-        #
-        connection = new_response.connection or response.connection
-        return self.response(request, new_response, connection=connection)
+        return run_in_loop_thread(
+            self._loop, self._request, method, url, params)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.
@@ -1058,27 +1029,6 @@ class HttpClient(EventHandler):
     #    self.bind_event('pre_request', OAuth2(client_id, client_secret))
 
     #    INTERNALS
-
-    def build_consumer(self, consumer_factory=None):
-        '''Override the :meth:`Producer.build_consumer` method.
-
-        Add a ``post_request`` handler to release the connection back to
-        the connection pool.
-        '''
-        consumer_factory = consumer_factory or self.consumer_factory
-        consumer = consumer_factory()
-        consumer.copy_many_times_events(self)
-        consumer.bind_event('post_request', release_response_connection)
-        return consumer
-
-    def _build_request(self, method, url, response, params):
-        nparams = params.copy()
-        nparams.update(((name, getattr(self, name)) for name in
-                        self.request_parameters if name not in params))
-        if response:
-            nparams['history'] = response.history
-        return HttpRequest(self, url, method, params, **nparams)
-
     def get_headers(self, request, headers=None):
         #Returns a :class:`Header` obtained from combining
         #:attr:`headers` with *headers*. Can handle websocket requests.
@@ -1115,26 +1065,26 @@ class HttpClient(EventHandler):
                     raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
 
-    def can_reuse_connection(self, connection, response):
-        # Reuse connection only if the headers has Connection keep-alive
-        if response and response.headers:
-            return response.headers.has('connection', 'keep-alive')
-        return False
-
-    def _request(self, response, request):
-        try:
-            pool = self.connection_pools.get(request.key)
-            if pool is None:
-                host, port = self.address
-                pool = self.connection_pool(
-                    partial(self.connect, host, port, request.ssl),
-                    pool_size=self.pool_size, loop=self._loop)
-                self.connection_pools[request.key] = pool
-            conn = yield pool.connect()
-            conn.set_consumer(response)
-            response.start(request)
-        except Exception:
-            response.finished(sys.exc_info())
+    def _request(self,  method, url, params):
+        nparams = params.copy()
+        nparams.update(((name, getattr(self, name)) for name in
+                        self.request_parameters if name not in params))
+        request = HttpRequest(self, url, method, params, **nparams)
+        pool = self.connection_pools.get(request.key)
+        if pool is None:
+            host, port = request.address
+            pool = self.connection_pool(
+                partial(self._connect, host, port, request.ssl),
+                pool_size=self.pool_size, loop=self._loop)
+            self.connection_pools[request.key] = pool
+        conn = yield pool.connect()
+        with conn:
+            consumer = conn.current_consumer()
+            consumer.start(request)
+            response = yield consumer.event('post_request')
+        if isinstance(response, request_again):
+            response = yield self._request(*response)
+        coroutine_return(response)
 
     def _connect(self, host, port, ssl):
         _, connection = yield self._loop.create_connection(
@@ -1144,4 +1094,15 @@ class HttpClient(EventHandler):
 
     def _new_connection(self):
         self.sessions = session = self.sessions + 1
-        return Connection(session=session, producer=self)
+        return Connection(self._build_consumer, session=session, producer=self)
+
+    def _build_consumer(self, consumer_factory=None):
+        '''Override the :meth:`Producer.build_consumer` method.
+
+        Add a ``post_request`` handler to release the connection back to
+        the connection pool.
+        '''
+        consumer_factory = consumer_factory or HttpResponse
+        consumer = consumer_factory()
+        consumer.copy_many_times_events(self)
+        return consumer

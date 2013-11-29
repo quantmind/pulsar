@@ -145,22 +145,12 @@ class BaseEventLoop(AbstractEventLoop):
         return timer
 
     def call_soon(self, callback, *args):
-        """Arrange for a callback to be called as soon as possible.
-
-        This operates as a FIFO queue, callbacks are called in the
-        order in which they are registered.  Each callback will be
-        called exactly once.
-
-        Any positional arguments after the callback will be passed to
-        the callback when it is called.
-        """
         handle = TimerHandle(None, callback, args)
         self._ready.append(handle)
         return handle
 
     #################################################    THREAD INTERACTION
     def call_soon_threadsafe(self, callback, *args):
-        """XXX"""
         handle = self.call_soon(callback, *args)
         self._write_to_self()
         return handle

@@ -9,6 +9,23 @@ Asynchonous API
 Event loop
 =================
 
+get event loop
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. function:: get_event_loop()
+
+    Returns the event loop in the current context. If a loop is not available
+    it returns nothing.
+
+
+new event loop
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. function:: new_event_loop(**kw)
+
+    Build a new event loop.
+
+
 Poller
 ~~~~~~~~~~~~~~~~~~~~
 

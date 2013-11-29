@@ -111,6 +111,20 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
+    def test_redirect_6(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('redirect', '6'))
+        self.assertEqual(response.status_code, 200)
+        history = response.history
+        self.assertEqual(len(history), 6)
+        self.assertTrue(history[0].url.endswith('/redirect/6'))
+        self._after('test_redirect_6', response)
+    def after_test_redirect_6(self, response):
+        redirect = response.history[-1]
+        self.assertEqual(redirect.connection, response.connection)
+        self.assertEqual(response.connection._processed, 7)
+
+class d:
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin())
@@ -122,8 +136,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
         self._after('test_home_page', response)
 
-
-class d:
     def test_dodgy_on_header_event(self):
         client = HttpClient()
         hook = partial(dodgyhook, self)
@@ -155,7 +167,7 @@ class d:
 
     def test_redirect_1(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '1')).on_finished
+        response = yield http.get(self.httpbin('redirect', '1'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 1)
@@ -164,11 +176,11 @@ class d:
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 2)
+        self.assertEqual(response.connection._processed, 2)
 
     def test_redirect_6(self):
         http = self.client()
-        response = yield http.get(self.httpbin('redirect', '6')).on_finished
+        response = yield http.get(self.httpbin('redirect', '6'))
         self.assertEqual(response.status_code, 200)
         history = response.history
         self.assertEqual(len(history), 6)
@@ -177,7 +189,7 @@ class d:
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection.processed, 7)
+        self.assertEqual(response.connection._processed, 7)
 
     def test_http10(self):
         '''By default HTTP/1.0 close the connection if no keep-alive header
