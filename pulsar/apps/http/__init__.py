@@ -213,7 +213,7 @@ from io import StringIO, BytesIO
 
 import pulsar
 from pulsar import (is_failure, EventHandler, Pool, coroutine_return,
-                    Connection)
+                    Connection, in_thread_loop)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
@@ -788,10 +788,13 @@ class HttpResponse(pulsar.ProtocolConsumer):
 
 
 class HttpClient(EventHandler):
-    '''A :class:`~pulsar.Client` for HTTP/HTTPS servers.
+    '''A client for HTTP/HTTPS servers.
 
-    As any :class:`~pulsar.Client` it handles
-    pools of asynchronous :class:`.Connection`.
+    It handles pool of asynchronous connections.
+
+    :param encode_multipart: optional flag for setting the
+        :attr:`encode_multipart` attribute
+    :param pool_size: set the :attr:`pool_size` attribute.
 
     .. attribute:: headers
 
@@ -819,6 +822,10 @@ class HttpClient(EventHandler):
     .. attribute:: proxy_info
 
         Dictionary of proxy servers for this client.
+
+    .. attribute:: pool_size
+
+        The size of a pool of connection for a given host.
 
     .. attribute:: DEFAULT_HTTP_HEADERS
 
@@ -863,11 +870,14 @@ class HttpClient(EventHandler):
                  ca_certs=None, cookies=None, store_cookies=True,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
-                 loop=None, client_version=None):
+                 loop=None, client_version=None, timeout=None,
+                 pool_size=10):
         super(HttpClient, self).__init__(loop)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
+        self.pool_size = pool_size
         self.trust_env = trust_env
+        self.timeout = timeout
         self.store_cookies = store_cookies
         self.max_redirects = max_redirects
         self.cookies = cookiejar_from_dict(cookies)
@@ -966,6 +976,7 @@ class HttpClient(EventHandler):
         '''
         return self.request('DELETE', url, **kwargs)
 
+    @in_thread_loop
     def request(self, method, url, response=None, **params):
         '''Constructs and sends a request to a remote server.
 
@@ -982,10 +993,18 @@ class HttpClient(EventHandler):
         :rtype: a :class:`HttpResponse` object.
         '''
         request = self._build_request(method, url, response, params)
-        if response is None or response.has_finished:
-            response = self.build_consumer()
-        self._loop.call_soon_threadsafe(self._request, response, request)
-        return response
+        pool = self.connection_pools.get(request.key)
+        if pool is None:
+            host, port = self.address
+            pool = self.connection_pool(
+                partial(self.connect, host, port, request.ssl),
+                pool_size=self.pool_size, loop=self._loop)
+            self.connection_pools[request.key] = pool
+        conn = yield pool.connect()
+        consumer = conn.currenct_consumer()
+        response.start(request)
+        response = yield response.event('post_request')
+        coroutine_return(response)
 
     def again(self, response, method=None, url=None, params=None,
               history=False, new_response=None, request=None):
@@ -1053,7 +1072,9 @@ class HttpClient(EventHandler):
         return consumer
 
     def _build_request(self, method, url, response, params):
-        nparams = self.update_parameters(self.request_parameters, params)
+        nparams = params.copy()
+        nparams.update(((name, getattr(self, name)) for name in
+                        self.request_parameters if name not in params))
         if response:
             nparams['history'] = response.history
         return HttpRequest(self, url, method, params, **nparams)
