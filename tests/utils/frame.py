@@ -39,7 +39,13 @@ class FrameTest(unittest.TestCase):
         f = parser.pong()
         self.assertEqual(f.opcode, 0xA)
         self.assertTrue(f.payload_length <= 125)
-        
+
+    def testCloseFrame(self):
+        close_message = struct.pack('!H', 1000) + b'OK'
+        f = Frame(close_message, opcode=0x8)
+        self.assertTrue(f.is_close)
+        self.assertEqual(close_message, f.msg[2:])
+
     def testUnmaskedDataFrame(self):
         parser = FrameParser(kind=2)
         f = parser.encode('Hello')
