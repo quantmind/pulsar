@@ -6,8 +6,10 @@ from itertools import starmap
 ispy3k = sys.version_info >= (3, 0)
 if ispy3k:
     long = int
+    string_type = str
 else:   # pragma    nocover
     from itertools import imap as map
+    string_type = unicode
 
 nil = b'$-1\r\n'
 null_array = b'*-1\r\n'
@@ -145,13 +147,21 @@ class Parser(object):
         for value in args:
             if value is None:
                 yield nil
-            elif isinstance(value, ltd):
-                if isinstance(value, dict):
-                    yield b''.join(self._pack(self._lua_dict(value)))
-                else:
-                    yield b''.join(self._pack(value))
+            elif isinstance(value, bytes):
+                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield value
+                yield crlf
+            elif isinstance(value, string_type):
+                value = value.encode('utf-8')
+                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield value
+                yield crlf
+            elif hasattr(value, 'items'):
+                yield b''.join(self._pack(self._lua_dict(value)))
+            elif hasattr(value, '__len__'):
+                yield b''.join(self._pack(value))
             else:
-                value = e(value)
+                value = str(value).encode('utf-8')
                 yield ('$%s\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf

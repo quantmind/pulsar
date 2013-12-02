@@ -118,39 +118,39 @@ class JsonCall:
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
 
-:param url: server location
-:param version: JSONRPC server version. Default ``2.0``
-:param id: optional request id, generated if not provided. Default ``None``.
-:param data: Extra data to include in all requests. Default ``None``.
-:param full_response: return the full Http response rather than
-    just the content.
-:param http: optional http opener. If provided it must have the ``request``
-    method available which must be of the form::
+    :param url: server location
+    :param version: JSONRPC server version. Default ``2.0``
+    :param id: optional request id, generated if not provided.
+        Default ``None``.
+    :param data: Extra data to include in all requests. Default ``None``.
+    :param full_response: return the full Http response rather than
+        just the content.
+    :param http: optional http client. If provided it must have the ``request``
+        method available which must be of the form::
 
-        http.request(url, body=..., method=...)
+            http.request(url, body=..., method=...)
 
-    Default ``None``.
+        Default ``None``.
 
-Lets say your RPC server is running at ``http://domain.name.com/``::
+    Lets say your RPC server is running at ``http://domain.name.com/``::
 
-    >>> a = JsonProxy('http://domain.name.com/')
-    >>> a.add(3,4)
-    7
-    >>> a.ping()
-    'pong'
+        >>> a = JsonProxy('http://domain.name.com/')
+        >>> a.add(3,4)
+        7
+        >>> a.ping()
+        'pong'
 
-'''
+    '''
     separator = '.'
     default_version = '2.0'
     default_timeout = 30
 
     def __init__(self, url, version=None, data=None,
                  full_response=False, **kw):
-        self.__url = url
-        self.__version = version or self.__class__.default_version
+        self._url = url
+        self._version = version or self.__class__.default_version
         self._full_response = full_response
-        self.__data = data if data is not None else {}
-        self.local = AttributeDictionary()
+        self._data = data if data is not None else {}
         self.setup(**kw)
 
     def setup(self, http=None, timeout=None, **kw):
@@ -159,19 +159,19 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
             http = HttpClient(timeout=timeout, **kw)
         http.headers['accept'] = 'application/json, text/*; q=0.5'
         http.headers['content-type'] = 'application/json'
-        self.local.http = http
+        self._http = http
 
     @property
     def url(self):
-        return self.__url
-
-    @property
-    def http(self):
-        return self.local.http
+        return self._url
 
     @property
     def version(self):
-        return self.__version
+        return self._version
+
+    @property
+    def _loop(self):
+        return self._http._loop
 
     def makeid(self):
         '''Can be re-implemented by your own Proxy'''

@@ -96,6 +96,10 @@ class TestParser(unittest.TestCase):
         chunk = p.bulk(None)
         self.assertEqual(chunk, b'$-1\r\n')
 
+    def test_multi_bulk(self):
+        p = self.parser()
+        self.assertEqual(p.multi_bulk([]), b'*0\r\n')
+
 
 
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires C extensions')

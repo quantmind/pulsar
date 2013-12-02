@@ -82,11 +82,12 @@ class BenchTest(test.WrapTest):
         testGetSummary = getattr(self.test, 'getSummary', simple)
         t = 0
         t2 = 0
-        info = {'name': testMethod.__name__}
+        info = {'name': '%s.%s' % (self.test.__class__.__name__,
+                                   testMethod.__name__)}
         for r in range(self.number):
             testStartUp()
             start = default_timer()
-            yield testMethod()
+            testMethod()
             delta = default_timer() - start
             dt = testGetTime(delta)
             testGetInfo(info, delta, dt)

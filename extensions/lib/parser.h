@@ -39,6 +39,8 @@
 #define RESPONSE_STATUS  '+'
 #define RESPONSE_ERROR  '-'
 #define NIL string("$-1\r\n")
+#define ITEMS "items"
+#define LEN "__len__"
 
 class Task;
 class StringTask;
@@ -240,20 +242,25 @@ inline PyObject* ArrayTask::_decode(RedisParser& parser, PyObject* result) {
     return NULL;
 }
 
-string obj_multibulk(PyObject* obj);
+void obj_multibulk(PyObject*, std::stringstream&);
 
-inline string list_multibulk(PyObject* args) {
-    std::stringstream str;
-    size_t size = PySequence_Size(args);
-    str << "*" << size << CRLF;
-    for (size_t index=0; index<size; ++index) {
-        str << obj_multibulk(PySequence_ITEM(args, index));
+inline void list_multibulk(PyObject *args, std::stringstream& str) {
+    size_t size = PyObject_Size(args);
+    PyObject *it, *value;
+    if (size >= 0) {
+        it = PyObject_GetIter(args);
+        if (it) {
+            str << "*" << size << CRLF;
+            for (value = PyIter_Next(it); value; value = PyIter_Next(it)) {
+                obj_multibulk(value, str);
+                Py_DECREF(value);
+            }
+            Py_DECREF(it);
+        }
     }
-    return str.str();
 }
 
-inline string dict_multibulk(PyObject* mapping) {
-    std::stringstream str;
+inline void dict_multibulk(PyObject *mapping, std::stringstream& str) {
     stdpylist list;
     size_t index = 0;
     PyObject *o, *key;
@@ -272,9 +279,8 @@ inline string dict_multibulk(PyObject* mapping) {
     }
     str << "*" << list.size() << CRLF;
     for (stdpylist::const_iterator it=list.begin(); it!=list.end(); ++it) {
-        str << obj_multibulk(*it);
+        obj_multibulk(*it, str);
     }
-    return str.str();
 }
 
 inline string obj_bulk(const string& value) {
@@ -284,20 +290,20 @@ inline string obj_bulk(const string& value) {
 }
 
 #if PY_MAJOR_VERSION == 2
-    inline string obj_multibulk(PyObject* obj) {
+    inline void obj_multibulk(PyObject* obj, std::stringstream& str) {
         if (obj == Py_None) {
-            return NIL;
+            str << NIL;
         } else if (PyString_Check(obj)) {
             string value(PyString_AS_STRING(obj), PyString_GET_SIZE(obj));
-            return obj_bulk(value);
+            str << '$' << value.size() << CRLF << value << CRLF;
         } else if (PyUnicode_Check(obj)) {
             PyObject *o = PyUnicode_AsUTF8String(obj);
             string value(PyString_AS_STRING(o), PyString_GET_SIZE(o));
             Py_DECREF(o);
-            return obj_bulk(value);
-        } else if (PyMapping_Check(obj)) {
+            str << '$' << value.size() << CRLF << value << CRLF;
+        } else if(PyObject_HasAttrString(obj, ITEMS)) {
             return dict_multibulk(obj);
-        } else if (PyIter_Check(obj)) {
+        } else if (PyObject_HasAttrString(obj, LEN)) {
             return list_multibulk(obj);
         } else {
             string value(to_bytes(obj));
@@ -305,30 +311,36 @@ inline string obj_bulk(const string& value) {
         }
     }
 #else
-    inline string obj_multibulk(PyObject* obj) {
+    inline void obj_multibulk(PyObject *obj, std::stringstream& str) {
         if (obj == Py_None) {
-            return NIL;
+            str << NIL;
         } else if (PyBytes_Check(obj)) {
             string value(PyBytes_AS_STRING(obj), PyBytes_GET_SIZE(obj));
-            return obj_bulk(value);
+            str << '$' << value.size() << CRLF << value << CRLF;
         } else if (PyUnicode_Check(obj)) {
             PyObject *o = PyUnicode_AsUTF8String(obj);
             string value(PyBytes_AS_STRING(o), PyBytes_GET_SIZE(o));
             Py_DECREF(o);
-            return obj_bulk(value);
-        } else if (PyMapping_Check(obj)) {
-            return dict_multibulk(obj);
-        } else if (PyIter_Check(obj)) {
-            return list_multibulk(obj);
+            str << '$' << value.size() << CRLF << value << CRLF;
+        } else if(PyObject_HasAttrString(obj, ITEMS)) {
+            dict_multibulk(obj, str);
+        } else if (PyObject_HasAttrString(obj, LEN)) {
+            list_multibulk(obj, str);
         } else {
             string value(to_bytes(obj));
-            return obj_bulk(value);
+            str << '$' << value.size() << CRLF << value << CRLF;
         }
     }
 #endif
 
-inline PyObject* pack_command(PyObject* obj) {
-    string result(obj_multibulk(obj));
+inline PyObject* pack_command(PyObject *obj) {
+    std::stringstream str;
+    if(PyObject_HasAttrString(obj, ITEMS)) {
+        dict_multibulk(obj, str);
+    } else {
+        list_multibulk(obj, str);
+    }
+    string result(str.str());
     return PyBytes_FromStringAndSize(result.c_str(), result.size());
 }
 
