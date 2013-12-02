@@ -79,6 +79,12 @@ class Compiler(object):
 
 class Store(object):
     '''Base class for an asynchronous :ref:`data stores <data-stores>`.
+
+    It is an :ref:`async object <async-object>` for accessing and retrieving
+    data from remote data servers such as redis, couchdb and so forth.
+
+    A :class:`Store` should not be created directly, instead the high level
+    :func:`.create_store` function should be used.
     '''
     compiler_class = None
     default_manager = None
@@ -359,7 +365,7 @@ def parse_store_url(url):
     return scheme, host, params
 
 
-def create_store(url, loop=None, force_sync=False, **kw):
+def create_store(url, loop=None, **kw):
     '''Create a new client :class:`Store` for a valid ``url``.
 
     A valid ``url`` taks the following forms::
@@ -370,8 +376,10 @@ def create_store(url, loop=None, force_sync=False, **kw):
         couchdb://user:password@127.0.0.1:6500/testdb
 
     :param loop: optional event loop, if not provided it is obtained
-        via the ``get_event_loop`` method.
-    :param force_sync: force a synchronous store.
+        via the ``get_event_loop`` method. If not loop is installed a bright
+        new event loop is created via the :func:`.new_event_loop`.
+        In the latter case the event loop is employed only for synchronous type
+        requests via the :meth:`~.EventLoop.run_until_complete` method.
     :param kw: additional key-valued parameters to pass to the :class:`Store`
         initialisation method.
     :return: a :class:`Store`.
@@ -382,11 +390,9 @@ def create_store(url, loop=None, force_sync=False, **kw):
     dotted_path = data_stores.get(scheme)
     if not dotted_path:
         raise ImproperlyConfigured('%s store not available' % scheme)
-    if force_sync:
-        logger = logging.getLogger(dotted_path)
-        loop = new_event_loop(iothreadloop=False, logger=logger)
-    else:
-        loop = loop or get_event_loop()
+    loop = loop or get_event_loop()
+    if not loop:
+        loop = new_event_loop(logger=logging.getLogger(dotted_path))
     store_class = module_attribute(dotted_path)
     params.update(kw)
     return store_class(scheme, address, loop, **params)

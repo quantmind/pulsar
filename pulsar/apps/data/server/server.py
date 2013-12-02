@@ -1294,7 +1294,7 @@ class Storage(object):
         self._setoper(client, 'intersection', request[2:], request[1])
 
     @command('sets')
-    def sismemeber(self, client, request, N):
+    def sismember(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
         if value is None:

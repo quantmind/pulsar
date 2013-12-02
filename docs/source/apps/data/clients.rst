@@ -1,4 +1,4 @@
-.. _apps-data-clients:
+.. _data-stores:
 
 =====================
 Datastore Clients

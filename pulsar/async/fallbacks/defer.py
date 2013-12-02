@@ -245,8 +245,8 @@ class DoneCallback:
 class Deferred(object):
     """The main class of pulsar asynchronous engine.
 
-    It is a ``asyncio.Future`` with an implementation similar to the
-    ``twisted.defer.Deferred`` class.
+    It is an :ref:`async object <async-object>` with an implementation similar
+    to the twisted ``Deferred`` class.
 
     :param loop: If supplied, it is the :class:`.EventLoop` associated
         with this :class:`Deferred`. If not supplied, the default event loop
@@ -580,8 +580,8 @@ class DeferredTask(Deferred):
     The callback will occur once the coroutine has finished
     (when it raises StopIteration), or an unhandled exception occurs.
     Instances of :class:`DeferredTask` are never
-    initialised directly, they are created by the :func:`async` or
-    :func:`maybe_async` functions when a generator is passed as argument.
+    initialised directly, they are created by the :func:`.async` or
+    :func:`.maybe_async` functions when a generator is passed as argument.
     '''
 
     def __init__(self, gen, loop):

@@ -1,6 +1,6 @@
-import pulsar
+from pulsar import new_event_loop, HAS_C_EXTENSIONS
 
-from .pulsardb import unittest, RedisCommands, create_store
+from .pulsards import unittest, RedisCommands, create_store
 
 
 class TestRedisStore(RedisCommands, unittest.TestCase):
@@ -9,11 +9,11 @@ class TestRedisStore(RedisCommands, unittest.TestCase):
     def setUpClass(cls):
         addr = 'redis://%s' % cls.cfg.redis_server
         cls.store = cls.create_store(addr)
-        cls.sync_store = cls.create_store(addr, force_sync=True)
+        cls.sync_store = cls.create_store(addr, loop=new_event_loop())
         cls.client = cls.store.client()
 
 
-#@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
+#@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
 #class TestRedisPoolPythonParser(TestRedisStore):
 #    pass
 

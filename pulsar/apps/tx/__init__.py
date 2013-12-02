@@ -7,7 +7,7 @@ for several protocols which can be used in pulsar by importing the
     from pulsar.apps.tx import twisted
 
 The implementation replaces the twisted reactor with a proxy for
-:class:`pulsar.EventLoop`.
+:class:`.EventLoop`.
 Twisted Deferred and Failures are made compatible with pulsar
 by installing twisted asynchronous binding via the
 :func:`.add_async_binding` function.
@@ -15,11 +15,11 @@ by installing twisted asynchronous binding via the
 Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.
 
-The Coverage report is switched off because twisted is not available
-in python 3.
 
-Pulsar Reactor
+Implementation
 ====================
+
+.. autofunction:: check_twisted
 
 .. autoclass:: PulsarReactor
    :members:
@@ -47,6 +47,11 @@ from pulsar import get_event_loop, Deferred, Failure, add_async_binding
 
 
 def check_twisted(coro_or_future, loop):
+    '''Binding for twisted.
+
+    Added to pulsar asynchronous engine via the :func:`.add_async_binding`
+    function.
+    '''
     if isinstance(coro_or_future, TwistedDeferred):
         d = Deferred(loop)
         d._twisted_deferred = obj

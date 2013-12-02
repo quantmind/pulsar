@@ -1,9 +1,11 @@
 import binascii
 
 import pulsar
+from pulsar import new_event_loop
 from pulsar.utils.security import random_string
 from pulsar.apps.test import unittest
-from pulsar.apps.data import KeyValueStore, create_store, redis_parser
+from pulsar.apps.data import (KeyValueStore, create_store, redis_parser,
+                              ResponseError)
 
 
 class RedisCommands(object):
@@ -17,6 +19,23 @@ class RedisCommands(object):
 
     def randomkey(self):
         return random_string()
+
+    def test_watch(self):
+        key1 = self.randomkey()
+        key2 = key1 + '2'
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.watch(key1, key2), True)
+        yield eq(c.unwatch(), True)
+
+    ###########################################################################
+    ##    BAD REQUESTS
+    #def test_no_command(self):
+    #    yield self.async.assertRaises(ResponseError, self.store.execute)
+
+    #def test_bad_command(self):
+    #    yield self.async.assertRaises(ResponseError, self.store.execute, 'foo')
+
 
     ###########################################################################
     ##    STRINGS
@@ -190,7 +209,144 @@ class RedisCommands(object):
 
     ###########################################################################
     ##    SETS
+    ### SET COMMANDS ###
+    def test_sadd_scard(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        members = (b'1', b'2', b'3', b'2')
+        yield eq(c.sadd(key, *members), 3)
+        yield eq(c.smembers(key), set(members))
+        yield eq(c.scard(key), 3)
 
+    def test_sdiff(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sdiff(key, key2), set((b'1', b'2', b'3')))
+        yield eq(c.sadd(key2, 2, 3), 2)
+        yield eq(c.sdiff(key, key2), set([b'1']))
+
+    def test_sdiffstore(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        des = key + 'd'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sdiffstore(des, key, key2), 3)
+        yield eq(c.smembers(des), set([b'1', b'2', b'3']))
+        yield eq(c.sadd(key2, 2, 3), 2)
+        yield eq(c.sdiffstore(des, key, key2), 1)
+        yield eq(c.smembers(des), set([b'1']))
+
+    def test_sinter(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sinter(key, key2), set())
+        yield eq(c.sadd(key2, 2, 3), 2)
+        yield eq(c.sinter(key, key2), set([b'2', b'3']))
+
+    def test_sinterstore(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        des = key + 'd'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sinterstore(des, key, key2), 0)
+        yield eq(c.smembers(des), set())
+        yield eq(c.sadd(key2, 2, 3), 2)
+        yield eq(c.sinterstore(des, key, key2), 2)
+        yield eq(c.smembers(des), set([b'2', b'3']))
+
+    def test_sismember(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sismember(key, 1), True)
+        yield eq(c.sismember(key, 2), True)
+        yield eq(c.sismember(key, 3), True)
+        yield eq(c.sismember(key, 4), False)
+
+    def test_smove(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.smove(key, key2, 1), False)
+        yield eq(c.sadd(key, 1, 2), 2)
+        yield eq(c.sadd(key2, 3, 4), 2)
+        yield eq(c.smove(key, key2, 1), True)
+        yield eq(c.smembers(key), set([b'2']))
+        yield eq(c.smembers(key2), set([b'1', b'3', b'4']))
+
+    def test_spop(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        value = yield c.spop(key)
+        self.assertTrue(value in set([b'1', b'2', b'3']))
+        yield eq(c.smembers(key), set([b'1', b'2', b'3']) - set([value]))
+
+    def test_srandmember(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        value = yield c.srandmember(key)
+        self.assertTrue(value in set((b'1', b'2', b'3')))
+        yield eq(c.smembers(key), set((b'1', b'2', b'3')))
+
+    def test_srandmember_multi_value(self):
+        s = [b'1', b'2', b'3']
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, *s), 3)
+        randoms = yield c.srandmember(key, 2)
+        self.assertEqual(len(randoms), 2)
+        self.assertEqual(set(randoms).intersection(s), set(randoms))
+
+    def test_srem(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3, 4), 4)
+        yield eq(c.srem(key, 5), 0)
+        yield eq(c.srem(key, 5), 0)
+        yield eq(c.srem(key, 2, 4), 2)
+        yield eq(c.smembers(key), set([b'1', b'3']))
+
+    def test_sunion(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sunion(key, key2), set((b'1', b'2', b'3')))
+        yield eq(c.sadd(key2, 2, 3, 4), 3)
+        yield eq(c.sunion(key, key2), set((b'1', b'2', b'3', b'4')))
+
+    def test_sunionstore(self):
+        key = self.randomkey()
+        key2 = key + '2'
+        des = key + 'd'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.sadd(key, 1, 2, 3), 3)
+        yield eq(c.sunionstore(des, key, key2), 3)
+        yield eq(c.smembers(des), set([b'1', b'2', b'3']))
+        yield eq(c.sadd(key2, 2, 3, 4), 3)
+        yield eq(c.sunionstore(des, key, key2), 4)
+        yield eq(c.smembers(des), set([b'1', b'2', b'3', b'4']))
     ###########################################################################
     ##    ORDERED SETS
 
@@ -277,6 +433,15 @@ class RedisCommands(object):
         self.assertTrue(self.called)
 
     ###########################################################################
+    ##    TRANSACTION
+    def test_watch(self):
+        key1 = self.randomkey()
+        key2 = key1 + '2'
+        result = yield self.client.watch(key1)
+        self.assertEqual(result, 1)
+
+
+    ###########################################################################
     ##    SCRIPTING
     def test_eval(self):
         result = yield self.client.eval('return "Hello"')
@@ -296,6 +461,7 @@ class RedisCommands(object):
     ##    SYNCHRONOUS CLIENT
     def test_sync(self):
         client = self.sync_store.client()
+        self.assertFalse(client.store._loop.is_running())
         self.assertEqual(client.echo('Hello'), b'Hello')
 
 
@@ -312,7 +478,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         cls.app = yield pulsar.send('arbiter', 'run', server)
         cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)
         cls.sync_store = cls.create_store(
-            'pulsar://%s:%s/10' % cls.app.address, force_sync=True)
+            'pulsar://%s:%s/10' % cls.app.address, loop=new_event_loop())
         cls.client = cls.store.client()
 
     @classmethod

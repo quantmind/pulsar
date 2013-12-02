@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
-'''WebSocket_ Protocol :class:`Frame` and :class:`FrameParser` classes.
-These two classes can be used for both clients and server protocols.
+'''WebSocket_ Protocol is implemented via the :class:`Frame` and
+:class:`FrameParser` classes.
+
+To obtain a frame parser one should use the :func:`frame_parser` function.
+
+frame parser
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: frame_parser
+
+
+Frame
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: Frame
+   :members:
+   :member-order: bysource
+
+
+Frame Parser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: FrameParser
+   :members:
+   :member-order: bysource
+
 
 .. _WebSocket: http://tools.ietf.org/html/rfc6455'''
 import os
@@ -49,6 +73,17 @@ class Extension(object):
 
 def frame_parser(version=None, kind=0, extensions=None, protocols=None,
                  pyparser=False):
+    '''Create a new :class:`FrameParser` instance.
+
+    :param version: protocol version, the default is 13
+    :param kind: the kind of parser, and integer between 0 and 3 (check the
+        :class:`FrameParser` documentation for details)
+    :param extensions: not used at the moment
+    :param protocols: not used at the moment
+    :param pyparser: if ``True`` (default ``False``) uses the python frame
+        parser implementation rather than the much faster cython
+        implementation.
+    '''
     version = get_version(version)
     Parser = PyFrameParser if pyparser else FrameParser
     # extensions, protocols

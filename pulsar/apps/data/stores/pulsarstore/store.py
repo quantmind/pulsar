@@ -61,10 +61,10 @@ class PulsarStore(Store):
         return PubSub(self, protocol=protocol)
 
     @in_loop_thread
-    def execute(self, command, *args, **options):
+    def execute(self, *args, **options):
         connection = yield self._pool.connect()
         with connection:
-            result = yield connection.execute(command, *args, **options)
+            result = yield connection.execute(*args, **options)
             coroutine_return(result)
 
     @in_loop_thread

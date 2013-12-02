@@ -102,6 +102,7 @@ class Consumer(pulsar.ProtocolConsumer):
             lambda r: r == b'OK'
         ),
         string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
+        string_keys_to_dict('SMEMBERS SDIFF SINTER SUNION', set),
         {
          'PING': lambda r: r == b'PONG',
          'PUBSUB': pubsub_callback,

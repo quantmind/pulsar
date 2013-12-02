@@ -1,14 +1,14 @@
-'''Pulsar has a thread safe :class:`HttpClient` class for multiple asynchronous
-HTTP requests.
+'''Pulsar ships with a thread safe :class:`HttpClient` class for multiple
+asynchronous HTTP requests.
 
 To get started, one builds a client::
 
     >>> from pulsar.apps import http
     >>> client = http.HttpClient()
 
-and than makes a request::
+and than makes requests, in a coroutine::
 
-    >>> response = http.get('http://www.bbc.co.uk')
+    >>> response = yield http.get('http://www.bbc.co.uk')
 
 
 .. contents::

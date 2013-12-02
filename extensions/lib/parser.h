@@ -244,7 +244,7 @@ string obj_multibulk(PyObject* obj);
 
 inline string list_multibulk(PyObject* args) {
     std::stringstream str;
-    size_t size = PySequence_Fast_GET_SIZE(args);
+    size_t size = PySequence_Size(args);
     str << "*" << size << CRLF;
     for (size_t index=0; index<size; ++index) {
         str << obj_multibulk(PySequence_ITEM(args, index));
@@ -295,10 +295,10 @@ inline string obj_bulk(const string& value) {
             string value(PyString_AS_STRING(o), PyString_GET_SIZE(o));
             Py_DECREF(o);
             return obj_bulk(value);
-        } else if (PyList_Check(obj) || PyTuple_Check(obj)) {
-            return list_multibulk(obj);
         } else if (PyMapping_Check(obj)) {
             return dict_multibulk(obj);
+        } else if (PyIter_Check(obj)) {
+            return list_multibulk(obj);
         } else {
             string value(to_bytes(obj));
             return obj_bulk(value);
@@ -316,10 +316,10 @@ inline string obj_bulk(const string& value) {
             string value(PyBytes_AS_STRING(o), PyBytes_GET_SIZE(o));
             Py_DECREF(o);
             return obj_bulk(value);
-        } else if (PyList_Check(obj) || PyTuple_Check(obj)) {
-            return list_multibulk(obj);
         } else if (PyMapping_Check(obj)) {
             return dict_multibulk(obj);
+        } else if (PyIter_Check(obj)) {
+            return list_multibulk(obj);
         } else {
             string value(to_bytes(obj));
             return obj_bulk(value);

@@ -175,11 +175,10 @@ def run_in_loop_thread(loop, callback, *args, **kwargs):
 
 
 def in_loop(method):
-    '''Decorator to run a method on the event loop of the instance of
-    the bound ``method.
+    '''Decorator to run a method in the event loop of the instance of
+    the bound ``method``.
 
-    The instance must expose the ``_loop`` attribute to use this method,
-    otherwise an :class:`AttributeError` occur.
+    The instance must be an :ref:`async object <async-object>`.
     '''
     def _(self, *args, **kwargs):
         try:
@@ -200,8 +199,7 @@ def in_loop_thread(method):
     This decorator turns ``method`` into a thread-safe asynchronous
     executor.
 
-    The instance must expose the ``_loop`` attribute to use this decorator,
-    in the same way as :func:`in_loop` does.
+    The instance must be an :ref:`async object <async-object>`.
 
     It uses the :func:`run_in_loop_thread` function.
     '''

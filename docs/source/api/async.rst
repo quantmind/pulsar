@@ -126,10 +126,12 @@ In loop thread
 .. autofunction:: in_loop_thread
 
 
-Asynchronous Classes
+.. module:: pulsar.async.fallbacks.defer
+
+Deferred
 ==========================
 
-While :class:`Actor` represents the concurrent side of pulsar,
+While :class:`.Actor` represents the concurrent side of pulsar,
 the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
 functions similar to twisted_.
 

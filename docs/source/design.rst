@@ -12,13 +12,13 @@ previous ones but it is independent on the layers above it. The three layers
 are:
 
 * :ref:`The asynchronous layer <async-layer>` forms the building blocks
-  of asynchronous execution. The main classes here are the :class:`Deferred`
-  and the :class:`EventLoop`.
+  of asynchronous execution. The main classes here are the :class:`.Deferred`
+  and the :class:`.EventLoop`.
 * :ref:`The actor layer <design-actor>` provides parallel execution in
   processes and threads and uses the :ref:`the asynchronous layer <async-layer>`
   as building block.
 * The last layer, built on top of the first two, is based on the higher level
-  :class:`apps.Application` class.
+  :class:`.Application` class.
 
 .. _async-layer:
 
@@ -35,32 +35,53 @@ tutorial.
 Event Loop
 ~~~~~~~~~~~~~~~
 The pulsating heart of the asynchronous framework.
-Pulsar :class:`EventLoop` will be following pep-3156_ guidelines.
+Pulsar :class:`.EventLoop` is implemented following pep-3156_ specification
+and can be interchanged with the ``asyncio`` event loop available in python 3.4.
 
 Deferred
 ~~~~~~~~~~~~
-Designed along the lines of `twisted deferred`_, this class is a callback which
+Designed along the lines of `twisted deferred`_, this is an
+:ref:`async object <async-object>` representing a callback which
 will be put off until later. Pulsar has three types of deferred:
 
-* A vanilla :class:`Deferred`, similar to twisted deferred.
-* A :class:`Task`, a specialised deferred which consume a :ref:`coroutine <coroutine>`.
-* A :class:`MultiDeferred` for managing collections of independent asynchronous
+* A vanilla :class:`.Deferred`, similar to twisted deferred.
+* A :class:`.DeferredTask`, a specialised deferred which consume a :ref:`coroutine <coroutine>`.
+* A :class:`.MultiDeferred` for managing collections of independent asynchronous
   components.
 
 .. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
+
+.. _async-object:
+
+Async Objects
+~~~~~~~~~~~~~~~~~
+Introduced in pulsar 0.8, an asynchronous object is any instance which expose
+the ``_loop`` attribute. This attribute is the :class:`.EventLoop` where
+the instance performs its asynchronous operations, whatever they may be.
+
+For example this is a class for valid async objects::
+
+    from pulsar import get_event_loop, new_event_loop
+
+
+    class SimpleAsyncObject:
+
+        def __init__(self, loop=None):
+            self._loop = loop or get_event_loop() or new_event_loop()
+
 
 .. _design-actor:
 
 Actors
 =================
 
-An :class:`Actor` is the atom of pulsar's concurrent computation,
+An :class:`.Actor` is the atom of pulsar's concurrent computation,
 they do not share state between them, communication is achieved via asynchronous
 :ref:`inter-process message passing <tutorials-messages>`,
 implemented using the standard python socket library. A pulsar actor can be
 process based as well as thread based and can perform one or many activities.
 
-The Theory
+The theory
 ~~~~~~~~~~~~~~~~~
 The actor model is the cornerstone of the Erlang programming language.
 Python has very few implementation and all of them seem quite limited in scope.
@@ -97,15 +118,15 @@ Python has very few implementation and all of them seem quite limited in scope.
 The Arbiter
 ~~~~~~~~~~~~~~~~~
 When using pulsar actor layer, you need to use pulsar in **server state**,
-that is to say, there will be a centralised :class:`Arbiter` controlling the main
-:class:`EventLoop` in the **main thread** of the **master process**.
-The arbiter is a specialised :class:`Actor`
-which control the life of all :class:`Actor` and :class:`Monitor`.
+that is to say, there will be a centralised :class:`.Arbiter` controlling the main
+:class:`.EventLoop` in the **main thread** of the **master process**.
+The arbiter is a specialised :class:`.Actor`
+which control the life of all :class:`.Actor` and :class:`.Monitor`.
 
 .. _design-arbiter:
 
-To access the :class:`Arbiter`, from the main process, one can use the
-:func:`arbiter` high level function::
+To access the :class:`.Arbiter`, from the main process, one can use the
+:func:`.arbiter` high level function::
 
     >>> arbiter = pulsar.arbiter()
     >>> arbiter.running()
@@ -116,7 +137,7 @@ To access the :class:`Arbiter`, from the main process, one can use the
 Implementation
 ~~~~~~~~~~~~~~~~~~
 An actor can be **processed based** (default) or **thread based** and control
-at least one running :class:`EventLoop`.
+at least one running :class:`.EventLoop`.
 To obtain the actor controlling the current thread::
 
     actor = pulsar.get_actor()
@@ -126,8 +147,8 @@ actor takes control of the main thread of that new process. On the other hand,
 thread-based actors always exist in the master process (the same process
 as the arbiter) and control threads other than the main thread.
 
-An actor can control more than one thread if it needs to, via the
-:attr:`Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
+An :class:`.Actor` can control more than one thread if it needs to, via the
+:attr:`~.Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
 The actor :ref:`event loop <eventloop>` is installed in all threads controlled
 by the actor so that when the ``get_event_loop`` function is invoked on
@@ -141,9 +162,10 @@ these threads it returns the event loop of the controlling actor.
     one thread, the **actor io thread**. In the case of process-based actors
     this thread is the main thread of the actor process.
 
-Each actor has its own :attr:`Actor.event_loop`, an instance of :class:`EventLoop`,
-which can be used to register handlers on file descriptors.
-The :attr:`Actor.event_loop` is created just after forking (or after the
+An actor is a :ref:`async object <async-object>` and therefore it has
+a :attr:`~.Actor._loop`
+attribute, which can be used to register handlers on file descriptors.
+The :attr:`.Actor._loop` is created just after forking (or after the
 actor's thread starts for thread-based actors).
 
 .. _iobound:
