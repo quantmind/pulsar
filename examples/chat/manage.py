@@ -59,6 +59,9 @@ if stdnet:
     import pulsar.utils.settings.backend
 
 
+import logging
+logger=logging.getLogger(__name__)
+
 class PubSubClient(pubsub.Client):
 
     def __init__(self, connection):
@@ -91,6 +94,8 @@ of clients of the :attr:`pubsub` handler.'''
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
         '''
+        logger.info('on_message %r' % msg)
+        print 'on_message %r' % msg
         if msg:
             lines = []
             for l in msg.split('\n'):
@@ -111,6 +116,7 @@ class Rpc(rpc.PulsarServerCommands):
 
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
+        print 'rpc_message %r' % message
         self.pubsub.publish('webchat', message)
         return 'OK'
 
@@ -163,6 +169,6 @@ def server(callable=None, name=None, **kwargs):
     name = name or 'wsgi'
     return wsgi.WSGIServer(callable=WebChat(name), name=name, **kwargs)
 
-
 if __name__ == '__main__':  # pragma nocover
+    logging.basicConfig(level=logging.DEBUG)
     server().start()
