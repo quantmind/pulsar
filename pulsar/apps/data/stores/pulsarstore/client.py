@@ -2,8 +2,8 @@ from itertools import chain
 from hashlib import sha1
 
 import pulsar
-from pulsar.utils.structures import mapping_iterator
-from pulsar.utils.pep import native_str, zip, ispy3k
+from pulsar.utils.structures import mapping_iterator, Zset
+from pulsar.utils.pep import native_str, zip, ispy3k, iteritems
 
 from .pubsub import PubSub
 from ...server import COMMANDS_INFO
@@ -82,6 +82,14 @@ def parse_info(response):
     return info
 
 
+def values_to_zset(response, withscores=False, **kw):
+    if withscores:
+        it = iter(response)
+        return Zset(((float(score), value) for value, score in zip(it, it)))
+    else:
+        return response
+
+
 def pubsub_callback(response, subcommand=None):
     if subcommand == 'numsub':
         it = iter(response)
@@ -103,6 +111,10 @@ class Consumer(pulsar.ProtocolConsumer):
         ),
         string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
         string_keys_to_dict('SMEMBERS SDIFF SINTER SUNION', set),
+        string_keys_to_dict('ZINCRBY ZSCORE',
+                            lambda v: float(v) if v is not None else v),
+        string_keys_to_dict('ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
+                            values_to_zset),
         {
          'PING': lambda r: r == b'PONG',
          'PUBSUB': pubsub_callback,
@@ -229,6 +241,89 @@ class Client(object):
             keys = list(keys)
         keys.append(timeout)
         return self.execute_command('BRPOP', *keys)
+
+    # SORTED SETS
+    def zadd(self, name, *args, **kwargs):
+        """
+        Set any number of score, element-name pairs to the key ``name``. Pairs
+        can be specified in two ways:
+
+        As *args, in the form of: score1, name1, score2, name2, ...
+        or as **kwargs, in the form of: name1=score1, name2=score2, ...
+
+        The following example would add four values to the 'my-key' key:
+        redis.zadd('my-key', 1.1, 'name1', 2.2, 'name2', name3=3.3, name4=4.4)
+        """
+        pieces = []
+        if args:
+            if len(args) % 2 != 0:
+                raise vALUEeRROR("ZADD requires an equal number of "
+                                 "values and scores")
+            pieces.extend(args)
+        for pair in iteritems(kwargs):
+            pieces.append(pair[1])
+            pieces.append(pair[0])
+        return self.execute_command('ZADD', name, *pieces)
+
+    def zinterstore(self, des, keys, weights=None, aggregate=None):
+        numkeys = len(keys)
+        pieces = list(keys)
+        if weights:
+            pieces.append(b'WEIGHTS')
+            pieces.extend(weights)
+        if aggregate:
+            pieces.append(b'AGGREGATE')
+            pieces.append(aggregate)
+        return self.execute_command('ZINTERSTORE', des, numkeys, *pieces)
+
+    def zunionstore(self, des, keys, weights=None, aggregate=None):
+        numkeys = len(keys)
+        pieces = list(keys)
+        if weights:
+            pieces.append(b'WEIGHTS')
+            pieces.extend(weights)
+        if aggregate:
+            pieces.append(b'AGGREGATE')
+            pieces.append(aggregate)
+        return self.execute_command('ZUNIONSTORE', des, numkeys, *pieces)
+
+    def zrange(self, key, start, stop, withscores=False):
+        if withscores:
+            return self.execute_command('ZRANGE', key, start, stop,
+                                        b'WITHSCORES', withscores=True)
+        else:
+            return self.execute_command('ZRANGE', key, start, stop)
+
+    def zrangebyscore(self, key, min, max, withscores=False, offset=None,
+                      count=None):
+        pieces = []
+        if withscores:
+            pieces.append(b'WITHSCORES')
+        if offset:
+            pieces.append(b'LIMIT')
+            pieces.append(offset)
+            pieces.append(count)
+        return self.execute_command('ZRANGEBYSCORE', key, min, max, *pieces,
+                                    withscores=withscores)
+
+    def zrevrange(self, key, start, stop, withscores=False):
+        if withscores:
+            return self.execute_command('ZREVRANGE', key, start, stop,
+                                        'WITHSCORES', withscores=True)
+        else:
+            return self.execute_command('ZRANGE', key, start, stop)
+
+    def zrevrangebyscore(self, key, min, max, withscores=False, offset=None,
+                      count=None):
+        pieces = []
+        if withscores:
+            pieces.append(b'WITHSCORES')
+        if offset:
+            pieces.append(b'LIMIT')
+            pieces.append(offset)
+            pieces.append(count)
+        return self.execute_command('ZREVRANGEBYSCORE', key, min, max, *pieces,
+                                    withscores=withscores)
 
     def eval(self, script, keys=None, args=None):
         return self._eval('eval', script, keys, args)

@@ -39,9 +39,6 @@ except ImportError:
 from pulsar.utils.path import Path
 from pulsar.apps import rpc, tasks, wsgi
 
-Path(pulsar.__file__).add2python('stdnet', up=2, down=['python-stdnet'],
-                                 must_exist=False)
-
 TASK_PATHS = ['sampletasks.*']
 
 
@@ -58,7 +55,7 @@ class Rpc(wsgi.LazyWsgi):
     def __init__(self, tqname):
         self.tqname = tqname
 
-    def setup(self):
+    def setup(self, environ):
         # only post allowed by the JSON RPC handler
         request = [wsgi.Router('/', post=RpcRoot(self.tqname))]
         response = [wsgi.GZipMiddleware(200)]

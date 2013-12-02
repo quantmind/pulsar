@@ -988,7 +988,7 @@ class HttpClient(Producer):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, wait=None, **params):
+    def request(self, method, url, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns an :class:`HttpResponse` object.
@@ -1004,7 +1004,7 @@ class HttpClient(Producer):
         :rtype: a :class:`HttpResponse` object.
         '''
         return run_in_loop_thread(
-            self._loop, self._request, method, url, params, wait)
+            self._loop, self._request, method, url, **params)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.
@@ -1066,7 +1066,7 @@ class HttpClient(Producer):
                     raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
 
-    def _request(self,  method, url, params, wait=None):
+    def _request(self,  method, url, wait=None, **params):
         nparams = params.copy()
         nparams.update(((name, getattr(self, name)) for name in
                         self.request_parameters if name not in params))

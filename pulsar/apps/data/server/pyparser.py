@@ -119,29 +119,7 @@ class Parser(object):
         return b''.join(starmap(pack, (args for args, _ in commands)))
 
     #    INTERNALS
-    if ispy3k:
-        def encode(self, value):
-            if isinstance(value, bytes):
-                return value
-            elif isinstance(value, float):
-                value = repr(value)
-            else:
-                value = str(value)
-            return value.encode('utf-8')
-
-    else:   # pragma    nocover
-        def encode(self, value):
-            if isinstance(value, unicode):
-                return value.encode('utf-8')
-            elif isinstance(value, float):
-                return repr(value)
-            else:
-                return str(value)
-
     def _pack(self, args):
-        ltd = (list, tuple, dict)
-        di = dict
-        e = self.encode
         crlf = b'\r\n'
         yield ('*%s\r\n' % len(args)).encode('utf-8')
         for value in args:
@@ -157,9 +135,11 @@ class Parser(object):
                 yield value
                 yield crlf
             elif hasattr(value, 'items'):
-                yield b''.join(self._pack(self._lua_dict(value)))
+                for value in self._pack(self._lua_dict(value)):
+                    yield value
             elif hasattr(value, '__len__'):
-                yield b''.join(self._pack(value))
+                for value in self._pack(value):
+                    yield value
             else:
                 value = str(value).encode('utf-8')
                 yield ('$%s\r\n' % len(value)).encode('utf-8')

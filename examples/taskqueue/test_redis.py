@@ -16,7 +16,6 @@ def redis_pubsub_test(self, app):
     self.assertFalse('name=%s' % app.name in con_str)
 
 
-@unittest.skipUnless(stdnet, 'Requires python-stdnet')
 class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
     #schedule_periodic = False
 
@@ -28,7 +27,6 @@ class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
         redis_pubsub_test(self, app)
 
 
-@unittest.skipUnless(stdnet, 'Requires python-stdnet')
 class TestRedisTaskQueueOnProcess(test_local.TestTaskQueueOnProcess):
 
     @classmethod

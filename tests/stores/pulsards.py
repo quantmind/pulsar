@@ -3,6 +3,7 @@ import binascii
 import pulsar
 from pulsar import new_event_loop
 from pulsar.utils.security import random_string
+from pulsar.utils.structures import Zset
 from pulsar.apps.test import unittest
 from pulsar.apps.data import (KeyValueStore, create_store, redis_parser,
                               ResponseError)
@@ -20,6 +21,19 @@ class RedisCommands(object):
     def randomkey(self):
         return random_string()
 
+    def test_zrange(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
+        yield eq(c.zrange(key, 0, 1), [b'a1', b'a2'])
+        yield eq(c.zrange(key, 1, 2), [b'a2', b'a3'])
+        yield eq(c.zrange(key, 0, 1, withscores=True),
+                 Zset([(1, b'a1'), (2, b'a2')]))
+        yield eq(c.zrange(key, 1, 2, withscores=True),
+                 Zset([(2, b'a2'), (3, b'a3')]))
+
+class d:
     def test_watch(self):
         key1 = self.randomkey()
         key2 = key1 + '2'
@@ -348,7 +362,104 @@ class RedisCommands(object):
         yield eq(c.sunionstore(des, key, key2), 4)
         yield eq(c.smembers(des), set([b'1', b'2', b'3', b'4']))
     ###########################################################################
-    ##    ORDERED SETS
+    ##    SORTED SETS
+    def test_zadd_zcard(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        members = (b'1', b'2', b'3', b'2')
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a2', b'a3'])
+        yield eq(c.zcard(key), 3)
+
+    def test_zcount(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
+        yield eq(c.zcount(key, '-inf', '+inf'), 3)
+        yield eq(c.zcount(key, '(1', 2), 1)
+        yield eq(c.zcount(key, '(1', '(3'), 1)
+        yield eq(c.zcount(key, 1, 3), 3)
+
+    def test_zincrby(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
+        yield eq(c.zincrby(key, 1, 'a2'), 3.0)
+        yield eq(c.zincrby(key, 5, 'a3'), 8.0)
+        yield eq(c.zscore(key, 'a2'), 3.0)
+        yield eq(c.zscore(key, 'a3'), 8.0)
+        yield eq(c.zscore(key, 'blaaa'), None)
+
+    def test_zinterstore_sum(self):
+        des = self.randomkey()
+        key1 = des + '1'
+        key2 = des + '2'
+        key3 = des + '3'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
+        yield eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
+        yield eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
+        yield eq(c.zinterstore(des, (key1, key2, key3)), 2)
+        yield eq(c.zrange(des, 0, -1, withscores=True),
+                 Zset(((8.0, b'a3'), (9.0, b'a1'))))
+
+    def test_zinterstore_max(self):
+        des = self.randomkey()
+        key1 = des + '1'
+        key2 = des + '2'
+        key3 = des + '3'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
+        yield eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
+        yield eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
+        yield eq(c.zinterstore(des, (key1, key2, key3), aggregate='max'), 2)
+        yield eq(c.zrange(des, 0, -1, withscores=True),
+                 Zset(((5.0, b'a3'), (6.0, b'a1'))))
+
+    def test_zinterstore_min(self):
+        des = self.randomkey()
+        key1 = des + '1'
+        key2 = des + '2'
+        key3 = des + '3'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
+        yield eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
+        yield eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
+        yield eq(c.zinterstore(des, (key1, key2, key3), aggregate='min'), 2)
+        yield eq(c.zrange(des, 0, -1, withscores=True),
+                 Zset(((1.0, b'a3'), (1.0, b'a1'))))
+
+    def test_zinterstore_with_weights(self):
+        des = self.randomkey()
+        key1 = des + '1'
+        key2 = des + '2'
+        key3 = des + '3'
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key1, a1=1, a2=2, a3=1), 3)
+        yield eq(c.zadd(key2, a1=2, a2=2, a3=2), 3)
+        yield eq(c.zadd(key3, a1=6, a3=5, a4=4), 3)
+        yield eq(c.zinterstore(des, (key1, key2, key3), weights=(1, 2, 3)), 2)
+        yield eq(c.zrange(des, 0, -1, withscores=True),
+                 Zset(((20.0, b'a3'), (23.0, b'a1'))))
+
+    def test_zrange(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
+        yield eq(c.zrange(key, 0, 1), [b'a1', b'a2'])
+        yield eq(c.zrange(key, 1, 2), [b'a2', b'a3'])
+        yield eq(c.zrange(key, 0, 1, withscores=True),
+                 Zset([(1, b'a1'), (2, b'a2')]))
+        yield eq(c.zrange(key, 1, 2, withscores=True),
+                 Zset([(2, b'a2'), (3, b'a3')]))
 
     ###########################################################################
     ##    CONNECTION

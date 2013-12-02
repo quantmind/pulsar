@@ -1,13 +1,15 @@
 from .skiplist import Skiplist
-from ..pep import iteritems
+from ..pep import iteritems, zip
 
 
 class Zset(object):
     '''Ordered-set equivalent of redis zset.
     '''
-    def __init__(self):
+    def __init__(self, data=None):
         self._sl = Skiplist()
         self._dict = {}
+        if data:
+            self.update(data)
 
     def __repr__(self):
         return repr(self._sl)
@@ -28,6 +30,11 @@ class Zset(object):
         self._sl = Skiplist(((score, member) for member, score
                              in iteritems(state)))
 
+    def __eq__(self, other):
+        if isinstance(other, Zset):
+            return other._dict == self._dict
+        return False
+
     def items(self):
         '''Iterable over ordered score, value pairs of this :class:`zset`
         '''
@@ -43,8 +50,8 @@ class Zset(object):
         '''The score of a given member'''
         return self._dict.get(member, default)
 
-    def count(self, mmin, mmax):
-        raise NotImplementedError
+    def count(self, minval, maxval, include_min=True, include_max=True):
+        return self._sl.count(minval, maxval, include_min, include_max)
 
     def add(self, score, val):
         r = 1
@@ -95,3 +102,46 @@ If found it returns the score of the item removed.'''
 
     def flat(self):
         return self._sl.flat()
+
+    @classmethod
+    def union(cls, zsets, weights, oper):
+        result = None
+        for zset, weight in zip(zsets, weights):
+            if result is None:
+                result = cls()
+                sl = result._sl
+                for score, value in zset._sl:
+                    result.add(score*weight, value)
+            else:
+                for score, value in zset._sl:
+                    score *= weight
+                    existing = sl.score(value)
+                    if existing is not None:
+                        score = oper(score, existing)
+                    result.add(score, value)
+        return result
+
+    @classmethod
+    def inter(cls, zsets, weights, oper):
+        result = None
+        values = None
+        for zset, _ in zip(zsets, weights):
+            if values is None:
+                values = set(zset)
+            else:
+                values.intersection_update(zset)
+        #
+        for zset, weight in zip(zsets, weights):
+            if result is None:
+                result = cls()
+                sl = result._sl
+                for score, value in zset._sl:
+                    if value in values:
+                        result.add(score*weight, value)
+            else:
+                for score, value in zset._sl:
+                    if value in values:
+                        existing = result.score(value)
+                        score = oper((score*weight, existing))
+                        result.add(score, value)
+        return result

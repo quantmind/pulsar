@@ -309,24 +309,17 @@ def create_connection(loop, protocol_factory, host, port, ssl,
                         sock = None
                         continue
                 yield loop.sock_connect(sock, address)
-            except socket.error as exc:
+            except socket.error:
                 if sock is not None:
                     sock.close()
-                exceptions.append(exc)
+                f = Failure(sys.exc_info())
+                f.mute()
+                exceptions.append(f)
             else:
                 break
         else:
-            if len(exceptions) == 1:
-                raise exceptions[0]
-            else:
-                # If they all have the same str(), raise one.
-                model = str(exceptions[0])
-                if all(str(exc) == model for exc in exceptions):
-                    raise exceptions[0]
-                # Raise a combined exception so the user can see all
-                # the various error messages.
-                raise socket.error('Multiple exceptions: {}'.format(
-                    ', '.join(str(exc) for exc in exceptions)))
+            if exceptions:
+                exceptions[0].throw()
 
     elif sock is None:
         raise ValueError(
@@ -431,8 +424,8 @@ def sock_connect(loop, sock, address, future=None):
                 # Jump to the except clause below.
                 raise socket.error(err, 'Connect call failed')
             future.callback(None)
-    except Exception as exc:
-        return future.callback(exc)
+    except Exception:
+        return future.callback(sys.exc_info())
 
 
 def sock_accept_connection(loop, protocol_factory, sock, ssl):

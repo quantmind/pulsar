@@ -258,6 +258,9 @@ class Storage(object):
         self.hash_type = Dict
         self.list_type = Deque
         self.zset_type = Zset
+        self.zset_aggregate = {b'min': min,
+                               b'max': max,
+                               b'sum': sum}
         self._type_event_map = {bytearray: self.NOTIFY_STRING,
                                 self.hash_type: self.NOTIFY_HASH,
                                 self.list_type: self.NOTIFY_LIST,
@@ -1476,13 +1479,22 @@ class Storage(object):
         elif not isinstance(value, self.zset_type):
             client.reply_wrongtype()
         else:
+            min_value, max_value = request[2], request[3]
+            include_min = include_max = True
+            if min_value and min_value[0] == 40:
+                include_min = False
+                min_value = min_value[1:]
+            if max_value and max_value[0] == 40:
+                include_max = False
+                max_value = max_value[1:]
             try:
-                mmin = float(request[2])
-                mmax = float(request[3])
+                mmin = float(min_value)
+                mmax = float(max_value)
             except Exception:
                 client.reply_error(self.INVALID_SCORE)
             else:
-                client.reply_int(value.count(mmin, mmax))
+                client.reply_int(value.count(mmin, mmax,
+                                             include_min, include_max))
 
     @command('Sorted sets', True)
     def zincrby(self, client, request, N):
@@ -1505,6 +1517,14 @@ class Storage(object):
             self._signal(self.NOTIFY_ZSET, db, request[0], key, 1)
             client.reply_bulk(str(score).encode('utf-8'))
 
+    @command('Sorted sets', True)
+    def zinterstore(self, client, request, N):
+        self._zsetoper(client, request, N)
+
+    @command('Sorted sets', True)
+    def zunionstore(self, client, request, N):
+        self._zsetoper(client, request, N)
+
     @command('Sorted sets')
     def zrange(self, client, request, N):
         check_input(request, N < 3 or N > 4)
@@ -1521,7 +1541,7 @@ class Storage(object):
             if N == 4:
                 if request[4].lower() == b'withscores':
                     result = []
-                    [result.extend(vs) for vs in
+                    [result.extend((value, score)) for score, value in
                      value.range(start, end, scores=True)]
                 else:
                     return client.reply_error(self.SYNTAX_ERROR)
@@ -1562,6 +1582,22 @@ class Storage(object):
                 db.pop()
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
+
+    @command('Sorted sets')
+    def zscore(self, client, request, N):
+        check_input(request, N != 2)
+        key = request[1]
+        db = client.db
+        value = db.get(key)
+        if value is None:
+            client.reply_bulk(None)
+        elif not isinstance(value, self.zset_type):
+            client.reply_wrongtype()
+        else:
+            score = value.score(request[2], None)
+            if score is not None:
+                score = str(score).encode('utf-8')
+            client.reply_bulk(score)
 
     ###########################################################################
     ##    PUBSUB COMMANDS
@@ -2105,6 +2141,63 @@ class Storage(object):
                 client.reply_zero()
         else:
             client.reply_multi_bulk(result)
+
+    def _zsetoper(self, client, request, N):
+        check_input(request, N < 3)
+        db = client.db
+        cmnd = request[0]
+        try:
+            des = request[1]
+            try:
+                numkeys = int(request[2])
+            except Exception:
+                numkeys = 0
+            if numkeys <= 0:
+                raise ValueError('at least 1 input key is needed for '
+                                 'ZUNIONSTORE/ZINTERSTORE')
+            sets = []
+            for key in request[3:3+numkeys]:
+                value = db.get(key)
+                if value is None:
+                    value = self.zset_type()
+                elif not isinstance(value, self.zset_type):
+                    return client.reply_wrongtype()
+                sets.append(value)
+            if len(sets) != numkeys:
+                raise ValueError('numkeys does not match number of sets')
+            op = set((b'weights', b'aggregate'))
+            request = request[3+numkeys:]
+            weights = None
+            aggregate = sum
+            while request:
+                name = request[0].lower()
+                if name in op:
+                    op.discard(name)
+                    if name == b'weights':
+                        weights = [float(v) for v in request[1:1+numkeys]]
+                        request = request[1+numkeys:]
+                    elif len(request) > 1:
+                        aggregate = self.zset_aggregate.get(request[1])
+                        request = request[2:]
+                else:
+                    raise ValueError(self.SYNTAX_ERROR)
+            if not aggregate:
+                raise ValueError(self.SYNTAX_ERRO)
+            if weights is None:
+                weights = [1]*numkeys
+            elif len(weights) != numkeys:
+                raise ValueError(self.SYNTAX_ERROR)
+        except Exception as e:
+            return client.reply_error(str(e))
+        if cmnd == b'zunionstore':
+            result = self.zset_type.union(sets, weights, aggregate)
+        else:
+            result = self.zset_type.inter(sets, weights, aggregate)
+        if db.pop(des) is not None:
+            self._signal(self.NOTIFY_GENERIC, db, 'del', des, 1)
+        db._data[des] = result
+        self._signal(self.NOTIFY_ZSET, db, cmnd, des, len(result))
+        client.reply_int(len(result))
 
     def _info(self):
         keyspace = {}

@@ -13,7 +13,8 @@ http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 import sys
 from functools import partial
 
-from pulsar import Failure, multi_async, maybe_failure
+from pulsar import (Failure, multi_async, maybe_failure, in_loop_thread,
+                    coroutine_return)
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -88,8 +89,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 
 class JsonCall:
-
-    dlots = ('_client', '_name')
+    slots = ('_client', '_name')
 
     def __init__(self, client, name):
         self._client = client
@@ -198,30 +198,25 @@ usage is simple::
         func = getattr(self, func)
         return multi_async((func(*args, **kwargs) for t in range(times)))
 
+    @in_loop_thread
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')
-        resp = self.http.post(self.url, data=body)
+        resp = yield self._http._request('POST', self._url, data=body)
         if self._full_response:
-            return resp
-        res = resp.on_finished.add_callback(self._end_call)
-        return res.result if self.http.force_sync else res
-
-    def _end_call(self, resp):
-        content = resp.decode_content()
-        if resp.is_error:
-            if 'error' in content:
-                return self.loads(content)
-            else:
-                resp.raise_for_status()
+            coroutine_return(resp)
         else:
-            return self.loads(content)
+            content = resp.decode_content()
+            if resp.is_error:
+                if 'error' not in content:
+                    resp.raise_for_status()
+            coroutine_return(self.loads(content))
 
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()
         params = self.get_params(*args, **kwargs)
         data = {'method': func_name, 'params': params, 'id': id,
-                'jsonrpc': self.__version}
+                'jsonrpc': self._version}
         return data
 
     def get_params(self, *args, **kwargs):
@@ -230,7 +225,7 @@ usage is simple::
         Mixing positional and named parameters in one
         call is not possible.
         '''
-        kwargs.update(self.__data)
+        kwargs.update(self._data)
         if args and kwargs:
             raise ValueError('Cannot mix positional and named parameters')
         if args:

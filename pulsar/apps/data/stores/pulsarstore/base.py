@@ -362,6 +362,7 @@ def parse_store_url(url):
         user, password = None, None
     if ':' in host:
         host = tuple(host.split(':'))
+        host = host[0], int(host[1])
     return scheme, host, params
 
 
