@@ -116,7 +116,7 @@ class Rpc(rpc.PulsarServerCommands):
 
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
-        print 'rpc_message %r' % message
+        logger.info('prc_message %r' % message)
         self.pubsub.publish('webchat', message)
         return 'OK'
 
