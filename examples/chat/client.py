@@ -12,8 +12,12 @@ class ChatClient(object):
         self.proxy = rpc.JsonProxy('http://127.0.0.1:8060/rpc')
 
     def say_hello(self):
-        self.proxy.message('Hi from rpc %s' % datetime.datetime.now()).bind(logger.info, Exception)
+        self.proxy.message('Hi from rpc %s' % datetime.datetime.now()).bind(self.hello_reply)
         self.actor.event_loop.call_later(1, self.say_hello)
+    
+    def hello_reply(self, result):
+        logger.info('result: %s' % result.decode_content())
+        return result
 
 def start(actor):
     client=ChatClient(actor)
