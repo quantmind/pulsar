@@ -40,7 +40,7 @@ class TestWebChat(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.app.name)
 
     def test_home(self):
-        response = yield self.http.get(self.uri).on_finished
+        response = yield self.http.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], 'text/html')
 
