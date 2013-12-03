@@ -5,7 +5,7 @@ from functools import partial
 from pulsar import HttpException, ProtocolError, ProtocolConsumer, maybe_async
 from pulsar.utils.pep import to_bytes, native_str
 from pulsar.utils.httpurl import DEFAULT_CHARSET
-from pulsar.utils.websocket import frame_parser
+from pulsar.utils.websocket import frame_parser, parse_close
 from pulsar.apps import wsgi
 
 from . import extensions
@@ -26,7 +26,7 @@ class WebSocket(wsgi.Router):
 
     Once the handshake is succesful, the protocol consumer
     is upgraded to :class:`WebSocketProtocol` and messages are handled by
-    the :attr:`handle` attribute, an instance of :class:`WS`.
+    the :attr:`handle` attribute, an instance of :class:`.WS`.
 
     See http://tools.ietf.org/html/rfc6455 for the websocket server protocol
     and http://www.w3.org/TR/websockets/ for details on the JavaScript
@@ -53,16 +53,14 @@ class WebSocket(wsgi.Router):
         if not headers_parser:
             raise HttpException(status=404)
         headers, parser = headers_parser
-        request.response.status_code = 101
-        request.response.content = b''
-        request.response.headers.update(headers)
-        factory = partial(WebSocketProtocol, request, self.handle, parser)
+        response = request.response
+        response.status_code = 101
+        response.content = b''
+        response.headers.update(headers)
         connection = request.environ['pulsar.connection']
+        factory = partial(WebSocketProtocol, request, self.handle, parser)
         connection.upgrade(factory)
         return request.response
-
-    def upgrade(self, connection,):
-        connection.upgrade.current_consumer
 
     def handle_handshake(self, environ):
         connections = environ.get(
@@ -120,24 +118,27 @@ class WebSocket(wsgi.Router):
 
 
 class WebSocketProtocol(ProtocolConsumer):
-    '''WebSocket protocol for servers and clients.
+    '''A :class:`.ProtocolConsumer` for websocket servers and clients.
 
     .. attribute:: handshake
 
-    The original handshake response/request.
-
-    For a server-side :class:`WebSocketProtocol` the handshake is a
-    :class:`.HttpRequest`, for client-side it is a :class:
+        The original handshake response/request.
 
     .. attribute:: handler
 
-    A websocket handler :class:`WS`.
+        A websocket handler :class:`.WS`.
 
     .. attribute:: parser
 
-    A websocket parser.
+        A websocket parser.
 
+    .. attribute:: close_reason
+
+        A tuple of (``code``, ``reason``) or ``None``.
+
+        Available when a close frame is received.
     '''
+    close_reason = None
     def __init__(self, handshake, handler, parser):
         super(WebSocketProtocol, self).__init__()
         self.bind_event('post_request', self._shut_down)
@@ -153,8 +154,10 @@ class WebSocketProtocol(ProtocolConsumer):
         frame = self.parser.decode(data)
         while frame:
             if frame.is_close:
-                # done with this, call finished method.
-                self.finished()
+                try:
+                    self.close_reason = parse_close(frame.body)
+                finally:
+                    self._connection.close()
                 break
             if frame.is_message:
                 maybe_async(self.handler.on_message(self, frame.body))
@@ -174,20 +177,22 @@ class WebSocketProtocol(ProtocolConsumer):
         if opcode == 8:
             self.finish()
 
-    def ping(self, body=None):
+    def ping(self, message=None):
         '''Write a ping ``frame``.
         '''
-        self.transport.write(self.parser.ping(msg))
+        self.transport.write(self.parser.ping(message))
 
-    def pong(self, body=None):
+    def pong(self, message=None):
         '''Write a pong ``frame``.
         '''
-        self.transport.write(self.parser.pong(msg))
+        self.transport.write(self.parser.pong(message))
+
+    def write_close(self, code=None):
+        '''Write a close ``frame`` with ``code``.
+        '''
+        self.transport.write(self.parser.close(code))
+        self._connection.close()
 
     def _shut_down(self, result):
-        # Callback for _post_request. Must return the result
         self.handler.on_close(self)
-        connection = self._connection
-        if connection:
-            connection.close()
         return result

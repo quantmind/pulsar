@@ -416,7 +416,7 @@ class HttpServerResponse(ProtocolConsumer):
             wsgi_iter = self.wsgi_callable(environ, self.start_response)
             yield self._async_wsgi(wsgi_iter)
         except IOError:     # client disconnected, end this connection
-            self.finished()
+            self.finish()
         except Exception:
             exc_info = sys.exc_info()
         if exc_info:

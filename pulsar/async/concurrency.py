@@ -254,7 +254,7 @@ class MonitorMixin(object):
         '''
         actor.state = ACTOR_STATES.RUN
         actor.bind_event('start', self.periodic_task, actor.stop)
-        actor.fire_event('start')
+        return actor.fire_event('start')
 
     @property
     def pid(self):

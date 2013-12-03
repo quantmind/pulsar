@@ -7,10 +7,10 @@ as redis does.
 To run a stand alone server create a script with the following code::
 
 
-    from pulsar.apps.data import KeyValueStore
+    from pulsar.apps.data import PulsarDS
 
     if __name__ == '__main__':
-        KeyValueStore().start()
+        PulsarDS().start()
 
 
 More information on the :ref:`pulsar data store example <tutorials-pulsards>`.
@@ -22,7 +22,7 @@ Implementation
 Key Value Store Application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: KeyValueStore
+.. autoclass:: PulsarDS
    :members:
    :member-order: bysource
 
@@ -91,10 +91,10 @@ class RedisParserSetting(Global):
         return PyRedisParser if self.value else RedisParser
 
 
-class KeyValuePairSetting(pulsar.Setting):
+class PulsarDsSetting(pulsar.Setting):
     virtual = True
-    app = 'keyvaluestore'
-    section = "Key-value pair server"
+    app = 'pulsards'
+    section = "Pulsar data store server"
 
 
 def validate_list_of_pairs(val):
@@ -113,7 +113,7 @@ def validate_list_of_pairs(val):
 
 ###############################################################################
 ##    CONFIGURATION PARAMETERS
-class KeyValueDatabases(KeyValuePairSetting):
+class KeyValueDatabases(PulsarDsSetting):
     name = "key_value_databases"
     flags = ["--key-value-databases"]
     type = int
@@ -121,14 +121,14 @@ class KeyValueDatabases(KeyValuePairSetting):
     desc = 'Number of databases for the key value store.'
 
 
-class KeyValuePassword(KeyValuePairSetting):
+class KeyValuePassword(PulsarDsSetting):
     name = "key_value_password"
     flags = ["--key-value-password"]
     default = ''
     desc = 'Optional password for the database.'
 
 
-class KeyValueSave(KeyValuePairSetting):
+class KeyValueSave(PulsarDsSetting):
     name = "key_value_save"
     default = [(900, 1), (300, 10), (60, 10000)]
     validator = validate_list_of_pairs
@@ -145,10 +145,10 @@ class KeyValueSave(KeyValuePairSetting):
     '''
 
 
-class KeyValueFileName(KeyValuePairSetting):
+class KeyValueFileName(PulsarDsSetting):
     name = "key_value_filename"
     flags = ["--key-value-filename"]
-    default = 'pulsarkv.rdb'
+    default = 'pulsards.rdb'
     desc = 'The filename where to dump the DB.'
 
 
@@ -166,13 +166,13 @@ class TcpServer(pulsar.TcpServer):
         return info
 
 
-class KeyValueStore(SocketServer):
+class PulsarDS(SocketServer):
     '''A :class:`.SocketServer` which serve a key-value store similar to redis.
     '''
-    name = 'keyvaluestore'
+    name = 'pulsards'
     cfg = pulsar.Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,
                         keep_alive=0,
-                        apps=['socket', 'keyvaluestore'])
+                        apps=['socket', 'pulsards'])
 
     def server_factory(self, *args, **kw):
         return TcpServer(self.cfg, *args, **kw)
@@ -184,7 +184,7 @@ class KeyValueStore(SocketServer):
         cfg = self.cfg
         workers = min(1, cfg.workers)
         cfg.set('workers', workers)
-        return super(KeyValueStore, self).monitor_start(monitor)
+        return super(PulsarDS, self).monitor_start(monitor)
 
 
 ###############################################################################

@@ -30,13 +30,15 @@ class Echo(ws.WS):
     def on_message(self, websocket, msg):
         if msg.startswith('send ping '):
             websocket.ping(msg[10:])
+        elif msg.startswith('send close '):
+            websocket.write_close(int(msg[11:]))
         else:
             websocket.write(msg)
 
 
 class Site(wsgi.LazyWsgi):
 
-    def setup(self):
+    def setup(self, environ):
         return wsgi.WsgiHandler([wsgi.Router('/', get=self.home),
                                  ws.WebSocket('/data', Graph()),
                                  ws.WebSocket('/echo', Echo())])

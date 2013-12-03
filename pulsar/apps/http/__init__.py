@@ -791,7 +791,9 @@ class HttpPool(Pool):
     def _put(self, conn):
         if not self._closed:
             response = conn._current_consumer
-            if response and response.headers.has('connection', 'keep-alive'):
+            if (response and
+                    response.headers.has('connection', 'keep-alive') and
+                    response.status_code != 101):
                 conn._current_consumer = None
                 try:
                     self._queue.put_nowait(conn)
@@ -840,6 +842,10 @@ class HttpClient(Producer):
 
         The size of a pool of connection for a given host.
 
+    .. attribute:: connection_pools
+
+        Dictionary of connection pools for different hosts
+
     .. attribute:: DEFAULT_HTTP_HEADERS
 
         Default headers for this :class:`HttpClient`
@@ -850,10 +856,12 @@ class HttpClient(Producer):
     consumer_factory = HttpResponse
     allow_redirects = False
     max_redirects = 10
-    connection_pool = HttpPool
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
+    connection_pool = HttpPool
+    '''Connection :class:`.Pool` factory
+    '''
     client_version = pulsar.SERVER_SOFTWARE
     '''String for the ``User-Agent`` header.'''
     version = 'HTTP/1.1'

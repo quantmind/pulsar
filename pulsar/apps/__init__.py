@@ -51,7 +51,7 @@ from hashlib import sha1
 from inspect import getfile
 
 import pulsar
-from pulsar import get_actor, EventHandler, coroutine_return, Config
+from pulsar import get_actor, EventHandler, coroutine_return, Config, Event
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import pickle
 from pulsar.utils.internet import (parse_connection_string,
@@ -59,7 +59,10 @@ from pulsar.utils.internet import (parse_connection_string,
 from pulsar.utils.log import LocalMixin, local_property
 from pulsar.utils.importer import import_module
 
-__all__ = ['Application', 'MultiApp', 'get_application']
+__all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
+
+
+when_monitor_start = []
 
 
 def get_application(name):
@@ -91,6 +94,8 @@ def monitor_start(self):
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
         self.bind_event('stop', monitor_stop)
+        for callback in when_monitor_start:
+            yield callback(self)
         self.monitor_task = lambda: app.monitor_task(self)
         yield app.monitor_start(self)
         if not self.cfg.workers:

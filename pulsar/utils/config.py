@@ -874,6 +874,14 @@ class Coverage(Global):
         """
 
 
+class DataStore(Global):
+    name = 'data_store'
+    flags = ['--data_store']
+    meta = "CONNECTION STRING"
+    default = ''
+    desc = '''Default data store'''
+
+
 ############################################################################
 ##    Worker Processes
 section_docs['Worker Processes'] = '''

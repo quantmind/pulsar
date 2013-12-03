@@ -35,9 +35,25 @@ from .pep import ispy3k, range, to_bytes
 from .exceptions import ProtocolError
 
 try:
-    from .lib import FrameParser
+    from .lib import FrameParser, CLOSE_CODES
 except:     # pragma    nocover
     FrameParser = None
+
+    CLOSE_CODES = {
+        1000: "OK",
+        1001: "going away",
+        1002: "protocol error",
+        1003: "unsupported type",
+        # 1004: - (reserved)
+        # 1005: no status code (internal)
+        # 1006: connection closed abnormally (internal)
+        1007: "invalid data",
+        1008: "policy violation",
+        1009: "message too big",
+        1010: "extension required",
+        1011: "unexpected error",
+        # 1015: TLS failure (internal)
+    }
 
 
 DEFAULT_VERSION = 13
@@ -138,11 +154,11 @@ class Frame:
 
     @property
     def is_ping(self):
-        return self._opcode == 8
+        return self._opcode == 9
 
     @property
     def is_pong(self):
-        return self._opcode == 8
+        return self._opcode == 10
 
 
 class PyFrameParser(object):
@@ -207,8 +223,10 @@ class PyFrameParser(object):
         '''return a `pong` :class:`Frame`.'''
         return self.encode(body, opcode=0xA)
 
-    def close(self, body=None):
+    def close(self, code=None):
         '''return a `close` :class:`Frame`.'''
+        code = code or 1000
+        body = pack('!H', code) + CLOSE_CODES.get(code, '').encode('utf-8')
         return self.encode(body, opcode=0x8)
 
     def continuation(self, body=None, final=True):
@@ -363,6 +381,20 @@ class PyFrameParser(object):
         chunk = bytes(self.buffer[:length])
         self.buffer = self.buffer[length:]
         return chunk
+
+
+def parse_close(data):
+    length = len(data)
+    if length == 0:
+        return 1005, ''
+    elif length == 1:
+        raise ProtocolError("Close frame too short")
+    else:
+        code, = unpack('!H', data[:2])
+        if not (code in CLOSE_CODES or 3000 <= code < 5000):
+            raise ProtocolError("Invalid status code for websocket")
+        reason = data[2:].decode('utf-8')
+        return code, reason
 
 
 if FrameParser is None:     # pragma    nocover

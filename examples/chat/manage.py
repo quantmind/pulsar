@@ -45,24 +45,16 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.apps import coroutine_return
+from pulsar import get_actor, coroutine_return
 from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
-from pulsar.apps.data import create_store, start_store, PubSubClient
+from pulsar.apps.data import (create_store, start_store, PubSubClient,
+                              DEFAULT_PULSAR_STORE_ADDRESS)
 from pulsar.utils.system import json
 from pulsar.utils.pep import to_string
 
 CHAT_DIR = os.path.dirname(__file__)
-
-
-class BackendServer(pulsar.Setting):
-    app ='chat_example'
-    name = 'pubsub_server'
-    flags = ['--pubsub_server']
-    meta = "CONNECTION STRING"
-    default = 'pulsar://127.0.0.1:0'
-    desc = '''Connection string to a pubsub server'''
 
 
 class ChatClient(PubSubClient):
@@ -150,7 +142,7 @@ class WebChat(LazyWsgi):
         '''
         cfg = environ['pulsar.cfg']
         loop = environ['pulsar.connection']._loop
-        self.store = create_store(cfg.pubsub_server, loop=loop)
+        self.store = create_store(cfg.data_store, loop=loop)
         pubsub = self.store.pubsub(protocol=Protocol())
         channel = '%s_webchat' % self.name
         pubsub.subscribe(channel)
@@ -165,20 +157,16 @@ class WebChat(LazyWsgi):
         return request.response
 
 
-def start_data_store(server):
-    store = yield start_store(server.cfg.pubsub_server)
-    server.cfg.set('pubsub_server', store.dns)
-    coroutine_return(server)
-
-
-def server(callable=None, name=None, cfg=None, **params):
+def server(callable=None, name=None, data_store=None, **params):
     name = name or 'wsgi'
-    # Include the configuration
-    cfg = pulsar.Config(apps=['socket', 'wsgi', 'chat_example'],
-                        server_software=pulsar.SERVER_SOFTWARE)
-    server = WSGIServer(callable=WebChat(name), name=name, cfg=cfg, **params)
-    server.bind_event('start', start_data_store)
-    return server
+    if not data_store:
+        actor = get_actor()
+        if actor:
+            data_store = actor.cfg.data_store
+        if not data_store:
+            data_store = 'pulsar://%s/3' % DEFAULT_PULSAR_STORE_ADDRESS
+    return WSGIServer(callable=WebChat(name), name=name,
+                      data_store=data_store, **params)
 
 
 if __name__ == '__main__':  # pragma nocover

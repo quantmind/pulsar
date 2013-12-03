@@ -32,14 +32,6 @@ API
 
 .. _websocket-middleware:
 
-WebSocket
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: WebSocket
-   :members:
-   :member-order: bysource
-
-
 .. _websocket-handler:
 
 WebSocket handler
@@ -49,6 +41,14 @@ WebSocket handler
    :members:
    :member-order: bysource
 
+.. module:: pulsar.apps.ws.websocket
+
+WebSocket
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: WebSocket
+   :members:
+   :member-order: bysource
 
 WebSocket protocol
 ~~~~~~~~~~~~~~~~~~~~
@@ -65,9 +65,9 @@ class WS(object):
     '''A web socket handler for both servers and clients.
 
     It implements the asynchronous message passing for a
-    :class:`WebSocketProtocol`.
+    :class:`.WebSocketProtocol`.
     On the server, the communication is started by the
-    :class:`WebSocket` middleware after a successful handshake.
+    :class:`.WebSocket` middleware after a successful handshake.
 
     Override :meth:`on_message` to handle incoming string messages and
     :meth:`on_bytes` to handle incoming ``bytes`` messages.
@@ -76,7 +76,7 @@ class WS(object):
     specific tasks when the websocket is opened or closed.
 
     These methods accept as first parameter the
-    :class:`WebSocketProtocol` created during the handshake.
+    :class:`.WebSocketProtocol` created during the handshake.
     '''
     def on_open(self, websocket):
         '''Invoked when a new ``websocket`` is opened.
@@ -97,22 +97,18 @@ class WS(object):
         '''Handles incoming bytes.'''
         pass
 
-    def on_ping(self, websocket, body):
-        '''Handle incoming ping ``Frame``.'''
-        websocket.pong(body)
+    def on_ping(self, websocket, message):
+        '''Handle incoming ping ``message``.
+
+        By default it writes back the message as a ``pong`` frame.
+        '''
+        websocket.pong(message)
 
     def on_pong(self, websocket, body):
-        '''Handle incoming pong ``Frame``.'''
+        '''Handle incoming pong ``message``.'''
         pass
 
     def on_close(self, websocket):
-        """Invoked when the WebSocket is closed."""
+        """Invoked when the ``websocket`` is closed.
+        """
         pass
-
-    def pong(self, websocket, body=None):
-        '''Return a ``pong`` frame.'''
-        return websocket.parser.pong(body)
-
-    def ping(self, websocket, body=None):
-        '''Return a ``ping`` frame.'''
-        return websocket.parser.ping(body)

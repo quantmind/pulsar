@@ -7,7 +7,7 @@ from pulsar.utils.internet import nice_address, format_address
 
 from .defer import multi_async, log_failure, in_loop, coroutine_return
 from .events import EventHandler
-from .access import asyncio, logger
+from .access import asyncio, AsyncObject
 
 
 __all__ = ['ProtocolConsumer',
@@ -20,7 +20,7 @@ __all__ = ['ProtocolConsumer',
 BIG = 2**31
 
 
-class ProtocolConsumer(EventHandler):
+class ProtocolConsumer(EventHandler, AsyncObject):
     '''The consumer of data for a server or client :class:`Connection`.
 
     It is responsible for receiving incoming data from an end point via the
@@ -103,18 +103,9 @@ class ProtocolConsumer(EventHandler):
 
     @property
     def on_finished(self):
-        '''A :class:`Deferred` called once the request is done.
-
-        A shortcut for ``self.event('post_request')``.
+        '''The ``post_request`` one time event.
         '''
         return self.event('post_request')
-
-    @property
-    def has_finished(self):
-        '''``True`` if consumer has finished consuming data.
-
-        This is when the ``finish`` event has been fired.'''
-        return bool(self.event('post_request').fired())
 
     def connection_made(self, connection):
         '''Called by a :class:`Connection` when it starts using this consumer.
@@ -169,33 +160,14 @@ class ProtocolConsumer(EventHandler):
         if conn._producer:
             p = getattr(conn._producer, '_requests_processed', 0)
             conn._producer._requests_processed = p + 1
+        self.bind_event('post_request', self._finished, self._finished)
         self._request = request
         self.fire_event('pre_request')
         if self._request is not None:
             try:
                 self.start_request()
             except Exception:
-                #TODO: should we abort the transport here?
                 self.finished(sys.exc_info())
-
-    def finished(self, result=None):
-        '''Call this method when done with this :class:`ProtocolConsumer`.
-
-        fires the ``post_request`` event and removes ``self`` from the
-        :attr:`connection`.
-
-        :param result: the positional parameter passed to the ``post_request``
-            event handler.
-        :return: whatever is returned by the ``:meth:`EventHandler.fire_event`
-            method (usually ``self`` is the input ``result`` is ``None``,
-            otherwise the input ``result``)
-        '''
-        result = self.fire_event('post_request', result)
-        c = self._connection
-        if c and c._current_consumer is self:
-            c._current_consumer = None
-            c.current_consumer()
-        return result
 
     def connection_lost(self, exc):
         '''Called by the :attr:`connection` when the transport is closed.
@@ -204,6 +176,13 @@ class ProtocolConsumer(EventHandler):
         to handle the potential exception ``exc``.'''
         log_failure(exc)
         return self.finished(exc)
+
+    def finished(self, exc=None):
+        '''Fire the ``post_request`` event if it wasn't already fired.
+        '''
+        if not self.event('post_request').fired():
+            return self.fire_event('post_request', exc)
+        return exc
 
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke
@@ -217,8 +196,14 @@ class ProtocolConsumer(EventHandler):
         self.fire_event('data_processed', data=data)
         return result
 
+    def _finished(self, result):
+        c = self._connection
+        if c and c._current_consumer is self:
+            c._current_consumer = None
+        return result
 
-class Protocol(EventHandler, asyncio.Protocol):
+
+class Protocol(EventHandler, asyncio.Protocol, AsyncObject):
     '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`.
 
     A :class:`Protocol` is an :class:`.EventHandler` which has
@@ -306,11 +291,6 @@ class Protocol(EventHandler, asyncio.Protocol):
         '''``True`` if the :attr:`transport` is closed.'''
         return self._transport.closing if self._transport else True
 
-    @property
-    def logger(self):
-        '''The python logger for this connection.'''
-        return logger(self._loop)
-
     def close(self, async=True, exc=None):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
@@ -376,6 +356,10 @@ class Connection(Protocol):
     :class:`.SocketStreamTransport`
     and a :class:`ProtocolConsumer`. It routes data arriving from the
     :class:`.SocketStreamTransport` to the :meth:`current_consumer`.
+
+    .. attribute:: _consumer_factory
+
+        A factory of :class:`.ProtocolConsumer`.
     '''
     _current_consumer = None
 
@@ -392,7 +376,7 @@ class Connection(Protocol):
         method.
         '''
         if self._current_consumer is None and self._consumer_factory:
-            self.set_consumer(self._consumer_factory())
+            self.set_consumer(self._build_consumer())
         return self._current_consumer
 
     def set_consumer(self, consumer):
@@ -429,7 +413,7 @@ class Connection(Protocol):
             else:
                 log_failure(exc)
 
-    def upgrade(self, consumer_factory=None, build_consumer=False):
+    def upgrade(self, consumer_factory):
         '''Upgrade the :func:`consumer_factory` callable.
 
         This method can be used when the protocol specification changes
@@ -444,18 +428,10 @@ class Connection(Protocol):
             Default ``False``.
         :return: the new consumer if ``build_consumer`` is ``True``.
         '''
+        self._consumer_factory = consumer_factory
         consumer = self._current_consumer
-        if consumer and not consumer.event('post_request').done():
-            assert consumer.event('pre_request').done(), "pre_request not done"
-            # so that post request won't be fired when the consumer finishes
-            consumer.silence_event('post_request')
-            self._processed -= 1
-            consumer_factory = consumer_factory or self._consumer_factory
-            self._consumer_factory = partial(self._upgrade, consumer_factory,
-                                             consumer)
-            if build_consumer:
-                consumer.finished()
-                return self._current_consumer
+        if consumer:
+            consumer.bind_event('post_request', self._upgrade)
 
     def info(self):
         info = super(Connection, self).info()
@@ -463,18 +439,19 @@ class Connection(Protocol):
         connection.update({'request_processed': self._processed})
         return info
 
-    def _upgrade(self, consumer_factory, old_consumer):
-        # A factory of protocol for an upgrade of an existing protocol consumer
-        # which didn't have the post_request event fired.
+    def _build_consumer(self):
+        consumer = self._consumer_factory()
         if self._producer:
-            consumer = self._producer.build_consumer(consumer_factory)
-        else:
-            consumer = consumer_factory()
-        consumer.chain_event(old_consumer, 'post_request')
+            consumer.copy_many_times_events(self._producer)
+        return consumer
+
+    def _upgrade(self, response):
+        consumer = self._build_consumer()
+        self.set_consumer(consumer)
         return consumer
 
 
-class Producer(EventHandler):
+class Producer(EventHandler, AsyncObject):
     '''An Abstract :class:`EventHandler` class for all producers of
     connections.
     '''
@@ -542,7 +519,6 @@ class TcpServer(Producer):
         self._max_connections = max_connections
         self._keep_alive = keep_alive
         self._concurrent_connections = set()
-        self.logger = logger(loop)
 
     def __repr__(self):
         return '%s %s' % (self.__class__.__name__, self.address)

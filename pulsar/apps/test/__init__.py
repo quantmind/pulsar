@@ -306,7 +306,7 @@ import sys
 import pulsar
 from pulsar import EventHandler, maybe_failure, multi_async, Failure
 from pulsar.apps import tasks
-from pulsar.apps.data import KeyValueStore, create_store
+from pulsar.apps.data import PulsarDS, create_store
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
 from pulsar.utils.pep import default_timer, to_string
@@ -553,9 +553,9 @@ class TestSuite(tasks.TaskQueue):
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
         # Create a datastore for this test suite
-        server = KeyValueStore(bind='127.0.0.1:0', workers=0,
-                              key_value_save=[],
-                              name='%s_store' % self.name)
+        server = PulsarDS(bind='127.0.0.1:0', workers=0,
+                          key_value_save=[],
+                          name='%s_store' % self.name)
         yield server()
         store = create_store('pulsar://%s:%s' % (server.address))
         self._create_backend(store)

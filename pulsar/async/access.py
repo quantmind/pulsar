@@ -18,7 +18,8 @@ __all__ = ['get_request_loop',
            'process_local_data',
            'thread_local_data',
            'logger',
-           'NOTHING']
+           'NOTHING',
+           'AsyncObject']
 
 
 LOGGER = logging.getLogger('pulsar')
@@ -112,3 +113,15 @@ class ProcessLocal(object):
 
     def local(self):
         return plocal()
+
+
+class AsyncObject(object):
+    '''Interface for :ref:`async objects <async-object>`
+    '''
+    _loop = None
+
+    @property
+    def logger(self):
+        '''The logger for this object
+        '''
+        return getattr(self._loop, 'logger', LOGGER)

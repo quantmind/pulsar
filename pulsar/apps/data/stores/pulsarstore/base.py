@@ -53,12 +53,12 @@ from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
                     coroutine_return, get_application, in_loop, send,
-                    EventHandler)
+                    EventHandler, when_monitor_start)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
 
-from ...server import KeyValueStore
+from ...server import PulsarDS
 
 
 data_stores = {}
@@ -403,7 +403,7 @@ def start_store(url, **kw):
     '''Equivalent to :func:`create_store` for most cases excepts when the
     ``url`` is for a pulsar store not yet started.
 
-    In this case, the a :class:`.KeyValueStore` is started.
+    In this case, the a :class:`.PulsarDS` is started.
     '''
     store = create_store(url, **kw)
     if store.name == 'pulsar':
@@ -416,7 +416,7 @@ def start_store(url, **kw):
                 raise
             app = yield get_application('keyvaluestore')
             if not app:
-                app = yield send('arbiter', 'run', KeyValueStore(bind=host))
+                app = yield send('arbiter', 'run', PulsarDS(bind=host))
             store._host = app.address
             dns = store._buildurl()
             store = create_store(dns, **kw)
@@ -429,6 +429,24 @@ def localhost(host):
             return ':'.join((str(b) for b in host))
     else:
         return host
+
+
+    @classmethod
+    def _start(cls, monitor):
+        app = monitor.app
+        if not isinstance(app, cls):
+            return
+
+
+def _start_store(monitor):
+    app = monitor.app
+    if not isinstance(app, PulsarDS):
+        dns = app.cfg.data_store
+        if dns:
+            store = yield start_store(dns)
+            app.cfg.set('data_store', store.dns)
+
+when_monitor_start.append(_start_store)
 
 
 def register_store(name, dotted_path):

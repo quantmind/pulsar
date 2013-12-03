@@ -3,7 +3,7 @@ from collections import namedtuple
 from copy import copy
 
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.websocket import FrameParser
+from pulsar.utils.websocket import frame_parser
 from pulsar.async.stream import SocketStreamSslTransport
 from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
                                   requote_uri, parse_cookie)
@@ -133,13 +133,12 @@ def handle_101(response):
         connection = response.connection
         request = response._request
         handler = request.websocket_handler
-        parser = FrameParser(kind=1)
+        parser = frame_parser(kind=1)
         if not handler:
             handler = WS()
-        consumer = WebSocketClient(response, handler, parser)
-        connection._current_consumer = None
-        connection.set_consumer(consumer)
-        response.finished(consumer)
+        factory = partial(WebSocketClient, response, handler, parser)
+        connection.upgrade(factory)
+        response.fire_event('post_request')
     return response
 
 

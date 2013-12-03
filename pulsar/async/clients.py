@@ -51,6 +51,11 @@ class Pool(object):
         '''
         return self._queue.qsize()
 
+    def __contains__(self, connection):
+        if connection not in self._in_use_connections:
+            return connection in self._queue
+        return True
+
     def connect(self):
         '''Get a connection from the pool.
 
@@ -113,6 +118,8 @@ class Pool(object):
 
 
 class PoolConnection(object):
+    '''A wrapper for a :class:`Connection` in a connection :class:`Pool`.
+    '''
     __slots__ = ('pool', 'connection')
 
     def __init__(self, pool, connection):
@@ -162,7 +169,7 @@ class AbstractClient(EventHandler):
         raise NotImplementedError
 
     def request(self, *args, **params):
-        '''Abstract method for creating a :class:`Request`.
+        '''Abstract method for creating a request.
         '''
         raise NotImplementedError
 

@@ -5,7 +5,7 @@ from pulsar import new_event_loop
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.test import unittest
-from pulsar.apps.data import (KeyValueStore, create_store, redis_parser,
+from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
                               ResponseError)
 
 
@@ -569,10 +569,10 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        server = KeyValueStore(name=cls.__name__.lower(),
-                               bind='127.0.0.1:0',
-                               concurrency=cls.concurrency,
-                               redis_py_parser=cls.redis_py_parser)
+        server = PulsarDS(name=cls.__name__.lower(),
+                          bind='127.0.0.1:0',
+                          concurrency=cls.concurrency,
+                          redis_py_parser=cls.redis_py_parser)
         cls.app = yield pulsar.send('arbiter', 'run', server)
         cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)
         cls.sync_store = cls.create_store(

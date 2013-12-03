@@ -29,8 +29,8 @@ except ImportError:  # pragma nocover
     import sys
     sys.path.append('../../')
 
-from pulsar.apps.data import KeyValueStore
+from pulsar.apps.data import PulsarDS
 
 
 if __name__ == '__main__':  # pragma nocover
-    KeyValueStore().start()
+    PulsarDS().start()

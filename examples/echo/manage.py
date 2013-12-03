@@ -125,7 +125,7 @@ class EchoProtocol(pulsar.ProtocolConsumer):
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
             self.buffer = self.response(self.buffer+data)
-            self.finished()
+            self.finish()
             return rest
         else:
             self.buffer = self.buffer + data

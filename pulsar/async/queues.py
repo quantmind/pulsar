@@ -31,6 +31,9 @@ class Queue:
         '''
         return self._maxsize
 
+    def __contains__(self, item):
+        return item in self._queue
+
     def qsize(self):
         '''Size of the queue.'''
         return len(self._queue)
