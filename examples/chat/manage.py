@@ -95,7 +95,6 @@ of clients of the :attr:`pubsub` handler.'''
         '''When a new message arrives, it publishes to all listening clients.
         '''
         logger.info('on_message %r' % msg)
-        print 'on_message %r' % msg
         if msg:
             lines = []
             for l in msg.split('\n'):
