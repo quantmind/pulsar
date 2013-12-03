@@ -1,5 +1,5 @@
 '''Tests the RPC "calculator" example.'''
-from pulsar import send
+from pulsar import send, new_event_loop
 from pulsar.apps import rpc
 from pulsar.apps.test import unittest, dont_run_with_thread
 
@@ -20,7 +20,7 @@ class TestRpcOnThread(unittest.TestCase):
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
-        cls.sync = rpc.JsonProxy(cls.uri, force_sync=True)
+        cls.sync = rpc.JsonProxy(cls.uri, loop=new_event_loop())
 
     @classmethod
     def tearDownClass(cls):
@@ -39,7 +39,7 @@ class TestRpcOnThread(unittest.TestCase):
     def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
-        wsgi_handler = s.callable.handler
+        wsgi_handler = s.callable.handler({})
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')

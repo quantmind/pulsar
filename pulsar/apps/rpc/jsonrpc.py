@@ -146,14 +146,11 @@ class JsonProxy(object):
     default_timeout = 30
 
     def __init__(self, url, version=None, data=None,
-                 full_response=False, **kw):
+                 full_response=False, http=None, timeout=None, **kw):
         self._url = url
         self._version = version or self.__class__.default_version
         self._full_response = full_response
         self._data = data if data is not None else {}
-        self.setup(**kw)
-
-    def setup(self, http=None, timeout=None, **kw):
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             http = HttpClient(timeout=timeout, **kw)

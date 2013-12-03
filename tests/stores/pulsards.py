@@ -21,19 +21,6 @@ class RedisCommands(object):
     def randomkey(self):
         return random_string()
 
-    def test_zrange(self):
-        key = self.randomkey()
-        eq = self.async.assertEqual
-        c = self.client
-        yield eq(c.zadd(key, a1=1, a2=2, a3=3), 3)
-        yield eq(c.zrange(key, 0, 1), [b'a1', b'a2'])
-        yield eq(c.zrange(key, 1, 2), [b'a2', b'a3'])
-        yield eq(c.zrange(key, 0, 1, withscores=True),
-                 Zset([(1, b'a1'), (2, b'a2')]))
-        yield eq(c.zrange(key, 1, 2, withscores=True),
-                 Zset([(2, b'a2'), (3, b'a3')]))
-
-class d:
     def test_watch(self):
         key1 = self.randomkey()
         key2 = key1 + '2'

@@ -113,7 +113,7 @@ remote functions.'''
 
 class Site(wsgi.LazyWsgi):
     '''WSGI handler for the RPC server'''
-    def setup(self):
+    def setup(self, environ):
         '''Called once to setup the list of wsgi middleware.'''
         json_handler = Root().putSubHandler('calc', Calculator())
         middleware = wsgi.Router('/', post=json_handler,
