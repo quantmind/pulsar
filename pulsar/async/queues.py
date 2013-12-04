@@ -1,15 +1,15 @@
 from collections import deque
 
-from .access import get_event_loop
+from .access import get_event_loop, AsyncObject
 from .defer import Deferred
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
 
 
-class Queue:
-    '''Asynchronous `FIFO queue`_ with same interface as Queue class
-    in the standard python library.
+class Queue(AsyncObject):
+    '''An :class:`.AsyncObject` which is a `FIFO queue`_ with same
+    interface as Queue class in the standard python library.
 
     .. _`FIFO queue`: http://en.wikipedia.org/wiki/FIFO
     '''

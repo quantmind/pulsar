@@ -71,7 +71,7 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
 
 
-class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
+class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
     '''The base class for parallel execution in pulsar.
 
     In computer science, the **Actor model** is a mathematical model
@@ -177,7 +177,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     next_periodic_task = None
 
     def __init__(self, impl):
-        super(Actor, self).__init__()
+        EventHandler.__init__(self)
         self.state = ACTOR_STATES.INITIAL
         self._thread_pool = None
         self.__impl = impl

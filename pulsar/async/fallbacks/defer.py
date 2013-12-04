@@ -3,8 +3,6 @@ import traceback
 from collections import deque, namedtuple
 from inspect import isgenerator, istraceback
 
-from pulsar.utils.pep import iteritems, default_timer
-
 from ..access import asyncio, get_request_loop, get_event_loop, logger
 
 
@@ -668,7 +666,7 @@ class AsyncBindings:
         '''Handle an asynchronous ``coro_or_future``.
 
         Equivalent to the ``asyncio.async`` function but returns a
-        :class:`.Deferred`. Raises :class:`FutureTypeError` if ``value``
+        :class:`.Deferred`. Raises :class:`.FutureTypeError` if ``value``
         is not a generator nor a :class:`.Future`.
 
         This function can be overwritten by the :func:`set_async` function.
@@ -695,16 +693,16 @@ class AsyncBindings:
         '''Handle a possible asynchronous ``value``.
 
         Return an :ref:`asynchronous instance <tutorials-coroutine>`
-        only if ``value`` is a generator, a :class:`Deferred` or ``get_result``
-        is set to ``False``.
+        only if ``value`` is a generator, a :class:`.Deferred` or
+        ``get_result`` is set to ``False``.
 
         :parameter value: the value to convert to an asynchronous instance
             if it needs to.
         :parameter loop: optional :class:`.EventLoop`.
-        :parameter get_result: optional flag indicating if to get the result in
-            case the return value is a :class:`Deferred` already done.
+        :parameter get_result: optional flag indicating if to get the result
+            in case the return value is a :class:`.Deferred` already done.
             Default: ``True``.
-        :return: a :class:`Deferred` or  a :class:`Failure` or a synchronous
+        :return: a :class:`.Deferred` or  a :class:`.Failure` or a synchronous
             value.
         '''
         try:

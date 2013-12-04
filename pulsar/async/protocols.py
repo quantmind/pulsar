@@ -7,7 +7,7 @@ from pulsar.utils.internet import nice_address, format_address
 
 from .defer import multi_async, log_failure, in_loop, coroutine_return
 from .events import EventHandler
-from .access import asyncio, AsyncObject
+from .access import asyncio, get_event_loop, new_event_loop
 
 
 __all__ = ['ProtocolConsumer',
@@ -20,7 +20,7 @@ __all__ = ['ProtocolConsumer',
 BIG = 2**31
 
 
-class ProtocolConsumer(EventHandler, AsyncObject):
+class ProtocolConsumer(EventHandler):
     '''The consumer of data for a server or client :class:`Connection`.
 
     It is responsible for receiving incoming data from an end point via the
@@ -203,7 +203,7 @@ class ProtocolConsumer(EventHandler, AsyncObject):
         return result
 
 
-class Protocol(EventHandler, asyncio.Protocol, AsyncObject):
+class Protocol(EventHandler, asyncio.Protocol):
     '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`.
 
     A :class:`Protocol` is an :class:`.EventHandler` which has
@@ -445,8 +445,8 @@ class Connection(Protocol):
         return consumer
 
 
-class Producer(EventHandler, AsyncObject):
-    '''An Abstract :class:`EventHandler` class for all producers of
+class Producer(EventHandler):
+    '''An Abstract :class:`.EventHandler` class for all producers of
     connections.
     '''
     _requests_processed = 0
@@ -455,31 +455,41 @@ class Producer(EventHandler, AsyncObject):
     protocol_factory = None
     '''A callable producing protocols.
 
-    The signature of the connection factory must be::
+    The signature of the protocol factory callable must be::
 
         protocol_factory(session, producer, **params)
-
-    By default it is set to the :class:`Connection` class.
     '''
+
+    def __init__(self, loop):
+        self._loop = loop or get_event_loop() or new_event_loop()
+        super(Producer, self).__init__(self._loop)
 
     @property
     def sessions(self):
-        '''Total number of connection handled'''
+        '''Total number of protocols created by the :class:`Producer`.
+        '''
         return self._sessions
 
     @property
     def requests_processed(self):
-        '''Total number of requests processed'''
+        '''Total number of requests processed.
+        '''
         return self._requests_processed
 
     def create_protocol(self):
-        '''Create a new :class:`Connection`
+        '''Create a new protocol via the :meth:`protocol_factory`
+
+        This method increase the count of :attr:`sessions` and build
+        the protocol passing ``self`` as the producer.
         '''
         self._sessions = session = self._sessions + 1
         return self.protocol_factory(session=session, producer=self)
 
     def build_consumer(self, consumer_factory):
-        '''Build a consumer for a connection.
+        '''Build a consumer for a protocol.
+
+        This method can be used by protocols which handle several requests,
+        for example the :class:`Connection` class.
 
         :param consumer_factory: consumer factory to use.
         '''
@@ -506,10 +516,9 @@ class TcpServer(Producer):
     def __init__(self, protocol_factory, loop, address=None,
                  name=None, sockets=None, max_connections=None,
                  keep_alive=None):
-        super(TcpServer, self).__init__()
+        super(TcpServer, self).__init__(loop)
         self.protocol_factory = protocol_factory
         self._name = name or self.__class__.__name__
-        self._loop = loop
         self._params = {'address': address, 'sockets': sockets}
         self._max_connections = max_connections
         self._keep_alive = keep_alive

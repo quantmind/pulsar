@@ -53,7 +53,7 @@ from functools import partial
 
 from pulsar import (get_event_loop, ImproperlyConfigured, Pool, new_event_loop,
                     coroutine_return, get_application, in_loop, send,
-                    EventHandler, when_monitor_start)
+                    EventHandler, when_monitor_start, Producer)
 from pulsar.utils.importer import module_attribute
 from pulsar.utils.pep import to_string
 from pulsar.utils.httpurl import urlsplit, parse_qsl, urlunparse, urlencode
@@ -77,7 +77,7 @@ class Compiler(object):
         raise NotImplementedError
 
 
-class Store(object):
+class Store(Producer):
     '''Base class for an asynchronous :ref:`data stores <data-stores>`.
 
     It is an :ref:`async object <async-object>` for accessing and retrieving
@@ -91,6 +91,7 @@ class Store(object):
 
     def __init__(self, name, host, loop, database=None,
                  user=None, password=None, encoding=None, **kw):
+        super(Producer, self).__init__()
         self._name = name
         self._host = host
         self._loop = loop
@@ -101,7 +102,6 @@ class Store(object):
         self._urlparams = {}
         self._init(**kw)
         self._dns = self._buildurl()
-        self.logger = loop.logger
 
     @property
     def name(self):

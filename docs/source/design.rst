@@ -70,6 +70,17 @@ For example this is a class for valid async objects::
             self._loop = loop or get_event_loop() or new_event_loop()
 
 
+Asynchronous objects can use the :func:`.in_loop` and
+:func:`.in_loop_thread` decorators for their methods.
+
+.. note::
+
+    An asynch object can also run its asynchronous methods in a synchronous
+    fashion. To do that, one should pass a bright new event loop during
+    initialisation. Check :ref:`synchronous components <tutorials-synchronous>`
+    for further details.
+
+
 .. _design-actor:
 
 Actors
@@ -172,8 +183,8 @@ actor's thread starts for thread-based actors).
 
 IO-bound
 ~~~~~~~~~~~~~~~
-The most common usage for an :class:`Actor` is to handle Input/Output
-events on file descriptors. An :attr:`Actor.event_loop` tells
+The most common usage for an :class:`.Actor` is to handle Input/Output
+events on file descriptors. An :attr:`.Actor._loop` tells
 the operating system (through ``epoll`` or ``select``) that it should be notified
 when a new connection is made, and then it goes to sleep.
 Serving the new request should occur as fast as possible so that other
@@ -183,17 +194,17 @@ connections can be served simultaneously.
 
 CPU-bound
 ~~~~~~~~~~~~~~~
-Another way for an actor to function is to use its :attr:`Actor.thread_pool`
+Another way for an actor to function is to use its :attr:`.Actor.thread_pool`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
-CPU-bound :class:`Actor` have the following properties:
+CPU-bound :class:`.Actor` have the following properties:
 
 .. _request-loop:
 
-* Their :attr:`Actor.event_loop` listen for requests on file descriptors
+* Their :attr:`.Actor._loop` listen for requests on file descriptors
   as usual and it is running (and installed) in the :ref:`actor io thread <actor-io-thread>`
   as usual.
-* The threads in the :attr:`Actor.thread_pool` install an additional :class:`EventLoop`
+* The threads in the :attr:`.Actor.thread_pool` install an additional :class:`EventLoop`
   which listen for events on a message queue.
   Pulsar refers to this specialised event loop as the **request loop**.
 
@@ -205,8 +216,8 @@ CPU-bound :class:`Actor` have the following properties:
     have installed two events loops: the event loop running on the
     :ref:`IO thread <actor-io-thread>` and the :ref:`request-loop <request-loop>`.
 
-The :attr:`Actor.thread_pool` needs to be initialised via the
-:attr:`Actor.create_thread_pool` method before it can be used.
+The :attr:`.Actor.thread_pool` needs to be initialised via the
+:attr:`.Actor.create_thread_pool` method before it can be used.
 
 
 .. _actor-periodic-task:
@@ -214,9 +225,9 @@ The :attr:`Actor.thread_pool` needs to be initialised via the
 Periodic task
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Each :class:`Actor`, including the :class:`Arbiter` and :class:`Monitor`,
+Each :class:`.Actor`, including the :class:`.Arbiter` and :class:`.Monitor`,
 perform one crucial periodic task at given intervals. The next
-call of the task is stored in the :class:`Actor.next_periodic_task`
+call of the task is stored in the :class:`.Actor.next_periodic_task`
 attribute.
 
 Periodic task are implemented by the :class:`Concurrency.periodic_task` method.
@@ -226,7 +237,7 @@ Periodic task are implemented by the :class:`Concurrency.periodic_task` method.
 Spawning
 ==============
 
-Spawning a new actor is achieved via the :func:`spawn` function::
+Spawning a new actor is achieved via the :func:`.spawn` function::
 
     from pulsar import spawn
 
@@ -241,19 +252,19 @@ Spawning a new actor is achieved via the :func:`spawn` function::
 
     ap = spawn(start=PeriodicTask())
 
-The valued returned by :func:`spawn` is an :class:`ActorProxyDeferred` instance,
-a specialised :class:`Deferred`, which has the spawned actor id ``aid`` and
+The valued returned by :func:`.spawn` is an :class:`.ActorProxyDeferred` instance,
+a specialised :class:`.Deferred`, which has the spawned actor id ``aid`` and
 it is called back once the remote actor has started.
-The callback will be an :class:`ActorProxy`, a lightweight proxy
+The callback will be an :class:`.ActorProxy`, a lightweight proxy
 for the remote actor.
 
 When spawning from an actor other than the :ref:`arbiter <design-arbiter>`,
-the workflow of the :func:`spawn` function is as follow:
+the workflow of the :func:`.spawn` function is as follow:
 
-* :func:`send` a message to the :ref:`arbiter <design-arbiter>` to spawn
+* :func:`.send` a message to the :ref:`arbiter <design-arbiter>` to spawn
   a new actor.
 * The arbiter spawn the actor and wait for the actor's **hand shake**. Once the
-  hand shake is done, it sends the response (the :class:`ActorProxy` of the
+  hand shake is done, it sends the response (the :class:`.ActorProxy` of the
   spawned actor) to the original actor.
 
 .. _handshake:
@@ -261,16 +272,16 @@ the workflow of the :func:`spawn` function is as follow:
 Handshake
 ~~~~~~~~~~~~~~~
 
-The actor **hand-shake** is the mechanism with which an :class:`Actor` register
+The actor **hand-shake** is the mechanism with which an :class:`.Actor` register
 its :ref:`mailbox address <tutorials-messages>` with its manager.
-The actor manager is either a :class:`Monitor` or the :class:`Arbiter`
+The actor manager is either a :class:`.Monitor` or the :class:`.Arbiter`
 depending on which spawned the actor.
 
 The handshake occurs when the monitor receives, for the first time,
 the actor :ref:`notify message <actor_notify_command>`.
 
 For the curious, the handshake is responsible for setting the
-:class:`ActorProxyMonitor.mailbox` attribute.
+:class:`.ActorProxyMonitor.mailbox` attribute.
 
 If the hand-shake fails, the spawned actor will eventually stop.
 
@@ -280,11 +291,11 @@ If the hand-shake fails, the spawned actor will eventually stop.
 Hooks
 ~~~~~~~~~~~~~~~~~~~
 
-An :class:`Actor` exposes three :ref:`one time events <one-time-event>`
+An :class:`.Actor` exposes three :ref:`one time events <one-time-event>`
 which can be used to customise its behaviour and two
 :ref:`many times event <many-times-event>` used when accessing actor
 information and when the actor spawn ather actors.
-Hooks are passed as key-valued parameters to the :func:`spawn` function.
+Hooks are passed as key-valued parameters to the :func:`.spawn` function.
 
 **start**
 
@@ -292,7 +303,7 @@ Fired just after the actor has received the
 :ref:`hand-shake from its monitor <handshake>`. This hook can be used to setup
 the application and register event handlers. For example, the
 :ref:`socket server application <apps-socket>` creates the server and register
-its file descriptor with the :attr:`Actor.event_loop`.
+its file descriptor with the :attr:`.Actor._loop`.
 
 This snippet spawns a new actor which starts an
 :ref:`Echo server <tutorials-writing-clients>`::
@@ -316,11 +327,11 @@ The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
 
 **stopping**
 
-Fired when the :class:`Actor` starts stopping.
+Fired when the :class:`.Actor` starts stopping.
 
 **stop**
 
-Fired just before the :class:`Actor` is garbage collected
+Fired just before the :class:`.Actor` is garbage collected
 
 .. important::
 
@@ -344,7 +355,7 @@ parameter ``info`` (a dictionary).
 **on_params**
 
 Fired every time an actor is about to spawn another actor. It can be used to
-add additional key-valued parameters passed to the :func:`pulsar.spawn`
+add additional key-valued parameters passed to the :func:`.spawn`
 function.
 
 .. _actor_commands:
@@ -352,10 +363,10 @@ function.
 Commands
 ===============
 
-An :class:`Actor` communicates with another remote :class:`Actor` by *sending*
+An :class:`.Actor` communicates with another remote :class:`.Actor` by *sending*
 an **action** to perform. This action takes the form of a **command** name and
 optional positional and key-valued parameters. It is possible to add new
-commands via the :class:`pulsar.command` decorator as explained in the
+commands via the :class:`.command` decorator as explained in the
 :ref:`api documentation <api-remote_commands>`.
 
 
@@ -385,7 +396,7 @@ Request information about a remote actor ``abcd``::
     send('abcd', 'info')
 
 The asynchronous result will be called back with the dictionary returned
-by the :meth:`Actor.info` method.
+by the :meth:`.Actor.info` method.
 
 .. _actor_notify_command:
 
@@ -434,7 +445,7 @@ Exceptions
 There are two categories of exceptions in Python: those that derive from the
 :class:`Exception` class and those that derive from :class:`BaseException`.
 Exceptions deriving from Exception will generally be caught and handled
-appropriately; for example, they will be passed through by :class:`Deferred`,
+appropriately; for example, they will be passed through by :class:`.Deferred`,
 and they will be logged and ignored when they occur in a callback.
 
 However, exceptions deriving only from BaseException are never caught,
@@ -449,7 +460,7 @@ Application Framework
 =============================
 
 To aid the development of applications running on top of pulsar concurrent
-framework, the library ships with the :class:`pulsar.apps.Application` class.
+framework, the library ships with the :class:`.Application` class.
 
 
 

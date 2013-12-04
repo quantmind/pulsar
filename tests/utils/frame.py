@@ -3,7 +3,7 @@ import struct
 
 from pulsar import ProtocolError, HAS_C_EXTENSIONS
 from pulsar.apps.test import unittest
-from pulsar.utils.websocket import frame_parser
+from pulsar.utils.websocket import frame_parser, parse_close
 import pulsar.apps.ws
 
 i2b = lambda args: bytes(bytearray(args))
@@ -40,12 +40,12 @@ class FrameTest(unittest.TestCase):
         s = self.parser()
         c = self.parser(kind=1)
         #
-        chunk = s.close('bye')
+        chunk = s.close(1001)
         frame = c.decode(chunk)
         self.assertTrue(frame.final)
         self.assertEqual(frame.opcode, 8)
-        self.assertEqual(frame.body, b'bye')
-        self.assertRaises(ProtocolError, s.close, self.bdata)
+        code, reason = parse_close(frame.body)
+        self.assertEqual(code, 1001)
         #
         chunk = s.ping('Hello')
         frame = c.decode(chunk)
@@ -177,6 +177,9 @@ class FrameTest(unittest.TestCase):
         s = self.parser(kind=3)
         chunk = s.encode('Hello')
         self.assertEqual(s.decode(chunk).body, 'Hello')
+
+    def test_parse_close(self):
+        self.assertRaises(ProtocolError, parse_close, b'o')
 
 
 @unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")

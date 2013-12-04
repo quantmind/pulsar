@@ -1,14 +1,15 @@
 from pulsar.utils.internet import is_socket_closed
 
+from .access import AsyncObject
 from .defer import coroutine_return
-from .events import EventHandler
+from .protocols import Producer
 from .queues import Queue, Full
 
 
-__all__ = ['Pool', 'AbstractClient']
+__all__ = ['Pool', 'PoolConnection', 'AbstractClient']
 
 
-class Pool(object):
+class Pool(AsyncObject):
     '''An asynchronous pool of open connections.
 
     Open connections are either :attr:`in_use` or :attr:`available`
@@ -111,10 +112,10 @@ class Pool(object):
         if self._queue._maxsize != 2:
             return
         message = '%s: ' % message if message else ''
-        self._loop.logger.log(level or 10,
-                              '%smax size %s, in_use %s, available %s',
-                              message, self._queue._maxsize, self.in_use,
-                              self.available)
+        self.logger.log(level or 10,
+                        '%smax size %s, in_use %s, available %s',
+                        message, self._queue._maxsize, self.in_use,
+                        self.available)
 
 
 class PoolConnection(object):
@@ -150,32 +151,22 @@ class PoolConnection(object):
         yield cls(pool, connection)
 
 
-class AbstractClient(EventHandler):
-    '''A client for a remote server.
+class AbstractClient(Producer):
+    '''A :class:`.Producer` for a client connections.
     '''
     ONE_TIME_EVENTS = ('finish',)
-
-    def __init__(self, loop):
-        super(AbstractClient, self).__init__()
-        self._loop = loop
 
     def __repr__(self):
         return self.__class__.__name__
     __str__ = __repr__
 
     def connect(self):
-        '''Abstract method for creating a server connection.
-        '''
-        raise NotImplementedError
-
-    def request(self, *args, **params):
-        '''Abstract method for creating a request.
+        '''Abstract method for creating a connection.
         '''
         raise NotImplementedError
 
     def close(self, async=True, timeout=5):
-        ''':meth:`close` all idle connections but wait for active connections
-        to finish.
+        '''Close all idle connections.
         '''
         return self.fire_event('finish')
 
@@ -185,11 +176,15 @@ class AbstractClient(EventHandler):
         '''
         return self.close(async=False)
 
-    def create_connection(self, protocol_factory, address, **kw):
+    def create_connection(self, address, protocol_factory=None, **kw):
+        '''Helper method for creating a connection to an ``address``.
+        '''
+        protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
             host, port = address
-            _, connection = yield self._loop.create_connection(
+            _, protocol = yield self._loop.create_connection(
                 protocol_factory, host, port, **kw)
         else:
-            raise NotImplementedError
-        coroutine_return(connection)
+            raise NotImplementedError('Could not connect to %s' %
+                                      str(address))
+        coroutine_return(protocol)

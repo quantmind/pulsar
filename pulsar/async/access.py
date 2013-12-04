@@ -117,6 +117,10 @@ class ProcessLocal(object):
 
 class AsyncObject(object):
     '''Interface for :ref:`async objects <async-object>`
+
+    .. attribute:: _loop
+
+        The event loop associated with this object
     '''
     _loop = None
 

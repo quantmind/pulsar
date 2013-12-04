@@ -80,8 +80,8 @@ Protocol Consumer
 Producers
 ==========================
 
-Producers are factory of connections with end-points. They are used by
-both servers and clients classes.
+Producers are factory of :class:`.Protocol` with end-points.
+They are used by both servers and clients classes.
 
 Producer
 ~~~~~~~~~~~~~~~~~

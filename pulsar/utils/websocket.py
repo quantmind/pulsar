@@ -26,6 +26,12 @@ Frame Parser
    :member-order: bysource
 
 
+parse_close
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: parse_close
+
+
 .. _WebSocket: http://tools.ietf.org/html/rfc6455'''
 import os
 from struct import pack, unpack
@@ -35,9 +41,9 @@ from .pep import ispy3k, range, to_bytes
 from .exceptions import ProtocolError
 
 try:
-    from .lib import FrameParser, CLOSE_CODES
+    from .lib import FrameParser as CFrameParser, CLOSE_CODES
 except:     # pragma    nocover
-    FrameParser = None
+    CFrameParser = None
 
     CLOSE_CODES = {
         1000: "OK",
@@ -101,7 +107,7 @@ def frame_parser(version=None, kind=0, extensions=None, protocols=None,
         implementation.
     '''
     version = get_version(version)
-    Parser = PyFrameParser if pyparser else FrameParser
+    Parser = FrameParser if pyparser else CFrameParser
     # extensions, protocols
     return Parser(version, kind, ProtocolError, None, None)
 
@@ -161,7 +167,7 @@ class Frame:
         return self._opcode == 10
 
 
-class PyFrameParser(object):
+class FrameParser(object):
     '''Decoder and encoder for the websocket protocol.
 
 .. attribute:: version
@@ -224,7 +230,8 @@ class PyFrameParser(object):
         return self.encode(body, opcode=0xA)
 
     def close(self, code=None):
-        '''return a `close` :class:`Frame`.'''
+        '''return a `close` :class:`Frame`.
+        '''
         code = code or 1000
         body = pack('!H', code) + CLOSE_CODES.get(code, '').encode('utf-8')
         return self.encode(body, opcode=0x8)
@@ -384,6 +391,11 @@ class PyFrameParser(object):
 
 
 def parse_close(data):
+    '''Parse the body of a close :class:`Frame`.
+
+    Returns a tuple (``code``, ``reason``) if successful otherwise
+    raise :class:`.ProtocolError`.
+    '''
     length = len(data)
     if length == 0:
         return 1005, ''
@@ -397,5 +409,5 @@ def parse_close(data):
         return code, reason
 
 
-if FrameParser is None:     # pragma    nocover
-    FrameParser = PyFrameParser
+if CFrameParser is None:     # pragma    nocover
+    CFrameParser = FrameParser

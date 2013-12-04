@@ -19,11 +19,19 @@ Ver. 0.8.0 - Development
     runs a callable in the event loop thread and returns a :class:`.Deferred`
     called back once the callable has a result/exception.
   * Added :func:`.in_loop` and :func:`.in_loop_thread` decorators for
-    member functions of objects exposing the ``_loop`` attribute.
+    member functions of :ref:`async objects <async-object>`.
+  * :func:`.async` is now a function, not a decorator.
   * Added the new :class:`.Pool` class for managing a pool of asynchronous
     connection with a server.
   * Embedding third-party asynchronous frameworks can be achieved via the
     new :func:`.add_async_binding` function.
+  * Removed ``Client`` class and replaced by :class:`.AbstractClient` which
+    in turns is a subclass of connections :class:`.Producer`.
+  * Removed ``force_sync`` parameter when creating synchronous components.
+    Synchronous objects are now created by explicitly passing a new event
+    loop during initialisation.
+    Check the the :ref:`synchronous components tutorial <tutorials-synchronous>`
+    for details.
 
 * **New data store module**
 
@@ -38,9 +46,18 @@ Ver. 0.8.0 - Development
 * **Websockets**
 
   * the web socket :meth:`~pulsar.apps.ws.WS.on_open` method is invoked soon
-    after upgrade headers are sent. No need to send an message from the client
+    after upgrade headers are sent. No need to send a message from the client
     to kick start the bidirectional communication.
-  * Websocket C extensions for faster parsing.
+  * Websocket C extensions for faster parsing/masking.
+  * Added support for sending :meth:`~pulsar.utils.websocket.FrameParser.close`
+    frames with an optional status code, and for parsing close frames
+    with a body via the :func:`.parse_close` function (for websocket clients).
+
+* **Miscellaneous**
+
+  * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
+    handlersd are now available via the new :mod:`pulsar.apps.data` module.
+  * The ``Backend`` class has been removed.
 
 * **821 regression tests**, **91% coverage**.
 

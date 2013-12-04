@@ -1,4 +1,4 @@
-from ..pulsarstore import store, register_store
+from ..pulsards import store, register_store
 
 
 

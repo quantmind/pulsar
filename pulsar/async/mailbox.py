@@ -253,6 +253,8 @@ class MailboxProtocol(Protocol):
 class MailboxClient(AbstractClient):
     '''Used by actors to send messages to other actors via the arbiter.
     '''
+    protocol_factory = MailboxProtocol
+
     def __init__(self, address, actor, loop):
         super(MailboxClient, self).__init__(loop)
         self.address = address
@@ -265,7 +267,7 @@ class MailboxClient(AbstractClient):
         return self._consumer
 
     def connect(self):
-        return self.create_connection(MailboxProtocol, self.address)
+        return self.create_connection(self.address)
 
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))

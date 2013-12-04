@@ -42,6 +42,18 @@ EventLoop
    :member-order: bysource
 
 
+Async object interface
+=================================
+
+This amall class is the default interface for
+:ref:`asynchronous objects <async-object>`. It is provided mainly for
+documentation purposes.
+
+.. autoclass:: pulsar.async.access.AsyncObject
+   :members:
+   :member-order: bysource
+
+
 .. _async-discovery:
 
 .. module:: pulsar.async.defer
@@ -55,13 +67,13 @@ interaction with :ref:`asynchronous components <tutorials-coroutine>`.
 Async
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: async
+.. autofunction:: pulsar.async.fallbacks.defer.async
 
 
 Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: maybe_async
+.. autofunction:: pulsar.async.fallbacks.defer.maybe_async
 
 
 Safe Async
@@ -142,17 +154,17 @@ Deferred
    :members:
    :member-order: bysource
 
-Multi Deferred
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: MultiDeferred
-   :members:
-   :member-order: bysource
-
 DeferredTask
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: DeferredTask
+   :members:
+   :member-order: bysource
+
+Multi Deferred
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass::  pulsar.async.defer.MultiDeferred
    :members:
    :member-order: bysource
 

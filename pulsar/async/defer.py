@@ -2,6 +2,8 @@ import sys
 from collections import Mapping
 
 from pulsar import HAS_C_EXTENSIONS
+from pulsar.utils.pep import iteritems
+
 from .access import get_event_loop, get_request_loop
 from .consts import MAX_ASYNC_WHILE
 

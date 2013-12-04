@@ -6,7 +6,7 @@ Pulsar key-value store server. To run the server type::
 Open a new shell and launch python and type::
 
     >>> from pulsar.apps.data import create_store
-    >>> store = create_store('pulsar://localhost:6410', force_sync=True)
+    >>> store = create_store('pulsar://localhost:6410')
     >>> client = store.client()
     >>> client.ping()
     True
@@ -19,9 +19,6 @@ Open a new shell and launch python and type::
     >>> client.dbsize()
     1
 
-The ``force_sync`` keyword is used here to force the client to
-wait for a full response rather than returning a :class:`.Deferred`.
-Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial.
 '''
 try:
     import pulsar

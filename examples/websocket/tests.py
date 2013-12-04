@@ -9,8 +9,8 @@ from .manage import server
 
 class Echo(WS):
 
-    def __init__(self):
-        self.queue = Queue()
+    def __init__(self, loop=None):
+        self.queue = Queue(loop=loop)
 
     def get(self):
         return self.queue.get()
@@ -46,32 +46,6 @@ class TestWebSocketThread(unittest.TestCase):
     def tearDownClass(cls):
         if cls.app is not None:
             yield send('arbiter', 'kill_actor', cls.app.name)
-
-    def test_close_sync(self):
-        loop = new_event_loop()
-        c = HttpClient(loop=loop)
-        handler = Echo()
-        ws = c.get(self.ws_echo, websocket_handler=handler)
-        self.assertEqual(ws.event('post_request').fired(), 0)
-        ws.write('send close 1001')
-        return
-        self.assertEqual(message, 'CLOSE')
-        self.assertTrue(ws.close_reason)
-        self.assertEqual(ws.close_reason[0], 1001)
-        self.assertTrue(ws._connection.closed)
-
-class d:
-    def test_close(self):
-        c = HttpClient()
-        handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler)
-        self.assertEqual(ws.event('post_request').fired(), 0)
-        ws.write('send close 1001')
-        message = yield handler.get()
-        self.assertEqual(message, 'CLOSE')
-        self.assertTrue(ws.close_reason)
-        self.assertEqual(ws.close_reason[0], 1001)
-        self.assertTrue(ws._connection.closed)
 
     def testHyBiKey(self):
         w = WebSocket('/', None)
@@ -145,12 +119,28 @@ class d:
         c = HttpClient()
         handler = Echo()
         ws = yield c.get(self.ws_echo, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
         ws.write('send close 1001')
         message = yield handler.get()
         self.assertEqual(message, 'CLOSE')
+        self.assertTrue(ws.close_reason)
         self.assertEqual(ws.close_reason[0], 1001)
         self.assertTrue(ws._connection.closed)
 
+    def test_close_sync(self):
+        loop = new_event_loop()
+        c = HttpClient(loop=loop)
+        handler = Echo(loop)
+        ws = c.get(self.ws_echo, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
+        self.assertEqual(ws._loop, loop)
+        self.assertFalse(ws._loop.is_running())
+        ws.write('send close 1001')
+        message = ws._loop.run_until_complete(handler.get())
+        self.assertEqual(message, 'CLOSE')
+        self.assertTrue(ws.close_reason)
+        self.assertEqual(ws.close_reason[0], 1001)
+        self.assertTrue(ws._connection.closed)
 
 @dont_run_with_thread
 class TestWebSocketProcess(TestWebSocketThread):

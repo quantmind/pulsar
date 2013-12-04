@@ -75,7 +75,7 @@ Actor Internals
 PoolMixin
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: PoolMixin
+.. autoclass:: pulsar.async.monitor.PoolMixin
    :members:
    :member-order: bysource
 

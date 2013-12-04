@@ -3,7 +3,7 @@ from inspect import isgenerator
 from pulsar.utils.pep import iteritems
 
 from .defer import Deferred, async, InvalidStateError
-from .access import logger
+from .access import AsyncObject
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -42,12 +42,13 @@ class AbstractEvent(object):
         self._silenced = True
 
 
-class Event(AbstractEvent):
+class Event(AbstractEvent, AsyncObject):
     '''The default implementation of :class:`AbstractEvent`.
     '''
-    def __init__(self):
+    def __init__(self, loop=None):
         self._handlers = []
         self._fired = 0
+        self._loop = loop
 
     def __repr__(self):
         return repr(self._handlers)
@@ -68,7 +69,7 @@ class Event(AbstractEvent):
                 try:
                     g = hnd(arg, **kwargs)
                 except Exception:
-                    logger().exception('Exception while firing event')
+                    self.logger.exception('Exception while firing event')
                 else:
                     if isgenerator(g):
                         # Add it to the event loop
@@ -83,9 +84,9 @@ class OneTime(Deferred, AbstractEvent):
     Implemented mainly for the one time events of the :class:`EventHandler`.
     There shouldn't be any reason to use this class on its own.
     '''
-    def __init__(self):
-        super(OneTime, self).__init__()
-        self._events = Deferred()
+    def __init__(self, loop=None):
+        super(OneTime, self).__init__(loop)
+        self._events = Deferred(loop)
 
     def bind(self, callback, errback=None):
         self._events.add_callback(callback, errback)
@@ -115,7 +116,7 @@ class OneTime(Deferred, AbstractEvent):
             return self.callback(result)
 
 
-class EventHandler(object):
+class EventHandler(AsyncObject):
     '''A Mixin for handling events.
 
     It handles :class:`OneTime` events and :class:`Event` that occur
@@ -125,17 +126,18 @@ class EventHandler(object):
     '''Event names which occur once only.'''
     MANY_TIMES_EVENTS = ()
     '''Event names which occur several times.'''
-    def __init__(self, one_time_events=None, many_times_events=None):
+    def __init__(self, loop=None, one_time_events=None,
+                 many_times_events=None):
         one = self.ONE_TIME_EVENTS
         if one_time_events:
             one = set(one)
             one.update(one_time_events)
-        events = dict(((name, OneTime()) for name in one))
+        events = dict(((name, OneTime(loop=loop)) for name in one))
         many = self.MANY_TIMES_EVENTS
         if many_times_events:
             many = set(many)
             many.update(many_times_events)
-        events.update(((name, Event()) for name in many))
+        events.update(((name, Event(loop=loop)) for name in many))
         self._events = events
 
     @property
@@ -201,9 +203,9 @@ class EventHandler(object):
             try:
                 return self._events[name].fire(arg, **kwargs)
             except InvalidStateError:
-                logger().error('Event %s already fired' % name)
+                self.logger.error('Event %s already fired' % name)
         else:
-            logger().warning('Unknown event "%s" for %s', name, self)
+            self.logger.warning('Unknown event "%s" for %s', name, self)
 
     def silence_event(self, name):
         '''Silence event ``name``.

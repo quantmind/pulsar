@@ -207,7 +207,7 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (is_failure, Producer, Pool, coroutine_return,
+from pulsar import (is_failure, AbstractClient, Pool, coroutine_return,
                     Connection, run_in_loop_thread, get_event_loop,
                     new_event_loop)
 from pulsar.utils.system import json
@@ -802,7 +802,7 @@ class HttpPool(Pool):
         self._in_use_connections.discard(conn)
 
 
-class HttpClient(Producer):
+class HttpClient(AbstractClient):
     '''A client for HTTP/HTTPS servers.
 
     It handles pool of asynchronous connections.
@@ -893,8 +893,7 @@ class HttpClient(Producer):
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None,
                  pool_size=10):
-        super(HttpClient, self).__init__()
-        self._loop = loop or get_event_loop() or new_event_loop()
+        super(HttpClient, self).__init__(loop)
         self.client_version = client_version or self.client_version
         self.connection_pools = {}
         self.pool_size = pool_size

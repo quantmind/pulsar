@@ -24,37 +24,18 @@ Writing the Client
 =========================
 The first step is to write a small class handling a connection
 pool with the remote server. The :class:`Echo` class does just that,
-it uses the asynchronous :class:`.Pool` of connections as backbone.
+it subclass the handy :class:`.AbstractClient` and uses
+the asynchronous :class:`.Pool` of connections as backbone.
 
-The first class implements the :class:`pulsar.ProtocolConsumer` as it is
-described in the next session, while the second class implements the
-:class:`pulsar.Client` which is a thread safe
-pool of connections to remote servers.
-
-The protocol consumer
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-The first step is to subclass :class:`.ProtocolConsumer` to create the
-:class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed
-for two reasons:
+The second step is the implementation of the :class:`.EchoProtocol`,
+a subclass of :class:`.ProtocolConsumer`.
+The :class:`EchoProtocol` is needed for two reasons:
 
 * It encodes and sends the request to the remote server via the
-  :meth:`EchoProtocol.start_request` method.
+  :meth:`~EchoProtocol.start_request` method.
 * It listens for incoming data from the remote server via the
-  :meth:`EchoProtocol.data_received` method.
+  :meth:`~EchoProtocol.data_received` method.
 
-
-The client
-~~~~~~~~~~~~~~~
-
-Pulsar provides :ref:`additional classes <clients-api>` for writing
-clients handling multiple requests. Here we subclass the :class:`pulsar.Client`
-and implement the :class:`Echo.request` method. :class:`Echo` is the main
-client class, used in all interactions with the echo server::
-
-    >>> pool = Echo()
-    >>> echo = pool.client(('127,0,0,1', 8080))
-    >>> response = echo(b'Hello!')
 
 
 Implementation
@@ -99,12 +80,12 @@ except ImportError:     # pragma nocover
     import pulsar
 
 from pulsar import (coroutine_return, Pool, in_loop_thread, get_event_loop,
-                    new_event_loop, Connection, Producer)
+                    new_event_loop, Connection, AbstractClient)
 from pulsar.apps.socket import SocketServer
 
 
 class EchoProtocol(pulsar.ProtocolConsumer):
-    '''An echo :class:`pulsar.ProtocolConsumer` for client and servers.
+    '''An echo :class:`~.ProtocolConsumer` for client and servers.
 
     The only difference between client and server is the implementation
     of the :meth:`response` method.
@@ -115,7 +96,7 @@ class EchoProtocol(pulsar.ProtocolConsumer):
     '''The buffer for long messages'''
 
     def data_received(self, data):
-        '''Implements the :meth:`pulsar.Protocol.data_received` method.
+        '''Implements the :meth:`~.ProtocolConsumer.data_received` method.
 
         It simply search for the :attr:`separator` and, if found, it invokes
         the :meth:`response` method with the value of the message.
@@ -125,14 +106,15 @@ class EchoProtocol(pulsar.ProtocolConsumer):
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
             self.buffer = self.response(self.buffer+data)
-            self.finish()
+            self.finished()
             return rest
         else:
             self.buffer = self.buffer + data
 
     def start_request(self):
-        '''Override :meth:`pulsar.Protocol.start_request` to write
-the message ended by the :attr:`separator` into the transport.'''
+        '''Override :meth:`~.ProtocolConsumer.start_request` to write
+        the message ended by the :attr:`separator` into the transport.
+        '''
         self.transport.write(self._request + self.separator)
 
     def response(self, data):
@@ -144,11 +126,12 @@ the message ended by the :attr:`separator` into the transport.'''
 
 
 class EchoServerProtocol(EchoProtocol):
-    '''The :class:`pulsar.ProtocolConsumer` used by the echo :func:`server`.'''
-
+    '''The :class:`EchoProtocol` used by the echo :func:`server`.
+    '''
     def response(self, data):
-        '''Override :meth:`EchoProtocol.response` method by writing the
-``data`` received back to the client.'''
+        '''Override :meth:`~EchoProtocol.response` method by writing the
+        ``data`` received back to the client.
+        '''
         self.transport.write(data)
         data = data[:-len(self.separator)]
         # If we get a QUIT message, close the transport.
@@ -158,7 +141,7 @@ class EchoServerProtocol(EchoProtocol):
         return data
 
 
-class Echo(Producer):
+class Echo(AbstractClient):
     '''A client for the echo server.
 
     :param address: set the :attr:`address` attribute
@@ -192,23 +175,13 @@ class Echo(Producer):
     protocol_factory = partial(Connection, EchoProtocol)
 
     def __init__(self, address, full_response=False, pool_size=10, loop=None):
-        self._loop = loop or get_event_loop() or new_event_loop()
+        super(Echo, self).__init__(loop)
         self.address = address
         self.full_response = full_response
         self.pool = Pool(self.connect, pool_size, self._loop)
 
     def connect(self):
-        '''Create a new connection with the server.
-
-        This method is not thread safe. It is used by the
-        connection :attr:`pool` whent it needs a new connection.
-
-        :return: a coroutine
-        '''
-        host, port = self.address
-        _, connection = yield self._loop.create_connection(
-            self.create_protocol, host, port)
-        coroutine_return(connection)
+        return self.create_connection(self.address)
 
     @in_loop_thread
     def __call__(self, message):
@@ -225,12 +198,14 @@ class Echo(Producer):
             coroutine_return(result)
 
 
-def server(description=None, **kwargs):
+def server(name=None, description=None, **kwargs):
     '''Create the :class:`.SocketServer` with :class:`EchoServerProtocol`
     as protocol factory.
     '''
+    name = name or 'echoserver'
     description = description or 'Echo Server'
-    return SocketServer(EchoServerProtocol, description=description, **kwargs)
+    return SocketServer(EchoServerProtocol, name=name,
+                        description=description, **kwargs)
 
 
 if __name__ == '__main__':  # pragma nocover

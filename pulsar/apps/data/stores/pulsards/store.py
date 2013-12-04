@@ -1,3 +1,5 @@
+from functools import partial
+
 from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
                     get_actor)
 from pulsar.utils.pep import zip
@@ -28,9 +30,10 @@ class PulsarStoreConnection(Connection):
 class PulsarStore(Store):
     '''Pulsar :class:`.Store` implementation.
     '''
+    protocol_factory = partial(PulsarStoreConnection, Consumer)
+
     def _init(self, namespace=None, parser_class=None, pool_size=50,
               decode_responses=False, **kwargs):
-        self._received = 0
         self._decode_responses = decode_responses
         if not parser_class:
             actor = get_actor()
@@ -39,7 +42,7 @@ class PulsarStore(Store):
         self._parser_class = parser_class
         if namespace:
             self._urlparams['namespace'] = namespace
-        self._pool = Pool(self.connect, pool_size=pool_size)
+        self._pool = Pool(self.connect, pool_size=pool_size, loop=self._loop)
         self.loaded_scripts = {}
 
     @property
@@ -75,13 +78,14 @@ class PulsarStore(Store):
             coroutine_return(result)
 
     def connect(self, protocol_factory=None):
-        protocol_factory = protocol_factory or self._new_connection
+        protocol_factory = protocol_factory or self.create_protocol
         if isinstance(self._host, tuple):
             host, port = self._host
             transport, connection = yield self._loop.create_connection(
                 protocol_factory, host, port)
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Could not connect to %s' %
+                                      str(self._host))
         if self._password:
             yield connection.execute('AUTH', self._password)
         if self._database:
@@ -122,10 +126,6 @@ class PulsarStore(Store):
         '''Close all open connections.'''
         return self._pool.close()
 
-    def _new_connection(self):
-        self._received = session = self._received + 1
-        return PulsarStoreConnection(Consumer, session=session, producer=self)
-
 
 register_store('pulsar',
-               'pulsar.apps.data.stores.pulsarstore.store.PulsarStore')
+               'pulsar.apps.data.stores.pulsards.store.PulsarStore')

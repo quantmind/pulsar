@@ -6,37 +6,37 @@ from pulsar.apps.test import unittest
 from examples.httpbin.manage import HttpBin
 
 class HttpBin2(HttpBin):
-    
+
     def gzip(self):
         pass    # switch off gzip handler, it is not a route anymore
-    
+
     @route('get2')
     def _get(self, request):    # override the _get handler
         raise pulsar.Http404
-    
+
     @route('async', async=True)
     def test_async_route(self, request):
         yield  'Hello'
-        
+
     @route('async', async=True, method='post')
     def test_async_route_post(self, request):
         yield  'Hello'
-        
-        
+
+
 class HttpBin3(HttpBin):
-    
+
     @route('new', position=0)
     def new(self, request):
         return self.info_data_response(request)
-    
+
     @route('post', method='post', title='Returns POST data', position=-1)
     def _post(self, request):
         return self.info_data_response(request)
-    
+
 
 
 class TestRouter(unittest.TestCase):
-    
+
     def router(self, path='/'):
         class testRouter(Router):
             response_content_types = RouterParam(('text/html',
@@ -44,23 +44,23 @@ class TestRouter(unittest.TestCase):
                                                   'application/json'))
             def get(self, request):
                 return 'Hello World!'
-            
+
             @route()
             def bla(self, request):
                 return 'This is /bla route'
-            
+
             @route('/foo')
             def xxx(self, request):
                 return 'This is /foo route'
-            
+
             @route()
             def post_pluto(self, request):
                 return 'This is /pluto POST route'
-        
+
         router = testRouter(path)
         self.assertEqual(len(router.routes), 3)
         return router
-    
+
     def test_router(self):
         router = self.router()
         self.assertEqual(router.route.path, '/')
@@ -71,11 +71,11 @@ class TestRouter(unittest.TestCase):
         handler, urlargs = router.resolve('bla')
         self.assertNotEqual(handler, router)
         self.assertEqual(urlargs, {})
-        
+
     def test_derived(self):
         self.assertTrue('gzip' in HttpBin.rule_methods)
         self.assertFalse('gzip' in HttpBin2.rule_methods)
-        
+
     def test_async_route(self):
         self.assertTrue('test_async_route' in HttpBin2.rule_methods)
         method = HttpBin2.rule_methods['test_async_route']
@@ -85,9 +85,7 @@ class TestRouter(unittest.TestCase):
         self.assertFalse(args)
         get = router.get
         post = router.post
-        self.assertTrue(get.async)
-        self.assertTrue(post.async)
-        
+
     def test_override(self):
         self.assertTrue('_get' in HttpBin.rule_methods)
         self.assertEqual(HttpBin.rule_methods['_get'][0].rule, 'get')
@@ -108,7 +106,7 @@ class TestRouter(unittest.TestCase):
         all3 = list(HttpBin3.rule_methods)
         self.assertEqual(all3.index('new'), 1)
         self.assertTrue(all3.index('_post') < all.index('_post'))
-        
+
     def test_accept(self):
         router = self.router()
         self.assertEqual(router.accept_content_type('text/html'), 'text/html')
