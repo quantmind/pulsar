@@ -853,7 +853,7 @@ class HttpClient(Producer):
     '''
     MANY_TIMES_EVENTS = ('connection_made', 'pre_request', 'on_headers',
                          'post_request', 'connection_lost')
-    consumer_factory = HttpResponse
+    protocol_factory = partial(Connection, HttpResponse)
     allow_redirects = False
     max_redirects = 10
     '''Maximum number of redirects.
@@ -1099,21 +1099,6 @@ class HttpClient(Producer):
 
     def _connect(self, host, port, ssl):
         _, connection = yield self._loop.create_connection(
-            self._new_connection, host, port, ssl)
+            self.create_protocol, host, port, ssl)
         yield connection.event('connection_made')
         coroutine_return(connection)
-
-    def _new_connection(self):
-        self._sessions = session = self._sessions + 1
-        return Connection(self._build_consumer, session=session, producer=self)
-
-    def _build_consumer(self, consumer_factory=None):
-        '''Override the :meth:`Producer.build_consumer` method.
-
-        Add a ``post_request`` handler to release the connection back to
-        the connection pool.
-        '''
-        consumer_factory = consumer_factory or HttpResponse
-        consumer = consumer_factory()
-        consumer.copy_many_times_events(self)
-        return consumer

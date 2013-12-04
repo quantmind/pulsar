@@ -99,7 +99,7 @@ except ImportError:     # pragma nocover
     import pulsar
 
 from pulsar import (coroutine_return, Pool, in_loop_thread, get_event_loop,
-                    new_event_loop, Connection)
+                    new_event_loop, Connection, Producer)
 from pulsar.apps.socket import SocketServer
 
 
@@ -158,7 +158,7 @@ class EchoServerProtocol(EchoProtocol):
         return data
 
 
-class Echo(object):
+class Echo(Producer):
     '''A client for the echo server.
 
     :param address: set the :attr:`address` attribute
@@ -189,10 +189,10 @@ class Echo(object):
 
         Default: ``False``
     '''
+    protocol_factory = partial(Connection, EchoProtocol)
+
     def __init__(self, address, full_response=False, pool_size=10, loop=None):
         self._loop = loop or get_event_loop() or new_event_loop()
-        self.sessions = 0
-        self._requests_processed = 0
         self.address = address
         self.full_response = full_response
         self.pool = Pool(self.connect, pool_size, self._loop)
@@ -207,7 +207,7 @@ class Echo(object):
         '''
         host, port = self.address
         _, connection = yield self._loop.create_connection(
-            self._new_connection, host, port)
+            self.create_protocol, host, port)
         coroutine_return(connection)
 
     @in_loop_thread
@@ -223,10 +223,6 @@ class Echo(object):
             result = yield consumer.on_finished
             result = consumer if self.full_response else consumer.buffer
             coroutine_return(result)
-
-    def _new_connection(self):
-        self.sessions = session = self.sessions + 1
-        return Connection(EchoProtocol, session=session, producer=self)
 
 
 def server(description=None, **kwargs):

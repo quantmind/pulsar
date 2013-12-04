@@ -375,8 +375,8 @@ class Connection(Protocol):
         from the :attr:`~Protocol.transport` via the :meth:`data_received`
         method.
         '''
-        if self._current_consumer is None and self._consumer_factory:
-            self.set_consumer(self._build_consumer())
+        if self._current_consumer is None:
+            self._build_consumer()
         return self._current_consumer
 
     def set_consumer(self, consumer):
@@ -431,7 +431,7 @@ class Connection(Protocol):
         self._consumer_factory = consumer_factory
         consumer = self._current_consumer
         if consumer:
-            consumer.bind_event('post_request', self._upgrade)
+            consumer.bind_event('post_request', self._build_consumer)
 
     def info(self):
         info = super(Connection, self).info()
@@ -439,14 +439,8 @@ class Connection(Protocol):
         connection.update({'request_processed': self._processed})
         return info
 
-    def _build_consumer(self):
-        consumer = self._consumer_factory()
-        if self._producer:
-            consumer.copy_many_times_events(self._producer)
-        return consumer
-
-    def _upgrade(self, response):
-        consumer = self._build_consumer()
+    def _build_consumer(self, *args):
+        consumer = self._producer.build_consumer(self._consumer_factory)
         self.set_consumer(consumer)
         return consumer
 
@@ -478,10 +472,16 @@ class Producer(EventHandler, AsyncObject):
         '''Total number of requests processed'''
         return self._requests_processed
 
+    def create_protocol(self):
+        '''Create a new :class:`Connection`
+        '''
+        self._sessions = session = self._sessions + 1
+        return self.protocol_factory(session=session, producer=self)
+
     def build_consumer(self, consumer_factory):
         '''Build a consumer for a connection.
 
-        :param consumer_factory: optional consumer factory to use.
+        :param consumer_factory: consumer factory to use.
         '''
         consumer = consumer_factory()
         consumer.copy_many_times_events(self)
@@ -489,12 +489,7 @@ class Producer(EventHandler, AsyncObject):
 
 
 class TcpServer(Producer):
-    '''A TCP server class.
-
-    .. attribute:: protocol_factory
-
-        Callable for producing :class:`Protocol` to handle the receiving,
-        decoding and sending of data.
+    '''A :class:`Producer` of server :class:`Connection` for TCP servers.
 
     .. attribute:: _server
 
@@ -548,13 +543,13 @@ class TcpServer(Producer):
             create_server = self._loop.create_server
             try:
                 if sockets:
-                    server = yield create_server(self._create_protocol,
+                    server = yield create_server(self.create_protocol,
                                                  sock=sockets,
                                                  backlog=backlog,
                                                  ssl=sslcontext)
                 else:
                     if isinstance(address, tuple):
-                        server = yield create_server(self._create_protocol,
+                        server = yield create_server(self.create_protocol,
                                                      host=address[0],
                                                      port=address[1],
                                                      backlog=backlog,
@@ -608,8 +603,9 @@ class TcpServer(Producer):
         return {'server': server,
                 'clients': clients}
 
-    ##    INTERNALS
-    def _create_protocol(self):
+    def create_protocol(self):
+        '''Override :meth:`Producer.create_protocol`.
+        '''
         self._sessions = session = self._sessions + 1
         protocol = self.protocol_factory(session=session,
                                          producer=self,
@@ -622,6 +618,7 @@ class TcpServer(Producer):
             self.stop_serving()
         return protocol
 
+    ##    INTERNALS
     def _connection_made(self, connection):
         self._concurrent_connections.add(connection)
         return connection
