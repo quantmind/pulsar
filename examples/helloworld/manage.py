@@ -23,7 +23,7 @@ from pulsar.apps import wsgi
 
 def hello(environ, start_response):
     '''The WSGI_ application handler which returns an iterable
-over the "Hello World!" message.'''
+    over the "Hello World!" message.'''
     data = b'Hello World!\n'
     status = '200 OK'
     response_headers = [
@@ -35,8 +35,7 @@ over the "Hello World!" message.'''
 
 
 def server(description=None, **kwargs):
-    '''Create the :class:`pulsar.apps.wsgi.WSGIServer` running :func:`hello`.
-    '''
+    '''Create the :class:`.WSGIServer` running :func:`hello`.'''
     description = description or 'Pulsar Hello World Application'
     return wsgi.WSGIServer(hello, description=description, **kwargs)
 

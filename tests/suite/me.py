@@ -39,14 +39,13 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         self.assertTrue(loop.cpubound)
-        self.assertFalse(worker.event_loop.cpubound)
+        self.assertFalse(worker._loop.cpubound)
 
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         monitor = worker.monitor
         self.assertEqual(mailbox.address, monitor.address)
-        self.assertEqual(mailbox.timeout, 0)
 
     @run_on_arbiter
     def test_TestSuiteMonitor(self):
@@ -61,13 +60,12 @@ class TestTestWorker(unittest.TestCase):
         mailbox = worker.mailbox
         self.assertTrue(mailbox)
         self.assertTrue(hasattr(mailbox, 'request'))
-        self.assertTrue(mailbox.event_loop)
-        self.assertTrue(mailbox.event_loop.running)
-        self.assertEqual(worker.event_loop, mailbox.event_loop)
-        self.assertEqual(worker.tid, mailbox.event_loop.tid)
+        self.assertTrue(mailbox._loop)
+        self.assertTrue(mailbox._loop.running)
+        self.assertEqual(worker._loop, mailbox._loop)
+        self.assertEqual(worker.tid, mailbox._loop.tid)
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
-        self.assertEqual(mailbox.concurrent_connections, 1)
 
     def test_event_loop(self):
         '''Test event loop in test worker'''
@@ -77,8 +75,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(loop.running)
         self.assertTrue(event_loop.running)
         self.assertNotEqual(loop, event_loop)
-        self.assertEqual(worker.event_loop, event_loop)
-        self.assertEqual(worker.tid, worker.event_loop.tid)
+        self.assertEqual(worker._loop, event_loop)
+        self.assertEqual(worker.tid, worker._loop.tid)
         self.assertNotEqual(worker.tid, loop.tid)
         self.assertTrue(str(event_loop))
 
@@ -104,10 +102,10 @@ class TestTestWorker(unittest.TestCase):
         # a separate thread
         def _callback():
             d.callback(current_thread().ident)
-        worker.event_loop.call_later(0.2, _callback)
+        worker._loop.call_later(0.2, _callback)
         result = yield d
         self.assertEqual(worker.tid, result)
-        self.assertEqual(worker.event_loop.tid, result)
+        self.assertEqual(worker._loop.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop.tid, current_thread().ident)
 

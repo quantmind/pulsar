@@ -560,7 +560,10 @@ the event loop to poll with a 0 timeout all the times.'''
             raise StopEventLoop
         else:
             for fd, events in event_pairs:
-                io.handle_events(self, fd, events)
+                try:
+                    io.handle_events(self, fd, events)
+                except KeyError:
+                    pass
 
     def _raise_loop_error(self, e):
         # Depending on python version and EventLoop implementation,

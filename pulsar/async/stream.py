@@ -196,7 +196,7 @@ advantage of specific capabilities in some transport mechanisms.'''
 class SocketStreamSslTransport(SocketStreamTransport):
     '''A :class:`SocketStreamTransport` with Transport Layer Security
     '''
-    SocketError = getattr(ssl, 'SSLError', None)
+    SocketError = (getattr(ssl, 'SSLError', None), socket.error)
 
     def __init__(self, loop, rawsock, protocol, sslcontext,
                  server_side=True, server_hostname=None, **kwargs):
@@ -333,7 +333,7 @@ def create_connection(loop, protocol_factory, host, port, ssl,
             loop, sock, protocol, sslcontext, server_side=False)
     else:
         transport = SocketStreamTransport(loop, sock, protocol)
-    yield transport, protocol
+    coroutine_return((transport, protocol))
 
 
 def start_serving(loop, protocol_factory, host, port, ssl,

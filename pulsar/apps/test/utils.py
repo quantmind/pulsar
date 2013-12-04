@@ -1,3 +1,30 @@
+'''
+run on arbiter
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: run_on_arbiter
+
+
+ActorTestMixin
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ActorTestMixin
+   :members:
+   :member-order: bysource
+
+
+AsyncAssert
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncAssert
+   :members:
+   :member-order: bysource
+
+run test server
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: run_test_server
+'''
 import gc
 from inspect import isclass
 from functools import partial
@@ -153,7 +180,7 @@ class ActorTestMixin(object):
             self._spawned = []
         return self._spawned
 
-    def spawn(self, concurrency=None, **kwargs):
+    def spawn_actor(self, concurrency=None, **kwargs):
         '''Spawn a new actor and perform some tests.'''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
@@ -209,10 +236,17 @@ def hide_leaks(actor):
 
 
 @contextmanager
-def run_test_server(loop, consumer_factory, address=None):
+def run_test_server(protocol_factory, loop, address=None, **kw):
+    '''A context manager for running a test server::
+
+        with run_test_server(loop, protocol_factory) as server:
+            ...
+
+    It creates a :class:`.TcpServer` and invoke
+    :meth:`~.TcpServer.stop_serving` on exit.
+    '''
     address = address or ('127.0.0.1', 0)
-    server = TcpServer(loop, '127.0.0.1', 0,
-                       consumer_factory=consumer_factory)
+    server = TcpServer(protocol_factory, loop, address, **kw)
     try:
         yield server
     finally:

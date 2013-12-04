@@ -291,15 +291,13 @@ Test Plugin
    :members:
    :member-order: bysource
 
-.. _unittest2: http://pypi.python.org/pypi/unittest2
-.. _mock: http://pypi.python.org/pypi/mock
-
 Utilities
-~~~~~~~~~~~~~~~
+================
 
 .. automodule:: pulsar.apps.test.utils
-    :members:
 
+.. _unittest2: http://pypi.python.org/pypi/unittest2
+.. _mock: http://pypi.python.org/pypi/mock
 '''
 import sys
 

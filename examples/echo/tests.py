@@ -1,6 +1,6 @@
-from pulsar import send, multi_async
+from pulsar import send, multi_async, new_event_loop, get_application
 from pulsar.utils.pep import range
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import unittest, dont_run_with_thread, run_on_arbiter
 
 from .manage import server, Echo, EchoServerProtocol
 
@@ -21,11 +21,23 @@ class TestEchoServerThread(unittest.TestCase):
         if cls.server:
             yield send('arbiter', 'kill_actor', cls.server.name)
 
+    def sync_client(self):
+        return Echo(self.server.address, loop=new_event_loop())
+
+    ##    TEST THE SERVER APPLICATION
+    @run_on_arbiter
+    def test_server_on_arbiter(self):
+        app = yield get_application(self.__class__.__name__.lower())
+        self.assertTrue(app.address)
+        self.assertTrue(app.cfg.address)
+        self.assertNotEqual(app.address, app.cfg.address)
+
     def test_server(self):
         self.assertTrue(self.server)
         self.assertEqual(self.server.callable, EchoServerProtocol)
         self.assertTrue(self.server.address)
 
+    ##    TEST CLIENT INTERACTION
     def test_ping(self):
         result = yield self.client(b'ciao luca')
         self.assertEqual(result, b'ciao luca')
@@ -121,6 +133,20 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.sessions, 3)
         self.assertEqual(client._requests_processed, 8)
 
+    ##    TEST SYNCHRONOUS CLIENT
+    def test_sync_echo(self):
+        echo = self.sync_client()
+        self.assertEqual(echo(b'ciao!'), b'ciao!')
+        self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
+
+    def test_sync_close(self):
+        echo = self.sync_client()
+        self.assertEqual(echo(b'ciao!'), b'ciao!')
+        self.assertEqual(echo.sessions, 1)
+        self.assertEqual(echo(b'QUIT'), b'QUIT')
+        self.assertEqual(echo.sessions, 1)
+        self.assertEqual(echo(b'ciao!'), b'ciao!')
+        self.assertEqual(echo.sessions, 2)
 
 
 @dont_run_with_thread

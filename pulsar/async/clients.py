@@ -1,7 +1,7 @@
 from pulsar.utils.internet import is_socket_closed
 
 from .access import AsyncObject
-from .defer import coroutine_return
+from .defer import coroutine_return, multi_async
 from .protocols import Producer
 from .queues import Queue, Full
 
@@ -120,6 +120,18 @@ class Pool(AsyncObject):
 
 class PoolConnection(object):
     '''A wrapper for a :class:`Connection` in a connection :class:`Pool`.
+
+    Objects are never initialised directly, instead they are `checked-out`
+    via the :meth:`checkout` class method from the :meth:`Pool.connect`
+    method.
+
+    .. attribute:: pool
+
+        The :class:`Pool` which created this :class:`PoolConnection`
+
+    .. attribute:: connection
+
+        The underlying socket connection.
     '''
     __slots__ = ('pool', 'connection')
 
@@ -128,10 +140,24 @@ class PoolConnection(object):
         self.connection = connection
 
     def close(self):
+        '''Close this pool connection by releasing the underlying
+        :attr:`connection` back to the ;attr:`pool`.
+        '''
         if self.pool is not None:
             self.pool._put(self.connection)
             self.pool = None
             self.connection = None
+
+    def detach(self):
+        '''Remove the underlying :attr:`connection` from the connection
+        :attr:`pool`.
+        '''
+        if self.pool is not None:
+            connection = self.connection
+            self.pool._in_use_connections.discard(connection)
+            self.pool = None
+            self.connection = None
+            return connection
 
     def __enter__(self):
         return self
@@ -147,6 +173,8 @@ class PoolConnection(object):
 
     @classmethod
     def checkout(cls, pool):
+        '''Checkout a new connection from ``pool``.
+        '''
         connection = yield pool._get()
         yield cls(pool, connection)
 
@@ -188,3 +216,23 @@ class AbstractClient(Producer):
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
         coroutine_return(protocol)
+
+    def timeit(self, times, callable, *args, **kwargs):
+        '''Send ``times`` requests asynchronously and evaluate the time
+        taken to obtain all responses.
+        Usage::
+
+            client = Client(...)
+            multi = client.timeit(100, client.request, ...)
+            response = yield multi
+            multi.total_time
+
+        Where ``client.request`` is the callable method to invoke (this must
+        be specified by the client implementation).
+
+        :return: a :class:`.MultiDeferred` which results in the list of results
+          for the individual requests. Its :attr:`MultiDeferred.total_time`
+          attribute indicates the number of seconds taken (once the deferred
+          has been called back).
+        '''
+        return multi_async([callable(*args, **kwargs) for _ in range(times)])

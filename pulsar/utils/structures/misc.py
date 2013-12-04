@@ -1,31 +1,3 @@
-'''
-Collection of data structures and function used throughout the library.
-
-MultiValueDict
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: MultiValueDict
-   :members:
-   :member-order: bysource
-
-
-.. _attribute-dictionary:
-
-AttributeDictionary
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AttributeDictionary
-   :members:
-   :member-order: bysource
-
-
-FrozenDict
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: FrozenDict
-   :members:
-   :member-order: bysource
-'''
 from copy import copy
 from itertools import islice
 import collections
@@ -251,6 +223,17 @@ class FrozenDict(dict):
             return len(self) < len(other)
         else:
             return False
+
+
+class Dict(dict):
+
+    def mget(self, fields):
+        return [self.get(f) for f in fields]
+
+    def flat(self):
+        result = []
+        [result.extend(pair) for pair in iteritems(self)]
+        return result
 
 
 class Deque(collections.deque):

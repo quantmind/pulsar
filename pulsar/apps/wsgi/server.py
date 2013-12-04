@@ -446,12 +446,12 @@ class HttpServerResponse(ProtocolConsumer):
                     wsgi_iter.close()
                 except Exception:
                     LOGGER.exception('Error while closing wsgi iterator')
-        self.finish_wsgi()
+        yield self.finish_wsgi()
 
     def finish_wsgi(self):
         if not self.keep_alive:
             self.connection.close()
-        self.finished()
+        return self.finished()
 
     def is_chunked(self):
         '''Check if the response uses chunked transfer encoding.

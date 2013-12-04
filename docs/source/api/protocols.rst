@@ -20,7 +20,7 @@ and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
 
 
 Transports
-==========================
+=================
 
 The :class:`.SocketTransport` is used as base class for all socket transports
 and it is the only class in this section which is also used outside
@@ -55,7 +55,8 @@ SocketStreamSslTransport
 .. module:: pulsar.async.protocols
 
 Protocols
-==========================
+=================
+
 
 Protocol
 ~~~~~~~~~~~~~~
@@ -78,7 +79,7 @@ Protocol Consumer
 
 
 Producers
-==========================
+=================
 
 Producers are factory of :class:`.Protocol` with end-points.
 They are used by both servers and clients classes.
@@ -104,10 +105,10 @@ TcpServer
 Clients
 =================
 
+
 This section introduces classes implementing the transport/protocol paradigm
 for clients with several connections to a remote :class:`.TcpServer`.
-:class:`BaseClient` is the main class here, and :class:`BaseClient.request`
-is the single most important method a subclass must implement.
+
 
 Abstract Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,6 +124,15 @@ Pool
 .. autoclass:: Pool
    :members:
    :member-order: bysource
+
+
+Pool Connection
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PoolConnection
+   :members:
+   :member-order: bysource
+
 
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

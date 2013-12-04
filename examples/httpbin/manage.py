@@ -30,6 +30,7 @@ from pulsar.utils.system import json
 
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
 
 if ispy3k:  # pragma nocover
     characters = string.ascii_letters + string.digits
@@ -46,8 +47,8 @@ def template():
 class HttpBin(wsgi.Router):
 
     def bind_server_event(self, request, event, handler):
-        server = request.environ['pulsar.connection'].current_consumer
-        server.bind_event(event, handler)
+        consumer = request.environ['pulsar.connection'].current_consumer()
+        consumer.bind_event(event, handler)
 
     def get(self, request):
         '''The home page of this router'''
@@ -283,6 +284,7 @@ class Site(wsgi.LazyWsgi):
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
                                  wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
+                                 wsgi.FileRouter('/favicon.ico', FAVICON),
                                  wsgi.MediaRouter('media', ASSET_DIR),
                                  ws.WebSocket('/graph-data', Graph()),
                                  router])

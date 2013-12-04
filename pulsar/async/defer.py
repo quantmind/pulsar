@@ -254,7 +254,7 @@ class MultiDeferred(Deferred):
     @property
     def locked(self):
         '''When ``True``, the :meth:`update` or :meth:`append` methods can no
-longer be used.'''
+        longer be used.'''
         return self._locked
 
     @property

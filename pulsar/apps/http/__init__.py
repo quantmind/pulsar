@@ -34,7 +34,7 @@ To disable cookie one can pass ``store_cookies=False`` during
 
 If a response contains some Cookies, you can get quick access to them::
 
-    >>> r = yield client.get(...).on_headers
+    >>> r = yield client.get(...)
     >>> type(r.cookies)
     <type 'dict'>
 
@@ -108,10 +108,9 @@ websocket handler::
         def on_message(self, websocket, message):
             websocket.write(message)
 
-The websocket response is obtained by waiting for the
-:attr:`HttpResponse.on_headers` event::
+The websocket response is obtained by::
 
-    ws = yield http.get('ws://...', websocket_handler=Echo()).on_headers
+    ws = yield http.get('ws://...', websocket_handler=Echo())
 
 Redirects & Decompression
 =============================
@@ -159,17 +158,7 @@ API
 ==========
 
 The main class here is the :class:`HttpClient` which is a subclass of
-:class:`~pulsar.Client`.
-You can use the client as a global singletone::
-
-
-    >>> requests = HttpClient()
-
-and somewhere else
-
-    >>> resp = requests.post('http://bla.foo', body=...)
-
-the same way requests_ works, otherwise use it where you need it.
+:class:`.AbstractClient`.
 
 
 HTTP Client
@@ -706,10 +695,6 @@ class HttpResponse(pulsar.ProtocolConsumer):
         '''
         return self._cookies
 
-    @property
-    def on_headers(self):
-        return self.event('on_headers')
-
     def recv_body(self):
         '''Flush the response body and return it.'''
         return self.parser.recv_body()
@@ -781,25 +766,9 @@ class HttpResponse(pulsar.ProtocolConsumer):
                     self.fire_event('on_headers')
                 if (not self.event('post_request').fired() and
                         request.parser.is_message_complete()):
-                    self.fire_event('post_request')
+                    self.finished()
         else:
             raise pulsar.ProtocolError('%s\n%s' % (self, self.headers))
-
-
-class HttpPool(Pool):
-
-    def _put(self, conn):
-        if not self._closed:
-            response = conn._current_consumer
-            if (response and
-                    response.headers.has('connection', 'keep-alive') and
-                    response.status_code != 101):
-                conn._current_consumer = None
-                try:
-                    self._queue.put_nowait(conn)
-                except Full:
-                    conn.close()
-        self._in_use_connections.discard(conn)
 
 
 class HttpClient(AbstractClient):
@@ -859,7 +828,7 @@ class HttpClient(AbstractClient):
     '''Maximum number of redirects.
 
     It can be overwritten on :meth:`request`.'''
-    connection_pool = HttpPool
+    connection_pool = Pool
     '''Connection :class:`.Pool` factory
     '''
     client_version = pulsar.SERVER_SOFTWARE
@@ -1092,8 +1061,12 @@ class HttpClient(AbstractClient):
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
             response = yield consumer.event(wait or 'post_request')
+            if (not consumer.headers.has('connection', 'keep-alive') or
+                consumer.status_code == 101):
+                conn.detach()
         if isinstance(response, request_again):
-            response = yield self._request(*response)
+            method, url, params = response
+            response = yield self._request(method, url, **params)
         coroutine_return(response)
 
     def _connect(self, host, port, ssl):

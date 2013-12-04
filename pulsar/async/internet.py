@@ -19,7 +19,8 @@ if hasattr(socket, 'AF_UNIX'):
 
 
 class Server(asyncio.AbstractServer):
-    '''Base class for pulsar socket servers'''
+    '''Base class for pulsar socket servers.
+    '''
     def __init__(self, loop, sockets):
         self._loop = loop
         self.sockets = sockets
@@ -49,9 +50,9 @@ class Server(asyncio.AbstractServer):
 class SocketTransport(asyncio.Transport):
     '''A ``asyncio.Transport`` for sockets.
 
-    :parameter loop: Set the :attr:`_loop` attribute.
-    :parameter sock: Set the :attr:`_sock` attribute.
-    :parameter protocol: set the :attr:`protocol` attribute.
+    :param loop: Set the :attr:`_loop` attribute.
+    :param sock: Set the :attr:`_sock` attribute.
+    :param protocol: set the :attr:`protocol` attribute.
     '''
     SocketError = socket.error
 

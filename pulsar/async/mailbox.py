@@ -9,7 +9,7 @@ eventually reach the recipient, provided that the recipient exists.
 The implementation details are outlined below:
 
 * Messages are sent via the :func:`.send` function, which is a proxy for
-  the actor :meth:`~pulsar.Actor.send` method.
+  the actor :meth:`~.Actor.send` method.
   Here is how you ping actor ``abc`` in a coroutine::
 
       from pulsar import send
@@ -26,7 +26,7 @@ The implementation details are outlined below:
 * Communication is bidirectional and there is **only one connection** between
   the arbiter and any given actor.
 * Messages are encoded and decoded using the unmasked websocket protocol
-  implemented in :class:`.frame_parser`.
+  implemented in :func:`.frame_parser`.
 * If, for some reasons, the connection between an actor and the arbiter
   get broken, the actor will eventually stop running and garbaged collected.
 

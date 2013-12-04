@@ -171,8 +171,8 @@ class Config(object):
 
         :param data: must be a ``Mapping`` like object exposing the ``item``
             method for iterating through key-value pairs.
-        :param default: if ``True`` the updated :attr:``settings`` will also
-            set their :attr:``~Setting.default`` attribute with the
+        :param default: if ``True`` the updated :attr:`settings` will also
+            set their :attr:`~Setting.default` attribute with the
             updating value (provided it is a valid one).
         '''
         for name, value in data.items():
@@ -237,7 +237,7 @@ class Config(object):
         return self.add_to_parser(parser)
 
     def add_to_parser(self, parser):
-        '''Add this container :attr:`settings`` to an existing ``parser``.
+        '''Add this container :attr:`settings` to an existing ``parser``.
         '''
         setts = self.settings
         sorter = lambda x: (setts[x].section, setts[x].order)
@@ -269,7 +269,8 @@ class Config(object):
         return unknowns
 
     def on_start(self):
-        '''Invoked by a :class:`pulsar.Application` just before starting.'''
+        '''Invoked by a :class:`.Application` just before starting.
+        '''
         for sett in self.settings.values():
             sett.on_start()
 

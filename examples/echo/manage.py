@@ -18,7 +18,7 @@ Open a new shell, in this directory, launch python and type::
     >>> from manage import Echo
     >>> echo = Echo(('localhost',8060))
     >>> echo(b'Hello!')
-    b'Hello!`
+    b'Hello!'
 
 Writing the Client
 =========================

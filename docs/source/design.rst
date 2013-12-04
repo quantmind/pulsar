@@ -322,7 +322,7 @@ This snippet spawns a new actor which starts an
 
     proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
 
-The :class:`examples.echo.manage.EchoServerProtocol` is introduced in the
+The :class:`.EchoServerProtocol` is introduced in the
 :ref:`echo server and client tutorial <tutorials-writing-clients>`.
 
 **stopping**

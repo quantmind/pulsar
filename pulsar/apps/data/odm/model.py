@@ -4,7 +4,6 @@ from copy import copy
 from collections import OrderedDict, Mapping
 
 from pulsar import ImproperlyConfigured, Event
-from pulsar.utils.structures import Hash
 from pulsar.utils.pep import ispy3k, itervalues, iteritems
 
 try:

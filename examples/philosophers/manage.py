@@ -1,5 +1,5 @@
 '''
-The dining `philosophers`_ problem is an example problem often used in
+The dining philosophers_ problem is an example problem often used in
 concurrent algorithm design to illustrate synchronisation issues and
 techniques for resolving them.
 
@@ -47,7 +47,9 @@ Implementation
    :members:
    :member-order: bysource
 
-.. _`philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem
+
+.. _philosophers: http://en.wikipedia.org/wiki/Dining_philosophers_problem
+
 '''
 import random
 import time
@@ -116,8 +118,8 @@ class DiningPhilosophers(pulsar.Application):
         self.take_action(philosopher)
 
     def worker_info(self, philosopher, info=None):
-        '''Override :meth:`pulsar.Application.worker_info` to provide
-information about the philosopher.'''
+        '''Override :meth:`~.Application.worker_info` to provide
+        information about the philosopher.'''
         params = philosopher.params
         info['philosopher'] = {'number': params.number,
                                'eaten': params.eaten}
@@ -125,9 +127,9 @@ information about the philosopher.'''
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
 
-* eat, if it has both forks and than :meth:`release_forks`.
-* try to :meth:`pickup_fork`, if he has less than 2 forks.
-'''
+        * eat, if it has both forks and than :meth:`release_forks`.
+        * try to :meth:`pickup_fork`, if he has less than 2 forks.
+        '''
         params = philosopher.params
         eaten = params.eaten or 0
         forks = params.forks

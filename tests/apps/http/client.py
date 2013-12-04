@@ -521,7 +521,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_http_get_timeit(self):
         N = 10
         client = self.client()
-        response = client.timeit(N, 'get', self.httpbin('get'),
+        response = client.timeit(N, client.get, self.httpbin('get'),
                                  data={'bla': 'foo'})
         results = yield response
         self.assertTrue(response.total_time)

@@ -9,6 +9,7 @@ except ImportError:     # pragma nocover
 
 from pulsar import arbiter
 
+
 def hello(actor):
     print('Hello there!')
     actor._loop.call_later(1, hello, actor)

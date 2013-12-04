@@ -1,4 +1,5 @@
-'''An asynchronous multi-process `HTTP proxy server`_
+'''An asynchronous multi-process `HTTP proxy server`_. It works for both
+``http`` and ``https`` (tunneled) requests.
 
 
 Managing Headers
@@ -71,16 +72,20 @@ class user_agent:
 
 
 class ProxyServerWsgiHandler(LocalMixin):
-    '''WSGI middleware for an asynchronous proxy server. To perform
-processing on headers you can pass a list of ``headers_middleware``.
-An headers middleware is a callable which accepts two parameters, the wsgi
-*environ* dictionary and the *headers* container.'''
+    '''WSGI middleware for an asynchronous proxy server.
+
+    To perform processing on headers you can pass a list of
+    ``headers_middleware``.
+    An headers middleware is a callable which accepts two parameters, the wsgi
+    *environ* dictionary and the *headers* container.
+    '''
     def __init__(self, headers_middleware=None):
         self.headers_middleware = headers_middleware or []
 
     @local_property
     def http_client(self):
-        '''The :ref:`HttpClient <'''
+        '''The :class:`.HttpClient` used by this proxy middleware for
+        accessing upstream resources'''
         return http.HttpClient(decompress=False, store_cookies=False)
 
     def __call__(self, environ, start_response):
@@ -114,8 +119,8 @@ An headers middleware is a callable which accepts two parameters, the wsgi
 
     def request_headers(self, environ):
         '''Fill request headers from the environ dictionary and
-modify the headers via the list of :attr:`headers_middleware`.
-The returned headers will be sent to the target uri.'''
+        modify the headers via the list of :attr:`headers_middleware`.
+        The returned headers will be sent to the target uri.'''
         headers = Headers(kind='client')
         for k in environ:
             if k.startswith('HTTP_'):
@@ -131,7 +136,7 @@ The returned headers will be sent to the target uri.'''
         return headers
 
 
-###############################################################################
+############################################################################
 ##    RESPONSE OBJECTS
 class ProxyResponse(object):
     '''Asynchronous wsgi response.
@@ -195,9 +200,6 @@ class ProxyResponse(object):
 
 class ProxyTunnel(ProxyResponse):
 
-    def setup(self, response):
-        response.bind_event('pre_request', self.connection_made)
-
     def connection_made(self, response):
         '''Start the tunnel.
 
@@ -209,7 +211,7 @@ class ProxyTunnel(ProxyResponse):
         DownStreamTunnel.
         '''
         # Upgrade downstream protocol consumer
-        upstream = response.connection
+        upstream = response._connection
         downstream = self.environ['pulsar.connection']
         downstream.upgrade(partial(DownStreamTunnel, upstream))
         self.start_response('200 Connection established', [])
@@ -240,15 +242,30 @@ class DownStreamTunnel(pulsar.ProtocolConsumer):
         The upstream (proxy - endpoint) connection consumer changes from HTTP
         to the :class:`UpstreamTunnel`.
         '''
-        self.upstream.upgrade(partial(UpstreamTunnel, connection), True)
+        self.upstream.upgrade(partial(UpstreamTunnel, connection))
+        self.upstream._current_consumer.bind_event('post_request', self.wait)
+        self.upstream._current_consumer.finished()
 
     def data_received(self, data):
         # Received data from the downstream part of the tunnel.
         # Send the data to the upstream server
-        self.upstream.transport.write(data)
+        self.upstream._transport.write(data)
+
+    def wait(self, response):
+        '''Return the current consumer ``on_finished`` event so that the
+        connection is not released.
+        '''
+        consumer = self.upstream._current_consumer
+        assert isinstance(consumer, UpstreamTunnel),\
+            'The current consumer is the upstream tunnel'
+        return consumer.on_finished
 
 
 class UpstreamTunnel(pulsar.ProtocolConsumer):
+    '''A :class:`.ProtocolConsumer` used by connections of the
+    :attr:~ProxyServerWsgiHandler.http_client` after they have been upgraded
+    to HTTP tunnelling.
+    '''
     headers = None
     status_code = None
 
@@ -257,9 +274,10 @@ class UpstreamTunnel(pulsar.ProtocolConsumer):
         self.downstream = downstream
 
     def data_received(self, data):
-        # Got data from the upstream server.
-        # Send it back to the downstream client
-        self.downstream.transport.write(data)
+        '''Data is received from the upstream resource, write it
+        to the downstream client.
+        '''
+        self.downstream._transport.write(data)
 
 
 def server(name='proxy-server', headers_middleware=None, server_software=None,

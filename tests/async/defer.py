@@ -250,11 +250,10 @@ class TestDeferred(unittest.TestCase):
         d = Deferred()
         d.cancel()
         self.assertTrue(d.cancelled())
-        failure = d.callback(None)
+        failure = d.exception()
         self.assertTrue(failure.isinstance(CancelledError))
         self.assertEqual(d.callback(3), failure)
         self.assertRaises(InvalidStateError, d.callback, 3)
-        mute_failure(self, failure)
 
     def test_coroutine_return(self):
         def f(count=0):

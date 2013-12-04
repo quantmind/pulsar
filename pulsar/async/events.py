@@ -104,7 +104,7 @@ class OneTime(Deferred, AbstractEvent):
                 if isinstance(result, Deferred):
                     # a deferred, add a check at the end of the callback pile
                     return self._events.add_callback(self._check, self._check)
-                elif not self._chained_to:
+                else:
                     return self.callback(result)
 
     def _check(self, result):
@@ -112,7 +112,7 @@ class OneTime(Deferred, AbstractEvent):
             # other callbacks have been added,
             # put another check at the end of the pile
             return self._events.add_callback(self._check, self._check)
-        elif not self._chained_to:
+        else:
             return self.callback(result)
 
 
@@ -216,18 +216,6 @@ class EventHandler(AsyncObject):
         event = self._events.get(name)
         if event:
             event.silence()
-
-    def chain_event(self, other, name):
-        '''Chain the event ``name`` from ``other``.
-
-        :param other: an :class:`EventHandler` to chain to.
-        :param name: event name to chain.
-        '''
-        event = self._events.get(name)
-        if event and isinstance(other, EventHandler):
-            event2 = other._events.get(name)
-            if event2:
-                event.chain(event2)
 
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.

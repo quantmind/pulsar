@@ -414,24 +414,26 @@ class Connection(Protocol):
                 log_failure(exc)
 
     def upgrade(self, consumer_factory):
-        '''Upgrade the :func:`consumer_factory` callable.
+        '''Upgrade the :func:`_consumer_factory` callable.
 
         This method can be used when the protocol specification changes
         during a response (an example is a WebSocket request/response,
-        or HTTP tunneling). For the upgrade to be successful, the
-        ``post_request`` :ref:`event <event-handling>` of the protocol
-        consumer should not have been fired already.
+        or HTTP tunneling).
+
+        This method adds a ``post_request`` callback to the
+        :meth:`current_consumer` to build a new consumer with the new
+        :func:`_consumer_factory`.
 
         :param consumer_factory: the new consumer factory (a callable
             accepting no parameters)
-        :param build_consumer: if ``True`` build the new consumer.
-            Default ``False``.
-        :return: the new consumer if ``build_consumer`` is ``True``.
+        :return: ``None``.
         '''
         self._consumer_factory = consumer_factory
         consumer = self._current_consumer
         if consumer:
             consumer.bind_event('post_request', self._build_consumer)
+        else:
+            self._build_consumer()
 
     def info(self):
         info = super(Connection, self).info()
@@ -651,7 +653,9 @@ class TcpServer(Producer):
             all.append(connection.event('connection_lost'))
             connection.transport.close(async)
         else:
-            for connection in list(self._concurrent_connections):
+            connections = list(self._concurrent_connections)
+            self._concurrent_connections = set()
+            for connection in connections:
                 all.append(connection.event('connection_lost'))
                 connection.transport.close(async)
         if all:

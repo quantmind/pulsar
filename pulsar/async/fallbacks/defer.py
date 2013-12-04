@@ -366,8 +366,6 @@ class Deferred(object):
     def exception(self):
         if self._state == _PENDING:
             raise InvalidStateError('Result is not ready.')
-        if self._state == _CANCELLED:
-            self._result.throw()
         if isinstance(self._result, Failure):
             self._result.mute()
             return self._result
