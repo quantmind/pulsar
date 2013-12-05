@@ -1,5 +1,5 @@
-from . import client
+from . import base
 
 
-class TestHttpClientWithProxy(client.TestHttpClient):
+class TestHttpClientWithProxy(base.TestHttpClient):
     with_proxy = True

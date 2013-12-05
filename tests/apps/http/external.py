@@ -5,7 +5,7 @@ from pulsar.apps import http
 from pulsar.apps.test import unittest
 from pulsar.apps.http import URLError
 
-from .client import TestHttpClientBase
+from .base import TestHttpClientBase
 
 
 class ExternalBase(TestHttpClientBase):

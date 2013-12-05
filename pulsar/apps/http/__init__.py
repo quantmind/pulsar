@@ -478,11 +478,9 @@ class HttpRequest(RequestBase):
         '''The bytes representation of this :class:`HttpRequest`.
 
         Called by :class:`HttpResponse` when it needs to encode this
-        :class:`HttpRequest` before sending it to the HTTP resourse.
+        :class:`HttpRequest` before sending it to the HTTP resource.
         '''
-        if self.method == 'CONNECT':    # this is SSL tunneling
-            return b''
-            # Call body before fist_line in case the query is changes.
+        # Call body before fist_line in case the query is changes.
         self.body = body = self.encode_body()
         first_line = self.first_line()
         if body:
@@ -906,6 +904,9 @@ class HttpClient(AbstractClient):
                                              DEFAULT_CHARSET)
         return self._websocket_key
 
+    def connect(self, url):
+        return self.request('CONNECT', url)
+
     def get(self, url, **kwargs):
         '''Sends a GET request and returns a :class:`HttpResponse` object.
 
@@ -1061,8 +1062,10 @@ class HttpClient(AbstractClient):
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
             response = yield consumer.event(wait or 'post_request')
-            if (not consumer.headers.has('connection', 'keep-alive') or
-                consumer.status_code == 101):
+            headers = consumer.headers
+            if (not headers or
+                    not headers.has('connection', 'keep-alive') or
+                    consumer.status_code == 101):
                 conn.detach()
         if isinstance(response, request_again):
             method, url, params = response

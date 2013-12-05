@@ -84,15 +84,19 @@ class OneTime(Deferred, AbstractEvent):
     Implemented mainly for the one time events of the :class:`EventHandler`.
     There shouldn't be any reason to use this class on its own.
     '''
-    def __init__(self, loop=None):
-        super(OneTime, self).__init__(loop)
-        self._events = Deferred(loop)
+    _events = None
+
+    @property
+    def events(self):
+        if self._events is None:
+            self._events = Deferred(self._loop)
+        return self._events
 
     def bind(self, callback, errback=None):
-        self._events.add_callback(callback, errback)
+        self.events.add_callback(callback, errback)
 
     def fired(self):
-        return int(self._events.done())
+        return int(self.events.done())
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
@@ -100,18 +104,18 @@ class OneTime(Deferred, AbstractEvent):
                 raise ValueError(("One time events don't support "
                                   "key-value parameters"))
             else:
-                result = self._events.callback(arg)
+                result = self.events.callback(arg)
                 if isinstance(result, Deferred):
                     # a deferred, add a check at the end of the callback pile
-                    return self._events.add_callback(self._check, self._check)
+                    return self.events.add_callback(self._check, self._check)
                 else:
                     return self.callback(result)
 
     def _check(self, result):
-        if self._events.has_callbacks:
+        if self.events.has_callbacks:
             # other callbacks have been added,
             # put another check at the end of the pile
-            return self._events.add_callback(self._check, self._check)
+            return self.events.add_callback(self._check, self._check)
         else:
             return self.callback(result)
 

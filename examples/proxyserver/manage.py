@@ -203,17 +203,23 @@ class ProxyTunnel(ProxyResponse):
     def connection_made(self, response):
         '''Start the tunnel.
 
-        This is a callback fired once a connection with target server is
-        established and this proxy is acting as tunnel for a TSL server.
+        This is a callback fired once a connection with upstream server is
+        established.
 
         Write back to the client the 200 Connection established message.
         After this the downstream connection consumer will upgrade to the
         DownStreamTunnel.
         '''
         # Upgrade downstream protocol consumer
+        # set the request to None so that start_request is not called
+        assert response._request.method == 'CONNECT'
+        response._request = None
         upstream = response._connection
-        downstream = self.environ['pulsar.connection']
-        downstream.upgrade(partial(DownStreamTunnel, upstream))
+        dostream = self.environ['pulsar.connection']
+        #
+        dostream.upgrade(partial(StreamTunnel, upstream))
+        upstream.upgrade(partial(StreamTunnel, dostream))
+        response.finished()
         self.start_response('200 Connection established', [])
         self._done = True
         # send empty byte so that headers are sent
@@ -221,63 +227,28 @@ class ProxyTunnel(ProxyResponse):
         return response
 
 
-class DownStreamTunnel(pulsar.ProtocolConsumer):
+class StreamTunnel(pulsar.ProtocolConsumer):
     ''':class:`ProtocolConsumer` handling encrypted messages from
-    downstream client.
+    downstream client and upstream server.
 
     This consumer is created as an upgrade of the standard Http protocol
-    consumer, once encrypted data arrives from the downstream client.
+    consumer.
 
-    .. attribute:: upstream
+    .. attribute:: tunnel
 
-        Client :class:`pulsar.Connection` with the upstream server.
-    '''
-    def __init__(self, upstream):
-        super(DownStreamTunnel, self).__init__()
-        self.upstream = upstream
-
-    def connection_made(self, connection):
-        '''Upgrade the consumer of :attr:`upstream` connection.
-
-        The upstream (proxy - endpoint) connection consumer changes from HTTP
-        to the :class:`UpstreamTunnel`.
-        '''
-        self.upstream.upgrade(partial(UpstreamTunnel, connection))
-        self.upstream._current_consumer.bind_event('post_request', self.wait)
-        self.upstream._current_consumer.finished()
-
-    def data_received(self, data):
-        # Received data from the downstream part of the tunnel.
-        # Send the data to the upstream server
-        self.upstream._transport.write(data)
-
-    def wait(self, response):
-        '''Return the current consumer ``on_finished`` event so that the
-        connection is not released.
-        '''
-        consumer = self.upstream._current_consumer
-        assert isinstance(consumer, UpstreamTunnel),\
-            'The current consumer is the upstream tunnel'
-        return consumer.on_finished
-
-
-class UpstreamTunnel(pulsar.ProtocolConsumer):
-    '''A :class:`.ProtocolConsumer` used by connections of the
-    :attr:~ProxyServerWsgiHandler.http_client` after they have been upgraded
-    to HTTP tunnelling.
+        Connection to the downstream client or upstream server.
     '''
     headers = None
     status_code = None
 
-    def __init__(self, downstream):
-        super(UpstreamTunnel, self).__init__()
-        self.downstream = downstream
+    def __init__(self, tunnel):
+        super(StreamTunnel, self).__init__()
+        self.tunnel = tunnel
 
     def data_received(self, data):
-        '''Data is received from the upstream resource, write it
-        to the downstream client.
-        '''
-        self.downstream._transport.write(data)
+        # Received data from the downstream part of the tunnel.
+        # Send the data to the upstream server
+        self.tunnel._transport.write(data)
 
 
 def server(name='proxy-server', headers_middleware=None, server_software=None,

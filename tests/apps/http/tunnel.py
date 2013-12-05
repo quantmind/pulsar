@@ -1,11 +1,11 @@
 from pulsar.utils.httpurl import urlparse
 
-from . import client
+from . import base
 
 
 #class TestHttpClient(client.TestHttpClientBase, client.unittest.TestCase):
 
-class TestTlsHttpClientWithProxy(client.TestHttpClient):
+class TestTlsHttpClientWithProxy(base.TestHttpClient):
     with_proxy = True
     with_tls = True
 

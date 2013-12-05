@@ -1,4 +1,5 @@
-from . import client
+from . import base
 
-class TestTlsHttpClient(client.TestHttpClient):
+
+class TestTlsHttpClient(base.TestHttpClient):
     with_tls = True

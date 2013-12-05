@@ -5,11 +5,11 @@ except ImportError:
     OAuth2 = None
 from pulsar.apps.test import unittest
 
-from . import client
+from . import base
 
 
 @unittest.skipUnless(OAuth2, 'Requires oauthlib')
-class TestOAuth(client.TestHttpClientBase, unittest.TestCase):
+class TestOAuth(base.TestHttpClientBase, unittest.TestCase):
     with_tls = True
 
     def client(self, **kw):
