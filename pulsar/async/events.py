@@ -182,10 +182,21 @@ class EventHandler(AsyncObject):
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
+
+        The events callbacks can be specified as a single callable or as
+        list/tuple of callabacks or (callback, erroback) tuples.
         '''
         for name in self._events:
             if name in events:
-                self.bind_event(name, events[name])
+                callbacks = events[name]
+                if not isinstance(callbacks, (list, tuple)):
+                    self.bind_event(name, callbacks)
+                else:
+                    for callable in callbacks:
+                        if isinstance(callable, tuple):
+                            self.bind_event(name, *callable)
+                        else:
+                            self.bind_event(name, callable)
 
     def fire_event(self, name, arg=None, **kwargs):
         """Dispatches ``arg`` or ``self`` to event ``name`` listeners.

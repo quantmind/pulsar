@@ -217,6 +217,8 @@ class Protocol(EventHandler, asyncio.Protocol):
     _transport = None
     _current_consumer = None
     _idle_timeout = None
+    _address = None
+    _type = 'server'
 
     def __init__(self, session=1, producer=None, timeout=0):
         super(Protocol, self).__init__()
@@ -225,11 +227,12 @@ class Protocol(EventHandler, asyncio.Protocol):
         self._producer = producer
 
     def __repr__(self):
-        address = self.address
+        address = self._address
         if address:
-            return '%s session %s' % (nice_address(address), self._session)
+            return '%s %s session %s' % (self._type, nice_address(address),
+                                         self._session)
         else:
-            return '<pending-connection> session %s' % self._session
+            return '<pending> session %s' % self._session
     __str__ = __repr__
 
     @property
@@ -261,11 +264,7 @@ class Protocol(EventHandler, asyncio.Protocol):
     def address(self):
         '''The address of the :attr:`transport`.
         '''
-        if self._transport:
-            addr = self._transport.get_extra_info('addr')
-            if not addr:
-                addr = self._transport.address
-            return addr
+        return self._address
 
     @property
     def timeout(self):
@@ -294,12 +293,12 @@ class Protocol(EventHandler, asyncio.Protocol):
     def close(self, async=True, exc=None):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
-            self._transport.close(async=async, exc=exc)
+            transport, self._transport = self._transport, None
+            transport.close(async=async, exc=exc)
 
     def abort(self, exc=None):
         '''Abort by aborting the :attr:`transport`.'''
-        if self._transport:
-            self._transport.close(async=False, exc=exc)
+        self.close(False, exc)
 
     def connection_made(self, transport):
         '''Sets the transport, fire the ``connection_made`` event and adds
@@ -308,6 +307,11 @@ class Protocol(EventHandler, asyncio.Protocol):
         if self._transport is not None:
             self._cancel_timeout()
         self._transport = transport
+        addr = self._transport.get_extra_info('addr')
+        if not addr:
+            self._type = 'client'
+            addr = self._transport.address
+        self._address = addr
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
         self._add_idle_timeout()
@@ -360,6 +364,10 @@ class Connection(Protocol):
     .. attribute:: _consumer_factory
 
         A factory of :class:`.ProtocolConsumer`.
+
+    .. attribute:: _processed
+
+        number of separate requests processed.
     '''
     _current_consumer = None
 

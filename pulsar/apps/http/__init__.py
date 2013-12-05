@@ -198,7 +198,7 @@ from io import StringIO, BytesIO
 import pulsar
 from pulsar import (is_failure, AbstractClient, Pool, coroutine_return,
                     Connection, run_in_loop_thread, get_event_loop,
-                    new_event_loop)
+                    ProtocolConsumer, new_event_loop)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
@@ -347,6 +347,7 @@ class HttpRequest(RequestBase):
         ``Expect: 100-Continue`` header.
 
     '''
+    CONNECT = 'CONNECT'
     _proxy = None
     _ssl = None
     _tunnel = None
@@ -442,10 +443,11 @@ class HttpRequest(RequestBase):
     full_url = property(_get_full_url, _set_full_url)
 
     def first_line(self):
-        url = self.full_url
-        if not self._proxy:
+        if not self._proxy and self.method != self.CONNECT:
             url = urlunparse(('', '', self.path or '/', self.params,
                               self.query, self.fragment))
+        else:
+            url = self.full_url
         return '%s %s %s' % (self.method, url, self.version)
 
     def new_parser(self):
@@ -614,7 +616,7 @@ class HttpRequest(RequestBase):
         return body, content_type
 
 
-class HttpResponse(pulsar.ProtocolConsumer):
+class HttpResponse(ProtocolConsumer):
     '''A :class:`.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
@@ -637,7 +639,7 @@ class HttpResponse(pulsar.ProtocolConsumer):
     _data_sent = None
     _status_code = None
     _cookies = None
-    ONE_TIME_EVENTS = pulsar.ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
+    ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     @property
     def parser(self):
@@ -904,8 +906,10 @@ class HttpClient(AbstractClient):
                                              DEFAULT_CHARSET)
         return self._websocket_key
 
-    def connect(self, url):
-        return self.request('CONNECT', url)
+    def connect(self, address):
+        if isinstance(address, tuple):
+            address = ':'.join(('%s' % v for v in address))
+        return self.request('CONNECT', address)
 
     def get(self, url, **kwargs):
         '''Sends a GET request and returns a :class:`HttpResponse` object.
@@ -1062,6 +1066,8 @@ class HttpClient(AbstractClient):
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
             response = yield consumer.event(wait or 'post_request')
+            if isinstance(response, ProtocolConsumer):
+                consumer = response
             headers = consumer.headers
             if (not headers or
                     not headers.has('connection', 'keep-alive') or

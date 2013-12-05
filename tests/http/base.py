@@ -4,7 +4,7 @@ import sys
 from base64 import b64decode
 
 import examples
-from pulsar import send, Failure
+from pulsar import send, Failure, SERVER_SOFTWARE
 from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
 from pulsar.utils import httpurl
@@ -101,6 +101,24 @@ class TestHttpClientBase:
         else:
             return self.uri
 
+    def after_test_home_page(self, response, processed=1):
+        request = response.request
+        self.assertEqual(request.scheme, 'https')
+        self.assertEqual(request.proxy, None)
+        # Only one connection pool,
+        # even though the proxy and the connection are for different addresses
+        http = response.producer
+        self.assertEqual(len(http.connection_pools), 1)
+        pool = http.connection_pools[response.request.key]
+        self.assertEqual(pool.available, 1)
+        self.assertEqual(pool.in_use, 0)
+        self.assertEqual(http.sessions, 1)
+        self.assertEqual(http.requests_processed, processed)
+        self.assertEqual(response._connection._processed, processed)
+
+    def _check_server(self, response):
+        self.assertEqual(response.headers['server'], SERVER_SOFTWARE)
+
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
@@ -113,13 +131,20 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         size = response.headers['content-length']
         self.assertEqual(len(content), int(size))
         self.assertEqual(response.headers['connection'], 'Keep-Alive')
-        self._after('test_home_page', response)
+        self._check_server(response)
+        self.after_test_home_page(response)
+        # Try again
+        response = yield http.get(self.httpbin())
+        self.assertEqual(str(response), '200')
+        self._check_server(response)
+        self.after_test_home_page(response, 2)
 
     def test_dodgy_on_header_event(self):
         client = HttpClient()
         response = yield client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
-        self.assertIsInstance(response.on_headers.exception(), Failure)
+        failure = response.event('on_headers').exception()
+        self.assertIsInstance(failure, Failure)
 
     def test_request_object(self):
         http = self.client()
@@ -240,7 +265,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_large_response(self):
         if pypy:
-            #TODO:this fails in pypy randomnly
+            # TODO: this fails in pypy randomnly
             return
         http = self.client(timeout=60)
         response = yield http.get(self.httpbin('getsize/600000'))
@@ -252,12 +277,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     def test_too_many_redirects(self):
         http = self.client()
-        response = http.get(self.httpbin('redirect', '5'), max_redirects=2)
-        # do this so that the test suite does not fail on the test
         try:
-            yield response
+            response = yield http.get(self.httpbin('redirect', '5'),
+                                      max_redirects=2)
         except TooManyRedirects as e:
             response = e.response
+        else:
+            assert False, 'TooManyRedirects not raised'
         history = response.history
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))

@@ -136,34 +136,34 @@ def handle_101(response):
         parser = frame_parser(kind=1)
         if not handler:
             handler = WS()
-        factory = partial(WebSocketClient, response, handler, parser)
-        connection.upgrade(factory)
-        response.fire_event('post_request')
+        connection.upgrade(partial(WebSocketClient, response, handler, parser))
+        response.finished()
     return response
 
 
 class Tunneling:
-    '''A callback for handling proxy tunneling.
+    '''A pre request callback for handling proxy tunneling.
 
-    The callable method is added as ``pre_request`` to a :class:`HttpClient`.
-    If Tunneling is required, it writes the CONNECT headers and abort
+    If Tunnelling is required, it writes the CONNECT headers and abort
     the writing of the actual request until headers from the proxy server
     are received.
     '''
     def __call__(self, response):
         # the pre_request handler
         request = response._request
-        tunnel = request._tunnel
-        if tunnel:
-            if getattr(request, '_apply_tunnel', False):
-                # if transport is not SSL already
-                if not isinstance(response.transport,
-                                  SocketStreamSslTransport):
-                    response._request = tunnel
-                    response.bind_event('on_headers', self.on_headers)
-            else:
-                request._apply_tunnel = True
-                response.bind_event('pre_request', self)
+        if request:
+            tunnel = request._tunnel
+            if tunnel:
+                if getattr(request, '_apply_tunnel', False):
+                    # if transport is not SSL already
+                    if not isinstance(response.transport,
+                                      SocketStreamSslTransport):
+                        response._request = tunnel
+                        response.bind_event('on_headers', self.on_headers)
+                else:
+                    # Append self again as pre_request
+                    request._apply_tunnel = True
+                    response.bind_event('pre_request', self)
         # make sure to return the response
         return response
 
@@ -182,14 +182,24 @@ class Tunneling:
         loop = prev_response._loop
         request = prev_response._request.request
         connection = prev_response._connection
-        response = connection.upgrade(build_consumer=True)
+        connection.upgrade(connection._consumer_factory)
         transport = connection.transport
         sock = transport.sock
         transport = SocketStreamSslTransport(loop, sock, transport.protocol,
                                              request._ssl, server_side=False,
                                              server_hostname=request._netloc)
         connection._transport = transport
-        # silnce connection made since it will be called again when the
+        # silence connection made since it will be called again when the
         # ssl handshake occurs. This is just to avoid unwanted logging.
+        #
         connection.silence_event('connection_made')
-        response.start(request)
+        connection._processed -= 1
+        connection.producer._requests_processed -= 1
+        #
+        prev_response.bind_event('post_request',
+                                 partial(self.start_tunneling, request))
+        prev_response.finished()
+
+    def start_tunneling(self, request, consumer):
+        consumer.start(request)
+        return consumer.on_finished

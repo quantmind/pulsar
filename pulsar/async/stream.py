@@ -112,10 +112,10 @@ advantage of specific capabilities in some transport mechanisms.'''
                 self.abort(TooManyConsecutiveWrite())
 
     def _write_continue(self, e):
-        return e.args[0] in TRY_WRITE_AGAIN
+        return e.args and e.args[0] in TRY_WRITE_AGAIN
 
     def _read_continue(self, e):
-        return e.args[0] == EWOULDBLOCK
+        return e.args and e.args[0] == EWOULDBLOCK
 
     def _ready_write(self):
         # Do the actual writing
@@ -244,7 +244,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
                 loop.add_writer(self._sock_fd, self._do_handshake)
                 return
             else:
-                raise
+                failure = sys.exc_info()
         except Exception:
             failure = sys.exc_info()
         else:

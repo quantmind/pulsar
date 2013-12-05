@@ -56,7 +56,6 @@ SERVER_SOFTWARE = 'Pulsar-proxy-server/%s' % pulsar.version
 ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = SERVER_SOFTWARE
 
-
 def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
@@ -91,9 +90,9 @@ class ProxyServerWsgiHandler(LocalMixin):
     def __call__(self, environ, start_response):
         # The WSGI thing
         loop = environ['pulsar.connection']._loop
-        return async(self._call(environ, start_response), loop)
+        return async(self._call(environ, start_response, loop), loop)
 
-    def _call(self, environ, start_response):
+    def _call(self, environ, start_response, loop):
         uri = environ['RAW_URI']
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
@@ -104,17 +103,16 @@ class ProxyServerWsgiHandler(LocalMixin):
             data = None
         request_headers = self.request_headers(environ)
         method = environ['REQUEST_METHOD']
-        events = {}
+
         if method == 'CONNECT':
             response = ProxyTunnel(environ, start_response)
         else:
             response = ProxyResponse(environ, start_response)
-            events['data_processed'] = response.data_processed
-        events['pre_request'] = response.connection_made
-        self.http_client.request(method, uri, data=data,
-                                 headers=request_headers,
-                                 version=environ['SERVER_PROTOCOL'],
-                                 **events)
+        request = async(self.http_client._request(
+            method, uri, data=data, headers=request_headers,
+            version=environ['SERVER_PROTOCOL'],
+            pre_request=response.pre_request), loop)
+        request.add_errback(response.error)
         coroutine_return(response)
 
     def request_headers(self, environ):
@@ -141,6 +139,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 class ProxyResponse(object):
     '''Asynchronous wsgi response.
     '''
+    _started = False
     _headers = None
     _done = False
 
@@ -149,16 +148,30 @@ class ProxyResponse(object):
         self.start_response = start_response
         self.queue = Queue()
 
-    def connection_made(self, response):
-        response.bind_event('post_request', None, self.error)
-        return response
-
     def __iter__(self):
         while True:
             try:
                 yield self.queue.get(wait=not self._done)
             except Empty:
                 break
+
+    def pre_request(self, response):
+        self._started = True
+        response.bind_event('data_processed', self.data_processed)
+        return response
+
+    def error(self, failure):
+        if not self._started:
+            uri = self.environ['RAW_URI']
+            msg = 'Could not find %s' % uri
+            html = wsgi.HtmlDocument(title=msg)
+            html.body.append('<h1>%s</h1>' % msg)
+            data = html.render()
+            resp = wsgi.WsgiResponse(504, data, content_type='text/html')
+            self.start_response(resp.status, resp.get_headers(),
+                                failure.exc_info)
+            self._done = True
+            self.queue.put(resp.content[0])
 
     def data_processed(self, response, **kw):
         '''Receive data from the requesting HTTP client.'''
@@ -200,7 +213,7 @@ class ProxyResponse(object):
 
 class ProxyTunnel(ProxyResponse):
 
-    def connection_made(self, response):
+    def pre_request(self, response):
         '''Start the tunnel.
 
         This is a callback fired once a connection with upstream server is
@@ -213,6 +226,7 @@ class ProxyTunnel(ProxyResponse):
         # Upgrade downstream protocol consumer
         # set the request to None so that start_request is not called
         assert response._request.method == 'CONNECT'
+        self._started = True
         response._request = None
         upstream = response._connection
         dostream = self.environ['pulsar.connection']
@@ -245,10 +259,23 @@ class StreamTunnel(pulsar.ProtocolConsumer):
         super(StreamTunnel, self).__init__()
         self.tunnel = tunnel
 
+    def connection_made(self, connection):
+        connection.bind_event('connection_lost', self._close_tunnel,
+                              self._close_tunnel)
+
     def data_received(self, data):
         # Received data from the downstream part of the tunnel.
         # Send the data to the upstream server
-        self.tunnel._transport.write(data)
+        try:
+            self.tunnel._transport.write(data)
+        except Exception:
+            if not self.tunnel.closed:
+                raise
+
+    def _close_tunnel(self, arg):
+        if not self.tunnel.closed:
+            self.tunnel._loop.call_soon(self.tunnel.close)
+        return arg
 
 
 def server(name='proxy-server', headers_middleware=None, server_software=None,
