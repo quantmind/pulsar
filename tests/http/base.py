@@ -103,8 +103,7 @@ class TestHttpClientBase:
 
     def after_test_home_page(self, response, processed=1):
         request = response.request
-        self.assertEqual(request.scheme, 'https')
-        self.assertEqual(request.proxy, None)
+        self.assertEqual(request.scheme, 'https' if self.with_tls else 'http')
         # Only one connection pool,
         # even though the proxy and the connection are for different addresses
         http = response.producer

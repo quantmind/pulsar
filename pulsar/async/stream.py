@@ -153,7 +153,6 @@ advantage of specific capabilities in some transport mechanisms.'''
     def _ready_read(self):
         # Read from the socket until we get EWOULDBLOCK or equivalent.
         # If any other error occur, abort the connection and re-raise.
-        passes = 0
         chunk = True
         try:
             while chunk:
@@ -169,13 +168,12 @@ advantage of specific capabilities in some transport mechanisms.'''
                         self._read_buffer.append(chunk)
                     else:
                         self._protocol.data_received(chunk)
-                elif not passes and chunk == b'':
+                if chunk == b'':
                     # We got empty data. Close the socket
                     try:
                         self._protocol.eof_received()
                     finally:
                         self.close()
-                passes += 1
             return
         except self.SocketError:
             failure = None if self._closing else sys.exc_info()

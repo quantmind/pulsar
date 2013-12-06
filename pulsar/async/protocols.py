@@ -321,6 +321,9 @@ class Protocol(EventHandler, asyncio.Protocol):
         '''
         self.fire_event('connection_lost', exc)
 
+    def eof_received(self):
+        '''The socket was closed from the remote end'''
+
     def set_timeout(self, timeout):
         '''Set a new :attr:`timeout` for this connection.'''
         self._cancel_timeout()
@@ -338,9 +341,8 @@ class Protocol(EventHandler, asyncio.Protocol):
     ########################################################################
     ##    INTERNALS
     def _timed_out(self):
-        self.logger.info(
-            '%s idle for %d seconds. Closing connection.', self, self._timeout)
         self.close()
+        self.logger.debug('Closed idle %s.', self)
 
     def _add_idle_timeout(self):
         if not self.closed and not self._idle_timeout and self._timeout:
