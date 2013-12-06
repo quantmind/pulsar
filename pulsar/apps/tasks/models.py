@@ -10,9 +10,6 @@ with one :class:`Job`, which can be of two types:
 
 .. _job-callable:
 
-Implementing jobs
-========================
-
 To define a job is simple, subclass from :class:`Job` and implement the
 **job callable method**::
 
@@ -48,35 +45,13 @@ This allows for cooperative task execution on each task thread workers.
 Non overlapping Jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :attr:`Job.can_overlap` attribute controls the way tasks are generated
-by a specific :class:`Job`. By default, a :class:`Job` creates a new task
-every time the :ref:`task backend <apps-taskqueue-backend>` requests it.
+The :attr:`~.Job.can_overlap` attribute controls the way tasks are generated
+by a specific :class:`Job`. By default, a :class:`.Job` creates a new task
+every time the :class:`.TaskBackend` requests it.
 
-However, when setting the :attr:`Job.can_overlap` attribute to ``False``,
+However, when setting the :attr:`~.Job.can_overlap` attribute to ``False``,
 a new task cannot be started unless a previous task of the same job
 is done.
-
-
-Job class
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Job
-   :members:
-   :member-order: bysource
-
-Periodic job
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PeriodicJob
-   :members:
-   :member-order: bysource
-
-Job registry
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobRegistry
-   :members:
-   :member-order: bysource
 
 '''
 from datetime import datetime, date

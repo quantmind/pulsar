@@ -1,20 +1,3 @@
-'''
-The :ref:`task queue application <app-taskqueue-app>` does not expose
-an external API to run new tasks or retrieve task information.
-The :class:`TaskQueueRpcMixin` class can be used to achieve just that. It is
-a :class:`pulsar.apps.rpc.JSONRPC` handler which exposes six functions
-for executing tasks and retrieving task information.
-
-The :ref:`task-queue example <tutorials-taskqueue>` shows how to use this class
-in the context of a WSGI server running along side the task-queue application.
-
-TaskQueue Rpc Mixin
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TaskQueueRpcMixin
-   :members:
-   :member-order: bysource
-'''
 import pulsar
 from pulsar.apps import rpc
 
@@ -39,16 +22,14 @@ def task_to_json(task):
 
 
 class TaskQueueRpcMixin(rpc.JSONRPC):
-    '''A :class:`pulsar.apps.rpc.JSONRPC` mixin for communicating with
-    a :class:`TaskQueue`.
+    '''A :class:`.JSONRPC` mixin for communicating with  a :class:`.TaskQueue`.
 
     To use it, you need to have an :ref:`RPC application <apps-rpc>`
     and a :ref:`task queue <apps-taskqueue>` application installed in the
-    :class:`pulsar.Arbiter`.
+    :class:`.Arbiter`.
 
-    :parameter taskqueue: instance or name of the
-        :class:`pulsar.apps.tasks.TaskQueue` which exposes the remote procedure
-        calls.
+    :parameter taskqueue: instance or name of the :class:`.TaskQueue`
+        application which exposes the remote procedure calls.
 
     '''
     _task_backend = None
@@ -63,8 +44,11 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     ##    REMOTES
     def rpc_job_list(self, request, jobnames=None):
         '''Return the list of Jobs registered with task queue with meta
-information. If a list of jobnames is given, it returns only jobs
-included in the list.'''
+        information.
+
+        If a list of ``jobnames`` is given, it returns only jobs
+        included in the list.
+        '''
         task_backend = yield self.task_backend()
         yield task_backend.job_list(jobnames=jobnames)
 
@@ -72,9 +56,14 @@ included in the list.'''
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
 
     def rpc_run_new_task(self, request, jobname=None, **kw):
-        '''Run a new task in the task queue. The task can be of any type
-as long as it is registered in the task queue registry. To check the
-available tasks call the "job_list" function. It returns the task id.'''
+        '''Run a new task in the task queue.
+
+        The task can be of any type as long as it is registered in the
+        task queue registry. To check the available tasks call the
+        :meth:`rpc_job_list` function.
+
+        It returns the task id.
+        '''
         result = yield self.run_new_task(request, jobname, **kw)
         yield task_to_json(result)
 
@@ -128,10 +117,12 @@ available tasks call the "job_list" function. It returns the task id.'''
 
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters
-to be passed to the :class:`Task` class constructor.
-This function can be overridden to add information about
-the type of request, who made the request and so forth. It must return
-a dictionary. By default it returns an empty dictionary.'''
+        to be passed to the :class:`.Task` class constructor.
+
+        This function can be overridden to add information about
+        the type of request, who made the request and so forth.
+        It must return a dictionary.
+        By default it returns an empty dictionary.'''
         return {}
 
     def _rq(self, request, action, *args, **kw):

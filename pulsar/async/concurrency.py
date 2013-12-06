@@ -144,7 +144,8 @@ back with the acknowledgement from the monitor.
         actor.next_periodic_task = None
         ack = None
         if actor.is_running():
-            actor.logger.debug('notifying the monitor')
+            if actor.cfg.debug:
+                actor.logger.debug('notify monitor')
             # if an error occurs, shut down the actor
             ack = actor.send('monitor', 'notify', actor.info())\
                        .add_errback(actor.stop)

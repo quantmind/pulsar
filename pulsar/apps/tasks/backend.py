@@ -6,10 +6,6 @@ and retrieving task information. Pulsar ships with two backends, one which uses
 pulsar internals and store tasks in the arbiter domain and another which stores
 tasks in redis_.
 
-
-Overview
-===============
-
 The backend is created by the :class:`.TaskQueue`
 as soon as it starts. It is then passed to all task queue workers
 which, in turns, invoke the :class:`TaskBackend.start` method
@@ -36,7 +32,7 @@ be implemented:
 Task states
 ~~~~~~~~~~~~~
 
-A :class:`Task` can have one of the following :attr:`Task.status` string:
+A :class:`Task` can have one of the following :attr:`~.Task.status` string:
 
 * ``PENDING`` A task waiting to be queued for execution.
 * ``QUEUED`` A task queued but not yet executed.
@@ -70,46 +66,13 @@ Task status broadcasting
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
 channels via the :attr:`~TaskBackend.pubsub` handler.
 
-API
-=========
-
-.. _apps-taskqueue-task:
-
-Task
-~~~~~~~~~~~~~
-
-.. autoclass:: Task
-   :members:
-   :member-order: bysource
-
-
-TaskBackend
-~~~~~~~~~~~~~
-
-.. autoclass:: TaskBackend
-   :members:
-   :member-order: bysource
-
-TaskConsumer
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TaskConsumer
-   :members:
-   :member-order: bysource
-
-Scheduler Entry
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: SchedulerEntry
-   :members:
-   :member-order: bysource
 
 .. _redis: http://redis.io/
 '''
 import sys
 import logging
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from hashlib import sha1
 
 from pulsar import (in_loop, Failure, EventHandler, PulsarException,
@@ -215,8 +178,16 @@ class Task(odm.Model):
     time_queued = odm.FloatField()
     time_started = odm.FloatField()
     time_finished = odm.FloatField()
+    '''The timestamp indicating when this has finished.
+    '''
     expiry = odm.FloatField()
+    '''The timestamp indicating when this task expires.
+
+    If the task is not started before this value it is ``REVOKED``.
+    '''
     status = odm.IntegerField()
+    '''flag indicating the :ref:`task status <task-state>`
+    '''
     kwargs = odm.PickleField()
     result = odm.PickleField()
 
@@ -258,7 +229,7 @@ class TaskBackend(LocalMixin):
 
     .. attribute:: schedule_periodic
 
-        `True` if this :class:`TaskBackend` can schedule periodic tasks.
+        ``True`` if this :class:`TaskBackend` can schedule periodic tasks.
 
         Passed by the task-queue application
         :ref:`schedule-periodic setting <setting-schedule_periodic>`.
@@ -306,8 +277,15 @@ class TaskBackend(LocalMixin):
         self.max_tasks = max_tasks
         self.poll_timeout = max(poll_timeout or 0, 2)
         self.processed = 0
-        self.local.schedule_periodic = schedule_periodic
+        self.schedule_periodic = schedule_periodic
         self.next_run = time.time()
+
+    def __repr__(self):
+        if self.schedule_periodic:
+            return 'task scheduler %s' % self._store_dns
+        else:
+            return 'task consumer %s' % self._store_dns
+    __str__ = __repr__
 
     @local_property
     def events(self):
@@ -322,16 +300,13 @@ class TaskBackend(LocalMixin):
         return self.store._loop
 
     @property
-    def schedule_periodic(self):
-        return self.local.schedule_periodic
-
-    @property
     def logger(self):
         return self.store._loop.logger
 
     @local_property
     def store(self):
-        '''Data store where tasks are queued'''
+        '''The :ref:`data store <data-stores>` client where tasks are queued
+        '''
         return create_store(self._store_dns)
 
     @local_property
@@ -342,15 +317,16 @@ class TaskBackend(LocalMixin):
 
     @local_property
     def concurrent_tasks(self):
-        '''Concurrent set of task ids.
-
-        The task with id in this set are currently being executed
-        by the task queue worker running this :class:`TaskBackend`..'''
+        '''Set of :class:`.Task` ids which are currently being executed.
+        '''
         return set()
 
     @property
     def num_concurrent_tasks(self):
-        '''The number of :attr:`concurrent_tasks`.'''
+        '''The number of :attr:`concurrent_tasks`.
+
+        This number is never greater than the :attr:`backlog` attribute.
+        '''
         return len(self.concurrent_tasks)
 
     @local_property
@@ -404,8 +380,9 @@ class TaskBackend(LocalMixin):
             task = yield self.maybe_queue_task(task)
             if task:
                 pubsub.publish(self.channel('task_queued'), task['id'])
-                if self.entries and job.name in self.entries:
-                    self.entries[job.name].next()
+                scheduled = self.entries.get(job.name)
+                if scheduled:
+                    scheduled.next()
                 self.logger.debug('%s', task.lazy_info())
             else:
                 self.logger.debug('%s cannot queue new task. Locked', jobname)
@@ -541,7 +518,7 @@ class TaskBackend(LocalMixin):
         for entry in itervalues(self.entries):
             is_due, next_time_to_run = entry.is_due(now=now)
             if is_due:
-                self.run_job(entry.name)
+                self.queue_task(entry.name)
             if next_time_to_run:
                 remaining_times.append(next_time_to_run)
         self.next_run = now or time.time()
@@ -681,22 +658,17 @@ class TaskBackend(LocalMixin):
         coroutine_return(task_id)
 
     def _setup_schedule(self):
-        if not self.local.schedule_periodic:
-            return ()
         entries = {}
+        if not self.schedule_periodic:
+            return entries
         for name, task in self.registry.filter_types('periodic'):
-            schedule = self._maybe_schedule(task.run_every, task.anchor)
-            entries[name] = SchedulerEntry(name, schedule)
+            every = task.run_every
+            if isinstance(every, int):
+                every = timedelta(seconds=every)
+            if not isinstance(every, timedelta):
+                raise ValueError('Schedule %s is not a timedelta' % every)
+            entries[name] = SchedulerEntry(name, every, task.anchor)
         return entries
-
-    def _maybe_schedule(self, s, anchor):
-        if not self.local.schedule_periodic:
-            return
-        if isinstance(s, int):
-            s = timedelta(seconds=s)
-        if not isinstance(s, timedelta):
-            raise ValueError('Schedule %s is not a timedelta' % s)
-        return Schedule(s, anchor)
 
     @in_loop_thread
     def task_done_callback(self, task_id):
@@ -715,45 +687,36 @@ class TaskBackend(LocalMixin):
                 when_done.callback(task)
 
 
-class Schedule(object):
+class SchedulerEntry(object):
+    '''A class used as a schedule entry by the :class:`.TaskBackend`.
 
-    def __init__(self, run_every=None, anchor=None):
+    .. attribute:: name
+
+        Task name
+
+    .. attribute:: run_every
+
+        Interval in seconds
+
+    .. attribute:: anchor
+
+        Datetime anchor
+
+    .. attribute:: last_run_at
+
+        last run datetime
+
+    .. attribute:: total_run_count
+
+        Total number of times this periodic task has been executed by the
+        :class:`.TaskBackend`.
+    '''
+    def __init__(self, name, run_every, anchor=None):
+        self.name = name
         self.run_every = run_every
         self.anchor = anchor
-
-    def is_due(self, last_run_at, now=None):
-        """Returns tuple of two items ``(is_due, next_time_to_run)``,
-        where next time to run is in seconds.
-
-        See :meth:`unuk.contrib.tasks.models.PeriodicTask.is_due`
-        for more information.
-        """
-        now = now or datetime.now()
-        rem_delta = last_run_at + self.run_every - now
-        rem = timedelta_seconds(rem_delta)
-        if rem == 0:
-            return True, timedelta_seconds(self.run_every)
-        return False, rem
-
-
-class SchedulerEntry(object):
-    """A class used as a schedule entry by the :class:`.TaskBackend`."""
-    name = None
-    '''Task name'''
-    schedule = None
-    '''The schedule'''
-    last_run_at = None
-    '''The time and date of when this task was last run.'''
-    total_run_count = None
-    '''Total number of times this periodic task has been executed by the
-    :class:`.TaskBackend`.'''
-
-    def __init__(self, name, schedule, args=(), kwargs={},
-                 last_run_at = None, total_run_count=None):
-        self.name = name
-        self.schedule = schedule
-        self.last_run_at = last_run_at or datetime.now()
-        self.total_run_count = total_run_count or 0
+        self.last_run_at = datetime.now()
+        self.total_run_count = 0
 
     def __repr__(self):
         return self.name
@@ -778,38 +741,32 @@ class SchedulerEntry(object):
                     anchor += run_every
                 while anchor > last_run_at:
                     anchor -= run_every
-                self.schedule.anchor = anchor
+                self.anchor = anchor
             return anchor
         else:
             return last_run_at
 
-    @property
-    def run_every(self):
-        '''tasks run every interval given by this attribute.
-
-        A python :class:`datetime.timedelta` instance.
-        '''
-        return self.schedule.run_every
-
-    @property
-    def anchor(self):
-        '''Some periodic :class:`.PeriodicJob` can specify an anchor.'''
-        return self.schedule.anchor
-
     def next(self, now=None):
-        """Returns a new instance of the same class, but with
-        its date and count fields updated.
-
-        Function called by :class:`.TaskBackend` when this entry
-        is due to run.
-        """
-        now = now or datetime.now()
+        '''Increase the :attr:`total_run_count` attribute by one and set the
+        value of :attr:`last_run_at` to ``now``.
+        '''
         self.last_run_at = now or datetime.now()
         self.total_run_count += 1
-        return self
 
     def is_due(self, now=None):
-        return self.schedule.is_due(self.scheduled_last_run_at, now=now)
+        '''Returns tuple of two items ``(is_due, next_time_to_run)``,
+        where next time to run is in seconds.
+
+        See :meth:`unuk.contrib.tasks.models.PeriodicTask.is_due`
+        for more information.
+        '''
+        last_run_at = self.scheduled_last_run_at
+        now = now or datetime.now()
+        rem_delta = last_run_at + self.run_every - now
+        rem = timedelta_seconds(rem_delta)
+        if rem == 0:
+            return True, timedelta_seconds(self.run_every)
+        return False, rem
 
 
 class PulsarTaskBackend(TaskBackend):

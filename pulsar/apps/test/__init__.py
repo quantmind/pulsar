@@ -422,8 +422,9 @@ class TestShowLeaks(TestOption):
     default = 0
     desc = """Shows memory leaks.
 
-    Run the garbadge collector before a process-based actor dies and shows
-    the memory leak report."""
+    Run the garbage collector before a process-based actor dies and shows
+    the memory leak report.
+    """
 
 
 class TestLogFailures(TestOption):

@@ -86,9 +86,9 @@ Lazy Wsgi Handler
 '''
 import sys
 
+from pulsar import async, Http404, Failure, coroutine_return
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
-from pulsar import async, Http404, Failure, coroutine_return
 
 from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
@@ -127,7 +127,8 @@ class WsgiHandler(object):
 
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
-        loop = environ['pulsar.connection']._loop
+        c = environ.get('pulsar.connection')
+        loop = c._loop if c else None
         return async(self._call(environ, start_response), loop)
 
     def _call(self, environ, start_response):

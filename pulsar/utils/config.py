@@ -706,14 +706,15 @@ class HttpParser(Global):
 class Debug(Global):
     name = "debug"
     flags = ["--debug"]
-    validator = validate_bool
-    action = "store_true"
-    default = False
+    nargs = '?'
+    type = int
+    default = 0
+    const = 1
     desc = """\
         Turn on debugging in the server.
 
-        This limits the number of worker processes to 1 and changes some error
-        handling that's sent to clients.
+        Set the log level to debug, limits the number of worker processes
+        to 1 and changes some error handling that's sent to clients.
         """
 
 

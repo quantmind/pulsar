@@ -1,23 +1,4 @@
-'''\
-Pulsar ships with an asynchronous :class:`TaskQueue` built on top
-:ref:`pulsar application framework <apps-framework>`. Task queues are used
-as a mechanism to distribute work across threads/processes or machines.
-Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share :class:`.Task` across
-several machines.
-By creating :class:`.Job` classes in a similar way you do for celery_,
-this application gives you all you need for running them with very
-little setup effort::
-
-    from pulsar.apps import tasks
-
-    if __name__ == '__main__':
-        tasks.TaskQueue(tasks_path=['path.to.tasks.*']).start()
-
-Check the :ref:`task queue tutorial <tutorials-taskqueue>` for a running
-example with simple tasks.
-
-To get started, follow the these points:
+'''To get started, follow the these simple guidelines:
 
 * Create the script which runs your application, in the
   :ref:`taskqueue tutorial <tutorials-taskqueue>` the script is called
@@ -25,7 +6,9 @@ To get started, follow the these points:
 * Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented. It
   can be a directory containing several submodules as explained in the
   :ref:`task paths parameter <app-tasks_path>`.
-
+* Write a simple :class:`.PeriodicJob` class with a
+  :ref:`callable method <job-callable>`
+* Run your script, sit back and relax.
 
 .. _app-taskqueue-job:
 
@@ -92,6 +75,7 @@ import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
 from pulsar.apps.data import start_store
+from pulsar.utils.pep import pickle
 
 from .models import *
 from .backend import task_backends, Task, TaskBackend
@@ -195,7 +179,7 @@ class TaskQueue(pulsar.Application):
         self._create_backend(store)
 
     def monitor_task(self, monitor):
-        '''Override the :meth:`.Application.monitor_task` callback.
+        '''Override the :meth:`~.Application.monitor_task` callback.
 
         Check if the :attr:`backend` needs to schedule new tasks.
         '''
@@ -210,7 +194,12 @@ class TaskQueue(pulsar.Application):
         self.backend.close(worker)
 
     def actorparams(self, monitor, params):
-        params['app'].cfg.set('schedule_periodic', False)
+        # makes sure workers are only consuming tasks, not scheduling.
+        backend = params['app'].backend
+        if backend.schedule_periodic:
+            backend = pickle.loads(pickle.dumps(backend))
+            backend.schedule_periodic = False
+            params['app'].backend = backend
 
     def worker_info(self, worker, info=None):
         be = self.backend
@@ -230,6 +219,7 @@ class TaskQueue(pulsar.Application):
             schedule_periodic=self.cfg.schedule_periodic,
             max_tasks=self.cfg.max_requests,
             backlog=self.cfg.concurrent_tasks)
+        self.logger.debug('created %s', self.backend)
 
 
 @command()

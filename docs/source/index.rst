@@ -31,7 +31,7 @@ located in the :mod:`pulsar.apps` module.
 
    apps/socket
    apps/wsgi/index
-   apps/tasks/index
+   apps/tasks
    apps/test
    apps/data/index
    apps/shell
