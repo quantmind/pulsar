@@ -354,16 +354,32 @@ class PyModelBase(dict):
     def to_store(self, store):
         return dict(self._to_store(store))
 
+    def to_json(self):
+        '''Return a JSON serialisable dictionary representation.'''
+        return dict(self._to_json(exclude_cache))
+
     def pkvalue(self):
         pk = self._meta.pk.name
         if pk in self:
             return self[pk]
 
+    ##    INTERNALS
     def _to_store(self, store):
         for key, value in iteritems(self):
             if key in self._meta.dfields:
                 value = self._meta.dfields[key].to_store(value, store)
             yield key, value
+
+    def _to_json(self):
+        pk = self.pkvalue()
+        if pk:
+            yield self._meta.pk.name, pk
+            for key in self:
+                value = self[key]
+                if value is not None:
+                    if key in self._meta.dfields:
+                        value = self._meta.dfields[key].to_json(value)
+                    yield key, value
 
 
 class ModelType(type(dict)):

@@ -311,7 +311,7 @@ class TaskBackend(LocalMixin):
 
     @local_property
     def models(self):
-        models = odm.Router(self.store)
+        models = odm.Mapper(self.store)
         models.register(Task)
         return models
 
@@ -446,6 +446,11 @@ class TaskBackend(LocalMixin):
         '''
         raise NotImplementedError
 
+    def flush(self):
+        '''Remove all queued :class:`.Task`
+        '''
+        raise NotImplementedError()
+
     ########################################################################
     ##    START/CLOSE METHODS FOR TASK WORKERS
     ########################################################################
@@ -473,11 +478,8 @@ class TaskBackend(LocalMixin):
             #self.pubsub.close()
             #self.store.close()
 
-    ########################################################################
-    ##    PRIVATE METHODS
-    ########################################################################
     def generate_task_ids(self, job, kwargs):
-        '''Generate task unique identifiers.
+        '''An internal method to generate task unique identifiers.
 
         :parameter job: The :class:`.Job` creating the task.
         :parameter kwargs: dictionary of key-valued parameters passed to the
@@ -503,15 +505,11 @@ class TaskBackend(LocalMixin):
                 name = self.name
             return tid, sha1(name.encode('utf-8')).hexdigest()
 
+    ########################################################################
+    ##    PRIVATE METHODS
+    ########################################################################
     def tick(self, now=None):
-        '''Run a tick, that is one iteration of the scheduler.
-
-        Available when :attr:`schedule_periodic` is ``True``.
-
-        Queues all due tasks and calculate the time in seconds to wait before
-        running a new :meth:`tick`.
-        For testing purposes a value ``now`` can be passed.
-        '''
+        #Run a tick, that is one iteration of the scheduler.
         if not self.schedule_periodic:
             return
         remaining_times = []
@@ -672,14 +670,11 @@ class TaskBackend(LocalMixin):
 
     @in_loop_thread
     def task_done_callback(self, task_id):
-        '''Got a task_id from the ``<name>_task_done`` channel.
-
-        Check if a ``callback`` is available in the :attr:`callbacks`
-        dictionary. If so fire the callback with the ``task`` instance
-        corresponsding to the input ``task_id``.
-
-        If a callback is not available, it must have been fired already.
-        '''
+        # Got a task_id from the ``<name>_task_done`` channel.
+        # Check if a ``callback`` is available in the :attr:`callbacks`
+        # dictionary. If so fire the callback with the ``task`` instance
+        # corresponsding to the input ``task_id``.
+        # If a callback is not available, it must have been fired already
         task = yield self.get_task(task_id)
         if task:
             when_done = self.callbacks.pop(task_id, None)
@@ -825,6 +820,9 @@ class PulsarTaskBackend(TaskBackend):
         for pk in ids:
             pipeline.hgetall('%s:%s' % (base, pk), factory=Task)
         return pipeline.commit()
+
+    def flush(self):
+        return self.store.flush()
 
 
 task_backends['pulsar'] = PulsarTaskBackend

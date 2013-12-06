@@ -123,20 +123,9 @@ class Store(Producer):
         '''Domain name server'''
         return self._dns
 
-    @property
-    def key(self):
-        return (self._dns, self._encoding)
-
     def __repr__(self):
         return 'Store(dns="%s")' % self._dns
     __str__ = __repr__
-
-    def router(self):
-        '''Create a :class:`.Router` with this :class:`.Store` as
-        default store.
-        '''
-        from asyncstore import odm
-        return odm.Router(self)
 
     def connect(self):
         '''Connect with store server
@@ -154,7 +143,7 @@ class Store(Producer):
         raise NotImplementedError
 
     def pubsub(self, **kw):
-        '''Get a :class:``PubSub` handler for the Store
+        '''Obtain a :class:`PubSub` handler for the Store if implemented.
         '''
         raise NotImplementedError
 
@@ -166,8 +155,8 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
-    def create_table(self, model_class):
-        '''Create the table for ``model_class``.
+    def create_table(self, model):
+        '''Create the table for ``model``.
         '''
         pass
 
@@ -186,6 +175,10 @@ class Store(Producer):
 
     def close(self):
         '''Close all open connections.'''
+        raise NotImplementedError
+
+    def flush(self):
+        '''Flush the store.'''
         raise NotImplementedError
 
     def _init(self, **kw):  # pragma    nocover

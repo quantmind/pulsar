@@ -8,10 +8,10 @@ from ..stores import create_store
 
 
 class Manager(AbstractQuery):
-    '''Links a database model/table with a data :class:`.Store`.
+    '''Used by the :class:`.Mapper` to link a data :class:`.Store` collection
+    with a :class:`.Model`.
 
-    Used by the :class:`.Router` to :ref:`register <tutorial-registration>`
-    a :class:`.Model` with a :class:`.Store`. For example::
+    For example::
 
         from pulsar.apps.data import odm
 
@@ -19,7 +19,7 @@ class Manager(AbstractQuery):
             group = odm.SymbolField()
             flag = odm.BooleanField()
 
-        models = odm.Router()
+        models = odm.Mapper()
         models.register(MyModel)
 
         manager = models[MyModel]
@@ -41,14 +41,25 @@ class Manager(AbstractQuery):
 
             manager_class = MyModelManager
 
+    .. attribute:: _model
+
+        The :class:`.Model` associated with this manager
+
+    .. attribute:: _store
+
+        The :class:`.Store` associated with this manager
+
+    .. attribute:: _mapper
+
+        The :class:`.Mapper` where this :class:`.Manager` is registered
     '''
     query_class = Query
 
-    def __init__(self, model, store=None, read_store=None, router=None):
+    def __init__(self, model, store=None, read_store=None, mapper=None):
         self._model = model
         self._store = store
         self._read_store = read_store or store
-        self._router = router
+        self._mapper = mapper
 
     @property
     def _meta(self):
@@ -104,35 +115,32 @@ class Manager(AbstractQuery):
 
     def begin(self):
         '''Begin a new :class:`.Transaction`.'''
-        return self._router.begin()
+        return self._mapper.begin()
 
     def new(self, *args, **kwargs):
-        '''Create a new instance of :attr:`model` and commit it to the store
-        server. This a shortcut method for the more verbose::
-
-        instance = manager.session().add(MyModel(**kwargs))
+        '''Create a new instance of :attr:`_model` and commit to server.
         '''
-        with self._router.begin() as t:
+        with self._mapper.begin() as t:
             t.add(self._model(*args, **kwargs))
         return t.wait()
 
     def save(self, instance):
-        '''Save an existing instance of :attr:`model`.
+        '''Save an existing ``instance`` of :attr:`_model`.
         '''
-        with self._router.begin() as t:
+        with self._mapper.begin() as t:
             t.add(instance)
         return t.wait()
     update = save
 
 
-class Router(EventHandler):
-    '''A router is a mapping of :class:`.Model` to a :class:`Manager`.
+class Mapper(EventHandler):
+    '''A mapper is a mapping of :class:`.Model` to a :class:`.Manager`.
 
-    The :class:`Manager` are registered with a :class:`.Store`::
+    The :class:`.Manager` are registered with a :class:`.Store`::
 
         from asyncstore import odm
 
-        models = odm.Router(store)
+        models = odm.Mapper(store)
         models.register(MyModel, ...)
 
         # dictionary Notation
@@ -141,7 +149,7 @@ class Router(EventHandler):
         # or dotted notation (lowercase)
         query = models.mymodel.query()
 
-    The ``models`` instance in the above snipped can be set globally if
+    The ``models`` instance in the above snippet can be set globally if
     one wishes to do so.
 
     .. attribute:: pre_commit
@@ -176,7 +184,7 @@ class Router(EventHandler):
                          'post_commit', 'post_delete')
 
     def __init__(self, default_store, **kw):
-        super(Router, self).__init__()
+        super(Mapper, self).__init__()
         self._registered_models = ModelDictionary()
         self._registered_names = {}
         self._default_store = create_store(default_store, **kw)
@@ -185,7 +193,7 @@ class Router(EventHandler):
 
     @property
     def default_store(self):
-        '''The default :class:`.Store` for this :class:`Router`.
+        '''The default :class:`.Store` for this :class:`Mapper`.
 
         Used when calling the :meth:`register` method without explicitly
         passing a :class:`.Store`.
@@ -199,7 +207,7 @@ class Router(EventHandler):
 
     @property
     def search_engine(self):
-        '''The :class:`SearchEngine` for this :class:`Router`. This
+        '''The :class:`SearchEngine` for this :class:`Mapper`. This
 must be created by users. Check :ref:`full text search <tutorial-search>`
 tutorial for information.'''
         return self._search_engine
@@ -222,16 +230,18 @@ tutorial for information.'''
         raise AttributeError('No model named "%s"' % name)
 
     def begin(self):
+        '''Begin a new :class:`.Transaction`
+        '''
         return Transaction(self)
 
     def set_search_engine(self, engine):
-        '''Set the search ``engine`` for this :class:`Router`.'''
+        '''Set the search ``engine`` for this :class:`Mapper`.'''
         self._search_engine = engine
-        self._search_engine.set_router(self)
+        self._search_engine.set_mapper(self)
 
     def register(self, model, store=None, read_store=None,
                  include_related=True, **params):
-        '''Register a :class:`.Model` with this :class:`Router`.
+        '''Register a :class:`.Model` with this :class:`Mapper`.
 
         If the model was already registered it does nothing.
 
@@ -277,7 +287,7 @@ tutorial for information.'''
             if not model:
                 raise Model.DoesNotExist(
                     'model id "{0}" not available'.format(elems[0]))
-            if not session or session.router is not self:
+            if not session or session.mapper is not self:
                 session = self.session()
             return session.query(model).get(id=elems[1])
         raise Model.DoesNotExist('uuid "{0}" not recognized'.format(uuid))
@@ -348,10 +358,6 @@ For example::
 '''
         return list(self._register_applications(applications, models,
                                                 stores))
-
-    def session(self):
-        '''Obatain a new :class:`Session` for this ``Router``.'''
-        return Session(self)
 
     def create_all(self):
         '''Loop though :attr:`registered_models` and issue the

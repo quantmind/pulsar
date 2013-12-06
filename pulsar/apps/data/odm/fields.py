@@ -157,6 +157,9 @@ class Field(UnicodeMixin):
         '''Generate the :attr:`attname` at runtime'''
         return self.name
 
+    def to_json(self, value, store=None):
+        return value
+
     def _handle_extras(self, **extras):
         '''Callback to hadle extra arguments during initialization.'''
         self.error_extras(extras)
@@ -176,6 +179,7 @@ class CharField(Field):
         elif value is not None:
             return str(value)
     to_store = to_python
+    to_json = to_python
 
 
 class AutoIdField(Field):
@@ -190,6 +194,7 @@ class IntegerField(Field):
         except Exception:
             return None
     to_store = to_python
+    to_json = to_python
 
 
 class FloatField(Field):
@@ -200,6 +205,7 @@ class FloatField(Field):
         except Exception:
             return None
     to_store = to_python
+    to_json = to_python
 
 
 class PickleField(Field):
@@ -215,3 +221,7 @@ class PickleField(Field):
             return pickle.dumps(value, protocol=2)
         except Exception:
             return None
+
+    def to_json(self, value, store=None):
+        if value is not None:
+            return b64encode(self.to_store(value)).decode(self.charset)

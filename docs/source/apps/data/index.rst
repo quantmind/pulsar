@@ -11,4 +11,5 @@ Data Stores
    :maxdepth: 2
 
    clients
+   odm
    pulsar

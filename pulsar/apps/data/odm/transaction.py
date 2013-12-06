@@ -49,48 +49,23 @@ DELETE = 2
 class Transaction(EventHandler):
     '''Transaction class for pipelining commands to :class:`.Store`.
 
-    A :class:`Transaction` is usually obtained via the :meth:`.Store.begin`
+    A :class:`Transaction` is usually obtained via the :meth:`.Mapper.begin`
     method::
 
-        t = store.begin()
+        t = models.begin()
 
     or using the ``with`` context manager::
 
-        with store.begin() as t:
+        with models.begin() as t:
             ...
-
-    **ATTRIBUTES**
-
-    .. attribute:: session
-
-        :class:`Session` which is being transacted.
 
     .. attribute:: name
 
         Optional :class:`Transaction` name
 
-    .. attribute:: backend
+    .. attribute:: mapper
 
-        the :class:`stdnet.BackendDataServer` to which the transaction
-        is being performed.
-
-    .. attribute:: signal_commit
-
-        If ``True``, a signal for each model in the transaction is triggered
-        just after changes are committed.
-        The signal carries a list of updated ``instances`` of the model,
-        the :class:`Session` and the :class:`Transaction` itself.
-
-        default ``True``.
-
-    .. attribute:: signal_delete
-
-        If ``True`` a signal for each model in the transaction is triggered
-        just after deletion of instances.
-        The signal carries the list ``ids`` of deleted instances of the mdoel,
-        the :class:`Session` and the :class:`Transaction` itself.
-
-        default ``True``.
+        the :class:`.Mapper` which initialised this transaction.
 
     .. attribute:: deleted
 
@@ -107,14 +82,14 @@ class Transaction(EventHandler):
     MANY_TIMES_EVENTS = ('pre_commit', 'pre_delete',
                          'post_commit', 'post_delete')
 
-    def __init__(self, router, name=None):
+    def __init__(self, mapper, name=None):
         super(Transaction, self).__init__()
-        self._loop = router._loop
+        self._loop = mapper._loop
         self.name = name or 'transaction'
-        self.router = router
+        self.mapper = mapper
         self._commands = {}
         self._executed = None
-        self.copy_many_times_events(router)
+        self.copy_many_times_events(mapper)
 
     def __enter__(self):
         return self
@@ -127,10 +102,10 @@ class Transaction(EventHandler):
         '''Add a ``model`` to the transaction.
 
         :parameter model: a :class:`Model` instance. It must be registered
-            with the :attr:`router` which created this :class:`Transaction`.
+            with the :attr:`mapper` which created this :class:`Transaction`.
         :return: the ``model``.
         '''
-        manager = self.router[model]
+        manager = self.mapper[model]
         store = manager._store
         if store not in self._commands:
             self._commands[store] = []
@@ -139,7 +114,7 @@ class Transaction(EventHandler):
     def execute(self, *args, **kw):
         '''Queue a command in the default data store.
         '''
-        store = kw.get('store') or self.router._default_store
+        store = kw.get('store') or self.mapper._default_store
         if store not in self._commands:
             self._commands[store] = []
         self._commands[store].append(Command(args))
@@ -148,7 +123,7 @@ class Transaction(EventHandler):
         '''Returns the :class:`SessionModel` for ``model`` which
 can be :class:`Model`, or a :class:`MetaClass`, or an instance
 of :class:`Model`.'''
-        manager = self.router[model]
+        manager = self.mapper[model]
         sm = self._models.get(manager)
         if sm is None:
             sm = TransactionModel(manager)

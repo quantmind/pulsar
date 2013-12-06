@@ -95,10 +95,10 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
-        id, oid = job.generate_task_ids((), {})
+        id, oid = app.backend.generate_task_ids(job, {})
         self.assertTrue(id)
         self.assertFalse(oid)
-        id1, oid = job.generate_task_ids((), {})
+        id1, oid = app.backend.generate_task_ids(job, {})
         self.assertNotEqual(id, id1)
         self.assertFalse(oid)
 
@@ -138,7 +138,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def test_run_new_task_asynchronous_from_test(self):
         app = yield get_application(self.name())
-        r = yield app.backend.run('asynchronous', lag=3)
+        r = yield app.backend.queue_task('asynchronous', lag=3)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         result = r['result']
@@ -163,7 +163,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def test_run_new_simple_task_from_test(self):
         app = yield get_application(self.name())
-        r = yield app.backend.run('addition', a=1, b=2)
+        r = yield app.backend.queue_task('addition', a=1, b=2)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 3)
@@ -179,9 +179,9 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         app = yield get_application(self.name())
         self.assertEqual(app.name, app.backend.name)
         self.assertTrue('notoverlap' in app.backend.registry)
-        r1 = yield app.backend.run('notoverlap', sec)
+        r1 = yield app.backend.queue_task('notoverlap', lag=sec)
         self.assertTrue(r1)
-        r2 = yield app.backend.run('notoverlap', sec)
+        r2 = yield app.backend.queue_task('notoverlap', lag=sec)
         self.assertFalse(r2)
         # We need to make sure the first task is completed
         r1 = yield app.backend.wait_for_task(r1)
@@ -220,7 +220,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
     def __test_delete_task(self):
         #ISSUE #56
         app = yield get_application(self.name())
-        id = yield app.backend.run('addition', 1, 4)
+        id = yield app.backend.queue_task('addition', a=1, b=4)
         r1 = yield app.backend.wait_for_task(id)
         self.assertEqual(r1.result, 5)
         deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
@@ -291,26 +291,26 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)
         #
-        id1, oid1 = job.generate_task_ids((), {})
+        id1, oid1 = app.backend.generate_task_ids(job, {})
         self.assertTrue(oid1)
-        id2, oid2 = job.generate_task_ids((), {})
+        id2, oid2 = app.backend.generate_task_ids(job, {})
         self.assertTrue(oid2)
         self.assertNotEqual(id2, id1)
         self.assertEqual(oid2, oid1)
         #
-        id3, oid3 = job.generate_task_ids((10, 'bla'), {'p': 45})
+        id3, oid3 = app.backend.generate_task_ids(job, {'p': 45})
         self.assertTrue(oid3)
         self.assertNotEqual(id3, id2)
         self.assertNotEqual(oid3, oid2)
-        id4, oid4 = job.generate_task_ids((10, 'bla'), {'p': 45})
+        id4, oid4 = app.backend.generate_task_ids(job, {'p': 45})
         self.assertNotEqual(id4, id3)
         self.assertEqual(oid4, oid3)
         #
-        id5, oid5 = job.generate_task_ids((), {'p': 45, 'c': 'bla'})
+        id5, oid5 = app.backend.generate_task_ids(job, {'p': 45, 'c': 'bla'})
         self.assertTrue(oid5)
-        id6, oid6 = job.generate_task_ids((), {'p': 45, 'c': 'bla'})
-        id7, oid7 = job.generate_task_ids((), {'p': 45, 'd': 'bla'})
-        id8, oid8 = job.generate_task_ids((), {'p': 45, 'c': 'blas'})
+        id6, oid6 = app.backend.generate_task_ids(job, {'p': 45, 'c': 'bla'})
+        id7, oid7 = app.backend.generate_task_ids(job, {'p': 45, 'd': 'bla'})
+        id8, oid8 = app.backend.generate_task_ids(job, {'p': 45, 'c': 'blas'})
         #
         self.assertEqual(oid5, oid6)
         self.assertNotEqual(oid5, oid7)

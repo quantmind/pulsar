@@ -122,6 +122,9 @@ class PulsarStore(Store):
         result = yield pipe.commit()
         coroutine_return(result)
 
+    def flush(self):
+        return self.execute('flushdb')
+
     def close(self):
         '''Close all open connections.'''
         return self._pool.close()

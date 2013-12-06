@@ -17,7 +17,7 @@ def task_to_json(task):
         if isinstance(task, (list, tuple)):
             task = [task_to_json(t) for t in task]
         elif isinstance(task, Task):
-            task = task.tojson()
+            task = task.to_json()
     return task
 
 
@@ -106,14 +106,13 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
             self._task_backend = app.backend
         yield self._task_backend
 
-    def run_new_task(self, request, jobname, args=None, meta_data=None, **kw):
+    def run_new_task(self, request, jobname, meta_data=None, **kw):
         if not jobname:
             raise rpc.InvalidParams('"jobname" is not specified!')
         meta_data = meta_data or {}
         meta_data.update(self.task_request_parameters(request))
-        args = args or ()
         task_backend = yield self.task_backend()
-        yield task_backend.run_job(jobname, args, kw, **meta_data)
+        yield task_backend.queue_task(jobname, meta_data, **kw)
 
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters
