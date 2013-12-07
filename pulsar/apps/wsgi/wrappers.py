@@ -466,7 +466,12 @@ class WsgiRequest(EnvironMixin):
                     result = data, None
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)
-                    result = parse_form_data(self.environ, charset)
+                    try:
+                        result = parse_form_data(self.environ, charset)
+                    except UnicodeDecodeError:
+                        # if the decoding fails (let's say the content type sent was wrong) we should attempt to proceed
+                        result = None
+
                 # set the wsgi.input to a readable file-like object for
                 # third-parties application (django or any other web-framework)
                 self.environ['wsgi.input'] = BytesIO(chunk)
