@@ -79,7 +79,7 @@ import re
 from gzip import GzipFile
 
 import pulsar
-from pulsar import maybe_async
+from pulsar import async, coroutine_return
 from pulsar.utils.httpurl import BytesIO, parse_cookie
 
 from .auth import parse_authorization_header
@@ -151,9 +151,15 @@ def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks.
     '''
-    request = wsgi_request(environ)
-    return maybe_async(request.data_and_files(),
-                       get_result=False).add_callback(lambda s: None)
+    if self.environ['wsgi.input']:
+        return async(_wait_for_body_middleware(environ, start_response))
+
+
+def _wait_for_body_middleware(environ, start_response):
+    stream = environ['wsgi.input']
+    chunk = yield stream.read()
+    environ['wsgi.input'] = BytesIO(chunk)
+    coroutine_return(None)
 
 
 #####################################################    RESPONSE MIDDLEWARE

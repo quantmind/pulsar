@@ -346,7 +346,8 @@ in the :attr:`response_content_types` list.'''
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
-``None`` if the path could not be resolved.'''
+        ``None`` if the path could not be resolved.
+        '''
         urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
@@ -382,8 +383,10 @@ in the :attr:`response_content_types` list.'''
         raise HttpRedirect(path)
 
     def add_child(self, router):
-        '''Add a new :class:`Router` to the :attr:`routes` list. If this
-:class:`Router` is a leaf route, add a slash to the url.'''
+        '''Add a new :class:`Router` to the :attr:`routes` list.
+
+        If this :class:`Router` is a leaf route, add a slash to the url.
+        '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
         if self.route.is_leaf:
@@ -424,15 +427,16 @@ set to the url of this :class:`Router`.'''
 
     def sitemap(self, root=None):
         '''This utility method returns a sitemap starting at root.
-If *root* is ``None`` it starts from this :class:`Router`.
 
-:param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
-:param root: Optional url path where to start the sitemap.
-    By default it starts from this :class:`Router`. Pass `"/"` to
-    start from the root :class:`Router`.
-:param levels: Number of nested levels to include.
-:return: A list of children
-'''
+        If *root* is ``None`` it starts from this :class:`Router`.
+
+        :param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
+        :param root: Optional url path where to start the sitemap.
+            By default it starts from this :class:`Router`. Pass `"/"` to
+            start from the root :class:`Router`.
+        :param levels: Number of nested levels to include.
+        :return: A list of children
+        '''
         if not root:
             root = self
         else:
@@ -444,8 +448,9 @@ If *root* is ``None`` it starts from this :class:`Router`.
         return list(self.routes)
 
     def encoding(self, request):
-        '''The encoding to use for the response. By default it
-returns ``utf-8``.'''
+        '''The encoding to use for the response.
+
+        By default it returns ``utf-8``.'''
         return 'utf-8'
 
 

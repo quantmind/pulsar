@@ -453,26 +453,23 @@ class WsgiRequest(EnvironMixin):
         coroutine_return(data)
 
     def _data_and_files(self):
-        if self.method not in ENCODE_URL_METHODS:
-            stream = self.environ.get('wsgi.input')
-            if stream:
+        result = {}, None
+        stream = self.environ.get('wsgi.input')
+        chunk = None
+        try:
+            if self.method not in ENCODE_URL_METHODS and stream:
                 chunk = yield stream.read()
                 content_type, options = self.content_type_options
                 charset = options.get('charset', 'utf-8')
                 if content_type in JSON_CONTENT_TYPES:
-                    data = json.loads(chunk.decode(charset))
-                    result = data, None
+                    result = json.loads(chunk.decode(charset)), None
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)
                     result = parse_form_data(self.environ, charset)
-                # set the wsgi.input to a readable file-like object for
-                # third-parties application (django or any other web-framework)
+        finally:
+            self._cached_data_and_files = result
+            if chunk is not None:
                 self.environ['wsgi.input'] = BytesIO(chunk)
-            else:
-                result = {}, None
-        else:
-            result = {}, None
-        self._cached_data_and_files = result
         coroutine_return(result)
 
     @cached_property
