@@ -259,8 +259,6 @@ class StreamTunnel(pulsar.ProtocolConsumer):
                               self._close_tunnel)
 
     def data_received(self, data):
-        # Received data from the downstream part of the tunnel.
-        # Send the data to the upstream server
         try:
             self.tunnel._transport.write(data)
         except Exception:

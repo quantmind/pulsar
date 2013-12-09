@@ -201,5 +201,6 @@ class Tunneling:
         prev_response.finished()
 
     def start_tunneling(self, request, consumer):
+        print('tunneling %s' % request)
         consumer.start(request)
         return consumer.on_finished

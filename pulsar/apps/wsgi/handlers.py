@@ -81,6 +81,21 @@ Lazy Wsgi Handler
    :members:
    :member-order: bysource
 
+
+.. _wsgi-pulsar-variables:
+
+Pulsar Variables
+======================
+Pulsar inject two server-defined variables into the WSGI environ:
+
+* ``pulsar.connection``, the :class:`.Connection` serving the request
+* ``pulsar.cfg``, the :class:`.Config` dictionary of the server
+
+The event loop serving the application can be retrieved from the connection
+via the ``_loop`` attribute::
+
+    loop = environ['pulsar.connection']._loop
+
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''

@@ -10,7 +10,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.wsgi import get_wsgi_application
 
 
-PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket', 'pulse'])
+PULSAR_OPTIONS = pulsar.make_optparse_options(apps=['socket', 'pulse'],
+                                              exclude=['debug'])
 pulse_app_name = make_option('--pulse-app-name',
                              dest='pulse-app-name',
                              type='string',
@@ -24,7 +25,7 @@ pulse_app_name = make_option('--pubsub-server',
 
 class Wsgi(LazyWsgi):
 
-    def setup(self):
+    def setup(self, environ):
         from django.conf import settings
         return WsgiHandler((wait_for_body_middleware,
                             get_wsgi_application()))
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         callable = Wsgi()
         if options.pop('dryrun', False) is True:    # used for testing
             return callable
-        callable.setup()
+        callable.setup({})
         from django.conf import settings
         # Allow to specify the server factory dotted path in the settings file
         dotted_path = getattr(settings, 'PULSE_SERVER_FACTORY', None)

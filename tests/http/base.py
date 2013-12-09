@@ -121,6 +121,24 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
+    def __test_HttpResponse(self):
+        r = HttpResponse()
+        self.assertEqual(r.request, None)
+        self.assertEqual(str(r), '<None>')
+        self.assertEqual(r.headers, None)
+
+    def __test_client(self):
+        http = self.client(max_redirects=5, timeout=33)
+        self.assertTrue('accept-encoding' in http.headers)
+        self.assertEqual(http.timeout, 33)
+        self.assertEqual(http.version, 'HTTP/1.1')
+        self.assertEqual(http.max_redirects, 5)
+        if self.with_proxy:
+            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
+                                               'https': self.proxy_uri,
+                                               'ws': self.proxy_uri,
+                                               'wss': self.proxy_uri})
+
     def test_home_page(self):
         http = self.client()
         response = yield http.get(self.httpbin())
@@ -145,6 +163,21 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         failure = response.event('on_headers').exception()
         self.assertIsInstance(failure, Failure)
 
+    def test_200_get(self):
+        http = self.client()
+        response = yield http.get(self.httpbin())
+        self._check_pool(http, response)
+        self.assertEqual(str(response), '200')
+        self.assertEqual(repr(response), 'HttpResponse(200)')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_status(), '200 OK')
+        self.assertTrue(response.get_content())
+        self.assertEqual(response.url, self.httpbin())
+        self._check_pool(http, response)
+        response = yield http.get(self.httpbin('get'))
+        self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response, processed=2)
+
     def test_request_object(self):
         http = self.client()
         response = yield http.get(self.httpbin())
@@ -157,11 +190,97 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(request.headers.kind, 'client')
         self.assertEqual(request.unredirected_headers.kind, 'client')
 
-    def test_HttpResponse(self):
-        r = HttpResponse()
-        self.assertEqual(r.request, None)
-        self.assertEqual(str(r), '<None>')
-        self.assertEqual(r.headers, None)
+    def test_http10(self):
+        '''By default HTTP/1.0 close the connection if no keep-alive header
+        was passed by the client.
+        '''
+        http = self.client(version='HTTP/1.0')
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.0')
+        response = yield http.get(self.httpbin())
+        self.assertEqual(response.headers['connection'], 'close')
+        self.assertEqual(str(response), '200')
+        self._check_pool(http, response, available=0)
+
+    def test_http11(self):
+        '''By default HTTP/1.1 keep alive the connection if no keep-alive
+        header was passed by the client.
+        '''
+        http = self.client()
+        http.headers.clear()
+        self.assertEqual(http.version, 'HTTP/1.1')
+        response = yield http.get(self.httpbin())
+        self.assertEqual(response.headers['connection'], 'keep-alive')
+        self._check_pool(http, response)
+
+    def test_http11_close(self):
+        http = self.client()
+        self.assertEqual(http.version, 'HTTP/1.1')
+        response = yield http.get(self.httpbin(),
+            headers=[('connection', 'close')])
+        self.assertEqual(response.headers['connection'], 'close')
+        self._check_pool(http, response, available=0)
+
+    def test_200_get_data(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('get'),
+                                  data={'bla': 'foo'})
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['content-type'],
+                         'application/json; charset=utf-8')
+        self.assertEqual(result['args'], {'bla': 'foo'})
+        self.assertEqual(response.url,
+                self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
+        self._check_pool(http, response)
+
+    def test_200_gzip(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('gzip'))
+        self.assertEqual(response.status_code, 200)
+        self._check_pool(http, response)
+        content = response.json()
+        self.assertTrue(content['gzipped'])
+        if 'content-encoding' in response.headers:
+            self.assertTrue(response.headers['content-encoding'], 'gzip')
+
+    def test_post(self):
+        data = (('bla', 'foo'), ('unz', 'whatz'),
+                ('numero', '1'), ('numero', '2'))
+        http = self.client()
+        response = yield http.post(self.httpbin('post'),
+                                   encode_multipart=False,
+                                   data=data)
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertTrue(result['args'])
+        self.assertEqual(result['args']['numero'],['1','2'])
+
+    def test_400_and_get(self):
+        '''Bad request 400'''
+        http = self.client()
+        response = yield http.get(self.httpbin('status', '400'))
+        self._check_pool(http, response, available=0)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_status(), '400 Bad Request')
+        self.assertTrue(response.get_content())
+        self.assertRaises(HTTPError, response.raise_for_status)
+        # Make sure we only have one connection after a valid request
+        response = yield http.get(self.httpbin('get'))
+        self.assertEqual(response.status_code, 200)
+        # for tunneling this fails sometimes
+        self._check_pool(http, response, sessions=2, processed=2)
+
+    def test_404_get(self):
+        '''Not Found 404'''
+        http = self.client()
+        response = yield http.get(self.httpbin('status', '404'))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(response.headers.has('connection', 'close'))
+        self.assertTrue('content-type' in response.headers)
+        self.assertTrue(response.get_content())
+        self.assertRaises(HTTPError, response.raise_for_status)
+class d:
 
     def test_redirect_1(self):
         http = self.client()
@@ -189,80 +308,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(redirect.connection, response.connection)
         self.assertEqual(response.connection._processed, 7)
 
-    def test_http10(self):
-        '''By default HTTP/1.0 close the connection if no keep-alive header
-        was passed by the client.
-        '''
-        http = self.client(version='HTTP/1.0')
-        http.headers.clear()
-        self.assertEqual(http.version, 'HTTP/1.0')
-        response = yield http.get(self.httpbin())
-        self.assertEqual(response.headers['connection'], 'close')
-        self.assertEqual(str(response), '200')
-        self._check_pool(http, response, available=0)
-
-    def test_http11(self):
-        '''By default HTTP/1.1 keep alive the connection if no keep-alive header
-        was passed by the client.
-        '''
-        http = self.client()
-        http.headers.clear()
-        self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield http.get(self.httpbin())
-        self.assertEqual(response.headers['connection'], 'keep-alive')
-        self._check_pool(http, response)
-
-    def test_http11_close(self):
-        http = self.client()
-        self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield http.get(self.httpbin(),
-            headers=[('connection', 'close')])
-        self.assertEqual(response.headers['connection'], 'close')
-        self._check_pool(http, response, available=0)
-
-    def test_client(self):
-        http = self.client(max_redirects=5, timeout=33)
-        self.assertTrue('accept-encoding' in http.headers)
-        self.assertEqual(http.timeout, 33)
-        self.assertEqual(http.version, 'HTTP/1.1')
-        self.assertEqual(http.max_redirects, 5)
-        if self.with_proxy:
-            self.assertEqual(http.proxy_info, {'http': self.proxy_uri,
-                                               'https': self.proxy_uri,
-                                               'ws': self.proxy_uri,
-                                               'wss': self.proxy_uri})
-
-    def test_200_get(self):
-        http = self.client()
-        response = yield http.get(self.httpbin())
-        self._check_pool(http, response)
-        self.assertEqual(str(response), '200')
-        self.assertEqual(repr(response), 'HttpResponse(200)')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_status(), '200 OK')
-        self.assertTrue(response.get_content())
-        self.assertEqual(response.url, self.httpbin())
-        self._check_pool(http, response)
-        response = yield http.get(self.httpbin('get'))
-        self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response, processed=2)
-
-    def test_400_and_get(self):
-        '''Bad request 400'''
-        http = self.client()
-        response = yield http.get(self.httpbin('status', '400'))
-        self._check_pool(http, response, available=0)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.get_status(), '400 Bad Request')
-        self.assertTrue(response.get_content())
-        self.assertRaises(HTTPError, response.raise_for_status)
-        # Make sure we only have one connection after a valid request
-        response = yield http.get(self.httpbin('get'))
-        self.assertEqual(response.status_code, 200)
-        # for tunneling this fails sometimes
-        self._check_pool(http, response, sessions=2, processed=2)
-
-    def __test_large_response(self):
+    def test_large_response(self):
         if pypy:
             # TODO: this fails in pypy randomnly
             return
@@ -288,52 +334,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0].url.endswith('/redirect/5'))
         self.assertTrue(history[1].url.endswith('/redirect/4'))
-
-    def test_200_get_data(self):
-        http = self.client()
-        response = yield http.get(self.httpbin('get'),
-                                  data={'bla': 'foo'})
-        result = response.json()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'],
-                         'application/json; charset=utf-8')
-        self.assertEqual(result['args'], {'bla': 'foo'})
-        self.assertEqual(response.url,
-                self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
-        self._check_pool(http, response)
-
-class d:
-    def test_200_gzip(self):
-        http = self.client()
-        response = yield http.get(self.httpbin('gzip'))
-        self.assertEqual(response.status_code, 200)
-        self._check_pool(http, response)
-        content = response.json()
-        self.assertTrue(content['gzipped'])
-        if 'content-encoding' in response.headers:
-            self.assertTrue(response.headers['content-encoding'], 'gzip')
-
-    def test_404_get(self):
-        '''Not Found 404'''
-        http = self.client()
-        response = yield http.get(self.httpbin('status', '404'))
-        self.assertEqual(response.status_code, 404)
-        self.assertTrue(response.headers.has('connection', 'close'))
-        self.assertTrue('content-type' in response.headers)
-        self.assertTrue(response.get_content())
-        self.assertRaises(HTTPError, response.raise_for_status)
-
-    def test_post(self):
-        data = (('bla', 'foo'), ('unz', 'whatz'),
-                ('numero', '1'), ('numero', '2'))
-        http = self.client()
-        response = yield http.post(self.httpbin('post'),
-                                   encode_multipart=False,
-                                   data=data)
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
 
     def test_post_multipart(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),

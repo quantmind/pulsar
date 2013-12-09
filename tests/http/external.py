@@ -33,7 +33,7 @@ class ExternalBase(TestHttpClientBase):
                 raise
             self.assertEqual(response.status_code, 200)
 
-    def test_http_get(self):
+    def __test_http_get(self):
         client = self.client()
         response = yield client.get('http://www.bbc.co.uk/').on_finished
         self.assertEqual(response.status_code, 200)
@@ -44,7 +44,7 @@ class ExternalBase(TestHttpClientBase):
         response = yield client.get('https://github.com/trending').on_finished
         self.assertEqual(response.status_code, 200)
 
-    def test_bad_host(self):
+    def __test_bad_host(self):
         client = self.client()
         response = client.get('http://xxxyyyxxxxyyy/blafoo')
         try:
@@ -65,14 +65,8 @@ class ProxyExternal(ExternalBase):
 
     def test_get_https(self):
         client = self.client()
-        response = client.get('https://github.com/trending')
-        r1 = yield response.on_headers
-        self.assertEqual(r1.status_code, 200)
-        headers1 = r1.headers
-        r2 = yield response.on_finished
-        self.assertEqual(r2.status_code, 200)
-        headers2 = r2.headers
-        self.assertNotEqual(len(headers1), len(headers2))
+        response = yield client.get('https://github.com/trending')
+        self.assertEqual(response.status_code, 200)
 
 
 @unittest.skipUnless(get_actor().cfg.http_proxy=='',

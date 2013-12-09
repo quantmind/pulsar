@@ -151,7 +151,7 @@ def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks.
     '''
-    if self.environ['wsgi.input']:
+    if environ['wsgi.input']:
         return async(_wait_for_body_middleware(environ, start_response))
 
 

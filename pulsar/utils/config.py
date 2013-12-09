@@ -641,7 +641,7 @@ def make_optparse_options(apps=None, exclude=None, include=None):
         def add_argument(self, *args, **kwargs):
             self.append(make_option(*args, **kwargs))
 
-    config = Config(apps=apps, exclude=None, include=None)
+    config = Config(apps=apps, exclude=exclude, include=include)
     parser = AddOptParser()
     config.add_to_parser(parser)
     return tuple(parser)
