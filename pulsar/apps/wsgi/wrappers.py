@@ -44,7 +44,7 @@ import re
 from functools import reduce
 from io import BytesIO
 
-from pulsar import async
+from pulsar import async, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
@@ -472,7 +472,7 @@ class WsgiRequest(EnvironMixin):
                 self.environ['wsgi.input'] = BytesIO(chunk)
         finally:
             self._cached_data_and_files = result
-        yield result
+        coroutine_return(result)
 
     @cached_property
     def url_data(self):
