@@ -230,7 +230,9 @@ class SocketServer(pulsar.Application):
 
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''
-        worker.servers[self.name] = self.create_server(worker)
+        server = self.create_server(worker)
+        server.bind_event('stop', partial(self._stop_worker, worker))
+        worker.servers[self.name] = server
 
     def worker_stopping(self, worker):
         server = worker.servers.get(self.name)
@@ -269,3 +271,7 @@ class SocketServer(pulsar.Application):
                 server.bind_event(event, callback)
         server.start_serving(cfg.backlog, sslcontext=worker.params.ssl)
         return server
+
+    def _stop_worker(self, worker, exc):
+        worker.stop()
+        return exc

@@ -2,10 +2,11 @@ import sys
 from functools import partial
 
 import pulsar
-from pulsar import TooManyConnections, ProtocolError
+from pulsar import ProtocolError
 from pulsar.utils.internet import nice_address, format_address
 
-from .defer import multi_async, log_failure, in_loop, coroutine_return
+from .defer import (multi_async, log_failure, in_loop, coroutine_return,
+                    NOT_DONE)
 from .events import EventHandler
 from .access import asyncio, get_event_loop, new_event_loop
 
@@ -540,7 +541,11 @@ class TcpServer(Producer):
         self._concurrent_connections = set()
 
     def __repr__(self):
-        return '%s %s' % (self.__class__.__name__, self.address)
+        address = self.address
+        if address:
+            return '%s %s' % (self.__class__.__name__, address)
+        else:
+            return self.__class__.__name__
     __str_ = __repr__
 
     @property
@@ -605,6 +610,7 @@ class TcpServer(Producer):
         if self._server:
             server, self._server = self._server, None
             server.close()
+            yield NOT_DONE
             yield self._close_connections()
             self.fire_event('stop')
         coroutine_return(self)
@@ -639,7 +645,9 @@ class TcpServer(Producer):
                             self._connection_lost,
                             partial(self._connection_lost_exc, protocol))
         if self._max_connections and session >= self._max_connections:
-            self.stop_serving()
+            self.logger.info('Reached maximum number of connections %s. '
+                             'Stop serving.' % self._max_connections)
+            self.close()
         return protocol
 
     ##    INTERNALS

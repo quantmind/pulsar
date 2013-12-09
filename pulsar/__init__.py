@@ -42,22 +42,23 @@ JAPANESE = b'\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc'.decode('utf-8')
 CHINESE = b'\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f'.decode('utf-8')
 SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
-if os.environ.get('pulsar_speedup') == 'no':
-    HAS_C_EXTENSIONS = False
-else:
-    HAS_C_EXTENSIONS = True
-    try:
-        from .utils import lib
-    except ImportError:
+if os.environ.get('pulsar_setup_running') != 'yes':
+    if os.environ.get('pulsar_speedup') == 'no':
         HAS_C_EXTENSIONS = False
+    else:
+        HAS_C_EXTENSIONS = True
+        try:
+            from .utils import lib
+        except ImportError:
+            HAS_C_EXTENSIONS = False
 
-from .utils.exceptions import *
-from .utils import system
-platform = system.platform
-from .utils.config import *
-from .async import *
-from .apps import *
-#
-del get_version
-# Import data stores
-from .apps.data import data_stores
+    from .utils.exceptions import *
+    from .utils import system
+    platform = system.platform
+    from .utils.config import *
+    from .async import *
+    from .apps import *
+    #
+    del get_version
+    # Import data stores
+    from .apps.data import data_stores

@@ -217,8 +217,9 @@ back to perform logging and propagate the failure. For example::
         return self.log(msg=msg, level='critical')
 
     def mute(self):
-        '''Mute logging and return self.'''
+        '''Mute logging and return ``self``.'''
         setattr(self.exc_info[1], '_failure_logged', True)
+        return self
 
 
 class DoneCallback:
