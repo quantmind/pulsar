@@ -153,7 +153,8 @@ def wait_for_body_middleware(environ, start_response=None):
     '''
     request = wsgi_request(environ)
     return maybe_async(request.data_and_files(),
-                       get_result=False).add_callback(lambda s: None)
+                       get_result=False).add_callback(lambda s: None,
+                                                      lambda f: None)
 
 
 #####################################################    RESPONSE MIDDLEWARE
