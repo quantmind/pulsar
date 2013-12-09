@@ -115,8 +115,10 @@ class TestSystemInfo(unittest.TestCase):
 
     def testMe(self):
         worker = get_actor()
-        info = system.system_info(worker.pid)
+        info = system.process_info(worker.pid)
+        info2 = system.process_info()
         self.assertTrue(isinstance(info, dict))
+        self.assertEqual(info, info2)
 
 
 class TestFunctions(unittest.TestCase):

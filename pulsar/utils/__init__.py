@@ -41,7 +41,7 @@ Internals
 System info
 ~~~~~~~~~~~~~~~~~
 
-.. autofunction:: system_info
+.. autofunction:: process_info
 
 
 .. module:: pulsar.utils.tools

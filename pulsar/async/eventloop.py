@@ -13,12 +13,12 @@ except ImportError:     # pragma    nocover
 
 from pulsar.utils.system import close_on_exec
 from pulsar.utils.pep import range
-from pulsar.utils.internet import SOCKET_INTERRUPT_ERRORS
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_local_data, LOGGER
 from .defer import maybe_async, async, DeferredTask, Deferred, Failure
-from .stream import create_connection, start_serving, sock_connect
+from .stream import (create_connection, start_serving, sock_connect,
+                     raise_socket_error)
 from .udp import create_datagram_endpoint
 from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
 from .pollers import DefaultIO
@@ -540,13 +540,13 @@ the event loop to poll with a 0 timeout all the times.'''
                     if isinstance(value, GeneratorType):
                         async(value, self)
             except socket.error as e:
-                if self._raise_loop_error(e):
+                if raise_socket_error(e) and self.running:
                     exc_info = sys.exc_info()
             except Exception:
                 exc_info = sys.exc_info()
             if exc_info:
                 Failure(exc_info).log(
-                    msg='Unhadled exception in event loop callback.')
+                    msg='Unhandled exception in event loop callback.')
 
     def _poll(self, timeout):
         callbacks = self._ready
@@ -564,17 +564,3 @@ the event loop to poll with a 0 timeout all the times.'''
                     io.handle_events(self, fd, events)
                 except KeyError:
                     pass
-
-    def _raise_loop_error(self, e):
-        # Depending on python version and EventLoop implementation,
-        # different exception types may be thrown and there are
-        # two ways EINTR might be signaled:
-        # * e.errno == errno.EINTR
-        # * e.args is like (errno.EINTR, 'Interrupted system call')
-        eno = getattr(e, 'errno', None)
-        if eno not in SOCKET_INTERRUPT_ERRORS:
-            args = getattr(e, 'args', None)
-            if isinstance(args, tuple) and len(args) == 2:
-                eno = args[0]
-        if eno not in SOCKET_INTERRUPT_ERRORS and self.running:
-            return True

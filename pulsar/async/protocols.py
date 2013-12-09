@@ -293,8 +293,7 @@ class Protocol(EventHandler, asyncio.Protocol):
     def close(self, async=True, exc=None):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
-            transport, self._transport = self._transport, None
-            transport.close(async=async, exc=exc)
+            self._transport.close(async=async, exc=exc)
 
     def abort(self, exc=None):
         '''Abort by aborting the :attr:`transport`.'''
@@ -395,17 +394,21 @@ class Connection(Protocol):
         consumer._connection = self
         consumer.connection_made(self)
 
-    def data_received(self, data):
+    def data_received(self, data, arg=None):
         '''Delegates handling of data to the :meth:`current_consumer`.
 
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
         self._cancel_timeout()
-        while data:
-            consumer = self.current_consumer()
-            data = consumer._data_received(data)
-        self._add_idle_timeout()
+        consumer = self.current_consumer()
+        data = consumer._data_received(data)
+        if data:
+            consumer.on_finished.add_callback(
+                partial(self.data_received, data))
+        else:
+            self._add_idle_timeout()
+        return arg
 
     def connection_lost(self, exc):
         '''It performs these actions in the following order:

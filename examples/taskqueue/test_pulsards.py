@@ -71,6 +71,13 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    def test_run_new_simple_task(self):
+        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 90)
+
+class d:
     def test_pickled_app(self):
         tq = self.apps[0]
         self.assertEqual(tq.name, self.name())

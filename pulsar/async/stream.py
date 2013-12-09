@@ -7,7 +7,8 @@ from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
-                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE)
+                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE,
+                                   SOCKET_INTERRUPT_ERRORS)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
@@ -25,6 +26,15 @@ MAX_CONSECUTIVE_WRITES = 500
 
 class TooManyConsecutiveWrite(PulsarException):
     '''Raise when too many consecutive writes are attempted.'''
+
+
+def raise_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    if eno not in SOCKET_INTERRUPT_ERRORS:
+        args = getattr(e, 'args', None)
+        if isinstance(args, tuple) and len(args) == 2:
+            eno = args[0]
+    return eno not in SOCKET_INTERRUPT_ERRORS
 
 
 class SocketStreamTransport(SocketTransport):
@@ -161,8 +171,10 @@ advantage of specific capabilities in some transport mechanisms.'''
                 except self.SocketError as e:
                     if self._read_continue(e):
                         return
-                    else:
+                    if raise_socket_error(e):
                         raise
+                    else:
+                        chunk = b''
                 if chunk:
                     if self._paused_reading:
                         self._read_buffer.append(chunk)

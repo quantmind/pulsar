@@ -162,12 +162,21 @@ class ProxyResponse(object):
 
     def error(self, failure):
         if not self._started:
+            request = wsgi.WsgiRequest(self.environ)
+            content_type = request.content_types.best_match(
+                ('text/html', 'text/plain'))
             uri = self.environ['RAW_URI']
             msg = 'Could not find %s' % uri
-            html = wsgi.HtmlDocument(title=msg)
-            html.body.append('<h1>%s</h1>' % msg)
-            data = html.render()
-            resp = wsgi.WsgiResponse(504, data, content_type='text/html')
+            failure.log(msg=msg, level='info')
+            if content_type == 'text/html':
+                html = wsgi.HtmlDocument(title=msg)
+                html.body.append('<h1>%s</h1>' % msg)
+                data = html.render()
+                resp = wsgi.WsgiResponse(504, data, content_type='text/html')
+            elif content_type == 'text/plain':
+                resp = wsgi.WsgiResponse(504, msg, content_type='text/html')
+            else:
+                resp = wsgi.WsgiResponse(504, '')
             self.start_response(resp.status, resp.get_headers(),
                                 failure.exc_info)
             self._done = True
@@ -190,20 +199,6 @@ class ProxyResponse(object):
             if response.parser.is_message_complete():
                 self._done = True
             self.queue.put(body)
-
-    def error(self, failure):
-        '''Handle a failure.'''
-        if not self._done:
-            uri = self.environ['RAW_URI']
-            msg = 'Oops! Could not find %s' % uri
-            html = wsgi.HtmlDocument(title=msg)
-            html.body.append('<h1>%s</h1>' % msg)
-            data = html.render()
-            resp = wsgi.WsgiResponse(504, data, content_type='text/html')
-            self.start_response(resp.status, resp.get_headers(),
-                                failure.exc_info)
-            self._done = True
-            self.queue.put(resp.content[0])
 
     def remove_hop_headers(self, headers):
         for header, value in headers:
@@ -278,8 +273,8 @@ class StreamTunnel(pulsar.ProtocolConsumer):
         return arg
 
 
-def server(name='proxy-server', headers_middleware=None, server_software=None,
-           **kwargs):
+def server(name='proxy-server', headers_middleware=None,
+           server_software=None, **kwargs):
     '''Function to Create a WSGI Proxy Server.'''
     if headers_middleware is None:
         #headers_middleware = [user_agent(USER_AGENT), x_forwarded_for]
