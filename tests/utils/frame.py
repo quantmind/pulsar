@@ -63,10 +63,10 @@ class FrameTest(unittest.TestCase):
         self.assertRaises(ProtocolError, s.pong, self.bdata)
 
     def test_conntrol_frames_fragmented(self):
-        s = self.parser()
         c = self.parser(kind=1)
         for opcode in (8, 9, 10):
             chunk = c.encode('test', opcode=opcode, final=False)
+            s = self.parser()
             try:
                 s.decode(chunk)
             except ProtocolError as e:

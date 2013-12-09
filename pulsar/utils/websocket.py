@@ -280,7 +280,8 @@ class FrameParser(object):
         if frame is None:
             if len(self.buffer) < 2:
                 return
-            first_byte, second_byte = unpack("BB", self.buffer[:2])
+            chunk = self._chunk(2)
+            first_byte, second_byte = unpack("BB", chunk)
             fin = (first_byte >> 7) & 1
             rsv1 = (first_byte >> 6) & 1
             rsv2 = (first_byte >> 5) & 1
@@ -303,7 +304,6 @@ class FrameParser(object):
                 elif not fin:
                     raise ProtocolError(
                         'WEBSOCKET control frame fragmented')
-            chunk = self._chunk(2)
             self.frame = frame = Frame(opcode, bool(fin), payload_length)
 
         if frame._masking_key is None:

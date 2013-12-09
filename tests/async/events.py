@@ -30,6 +30,5 @@ class TestFailure(unittest.TestCase):
         self.assertTrue(h.events['finish'].events.has_callbacks)
         self.assertEqual(h.fire_event('start', 2), 3)
         failure = maybe_failure(ValueError('test'))
-        self.assertEqual(h.fire_event('finish', failure), None)
+        self.assertEqual(h.fire_event('finish', failure), failure)
         self.assertTrue(failure.logged)
-

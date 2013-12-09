@@ -4,7 +4,7 @@ import sys
 from base64 import b64decode
 
 import examples
-from pulsar import send, Failure, SERVER_SOFTWARE
+from pulsar import send, Failure, SERVER_SOFTWARE, new_event_loop
 from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
 from pulsar.utils import httpurl
@@ -49,10 +49,11 @@ class TestHttpClientBase:
             bits = ('https' if cls.with_tls else 'http',) + cls.app.address
             cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
-            s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
-                        name='proxyserver-%s' % cls.__name__.lower())
-            cls.proxy_app = yield send('arbiter', 'run', s)
-            cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
+            #s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
+            #            name='proxyserver-%s' % cls.__name__.lower())
+            #cls.proxy_app = yield send('arbiter', 'run', s)
+            #cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
+            cls.proxy_uri = 'http://127.0.0.1:8060'
 
     @classmethod
     def tearDownClass(cls):
@@ -66,15 +67,14 @@ class TestHttpClientBase:
         '''When tunneling, the client needs to perform an extra request.'''
         return int(self.with_proxy and self.with_tls)
 
-    def client(self, timeout=None, parser=None, **kwargs):
-        timeout = timeout or self.timeout
+    def client(self, loop=None, parser=None, **kwargs):
         parser = self.parser()
         if self.with_proxy:
             kwargs['proxy_info'] = {'http': self.proxy_uri,
                                     'https': self.proxy_uri,
                                     'ws': self.proxy_uri,
                                     'wss': self.proxy_uri}
-        return HttpClient(timeout=timeout, parser=parser, **kwargs)
+        return HttpClient(loop=loop, parser=parser, **kwargs)
 
     def parser(self):
         return None

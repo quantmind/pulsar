@@ -158,6 +158,7 @@ class Tunneling:
                     # if transport is not SSL already
                     if not isinstance(response.transport,
                                       SocketStreamSslTransport):
+                        print('tunneling %s' % request)
                         response._request = tunnel
                         response.bind_event('on_headers', self.on_headers)
                 else:
@@ -201,6 +202,6 @@ class Tunneling:
         prev_response.finished()
 
     def start_tunneling(self, request, consumer):
-        print('tunneling %s' % request)
+        print('tunnelling done %s' % request)
         consumer.start(request)
         return consumer.on_finished
