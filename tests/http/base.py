@@ -49,11 +49,11 @@ class TestHttpClientBase:
             bits = ('https' if cls.with_tls else 'http',) + cls.app.address
             cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
-            #s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
-            #            name='proxyserver-%s' % cls.__name__.lower())
-            #cls.proxy_app = yield send('arbiter', 'run', s)
-            #cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
-            cls.proxy_uri = 'http://127.0.0.1:8060'
+            s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
+                        name='proxyserver-%s' % cls.__name__.lower())
+            cls.proxy_app = yield send('arbiter', 'run', s)
+            cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
+            #cls.proxy_uri = 'http://127.0.0.1:8060'
 
     @classmethod
     def tearDownClass(cls):

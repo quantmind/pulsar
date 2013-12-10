@@ -170,6 +170,7 @@ class Tunneling:
 
     def on_headers(self, response):
         '''Called back once the headers have arrived.'''
+        print('headers %s' % response._request.request)
         if response.status_code == 200:
             loop = response._loop
             loop.remove_reader(response.transport.sock.fileno())
@@ -202,6 +203,5 @@ class Tunneling:
         prev_response.finished()
 
     def start_tunneling(self, request, consumer):
-        print('tunnelling done %s' % request)
         consumer.start(request)
         return consumer.on_finished

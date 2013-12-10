@@ -119,7 +119,7 @@ class Consumer(pulsar.ProtocolConsumer):
          'PING': lambda r: r == b'PONG',
          'PUBSUB': pubsub_callback,
          'INFO': parse_info,
-         'TIME': lambda x: (int(x[0]), int(x[1])),
+         'TIME': lambda x: (int(float(x[0])), int(float(x[1]))),
          'HGETALL': pairs_to_object,
          'HINCRBYFLOAT': lambda r: float(r),
          'HMGET': values_to_object,

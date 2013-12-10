@@ -230,9 +230,9 @@ class ProxyTunnel(ProxyResponse):
         upstream.upgrade(partial(StreamTunnel, dostream))
         response.finished()
         self.start_response('200 Connection established', [])
-        self._done = True
         # send empty byte so that headers are sent
         self.queue.put(b'')
+        self._done = True
         return response
 
 
