@@ -180,14 +180,14 @@ class LazyWsgi(LocalMixin):
         return self.handler(environ)(environ, start_response)
 
     @local_method
-    def handler(self, environ):
+    def handler(self, environ=None):
         '''The :ref:`wsgi application handler <wsgi-handlers>` which
         is loaded via the :meth:`setup` method, once only,
         when first accessed.
         '''
         return self.setup(environ)
 
-    def setup(self, environ):
+    def setup(self, environ=None):
         '''The setup function for this :class:`LazyWsgi`.
 
         Called once only the first time this application handler is invoked.

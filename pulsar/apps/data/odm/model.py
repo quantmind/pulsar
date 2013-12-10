@@ -1,10 +1,12 @@
 import sys
 from inspect import isclass
 from copy import copy
-from collections import OrderedDict, Mapping
+from base64 import b64encode
+from collections import Mapping
 
 from pulsar import ImproperlyConfigured, Event
-from pulsar.utils.pep import ispy3k, itervalues, iteritems
+from pulsar.utils.structures import OrderedDict
+from pulsar.utils.pep import ispy3k, iteritems
 
 try:
     from pulsar.utils.libs import Model as CModelBase
@@ -332,7 +334,7 @@ class PyModelBase(dict):
         if len(args) == 1:
             iterable = args[0]
             if isinstance(iterable, Mapping):
-                iterable = itervalues(iterable)
+                iterable = iteritems(iterable)
             super(PyModelBase, self).update(((mstr(k), v)
                                              for k, v in iterable))
             self._modified = 1
@@ -355,8 +357,9 @@ class PyModelBase(dict):
         return dict(self._to_store(store))
 
     def to_json(self):
-        '''Return a JSON serialisable dictionary representation.'''
-        return dict(self._to_json(exclude_cache))
+        '''Return a JSON serialisable dictionary representation.
+        '''
+        return dict(self._to_json())
 
     def pkvalue(self):
         pk = self._meta.pk.name
@@ -379,6 +382,11 @@ class PyModelBase(dict):
                 if value is not None:
                     if key in self._meta.dfields:
                         value = self._meta.dfields[key].to_json(value)
+                    elif isinstance(value, bytes):
+                        try:
+                            value = value.decode('utf-8')
+                        except Exception:
+                            value = b64encode(value).decode('utf-8')
                     yield key, value
 
 

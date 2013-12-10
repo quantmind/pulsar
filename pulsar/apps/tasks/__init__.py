@@ -78,8 +78,9 @@ from pulsar.apps.data import start_store
 from pulsar.utils.pep import pickle
 
 from .models import *
-from .backend import task_backends, Task, TaskBackend
+from .backend import *
 from .rpc import *
+from .states import *
 
 
 section_docs['Task Consumer'] = '''

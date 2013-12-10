@@ -175,7 +175,7 @@ class CharField(Field):
 
     def to_python(self, value, store=None):
         if isinstance(value, bytes):
-            return value.decode('utf-8', errors='ignore')
+            return value.decode('utf-8', 'ignore')
         elif value is not None:
             return str(value)
     to_store = to_python
@@ -211,17 +211,23 @@ class FloatField(Field):
 class PickleField(Field):
 
     def to_python(self, value, store=None):
-        try:
-            return pickle.loads(value)
-        except Exception:
-            return None
+        if value is not None:
+            try:
+                return pickle.loads(value)
+            except Exception:
+                return None
 
     def to_store(self, value, store=None):
-        try:
-            return pickle.dumps(value, protocol=2)
-        except Exception:
-            return None
+        if value is not None:
+            try:
+                return pickle.dumps(value, protocol=2)
+            except Exception:
+                return None
 
     def to_json(self, value, store=None):
-        if value is not None:
-            return b64encode(self.to_store(value)).decode(self.charset)
+        if isinstance(value, (int, float, str, tuple, list, dict)):
+            return value
+        else:
+            value = self.to_store(value)
+            if value is not None:
+                return b64encode(value).decode('utf-8')

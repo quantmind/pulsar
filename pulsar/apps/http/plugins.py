@@ -158,7 +158,7 @@ class Tunneling:
                     # if transport is not SSL already
                     if not isinstance(response.transport,
                                       SocketStreamSslTransport):
-                        print('tunneling %s' % request)
+                        #print('tunneling %s' % request)
                         response._request = tunnel
                         response.bind_event('on_headers', self.on_headers)
                 else:
@@ -170,7 +170,7 @@ class Tunneling:
 
     def on_headers(self, response):
         '''Called back once the headers have arrived.'''
-        print('headers %s' % response._request.request)
+        #print('headers %s' % response._request.request)
         if response.status_code == 200:
             loop = response._loop
             loop.remove_reader(response.transport.sock.fileno())

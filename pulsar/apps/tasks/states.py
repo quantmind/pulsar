@@ -16,3 +16,8 @@ CODES = {SUCCESS: "SUCCESS",
          RETRY: 'RETRY',
          STARTED: "STARTED",
          QUEUED: "QUEUED"}
+UNKNOWN = 'UNKNOWN'
+
+
+def status_string(status):
+    return CODES.get(status, UNKNOWN)

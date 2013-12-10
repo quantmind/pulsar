@@ -5,6 +5,12 @@ run on arbiter
 .. autofunction:: run_on_arbiter
 
 
+sequential
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: sequential
+
+
 ActorTestMixin
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -25,17 +31,20 @@ run test server
 
 .. autofunction:: run_test_server
 '''
+import sys
 import gc
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
 
 import pulsar
-from pulsar import safe_async, get_actor, send, multi_async, TcpServer
+from pulsar import (safe_async, get_actor, send, multi_async,
+                    TcpServer, coroutine_return)
 from pulsar.async.proxy import ActorProxyDeferred
 
 
 __all__ = ['run_on_arbiter',
+           'sequential',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
            'AsyncAssert',
@@ -117,6 +126,15 @@ def run_on_arbiter(f):
     return f
 
 
+def sequential(cls):
+    '''Decorator for a :class:`unittest.TestCase` which cause
+    its test functions to run sequentially rather than in an
+    asynchronous fashion.
+    '''
+    cls._sequential_execution = True
+    return cls
+
+
 class AsyncAssert(object):
     '''A `descriptor`_ added by the :ref:`test-suite` to all python
     :class:`unittest.TestCase` loaded.
@@ -151,7 +169,7 @@ class AsyncAssert(object):
         try:
             yield callable(*args, **kwargs)
         except error:
-            pass
+            coroutine_return(None)
         except Exception:
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))

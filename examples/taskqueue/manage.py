@@ -32,7 +32,7 @@ Implementation
 '''
 try:
     import pulsar
-except ImportError:
+except ImportError: # pragma    nocover
     import sys
     sys.path.append('../../')
     import pulsar
@@ -43,11 +43,8 @@ TASK_PATHS = ['sampletasks.*']
 
 
 class RpcRoot(rpc.PulsarServerCommands, tasks.TaskQueueRpcMixin):
-    '''The :class:`pulsar.apps.rpc.JSONRPC` handler which communicates
-with the task queue.'''
-
-    def rpc_runpycode(self, request, code=None, **params):
-        return self.task_run(request, 'runpycode', code=code, **params)
+    '''The :class:`.JSONRPC` handler which communicates with the task queue.
+    '''
 
 
 class Rpc(wsgi.LazyWsgi):
@@ -72,9 +69,8 @@ def dummy():
 class server(pulsar.MultiApp):
     '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
 
-    This class shows how to
-    use :class:`pulsar.apps.MultiApp` utility for starting several
-    :ref:`pulsar applications <apps-framework>` at once.
+    This class shows how to use the :class:`.MultiApp` utility for
+    starting several :ref:`pulsar applications <apps-framework>` at once.
     '''
     cfg = pulsar.Config('Taskqueue with JSON-RPC API example')
 
@@ -85,5 +81,5 @@ class server(pulsar.MultiApp):
                            callable=Rpc(self.name))
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma    nocover
     server('taskqueue').start()

@@ -2,7 +2,7 @@ from functools import partial
 
 from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
                     get_actor)
-from pulsar.utils.pep import zip
+from pulsar.utils.pep import to_string, zip
 
 from .base import register_store, Store
 from .client import Client, Pipeline, Consumer
@@ -108,7 +108,7 @@ class PulsarStore(Store):
         return pipe.commit()
 
     def get_model(self, model, pk):
-        key = '%s:%s' % (model._meta.table_name, pk)
+        key = '%s:%s' % (model._meta.table_name, to_string(pk))
         return self.execute('hgetall', key, factory=model)
 
     def compile_query(self, query):

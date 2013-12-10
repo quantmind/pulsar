@@ -63,21 +63,17 @@ class TaskQueueBase(object):
         cmnds = [send('arbiter', 'kill_actor', a.name) for a in cls.apps]
         yield multi_async(cmnds)
 
-    def pubsub_test(self, app):
-        pubsub = app.backend.pubsub
-        self.assertEqual(pubsub.backend.connection_string,
-                         'local://?name=%s' % app.name)
-
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
-    def test_run_new_simple_task(self):
-        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
-        r = yield self.proxy.wait_for_task(r)
-        self.assertEqual(r['status'], tasks.SUCCESS)
-        self.assertEqual(r['result'], 90)
+    def test_ping_store(self):
+        tq = self.apps[0]
+        self.assertTrue(tq.backend)
+        backend = tq.backend
+        store = backend.store
+        client = store.client()
+        self.async.assertEqual(client.ping(), True)
 
-class d:
     def test_pickled_app(self):
         tq = self.apps[0]
         self.assertEqual(tq.name, self.name())
@@ -98,7 +94,7 @@ class d:
         self.assertTrue(app.backend.registry)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
         backend = app.backend
-        self.assertFalse(backend.entries)
+        #self.assertFalse(backend.entries)
         job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
@@ -110,15 +106,10 @@ class d:
         self.assertFalse(oid)
 
     def test_pubsub(self):
-        '''Tests meta attributes of taskqueue'''
+        '''Tests pubsub handler'''
         app = yield get_application(self.name())
-        self.assertFalse(app.backend.local.pubsub)
-        pubsub = app.backend.pubsub
-        self.assertEqual(app.backend.local.pubsub, pubsub)
-        # the pubsub name is the same as the task queue application
-        self.assertEqual(app.backend.name, app.name)
-        self.assertEqual(pubsub.name, app.name)
-        self.pubsub_test(app)
+        pubsub = app.backend.pubsub()
+        self.assertEqual(pubsub.store, app.backend.store)
 
     def test_rpc_meta(self):
         app = yield get_application(self.rpc_name())
@@ -127,7 +118,7 @@ class d:
         self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
         self.assertNotEqual(app.cfg.address, app.address)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
-        wsgi_handler = app.callable.handler
+        wsgi_handler = app.callable.handler()
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertTrue(router.post)
@@ -143,7 +134,7 @@ class d:
         self.assertTrue(regular)
         self.assertTrue(periodic)
 
-    def test_run_new_task_asynchronous_from_test(self):
+    def test_queue_task_asynchronous_from_test(self):
         app = yield get_application(self.name())
         r = yield app.backend.queue_task('asynchronous', lag=3)
         r = yield self.proxy.wait_for_task(r)
@@ -152,21 +143,28 @@ class d:
         self.assertTrue(result['loops'])
         self.assertTrue(result['time'] > 3)
 
-    def test_run_new_task_asynchronous(self):
-        r = yield self.proxy.run_new_task(jobname='asynchronous', lag=3)
+    def test_queue_task_asynchronous(self):
+        r = yield self.proxy.queue_task(jobname='asynchronous', lag=3)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         result = r['result']
         self.assertTrue(result['loops'])
         self.assertTrue(result['time'] > 3)
 
-    def test_run_new_task_asynchronous_wait_on_test(self):
+    def test_queue_task_asynchronous_wait_on_test(self):
         app = yield get_application(self.name())
-        r = yield self.proxy.run_new_task(jobname='asynchronous', lag=3)
+        r = yield self.proxy.queue_task(jobname='asynchronous', lag=3)
         r = yield app.backend.wait_for_task(r)
-        self.assertEqual(r.status, tasks.SUCCESS)
-        self.assertTrue(r.result['loops'])
-        self.assertTrue(r.result['time'] > 3)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertTrue(r['result']['loops'])
+        self.assertTrue(r['result']['time'] > 3)
+
+    def test_queue_task_expiry(self):
+        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50,
+                                        expiry=0)
+        self.assertTrue(r)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.REVOKED)
 
     def test_run_new_simple_task_from_test(self):
         app = yield get_application(self.name())
@@ -176,7 +174,7 @@ class d:
         self.assertEqual(r['result'], 3)
 
     def test_run_new_simple_task(self):
-        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 90)
@@ -192,42 +190,35 @@ class d:
         self.assertFalse(r2)
         # We need to make sure the first task is completed
         r1 = yield app.backend.wait_for_task(r1)
-        self.assertEqual(r1.status, tasks.SUCCESS)
-        self.assertTrue(r1.result > sec)
+        self.assertEqual(r1['status'], tasks.SUCCESS)
+        self.assertTrue(r1['result'] > sec)
 
-    def test_run_new_task_error(self):
+    def test_queue_task_error(self):
         yield self.async.assertRaises(rpc.InvalidParams,
-                                      self.proxy.run_new_task)
+                                      self.proxy.queue_task)
         yield self.async.assertRaises(rpc.InternalError,
-                                      self.proxy.run_new_task,
+                                      self.proxy.queue_task,
                                       jobname='xxxx', bla='foo')
 
-    def test_run_new_task_run_py_code(self):
+    def test_queue_task_run_py_code(self):
         '''Run a new task from the *runpycode* task factory.'''
-        r = yield self.proxy.run_new_task(jobname='runpycode',
-                                          code=CODE_TEST, N=3)
+        r = yield self.proxy.queue_task(jobname='runpycode',
+                                        code=CODE_TEST, N=3)
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 9)
 
-    def test_run_new_task_periodicerror(self):
-        r = yield self.proxy.run_new_task(jobname='testperiodicerror')
+    def test_queue_task_periodicerror(self):
+        r = yield self.proxy.queue_task(jobname='testperiodicerror')
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.FAILURE)
         self.assertTrue('kaputt' in r['result'])
 
-    def test_run_new_task_expiry(self):
-        r = yield self.proxy.run_new_task(jobname='addition', a=40, b=50,
-                                          meta_data={'expiry': time()})
-        self.assertTrue(r)
-        r = yield self.proxy.wait_for_task(r)
-        self.assertEqual(r['status'], tasks.REVOKED)
-
     def __test_delete_task(self):
         #ISSUE #56
         app = yield get_application(self.name())
-        id = yield app.backend.queue_task('addition', a=1, b=4)
+        id = yield app.backend.queue_task(jobname='addition', a=1, b=4)
         r1 = yield app.backend.wait_for_task(id)
         self.assertEqual(r1.result, 5)
         deleted = yield app.backend.delete_tasks([r1.id, 'kjhbkjb'])
@@ -238,23 +229,24 @@ class d:
     def test_run_producerconsumer(self):
         '''A task which produce other tasks'''
         sample = 5
-        r = yield self.proxy.run_new_task(jobname='standarddeviation',
-                                          sample=sample, size=100)
+        r = yield self.proxy.queue_task(jobname='standarddeviation',
+                                        sample=sample, size=100)
         self.assertTrue(r)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 'produced %s new tasks' % sample)
         self.assertTrue(tasks.nice_task_message(r))
         # We check for the tasks created
-        created = yield self.proxy.get_tasks(from_task=r['id'])
-        self.assertEqual(len(created), sample)
-        stasks = []
-        for task in created:
-            stasks.append(self.proxy.wait_for_task(task['id']))
-        created = yield multi_async(stasks)
-        self.assertEqual(len(created), sample)
-        for task in created:
-            self.assertEqual(task['status'], tasks.SUCCESS)
+        # TODO: not available
+        #created = yield self.proxy.get_tasks(from_task=r['id'])
+        #self.assertEqual(len(created), sample)
+        #stasks = []
+        #for task in created:
+        #    stasks.append(self.proxy.wait_for_task(task['id']))
+        #created = yield multi_async(stasks)
+        #self.assertEqual(len(created), sample)
+        #for task in created:
+        #    self.assertEqual(task['status'], tasks.SUCCESS)
 
     ##    RPC TESTS
     def test_check_next_run(self):

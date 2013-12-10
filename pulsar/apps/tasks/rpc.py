@@ -1,4 +1,5 @@
 import pulsar
+from pulsar import raise_error_and_log
 from pulsar.apps import rpc
 
 from .backend import Task, TaskNotAvailable
@@ -12,8 +13,9 @@ def task_to_json(task):
         if pulsar.is_failure(task):
             err = task.trace[1]
             if isinstance(err, TaskNotAvailable):
-                raise rpc.InvalidParams('Job "%s" is not available.'
-                                        % err.task_name)
+                error = rpc.InvalidParams(
+                    'Job "%s" is not available.' % err.task_name)
+                raise_error_and_log(error, level='warning')
         if isinstance(task, (list, tuple)):
             task = [task_to_json(t) for t in task]
         elif isinstance(task, Task):
@@ -55,16 +57,16 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
 
-    def rpc_run_new_task(self, request, jobname=None, **kw):
-        '''Run a new task in the task queue.
+    def rpc_queue_task(self, request, jobname=None, **kw):
+        '''Queue a new ``jobname`` in the task queue.
 
         The task can be of any type as long as it is registered in the
         task queue registry. To check the available tasks call the
         :meth:`rpc_job_list` function.
 
-        It returns the task id.
+        It returns the task :attr:`~Task.id`.
         '''
-        result = yield self.run_new_task(request, jobname, **kw)
+        result = yield self.queue_task(request, jobname, **kw)
         yield task_to_json(result)
 
     def rpc_get_task(self, request, id=None):
@@ -106,9 +108,10 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
             self._task_backend = app.backend
         yield self._task_backend
 
-    def run_new_task(self, request, jobname, meta_data=None, **kw):
+    def queue_task(self, request, jobname, meta_data=None, **kw):
         if not jobname:
-            raise rpc.InvalidParams('"jobname" is not specified!')
+            error = rpc.InvalidParams('"jobname" is not specified!')
+            raise_error_and_log(error, level='warning')
         meta_data = meta_data or {}
         meta_data.update(self.task_request_parameters(request))
         task_backend = yield self.task_backend()

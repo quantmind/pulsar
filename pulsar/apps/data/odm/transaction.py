@@ -120,9 +120,8 @@ class Transaction(EventHandler):
         self._commands[store].append(Command(args))
 
     def model(self, model):
-        '''Returns the :class:`SessionModel` for ``model`` which
-can be :class:`Model`, or a :class:`MetaClass`, or an instance
-of :class:`Model`.'''
+        '''Returns the :class:`TransactionModel` for ``model``
+        '''
         manager = self.mapper[model]
         sm = self._models.get(manager)
         if sm is None:

@@ -161,7 +161,7 @@ class Store(Producer):
         pass
 
     def execute_transaction(self, commands):
-        '''Execute a list of ``commands`` in a transaction
+        '''Execute a list of ``commands`` in a :class:`.Transaction`
         '''
         raise NotImplementedError
 
@@ -407,9 +407,13 @@ def start_store(url, **kw):
             host = localhost(store._host)
             if not host:
                 raise
-            app = yield get_application('keyvaluestore')
+            # First check if a pulsar store is installed in the arbiter
+            app = yield get_application('pulsards')
             if not app:
+                # No create one
                 app = yield send('arbiter', 'run', PulsarDS(bind=host))
+            else:
+                yield app.event('start')
             store._host = app.address
             dns = store._buildurl()
             store = create_store(dns, **kw)

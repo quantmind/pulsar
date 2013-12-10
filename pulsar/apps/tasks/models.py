@@ -174,30 +174,30 @@ implemented by subclasses.'''
         '''Type of Job, one of ``regular`` and ``periodic``.'''
         return 'regular'
 
-    def run_job(self, consumer, jobname, *args, **kwargs):
-        '''Run a new task in the task queue.
+    def queue_task(self, consumer, jobname, meta_params=None, **kwargs):
+        '''Queue a new task in the task queue.
 
-This utility method can be used from within the
-:ref:`job callable <job-callable>` method and it allows tasks to act
-as tasks factories.
+        This utility method can be used from within the
+        :ref:`job callable <job-callable>` method and it allows tasks to act
+        as tasks factories.
 
-:parameter consumer: the :class:`.TaskConsumer`
-    handling the :ref:`Task <apps-taskqueue-task>`. Must be the same instance
-    as the one passed to the :ref:`job callable <job-callable>` method.
-:parameter jobname: The name of the :class:`Job` to run.
-:parameter args: positional argument for the
-    :ref:`job callable <job-callable>`.
-:parameter kwargs: key-valued parameters for the
-    :ref:`job callable <job-callable>`.
-:return: a :class:`pulsar.Deferred` called back with the task id of the
-    new job.
+        :parameter consumer: the :class:`.TaskConsumer`
+            handling the :ref:`Task <apps-taskqueue-task>`.
+            Must be the same instance as the one passed to the
+            :ref:`job callable <job-callable>` method.
+        :parameter jobname: The name of the :class:`Job` to run.
+        :parameter kwargs: key-valued parameters for the
+            :ref:`job callable <job-callable>`.
+        :return: a :class:`.Deferred` called back with the task id.
 
-This method invokes the :meth:`.TaskBackend.run_job`
-method with the additional ``from_task`` argument equal to the
-id of the task invoking the method.
-'''
-        return consumer.backend.run_job(jobname, args, kwargs,
-                                        from_task=consumer.task_id)
+        This method invokes the :meth:`.TaskBackend.queue_task`
+        method with the additional ``from_task`` argument equal to the
+        id of the task invoking the method.
+        '''
+        if meta_params is None:
+            meta_params = {}
+        meta_params['from_task'] = consumer.task_id
+        return consumer.backend.queue_task(jobname, meta_params, **kwargs)
 
     def create_id(self, kwargs):
         '''Create a unique id for a task.

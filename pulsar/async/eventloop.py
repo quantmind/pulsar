@@ -15,7 +15,7 @@ from pulsar.utils.system import close_on_exec
 from pulsar.utils.pep import range
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
-from .access import asyncio, thread_local_data, LOGGER
+from .access import asyncio, thread_data, LOGGER
 from .defer import maybe_async, async, DeferredTask, Deferred, Failure
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
@@ -43,10 +43,10 @@ def setid(self):
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
     '''Pulsar event loop policy'''
     def get_event_loop(self):
-        return thread_local_data('_event_loop')
+        return thread_data('_event_loop')
 
     def get_request_loop(self):
-        return thread_local_data('_request_loop') or self.get_event_loop()
+        return thread_data('_request_loop') or self.get_event_loop()
 
     def new_event_loop(self):
         return EventLoop()
@@ -56,9 +56,9 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
         assert event_loop is None or isinstance(event_loop,
                                                 asyncio.AbstractEventLoop)
         if getattr(event_loop, 'cpubound', False):
-            thread_local_data('_request_loop', event_loop)
+            thread_data('_request_loop', event_loop)
         else:
-            thread_local_data('_event_loop', event_loop)
+            thread_data('_event_loop', event_loop)
 
 
 asyncio.set_event_loop_policy(EventLoopPolicy())

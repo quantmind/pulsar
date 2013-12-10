@@ -65,7 +65,7 @@ class StandardDeviation(tasks.Job):
         if inputs is None:
             for n in range(sample):
                 inputs = [random() for i in range(size)]
-                self.run_job(consumer, self.name, inputs=inputs)
+                self.queue_task(consumer, self.name, inputs=inputs)
             return 'produced %s new tasks' % sample
         else:
             time.sleep(0.1)

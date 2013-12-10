@@ -43,6 +43,7 @@ __all__ = ['Deferred',
            'run_in_loop_thread',
            'in_loop',
            'in_loop_thread',
+           'raise_error_and_log',
            'NOT_DONE']
 
 
@@ -87,6 +88,14 @@ def log_failure(value):
     if isinstance(value, Failure):
         value.log()
     return value
+
+
+def raise_error_and_log(error, level=None):
+    try:
+        raise error
+    except Exception as e:
+        Failure(sys.exc_info()).log(msg=str(e), level=level)
+        raise
 
 
 def async_sleep(timeout):

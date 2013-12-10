@@ -588,7 +588,7 @@ class TestSuite(tasks.TaskQueue):
                                                 tag=tag)
                     queued.append(r)
                 queued = yield multi_async(queued)
-                self._tests_queued = set((task['id'] for task in queued))
+                self._tests_queued = set(queued)
                 yield self._test_done()
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')

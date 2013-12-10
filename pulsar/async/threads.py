@@ -14,7 +14,7 @@ Full = queue.Full
 from pulsar.utils.exceptions import StopEventLoop
 
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
-                     thread_local_data, LOGGER)
+                     thread_data, AsyncObject, LOGGER)
 from .defer import Deferred, safe_async
 from .pollers import Poller, READ
 
@@ -23,7 +23,6 @@ __all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
 
 
 class Thread(dummy.DummyProcess):
-
     @property
     def pid(self):
         return current_process().pid
@@ -37,8 +36,6 @@ class Thread(dummy.DummyProcess):
             loop = self.loop()
             if loop:
                 loop.stop()
-            else:
-                LOGGER.error('Cannot terminate thread. No loop.')
 
 
 class PoolThread(Thread):
@@ -68,7 +65,7 @@ class PoolThread(Thread):
         super(Thread, self).run()
 
     def loop(self):
-        return thread_local_data('_request_loop', ct=self)
+        return thread_data('_request_loop', ct=self)
 
 
 class IOqueue(Poller):
@@ -154,7 +151,7 @@ CLOSE = 1
 TERMINATE = 2
 
 
-class ThreadPool(object):
+class ThreadPool(AsyncObject):
     '''A thread pool for an actor.
 
     This pool maintains a group of threads to perform asynchronous tasks via

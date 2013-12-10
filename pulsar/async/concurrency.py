@@ -6,7 +6,7 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import new_event_loop, get_actor, set_actor, remove_actor, logger
+from .access import new_event_loop, get_actor, set_actor, logger
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure, Deferred
@@ -188,8 +188,6 @@ back with the acknowledgement from the monitor.
                 self._stop_actor(actor)
         elif actor.stopped():
             # The actor has finished the stopping process.
-            #Remove itself from the actors dictionary
-            remove_actor(actor)
             actor.fire_event('stop')
         return actor.event('stop')
 

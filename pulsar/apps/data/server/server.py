@@ -2233,15 +2233,21 @@ class Storage(object):
     def _save(self, async=True):
         self._dirty = 0
         self._last_save = int(time.time())
-        data = StorageData(self)
-        data.save(self._filename, async)
+        dbs = [(db._num, db._data) for db in self.databases.values()
+               if len(db._data)]
+        with open(self._filename, 'wb') as file:
+            pickle.dump((1.0, dbs), file, protocol=2)
 
     def _loaddb(self):
         filename = self._filename
         if os.path.isfile(filename):
             with open(filename, 'rb') as file:
                 data = pickle.load(file)
-            data.load(self)
+            version, dbs = data
+            for num, data in dbs:
+                db = self.databases.get(num)
+                if db is not None:
+                    db._data = data
 
     def _signal(self, type, db, command, key=None, dirty=0):
         self._dirty += dirty
@@ -2495,21 +2501,3 @@ class Db(object):
             handle, value, = self._expires.pop(key)
             handle.cancel()
             self.store._expired_keys += 1
-
-
-class StorageData:
-
-    def __init__(self, storage):
-        self.version = 1
-        self.dbs = [(db._num, db._data) for db in storage.databases.values()
-                    if len(db._data)]
-
-    def save(self, filename, async=True):
-        with open(filename, 'wb') as file:
-            pickle.dump(self, file, protocol=2)
-
-    def load(self, storage):
-        for num, data in self.dbs:
-            db = storage.databases.get(num)
-            if db is not None:
-                db._data = data
