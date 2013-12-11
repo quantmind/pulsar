@@ -95,6 +95,7 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
+from functools import partial
 
 import pulsar
 from pulsar import TcpServer, multi_async
@@ -231,6 +232,7 @@ class SocketServer(pulsar.Application):
         worker.servers[self.name] = servers = []
         for sock in worker.params.sockets:
             server = self.create_server(worker, sock.sock)
+            server.bind_event('stop', partial(self._stop_worker, worker))
             servers.append(server)
 
     def worker_stopping(self, worker):
@@ -248,6 +250,10 @@ class SocketServer(pulsar.Application):
                 'read_timeout': server.timeout,
                 'concurrent_connections': server.concurrent_connections,
                 'received_connections': server.received})
+
+    def _stop_worker(self, worker, exc):
+        worker.stop()
+        return exc
 
     #   INTERNALS
 

@@ -674,6 +674,14 @@ class Server(ConnectionProducer):
         consumer.copy_many_times_events(self)
         return consumer
 
+    def new_connection(self, consumer_factory, producer=None):
+        conn = super(Server, self).new_connection(consumer_factory, producer)
+        if self._max_connections and conn._session >= self._max_connections:
+            logger().info('Reached maximum number of connections %s. '
+                          'Stop serving.' % self._max_connections)
+            self.close()
+        return conn
+
     @property
     def event_loop(self):
         '''The :class:`EventLoop` running the server'''
