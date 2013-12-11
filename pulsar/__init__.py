@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 8, 0, 'alpha', 1)
+VERSION = (0, 7, 3, 'beta', 1)
+
+import os
 
 from .utils.version import get_version
 
@@ -40,17 +42,18 @@ JAPANESE = b'\xe3\x83\x91\xe3\x83\xab\xe3\x82\xb5\xe3\x83\xbc'.decode('utf-8')
 CHINESE = b'\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f'.decode('utf-8')
 SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
-from .utils.exceptions import *
-from .utils import system
-platform = system.platform
-from .utils.config import *
-from .async import *
-from .apps import *
-#
-# Import pubsub local backend for commands
-from .apps.pubsub import local
-del local
-# Import tasks local backend for commands
-from .apps.tasks.backends import local
-del local
-del get_version
+if os.environ.get('pulsar_setup_running') != 'yes':
+    from .utils.exceptions import *
+    from .utils import system
+    platform = system.platform
+    from .utils.config import *
+    from .async import *
+    from .apps import *
+    #
+    # Import pubsub local backend for commands
+    from .apps.pubsub import local
+    del local
+    # Import tasks local backend for commands
+    from .apps.tasks.backends import local
+    del local
+    del get_version
