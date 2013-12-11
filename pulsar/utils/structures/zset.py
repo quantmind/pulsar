@@ -43,8 +43,12 @@ class Zset(object):
     def range(self, start, end, scores=False):
         return self._sl.range(start, end, scores)
 
-    def range_by_score(self, minval, maxval):
-        return self._sl.range_by_score(minval, maxval)
+    def range_by_score(self, minval, maxval, include_min=True,
+                       include_max=True, start=0, num=None, scores=False):
+        return self._sl.range_by_score(minval, maxval, start=start,
+                                       num=num, include_min=include_min,
+                                       include_max=include_max,
+                                       scores=scores)
 
     def score(self, member, default=None):
         '''The score of a given member'''
@@ -59,7 +63,7 @@ class Zset(object):
             sc = self._dict[val]
             if sc == score:
                 return 0
-            self._sl.remove(sc)
+            self.remove(val)
             r = 0
         self._dict[val] = score
         self._sl.insert(score, val)
@@ -75,19 +79,38 @@ scores and values.'''
     def remove_items(self, items):
         removed = 0
         for item in items:
-            score = self._dict.pop(item, None)
+            score = self.remove(item)
             if score is not None:
                 removed += 1
-                self._sl.remove(score)
         return removed
 
     def remove(self, item):
         '''Remove ``item`` for the :class:`zset` it it exists.
-If found it returns the score of the item removed.'''
+        If found it returns the score of the item removed.
+        '''
         score = self._dict.pop(item, None)
         if score is not None:
-            self._sl.remove(score)
-            return score
+            index = self._sl.rank(score)
+            assert index >= 0, 'could not find start range'
+            for i, v in enumerate(self._sl.range(index)):
+                if v == item:
+                    assert self._sl.remove_range(index+i,index+i+1) == 1
+                    return score
+            assert False, 'could not find element'
+
+    def remove_range(self, start, end):
+        '''Remove a range by score.
+        '''
+        return self._sl.remove_range(start, end,
+            callback=lambda sc, value: self._dict.pop(value))
+
+    def remove_range_by_score(self, minval, maxval,
+                              include_min=True, include_max=True):
+        '''Remove a range by score.
+        '''
+        return self._sl.remove_range_by_score(minval, maxval,
+            include_min=include_min, include_max=include_max,
+            callback=lambda sc, value: self._dict.pop(value))
 
     def clear(self):
         '''Clear this :class:`zset`.'''

@@ -59,6 +59,12 @@ class TestZset(unittest.TestCase):
             self.assertFalse(val in s)
         self.assertFalse(s)
 
+    def test_remove_same_score(self):
+        s = self.zset([(3, 'bla'), (3, 'foo'), (3, 'pippo')])
+        self.assertEqual(s.remove('foo'), 3)
+        self.assertEqual(len(s), 2)
+        self.assertFalse('foo' in s)
+
     def test_range(self):
         s = self.random()
         values = list(s.range(3, 10))
@@ -75,3 +81,14 @@ class TestZset(unittest.TestCase):
         all = list(s)[3:10]
         all2 = [v for s, v in values]
         self.assertEqual(all, all2)
+
+    def test_remove_range_by_score(self):
+        s = self.zset([(1.2, 'bla'), (2.3, 'foo'), (3.6, 'pippo')])
+        self.assertEqual(s.remove_range_by_score(1.6, 4), 2)
+        self.assertEqual(s, self.zset([(1.2, 'bla')]))
+
+    def test_remove_range_by_rank(self):
+        s = self.zset([(1.2, 'bla'), (2.3, 'foo'), (3.6, 'pippo'),
+                       (4, 'b'), (5, 'c')])
+        self.assertEqual(s.remove_range(1, 4), 3)
+        self.assertEqual(s, self.zset([(1.2, 'bla'), (5, 'c')]))

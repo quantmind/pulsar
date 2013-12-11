@@ -86,13 +86,14 @@ class Skiplist(Sequence):
         node = self._head
         rank = 0
         for i in range(self._level-1, -1, -1):
-            while node.next[i] and node.next[i].score <= score:
+            while node.next[i] and node.next[i].score < score:
                 rank += node.width[i]
                 node = node.next[i]
-        if node.score == score:
-            return rank - 1
+        node = node.next[0]
+        if node and node.score == score:
+            return rank
         else:
-            return -1 - rank
+            return -2 - rank
 
     def range(self, start=0, end=None, scores=False):
         N = len(self)
@@ -119,13 +120,30 @@ class Skiplist(Sequence):
             index += 1
             node = node.next[0]
 
-    def range_by_score(self, minvalue=neg_inf, maxvalue=inf):
+    def range_by_score(self, minval, maxval, include_min=True,
+                       include_max=True, start=0, num=None, scores=False):
         node = self._head
-        if start is not None:
+        if include_min:
             for i in range(self._level-1, -1, -1):
-                while node.next[i] and node.next[i].score <= start:
+                while node.next[i] and node.next[i].score < minval:
                     node = node.next[i]
-        raise NotImplementedError
+        else:
+            for i in range(self._level-1, -1, -1):
+                while node.next[i] and node.next[i].score <= minval:
+                    node = node.next[i]
+        node = node.next[0]
+        if node and node.score >= minval:
+            index = 0
+            while node:
+                index += 1
+                if num is not None and index - start > num:
+                    break
+                if ((include_max and node.score > maxval) or
+                    (not include_max and node.score >= maxval)):
+                    break
+                if index > start:
+                    yield (node.score, node.value) if scores else node.value
+                node = node.next[0]
 
     def insert(self, score, value):
         # find first node on each level where node.next[levels].score > score
@@ -170,27 +188,86 @@ class Skiplist(Sequence):
         self._size += 1
         return node
 
-    def remove(self, score):
-        # find first node on each level where node.next[levels].score >= score
-        chain = [None] * SKIPLIST_MAXLEVEL
+    def remove_range(self, start, end, callback=None):
+        '''Remove a range by rank.
+
+        This is equivalent to perform::
+
+            del l[start:end]
+
+        on a python list.
+        It returns the number of element removed.
+        '''
+        N = len(self)
+        if start < 0:
+            start = max(N +  start, 0)
+        if start >= N:
+            return 0
+        if end is None:
+            end = N
+        elif end < 0:
+            end = max(N + end, 0)
+        else:
+            end = min(end, N)
+        if start >= end:
+            return 0
         node = self._head
+        index = 0
+        chain = [None] * self._level
         for i in range(self._level-1, -1, -1):
-            while node.next[i] and node.next[i].score < score:
+            while node.next[i] and (index + node.width[i]) <= start:
+                index += node.width[i]
                 node = node.next[i]
             chain[i] = node
-
         node = node.next[0]
-        if score != node.score:
-            raise KeyError('Not Found')
+        initial = self._size
+        while node and index < end:
+            next = node.next[0]
+            self._remove_node(node, chain)
+            index += 1
+            if callback:
+                callback(node.score, node.value)
+            node = next
+        return initial - self._size
 
-        for i in range(self._level):
-            if chain[i].next[i] == node:
-                chain[i].width[i] += node.width[i] - 1
-                chain[i].next[i] = node.next[i]
-            else:
-                chain[i].width[i] -= 1
+    def remove_range_by_score(self, minval, maxval, include_min=True,
+                              include_max=True, callback=None):
+        '''Remove a range with scores between ``minval`` and ``maxval``.
 
-        self._size -= 1
+        :param minval: the start value of the range to remove
+        :param maxval: the end value of the range to remove
+        :param include_min: whether or not to include ``minval`` in the
+            values to remove
+        :param include_max: whether or not to include ``maxval`` in the
+            scores to to remove
+        :param callback: optional callback function invoked for each
+            score, value pair removed.
+        :return: the number of elements removed.
+        '''
+        node = self._head
+        chain = [None] * self._level
+        if include_min:
+            for i in range(self._level-1, -1, -1):
+                while node.next[i] and node.next[i].score < minval:
+                    node = node.next[i]
+                chain[i] = node
+        else:
+            for i in range(self._level-1, -1, -1):
+                while node.next[i] and node.next[i].score <= minval:
+                    node = node.next[i]
+                chain[i] = node
+        node = node.next[0]
+        initial = self._size
+        while node and node.score >= minval:
+            if ((include_max and node.score > maxval) or
+                (not include_max and node.score >= maxval)):
+                break
+            next = node.next[0]
+            self._remove_node(node, chain)
+            if callback:
+                callback(node.score, node.value)
+            node = next
+        return initial - self._size
 
     def count(self, minval, maxval, include_min=True, include_max=True):
         '''Returns the number of elements in the skiplist with a score
@@ -225,3 +302,19 @@ class Skiplist(Sequence):
             yield node.value
             node = node.next[0]
 
+    def _remove_node(self, node, chain):
+        for i in range(self._level):
+            if chain[i].next[i] == node:
+                chain[i].width[i] += node.width[i] - 1
+                chain[i].next[i] = node.next[i]
+            else:
+                chain[i].width[i] -= 1
+        self._size -= 1
+
+
+class SkipListSlice(object):
+    __slots__ = ('sl', 'slice')
+
+    def __init__(self, sl, slice):
+        self.sl = sl
+        self.slice = slice

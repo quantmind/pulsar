@@ -49,6 +49,13 @@ class PulsarStore(Store):
     def pool(self):
         return self._pool
 
+    @property
+    def namespace(self):
+        '''The prefix namespace to append to all transaction on keys
+        '''
+        n = self._urlparams.get('namespace')
+        return '%s:' % n if n else ''
+
     def key(self):
         return (self._dns, self._encoding)
 
@@ -94,21 +101,24 @@ class PulsarStore(Store):
 
     def execute_transaction(self, commands):
         pipe = self.pipeline()
+        namespace = self.namespace
         for command in commands:
             action = command.action
             if not action:
                 pipe.execute(*command.args)
             elif action == Command.INSERT:
                 model = command.args
-                key = '%s:%s' % (model._meta.table_name,
-                                 model.pkvalue() or '')
+                key = '%s%s:%s' % (namespace,
+                                   model._meta.table_name,
+                                   model.pkvalue() or '')
                 pipe.hmset(key, model._to_store(self))
             else:
                 raise NotImplementedError
         return pipe.commit()
 
     def get_model(self, model, pk):
-        key = '%s:%s' % (model._meta.table_name, to_string(pk))
+        key = '%s%s:%s' % (self.namespace, model._meta.table_name,
+                           to_string(pk))
         return self.execute('hgetall', key, factory=model)
 
     def compile_query(self, query):

@@ -73,8 +73,10 @@ nan = float('nan')
 
 if ispy3k:
     from itertools import zip_longest
+    _ord = lambda x: x
 else:   # pragma    nocover
     from itertools import izip_longest as zip_longest
+    _ord = lambda x: ord(x)
 
 
 class RedisParserSetting(Global):
@@ -1481,10 +1483,10 @@ class Storage(object):
         else:
             min_value, max_value = request[2], request[3]
             include_min = include_max = True
-            if min_value and min_value[0] == 40:
+            if min_value and _ord(min_value[0]) == 40:
                 include_min = False
                 min_value = min_value[1:]
-            if max_value and max_value[0] == 40:
+            if max_value and _ord(max_value[0]) == 40:
                 include_max = False
                 max_value = max_value[1:]
             try:
@@ -1550,6 +1552,51 @@ class Storage(object):
             client.reply_multi_bulk(result)
 
     @command('Sorted sets')
+    def zrangebyscore(self, client, request, N):
+        check_input(request, N < 3 or N > 7)
+        value = client.db.get(request[1])
+        if value is None:
+            client.reply_multi_bulk(())
+        elif not isinstance(value, self.zset_type):
+            client.reply_wrongtype()
+        else:
+            try:
+                minval, include_min, maxval, include_max = self._score_values(
+                    request[2], request[3])
+            except exception:
+                return client.reply_error(self.SYNTAX_ERROR)
+            request = request[4:]
+            withscores = False
+            offset = 0
+            count = None
+            while request:
+                if request[0].lower() == b'withscores':
+                    withscores = True
+                    request = request[1:]
+                elif request[0].lower() == b'limit':
+                    try:
+                        offset = int(request[1])
+                        count = int(request[2])
+                    except Exception:
+                        return client.reply_error(self.SYNTAX_ERROR)
+                    request = request[3:]
+                else:
+                    return client.reply_error(self.SYNTAX_ERROR)
+            if withscores:
+                result = []
+                [result.extend((value, score)) for score, value in
+                     value.range_by_score(minval, maxval, scores=True,
+                                          start=offset, num=count,
+                                          include_min=include_min,
+                                          include_max=include_max)]
+            else:
+                result = list(value.range_by_score(minval, maxval,
+                                                   start=offset, num=count,
+                                                   include_min=include_min,
+                                                   include_max=include_max))
+            client.reply_multi_bulk(result)
+
+    @command('Sorted sets')
     def zrank(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -1580,6 +1627,52 @@ class Storage(object):
                 self._signal(self.NOTIFY_ZSET, db, request[0], key, removed)
             if not value:
                 db.pop()
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
+            client.reply_int(removed)
+
+    @command('Sorted sets', True)
+    def zremrangebyrank(self, client, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        db = client.db
+        value = db.get(key)
+        if value is None:
+            client.reply_zero()
+        elif not isinstance(value, self.zset_type):
+            client.reply_wrongtype()
+        else:
+            try:
+                start, end = self._range_values(value, request[2], request[3])
+            except exception:
+                return client.reply_error(self.SYNTAX_ERROR)
+            removed = value.remove_range(start, end)
+            if removed:
+                self._signal(self.NOTIFY_ZSET, db, request[0], key, removed)
+            if db.pop(key, value) is not None:
+                self._signal(self.NOTIFY_GENERIC, db, 'del', key)
+            client.reply_int(removed)
+
+    @command('Sorted sets', True)
+    def zremrangebyscore(self, client, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        db = client.db
+        value = db.get(key)
+        if value is None:
+            client.reply_zero()
+        elif not isinstance(value, self.zset_type):
+            client.reply_wrongtype()
+        else:
+            try:
+                minval, include_min, maxval, include_max = self._score_values(
+                    request[2], request[3])
+            except exception:
+                return client.reply_error(self.SYNTAX_ERROR)
+            removed = value.remove_range_by_score(minval, maxval, include_min,
+                                                  include_max)
+            if removed:
+                self._signal(self.NOTIFY_ZSET, db, request[0], key, removed)
+            if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
@@ -2198,6 +2291,16 @@ class Storage(object):
         db._data[des] = result
         self._signal(self.NOTIFY_ZSET, db, cmnd, des, len(result))
         client.reply_int(len(result))
+
+    def _score_values(self, min_value, max_value):
+        include_min = include_max = True
+        if min_value and _ord(min_value[0]) == 40:
+            include_min = False
+            min_value = min_value[1:]
+        if max_value and _ord(max_value[0]) == 40:
+            include_max = False
+            max_value = max_value[1:]
+        return float(min_value), include_min, float(max_value), include_max
 
     def _info(self):
         keyspace = {}

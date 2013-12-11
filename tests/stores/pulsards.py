@@ -13,16 +13,23 @@ class StoreMixin(object):
     redis_py_parser = False
 
     @classmethod
-    def create_store(cls, address, **kw):
+    def create_store(cls, address, namespace=None, **kw):
         if cls.redis_py_parser:
             kw['parser_class'] = redis_parser(True)
-        return create_store(address, **kw)
+        if not namespace:
+            namespace = cls.randomkey(6).lower()
+        return create_store(address, namespace=namespace, **kw)
 
-    def randomkey(self):
-        return random_string()
+    @classmethod
+    def randomkey(cls, length=None):
+        return random_string(length=length)
 
 
 class RedisCommands(StoreMixin):
+
+    def test_store(self):
+        store = self.store
+        self.assertEqual(len(store.namespace), 7)
 
     def test_watch(self):
         key1 = self.randomkey()
@@ -451,6 +458,58 @@ class RedisCommands(StoreMixin):
         yield eq(c.zrange(key, 1, 2, withscores=True),
                  Zset([(2, b'a2'), (3, b'a3')]))
 
+    def test_zrangebyscore(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3, a4=4, a5=5), 5)
+        yield eq(c.zrangebyscore(key, 2, 4), [b'a2', b'a3', b'a4'])
+        # slicing with start/num
+        yield eq(c.zrangebyscore(key, 2, 4, offset=1, count=2),
+                 [b'a3', b'a4'])
+        # withscores
+        yield eq(c.zrangebyscore(key, 2, 4, withscores=True),
+                 Zset([(2.0, b'a2'), (3.0, b'a3'), (4.0, b'a4')]))
+
+    def test_zrank(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3, a4=4, a5=5), 5)
+        yield eq(c.zrank(key, 'a1'), 0)
+        yield eq(c.zrank(key, 'a2'), 1)
+        yield eq(c.zrank(key, 'a6'), None)
+
+    def test_zrem(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3, a4=4, a5=5), 5)
+        yield eq(c.zrem(key, 'a2'), 1)
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a3', b'a4', b'a5'])
+        yield eq(c.zrem(key, 'b'), 0)
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a3', b'a4', b'a5'])
+        yield eq(c.zrem(key, 'a3', 'a5', 'h'), 2)
+        yield eq(c.zrange(key, 0, -1), [b'a1',b'a4'])
+
+    def test_zremrangebyrank(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3, a4=4, a5=5), 5)
+        yield eq(c.zremrangebyrank(key, 1, 3), 3)
+        yield eq(c.zrange(key, 0, 5), [b'a1', b'a5'])
+
+    def test_zremrangebyscore(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.zadd(key, a1=1, a2=2, a3=3, a4=4, a5=5), 5)
+        yield eq(c.zremrangebyscore(key, 2, 4), 3)
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a5'])
+        yield eq(c.zremrangebyscore(key, 2, 4), 0)
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a5'])
+
     ###########################################################################
     ##    CONNECTION
     def test_ping(self):
@@ -567,14 +626,13 @@ class RedisCommands(StoreMixin):
 
 
 class TestPulsarStore(RedisCommands, unittest.TestCase):
-    concurrency = 'thread'
     app = None
 
     @classmethod
     def setUpClass(cls):
         server = PulsarDS(name=cls.__name__.lower(),
                           bind='127.0.0.1:0',
-                          concurrency=cls.concurrency,
+                          concurrency=cls.cfg.concurrency,
                           redis_py_parser=cls.redis_py_parser)
         cls.app = yield pulsar.send('arbiter', 'run', server)
         cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)

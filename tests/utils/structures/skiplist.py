@@ -1,4 +1,5 @@
-'''Tests the tools and utilities in pulsar.utils.'''
+from random import randint
+
 from pulsar.utils.pep import zip
 from pulsar.utils.structures import Skiplist
 from pulsar.apps.test import unittest, populate
@@ -36,3 +37,55 @@ class TestSkiplist(unittest.TestCase):
         self.assertEqual(sl.count(1, 2, include_max=False), 1)
         self.assertEqual(sl.count(1, 2, include_min=False,
                                   include_max=False), 0)
+
+    def test_range_by_score(self):
+        sl = self.skiplist()
+        self.assertEqual(tuple(sl.range_by_score(float('-inf'), 5)), ())
+        sl.insert(1, 'bla')
+        self.assertEqual(tuple(sl.range_by_score(-3, 5)), ('bla',))
+        sl.insert(1.5, 'foo')
+        sl.insert(0.3, 'pippo')
+        self.assertEqual(tuple(sl.range_by_score(0.9, 1.1)), ('bla',))
+        self.assertEqual(tuple(sl.range_by_score(1, 2)), ('bla', 'foo'))
+        self.assertEqual(tuple(sl.range_by_score(1, 2, include_min=False)),
+                         ('foo',))
+        self.assertEqual(tuple(sl.range_by_score(1, 1.5)), ('bla', 'foo'))
+        self.assertEqual(tuple(sl.range_by_score(1, 1.5, include_max=False)),
+                         ('bla',))
+        self.assertEqual(tuple(sl.range_by_score(-1, 2, start=1)),
+                         ('bla', 'foo'))
+        self.assertEqual(tuple(sl.range_by_score(-1, 2, start=1, num=1)),
+                         ('bla',))
+
+    def test_remove_range(self):
+        sl = self.skiplist()
+        self.assertEqual(sl.remove_range(0, 3), 0)
+        sl.insert(1, 'bla')
+        self.assertEqual(sl.remove_range(0, 3), 1)
+        sl = self.random(10)
+        li = list(sl)
+        lir = li[:4]+ li [7:]
+        self.assertEqual(sl.remove_range(4, 7), 3)
+        li2 = list(sl)
+        self.assertEqual(li2, lir)
+        #
+        sl = self.random()
+        li = list(sl)
+        lir = li[:5] + li[-8:]
+        self.assertEqual(sl.remove_range(5, -8), len(li[5:-8]))
+        li2 = list(sl)
+        self.assertEqual(li2, lir)
+        #
+        sl = self.random()
+        c = 0
+        while sl:
+            c += 1
+            index = randint(0, len(sl)-1)
+            self.assertEqual(sl.remove_range(index, index+1), 1)
+        self.assertEqual(c, 100)
+
+    def test_remove_range_by_score(self):
+        sl = self.skiplist()
+        self.assertEqual(sl.remove_range_by_score(0, 3), 0)
+        sl.insert(1, 'bla')
+        self.assertEqual(sl.remove_range_by_score(0, 3), 1)
