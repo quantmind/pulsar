@@ -14,11 +14,11 @@ class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
 
     @classmethod
     def task_backend(cls):
-        return cls.cfg.backend_server or 'redis://127.0.0.1:6379'
+        return 'redis://%s' % cls.cfg.redis_server
 
 
 class TestRedisTaskQueueOnProcess(test_pulsards.TestTaskQueueOnProcess):
 
     @classmethod
     def task_backend(cls):
-        return cls.cfg.backend_server or 'redis://127.0.0.1:6379'
+        return 'redis://%s' % cls.cfg.redis_server

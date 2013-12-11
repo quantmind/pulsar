@@ -13,7 +13,7 @@ class TestRedisStore(RedisCommands, unittest.TestCase):
         cls.client = cls.store.client()
 
 
-#@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
-#class TestRedisPoolPythonParser(TestRedisStore):
-#    pass
+@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
+class TestRedisPoolPythonParser(TestRedisStore):
+    pass
 

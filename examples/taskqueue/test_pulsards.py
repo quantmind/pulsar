@@ -66,6 +66,13 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    def test_run_new_simple_task(self):
+        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
+        r = yield self.proxy.wait_for_task(r)
+        self.assertEqual(r['status'], tasks.SUCCESS)
+        self.assertEqual(r['result'], 90)
+
+class f:
     def test_ping_store(self):
         tq = self.apps[0]
         self.assertTrue(tq.backend)

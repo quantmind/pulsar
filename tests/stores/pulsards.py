@@ -585,6 +585,6 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
             yield pulsar.send('arbiter', 'kill_actor', cls.app.name)
 
 
-#@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
-#class TestPulsarStorePyParser(TestPulsarStore):
-#    redis_py_parser = True
+@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
+class TestPulsarStorePyParser(TestPulsarStore):
+    redis_py_parser = True
