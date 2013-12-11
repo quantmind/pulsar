@@ -121,17 +121,17 @@ class Parser(object):
     #    INTERNALS
     def _pack(self, args):
         crlf = b'\r\n'
-        yield ('*%s\r\n' % len(args)).encode('utf-8')
+        yield ('*%d\r\n' % len(args)).encode('utf-8')
         for value in args:
             if value is None:
                 yield nil
             elif isinstance(value, bytes):
-                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf
             elif isinstance(value, string_type):
                 value = value.encode('utf-8')
-                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf
             elif hasattr(value, 'items'):
@@ -142,7 +142,7 @@ class Parser(object):
                     yield value
             else:
                 value = str(value).encode('utf-8')
-                yield ('$%s\r\n' % len(value)).encode('utf-8')
+                yield ('$%d\r\n' % len(value)).encode('utf-8')
                 yield value
                 yield crlf
 

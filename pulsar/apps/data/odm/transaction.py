@@ -1,5 +1,7 @@
-from pulsar import EventHandler, coroutine_return, in_loop
+from pulsar import EventHandler, coroutine_return, in_loop, InvalidOperation
 from pulsar.utils.pep import iteritems
+
+from ..stores import Command
 
 
 class ModelDictionary(dict):
@@ -35,17 +37,6 @@ class TransactionModel(object):
         self._queries = []
 
 
-class Command(object):
-    __slots__ = ('args', 'action')
-
-    def __init__(self, args, action=0):
-        self.args = args
-        self.action = action
-
-INSERT = 1
-DELETE = 2
-
-
 class Transaction(EventHandler):
     '''Transaction class for pipelining commands to :class:`.Store`.
 
@@ -66,6 +57,10 @@ class Transaction(EventHandler):
     .. attribute:: mapper
 
         the :class:`.Mapper` which initialised this transaction.
+
+    .. attribute:: _commands
+
+        dictionary of commands for each :class:`.Store` in this transaction.
 
     .. attribute:: deleted
 
@@ -101,7 +96,7 @@ class Transaction(EventHandler):
     def add(self, model):
         '''Add a ``model`` to the transaction.
 
-        :parameter model: a :class:`Model` instance. It must be registered
+        :parameter model: a :class:`.Model` instance. It must be registered
             with the :attr:`mapper` which created this :class:`Transaction`.
         :return: the ``model``.
         '''
@@ -109,7 +104,7 @@ class Transaction(EventHandler):
         store = manager._store
         if store not in self._commands:
             self._commands[store] = []
-        self._commands[store].append(Command(model, INSERT))
+        self._commands[store].append(Command(model, Command.INSERT))
 
     def execute(self, *args, **kw):
         '''Queue a command in the default data store.
@@ -133,11 +128,23 @@ class Transaction(EventHandler):
         if self._executed is None:
             self._executed = self._commit()
             return self._executed
+        else:
+            raise InvalidOperation('Transaction already executed.')
 
-    def wait(self):
+    def wait(self, callback=None):
+        '''Waits for the transaction have finished.
+
+        :param callback: optional function called back once the transaction
+            has finished. The function receives one parameter only, the
+            transaction.
+        :return: a :class:`.Deferred`
+        '''
         if self._executed is None:
-            raise RuntimeError('to wait you need to commit first')
-        return self._executed
+            self.commit()
+        if callback:
+            return self._executed.then().add_callback(lambda r: callback(self))
+        else:
+            return self._executed
 
     @in_loop
     def _commit(self):

@@ -72,7 +72,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 90)
 
-class f:
     def test_ping_store(self):
         tq = self.apps[0]
         self.assertTrue(tq.backend)

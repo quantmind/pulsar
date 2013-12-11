@@ -156,7 +156,7 @@ class Consumer(pulsar.ProtocolConsumer):
                 else:
                     raise response
                 self.finished(response)
-        else:
+        else:   # pipeline
             commands, raise_on_error, responses = request
             while response is not False:
                 if isinstance(response, Exception) and raise_on_error:

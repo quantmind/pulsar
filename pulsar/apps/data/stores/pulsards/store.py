@@ -4,7 +4,7 @@ from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
                     get_actor)
 from pulsar.utils.pep import to_string, zip
 
-from .base import register_store, Store
+from .base import register_store, Store, Command
 from .client import Client, Pipeline, Consumer
 from .pubsub import PubSub
 from ...server import redis_parser
@@ -98,7 +98,7 @@ class PulsarStore(Store):
             action = command.action
             if not action:
                 pipe.execute(*command.args)
-            elif action == 1:
+            elif action == Command.INSERT:
                 model = command.args
                 key = '%s:%s' % (model._meta.table_name,
                                  model.pkvalue() or '')

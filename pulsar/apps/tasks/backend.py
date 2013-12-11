@@ -630,7 +630,8 @@ class TaskBackend(LocalMixin):
             if not consumer.job:
                 raise RuntimeError('%s not in registry' % task_info)
             if task['status'] > states.STARTED:
-                if task['expiry'] and time_ended > task['expiry']:
+                expiry = task.get('expiry')
+                if expiry and time_ended > expiry:
                     raise TaskTimeout
                 else:
                     consumer.logger.info('starting %s', task_info)

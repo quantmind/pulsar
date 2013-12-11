@@ -65,6 +65,10 @@ class Manager(AbstractQuery):
     def _meta(self):
         return self._model._meta
 
+    @property
+    def _loop(self):
+        return self._store._loop
+
     def __str__(self):
         if self.store:
             return '{0}({1} - {2})'.format(self.__class__.__name__,
@@ -122,7 +126,7 @@ class Manager(AbstractQuery):
         '''
         with self._mapper.begin() as t:
             t.add(self._model(*args, **kwargs))
-        return t.wait()
+        return t.wait(self._get_instance)
 
     def save(self, instance):
         '''Save an existing ``instance`` of :attr:`_model`.
@@ -131,6 +135,10 @@ class Manager(AbstractQuery):
             t.add(instance)
         return t.wait()
     update = save
+
+    ##    INTERNAL
+    def _get_instance(self, transaction):
+        return transaction
 
 
 class Mapper(EventHandler):

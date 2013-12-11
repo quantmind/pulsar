@@ -11,6 +11,7 @@ class TestRedisStore(RedisCommands, unittest.TestCase):
         cls.store = cls.create_store(addr)
         cls.sync_store = cls.create_store(addr, loop=new_event_loop())
         cls.client = cls.store.client()
+        return cls.store.flush()
 
 
 @unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')

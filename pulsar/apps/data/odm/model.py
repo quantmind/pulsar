@@ -371,7 +371,8 @@ class PyModelBase(dict):
         for key, value in iteritems(self):
             if key in self._meta.dfields:
                 value = self._meta.dfields[key].to_store(value, store)
-            yield key, value
+            if value is not None:
+                yield key, value
 
     def _to_json(self):
         pk = self.pkvalue()

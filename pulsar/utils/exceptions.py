@@ -41,6 +41,10 @@ class EventAlreadyRegistered(PulsarException):
     pass
 
 
+class InvalidOperation(PulsarException):
+    pass
+
+
 class StopEventLoop(BaseException):
     ''':class:`BaseException` raised to cleanly stop a
     :class:`pulsar.EventLoop`.'''

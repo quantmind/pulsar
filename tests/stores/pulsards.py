@@ -9,7 +9,7 @@ from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
                               ResponseError)
 
 
-class RedisCommands(object):
+class StoreMixin(object):
     redis_py_parser = False
 
     @classmethod
@@ -20,6 +20,9 @@ class RedisCommands(object):
 
     def randomkey(self):
         return random_string()
+
+
+class RedisCommands(StoreMixin):
 
     def test_watch(self):
         key1 = self.randomkey()

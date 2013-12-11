@@ -40,12 +40,22 @@ Store
    :members:
    :member-order: bysource
 
+
+Command
+~~~~~~~~~~~~~~~
+
+.. autoclass:: Command
+   :members:
+   :member-order: bysource
+
+
 PubSub
 ~~~~~~~~~~~~~~~
 
 .. autoclass:: PubSub
    :members:
    :member-order: bysource
+
 '''
 import logging
 import socket
@@ -62,6 +72,30 @@ from ...server import PulsarDS
 
 
 data_stores = {}
+
+
+class Command(object):
+    '''A command executed during a in a :meth:`~.Store.execute_transaction`
+
+    .. attribute:: action
+
+        Type of action:
+        * 0 custom command
+        * 1 equivalent to an SQL INSERT
+        * 2 equivalent to an SQL DELETE
+    '''
+    __slots__ = ('args', 'action')
+    INSERT = 1
+    UPDATE = 2
+    DELETE = 3
+
+    def __init__(self, args, action=0):
+        self.args = args
+        self.action = action
+
+    @classmethod
+    def insert(cls, args):
+        return cls(args, cls.INSERT)
 
 
 class Compiler(object):
