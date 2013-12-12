@@ -1,23 +1,39 @@
-(function($) {
-
-    $.wschat = function(ws) {
+(function ($) {
+    "use strict";
+    $.wschat = function (ws) {
         var messages = $('#messages'),
             users = $('#users'),
-            message = $('#message');
+            message = $('#message'),
+            user_label,
+            who_ami,
+            wall = function (user, message) {
+                messages.prepend('<p>' + user + '&nbsp;' + message + '</p>');
+            };
 
-        ws.onmessage = function(e) {
+        ws.onmessage = function (e) {
             var data = $.parseJSON(e.data),
-                channel = data.channel,
                 label = 'info">@',
-                user;
-            if (data.user === 'anonymous') {
+                user = data.user,
+                userid = 'chatuser-' + user;
+            if (!data.authenticated) {
                 label = 'inverse">';
             }
-            user = '<span class="label label-' + label + data.user + '</span>';
-            if (data.channel == 'webchat') {
-                messages.prepend('<p>' + user + '&nbsp;' + data.message + '</p>');
-            } else if (data.channel == 'chatuser') {
-                users.append('<p>' + user + '</p>');
+            if (!who_ami) {
+                who_ami = user;
+            }
+            user_label = '<span class="label label-' + label + user + '</span>';
+            if (data.channel === 'webchat') {
+                wall(user_label, data.message);
+            } else if (data.channel === 'chatuser') {
+                if (data.message === 'joined') {
+                    if (users.find('#' + userid).length === 0) {
+                        users.append('<p id="' + userid + '">' + user_label + '</p>');
+                        wall(user_label, 'joined the chat');
+                    }
+                } else {
+                    wall(user_label, 'left the chat');
+                    users.find('#' + userid).remove();
+                }
             }
         };
         $('#publish').click(function () {

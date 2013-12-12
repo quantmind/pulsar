@@ -1,5 +1,4 @@
 .panel {
-    height: 600px;
     background: #fff;
     border: solid 1px #E6E6E6;
 }
@@ -8,6 +7,13 @@
     padding: 60px 0;
 }
 
+#users {
+    height: 400px;
+}
+#messages {
+    height: 100%;
+    min-height: 620px;
+}
 #messages p {
     padding: 10px 5px;
     margin: 0;

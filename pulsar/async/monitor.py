@@ -3,6 +3,7 @@ from time import time
 
 import pulsar
 from pulsar.utils.pep import iteritems, itervalues, range
+from pulsar.utils.security import gen_unique_id
 
 from .proxy import actor_proxy_deferred
 from .actor import Actor
@@ -36,6 +37,10 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
             raise TypeError('class %s not a valid monitor' % cls)
         kind = 'arbiter'
         params = {}
+        if not cfg.exc_id:
+            if not aid:
+                aid = gen_unique_id()[:8]
+            cfg.set('exc_id', aid)
     for key, value in iteritems(kw):
         if key in cfg.settings:
             cfg.set(key, value)

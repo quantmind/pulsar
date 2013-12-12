@@ -44,6 +44,24 @@ Get application
 
 .. autofunction:: get_application
 
+
+.. _when-monitor-start:
+
+When monitor start
+=================================
+
+The application framework provides a way for adding hooks which are executed
+every time a new application starts. A hook is registered by::
+
+    from pulsar.apps import when_monitor_start
+
+    def myhook(monitor):
+        ...
+
+    when_monitor_start.append(myhook)
+
+By default, the list of hooks only contains a callback to start the
+:ref:`default data store <setting-data_store>` if it needs to.
 '''
 import os
 import sys
@@ -424,10 +442,12 @@ class Application(Configurator, pulsar.Pulsar):
             self.cfg.on_start()
             self.configure_logging()
             self.fire_event('ready')
-            if not actor:
+            if not actor:   # arbiter not available
+                # This application is starts the arbiter
                 cfg = Config()
                 cfg.update(self.arbiter_params())
                 actor = pulsar.arbiter(cfg=cfg)
+                self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 if actor.started():
                     self._add_to_arbiter(actor)

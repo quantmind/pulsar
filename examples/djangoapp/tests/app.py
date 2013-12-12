@@ -3,6 +3,7 @@ from pulsar import send, get_application, Queue
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.utils.security import gen_unique_id
 from pulsar.utils.system import json
 
 try:
@@ -36,13 +37,15 @@ class TestDjangoChat(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.exc_id = gen_unique_id()[:8]
         name = cls.__name__.lower()
         argv = [__file__, 'pulse',
                 '--bind', '127.0.0.1:0',
                 '--concurrency', cls.concurrency,
-                '--pulse-app-name', name,
-                '--pubsub-server', 'pulsar://?namespace=%s' % name]
+                '--exc-id', cls.exc_id,
+                '--pulse-app-name', name]
         cls.app = yield send('arbiter', 'run', start_server, name, argv)
+        assert cls.app.cfg.exc_id == cls.exc_id, "Bad execution id"
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)
         cls.http = http.HttpClient()
@@ -53,15 +56,15 @@ class TestDjangoChat(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.app.name)
 
     def test_home(self):
-        result = yield self.http.get(self.uri).on_finished
+        result = yield self.http.get(self.uri)
         self.assertEqual(result.status_code, 200)
 
     def test_404(self):
-        result = yield self.http.get('%s/bsjdhcbjsdh' % self.uri).on_finished
+        result = yield self.http.get('%s/bsjdhcbjsdh' % self.uri)
         self.assertEqual(result.status_code, 404)
 
     def test_handshake(self):
-        ws = yield self.http.get(self.ws).on_headers
+        ws = yield self.http.get(self.ws)
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
@@ -69,8 +72,7 @@ class TestDjangoChat(unittest.TestCase):
         self.assertTrue(ws.connection)
 
     def test_websocket(self):
-        ws = yield self.http.get(self.ws, websocket_handler=MessageHandler()
-                                 ).on_headers
+        ws = yield self.http.get(self.ws, websocket_handler=MessageHandler())
         self.assertTrue(ws)
         self.assertIsInstance(ws.handler, MessageHandler)
         ws.write('Hello there!')

@@ -58,7 +58,7 @@ class PulsarSettings(Directive):
                 if isfunction(sett.default):
                     default = ':func:`%s`' % sett.default.__name__
                 else:
-                    default = '``%s``' % sett.default
+                    default = '``%r``' % sett.default
                 yield '*Default*: %s\n' % default
                 yield desc + '\n'
 

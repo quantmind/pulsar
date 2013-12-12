@@ -490,7 +490,9 @@ class RedisCommands(StoreMixin):
         yield eq(c.zrem(key, 'b'), 0)
         yield eq(c.zrange(key, 0, -1), [b'a1', b'a3', b'a4', b'a5'])
         yield eq(c.zrem(key, 'a3', 'a5', 'h'), 2)
-        yield eq(c.zrange(key, 0, -1), [b'a1',b'a4'])
+        yield eq(c.zrange(key, 0, -1), [b'a1', b'a4'])
+        yield eq(c.zrem(key, 'a1', 'a4'), 2)
+        yield eq(c.type(key), 'none')
 
     def test_zremrangebyrank(self):
         key = self.randomkey()

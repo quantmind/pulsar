@@ -130,7 +130,7 @@ class WebSocketProtocol(ProtocolConsumer):
 
     .. attribute:: parser
 
-        A websocket parser.
+        A websocket :class:`.FrameParser`.
 
     .. attribute:: close_reason
 
@@ -145,6 +145,12 @@ class WebSocketProtocol(ProtocolConsumer):
         self.handshake = handshake
         self.handler = handler
         self.parser = parser
+
+    @property
+    def cfg(self):
+        '''The :class:`.Config` container for this protocol.
+        '''
+        return self.handshake.cfg
 
     def connection_made(self, connection):
         connection.set_timeout(0)
@@ -169,10 +175,18 @@ class WebSocketProtocol(ProtocolConsumer):
                 maybe_async(self.handler.on_pong(self, frame.body))
             frame = self.parser.decode()
 
-    def write(self, message, opcode=-1, **kw):
+    def write(self, message, opcode=None, **kw):
         '''Write a new ``message`` into the wire.
+
+        It uses the :meth:`~.FrameParser.encode` method of the
+        websocket :attr:`parser`.
+
+        :param message: message to send, must be a string or bytes
+        :param opcode: optional ``opcode``, if not supplied it is set to 1
+            if ``message`` is a string, otherwise ``2`` when the message
+            are bytes.
          '''
-        chunk = self.parser.encode(message, opcode=-1, **kw)
+        chunk = self.parser.encode(message, opcode=opcode, **kw)
         self.transport.write(chunk)
         if opcode == 8:
             self.finish()
@@ -194,5 +208,5 @@ class WebSocketProtocol(ProtocolConsumer):
         self._connection.close()
 
     def _shut_down(self, result):
-        self.handler.on_close(self)
+        maybe_async(self.handler.on_close(self))
         return result

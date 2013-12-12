@@ -386,6 +386,18 @@ class WsgiRequest(EnvironMixin):
 :ref:`router <wsgi-router>` with this request :attr:`path`.'''
         return self.cache.urlargs
 
+    @property
+    def cfg(self):
+        '''The :ref:`config container <settings>` of the server
+        '''
+        return self.cache.cfg
+
+    @property
+    def ipaddress(self):
+        '''internet protocol address of the client
+        '''
+        return self.environ.get('REMOTE_ADDR')
+
     @cached_property
     def response(self):
         '''The :class:`WsgiResponse` for this client request.

@@ -74,7 +74,7 @@ import time
 import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
-from pulsar.apps.data import start_store
+from pulsar.apps.data import start_store, DEFAULT_PULSAR_STORE_ADDRESS
 from pulsar.utils.pep import pickle
 
 from .models import *
@@ -82,6 +82,8 @@ from .backend import *
 from .rpc import *
 from .states import *
 
+
+DEFAULT_TASK_BACKEND = 'pulsar:://%s/1' % DEFAULT_PULSAR_STORE_ADDRESS
 
 section_docs['Task Consumer'] = '''
 This section covers configuration parameters used by CPU bound type
@@ -114,16 +116,15 @@ class ConcurrentTasks(TaskSetting):
 class TaskBackendConnection(TaskSetting):
     name = "task_backend"
     flags = ["--task-backend"]
-    default = "pulsar://"
+    default = ""
+    meta = 'CONNECTION_STRING'
     desc = '''\
-        Task backend.
+        Connection string for the backend storing :class:`.Task`.
 
-        A task backend is string which connect to the backend storing Tasks)
-        which accepts one parameter only and returns an instance of a
-        distributed queue which has the same API as
-        :class:`.MessageQueue`. The only parameter passed to the
-        task queue factory is a :class:`.Config` instance.
-        This parameters is used by :class:`.TaskQueue` application.'''
+        If the value is not available (default) it uses as fallback the
+        :ref:`data_store <setting-data_store>` value. If still not
+        set, it uses the ``%s`` value.
+        ''' % DEFAULT_TASK_BACKEND
 
 
 class TaskPaths(TaskSetting):
@@ -176,7 +177,9 @@ class TaskQueue(pulsar.Application):
         '''
         if self.callable:
             self.callable()
-        store = yield start_store(self.cfg.task_backend, loop=monitor._loop)
+        connection_string = (self.cfg.task_backend or self.cfg.data_store or
+                             DEFAULT_TASK_BACKEND)
+        store = yield start_store(connection_string, loop=monitor._loop)
         self._create_backend(store)
 
     def monitor_task(self, monitor):

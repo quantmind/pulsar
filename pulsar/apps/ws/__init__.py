@@ -2,8 +2,8 @@
 handling the WebSocket_ protocol.
 Web sockets allow for bidirectional communication between the browser
 and server. Pulsar implementation uses the WSGI middleware
-:class:`WebSocket` for the handshake_ and a class derived from
-:class:`WS` handler for the communication part.
+:class:`.WebSocket` for the handshake_ and a class derived from
+:class:`.WS` handler for the communication part.
 
 This is a Web Socket handler which echos all received messages
 back to the client::
@@ -16,7 +16,7 @@ back to the client::
             websocket.write(message)
 
 
-To create a valid :class:`WebSocket` middleware initialise as follow::
+To create a valid :class:`.WebSocket` middleware initialise as follow::
 
     wm = ws.WebSocket('/bla', EchoWS())
     app = wsgi.WsgiHandler(middleware=(..., wm))

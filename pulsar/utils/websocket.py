@@ -170,18 +170,18 @@ class Frame:
 class FrameParser(object):
     '''Decoder and encoder for the websocket protocol.
 
-.. attribute:: version
+    .. attribute:: version
 
-    Optional protocol version (Default 13).
+        Optional protocol version (Default 13).
 
-.. attribute:: kind
+    .. attribute:: kind
 
-    * 0 for parsing client's frames and sending server frames (to be used
-      in the server)
-    * 1 for parsing server frames and sending client frames (to be used
-      by the client)
-    * 2 Assumes always unmasked data
-'''
+        * 0 for parsing client's frames and sending server frames (to be used
+          in the server)
+        * 1 for parsing server frames and sending client frames (to be used
+          by the client)
+        * 2 Assumes always unmasked data
+    '''
     def __init__(self, version, kind, ProtocolError, extensions, protocols):
         self.version = version
         self.kind = kind
@@ -241,12 +241,11 @@ class FrameParser(object):
         return self.encode(body, opcode=0, final=final)
 
     def encode(self, message, final=True, masking_key=None,
-               opcode=-1, rsv1=0, rsv2=0, rsv3=0):
+               opcode=None, rsv1=0, rsv2=0, rsv3=0):
         '''Encode a ``message`` for writing into the wire.
 
-        The message length cannot exceed :attr:`max_payload`
         To produce several frames for a given large message use
-        :meth:`multi_encode'.
+        :meth:`multi_encode` method.
         '''
         fin = 1 if final else 0
         opcode, masking_key, data = self._info(message, opcode, masking_key)
@@ -371,7 +370,7 @@ class FrameParser(object):
             assert len(masking_key) == mask_length, "bad masking key"
         else:
             masking_key = b''
-        if opcode == -1:
+        if opcode is None:
             opcode = 1 if isinstance(message, string_type) else 2
         data = to_bytes(message or b'', 'utf-8')
         if opcode not in self._opcodes:

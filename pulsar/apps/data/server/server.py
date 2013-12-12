@@ -84,7 +84,8 @@ class RedisParserSetting(Global):
     flags = ["--redis-py-parser"]
     action = "store_true"
     default = False
-    desc = '''Use the python redis parser rather the C implementation.
+    desc = '''\
+    Use the python redis parser rather the C implementation.
 
     Mainly used for benchmarking purposes.
     '''
@@ -134,7 +135,9 @@ class KeyValueSave(PulsarDsSetting):
     name = "key_value_save"
     default = [(900, 1), (300, 10), (60, 10000)]
     validator = validate_list_of_pairs
-    desc = ''''
+    desc = '''\
+        List of pairs controlling data store persistence.
+
         Will save the DB if both the given number of seconds and the given
         number of write operations against the DB occurred.
 
@@ -143,7 +146,7 @@ class KeyValueSave(PulsarDsSetting):
         after 300 sec (5 min) if at least 10 keys changed
         after 60 sec if at least 10000 keys changed
 
-        You can disable saving at all by setting an ampty list
+        You can disable saving at all by setting an empty list
     '''
 
 
@@ -151,7 +154,7 @@ class KeyValueFileName(PulsarDsSetting):
     name = "key_value_filename"
     flags = ["--key-value-filename"]
     default = 'pulsards.rdb'
-    desc = 'The filename where to dump the DB.'
+    desc = '''The filename where to dump the DB.'''
 
 
 class TcpServer(pulsar.TcpServer):
@@ -1625,8 +1628,7 @@ class Storage(object):
             removed = value.remove_items(request[2:])
             if removed:
                 self._signal(self.NOTIFY_ZSET, db, request[0], key, removed)
-            if not value:
-                db.pop()
+            if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 

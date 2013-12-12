@@ -871,9 +871,7 @@ class Coverage(Global):
     validator = validate_bool
     action = "store_true"
     default = False
-    desc = """\
-        Collect code coverage from all spawn actors.
-        """
+    desc = """Collect code coverage from all spawn actors."""
 
 
 class DataStore(Global):
@@ -881,14 +879,31 @@ class DataStore(Global):
     flags = ['--data_store']
     meta = "CONNECTION STRING"
     default = ''
-    desc = '''Default data store'''
+    desc = '''\
+    Default data store.
+
+    Use this setting to specify a datastore used by pulsar applications.
+    By default no datastore is used.
+    '''
+
+
+class ExecutionId(Global):
+    name = 'exc_id'
+    flags = ['--exc-id']
+    default = ''
+    desc = '''\
+    Execution ID.
+
+    Use this setting to specify an execution ID.
+    If not provided, a value will be assigned by pulsar.
+    '''
 
 
 ############################################################################
 ##    Worker Processes
 section_docs['Worker Processes'] = '''
 This group of configuration parameters control the number of actors
-for a given :class:`pulsar.Monitor`, the type of concurreny of the server and
+for a given :class:`.Monitor`, the type of concurreny of the server and
 other actor-specific parameters.
 
 They are available to all applications and, unlike global settings,
