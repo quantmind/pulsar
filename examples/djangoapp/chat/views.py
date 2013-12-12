@@ -1,11 +1,12 @@
 import time
 from hashlib import sha1
 
-from pulsar import get_actor, coroutine_return
+from pulsar import get_actor, coroutine_return, HttpException
 from pulsar.apps import ws
 from pulsar.apps.data import PubSubClient, create_store
 from pulsar.utils.log import lazyproperty
 from pulsar.utils.system import json
+from pulsar.utils.security import random_string
 
 
 def home(request):
@@ -84,15 +85,14 @@ class Chat(ws.WS):
 
     def user(self, websocket):
         user = websocket.handshake.get('django.user')
-        if isinstance(user, str):
-            return user, False
-        elif user.is_authenticated():
+        if user.is_authenticated():
             return user.username, True
         else:
-            ip = websocket.handshake.ipaddress
-            ipsha = sha1(ip.encode('utf-8')).hexdigest()[:6]
-            user = 'an_%s' % ipsha
-            websocket.handshake.environ['django.user'] = user
+            session = websocket.handshake.get('django.session')
+            user = session.get('chatuser')
+            if not user:
+                user = 'an_%s' % random_string(length=6).lower()
+                session['chatuser'] = user
             return user, False
 
     def publish(self, websocket, channel, message=''):
@@ -114,7 +114,11 @@ class middleware(object):
         from django.http import HttpResponse
         environ = request.META
         environ['django.user'] = request.user
-        response = self._web_socket(environ)
+        environ['django.session'] = request.session
+        try:
+            response = self._web_socket(environ)
+        except HttpException as e:
+            return HttpResponse(status=e.status)
         if response is not None:
             # we have a response, this is the websocket upgrade.
             # Convert to django response
@@ -125,3 +129,4 @@ class middleware(object):
             return resp
         else:
             environ.pop('django.user')
+            environ.pop('django.session')

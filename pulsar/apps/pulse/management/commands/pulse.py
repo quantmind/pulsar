@@ -39,10 +39,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if args:
             raise CommandError('pulse --help for usage')
-        name = options.get('pulse-app-name')
+        app_name = options.get('pulse-app-name')
         callable = Wsgi()
         if options.pop('dryrun', False) is True:  # used for testing
             return callable
         callable.setup()
-        WSGIServer(callable=callable, cfg=options, name=name,
-                   parse_console=False).start()
+        cfg = pulsar.Config(apps=['socket'])
+        argv = []
+        for name, value in options.items():
+            s = cfg.settings.get(name)
+            if value is not None and s and s.flags:
+                argv.extend((s.flags[0], str(value)))
+        WSGIServer(callable=callable, name=app_name, argv=argv).start()

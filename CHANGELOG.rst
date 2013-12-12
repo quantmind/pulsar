@@ -32,6 +32,10 @@ Ver. 0.8.0 - Development
     loop during initialisation.
     Check the the :ref:`synchronous components tutorial <tutorials-synchronous>`
     for details.
+  * Added the :ref:`data-store <setting-data_store>` setting for specifying
+    the default data store of a running application.
+  * Added the :ref:`exc-id <setting-exc_id>` setting which uniquely specify
+    the identity of a running application. This is useful during testing.
 
 * **New data store module**
 
@@ -58,6 +62,8 @@ Ver. 0.8.0 - Development
   * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
     handlersd are now available via the new :mod:`pulsar.apps.data` module.
   * The ``Backend`` class has been removed.
+  * Improved :ref:`django example <tutorials-django>` with possibility to
+    choose different data stores for messages.
 
 * **821 regression tests**, **91% coverage**.
 

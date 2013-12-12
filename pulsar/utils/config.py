@@ -876,7 +876,7 @@ class Coverage(Global):
 
 class DataStore(Global):
     name = 'data_store'
-    flags = ['--data_store']
+    flags = ['--data-store']
     meta = "CONNECTION STRING"
     default = ''
     desc = '''\

@@ -14,6 +14,20 @@ command and create the super user.
 
 This example uses the :ref:`django pulse <apps-pulse>` application.
 
+Message and data backend
+============================
+
+By default, messages are from connected clients are synchronised via the
+:ref:`pulsar data store <pulsards>` which starts when the django
+site starts. It is possible to specify a different data store via the
+:ref:`stats-store options <setting-data_store>`.
+
+For example, it is possible to use redis_ as an alternative datastore
+simply by issuing the following start up command::
+
+    python manage.py pulse --data-store redis://127.0.0.1:6379/3
+
+
 Views and Middleware
 ==========================
 
