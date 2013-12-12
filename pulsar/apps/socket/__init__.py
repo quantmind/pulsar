@@ -250,6 +250,10 @@ class SocketServer(pulsar.Application):
         '''
         return TcpServer(*args, **kw)
 
+    def _stop_worker(self, worker, exc):
+        worker.stop()
+        return exc
+
     #   INTERNALS
     def create_server(self, worker):
         '''Create the Server which will listen for requests.

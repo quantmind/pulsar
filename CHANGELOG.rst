@@ -1,4 +1,4 @@
-Ver. 0.8.0 - Development
+Ver. 0.8.0
 ===========================
 * **Asyncio Integration**
 
@@ -66,6 +66,15 @@ Ver. 0.8.0 - Development
     choose different data stores for messages.
 
 * **821 regression tests**, **91% coverage**.
+
+Ver. 0.7.3 - 2013-Dec-12
+===========================
+* A bug fix release.
+* ``setup.py`` only import pulsar version and skip the rest
+* The :func:`.wait_for_body_middleware` read the HTTP body only without
+  decoding it
+* C extensions included in ``MANIFEST.in`` so that they can be compiled from PyPi
+* **823 regression tests**, **91% coverage**
 
 Ver. 0.7.2 - 2013-Oct-16
 ===========================

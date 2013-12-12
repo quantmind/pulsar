@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -
-'''Event driven concurrent framework for Python'''
 VERSION = (0, 8, 0, 'alpha', 1)
 
 import os
@@ -58,7 +57,7 @@ if os.environ.get('pulsar_setup_running') != 'yes':
     from .utils.config import *
     from .async import *
     from .apps import *
-    #
+
     del get_version
     # Import data stores
     from .apps.data import data_stores
