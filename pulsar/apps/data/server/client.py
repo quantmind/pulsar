@@ -26,6 +26,10 @@ class command:
         self.name = name
         self.script = script
 
+    @property
+    def url(self):
+        return 'http://redis.io/commands/%s' % self.name
+
     def __call__(self, f):
         self.method_name = f.__name__
         if not self.name:

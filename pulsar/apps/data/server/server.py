@@ -1526,10 +1526,6 @@ class Storage(object):
     def zinterstore(self, client, request, N):
         self._zsetoper(client, request, N)
 
-    @command('Sorted sets', True)
-    def zunionstore(self, client, request, N):
-        self._zsetoper(client, request, N)
-
     @command('Sorted sets')
     def zrange(self, client, request, N):
         check_input(request, N < 3 or N > 4)
@@ -1543,6 +1539,7 @@ class Storage(object):
                 start, end = self._range_values(value, request[2], request[3])
             except exception:
                 return client.reply_error(self.SYNTAX_ERROR)
+            reverse = (request[0] == b'zrevrange')
             if N == 4:
                 if request[4].lower() == b'withscores':
                     result = []
@@ -1679,6 +1676,10 @@ class Storage(object):
             client.reply_int(removed)
 
     @command('Sorted sets')
+    def zrevrange(self, client, request, N):
+        self.range(client, request, N)
+
+    @command('Sorted sets')
     def zscore(self, client, request, N):
         check_input(request, N != 2)
         key = request[1]
@@ -1693,6 +1694,10 @@ class Storage(object):
             if score is not None:
                 score = str(score).encode('utf-8')
             client.reply_bulk(score)
+
+    @command('Sorted sets', True)
+    def zunionstore(self, client, request, N):
+        self._zsetoper(client, request, N)
 
     ###########################################################################
     ##    PUBSUB COMMANDS

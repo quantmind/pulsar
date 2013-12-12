@@ -83,7 +83,7 @@ from .rpc import *
 from .states import *
 
 
-DEFAULT_TASK_BACKEND = 'pulsar:://%s/1' % DEFAULT_PULSAR_STORE_ADDRESS
+DEFAULT_TASK_BACKEND = 'pulsar://%s/1' % DEFAULT_PULSAR_STORE_ADDRESS
 
 section_docs['Task Consumer'] = '''
 This section covers configuration parameters used by CPU bound type
