@@ -41,12 +41,5 @@ located in the :mod:`pulsar.apps` module.
    apps/pubsub
    apps/twisted
    apps/pulse
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+<<<<<<< HEAD
 

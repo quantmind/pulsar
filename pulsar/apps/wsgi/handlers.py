@@ -32,9 +32,9 @@ An asynchronous :ref:`application handler <wsgi-handlers>` must conform
 with the standard `WSGI 1.0.1`_ specification with the following two
 exceptions:
 
-* It can return a :class:`pulsar.Deferred`.
-* If it returns a :class:`pulsar.Deferred`, the deferred, when called, i.e.
-  the deferred get its :meth:`pulsar.Deferred.callback` method invoked,
+* It can return a :class:`.Deferred`.
+* If it returns a :class:`.Deferred`, the deferred, when called, i.e.
+  the deferred get its :meth:`.Deferred.callback` method invoked,
   the result must be an :ref:`asynchronous iterable <wsgi-async-iter>`.
 
 Pulsar is shipped with two WSGI application handlers documented below.
@@ -45,7 +45,7 @@ Asynchronous Iterable
 ========================
 
 An asynchronous iterable is an iterable over a combination of ``bytes`` or
-:class:`pulsar.Deferred` which result in ``bytes``.
+:class:`.Deferred` which result in ``bytes``.
 For example this could be an asynchronous iterable::
 
     def simple_async():

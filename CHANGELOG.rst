@@ -1,3 +1,14 @@
+Ver. 0.7.3 - 2013-Dec-12
+===========================
+* ``setup.py`` only import pulsar version and skip the rest.
+* The :func:`.wait_for_body_middleware ` read the HTTP body only without
+  decoding it.
+* Extensions included in ``MANIFEST.in``
+* Added :func:`pulsar.run_in_loop_thread` high level function. The function
+  runs a callable in the event loop thread and returns :class:`.Deferred`
+  called back once the callable has a result/exception.
+* **823 regression tests**, **91% coverage**.
+
 Ver. 0.7.2 - 2013-Oct-16
 ===========================
 * A bug fix release.

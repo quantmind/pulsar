@@ -2,7 +2,7 @@
 An application implements several :class:`Job`
 classes which specify the way each :ref:`task <apps-taskqueue-task>` is run.
 Each :class:`Job` class is a task-factory, therefore,
-a :ref:`task <apps-taskqueue-task>` is always associated
+a :class:`.Task` is always associated
 with one :class:`Job`, which can be of two types:
 
 * standard (:class:`Job`)
@@ -24,7 +24,7 @@ To define a job is simple, subclass from :class:`Job` and implement the
             "Add two numbers"
             return a+b
 
-The ``consumer``, instance of :class:`pulsar.apps.tasks.backends.TaskConsumer`,
+The ``consumer``, instance of :class:`.TaskConsumer`,
 is passed by the :ref:`Task backend <apps-taskqueue-backend>` and should
 always be the first positional parameter in the callable method.
 The remaining (optional) positional and key-valued parameters are needed by
@@ -211,7 +211,7 @@ This utility method can be used from within the
 :ref:`job callable <job-callable>` method and it allows tasks to act
 as tasks factories.
 
-:parameter consumer: the :class:`pulsar.apps.tasks.backends.TaskConsumer`
+:parameter consumer: the :class:`.TaskConsumer`
     handling the :ref:`Task <apps-taskqueue-task>`. Must be the same instance
     as the one passed to the :ref:`job callable <job-callable>` method.
 :parameter jobname: The name of the :class:`Job` to run.
@@ -222,7 +222,7 @@ as tasks factories.
 :return: a :class:`pulsar.Deferred` called back with the task id of the
     new job.
 
-This method invokes the :meth:`pulsar.apps.tasks.backends.TaskBackend.run_job`
+This method invokes the :meth:`.TaskBackend.run_job`
 method with the additional ``from_task`` argument equal to the
 id of the task invoking the method.
 '''

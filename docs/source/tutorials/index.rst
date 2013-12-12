@@ -15,10 +15,11 @@ Most of the material presented in the these tutorials is based on the
 
 .. toctree::
    :maxdepth: 1
-   
+
    hello
    clients
    wsgi
+   deploy
    httpbin
    proxy
    webmail
@@ -27,8 +28,8 @@ Most of the material presented in the these tutorials is based on the
    taskqueue
    django
    philosophers
-   
-   
+
+
 Topics
 ==============
 
@@ -36,12 +37,12 @@ These sections cover **pulsar internals** for the curious reader.
 
 .. toctree::
    :maxdepth: 1
-   
+
    coroutine
    messages
    events
    signal
    sync
-   
-   
-   
+   benchmarking
+
+

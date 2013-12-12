@@ -10,7 +10,7 @@ tasks in redis_.
 Overview
 ===============
 
-The backend is created by the :class:`pulsar.apps.tasks.TaskQueue`
+The backend is created by the :class:`.TaskQueue`
 as soon as it starts. It is then passed to all task queue workers
 which, in turns, invoke the :class:`TaskBackend.start` method
 to start pulling tasks form the distributed task queue.
@@ -20,17 +20,17 @@ Implementation
 When creating a new :class:`TaskBackend` there are six methods which must
 be implemented:
 
-* The :meth:`TaskBackend.put_task` method, invoked when putting a new
+* The :meth:`~TaskBackend.put_task` method, invoked when putting a new
   :class:`Task.id` into the distributed task queue, whatever that is.
-* The :meth:`TaskBackend.get_task` method, invoked when retrieving
+* The :meth:`~TaskBackend.get_task` method, invoked when retrieving
   a :class:`Task` from the backend server.
-* The :meth:`TaskBackend.get_tasks` method, invoked when retrieving
+* The :meth:`~TaskBackend.get_tasks` method, invoked when retrieving
   a group of :class:`Task` from the backend server.
-* The :meth:`TaskBackend.save_task` method, invoked when creating
+* The :meth:`~TaskBackend.save_task` method, invoked when creating
   or updating a :class:`Task`.
-* The :meth:`TaskBackend.delete_tasks` method, invoked when deleting
+* The :meth:`~TaskBackend.delete_tasks` method, invoked when deleting
   a bunch of :class:`Task`.
-* The :meth:`TaskBackend.flush` method, invoked flushing a backend (remove
+* The :meth:`~TaskBackend.flush` method, invoked flushing a backend (remove
   all tasks and clear the task queue).
 
 .. _task-state:
@@ -50,12 +50,14 @@ A :class:`Task` can have one of the following :attr:`Task.status` string:
 * ``FAILURE`` task execution has finished with failure.
 * ``SUCCESS`` task execution has finished with success.
 
+.. _task-run-state:
 
 **FULL_RUN_STATES**
 
 The set of states for which a :class:`Task` has run:
 ``FAILURE`` and ``SUCCESS``
 
+.. _task-ready-state:
 
 **READY_STATES**
 
@@ -68,11 +70,11 @@ Task status broadcasting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
-channels via the :attr:`TaskBackend.pubsub` handler.
+channels via the :attr:`~TaskBackend.pubsub` handler.
 
 The pubsub handler is constructed using the same
-:attr:`pulsar.apps.Backend.connection_string` and
-:attr:`pulsar.apps.Backend.name` as the the :class:`TaskBackend`.
+:attr:`~pulsar.apps.Backend.connection_string` and
+:attr:`~pulsar.apps.Backend.name` as the the :class:`TaskBackend`.
 
 API
 =========
@@ -194,26 +196,26 @@ class TaskTimeout(PulsarException):
 class TaskConsumer(object):
     '''A context manager for consuming tasks.
 
-Instances of this consumer are created by the :class:`TaskBackend` when
-a task is executed.
+    Instances of this consumer are created by the :class:`TaskBackend` when
+    a task is executed.
 
-.. attribute:: task_id
+    .. attribute:: task_id
 
-    the :attr:`Task.id` being consumed.
+        the :attr:`Task.id` being consumed.
 
-.. attribute:: job
+    .. attribute:: job
 
-    the :ref:`Job <apps-taskqueue-job>` which generated the :attr:`task`.
+        the :ref:`Job <apps-taskqueue-job>` which generated the :attr:`task`.
 
-.. attribute:: worker
+    .. attribute:: worker
 
-    the :class:`pulsar.Actor` running the task worker.
+        the :class:`.Actor` running the task worker.
 
-.. attribute:: backend
+    .. attribute:: backend
 
-    Access to the :class:`TaskBackend`. This is useful when creating
-    tasks from within a :ref:`job callable <job-callable>`.
-'''
+        Access to the :class:`TaskBackend`. This is useful when creating
+        tasks from within a :ref:`job callable <job-callable>`.
+    '''
     def __init__(self, backend, worker, task_id, job):
         self.backend = backend
         self.worker = worker
@@ -223,46 +225,46 @@ a task is executed.
 
 class Task(object):
     '''Interface for tasks which are produced by
-:ref:`jobs or periodic jobs <apps-taskqueue-job>`.
+    :ref:`jobs or periodic jobs <apps-taskqueue-job>`.
 
-.. attribute:: id
+    .. attribute:: id
 
-    :class:`Task` unique id.
+        :class:`Task` unique id.
 
-.. attribute:: name
+    .. attribute:: name
 
-    :class:`Job` name.
+        :class:`Job` name.
 
-.. attribute:: status
+    .. attribute:: status
 
-    The current :ref:`status string <task-state>` of task.
+        The current :ref:`status string <task-state>` of task.
 
-.. attribute:: time_executed
+    .. attribute:: time_executed
 
-    date time when the task was executed.
+        date time when the task was executed.
 
-.. attribute:: time_start
+    .. attribute:: time_start
 
-    date-time when the task calculation has started.
+        date-time when the task calculation has started.
 
-.. attribute:: time_end
+    .. attribute:: time_end
 
-    date-time when the task has finished.
+        date-time when the task has finished.
 
-.. attribute:: expiry
+    .. attribute:: expiry
 
-    optional date-time indicating when the task should expire.
+        optional date-time indicating when the task should expire.
 
-.. attribute:: timeout
+    .. attribute:: timeout
 
-    A datetime or ``None`` indicating whether a timeout has occurred.
+        A datetime or ``None`` indicating whether a timeout has occurred.
 
-.. attribute:: from_task
+    .. attribute:: from_task
 
-    Optional :attr:`Task.id` for the :class:`Task` which queued
-    this :class:`Task`. This is a usuful for monitoring the creation
-    of tasks within other tasks.
-'''
+        Optional :attr:`Task.id` for the :class:`Task` which queued
+        this :class:`Task`. This is a usuful for monitoring the creation
+        of tasks within other tasks.
+    '''
     stack_trace = None
 
     def __init__(self, id, overlap_id='', name=None, time_executed=None,
@@ -293,8 +295,10 @@ Lower number higher precedence.'''
         return states.PRECEDENCE_MAPPING.get(self.status, states.UNKNOWN_STATE)
 
     def done(self):
-        '''Return ``True`` if the :class:`Task` has finshed
-(its status is one of :ref:`READY_STATES <task-state>`).'''
+        '''Return ``True`` if the :class:`Task` has finshed.
+
+        Its status is one of :ref:`READY_STATES <task-ready-state>`.
+        '''
         return self.status in states.READY_STATES
 
     def execute2start(self):
@@ -306,8 +310,11 @@ Lower number higher precedence.'''
             return self.time_ended - self.time_executed
 
     def duration(self):
-        '''The :class:`Task` duration. Only available if the task status is in
-:attr:`FULL_RUN_STATES`.'''
+        '''The :class:`Task` duration.
+
+        Only available if the task status is in
+        :ref:`FULL_RUN_STATES <task-run-state>`.
+        '''
         if self.time_end and self.time_started:
             return self.time_ended - self.time_started
 
@@ -333,7 +340,7 @@ class PubSubClient(pubsub.Client):
 
 
 class TaskBackend(Backend):
-    '''A :class:`pulsar.apps.Backend` class for :class:`Task`.
+    '''A :class:`.Backend` class for :class:`Task`.
 A :class:`TaskBackend` is responsible for creating tasks and put them
 into the distributed queue.
 It also schedules the run of periodic tasks if enabled to do so.
@@ -353,7 +360,7 @@ It also schedules the run of periodic tasks if enabled to do so.
 .. attribute:: backlog
 
     The maximum number of concurrent tasks running on a task-queue
-    :class:`pulsar.apps.Worker`. A number in the order of 5 to 10 is normally
+    for an :class:`.Actor`. A number in the order of 5 to 10 is normally
     used. Passed by the task-queue application
     :ref:`concurrent tasks setting <setting-concurrent_tasks>`.
 
@@ -406,7 +413,7 @@ It also schedules the run of periodic tasks if enabled to do so.
 
     @local_property
     def pubsub(self):
-        '''A :class:`pulsar.apps.pubsub.PubSub` handler which notifies
+        '''A :class:`.PubSub` handler which notifies
 and listen tasks execution status. There are three channels:
 
 * ``<name>_task_created`` published when a new task is created.
@@ -414,7 +421,7 @@ and listen tasks execution status. There are three channels:
 * ``<name>_task_done`` published when a task is done.
 
 All three messages are composed by the task id only. Here ``<name>`` is
-replaced by the :attr:`pulsar.Backend.name` attribute of this task backend.
+replaced by the :attr:`.Backend.name` attribute of this task backend.
 
 Check the :ref:`task broadcasting documentation <tasks-pubsub>` for more
 information.
@@ -444,8 +451,7 @@ information.
 
     @local_property
     def registry(self):
-        '''The :class:`pulsar.apps.tasks.models.JobRegistry` for this
-        backend.
+        '''The :class:`.JobRegistry` for this backend.
         '''
         return JobRegistry.load(self.task_paths)
 
@@ -458,27 +464,27 @@ information.
 
     def run_job(self, jobname, targs=None, tkwargs=None, **meta_params):
         '''Create a new :ref:`task <apps-taskqueue-task>` which may or
-may not be queued. This method returns a :class:`pulsar.Deferred` which
+may not be queued. This method returns a :class:`.Deferred` which
 results in the :attr:`Task.id` created.
-If ``jobname`` is not a valid :attr:`pulsar.apps.tasks.models.Job.name`,
+If ``jobname`` is not a valid :attr:`.Job.name`,
 a ``TaskNotAvailable`` exception occurs.
 
-:parameter jobname: the name of a :class:`pulsar.apps.tasks.models.Job`
-    registered with the :class:`pulsar.apps.tasks.TaskQueue` application.
+:parameter jobname: the name of a :class:`.Job`
+    registered with the :class:`.TaskQueue` application.
 :parameter targs: optional tuple used for the positional arguments in the
     task callable.
 :parameter tkwargs: optional dictionary used for the key-valued arguments
     in the task callable.
 :parameter meta_params: Additional parameters to be passed to the :class:`Task`
     constructor (not its callable function).
-:return: a :class:`pulsar.Deferred` resulting in a :attr:`Task.id`
+:return: a :class:`.Deferred` resulting in a :attr:`Task.id`
     on success.'''
         c = self.create_task(jobname, targs, tkwargs, **meta_params)
         return maybe_async(c, get_result=False).add_callback(self.put_task)
 
     def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
-its execution. It returns a :class:`pulsar.Deferred`.'''
+its execution. It returns a :class:`.Deferred`.'''
         # make sure we are subscribed to the task_done channel
         def _():
             self.pubsub
@@ -500,7 +506,7 @@ its execution. It returns a :class:`pulsar.Deferred`.'''
         '''invoked by the task queue ``worker`` when it starts.
 
         Here, the ``worker`` creates its thread pool via
-        :meth:`pulsar.Actor.create_thread_pool` and register the
+        :meth:`.Actor.create_thread_pool` and register the
         :meth:`may_pool_task` callback in its event loop.'''
         worker.create_thread_pool()
         self.local.task_poller = worker.event_loop.call_soon(
@@ -508,8 +514,10 @@ its execution. It returns a :class:`pulsar.Deferred`.'''
         worker.logger.debug('started polling tasks')
 
     def close(self, worker):
-        '''Close this :class:`TaskBackend`. Invoked by the
-:class:`pulsar.apps.Worker` when is stopping.'''
+        '''Close this :class:`TaskBackend`.
+
+        Invoked by the :class:`.Actor` when stopping.
+        '''
         if self.local.task_poller:
             self.local.task_poller.cancel()
             worker.logger.debug('stopped polling tasks')
@@ -844,7 +852,7 @@ class Schedule(object):
 
 
 class SchedulerEntry(object):
-    """A class used as a schedule entry in by a :class:`Scheduler`."""
+    """A class used as a schedule entry by the :class:`.TaskBackend`."""
     name = None
     '''Task name'''
     schedule = None
@@ -853,7 +861,7 @@ class SchedulerEntry(object):
     '''The time and date of when this task was last run.'''
     total_run_count = None
     '''Total number of times this periodic task has been executed by the
-    :class:`Scheduler`.'''
+    :class:`.TaskBackend`.'''
 
     def __init__(self, name, schedule, args=(), kwargs={},
                  last_run_at = None, total_run_count=None):
@@ -868,8 +876,11 @@ class SchedulerEntry(object):
 
     @property
     def scheduled_last_run_at(self):
-        '''The scheduled last run datetime. This is different from
-:attr:`last_run_at` only when :attr:`anchor` is set.'''
+        '''The scheduled last run datetime.
+
+        This is different from :attr:`last_run_at` only when
+        :attr:`anchor` is set.
+        '''
         last_run_at = self.last_run_at
         anchor = self.anchor
         if last_run_at and anchor:
@@ -889,16 +900,23 @@ class SchedulerEntry(object):
 
     @property
     def run_every(self):
+        '''tasks run every interval given by this attribute.
+
+        A python :class:`datetime.timedelta` instance.
+        '''
         return self.schedule.run_every
 
     @property
     def anchor(self):
+        '''Some periodic :class:`.PeriodicJob` can specify an anchor.'''
         return self.schedule.anchor
 
     def next(self, now=None):
         """Returns a new instance of the same class, but with
-        its date and count fields updated. Function called by
-        :class:`Backend` when the ``this`` is due to run.
+        its date and count fields updated.
+
+        Function called by :class:`.TaskBackend` when this entry
+        is due to run.
         """
         now = now or datetime.now()
         self.last_run_at = now or datetime.now()

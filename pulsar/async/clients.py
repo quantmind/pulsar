@@ -56,16 +56,12 @@ class Request(object):
     def encode(self):
         raise NotImplementedError
 
-    def create_connection(self, event_loop, connection):
+    def connect(self, event_loop, connection):
         '''Called by a :class:`Client` when a new connection is needed.
         '''
         host, port = self.address
-        res = event_loop.create_connection(
+        _, connection = yield event_loop.create_connection(
             lambda: connection, host, port, ssl=self.ssl)
-        return res.add_callback(self._connection_made)
-
-    def _connection_made(self, transport_protocol):
-        _, connection = transport_protocol
         # wait for the connection_made event
         yield connection.event('connection_made')
         # starts the new request
@@ -220,8 +216,11 @@ class Client(Producer):
     * ``connection_lost`` a connection dropped.
 
     Most initialisation parameters have sensible defaults and don't need to be
-    passed for most use-cases. Additionally, they can also be set as class
-    attributes to override defaults.
+    passed for most use-cases (the only exception is the
+    :meth:`consumer_factory` callable which must be specified).
+
+    Additionally, these parameters can be set as class attributes to override
+    defaults.
 
     :param max_connections: set the :attr:`Producer.max_connections` attribute.
     :param timeout: set the :attr:`Producer.timeout` attribute.
@@ -282,7 +281,6 @@ class Client(Producer):
         super(Client, self).__init__(connection_factory=connection_factory,
                                      timeout=timeout,
                                      max_connections=max_connections)
-        self.lock = Lock()
         self._closed = False
         self.trust_env = trust_env
         self.client_version = client_version or self.client_version
@@ -434,15 +432,14 @@ class Client(Producer):
 
         Thread safe.
         '''
-        with self.lock:
-            pool = self.connection_pools.get(request.key)
-            if pool is None:
-                connection = None
-                pool = self.connection_pool(
-                    request,
-                    max_connections=self.max_connections,
-                    connection_factory=self.connection_factory)
-                self.connection_pools[request.key] = pool
+        pool = self.connection_pools.get(request.key)
+        if pool is None:
+            connection = None
+            pool = self.connection_pool(
+                request,
+                max_connections=self.max_connections,
+                connection_factory=self.connection_factory)
+            self.connection_pools[request.key] = pool
         return pool.get_or_create_connection(self, connection)
 
     def update_parameters(self, parameter_list, params):
@@ -533,8 +530,8 @@ class Client(Producer):
                 conn.set_consumer(response)
             if conn.transport is None:
                 # There is no transport, we need to connect with server first
-                return request.create_connection(
-                    event_loop, conn).add_errback(response.finished)
+                event_loop.async(request.connect(
+                    event_loop, conn)).add_errback(response.finished)
             else:
                 response.start(request)
             return

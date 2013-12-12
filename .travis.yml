@@ -13,6 +13,9 @@ install:
   - python setup.py install
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
+services:
+  - redis-server
+
 script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar

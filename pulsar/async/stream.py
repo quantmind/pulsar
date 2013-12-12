@@ -311,10 +311,14 @@ class TcpServer(Server):
         '''Stop serving the :class:`pulsar.Server.sock`'''
         if self._sock:
             sock, self._sock = self._sock, None
-            self._event_loop.call_soon_threadsafe(self._stop_serving, sock)
+            self._event_loop.stop_serving(sock)
 
     def close(self):
         '''Same as :meth:`stop_serving` method.'''
+        if self._sock:
+            sock, self._sock = self._sock, None
+            self._event_loop.stop_serving(sock)
+            self._event_loop.call_soon(self._close)
         self.stop_serving()
 
     def _got_sockets(self, sockets):
@@ -323,9 +327,10 @@ class TcpServer(Server):
                          format_address(self.address))
         return self
 
-    def _stop_serving(self, sock):
-        self._event_loop.stop_serving(sock)
+    def _close(self):
+        yield self.close_connections()
         self.fire_event('stop')
+        yield self
 
 
 def create_connection(event_loop, protocol_factory, host, port, ssl,
@@ -543,7 +548,8 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                     # connection, but we get told to try to accept() anyway.
                     continue
                 elif e.args[0] in ACCEPT_ERRORS:
-                    logger(event_loop).info('Could not accept new connection')
+                    logger(event_loop).info(
+                        'Could not accept new connection %s: %s', i+1, e)
                     break
                 raise
             protocol = protocol_factory()

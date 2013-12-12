@@ -31,7 +31,7 @@ Usage
 A pubsub handler can be passed to different process domain and therefore it
 can be used to synchronise pulsar actors.
 
-A tipical usage is when one needs to serve a websocket on a multiprocessing
+A typical usage is when one needs to serve a websocket on a multiprocessing
 web server such as the :ref:`pulsar WSGI server <apps-wsgi>`.
 For example, the :ref:`websocket chat server <tutorials-chat>` uses a pubsub
 handler to propagate a message received from an http client to all
@@ -172,6 +172,9 @@ from the publisher, the :meth:`broadcast` method will notify all
         '''Remove *client* from the set of all :attr:`clients`.'''
         self.backend.remove_client(client)
 
+    def channel(self, channel):
+        return self.backend.channel(channel)
+
     def publish(self, channel, message):
         '''Publish a ``message`` to ``channel``. It invokes the
 :meth:`PubSubBackend.publish` method after the message has been encoded
@@ -215,6 +218,9 @@ from the publisher, the :meth:`broadcast` method will notify all
     def remove_client(self, client):
         '''Remove *client* from the set of all :attr:`clients`.'''
         self.clients.discard(client)
+
+    def channel(self, channel):
+        return channel
 
     def publish(self, channel, message):
         '''Publish a ``message`` into ``channel``.

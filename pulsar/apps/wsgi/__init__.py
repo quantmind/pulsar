@@ -8,6 +8,15 @@ as well as :ref:`pulsar wsgi application handlers <wsgi-handlers>`,
 the :ref:`pulsar RPC middleware <apps-rpc>` and
 the :ref:`websocket middleware <apps-ws>`.
 
+.. note::
+
+    Pulsar wsgi server is production ready designed to easily
+    handle fast, scalable http applications. As all pulsar applications,
+    it uses an event-driven, non-blocking I/O model that makes it
+    lightweight and efficient. In addition, its multiprocessing
+    capabilities allow to handle the `c10k problem`_ with ease.
+
+
 An example of a web server written with :mod:`pulsar.apps.wsgi` which responds
 with ``Hello World!`` for every request::
 
@@ -43,6 +52,7 @@ WSGI Server
 
 
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
+.. _`c10k problem`: http://en.wikipedia.org/wiki/C10k_problem
 """
 from functools import partial
 
@@ -62,13 +72,14 @@ from .auth import *
 
 
 class WSGIServer(SocketServer):
-    '''A wsgi :class:`pulsar.apps.socket.SocketServer`.'''
+    '''A WSGI :class:`.SocketServer`.
+    '''
     name = 'wsgi'
     cfg = pulsar.Config(apps=['socket', 'wsgi'],
                         server_software=pulsar.SERVER_SOFTWARE)
 
     def protocol_consumer(self):
-        '''Build the :class:`pulsar.ProtocolConsumer` factory.
+        '''Build the :class:`.ProtocolConsumer` factory.
 
         It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
         protocol consumer and the wsgi callable provided as parameter during

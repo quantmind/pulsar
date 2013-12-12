@@ -325,7 +325,7 @@ Fired every time an actor is about to spawn another actor. It can be used to
 add additional key-valued parameters passed to the :func:`pulsar.spawn`
 function.
 
-.. _actorparams:
+.. _actor_commands:
 
 Commands
 ===============
