@@ -644,7 +644,8 @@ class TcpServer(Producer):
         protocol.bind_event('connection_lost',
                             self._connection_lost,
                             partial(self._connection_lost_exc, protocol))
-        if self._max_connections and session >= self._max_connections:
+        if (self._server and self._max_connections and
+                session >= self._max_connections):
             self.logger.info('Reached maximum number of connections %s. '
                              'Stop serving.' % self._max_connections)
             self.close()
