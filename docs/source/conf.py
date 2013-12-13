@@ -27,7 +27,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo',
               'sphinx.ext.pngmath',
               'sphinx.ext.viewcode',
-              'pulsarext']
+              'pulsarext',
+              'redisext']
 
 # Beta version is published in github pages
 if pulsar.VERSION[3] == 'beta':
@@ -40,7 +41,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'content'
 
 # General information about the project.
 project = 'pulsar'
@@ -59,6 +60,9 @@ html_sidebars = {
            'sourcelink.html', 'searchbox.html'],
 }
 exclude_trees = []
+html_additional_pages = {
+    'index': 'index.html',
+}
 
 # -- Options for HTML output ---------------------------------------------------
 
@@ -94,10 +98,6 @@ html_favicon = 'favicon.ico'
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
 #html_use_smartypants = True
-
-# Additional templates that should be rendered to pages, maps page names to
-# template names.
-#html_additional_pages = {}
 
 # If false, no module index is generated.
 #html_domain_indices = True

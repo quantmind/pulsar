@@ -94,6 +94,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 
     def _call(self, environ, start_response, loop):
         uri = environ['RAW_URI']
+        loop.logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
         if environ.get('HTTP_EXPECT') != '100-continue':

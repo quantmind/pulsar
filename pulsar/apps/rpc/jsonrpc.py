@@ -184,14 +184,15 @@ class JsonProxy(object):
         return JsonCall(self, name)
 
     def timeit(self, func, times, *args, **kwargs):
-        '''Usefull little utility for timing responses from server. The
-usage is simple::
+        '''Useful utility for timing responses from a server.
 
-    >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
-    >>> p.timeit('ping',10)
-    0.56...
-    '''
+        The usage is simple::
+
+            >>> from pulsar.apps import rpc
+            >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
+            >>> p.timeit('ping', 10)
+            0.56...
+        '''
         func = getattr(self, func)
         return multi_async((func(*args, **kwargs) for t in range(times)))
 

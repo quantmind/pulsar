@@ -97,10 +97,10 @@ Ver. 0.7.0 - 2013-Oct-13
 ===========================
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
-    * SSL support
-    * Proxy and Tunneling
-    * Cookie support
-    * File upload
+  * SSL support
+  * Proxy and Tunnelling
+  * Cookie support
+  * File upload
 
 * Code coverage can be turned on by using the ``--coverage`` option. By
   passing in the command line ``--coveralls`` when testing, coverage is

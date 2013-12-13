@@ -63,7 +63,7 @@ class Plugin(object):
         return self.result.testsRun if self.result else 0
 
     def on_start(self):
-        '''Called by :ref:`TestSuite <test-suite>` once only at startup.
+        '''Called by the :class:`.TestSuite` once only at startup.
 
         This callback is invoked once all tests are loaded but before
         the test suite starts running them.
@@ -71,7 +71,7 @@ class Plugin(object):
         pass
 
     def on_end(self):
-        '''Called by :ref:`TestSuite <test-suite>` just before it stops.
+        '''Called by the :class:`.TestSuite` just before it stops.
         '''
         pass
 

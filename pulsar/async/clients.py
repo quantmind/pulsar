@@ -1,9 +1,11 @@
+from functools import reduce
+
 from pulsar.utils.internet import is_socket_closed
 
 from .access import AsyncObject
-from .defer import coroutine_return, multi_async
+from .defer import coroutine_return, multi_async, TimeoutError, NOT_DONE
 from .protocols import Producer
-from .queues import Queue, Full
+from .queues import Queue, Full, Empty
 
 
 __all__ = ['Pool', 'PoolConnection', 'AbstractClient']
@@ -23,8 +25,8 @@ class Pool(AsyncObject):
         self._closed = False
         self._timeout = timeout
         self._queue = Queue(loop=loop, maxsize=pool_size)
+        self._connecting = 0
         self._loop = self._queue._loop
-        self._waiting = 0
         self._in_use_connections = set()
 
     @property
@@ -44,13 +46,13 @@ class Pool(AsyncObject):
         These connections are not available until they are released back
         to the pool.
         '''
-        return len(self._in_use_connections) + self._waiting
+        return len(self._in_use_connections)
 
     @property
     def available(self):
         '''Number of available connections in the pool.
         '''
-        return self._queue.qsize()
+        return reduce(self._count_connections, self._queue._queue, 0)
 
     def __contains__(self, connection):
         if connection not in self._in_use_connections:
@@ -83,27 +85,31 @@ class Pool(AsyncObject):
 
     def _get(self):
         queue = self._queue
-        connection = None
-        # all available connections are in use or there are some available
-        if self.in_use >= self._queue._maxsize or self._queue.qsize():
+        if self.in_use + self._connecting >= queue._maxsize or queue.qsize():
             connection = yield queue.get(timeout=self._timeout)
-            if is_socket_closed(connection.sock):
-                if connection._transport:
-                    connection._transport.close()
+            # None signal that a connection was removed form the queue
+            # Go again
+            if connection is None:
                 connection = yield self._get()
             else:
-                self._in_use_connections.add(connection)
+                if is_socket_closed(connection.sock):
+                    connection.close()
+                    connection = yield self._get()
+                else:
+                    self._in_use_connections.add(connection)
         else:
-            self._waiting += 1
-            connection = yield self._creator()
-            self._in_use_connections.add(connection)
-            self._waiting -= 1
+            self._connecting += 1
+            try:
+                connection = yield self._creator()
+                self._in_use_connections.add(connection)
+            finally:
+                self._connecting -= 1
         coroutine_return(connection)
 
-    def _put(self, conn):
+    def _put(self, conn, discard=False):
         if not self._closed:
             try:
-                self._queue.put_nowait(conn)
+                self._queue.put_nowait(None if discard else conn)
             except Full:
                 conn.close()
         self._in_use_connections.discard(conn)
@@ -116,6 +122,9 @@ class Pool(AsyncObject):
                         '%smax size %s, in_use %s, available %s',
                         message, self._queue._maxsize, self.in_use,
                         self.available)
+
+    def _count_connections(self, x, y):
+        return x + int(y is not None)
 
 
 class PoolConnection(object):
@@ -139,12 +148,12 @@ class PoolConnection(object):
         self.pool = pool
         self.connection = connection
 
-    def close(self):
+    def close(self, discard=False):
         '''Close this pool connection by releasing the underlying
         :attr:`connection` back to the ;attr:`pool`.
         '''
         if self.pool is not None:
-            self.pool._put(self.connection)
+            self.pool._put(self.connection, discard)
             self.pool = None
             self.connection = None
 
@@ -152,12 +161,7 @@ class PoolConnection(object):
         '''Remove the underlying :attr:`connection` from the connection
         :attr:`pool`.
         '''
-        if self.pool is not None:
-            connection = self.connection
-            self.pool._in_use_connections.discard(connection)
-            self.pool = None
-            self.connection = None
-            return connection
+        self.close(True)
 
     def __enter__(self):
         return self

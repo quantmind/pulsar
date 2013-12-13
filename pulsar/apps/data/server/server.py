@@ -1,6 +1,6 @@
 '''
 Pulsar-ds is a python implementation of the popular redis_
-data store. It uses pulsar_ asynchronous framework to create a
+data store. It uses pulsar asynchronous framework to create a
 single-threaded workers responding to TCP-requests in the same way
 as redis does.
 
@@ -293,14 +293,14 @@ class Storage(object):
 
     ###########################################################################
     ##    KEYS COMMANDS
-    @command('keys', True, name='del')
+    @command('Keys', True, name='del')
     def delete(self, client, request, N):
         check_input(request, not N)
         rem = client.db.rem
         result = reduce(lambda x, y: x + rem(y), request[1:], 0)
         client.reply_int(result)
 
-    @command('keys')
+    @command('Keys')
     def exists(self, client, request, N):
         check_input(request, N != 1)
         if client.db.exists(request[1]):
@@ -308,7 +308,7 @@ class Storage(object):
         else:
             client.reply_zero()
 
-    @command('keys', True)
+    @command('Keys', True)
     def expire(self, client, request, N):
         check_input(request, N != 2)
         try:
@@ -323,7 +323,7 @@ class Storage(object):
                     return client.reply_one()
             client.reply_zero()
 
-    @command('keys', True)
+    @command('Keys', True)
     def expireat(self, client, request, N):
         check_input(request, N != 2)
         try:
@@ -338,7 +338,7 @@ class Storage(object):
                     return client.reply_one()
             client.reply_zero()
 
-    @command('keys')
+    @command('Keys')
     def keys(self, client, request, N):
         err = 'ignore'
         check_input(request, N != 1)
@@ -351,7 +351,7 @@ class Storage(object):
                   gr.search(key.decode('utf-8', err))]
         client.reply_multi_bulk(result)
 
-    @command('keys', True)
+    @command('Keys', True)
     def move(self, client, request, N):
         check_input(request, N != 2)
         key = request[1]
@@ -372,7 +372,7 @@ class Storage(object):
         self._signal(self._type_event_map[type(value)], db2, 'set', key, 1)
         client.reply_one()
 
-    @command('keys', True)
+    @command('Keys', True)
     def persist(self, client, request, N):
         check_input(request, N != 1)
         if client.db.persist(request[1]):
@@ -380,7 +380,7 @@ class Storage(object):
         else:
             client.reply_zero()
 
-    @command('keys')
+    @command('Keys')
     def randomkey(self, client, request, N):
         check_input(request, N)
         keys = list(client.db)
@@ -389,7 +389,7 @@ class Storage(object):
         else:
             client.reply_bulk()
 
-    @command('keys', True)
+    @command('Keys', True)
     def rename(self, client, request, N, ex=False):
         check_input(request, N != 2)
         key1, key2 = request[1], request[2]
@@ -415,11 +415,11 @@ class Storage(object):
             self._signal(event, db, request[0], key2, dirty)
             client.reply_one() if result else client.reply_ok()
 
-    @command('keys', True)
+    @command('Keys', True)
     def renameex(self, client, request, N):
         self.rename(client, request, N, True)
 
-    @command('sort', True)
+    @command('Keys', True)
     def sort(self, client, request, N):
         check_input(request, not N)
         value = client.db.get(request[1])
@@ -429,12 +429,12 @@ class Storage(object):
             return client.reply_wrongtype()
         sort_command(self, client, request, value)
 
-    @command('keys', True)
+    @command('Keys', True)
     def ttl(self, client, request, N):
         check_input(request, N != 1)
         client.reply_int(client.db.ttl(request[1]))
 
-    @command('keys', True)
+    @command('Keys', True)
     def type(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -446,7 +446,7 @@ class Storage(object):
 
     ###########################################################################
     ##    STRING COMMANDS
-    @command('strings', True)
+    @command('Strings', True)
     def append(self, client, request, N):
         check_input(request, N != 2,)
         key = request[1]
@@ -463,7 +463,7 @@ class Storage(object):
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_int(len(value))
 
-    @command('strings')
+    @command('Strings')
     def bitcount(self, client, request, N):
         check_input(request, N < 1 or N > 3)
         key = request[1]
@@ -482,7 +482,7 @@ class Storage(object):
                 value = value[start:end]
             client.reply_int(count_bytes(value))
 
-    @command('strings', True)
+    @command('Strings', True)
     def bitop(self, client, request, N):
         check_input(request, N < 3)
         db = client.db
@@ -525,13 +525,13 @@ class Storage(object):
         else:
             client.reply_zero()
 
-    @command('strings', True)
+    @command('Strings', True)
     def decr(self, client, request, N):
         check_input(request, N != 1)
         r = self._incrby(client, request[0], request[1], b'-1', int)
         client.reply_int(r)
 
-    @command('strings', True)
+    @command('Strings', True)
     def decrby(self, client, request, N):
         check_input(request, N != 2)
         try:
@@ -541,7 +541,7 @@ class Storage(object):
         r = self._incrby(client, request[0], request[1], val, int)
         client.reply_int(r)
 
-    @command('strings')
+    @command('Strings')
     def get(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -553,7 +553,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('strings')
+    @command('Strings')
     def getbit(self, client, request, N):
         check_input(request, N != 2)
         try:
@@ -578,7 +578,7 @@ class Storage(object):
             else:
                 client.reply_zero()
 
-    @command('strings')
+    @command('Strings')
     def getrange(self, client, request, N):
         check_input(request, N != 3)
         try:
@@ -601,7 +601,7 @@ class Storage(object):
                 end += 1
             client.reply_bulk(bytes(string[start:end]))
 
-    @command('strings', True)
+    @command('Strings', True)
     def getset(self, client, request, N):
         check_input(request, N != 2)
         key = request[1]
@@ -619,25 +619,25 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('strings', True)
+    @command('Strings', True)
     def incr(self, client, request, N):
         check_input(request, N != 1)
         r = self._incrby(client, request[0], request[1], b'1', int)
         client.reply_int(r)
 
-    @command('strings', True)
+    @command('Strings', True)
     def incrby(self, client, request, N):
         check_input(request, N != 2)
         r = self._incrby(client, request[0], request[1], request[2], int)
         client.reply_int(r)
 
-    @command('strings', True)
+    @command('Strings', True)
     def incrbyfloat(self, client, request, N):
         check_input(request, N != 2)
         r = self._incrby(client, request[0], request[1], request[2], float)
         client.reply_bulk(str(r).encode('utf-8'))
 
-    @command('strings')
+    @command('Strings')
     def mget(self, client, request, N):
         check_input(request, not N)
         get = client.db.get
@@ -652,7 +652,7 @@ class Storage(object):
                 return client.reply_wrongtype()
         client.reply_multi_bulk(values)
 
-    @command('strings', True)
+    @command('Strings', True)
     def mset(self, client, request, N):
         D = N // 2
         check_input(request, N < 2 or D * 2 != N)
@@ -663,7 +663,7 @@ class Storage(object):
             self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
         client.reply_ok()
 
-    @command('strings', True)
+    @command('Strings', True)
     def msetnx(self, client, request, N):
         D = N // 2
         check_input(request, N < 2 or D * 2 != N)
@@ -682,13 +682,13 @@ class Storage(object):
                 self._signal(self.NOTIFY_STRING, db, 'set', key, 1)
             client.reply_one()
 
-    @command('strings', True)
+    @command('Strings', True)
     def psetex(self, client, request, N):
         check_input(request, N != 3)
         self._set(client, request[1], request[3], milliseconds=request[2])
         client.reply_ok()
 
-    @command('strings', True)
+    @command('Strings', True)
     def set(self, client, request, N):
         check_input(request, N < 2 or N > 8)
         db = client.db
@@ -719,7 +719,7 @@ class Storage(object):
         else:
             client.reply_bulk()
 
-    @command('strings', True)
+    @command('Strings', True)
     def setbit(self, client, request, N):
         check_input(request, N != 3)
         key = request[1]
@@ -765,13 +765,13 @@ class Storage(object):
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_one() if bitval else client.reply_zero()
 
-    @command('strings', True)
+    @command('Strings', True)
     def setex(self, client, request, N):
         check_input(request, N != 3)
         self._set(client, request[1], request[3], seconds=request[2])
         client.reply_ok()
 
-    @command('strings', True)
+    @command('Strings', True)
     def setnx(self, client, request, N):
         check_input(request, N != 2)
         if self._set(client, request[1], request[2], nx=True):
@@ -779,7 +779,7 @@ class Storage(object):
         else:
             client.reply_zero()
 
-    @command('strings', True)
+    @command('Strings', True)
     def setrange(self, client, request, N):
         check_input(request, N != 3)
         key = request[1]
@@ -806,7 +806,7 @@ class Storage(object):
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_int(len(string))
 
-    @command('strings')
+    @command('Strings')
     def strlen(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -819,7 +819,7 @@ class Storage(object):
 
     ###########################################################################
     ##    HASHES COMMANDS
-    @command('hashes', True)
+    @command('Hashes', True)
     def hdel(self, client, request, N):
         check_input(request, N < 2)
         key = request[1]
@@ -838,7 +838,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes')
+    @command('Hashes')
     def hexists(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -849,7 +849,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes')
+    @command('Hashes')
     def hget(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -860,7 +860,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes')
+    @command('Hashes')
     def hgetall(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -871,19 +871,19 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes', True)
+    @command('Hashes', True)
     def hincrby(self, client, request, N):
         result = self._hincrby(client, request, N, int)
         if result is not None:
             client.reply_int(result)
 
-    @command('hashes', True)
+    @command('Hashes', True)
     def hincrbyfloat(self, client, request, N):
         result = self._hincrby(client, request, N, float)
         if result is not None:
             client.reply_bulk(str(result).encode('utf-8'))
 
-    @command('hashes')
+    @command('Hashes')
     def hkeys(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -894,7 +894,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes')
+    @command('Hashes')
     def hlen(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -905,7 +905,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes')
+    @command('Hashes')
     def hmget(self, client, request, N):
         check_input(request, N < 3)
         value = client.db.get(request[1])
@@ -917,7 +917,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('hashes', True)
+    @command('Hashes', True)
     def hmset(self, client, request, N):
         D = (N - 1) // 2
         check_input(request, N < 3 or D * 2 != N - 1)
@@ -934,7 +934,7 @@ class Storage(object):
         self._signal(self.NOTIFY_HASH, db, request[0], key, D)
         client.reply_ok()
 
-    @command('hashes', True)
+    @command('Hashes', True)
     def hset(self, client, request, N):
         check_input(request, N != 3)
         key, field = request[1], request[2]
@@ -949,7 +949,7 @@ class Storage(object):
         self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
         client.reply_zero() if field in value else client.reply_one()
 
-    @command('hashes', True)
+    @command('Hashes', True)
     def hsetnx(self, client, request, N):
         check_input(request, N != 3)
         key, field = request[1], request[2]
@@ -967,7 +967,7 @@ class Storage(object):
             self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
             client.reply_one()
 
-    @command('hashes')
+    @command('Hashes')
     def hvals(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -980,7 +980,7 @@ class Storage(object):
 
     ###########################################################################
     ##    LIST COMMANDS
-    @command('lists', True, script=0)
+    @command('Lists', True, script=0)
     def blpop(self, client, request, N):
         check_input(request, N < 2)
         try:
@@ -991,11 +991,11 @@ class Storage(object):
         if not self._bpop(client, request[0], keys):
             client.blocked = Blocked(client, request[0], keys, timeout)
 
-    @command('lists', True, script=0)
+    @command('Lists', True, script=0)
     def brpop(self, client, request, N):
         return self.blpop(client, request, N)
 
-    @command('lists', True, script=0)
+    @command('Lists', True, script=0)
     def brpoplpush(self, client, request, N):
         check_input(request, N != 3)
         try:
@@ -1007,7 +1007,7 @@ class Storage(object):
         if not self._bpop(client, request[0], keys, dest):
             client.blocked = Blocked(client, request[0], keys, timeout, dest)
 
-    @command('lists')
+    @command('Lists')
     def lindex(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -1023,7 +1023,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('lists', True)
+    @command('Lists', True)
     def linsert(self, client, request, N):
         # This method is INEFFICIENT, but redis supported so we do
         # the same here
@@ -1048,7 +1048,7 @@ class Storage(object):
             self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
             client.reply_int(len(value))
 
-    @command('lists')
+    @command('Lists')
     def llen(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -1060,7 +1060,7 @@ class Storage(object):
         else:
             client.reply_wrongtype()
 
-    @command('lists', True)
+    @command('Lists', True)
     def lpop(self, client, request, N):
         check_input(request, N != 1)
         db = client.db
@@ -1081,11 +1081,11 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_bulk(result)
 
-    @command('lists', True)
+    @command('Lists', True)
     def rpop(self, client, request, N):
         return self.lpop(client, request, N)
 
-    @command('lists', True)
+    @command('Lists', True)
     def lpush(self, client, request, N):
         check_input(request, N < 2)
         key = request[1]
@@ -1105,11 +1105,11 @@ class Storage(object):
         client.reply_int(len(value))
         self._signal(self.NOTIFY_LIST, db, request[0], key, N - 1)
 
-    @command('lists', True)
+    @command('Lists', True)
     def rpush(self, client, request, N):
         return self.lpush(client, request, N)
 
-    @command('lists', True)
+    @command('Lists', True)
     def lpushx(self, client, request, N):
         check_input(request, N != 2)
         key = request[1]
@@ -1128,11 +1128,11 @@ class Storage(object):
             client.reply_int(len(value))
             self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
 
-    @command('lists', True)
+    @command('Lists', True)
     def rpushx(self, client, request, N):
         return self.lpushx(client, request, N)
 
-    @command('lists', True)
+    @command('Lists', True)
     def lrange(self, client, request, N):
         check_input(request, N != 3)
         db = client.db
@@ -1150,7 +1150,7 @@ class Storage(object):
             assert value
             client.reply_multi_bulk(tuple(islice(value, start, end)))
 
-    @command('lists', True)
+    @command('Lists', True)
     def lrem(self, client, request, N):
         # This method is INEFFICIENT, but redis supported so we do
         # the same here
@@ -1175,7 +1175,7 @@ class Storage(object):
             if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
 
-    @command('lists', True)
+    @command('Lists', True)
     def lset(self, client, request, N):
         check_input(request, N != 3)
         db = client.db
@@ -1198,7 +1198,7 @@ class Storage(object):
             else:
                 client.reply_error(self.OUT_OF_BOUND)
 
-    @command('lists', True)
+    @command('Lists', True)
     def ltrim(self, client, request, N):
         check_input(request, N != 3)
         db = client.db
@@ -1223,7 +1223,7 @@ class Storage(object):
             if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
 
-    @command('lists', True)
+    @command('Lists', True)
     def rpoplpush(self, client, request, N):
         check_input(request, N != 2)
         key1, key2 = request[1], request[2]
@@ -1253,7 +1253,7 @@ class Storage(object):
 
     ###########################################################################
     ##    SETS COMMANDS
-    @command('sets', True)
+    @command('Sets', True)
     def sadd(self, client, request, N):
         check_input(request, N < 2)
         key = request[1]
@@ -1270,7 +1270,7 @@ class Storage(object):
         self._signal(self.NOTIFY_SET, db, request[0], key, n)
         client.reply_int(n)
 
-    @command('sets')
+    @command('Sets')
     def scard(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -1281,27 +1281,27 @@ class Storage(object):
         else:
             client.reply_int(len(value))
 
-    @command('sets')
+    @command('Sets')
     def sdiff(self, client, request, N):
         check_input(request, N < 1)
         self._setoper(client, 'difference', request[1:])
 
-    @command('sets', True)
+    @command('Sets', True)
     def sdiffstore(self, client, request, N):
         check_input(request, N < 2)
         self._setoper(client, 'difference', request[2:], request[1])
 
-    @command('sets')
+    @command('Sets')
     def sinter(self, client, request, N):
         check_input(request, N < 1)
         self._setoper(client, 'intersection', request[1:])
 
-    @command('sets', True)
+    @command('Sets', True)
     def sinterstore(self, client, request, N):
         check_input(request, N < 2)
         self._setoper(client, 'intersection', request[2:], request[1])
 
-    @command('sets')
+    @command('Sets')
     def sismember(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -1312,7 +1312,7 @@ class Storage(object):
         else:
             client.reply_int(int(request[2] in value))
 
-    @command('sets')
+    @command('Sets')
     def smembers(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -1323,7 +1323,7 @@ class Storage(object):
         else:
             client.reply_multi_bulk(value)
 
-    @command('sets', True)
+    @command('Sets', True)
     def smove(self, client, request, N):
         check_input(request, N != 3)
         db = client.db
@@ -1354,7 +1354,7 @@ class Storage(object):
             else:
                 client.reply_zero()
 
-    @command('sets', True)
+    @command('Sets', True)
     def spop(self, client, request, N):
         check_input(request, N != 1)
         key = request[1]
@@ -1371,7 +1371,7 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_bulk(result)
 
-    @command('sets')
+    @command('Sets')
     def srandmember(self, client, request, N):
         check_input(request, N < 1 or N > 2)
         value = client.db.get(request[1])
@@ -1415,7 +1415,7 @@ class Storage(object):
                 value.add(result)
             client.reply_bulk(result)
 
-    @command('sets', True)
+    @command('Sets', True)
     def srem(self, client, request, N):
         check_input(request, N < 2)
         db = client.db
@@ -1434,19 +1434,19 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
-    @command('sets')
+    @command('Sets')
     def sunion(self, client, request, N):
         check_input(request, N < 1)
         self._setoper(client, 'union', request[1:])
 
-    @command('sets', True)
+    @command('Sets', True)
     def sunionstore(self, client, request, N):
         check_input(request, N < 2)
         self._setoper(client, 'union', request[2:], request[1])
 
     ###########################################################################
     ##    SORTED SETS COMMANDS
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zadd(self, client, request, N):
         D = (N - 1) // 2
         check_input(request, N < 3 or D * 2 != N - 1)
@@ -1464,7 +1464,7 @@ class Storage(object):
         self._signal(self.NOTIFY_ZSET, db, request[0], key, result)
         client.reply_int(result)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zcard(self, client, request, N):
         check_input(request, N != 1)
         value = client.db.get(request[1])
@@ -1475,7 +1475,7 @@ class Storage(object):
         else:
             client.reply_int(len(value))
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zcount(self, client, request, N):
         check_input(request, N != 3)
         value = client.db.get(request[1])
@@ -1501,7 +1501,7 @@ class Storage(object):
                 client.reply_int(value.count(mmin, mmax,
                                              include_min, include_max))
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zincrby(self, client, request, N):
         check_input(request, N != 3)
         key = request[1]
@@ -1522,11 +1522,11 @@ class Storage(object):
             self._signal(self.NOTIFY_ZSET, db, request[0], key, 1)
             client.reply_bulk(str(score).encode('utf-8'))
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zinterstore(self, client, request, N):
         self._zsetoper(client, request, N)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zrange(self, client, request, N):
         check_input(request, N < 3 or N > 4)
         value = client.db.get(request[1])
@@ -1551,7 +1551,7 @@ class Storage(object):
                 result = list(value.range(start, end))
             client.reply_multi_bulk(result)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zrangebyscore(self, client, request, N):
         check_input(request, N < 3 or N > 7)
         value = client.db.get(request[1])
@@ -1596,7 +1596,7 @@ class Storage(object):
                                                    include_max=include_max))
             client.reply_multi_bulk(result)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zrank(self, client, request, N):
         check_input(request, N != 2)
         value = client.db.get(request[1])
@@ -1611,7 +1611,7 @@ class Storage(object):
             else:
                 client.reply_bulk()
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zrem(self, client, request, N):
         check_input(request, N < 2)
         key = request[1]
@@ -1629,7 +1629,7 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zremrangebyrank(self, client, request, N):
         check_input(request, N != 3)
         key = request[1]
@@ -1651,7 +1651,7 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zremrangebyscore(self, client, request, N):
         check_input(request, N != 3)
         key = request[1]
@@ -1675,11 +1675,11 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zrevrange(self, client, request, N):
         self.range(client, request, N)
 
-    @command('Sorted sets')
+    @command('Sorted Sets')
     def zscore(self, client, request, N):
         check_input(request, N != 2)
         key = request[1]
@@ -1695,7 +1695,7 @@ class Storage(object):
                 score = str(score).encode('utf-8')
             client.reply_bulk(score)
 
-    @command('Sorted sets', True)
+    @command('Sorted Sets', True)
     def zunionstore(self, client, request, N):
         self._zsetoper(client, request, N)
 
@@ -1801,7 +1801,7 @@ class Storage(object):
 
     ###########################################################################
     ##    TRANSACTION COMMANDS
-    @command('transactions', script=0)
+    @command('Transactions', script=0)
     def discard(self, client, request, N):
         check_input(request, N)
         if client.transaction is None:
@@ -1810,7 +1810,7 @@ class Storage(object):
             self._close_transaction(client)
             client.reply_ok()
 
-    @command('transactions', name='exec', script=0)
+    @command('Transactions', name='exec', script=0)
     def execute(self, client, request, N):
         check_input(request, N)
         if client.transaction is None:
@@ -1826,7 +1826,7 @@ class Storage(object):
                 for handle, request in requests:
                     client._execute_command(handle, request)
 
-    @command('transactions', script=0)
+    @command('Transactions', script=0)
     def multi(self, client, request, N):
         check_input(request, N)
         if client.transaction is None:
@@ -1835,7 +1835,7 @@ class Storage(object):
         else:
             self.error_replay("MULTI calls can not be nested")
 
-    @command('transactions', script=0)
+    @command('Transactions', script=0)
     def watch(self, client, request, N):
         check_input(request, not N)
         if client.transaction is not None:
@@ -1848,7 +1848,7 @@ class Storage(object):
             wkeys.update(request[1:])
             client.reply_ok()
 
-    @command('transactions', script=0)
+    @command('Transactions', script=0)
     def unwatch(self, client, request, N):
         check_input(request, N)
         transaction = client.transaction
@@ -1858,7 +1858,7 @@ class Storage(object):
 
     ###########################################################################
     ##    SCRIPTING
-    @command('scripting', script=0)
+    @command('Scripting', script=0)
     def eval(self, client, request, N):
         check_input(request, N < 2)
         if not self.lua:
@@ -1866,7 +1866,7 @@ class Storage(object):
         script = request[1]
         self._eval_script(client, script, request)
 
-    @command('scripting', script=0)
+    @command('Scripting', script=0)
     def evalsha(self, client, request, N):
         check_input(request, N < 2)
         if not self.lua:
@@ -1877,7 +1877,7 @@ class Storage(object):
         else:
             self._eval_script(client, script, request)
 
-    @command('scripting', script=0)
+    @command('Scripting', script=0)
     def script(self, client, request, N):
         check_input(request, not N)
         if not self.lua:
@@ -1904,7 +1904,7 @@ class Storage(object):
 
     ###########################################################################
     ##    CONNECTION COMMANDS
-    @command('connection', script=0)
+    @command('Connections', script=0)
     def auth(self, client, request, N):
         check_input(request, N != 1)
         conn.password = request[1]
@@ -1913,23 +1913,23 @@ class Storage(object):
         else:
             client.reply_ok()
 
-    @command('connection')
+    @command('Connections')
     def echo(self, client, request, N):
         check_input(request, N != 1)
         client.reply_bulk(request[1])
 
-    @command('connection')
+    @command('Connections')
     def ping(self, client, request, N):
         check_input(request, N)
         client.reply_status('PONG')
 
-    @command('connection', script=0)
+    @command('Connections', script=0)
     def quit(self, client, request, N):
         check_input(request, N)
         client.reply_ok()
         client.close()
 
-    @command('connection')
+    @command('Connections')
     def select(self, client, request, N):
         check_input(request, N != 1)
         D = len(self.databases) - 1
@@ -1946,13 +1946,13 @@ class Storage(object):
 
     ###########################################################################
     ##    SERVER COMMANDS
-    @command('server')
+    @command('Server')
     def bgsave(self, client, request, N):
         check_input(request, N)
         self._save()
         client.reply_ok()
 
-    @command('server')
+    @command('Server')
     def client(self, client, request, N):
         check_input(request, not N)
         subcommand = request[1].decode('utf-8').lower()
@@ -1963,7 +1963,7 @@ class Storage(object):
         else:
             client.reply_error("unknown command 'client %s'" % subcommand)
 
-    @command('server')
+    @command('Server')
     def config(self, client, request, N):
         check_input(request, not N)
         subcommand = request[1].decode('utf-8').lower()
@@ -1995,49 +1995,49 @@ class Storage(object):
         else:
             client.reply_error("'config %s' not valid" % subcommand)
 
-    @command('server')
+    @command('Server')
     def dbsize(self, client, request, N):
         check_input(request, N != 0)
         client.reply_int(len(client.db))
 
-    @command('server', True)
+    @command('Server', True)
     def flushdb(self, client, request, N):
         check_input(request, N)
         client.db.flush()
         client.reply_ok()
 
-    @command('server', True)
+    @command('Server', True)
     def flushall(self, client, request, N):
         check_input(request, N)
         for db in self.databases.values():
             db.flush()
         client.reply_ok()
 
-    @command('server')
+    @command('Server')
     def info(self, client, request, N):
         check_input(request, N)
         info = '\n'.join(self._flat_info())
         client.reply_bulk(info.encode('utf-8'))
 
-    @command('server')
+    @command('Server')
     def lastsave(self, client, request, N):
         check_input(request, N)
         client.reply_int(self._last_save)
 
-    @command('server', script=0)
+    @command('Server', script=0)
     def monitor(self, client, request, N):
         check_input(request, N)
         client.flag |= MONITOR
         self._monitors.add(client)
         client.reply_ok()
 
-    @command('server', script=0)
+    @command('Server', script=0)
     def save(self, client, request, N):
         check_input(request, N)
         self._save(False)
         client.reply_ok()
 
-    @command('server')
+    @command('Server')
     def time(self, client, request, N):
         check_input(request, N != 0)
         t = time.time()
@@ -2577,7 +2577,7 @@ class Db(object):
             return -2
 
     def info(self):
-        return {'keys': len(self._data),
+        return {'Keys': len(self._data),
                 'expires': len(self._expires)}
 
     def pop(self, key, value=None):

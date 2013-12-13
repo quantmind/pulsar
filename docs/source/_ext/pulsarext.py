@@ -91,8 +91,5 @@ class PulsarSettings(Directive):
             return []
 
 
-
 def setup(app):
     app.add_directive(targetid, PulsarSettings)
-
-

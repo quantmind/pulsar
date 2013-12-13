@@ -38,6 +38,8 @@ classes are used.
    :members:
    :member-order: bysource
 
+
+.. _redis: http://redis.io/
 '''
 import os
 try:

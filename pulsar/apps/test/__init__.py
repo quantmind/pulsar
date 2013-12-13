@@ -239,17 +239,13 @@ Profile
 .. automodule:: pulsar.apps.test.plugins.profile
 
 
-.. module:: pulsar.apps.test
-
 API
 =========
-
-.. _test-suite:
 
 Test Suite
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestSuite
+.. autoclass:: pulsar.apps.test.TestSuite
    :members:
    :member-order: bysource
 

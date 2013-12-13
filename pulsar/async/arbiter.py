@@ -51,7 +51,7 @@ def spawn(**kwargs):
       and ``stop``
     * ``actor_class`` a custom :class:`Actor` subclass (never used)
 
-    :return: an :class:`ActorProxyDeferred`.
+    :return: an :class:`.ActorProxyDeferred`.
 
     A typical usage::
 

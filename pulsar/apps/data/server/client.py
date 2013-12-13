@@ -2,10 +2,11 @@ import time
 from functools import partial
 
 import pulsar
+from pulsar.utils.structures import OrderedDict
 from pulsar.utils.pep import force_native_str, to_bytes
 
 
-COMMANDS_INFO = {}
+COMMANDS_INFO = OrderedDict()
 
 
 class CommandError(Exception):

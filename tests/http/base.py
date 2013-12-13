@@ -54,6 +54,7 @@ class TestHttpClientBase:
             cls.proxy_app = yield send('arbiter', 'run', s)
             cls.proxy_uri = 'http://{0}:{1}'.format(*cls.proxy_app.address)
             #cls.proxy_uri = 'http://127.0.0.1:8060'
+        #cls.uri = 'https://127.0.0.1:9080/'
 
     @classmethod
     def tearDownClass(cls):
@@ -156,13 +157,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self._check_server(response)
         self.after_test_home_page(response, 2)
 
-    def test_dodgy_on_header_event(self):
-        client = HttpClient()
-        response = yield client.get(self.httpbin(), on_headers=dodgyhook)
-        self.assertTrue(response.headers)
-        failure = response.event('on_headers').exception()
-        self.assertIsInstance(failure, Failure)
-
     def test_200_get(self):
         http = self.client()
         response = yield http.get(self.httpbin())
@@ -256,6 +250,24 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(result['args'])
         self.assertEqual(result['args']['numero'],['1','2'])
 
+    def test_large_response(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('getsize/600000'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['size'], 600000)
+        self.assertEqual(len(data['data']), 600000)
+        self.assertFalse(response.parser.is_chunked())
+
+    def test_large_response2(self):
+        http = self.client()
+        response = yield http.get(self.httpbin('getsize/600000'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['size'], 600000)
+        self.assertEqual(len(data['data']), 600000)
+        self.assertFalse(response.parser.is_chunked())
+
     def test_400_and_get(self):
         '''Bad request 400'''
         http = self.client()
@@ -280,7 +292,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.get_content())
         self.assertRaises(HTTPError, response.raise_for_status)
-class d:
+
+    def test_dodgy_on_header_event(self):
+        client = HttpClient()
+        response = yield client.get(self.httpbin(), on_headers=dodgyhook)
+        self.assertTrue(response.headers)
+        failure = response.event('on_headers').exception()
+        self.assertIsInstance(failure, Failure)
 
     def test_redirect_1(self):
         http = self.client()
@@ -607,3 +625,31 @@ class d:
                          'text/plain; charset=utf-8')
         result = response.decode_content()
         self.assertEqual(result, 'Hello, World!')
+
+    def test_pool_200(self):
+        N = 6
+        http = self.client(pool_size=5)
+        results = yield http.timeit(N, http.get, self.httpbin())
+        self.assertEqual(len(results), N)
+        for response in results:
+            self.assertEqual(str(response), '200')
+            self.assertTrue('content-length' in response.headers)
+        self.assertEqual(len(http.connection_pools), 1)
+        pool = tuple(http.connection_pools.values())[0]
+        self.assertEqual(pool.pool_size, 5)
+        self.assertEqual(pool.in_use, 0)
+        self.assertEqual(pool.available, 5)
+
+    def test_pool_400(self):
+        N = 6
+        http = self.client(pool_size=5)
+        results = yield http.timeit(N, http.get, self.httpbin('status', '400'))
+        self.assertEqual(len(results), N)
+        for response in results:
+            self.assertEqual(str(response), '400')
+            self.assertTrue('content-length' in response.headers)
+        self.assertEqual(len(http.connection_pools), 1)
+        pool = tuple(http.connection_pools.values())[0]
+        self.assertEqual(pool.pool_size, 5)
+        self.assertEqual(pool.in_use, 0)
+        self.assertEqual(pool.available, 0)

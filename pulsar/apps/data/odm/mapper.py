@@ -373,16 +373,7 @@ For example::
         for manager in self._registered_models.values():
             manager.create_all()
 
-    def add(self, instance):
-        '''Add an ``instance`` to its store database. This is a shurtcut
-method for::
-
-    self.session().add(instance)
-'''
-        return self.session().add(instance)
-
     # PRIVATE METHODS
-
     def _register_applications(self, applications, models, backends):
         backends = backends or {}
         for model in model_iterator(applications):

@@ -105,7 +105,7 @@ class Queue(AsyncObject):
         :param timeout: optional timeout in seconds.
         :param wait: optional flag for returning the ``item`` if one is
             immediately available.
-        :return: a :class:`Deferred` resulting in the item removed form the
+        :return: a :class:`.Deferred` resulting in the item removed form the
             queue if ``wait`` is ``True``, otherwise the ``item`` removed from
             the queue.
         '''

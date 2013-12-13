@@ -422,8 +422,8 @@ class Application(Configurator, pulsar.Pulsar):
         '''Register this application with the (optional) calling ``actor``.
 
         If an ``actor`` is available (either via the function argument or via
-        the :func:`.get_actor` function) it must be :class:`.Arbiter`,
-        otherwise this call is no-op.
+        the :func:`~pulsar.async.actor.get_actor` function) it must be
+        :class:`.Arbiter`, otherwise this call is no-op.
 
         If no actor is available, it means this application starts
         pulsar engine by creating the :class:`.Arbiter` with its

@@ -1,7 +1,9 @@
+import sys
 from functools import partial
 from collections import namedtuple
 from copy import copy
 
+from pulsar import Deferred
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.async.stream import SocketStreamSslTransport
@@ -158,7 +160,6 @@ class Tunneling:
                     # if transport is not SSL already
                     if not isinstance(response.transport,
                                       SocketStreamSslTransport):
-                        #print('tunneling %s' % request)
                         response._request = tunnel
                         response.bind_event('on_headers', self.on_headers)
                 else:
@@ -170,38 +171,40 @@ class Tunneling:
 
     def on_headers(self, response):
         '''Called back once the headers have arrived.'''
-        #print('headers %s' % response._request.request)
         if response.status_code == 200:
-            loop = response._loop
-            loop.remove_reader(response.transport.sock.fileno())
-            # Wraps the socket at the next iteration loop. Important!
-            loop.call_soon_threadsafe(self.switch_to_ssl, response)
+            connection = response._connection
+            response.bind_event('post_request', self._tunnel_consumer)
+            return response.finished()
         # make sure to return the response
         return response
 
-    def switch_to_ssl(self, prev_response):
-        '''Wrap the transport for SSL communication.'''
-        loop = prev_response._loop
-        request = prev_response._request.request
-        connection = prev_response._connection
-        connection.upgrade(connection._consumer_factory)
-        transport = connection.transport
-        sock = transport.sock
-        transport = SocketStreamSslTransport(loop, sock, transport.protocol,
-                                             request._ssl, server_side=False,
-                                             server_hostname=request._netloc)
-        connection._transport = transport
-        # silence connection made since it will be called again when the
-        # ssl handshake occurs. This is just to avoid unwanted logging.
-        #
-        connection.silence_event('connection_made')
-        connection._processed -= 1
-        connection.producer._requests_processed -= 1
-        #
-        prev_response.bind_event('post_request',
-                                 partial(self.start_tunneling, request))
-        prev_response.finished()
+    def _tunnel_consumer(self, response):
+        request = response._request.request
+        connection = response._connection
+        loop = connection._loop
+        d = Deferred(loop)
+        loop.remove_reader(connection.transport.sock.fileno())
+        # Wraps the socket at the next iteration loop. Important!
+        loop.call_later(1, self.switch_to_ssl, connection, request, d)
+        return d
 
-    def start_tunneling(self, request, consumer):
-        consumer.start(request)
-        return consumer.on_finished
+    def switch_to_ssl(self, connection, request, d):
+        '''Wrap the transport for SSL communication.'''
+        try:
+            loop = connection._loop
+            transport = connection.transport
+            sock = transport.sock
+            sslt = SocketStreamSslTransport(loop, sock, transport.protocol,
+                                            request._ssl, server_side=False,
+                                            server_hostname=request._netloc)
+            connection._transport = sslt
+            # silence connection made since it will be called again when the
+            # ssl handshake occurs. This is just to avoid unwanted logging.
+            connection.silence_event('connection_made')
+            connection._processed -= 1
+            connection.producer._requests_processed -= 1
+            response = connection._build_consumer()
+            response.start(request)
+            response.on_finished.chain(d)
+        except Exception:
+            d.callback(sys.exc_info())

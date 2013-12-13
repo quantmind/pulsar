@@ -74,6 +74,6 @@ Logging
 Path
 ==================
 
-.. automodule:: pulsar.utils.html
+.. automodule:: pulsar.utils.path
    :members:
 '''
