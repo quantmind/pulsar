@@ -95,6 +95,8 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
+from math import log
+from random import lognormvariate
 from functools import partial
 
 import pulsar
@@ -262,10 +264,13 @@ class SocketServer(pulsar.Application):
         '''
         sockets = [sock.sock for sock in worker.params.sockets]
         cfg = self.cfg
+        max_requests = cfg.max_requests
+        if max_requests:
+            max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(self.protocol_factory(),
                                      worker._loop,
                                      sockets=sockets,
-                                     max_connections=cfg.max_requests,
+                                     max_connections=max_requests,
                                      keep_alive=cfg.keep_alive,
                                      name=self.name)
         for event in ('connection_made', 'pre_request', 'post_request',
