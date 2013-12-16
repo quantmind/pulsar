@@ -2,8 +2,8 @@
 Pulsar
 ================
 
-Concurrent framework for Python.
 
+Concurrent framework for Python.
 
 .. toctree::
    :maxdepth: 1
