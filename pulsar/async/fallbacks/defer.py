@@ -138,11 +138,12 @@ class Failure(object):
         Check if the :attr:`error` was logged.
 
     '''
+    __slots__ = ('_mute', 'exc_info')
     _msg = 'Pulsar Asynchronous Failure'
 
     def __init__(self, exc_info, noisy=False):
-        self.exc_info = as_async_exec_info(exc_info)
         self._mute = False
+        self.exc_info = as_async_exec_info(exc_info)
         if noisy:
             self.log()
 

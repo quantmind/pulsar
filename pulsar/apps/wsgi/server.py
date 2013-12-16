@@ -419,6 +419,7 @@ class HttpServerResponse(ProtocolConsumer):
             wsgi_iter = self.wsgi_callable(environ, self.start_response)
             yield self._async_wsgi(wsgi_iter)
         except IOError:     # client disconnected, end this connection
+            print('here')
             self.finished()
         except Exception:
             exc_info = sys.exc_info()
@@ -448,7 +449,7 @@ class HttpServerResponse(ProtocolConsumer):
                 try:
                     wsgi_iter.close()
                 except Exception:
-                    LOGGER.exception('Error while closing wsgi iterator')
+                    self.logger.exception('Error while closing wsgi iterator')
         yield self.finish_wsgi()
 
     def finish_wsgi(self):
