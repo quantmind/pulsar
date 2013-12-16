@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Dining Philosophers &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Dining Philosophers &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="Asynchronous Components" href="coroutine.html" />
+    <link rel="next" title="Pulsar-ds" href="pulsards.html" />
     <link rel="prev" title="Django with Pulsar" href="django.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -41,12 +47,12 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="coroutine.html" title="Asynchronous Components"
+          <a href="pulsards.html" title="Pulsar-ds"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="django.html" title="Django with Pulsar"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/tutorials/philosophers.html">release docs here</a>.
         </p>
     
@@ -68,10 +74,10 @@
           <div class="body">
             
   <div class="section" id="dining-philosophers">
-<span id="philosophers"></span><h1>Dining Philosophers<a class="headerlink" href="#dining-philosophers" title="Permalink to this headline">¶</a></h1>
+<span id="id1"></span><h1>Dining Philosophers<a class="headerlink" href="#dining-philosophers" title="Permalink to this headline">¶</a></h1>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.philosophers.manage" title="examples.philosophers.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.philosophers.manage</span></tt></a>
 module.</p>
-<span class="target" id="module-examples.philosophers.manage"></span><p>The dining <a href="#id2"><span class="problematic" id="id3">`philosophers`_</span></a> problem is an example problem often used in
+<span class="target" id="module-examples.philosophers.manage"></span><p>The dining <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">philosophers</a> problem is an example problem often used in
 concurrent algorithm design to illustrate synchronisation issues and
 techniques for resolving them.</p>
 <div class="section" id="the-problem">
@@ -113,7 +119,7 @@ get a chance to eat.</li>
 <dd><dl class="method">
 <dt id="examples.philosophers.manage.DiningPhilosophers.worker_info">
 <tt class="descname">worker_info</tt><big>(</big><em>philosopher</em>, <em>info=None</em><big>)</big><a class="reference internal" href="../modules/examples/philosophers/manage.html#DiningPhilosophers.worker_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.philosophers.manage.DiningPhilosophers.worker_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Application.worker_info()</span></tt> to provide
+<dd><p>Override <a class="reference internal" href="../api/application.html#pulsar.apps.Application.worker_info" title="pulsar.apps.Application.worker_info"><tt class="xref py py-meth docutils literal"><span class="pre">worker_info()</span></tt></a> to provide
 information about the philosopher.</p>
 </dd></dl>
 
@@ -153,7 +159,7 @@ action to the monitor.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -170,7 +176,7 @@ action to the monitor.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Dining Philosophers</a><ul>
 <li><a class="reference internal" href="#the-problem">The problem</a></li>
@@ -183,8 +189,8 @@ action to the monitor.</p>
   <p class="topless"><a href="django.html"
                         title="previous chapter">Django with Pulsar</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="coroutine.html"
-                        title="next chapter">Asynchronous Components</a></p>
+  <p class="topless"><a href="pulsards.html"
+                        title="next chapter">Pulsar-ds</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/philosophers.txt"
@@ -208,10 +214,13 @@ action to the monitor.</p>
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -228,5 +237,5 @@ action to the monitor.</p>
 
 </script>
 
-  </body>
+</body>
 </html>

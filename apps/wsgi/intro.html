@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>WSGI Server &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>WSGI Server &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous WSGI" href="async.html" />
     <link rel="prev" title="WSGI" href="index.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -46,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="WSGI"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/wsgi/intro.html">release docs here</a>.
         </p>
     
@@ -86,8 +92,8 @@ it uses an event-driven, non-blocking I/O model that makes it
 lightweight and efficient. In addition, its multiprocessing
 capabilities allow to handle the <a class="reference external" href="http://en.wikipedia.org/wiki/C10k_problem">c10k problem</a> with ease.</p>
 </div>
-<p>An example of a web server written with <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi</span></tt></a> which responds
-with <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">World!</span></tt> for every request:</p>
+<p>An example of a web server written with the <a class="reference internal" href="#module-pulsar.apps.wsgi" title="pulsar.apps.wsgi"><tt class="xref py py-mod docutils literal"><span class="pre">wsgi</span></tt></a>
+module which responds with <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">World!</span></tt> for every request:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
@@ -114,15 +120,6 @@ To run the application:</p>
 <dt id="pulsar.apps.wsgi.WSGIServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.</tt><tt class="descname">WSGIServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer" title="Permalink to this definition">¶</a></dt>
 <dd><p>A WSGI <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a>.</p>
-<dl class="method">
-<dt id="pulsar.apps.wsgi.WSGIServer.protocol_consumer">
-<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi.html#WSGIServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.WSGIServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build the <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> factory.</p>
-<p>It uses the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="pulsar.apps.wsgi.server.HttpServerResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.server.HttpServerResponse</span></tt></a>
-protocol consumer and the wsgi callable provided as parameter during
-initialisation.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -131,7 +128,7 @@ initialisation.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.server.</tt><tt class="descname">HttpServerResponse</tt><big>(</big><em>wsgi_callable</em>, <em>cfg</em>, <em>server_software=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Server side WSGI <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.</p>
+<dd><p>Server side WSGI <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable">
 <tt class="descname">wsgi_callable</tt><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable" title="Permalink to this definition">¶</a></dt>
@@ -141,7 +138,7 @@ initialisation.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.server.HttpServerResponse.data_received">
 <tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/server.html#HttpServerResponse.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.server.HttpServerResponse.data_received" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.ProtocolConsumer.data_received" title="pulsar.ProtocolConsumer.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">data_received()</span></tt></a> method.</p>
+<dd><p>Implements <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.data_received" title="pulsar.async.protocols.ProtocolConsumer.data_received"><tt class="xref py py-meth docutils literal"><span class="pre">data_received()</span></tt></a> method.</p>
 <p>Once we have a full HTTP message, build the wsgi <tt class="docutils literal"><span class="pre">environ</span></tt> and
 delegate the response to the <a class="reference internal" href="#pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable" title="pulsar.apps.wsgi.server.HttpServerResponse.wsgi_callable"><tt class="xref py py-func docutils literal"><span class="pre">wsgi_callable()</span></tt></a> function.</p>
 </dd></dl>
@@ -253,7 +250,7 @@ or newer and there was no Content-Length header set.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
+<a href="../../content.html">
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -270,7 +267,7 @@ or newer and there was no Content-Length header set.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <h3><a href="../../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">WSGI Server</a><ul>
 <li><a class="reference internal" href="#id2">WSGI Server</a></li>
@@ -309,10 +306,13 @@ or newer and there was no Content-Length header set.</p>
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -329,5 +329,5 @@ or newer and there was no Content-Length header set.</p>
 
 </script>
 
-  </body>
+</body>
 </html>

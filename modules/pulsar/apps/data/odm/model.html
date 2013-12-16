@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.data.odm.model &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.8.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../../../apps.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/data/odm/model.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.data.odm.model</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ImproperlyConfigured</span><span class="p">,</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">iteritems</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">pulsar.utils.libs</span> <span class="kn">import</span> <span class="n">Model</span> <span class="k">as</span> <span class="n">CModelBase</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">CModelBase</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">AutoIdField</span>
+
+
+<span class="n">class_prepared</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">get_fields</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+    <span class="c">#</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">Field</span><span class="p">):</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+    <span class="c">#</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">creation_counter</span><span class="p">)</span>
+    <span class="c">#</span>
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s">&#39;_meta&#39;</span><span class="p">):</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="nb">list</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">copy</span><span class="p">(</span><span class="n">field</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span>
+                          <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="o">+</span> <span class="n">fields</span>
+    <span class="c">#</span>
+    <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">make_app_label</span><span class="p">(</span><span class="n">new_class</span><span class="p">,</span> <span class="n">app_label</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">app_label</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">model_module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">new_class</span><span class="o">.</span><span class="n">__module__</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">bits</span> <span class="o">=</span> <span class="n">model_module</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">app_label</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">app_label</span> <span class="o">==</span> <span class="s">&#39;models&#39;</span><span class="p">:</span>
+                <span class="n">app_label</span> <span class="o">=</span> <span class="n">bits</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">app_label</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">app_label</span>
+
+
+<span class="k">class</span> <span class="nc">ModelMeta</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A class for storing meta data for a :class:`.Model` class.</span>
+<span class="sd">    To override default behaviour you can specify the ``Meta`` class</span>
+<span class="sd">    as an inner class of :class:`.Model` in the following way::</span>
+
+<span class="sd">        from datetime import datetime</span>
+<span class="sd">        from stdnet import odm</span>
+
+<span class="sd">        class MyModel(odm.StdModel):</span>
+<span class="sd">            timestamp = odm.DateTimeField(default = datetime.now)</span>
+<span class="sd">            ...</span>
+
+<span class="sd">            class Meta:</span>
+<span class="sd">                ordering = &#39;-timestamp&#39;</span>
+<span class="sd">                name = &#39;custom&#39;</span>
+
+
+<span class="sd">    :parameter register: if ``True`` (default), this :class:`ModelMeta` is</span>
+<span class="sd">        registered in the global models hashtable.</span>
+<span class="sd">    :parameter abstract: Check the :attr:`abstract` attribute.</span>
+<span class="sd">    :parameter ordering: Check the :attr:`ordering` attribute.</span>
+<span class="sd">    :parameter app_label: Check the :attr:`app_label` attribute.</span>
+<span class="sd">    :parameter name: Check the :attr:`name` attribute.</span>
+<span class="sd">    :parameter table_name: Check the :attr:`table_name` attribute.</span>
+<span class="sd">    :parameter attributes: Check the :attr:`attributes` attribute.</span>
+
+<span class="sd">    This is the list of attributes and methods available. All attributes,</span>
+<span class="sd">    but the ones mantioned above, are initialized by the object relational</span>
+<span class="sd">    mapper.</span>
+
+<span class="sd">    .. attribute:: abstract</span>
+
+<span class="sd">        If ``True``, This is an abstract Meta class.</span>
+
+<span class="sd">    .. attribute:: model</span>
+
+<span class="sd">        :class:`Model` for which this class is the database metadata container.</span>
+
+<span class="sd">    .. attribute:: name</span>
+
+<span class="sd">        Usually it is the :class:`Model` class name in lower-case, but it</span>
+<span class="sd">        can be customised.</span>
+
+<span class="sd">    .. attribute:: app_label</span>
+
+<span class="sd">        Unless specified it is the name of the directory or file</span>
+<span class="sd">        (if at top level) containing the :class:`Model` definition. It can be</span>
+<span class="sd">        customised.</span>
+
+<span class="sd">    .. attribute:: table_name</span>
+
+<span class="sd">        The table_name which is by default given by ``app_label.name``.</span>
+
+<span class="sd">    .. attribute:: ordering</span>
+
+<span class="sd">        Optional name of a :class:`Field` in the :attr:`model`.</span>
+<span class="sd">        If provided, model indices will be sorted with respect to the value</span>
+<span class="sd">        of the specified field. It can also be a :class:`autoincrement`</span>
+<span class="sd">        instance.</span>
+<span class="sd">        Check the :ref:`sorting &lt;sorting&gt;` documentation for more details.</span>
+
+<span class="sd">        Default: ``None``.</span>
+
+<span class="sd">    .. attribute:: dfields</span>
+
+<span class="sd">        dictionary of :class:`Field` instances.</span>
+
+<span class="sd">    .. attribute:: fields</span>
+
+<span class="sd">        list of all :class:`Field` instances.</span>
+
+<span class="sd">    .. attribute:: scalarfields</span>
+
+<span class="sd">        Ordered list of all :class:`Field` which are not</span>
+<span class="sd">        :class:`.StructureField`.</span>
+<span class="sd">        The order is the same as in the :class:`Model` definition.</span>
+
+<span class="sd">    .. attribute:: indices</span>
+
+<span class="sd">        List of :class:`Field` which are indices (:attr:`Field.index` attribute</span>
+<span class="sd">        set to ``True``).</span>
+
+<span class="sd">    .. attribute:: pk</span>
+
+<span class="sd">        The :class:`Field` representing the primary key.</span>
+
+<span class="sd">    .. attribute:: related</span>
+
+<span class="sd">        Dictionary of :class:`related.RelatedManager` for the :attr:`model`.</span>
+<span class="sd">        It is created at runtime by the object data mapper.</span>
+
+<span class="sd">    .. attribute:: manytomany</span>
+
+<span class="sd">        List of :class:`ManyToManyField` names for the :attr:`model`. This</span>
+<span class="sd">        information is useful during registration.</span>
+
+<span class="sd">    .. attribute:: attributes</span>
+
+<span class="sd">        Additional attributes for :attr:`model`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">app_label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">register</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">pkname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ordering</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">abstract</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">abstract</span> <span class="o">=</span> <span class="n">abstract</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">converters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_label</span> <span class="o">=</span> <span class="n">app_label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">table_name</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_label</span><span class="p">:</span>
+                <span class="n">table_name</span> <span class="o">=</span> <span class="s">&#39;{0}.{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">table_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="c">#</span>
+        <span class="c"># Check if PK field exists</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">pkname</span> <span class="o">=</span> <span class="n">pkname</span> <span class="ow">or</span> <span class="s">&#39;id&#39;</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">FieldError</span><span class="p">(</span><span class="s">&quot;Primary key already available </span><span class="si">%s</span><span class="s">.&quot;</span>
+                                     <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+                <span class="n">pk</span> <span class="o">=</span> <span class="n">field</span>
+                <span class="n">pkname</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">pk</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">abstract</span><span class="p">:</span>
+            <span class="c"># ID field not available, create one</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">AutoIdField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">fields</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pkname</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">field</span><span class="o">.</span><span class="n">register_with_model</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">pk</span><span class="o">.</span><span class="n">register_with_model</span><span class="p">(</span><span class="n">pkname</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ordering</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">ordering</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ordering</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sorting</span><span class="p">(</span><span class="n">ordering</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state</span><span class="p">:</span>
+            <span class="n">pkvalue</span><span class="p">,</span> <span class="n">loadedfields</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
+            <span class="n">pkvalue</span> <span class="o">=</span> <span class="n">pk</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">pkvalue</span><span class="p">,</span> <span class="n">backend</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pk</span><span class="o">.</span><span class="n">attname</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">loadedfields</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">loadedfields</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">loadedfields</span><span class="p">)</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_loadedfields</span> <span class="o">=</span> <span class="n">loadedfields</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">loadedfields</span><span class="p">():</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">value_from_data</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">backend</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">backend</span> <span class="ow">or</span> <span class="p">(</span><span class="s">&#39;__dbdata__&#39;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span>
+                           <span class="n">data</span><span class="p">[</span><span class="s">&#39;__dbdata__&#39;</span><span class="p">][</span><span class="n">pk</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="n">pkvalue</span><span class="p">):</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">dbdata</span><span class="p">[</span><span class="n">pk</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkvalue</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">pkname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Primary key name. A shortcut for ``self.pk.name``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">pk_to_python</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Convert the primary key ``value`` to a valid python representation.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="o">.</span><span class="n">to_python</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">backend</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Perform validation for *instance* and stores serialized data,</span>
+<span class="sd">indexes and errors into local cache.</span>
+<span class="sd">Return ``True`` if the instance is ready to be saved to database.&#39;&#39;&#39;</span>
+        <span class="n">dbdata</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">dbdata</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">dbdata</span><span class="p">[</span><span class="s">&#39;cleaned_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">dbdata</span><span class="p">[</span><span class="s">&#39;errors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c">#Loop over scalar fields first</span>
+        <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="n">fieldvalue_pairs</span><span class="p">():</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">svalue</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">set_get_value</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">errors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">svalue</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">svalue</span> <span class="ow">is</span> <span class="s">&#39;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">field</span><span class="o">.</span><span class="n">required</span><span class="p">:</span>
+                    <span class="n">errors</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Field &#39;{0}&#39; is required for &#39;{1}&#39;.&quot;</span>
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">svalue</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">svalue</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">svalue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">svalue</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">get_sorting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sortby</span><span class="p">,</span> <span class="n">errorClass</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sortby</span><span class="p">,</span> <span class="n">autoincrement</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
+            <span class="k">return</span> <span class="n">orderinginfo</span><span class="p">(</span><span class="n">sortby</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sortby</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">):</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">sortby</span> <span class="o">=</span> <span class="n">sortby</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">sortby</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkname</span><span class="p">():</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
+            <span class="k">return</span> <span class="n">orderinginfo</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">attname</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sortby</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span><span class="p">[</span><span class="n">sortby</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">orderinginfo</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">attname</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                                    <span class="bp">None</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+            <span class="n">sortbys</span> <span class="o">=</span> <span class="n">sortby</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">JSPLITTER</span><span class="p">)</span>
+            <span class="n">s0</span> <span class="o">=</span> <span class="n">sortbys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sortbys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s0</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span><span class="p">[</span><span class="n">s0</span><span class="p">]</span>
+                <span class="n">nested</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_sorting</span><span class="p">(</span><span class="n">JSPLITTER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sortbys</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span> <span class="n">errorClass</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">nested</span><span class="p">:</span>
+                    <span class="n">sortby</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">attname</span>
+                <span class="k">return</span> <span class="n">orderinginfo</span><span class="p">(</span><span class="n">sortby</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">nested</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">errorClass</span> <span class="o">=</span> <span class="n">errorClass</span> <span class="ow">or</span> <span class="ne">ValueError</span>
+        <span class="k">raise</span> <span class="n">errorClass</span><span class="p">(</span><span class="s">&#39;&quot;</span><span class="si">%s</span><span class="s">&quot; cannot order by attribute &quot;</span><span class="si">%s</span><span class="s">&quot;. It is not a &#39;</span>
+                         <span class="s">&#39;scalar field.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sortby</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">backend_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a two elements tuple containing a list</span>
+<span class="sd">of fields names and a list of field attribute names.&#39;&#39;&#39;</span>
+        <span class="n">dfields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfields</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">atts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pkname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkname</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">pkname</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">processed</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dfields</span><span class="p">:</span>
+                <span class="n">processed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">field</span> <span class="o">=</span> <span class="n">dfields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">atts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">attname</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bname</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">JSPLITTER</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">bname</span> <span class="ow">in</span> <span class="n">dfields</span><span class="p">:</span>
+                    <span class="n">field</span> <span class="o">=</span> <span class="n">dfields</span><span class="p">[</span><span class="n">bname</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;json object&#39;</span><span class="p">,</span> <span class="s">&#39;related object&#39;</span><span class="p">):</span>
+                        <span class="n">processed</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                        <span class="n">atts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">names</span><span class="p">,</span> <span class="n">atts</span>
+
+
+<span class="k">class</span> <span class="nc">PyModelBase</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_access_cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">mstr</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_access_cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_access_cache</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">converters</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">converters</span><span class="p">[</span><span class="n">field</span><span class="p">](</span><span class="n">value</span><span class="p">)</span>
+                <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setitem__</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">mstr</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_access_cache</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setitem__</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">iterable</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+                <span class="n">iterable</span> <span class="o">=</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(((</span><span class="n">mstr</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span>
+                                             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;expected at most 1 arguments, got </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">PyModelBase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">clear_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_store</span><span class="p">(</span><span class="n">store</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a JSON serialisable dictionary representation.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_json</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">pkvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">pk</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">pk</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">pk</span><span class="p">]</span>
+
+    <span class="c">##    INTERNALS</span>
+    <span class="k">def</span> <span class="nf">_to_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to_store</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">store</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pk</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">pk</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pk</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">:</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">dfields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                            <span class="n">value</span> <span class="o">=</span> <span class="n">b64encode</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">ModelType</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="nb">dict</span><span class="p">)):</span>
+    <span class="sd">&#39;&#39;&#39;Model metaclass&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;Meta&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="n">meta</span><span class="p">):</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                         <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;__&#39;</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">extend_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">get_fields</span><span class="p">(</span><span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="n">new_class</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ModelType</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="n">ModelMeta</span><span class="p">(</span><span class="n">new_class</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="o">**</span><span class="n">meta</span><span class="p">)</span>
+        <span class="n">class_prepared</span><span class="o">.</span><span class="n">fire</span><span class="p">(</span><span class="n">new_class</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_class</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">extend_meta</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;register&#39;</span><span class="p">,</span> <span class="s">&#39;abstract&#39;</span><span class="p">,</span> <span class="s">&#39;attributes&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="n">meta</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">PyModel</span><span class="p">(</span><span class="n">ModelType</span><span class="p">(</span><span class="s">&#39;_PyModelBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">PyModelBase</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+    <span class="n">abstract</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+<span class="k">if</span> <span class="n">CModelBase</span><span class="p">:</span>
+<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.model.Model">[docs]</a>    <span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">ModelType</span><span class="p">(</span><span class="s">&#39;_ModelBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">CModelBase</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+        <span class="n">abstract</span> <span class="o">=</span> <span class="bp">True</span>
+</div>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">Model</span> <span class="o">=</span> <span class="n">PyModel</span>
+
+
+<span class="k">if</span> <span class="n">ispy3k</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mstr</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mstr</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../../content.html">
+  <img class="logo" width="200" src="../../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

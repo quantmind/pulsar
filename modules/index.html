@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Overview: module code &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Overview: module code &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,9 +28,11 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" /> 
-  </head>
-  <body>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -37,14 +43,14 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/index.html">release docs here</a>.
         </p>
     
@@ -68,27 +74,31 @@
 <li><a href="examples/proxyserver/manage.html">examples.proxyserver.manage</a></li>
 <li><a href="examples/taskqueue/manage.html">examples.taskqueue.manage</a></li>
 <li><a href="examples/webmail/manage.html">examples.webmail.manage</a></li>
-<li><a href="pulsar.html">pulsar</a></li>
-<ul><li><a href="pulsar/apps.html">pulsar.apps</a></li>
-<ul><li><a href="pulsar/apps/http.html">pulsar.apps.http</a></li>
-<li><a href="pulsar/apps/pubsub.html">pulsar.apps.pubsub</a></li>
-<li><a href="pulsar/apps/redis.html">pulsar.apps.redis</a></li>
-<ul><li><a href="pulsar/apps/redis/client.html">pulsar.apps.redis.client</a></li>
-</ul><li><a href="pulsar/apps/rpc.html">pulsar.apps.rpc</a></li>
+<li><a href="pulsar/apps.html">pulsar.apps</a></li>
+<ul><li><a href="pulsar/apps/data/odm/mapper.html">pulsar.apps.data.odm.mapper</a></li>
+<li><a href="pulsar/apps/data/odm/model.html">pulsar.apps.data.odm.model</a></li>
+<li><a href="pulsar/apps/data/odm/transaction.html">pulsar.apps.data.odm.transaction</a></li>
+<li><a href="pulsar/apps/data/server/server.html">pulsar.apps.data.server.server</a></li>
+<li><a href="pulsar/apps/data/stores/pulsards/base.html">pulsar.apps.data.stores.pulsards.base</a></li>
+<li><a href="pulsar/apps/http.html">pulsar.apps.http</a></li>
+<li><a href="pulsar/apps/rpc.html">pulsar.apps.rpc</a></li>
 <li><a href="pulsar/apps/shell.html">pulsar.apps.shell</a></li>
 <li><a href="pulsar/apps/socket.html">pulsar.apps.socket</a></li>
 <li><a href="pulsar/apps/tasks.html">pulsar.apps.tasks</a></li>
-<ul><li><a href="pulsar/apps/tasks/backends.html">pulsar.apps.tasks.backends</a></li>
+<ul><li><a href="pulsar/apps/tasks/backend.html">pulsar.apps.tasks.backend</a></li>
 <li><a href="pulsar/apps/tasks/models.html">pulsar.apps.tasks.models</a></li>
 <li><a href="pulsar/apps/tasks/rpc.html">pulsar.apps.tasks.rpc</a></li>
 </ul><li><a href="pulsar/apps/test.html">pulsar.apps.test</a></li>
 <ul><li><a href="pulsar/apps/test/loader.html">pulsar.apps.test.loader</a></li>
+<li><a href="pulsar/apps/test/plugins/base.html">pulsar.apps.test.plugins.base</a></li>
+<li><a href="pulsar/apps/test/plugins/bench.html">pulsar.apps.test.plugins.bench</a></li>
 <li><a href="pulsar/apps/test/plugins/profile.html">pulsar.apps.test.plugins.profile</a></li>
 <li><a href="pulsar/apps/test/result.html">pulsar.apps.test.result</a></li>
 <li><a href="pulsar/apps/test/utils.html">pulsar.apps.test.utils</a></li>
 </ul><li><a href="pulsar/apps/tx.html">pulsar.apps.tx</a></li>
 <li><a href="pulsar/apps/ws.html">pulsar.apps.ws</a></li>
-<li><a href="pulsar/apps/wsgi.html">pulsar.apps.wsgi</a></li>
+<ul><li><a href="pulsar/apps/ws/websocket.html">pulsar.apps.ws.websocket</a></li>
+</ul><li><a href="pulsar/apps/wsgi.html">pulsar.apps.wsgi</a></li>
 <ul><li><a href="pulsar/apps/wsgi/auth.html">pulsar.apps.wsgi.auth</a></li>
 <li><a href="pulsar/apps/wsgi/content.html">pulsar.apps.wsgi.content</a></li>
 <li><a href="pulsar/apps/wsgi/handlers.html">pulsar.apps.wsgi.handlers</a></li>
@@ -98,28 +108,47 @@
 <li><a href="pulsar/apps/wsgi/server.html">pulsar.apps.wsgi.server</a></li>
 <li><a href="pulsar/apps/wsgi/structures.html">pulsar.apps.wsgi.structures</a></li>
 <li><a href="pulsar/apps/wsgi/wrappers.html">pulsar.apps.wsgi.wrappers</a></li>
-</ul></ul><li><a href="pulsar/async/concurrency.html">pulsar.async.concurrency</a></li>
+</ul></ul><li><a href="pulsar/async.html">pulsar.async</a></li>
+<ul><li><a href="pulsar/async/access.html">pulsar.async.access</a></li>
+<li><a href="pulsar/async/actor.html">pulsar.async.actor</a></li>
+<li><a href="pulsar/async/arbiter.html">pulsar.async.arbiter</a></li>
+<li><a href="pulsar/async/clients.html">pulsar.async.clients</a></li>
+<li><a href="pulsar/async/commands.html">pulsar.async.commands</a></li>
+<li><a href="pulsar/async/concurrency.html">pulsar.async.concurrency</a></li>
 <li><a href="pulsar/async/consts.html">pulsar.async.consts</a></li>
+<li><a href="pulsar/async/defer.html">pulsar.async.defer</a></li>
+<li><a href="pulsar/async/eventloop.html">pulsar.async.eventloop</a></li>
+<li><a href="pulsar/async/events.html">pulsar.async.events</a></li>
+<li><a href="pulsar/async/fallbacks/defer.html">pulsar.async.fallbacks.defer</a></li>
+<li><a href="pulsar/async/internet.html">pulsar.async.internet</a></li>
 <li><a href="pulsar/async/mailbox.html">pulsar.async.mailbox</a></li>
+<li><a href="pulsar/async/monitor.html">pulsar.async.monitor</a></li>
+<li><a href="pulsar/async/pollers.html">pulsar.async.pollers</a></li>
+<li><a href="pulsar/async/protocols.html">pulsar.async.protocols</a></li>
+<li><a href="pulsar/async/proxy.html">pulsar.async.proxy</a></li>
+<li><a href="pulsar/async/queues.html">pulsar.async.queues</a></li>
 <li><a href="pulsar/async/stream.html">pulsar.async.stream</a></li>
-<li><a href="pulsar/utils/config.html">pulsar.utils.config</a></li>
+</ul><li><a href="pulsar/utils/config.html">pulsar.utils.config</a></li>
 <li><a href="pulsar/utils/exceptions.html">pulsar.utils.exceptions</a></li>
 <li><a href="pulsar/utils/html.html">pulsar.utils.html</a></li>
 <li><a href="pulsar/utils/httpurl.html">pulsar.utils.httpurl</a></li>
 <li><a href="pulsar/utils/internet.html">pulsar.utils.internet</a></li>
 <li><a href="pulsar/utils/log.html">pulsar.utils.log</a></li>
-<li><a href="pulsar/utils/structures.html">pulsar.utils.structures</a></li>
+<li><a href="pulsar/utils/path.html">pulsar.utils.path</a></li>
+<li><a href="pulsar/utils/structures/misc.html">pulsar.utils.structures.misc</a></li>
+<li><a href="pulsar/utils/structures/skiplist.html">pulsar.utils.structures.skiplist</a></li>
+<li><a href="pulsar/utils/structures/zset.html">pulsar.utils.structures.zset</a></li>
 <li><a href="pulsar/utils/system.html">pulsar.utils.system</a></li>
 <li><a href="pulsar/utils/tools.html">pulsar.utils.tools</a></li>
 <li><a href="pulsar/utils/websocket.html">pulsar.utils.websocket</a></li>
-</ul></ul>
+</ul>
 
           </div>
         </div>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -154,10 +183,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -174,5 +206,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

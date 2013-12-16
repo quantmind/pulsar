@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.apps.tx &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.tx &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,9 +44,8 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
     </div>
@@ -48,7 +53,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/tx.html">release docs here</a>.
         </p>
     
@@ -71,19 +76,19 @@
 <span class="sd">    from pulsar.apps.tx import twisted</span>
 
 <span class="sd">The implementation replaces the twisted reactor with a proxy for</span>
-<span class="sd">:class:`pulsar.EventLoop`.</span>
+<span class="sd">:class:`.EventLoop`.</span>
 <span class="sd">Twisted Deferred and Failures are made compatible with pulsar</span>
-<span class="sd">by installing two different discovery functions via the</span>
-<span class="sd">:func:`pulsar.set_async` function.</span>
+<span class="sd">by installing twisted asynchronous binding via the</span>
+<span class="sd">:func:`.add_async_binding` function.</span>
 
 <span class="sd">Threads, signal handling, scheduling and so forth is handled by pulsar itself,</span>
 <span class="sd">twisted implementation is switched off.</span>
 
-<span class="sd">The Coverage report is switched off because twisted is not available</span>
-<span class="sd">in python 3.</span>
 
-<span class="sd">Pulsar Reactor</span>
+<span class="sd">Implementation</span>
 <span class="sd">====================</span>
+
+<span class="sd">.. autofunction:: check_twisted</span>
 
 <span class="sd">.. autoclass:: PulsarReactor</span>
 <span class="sd">   :members:</span>
@@ -96,8 +101,7 @@
     <span class="kn">import</span> <span class="nn">twisted</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.main</span> <span class="kn">import</span> <span class="n">installReactor</span>
     <span class="kn">from</span> <span class="nn">twisted.internet.posixbase</span> <span class="kn">import</span> <span class="n">PosixReactorBase</span>
-    <span class="kn">from</span> <span class="nn">twisted.internet.defer</span> <span class="kn">import</span> <span class="n">Deferred</span>
-    <span class="kn">from</span> <span class="nn">twisted.python.failure</span> <span class="kn">import</span> <span class="n">Failure</span>
+    <span class="kn">from</span> <span class="nn">twisted.internet.defer</span> <span class="kn">import</span> <span class="n">Deferred</span> <span class="k">as</span> <span class="n">TwistedDeferred</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
     <span class="c"># This is for when we build documentation with sphinx in python 3</span>
     <span class="kn">import</span> <span class="nn">os</span>
@@ -108,29 +112,24 @@
         <span class="k">raise</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.async.defer</span> <span class="kn">import</span> <span class="p">(</span><span class="n">default_maybe_async</span><span class="p">,</span> <span class="n">default_maybe_failure</span><span class="p">,</span>
-                                <span class="n">set_async</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">get_event_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">add_async_binding</span>
 
 
-<span class="k">def</span> <span class="nf">_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>    <span class="c"># pragma    nocover</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">):</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
+<div class="viewcode-block" id="check_twisted"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.check_twisted">[docs]</a><span class="k">def</span> <span class="nf">check_twisted</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Binding for twisted.</span>
+
+<span class="sd">    Added to pulsar asynchronous engine via the :func:`.add_async_binding`</span>
+<span class="sd">    function.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">TwistedDeferred</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="n">d</span><span class="o">.</span><span class="n">_twisted_deferred</span> <span class="o">=</span> <span class="n">obj</span>
-        <span class="n">obj</span><span class="o">.</span><span class="n">addBoth</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">)</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">d</span>
-    <span class="k">return</span> <span class="n">default_maybe_async</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">addCallbacks</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">Failure</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">tb</span><span class="p">))))</span>
+        <span class="k">return</span> <span class="n">d</span>
 
-
-<span class="k">def</span> <span class="nf">_maybe_failure</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">Failure</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Failure</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">tb</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default_maybe_failure</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-
-
-<span class="c"># Set the new async discovery functions</span>
-<span class="n">set_async</span><span class="p">(</span><span class="n">_maybe_async</span><span class="p">,</span> <span class="n">_maybe_failure</span><span class="p">)</span>
+</div>
+<span class="n">add_async_binding</span><span class="p">(</span><span class="n">check_twisted</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
@@ -196,7 +195,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -231,10 +230,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -251,5 +253,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

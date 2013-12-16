@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -46,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/api/async.html">release docs here</a>.
         </p>
     
@@ -67,117 +73,101 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-pulsar"></span><div class="section" id="asynchonous-api">
+  <span class="target" id="module-pulsar.async"></span><div class="section" id="asynchonous-api">
 <span id="async-api"></span><h1>Asynchonous API<a class="headerlink" href="#asynchonous-api" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="event-loop">
 <h2>Event loop<a class="headerlink" href="#event-loop" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="get-event-loop">
+<h3>get event loop<a class="headerlink" href="#get-event-loop" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.get_event_loop">
+<tt class="descclassname">pulsar.async.</tt><tt class="descname">get_event_loop</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.async.get_event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the event loop in the current context. If a loop is not available
+it returns nothing.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="new-event-loop">
+<h3>new event loop<a class="headerlink" href="#new-event-loop" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.new_event_loop">
+<tt class="descclassname">pulsar.async.</tt><tt class="descname">new_event_loop</tt><big>(</big><em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.async.new_event_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a new event loop.</p>
+</dd></dl>
+
+</div>
 <div class="section" id="poller">
 <h3>Poller<a class="headerlink" href="#poller" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.Poller">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Poller</tt><a class="headerlink" href="#pulsar.Poller" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller">
+<em class="property">class </em><tt class="descclassname">pulsar.async.pollers.</tt><tt class="descname">Poller</tt><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Poller interface</p>
 <dl class="method">
-<dt id="pulsar.Poller.handlers">
-<tt class="descname">handlers</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.Poller.handlers" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.handlers">
+<tt class="descname">handlers</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.handlers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.handlers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the handlers for file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.install_waker">
-<tt class="descname">install_waker</tt><big>(</big><em>event_loop</em><big>)</big><a class="headerlink" href="#pulsar.Poller.install_waker" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.install_waker">
+<tt class="descname">install_waker</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.install_waker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.install_waker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Install event loop waker.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.add_reader">
-<tt class="descname">add_reader</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="headerlink" href="#pulsar.Poller.add_reader" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.add_reader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.add_reader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a reader <tt class="docutils literal"><span class="pre">handler</span></tt> on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.add_writer">
-<tt class="descname">add_writer</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="headerlink" href="#pulsar.Poller.add_writer" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.add_writer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.add_writer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a writer <tt class="docutils literal"><span class="pre">handler</span></tt> on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.add_error">
-<tt class="descname">add_error</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="headerlink" href="#pulsar.Poller.add_error" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.add_error">
+<tt class="descname">add_error</tt><big>(</big><em>fd</em>, <em>handler</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.add_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.add_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a error <tt class="docutils literal"><span class="pre">handler</span></tt> on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.remove_reader">
-<tt class="descname">remove_reader</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.Poller.remove_reader" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.remove_reader">
+<tt class="descname">remove_reader</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.remove_reader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.remove_reader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the read event on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.remove_writer">
-<tt class="descname">remove_writer</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.Poller.remove_writer" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.remove_writer">
+<tt class="descname">remove_writer</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.remove_writer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.remove_writer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the write event on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.remove_error">
-<tt class="descname">remove_error</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.Poller.remove_error" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.remove_error">
+<tt class="descname">remove_error</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.remove_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.remove_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the error event on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.handle_events">
-<tt class="descname">handle_events</tt><big>(</big><em>loop</em>, <em>fd</em>, <em>events</em><big>)</big><a class="headerlink" href="#pulsar.Poller.handle_events" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.handle_events">
+<tt class="descname">handle_events</tt><big>(</big><em>loop</em>, <em>fd</em>, <em>events</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.handle_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.handle_events" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle <tt class="docutils literal"><span class="pre">events</span></tt> on file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
 <p>This method is called by the event <tt class="docutils literal"><span class="pre">loop</span></tt> when new events are
 triggered.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.unregister">
-<tt class="descname">unregister</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.Poller.unregister" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.unregister">
+<tt class="descname">unregister</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.unregister"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.unregister" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unregister file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt> from the poller.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Poller.fileno">
-<tt class="descname">fileno</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Poller.fileno" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.pollers.Poller.fileno">
+<tt class="descname">fileno</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/pollers.html#Poller.fileno"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.pollers.Poller.fileno" title="Permalink to this definition">¶</a></dt>
 <dd><p>File descriptor for this poller.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="timed-call">
-<h3>Timed Call<a class="headerlink" href="#timed-call" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.TimedCall">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">TimedCall</tt><big>(</big><em>deadline</em>, <em>callback</em>, <em>args</em><big>)</big><a class="headerlink" href="#pulsar.TimedCall" title="Permalink to this definition">¶</a></dt>
-<dd><p>An EventLoop callback handler. This is not initialised directly, instead
-it is created by <a class="reference internal" href="#pulsar.EventLoop.call_soon" title="pulsar.EventLoop.call_soon"><tt class="xref py py-meth docutils literal"><span class="pre">EventLoop.call_soon()</span></tt></a>, <a class="reference internal" href="#pulsar.EventLoop.call_later" title="pulsar.EventLoop.call_later"><tt class="xref py py-meth docutils literal"><span class="pre">EventLoop.call_later()</span></tt></a>,
-<a class="reference internal" href="#pulsar.EventLoop.call_soon_threadsafe" title="pulsar.EventLoop.call_soon_threadsafe"><tt class="xref py py-meth docutils literal"><span class="pre">EventLoop.call_soon_threadsafe()</span></tt></a> and so forth.</p>
-<dl class="attribute">
-<dt id="pulsar.TimedCall.deadline">
-<tt class="descname">deadline</tt><a class="headerlink" href="#pulsar.TimedCall.deadline" title="Permalink to this definition">¶</a></dt>
-<dd><p>a time in the future or <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.TimedCall.callback">
-<tt class="descname">callback</tt><a class="headerlink" href="#pulsar.TimedCall.callback" title="Permalink to this definition">¶</a></dt>
-<dd><p>The callback to execute in the eventloop</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.TimedCall.cancelled">
-<tt class="descname">cancelled</tt><a class="headerlink" href="#pulsar.TimedCall.cancelled" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag indicating this callback is cancelled.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.TimedCall.cancel">
-<tt class="descname">cancel</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.TimedCall.cancel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempt to cancel the callback.</p>
 </dd></dl>
 
 </dd></dl>
@@ -186,201 +176,155 @@ it is created by <a class="reference internal" href="#pulsar.EventLoop.call_soon
 <div class="section" id="eventloop">
 <h3>EventLoop<a class="headerlink" href="#eventloop" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.EventLoop">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">EventLoop</tt><big>(</big><em>io=None</em>, <em>logger=None</em>, <em>poll_timeout=None</em>, <em>timer=None</em>, <em>iothreadloop=True</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop">
+<em class="property">class </em><tt class="descclassname">pulsar.async.eventloop.</tt><tt class="descname">EventLoop</tt><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop" title="Permalink to this definition">¶</a></dt>
 <dd><p>A pluggable event loop which conforms with the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API.</p>
 <p>The event loop is the place where most asynchronous operations
 are carried out.</p>
 <dl class="attribute">
-<dt id="pulsar.EventLoop.poll_timeout">
-<tt class="descname">poll_timeout</tt><a class="headerlink" href="#pulsar.EventLoop.poll_timeout" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.EventLoop.poll_timeout">
+<tt class="descname">poll_timeout</tt><a class="headerlink" href="#pulsar.async.EventLoop.poll_timeout" title="Permalink to this definition">¶</a></dt>
 <dd><p>The timeout in seconds when polling with <tt class="docutils literal"><span class="pre">epolL</span></tt>, <tt class="docutils literal"><span class="pre">kqueue</span></tt>,
 <tt class="docutils literal"><span class="pre">select</span></tt> and so forth.</p>
 <p>Default: <tt class="docutils literal"><span class="pre">0.5</span></tt></p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.tid">
-<tt class="descname">tid</tt><a class="headerlink" href="#pulsar.EventLoop.tid" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.EventLoop.tid">
+<tt class="descname">tid</tt><a class="headerlink" href="#pulsar.async.EventLoop.tid" title="Permalink to this definition">¶</a></dt>
 <dd><p>The thread id where this event loop is running. If the
 event loop is not running this attribute is <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.task_factory">
-<tt class="descname">task_factory</tt><a class="headerlink" href="#pulsar.EventLoop.task_factory" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a></p>
+<dt id="pulsar.async.eventloop.EventLoop.task_factory">
+<tt class="descname">task_factory</tt><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.task_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.io">
-<tt class="descname">io</tt><a class="headerlink" href="#pulsar.EventLoop.io" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.Poller" title="pulsar.Poller"><tt class="xref py py-class docutils literal"><span class="pre">Poller</span></tt></a> for this event loop. If not supplied,
+<dt id="pulsar.async.eventloop.EventLoop.io">
+<tt class="descname">io</tt><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.io"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.io" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <tt class="xref py py-class docutils literal"><span class="pre">Poller</span></tt> for this event loop. If not supplied,
 the best possible implementation available will be used. On posix
 system this is <tt class="docutils literal"><span class="pre">epoll</span></tt> or <tt class="docutils literal"><span class="pre">kqueue</span></tt> (Mac OS)
 or else <tt class="docutils literal"><span class="pre">select</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.iothreadloop">
-<tt class="descname">iothreadloop</tt><a class="headerlink" href="#pulsar.EventLoop.iothreadloop" title="Permalink to this definition">¶</a></dt>
-<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> install itself as the event
+<dt id="pulsar.async.eventloop.EventLoop.iothreadloop">
+<tt class="descname">iothreadloop</tt><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.iothreadloop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.iothreadloop" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this <tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt> install itself as the event
 loop of the thread where it is run.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.cpubound">
-<tt class="descname">cpubound</tt><a class="headerlink" href="#pulsar.EventLoop.cpubound" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.cpubound">
+<tt class="descname">cpubound</tt><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.cpubound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.cpubound" title="Permalink to this definition">¶</a></dt>
 <dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt> this is a CPU bound event loop, otherwise it is an I/O
 event loop. CPU bound loops can block the loop for considerable amount
 of time.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.EventLoop.num_loops">
-<tt class="descname">num_loops</tt><a class="headerlink" href="#pulsar.EventLoop.num_loops" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.num_loops">
+<tt class="descname">num_loops</tt><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.num_loops"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.num_loops" title="Permalink to this definition">¶</a></dt>
 <dd><p>Total number of loops.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.run">
-<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the event loop until nothing left to do or stop() called.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.run_forever">
-<tt class="descname">run_forever</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run_forever" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.run_forever">
+<tt class="descname">run_forever</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.run_forever"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.run_forever" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the event loop forever.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.run_until_complete">
-<tt class="descname">run_until_complete</tt><big>(</big><em>future</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run_until_complete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run the event loop until a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> <em>future</em> is done.
-Return the future&#8217;s result, or raise its exception. If timeout is not
-<tt class="docutils literal"><span class="pre">None</span></tt>, run it for at most that long;  if the future is still not done,
-raise TimeoutError (but don&#8217;t cancel the future).</p>
+<dt id="pulsar.async.eventloop.EventLoop.run_until_complete">
+<tt class="descname">run_until_complete</tt><big>(</big><em>future</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.run_until_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.run_until_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run until the Future is done.</p>
+<p>If the argument is a coroutine, it is wrapped in a Task.</p>
+<p>XXX TBD: It would be disastrous to call run_until_complete()
+with the same coroutine twice &#8211; it would wrap it in two
+different Tasks and that can&#8217;t be good.</p>
+<p>Return the Future&#8217;s result, or raise its exception.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.stop">
-<tt class="descname">stop</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.stop" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.stop">
+<tt class="descname">stop</tt><big>(</big><em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Stop the loop after the current event loop iteration is complete</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.is_running">
-<tt class="descname">is_running</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.is_running" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.is_running">
+<tt class="descname">is_running</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.is_running"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.is_running" title="Permalink to this definition">¶</a></dt>
 <dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if the loop is running.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.call_at">
-<tt class="descname">call_at</tt><big>(</big><em>when</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_at" title="Permalink to this definition">¶</a></dt>
-<dd><p>Arrange for a <tt class="docutils literal"><span class="pre">callback</span></tt> to be called at a given time <tt class="docutils literal"><span class="pre">when</span></tt>
-in the future. The time is an absolute time, for relative time check
-the <a class="reference internal" href="#pulsar.EventLoop.call_later" title="pulsar.EventLoop.call_later"><tt class="xref py py-meth docutils literal"><span class="pre">call_later()</span></tt></a> method.
-Returns a <a class="reference internal" href="#pulsar.TimedCall" title="pulsar.TimedCall"><tt class="xref py py-class docutils literal"><span class="pre">TimedCall</span></tt></a> with a <a class="reference internal" href="#pulsar.TimedCall.cancel" title="pulsar.TimedCall.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">TimedCall.cancel()</span></tt></a> method
-that can be used to cancel the call.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.call_later">
-<tt class="descname">call_later</tt><big>(</big><em>seconds</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_later" title="Permalink to this definition">¶</a></dt>
-<dd><p>Arrange for a <tt class="docutils literal"><span class="pre">callback</span></tt> to be called at a given time.</p>
-<p>Returns a <a class="reference internal" href="#pulsar.TimedCall" title="pulsar.TimedCall"><tt class="xref py py-class docutils literal"><span class="pre">TimedCall</span></tt></a> with a <a class="reference internal" href="#pulsar.TimedCall.cancel" title="pulsar.TimedCall.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">TimedCall.cancel()</span></tt></a> method
-that can be used to cancel the call. The delay can be an int or float,
-expressed in <tt class="docutils literal"><span class="pre">seconds</span></tt>. It is always a relative time.</p>
-<p>Each callback will be called exactly once.  If two callbacks
-are scheduled for exactly the same time, it is undefined which
-will be called first.</p>
-<p>Callbacks scheduled in the past are passed on to <a class="reference internal" href="#pulsar.EventLoop.call_soon" title="pulsar.EventLoop.call_soon"><tt class="xref py py-meth docutils literal"><span class="pre">call_soon()</span></tt></a> method,
-so these will be called in the order in which they were
-registered rather than by time due.  This is so you can&#8217;t
-cheat and insert yourself at the front of the ready queue by
-using a negative time.</p>
-<p>Any positional arguments after the callback will be passed to
-the callback when it is called.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.call_soon">
-<tt class="descname">call_soon</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_soon" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to <tt class="docutils literal"><span class="pre">self.call_later(0,</span> <span class="pre">callback,</span> <span class="pre">*args)</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.call_soon_threadsafe">
-<tt class="descname">call_soon_threadsafe</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_soon_threadsafe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calls the given callback on the next I/O loop iteration.
-It is safe to call this method from any thread at any time.
-Note that this is the <em>only</em> method in <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> that
-makes this guarantee. all other interaction with the <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>
-must be done from that <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>&#8216;s thread. It may be used
-to transfer control from other threads to the EventLoop&#8217;s thread.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.run_in_executor">
-<tt class="descname">run_in_executor</tt><big>(</big><em>executor</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.run_in_executor" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.run_in_executor">
+<tt class="descname">run_in_executor</tt><big>(</big><em>executor</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.run_in_executor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.run_in_executor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Arrange to call <tt class="docutils literal"><span class="pre">callback(*args)</span></tt> in an <tt class="docutils literal"><span class="pre">executor</span></tt>.</p>
-<p>Return a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> called once the callback has finished.</p>
+<p>Return a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> called once the callback has finished.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.add_reader">
-<tt class="descname">add_reader</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.add_reader" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.add_reader">
+<tt class="descname">add_reader</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.add_reader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.add_reader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a reader callback.  Return a Handler instance.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.add_writer">
-<tt class="descname">add_writer</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.add_writer" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.add_writer">
+<tt class="descname">add_writer</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.add_writer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.add_writer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a reader callback.  Return a Handler instance.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.add_connector">
-<tt class="descname">add_connector</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.add_connector" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.add_connector">
+<tt class="descname">add_connector</tt><big>(</big><em>fd</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.add_connector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.add_connector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a connector callback. Return a Handler instance.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.remove_reader">
-<tt class="descname">remove_reader</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.remove_reader" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cancels the current read callback for file descriptor fd,
-if one is set. A no-op if no callback is currently set for the file
-descriptor.</p>
+<dt id="pulsar.async.eventloop.EventLoop.remove_reader">
+<tt class="descname">remove_reader</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.remove_reader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.remove_reader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancels the current read handler for file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
+<p>A no-op if no callback is currently set for the file descriptor.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.remove_writer">
-<tt class="descname">remove_writer</tt><big>(</big><em>fd</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.remove_writer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cancels the current write callback for file descriptor fd,
-if one is set. A no-op if no callback is currently set for the file
-descriptor.</p>
+<dt id="pulsar.async.eventloop.EventLoop.remove_writer">
+<tt class="descname">remove_writer</tt><big>(</big><em>fd</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.remove_writer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.remove_writer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancels the current write callback for file descriptor <tt class="docutils literal"><span class="pre">fd</span></tt>.</p>
+<p>A no-op if no callback is currently set for the file descriptor.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.add_signal_handler">
-<tt class="descname">add_signal_handler</tt><big>(</big><em>sig</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.add_signal_handler" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.add_signal_handler">
+<tt class="descname">add_signal_handler</tt><big>(</big><em>sig</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.add_signal_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.add_signal_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a signal handler.</p>
 <p>Whenever signal <tt class="docutils literal"><span class="pre">sig</span></tt> is received, arrange for <cite>callback(*args)</cite> to
-be called. Returns a <a class="reference internal" href="#pulsar.TimedCall" title="pulsar.TimedCall"><tt class="xref py py-class docutils literal"><span class="pre">TimedCall</span></tt></a> handler which can be used to
+be called. Returns an <tt class="docutils literal"><span class="pre">asyncio</span> <span class="pre">Handle</span></tt> which can be used to
 cancel the signal callback.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.remove_signal_handler">
-<tt class="descname">remove_signal_handler</tt><big>(</big><em>sig</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.remove_signal_handler" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.remove_signal_handler">
+<tt class="descname">remove_signal_handler</tt><big>(</big><em>sig</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.remove_signal_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.remove_signal_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the signal <tt class="docutils literal"><span class="pre">sig</span></tt> if it was installed and reinstal the
 default signal handler <tt class="docutils literal"><span class="pre">signal.SIG_DFL</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.create_connection">
-<tt class="descname">create_connection</tt><big>(</big><em>protocol_factory</em>, <em>host=None</em>, <em>port=None</em>, <em>ssl=None</em>, <em>family=0</em>, <em>proto=0</em>, <em>flags=0</em>, <em>sock=None</em>, <em>local_addr=None</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.create_connection" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.create_connection">
+<tt class="descname">create_connection</tt><big>(</big><em>protocol_factory</em>, <em>host=None</em>, <em>port=None</em>, <em>ssl=None</em>, <em>family=0</em>, <em>proto=0</em>, <em>flags=0</em>, <em>sock=None</em>, <em>local_addr=None</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.create_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.create_connection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a stream connection to a given internet host and port.</p>
 <p>It is the asynchronous equivalent of <tt class="docutils literal"><span class="pre">socket.create_connection</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -389,7 +333,7 @@ default signal handler <tt class="docutils literal"><span class="pre">signal.SIG
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>protocol_factory</strong> &#8211; The callable to create the
-<a class="reference internal" href="protocols.html#pulsar.Protocol" title="pulsar.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> which handle the connection.</li>
+<tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt> which handle the connection.</li>
 <li><strong>host</strong> &#8211; If host is an empty string or None all interfaces are
 assumed and a list of multiple sockets will be returned (most
 likely one for IPv4 and another one for IPv6)</li>
@@ -405,7 +349,7 @@ before connecting.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> and its result on success is the
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> and its result on success is the
 <tt class="docutils literal"><span class="pre">(transport,</span> <span class="pre">protocol)</span></tt> pair.</p>
 </td>
 </tr>
@@ -416,15 +360,15 @@ appropriate exception will be raised.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.start_serving">
-<tt class="descname">start_serving</tt><big>(</big><em>protocol_factory</em>, <em>host=None</em>, <em>port=None</em>, <em>ssl=None</em>, <em>family=0</em>, <em>flags=1</em>, <em>sock=None</em>, <em>backlog=100</em>, <em>reuse_address=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.start_serving" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.create_server">
+<tt class="descname">create_server</tt><big>(</big><em>protocol_factory</em>, <em>host=None</em>, <em>port=None</em>, <em>ssl=None</em>, <em>family=0</em>, <em>flags=1</em>, <em>sock=None</em>, <em>backlog=100</em>, <em>reuse_address=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.create_server" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a TCP server bound to <tt class="docutils literal"><span class="pre">host</span></tt> and <tt class="docutils literal"><span class="pre">port</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>protocol_factory</strong> &#8211; The <a class="reference internal" href="protocols.html#pulsar.Protocol" title="pulsar.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> which handle server
+<li><strong>protocol_factory</strong> &#8211; The <tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt> which handle server
 requests.</li>
 <li><strong>host</strong> &#8211; If host is an empty string or None all interfaces are
 assumed and a list of multiple sockets will be returned (most
@@ -448,7 +392,7 @@ on UNIX.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result will be a list of socket
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> whose result will be a list of socket
 objects which will later be handled by <tt class="docutils literal"><span class="pre">protocol_factory</span></tt>.</p>
 </td>
 </tr>
@@ -457,94 +401,77 @@ objects which will later be handled by <tt class="docutils literal"><span class=
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.stop_serving">
-<tt class="descname">stop_serving</tt><big>(</big><em>sock</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.stop_serving" title="Permalink to this definition">¶</a></dt>
-<dd><p>The argument should be a socket from the list returned by
-<a class="reference internal" href="#pulsar.EventLoop.start_serving" title="pulsar.EventLoop.start_serving"><tt class="xref py py-meth docutils literal"><span class="pre">start_serving()</span></tt></a> method. The serving loop associated with that socket
-will be stopped.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.sock_connect">
-<tt class="descname">sock_connect</tt><big>(</big><em>sock</em>, <em>address</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.sock_connect" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.sock_connect">
+<tt class="descname">sock_connect</tt><big>(</big><em>sock</em>, <em>address</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.sock_connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.sock_connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connect <tt class="docutils literal"><span class="pre">sock</span></tt> to the given <tt class="docutils literal"><span class="pre">address</span></tt>.</p>
-<p>Returns a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result on success will be <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<p>Returns a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> whose result on success will be <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.sock_accept">
-<tt class="descname">sock_accept</tt><big>(</big><em>sock</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.sock_accept" title="Permalink to this definition">¶</a></dt>
-<dd><p>Accept a connection from a socket <tt class="docutils literal"><span class="pre">sock</span></tt>.</p>
-<p>The socket must be in listening mode and bound to an address.
-Returns a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result on success will be a tuple
-<tt class="docutils literal"><span class="pre">(conn,</span> <span class="pre">peer)</span></tt> where <tt class="docutils literal"><span class="pre">conn</span></tt> is a connected non-blocking socket
-and <tt class="docutils literal"><span class="pre">peer</span></tt> is the peer address.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.wake">
-<tt class="descname">wake</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.EventLoop.wake" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wake up the eventloop.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.call_repeatedly">
-<tt class="descname">call_repeatedly</tt><big>(</big><em>interval</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_repeatedly" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.eventloop.EventLoop.call_repeatedly">
+<tt class="descname">call_repeatedly</tt><big>(</big><em>interval</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.call_repeatedly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.call_repeatedly" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call a <tt class="docutils literal"><span class="pre">callback</span></tt> every <tt class="docutils literal"><span class="pre">interval</span></tt> seconds. It handles
 asynchronous results. If an error occur in the <tt class="docutils literal"><span class="pre">callback</span></tt>, the chain is
 broken and the <tt class="docutils literal"><span class="pre">callback</span></tt> won&#8217;t be called anymore.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.EventLoop.call_every">
-<tt class="descname">call_every</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.call_every" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <a class="reference internal" href="#pulsar.EventLoop.call_repeatedly" title="pulsar.EventLoop.call_repeatedly"><tt class="xref py py-meth docutils literal"><span class="pre">call_repeatedly()</span></tt></a> with the only difference that
+<dt id="pulsar.async.eventloop.EventLoop.call_every">
+<tt class="descname">call_every</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.call_every"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.call_every" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <tt class="xref py py-meth docutils literal"><span class="pre">call_repeatedly()</span></tt> with the only difference that
 the <tt class="docutils literal"><span class="pre">callback</span></tt> is scheduled at every loop. Installing this callback cause
 the event loop to poll with a 0 timeout all the times.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pulsar.EventLoop.maybe_async">
-<tt class="descname">maybe_async</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.maybe_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run <tt class="docutils literal"><span class="pre">value</span></tt> in this event loop.</p>
-<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a>, it is run immediately
-in this event loop.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">either <tt class="docutils literal"><span class="pre">value</span></tt> or a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventLoop.async">
-<tt class="descname">async</tt><big>(</big><em>value</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.EventLoop.async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <tt class="xref py py-meth docutils literal"><span class="pre">maybe_asyc()</span></tt> but forcing a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
-return.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
 </div>
-<div class="section" id="async-discovery-functions">
-<span id="async-discovery"></span><h2>Async Discovery Functions<a class="headerlink" href="#async-discovery-functions" title="Permalink to this headline">¶</a></h2>
-<p>This section describes the asynchronous discover functions which are used
-throughout the library to access if objects are asynchronous or not.
-There are two important functions: <a class="reference internal" href="#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> and <a class="reference internal" href="#pulsar.maybe_failure" title="pulsar.maybe_failure"><tt class="xref py py-func docutils literal"><span class="pre">maybe_failure()</span></tt></a>
-for asynchronous exceptions.</p>
+<div class="section" id="async-object-interface">
+<h2>Async object interface<a class="headerlink" href="#async-object-interface" title="Permalink to this headline">¶</a></h2>
+<p>This amall class is the default interface for
+<a class="reference internal" href="../design.html#async-object"><em>asynchronous objects</em></a>. It is provided mainly for
+documentation purposes.</p>
+<dl class="class">
+<dt id="pulsar.async.access.AsyncObject">
+<em class="property">class </em><tt class="descclassname">pulsar.async.access.</tt><tt class="descname">AsyncObject</tt><a class="reference internal" href="../modules/pulsar/async/access.html#AsyncObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.access.AsyncObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface for <a class="reference internal" href="../design.html#async-object"><em>async objects</em></a></p>
+<dl class="attribute">
+<dt id="pulsar.async.AsyncObject._loop">
+<tt class="descname">_loop</tt><a class="headerlink" href="#pulsar.async.AsyncObject._loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event loop associated with this object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.async.access.AsyncObject.logger">
+<tt class="descname">logger</tt><a class="reference internal" href="../modules/pulsar/async/access.html#AsyncObject.logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.access.AsyncObject.logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>The logger for this object</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pulsar.async.defer"><span id="async-discovery"></span></span></div>
+<div class="section" id="async-utilities">
+<h2>Async Utilities<a class="headerlink" href="#async-utilities" title="Permalink to this headline">¶</a></h2>
+<p>A collection of asynchronous utilities which facilitates manipulation and
+interaction with <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a>.</p>
+<div class="section" id="async">
+<h3>Async<a class="headerlink" href="#async" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.fallbacks.defer.async">
+<tt class="descclassname">pulsar.async.fallbacks.defer.</tt><tt class="descname">async</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.async.fallbacks.defer.async" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
 <div class="section" id="maybe-async">
 <h3>Maybe Async<a class="headerlink" href="#maybe-async" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.maybe_async">
-<tt class="descclassname">pulsar.</tt><tt class="descname">maybe_async</tt><big>(</big><em>value</em>, <em>canceller=None</em>, <em>event_loop=None</em>, <em>timeout=None</em>, <em>get_result=True</em><big>)</big><a class="headerlink" href="#pulsar.maybe_async" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.maybe_async">
+<tt class="descclassname">pulsar.async.fallbacks.defer.</tt><tt class="descname">maybe_async</tt><big>(</big><em>self</em>, <em>value</em>, <em>loop=None</em>, <em>get_result=True</em><big>)</big><a class="headerlink" href="#pulsar.async.fallbacks.defer.maybe_async" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handle a possible asynchronous <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
 <p>Return an <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous instance</em></a>
-only if <tt class="docutils literal"><span class="pre">value</span></tt> is a generator, a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> or <tt class="docutils literal"><span class="pre">get_result</span></tt>
-is set to <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+only if <tt class="docutils literal"><span class="pre">value</span></tt> is a generator, a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> or
+<tt class="docutils literal"><span class="pre">get_result</span></tt> is set to <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -552,170 +479,91 @@ is set to <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>value</strong> &#8211; the value to convert to an asynchronous instance
 if it needs to.</li>
-<li><strong>canceller</strong> &#8211; optional canceller (see <a class="reference internal" href="#pulsar.Deferred.canceller" title="pulsar.Deferred.canceller"><tt class="xref py py-attr docutils literal"><span class="pre">Deferred.canceller</span></tt></a>).</li>
-<li><strong>event_loop</strong> &#8211; optional <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.</li>
-<li><strong>timeout</strong> &#8211; optional timeout after which any asynchronous element
-get a cancellation.</li>
-<li><strong>get_result</strong> &#8211; optional flag indicating if to get the result in
-case the return value is a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> already done.
+<li><strong>loop</strong> &#8211; optional <a class="reference internal" href="#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.</li>
+<li><strong>get_result</strong> &#8211; optional flag indicating if to get the result
+in case the return value is a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> already done.
 Default: <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> or  a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> or a synchronous</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> or  a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> or a synchronous
+value.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>value.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="maybe-failure">
-<h3>Maybe Failure<a class="headerlink" href="#maybe-failure" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.maybe_failure">
-<tt class="descclassname">pulsar.</tt><tt class="descname">maybe_failure</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#pulsar.maybe_failure" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert <em>value</em> into a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> if it is a stack trace or an
-exception, otherwise returns <em>value</em>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>value</strong> &#8211; the value to convert to a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> instance
-if it needs to.</li>
-<li><strong>msg</strong> &#8211; Optional message to display in the log if <em>value</em> is a
-failure.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> or the original <em>value</em>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
-<div class="section" id="set-async">
-<h3>Set Async<a class="headerlink" href="#set-async" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.set_async">
-<tt class="descclassname">pulsar.</tt><tt class="descname">set_async</tt><big>(</big><em>maybe_async_callable</em>, <em>maybe_failure_callable</em><big>)</big><a class="headerlink" href="#pulsar.set_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the asynchronous and failure discovery functions. This can be
-used when third-party asynchronous objects are used in conjunction
-with pulsar <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> and <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="is-failure">
-<h3>Is failure<a class="headerlink" href="#is-failure" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.is_failure">
-<tt class="descclassname">pulsar.</tt><tt class="descname">is_failure</tt><big>(</big><em>obj</em>, <em>*classes</em><big>)</big><a class="headerlink" href="#pulsar.is_failure" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if <tt class="docutils literal"><span class="pre">obj</span></tt> is a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>. If optional <tt class="docutils literal"><span class="pre">classes</span></tt>
-are given, it checks if the error is an instance of those classes.</p>
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="async-utilities">
-<h2>Async Utilities<a class="headerlink" href="#async-utilities" title="Permalink to this headline">¶</a></h2>
-<p>A collection of asynchronous utilities which facilitates manipulation and
-interaction with <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a>.</p>
-<div class="section" id="async">
-<h3>Async<a class="headerlink" href="#async" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">async</tt><big>(</big><em>timeout=None</em>, <em>get_result=False</em><big>)</big><a class="headerlink" href="#pulsar.async" title="Permalink to this definition">¶</a></dt>
-<dd><p>A decorator for <a class="reference internal" href="../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a>.</p>
-<p>It convert the return value of the callable it decorates into a
-<a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> via the <a class="reference internal" href="#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> function. The return value is
-<strong>always</strong> a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> (unless <tt class="xref py py-attr docutils literal"><span class="pre">get_result</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>),
-and the function never throws.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>timeout</strong> &#8211; Optional timeout in seconds.</li>
-<li><strong>get_result</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> return the deferred value if the deferred
-is done. Default <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<p>Check the <a class="reference internal" href="../tutorials/coroutine.html#tutorial-async-utilities"><em>Asynchronous utilities tutorial</em></a>
-for detailed discussion and examples.</p>
-<p>Typical usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@async</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">myfunction</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p>When invoked, <tt class="docutils literal"><span class="pre">myfunction</span></tt> it returns a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="nd">@async</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">simple</span><span class="p">():</span>
-    <span class="k">return</span> <span class="mi">1</span>
-
-<span class="nd">@async</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">simple_error</span><span class="p">():</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Kaput!&#39;</span><span class="p">)</span>
-
-<span class="nd">@async</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">simple_coro</span><span class="p">():</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="o">...</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p>when invoked:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">simple</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span>
-<span class="go">Deferred (done)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">result</span>
-<span class="go">1</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">simple_error</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span>
-<span class="go">Deferred (done)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">result</span>
-<span class="go">Failure: Traceback (most recent call last):</span>
-<span class="go">  File &quot;...pulsarsync\defer.py&quot;, line 260, in call</span>
-<span class="go">    result = callable(*args, **kwargs)</span>
-<span class="go">  File ...</span>
-<span class="go">    raise ValueError(&#39;Kaput!&#39;)</span>
-<span class="go">ValueError: Kaput!</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</div>
-<div class="section" id="multi-async">
-<h3>Multi Async<a class="headerlink" href="#multi-async" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.multi_async">
-<tt class="descclassname">pulsar.</tt><tt class="descname">multi_async</tt><big>(</big><em>iterable</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.multi_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is an utility function to convert an <em>iterable</em> into a
-<a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> element.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="safe-async">
 <h3>Safe Async<a class="headerlink" href="#safe-async" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.safe_async">
-<tt class="descclassname">pulsar.</tt><tt class="descname">safe_async</tt><big>(</big><em>callable</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.safe_async" title="Permalink to this definition">¶</a></dt>
-<dd><p>Safely execute a <tt class="docutils literal"><span class="pre">callable</span></tt> and always return a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>,
-even if the <tt class="docutils literal"><span class="pre">callable</span></tt> is not asynchronous. Never throws.</p>
+<dt id="pulsar.async.defer.safe_async">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">safe_async</tt><big>(</big><em>callable</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#safe_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.safe_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely execute a <tt class="docutils literal"><span class="pre">callable</span></tt> and always return a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt>.</p>
+<p>Never throws.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="maybe-failure">
+<h3>Maybe Failure<a class="headerlink" href="#maybe-failure" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.maybe_failure">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">maybe_failure</tt><big>(</big><em>value</em>, <em>noisy=False</em><big>)</big><a class="headerlink" href="#pulsar.async.defer.maybe_failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert <tt class="docutils literal"><span class="pre">value</span></tt> into a <tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt> if it needs to.</p>
+<p>The conversion happen only if <tt class="docutils literal"><span class="pre">value</span></tt> is a stack trace or an
+exception, otherwise returns <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> &#8211; the value to convert to a <tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt> instance
+if it needs to.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a <tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt> or the original <tt class="docutils literal"><span class="pre">value</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="add-async-binding">
+<h3>Add async binding<a class="headerlink" href="#add-async-binding" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.add_async_binding">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">add_async_binding</tt><big>(</big><em>binding</em><big>)</big><a class="headerlink" href="#pulsar.async.defer.add_async_binding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a third-party asynchronous <tt class="docutils literal"><span class="pre">binding</span></tt> to pulsar asynchronous engine.</p>
+<p><tt class="docutils literal"><span class="pre">binding</span></tt> is a function which accept one parameter only and must return
+<tt class="docutils literal"><span class="pre">None</span></tt> or a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="is-failure">
+<h3>Is failure<a class="headerlink" href="#is-failure" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.is_failure">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">is_failure</tt><big>(</big><em>obj</em>, <em>*classes</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#is_failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.is_failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <tt class="docutils literal"><span class="pre">obj</span></tt> is a <tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt>.</p>
+<p>If optional <tt class="docutils literal"><span class="pre">classes</span></tt> are given, it checks if the error is an instance
+of those classes.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="multi-async">
+<h3>Multi Async<a class="headerlink" href="#multi-async" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.multi_async">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">multi_async</tt><big>(</big><em>iterable=None</em>, <em>loop=None</em>, <em>lock=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#multi_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.multi_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is an utility function to convert an <em>iterable</em> into a
+<a class="reference internal" href="#pulsar.async.defer.MultiDeferred" title="pulsar.async.defer.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> element.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="async-sleep">
 <h3>Async Sleep<a class="headerlink" href="#async-sleep" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.async_sleep">
-<tt class="descclassname">pulsar.</tt><tt class="descname">async_sleep</tt><big>(</big><em>timeout</em><big>)</big><a class="headerlink" href="#pulsar.async_sleep" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.async_sleep">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">async_sleep</tt><big>(</big><em>timeout</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#async_sleep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.async_sleep" title="Permalink to this definition">¶</a></dt>
 <dd><p>The asynchronous equivalent of <tt class="docutils literal"><span class="pre">time.sleep(timeout)</span></tt>. Use this
 function within a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> when you need to resume
 the coroutine after <tt class="docutils literal"><span class="pre">timeout</span></tt> seconds. For example:</p>
@@ -724,7 +572,7 @@ the coroutine after <tt class="docutils literal"><span class="pre">timeout</span
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>This function returns a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> called back in <tt class="docutils literal"><span class="pre">timeout</span></tt> seconds
+<p>This function returns a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> called back in <tt class="docutils literal"><span class="pre">timeout</span></tt> seconds
 with the <tt class="docutils literal"><span class="pre">timeout</span></tt> value.</p>
 </dd></dl>
 
@@ -732,8 +580,8 @@ with the <tt class="docutils literal"><span class="pre">timeout</span></tt> valu
 <div class="section" id="async-while">
 <h3>Async While<a class="headerlink" href="#async-while" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.async_while">
-<tt class="descclassname">pulsar.</tt><tt class="descname">async_while</tt><big>(</big><em>timeout</em>, <em>while_clause</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pulsar.async_while" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.async_while">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">async_while</tt><big>(</big><em>timeout</em>, <em>while_clause</em>, <em>*args</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#async_while"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.async_while" title="Permalink to this definition">¶</a></dt>
 <dd><p>The asynchronous equivalent of <tt class="docutils literal"><span class="pre">while</span> <span class="pre">while_clause(*args):</span></tt></p>
 <p>Use this function within a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a> when you need
 to wait <tt class="docutils literal"><span class="pre">while_clause</span></tt> to be satisfied.</p>
@@ -749,7 +597,7 @@ callable.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt>.</p>
 </td>
 </tr>
 </tbody>
@@ -757,93 +605,151 @@ callable.</li>
 </dd></dl>
 
 </div>
+<div class="section" id="run-in-loop-thread">
+<h3>Run in loop thread<a class="headerlink" href="#run-in-loop-thread" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.run_in_loop_thread">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">run_in_loop_thread</tt><big>(</big><em>loop</em>, <em>callback</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#run_in_loop_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.run_in_loop_thread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run <tt class="docutils literal"><span class="pre">callable</span></tt> in the event <tt class="docutils literal"><span class="pre">loop</span></tt> thread.</p>
+<p>Return a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a></p>
+</dd></dl>
+
 </div>
-<div class="section" id="asynchronous-classes">
-<h2>Asynchronous Classes<a class="headerlink" href="#asynchronous-classes" title="Permalink to this headline">¶</a></h2>
-<p>While <a class="reference internal" href="actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> represents the concurrent side of pulsar,
-the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> adds the asynchronous flavour to it by using callbacks
-functions similar to <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>.</p>
+</div>
+<div class="section" id="async-decorators">
+<h2>Async Decorators<a class="headerlink" href="#async-decorators" title="Permalink to this headline">¶</a></h2>
+<p>Both the <a class="reference internal" href="#pulsar.async.defer.in_loop" title="pulsar.async.defer.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="#pulsar.async.defer.in_loop_thread" title="pulsar.async.defer.in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">in_loop_thread()</span></tt></a> can be applied to
+member functions of classes for wich instances expose the <tt class="docutils literal"><span class="pre">_loop</span></tt>
+attribute (an instance of an event loop).</p>
+<div class="section" id="in-loop">
+<h3>In loop<a class="headerlink" href="#in-loop" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.in_loop">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">in_loop</tt><big>(</big><em>method</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#in_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.in_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to run a method in the event loop of the instance of
+the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
+<p>The instance must be an <a class="reference internal" href="../design.html#async-object"><em>async object</em></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="in-loop-thread">
+<h3>In loop thread<a class="headerlink" href="#in-loop-thread" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.defer.in_loop_thread">
+<tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">in_loop_thread</tt><big>(</big><em>method</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#in_loop_thread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.in_loop_thread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to run a method in the thread of the event loop
+of the instance of the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
+<p>This decorator turns <tt class="docutils literal"><span class="pre">method</span></tt> into a thread-safe asynchronous
+executor.</p>
+<p>The instance must be an <a class="reference internal" href="../design.html#async-object"><em>async object</em></a>.</p>
+<p>It uses the <a class="reference internal" href="#pulsar.async.defer.run_in_loop_thread" title="pulsar.async.defer.run_in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop_thread()</span></tt></a> function.</p>
+</dd></dl>
+
+<span class="target" id="module-pulsar.async.fallbacks.defer"></span></div>
+</div>
 <div class="section" id="deferred">
-<h3>Deferred<a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h3>
+<h2>Deferred<a class="headerlink" href="#deferred" title="Permalink to this headline">¶</a></h2>
+<p>While <a class="reference internal" href="actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> represents the concurrent side of pulsar,
+the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> adds the asynchronous flavour to it by using callbacks
+functions similar to <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>.</p>
+<div class="section" id="id1">
+<h3>Deferred<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.Deferred">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Deferred</tt><big>(</big><em>canceller=None</em>, <em>timeout=None</em>, <em>event_loop=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred" title="Permalink to this definition">¶</a></dt>
-<dd><p>The main class of pulsar asynchronous engine. It is a callback
-which will be put off until later. It conforms with the
-<tt class="docutils literal"><span class="pre">tulip.Future</span></tt> interface with an implementation similar to the
-<tt class="docutils literal"><span class="pre">twisted.defer.Deferred</span></tt> class.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred">
+<em class="property">class </em><tt class="descclassname">pulsar.async.fallbacks.defer.</tt><tt class="descname">Deferred</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred" title="Permalink to this definition">¶</a></dt>
+<dd><p>The main class of pulsar asynchronous engine.</p>
+<p>It is an <a class="reference internal" href="../design.html#async-object"><em>async object</em></a> with an implementation similar
+to the twisted <tt class="docutils literal"><span class="pre">Deferred</span></tt> class.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>canceller</strong> &#8211; optional callable which set the <a class="reference internal" href="#pulsar.Deferred.canceller" title="pulsar.Deferred.canceller"><tt class="xref py py-attr docutils literal"><span class="pre">canceller</span></tt></a>
-attribute.</li>
-<li><strong>timeout</strong> &#8211; optional timeout. If greater than zero the deferred will be
-cancelled after <tt class="docutils literal"><span class="pre">timeout</span></tt> seconds if no result is available.</li>
-<li><strong>event_loop</strong> &#8211; If supplied, it is the <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> associated
-with this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. If not supplied, the default event loop
-is used. The event loop associated with this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is accessed
-via the <a class="reference internal" href="#pulsar.Deferred.event_loop" title="pulsar.Deferred.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a> attribute.</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>loop</strong> &#8211; If supplied, it is the <a class="reference internal" href="#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> associated
+with this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. If not supplied, the default event loop
+is used. The event loop associated with this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is
+accessed via the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._loop" title="pulsar.async.fallbacks.defer.Deferred._loop"><tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt></a> attribute.</td>
 </tr>
 </tbody>
 </table>
 <dl class="attribute">
-<dt id="pulsar.Deferred.canceller">
-<tt class="descname">canceller</tt><a class="headerlink" href="#pulsar.Deferred.canceller" title="Permalink to this definition">¶</a></dt>
-<dd><p>A callable used to stop the pending operation scheduled by this
-<a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> when <a class="reference internal" href="#pulsar.Deferred.cancel" title="pulsar.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">cancel()</span></tt></a> is invoked. The canceller must
-accept a deferred as the only argument.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred._loop">
+<tt class="descname">_loop</tt><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred._loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event loop associated with this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Deferred.paused">
-<tt class="descname">paused</tt><a class="headerlink" href="#pulsar.Deferred.paused" title="Permalink to this definition">¶</a></dt>
-<dd><p>Integer indicating the number of times this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> has been
-paused because the result of a callback was another <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred._paused">
+<tt class="descname">_paused</tt><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred._paused" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer indicating the number of times this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> has been
+paused because the result of a callback was another <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Deferred.result">
-<tt class="descname">result</tt><a class="headerlink" href="#pulsar.Deferred.result" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is available once the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is done. Note,
-this can be anything, including another <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. Trying to access
-this attribute when <a class="reference internal" href="#pulsar.Deferred.done" title="pulsar.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a> is <tt class="docutils literal"><span class="pre">False</span></tt> will result in an
-<tt class="docutils literal"><span class="pre">AttributeError</span></tt> exception.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred._result">
+<tt class="descname">_result</tt><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred._result" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is available once the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is done. Note,
+this can be anything, including another <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Deferred.event_loop">
-<tt class="descname">event_loop</tt><a class="headerlink" href="#pulsar.Deferred.event_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a> associated with this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. It
-can be set during initialisation.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred._timeout">
+<tt class="descname">_timeout</tt><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred._timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <tt class="docutils literal"><span class="pre">asyncio.TimerHandle</span></tt> which handles the timeout of this
+<a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<p>Available only when a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.set_timeout" title="pulsar.async.fallbacks.defer.Deferred.set_timeout"><tt class="xref py py-meth docutils literal"><span class="pre">set_timeout()</span></tt></a> has been called with a valid
+timeout.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Deferred.timeout">
-<tt class="descname">timeout</tt><a class="headerlink" href="#pulsar.Deferred.timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="#pulsar.TimedCall" title="pulsar.TimedCall"><tt class="xref py py-class docutils literal"><span class="pre">TimedCall</span></tt></a> which handles the timeout of this
-<a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>. Available only when a timeout is set.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.timeout">
+<tt class="descname">timeout</tt><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <tt class="docutils literal"><span class="pre">asyncio.TimerHandle</span></tt> which handles the timeout of this
+<a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<p>Available only when a timeout is set.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.async.fallbacks.defer.Deferred.has_callbacks">
+<tt class="descname">has_callbacks</tt><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.has_callbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.has_callbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> if this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> has callbacks.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.set_timeout">
-<tt class="descname">set_timeout</tt><big>(</big><em>timeout</em>, <em>event_loop=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.set_timeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set a the <a class="reference internal" href="#pulsar.Deferred.timeout" title="pulsar.Deferred.timeout"><tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt></a> for this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.done">
+<tt class="descname">done</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.done"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is done.</p>
+<p>This is the case when it was called or cancelled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.fallbacks.defer.Deferred.cancelled">
+<tt class="descname">cancelled</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.cancelled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.cancelled" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, it returns <tt class="docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
+was cancelled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.fallbacks.defer.Deferred.cancel">
+<tt class="descname">cancel</tt><big>(</big><em>msg=''</em>, <em>mute=False</em>, <em>exception_class=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.cancel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.cancel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel the deferred and schedule callbacks.</p>
+<p>If the deferred is waiting for another <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>,
+forward the cancellation to that one.</p>
+<p>If the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is already <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.done" title="pulsar.async.fallbacks.defer.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a>, it does nothing.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>timeout</strong> &#8211; a timeout in seconds.</li>
-<li><strong>event_loop</strong> &#8211; optional event loop where to run the callback. If not
-supplied the <a class="reference internal" href="#pulsar.Deferred.event_loop" title="pulsar.Deferred.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">event_loop</span></tt></a> attribute is used.</li>
+<li><strong>msg</strong> &#8211; Optional message to pass to the when the
+<tt class="xref py py-class docutils literal"><span class="pre">CancelledError</span></tt> is initialised.</li>
+<li><strong>mute</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> mute the logging of the exception class</li>
+<li><strong>exception_class</strong> &#8211; optional exception class to raise on
+cancellation. By default it is the <tt class="xref py py-class docutils literal"><span class="pre">CancelledError</span></tt>
+exception.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">returns <tt class="docutils literal"><span class="pre">self</span></tt> so that other methods can be concatenated.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">True</span></tt> if the cancellation was done otherwise <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
 </td>
 </tr>
 </tbody>
@@ -851,76 +757,26 @@ supplied the <a class="reference internal" href="#pulsar.Deferred.event_loop" ti
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.cancelled">
-<tt class="descname">cancelled</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.cancelled" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, it returns <tt class="docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
-was cancelled.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.add_done_callback">
+<tt class="descname">add_done_callback</tt><big>(</big><em>fn</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.add_done_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.add_done_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a callback to be run when the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> becomes done.</p>
+<p>The callback is called with a single argument,
+the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> object.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.done">
-<tt class="descname">done</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.done" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is done.</p>
-<p>This is the case when it was called or cancelled.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.remove_done_callback">
+<tt class="descname">remove_done_callback</tt><big>(</big><em>fn</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.remove_done_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.remove_done_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all instances of a callback from the &#8220;call when done&#8221; list.</p>
+<p>Returns the number of callbacks removed.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.cancel">
-<tt class="descname">cancel</tt><big>(</big><em>msg=''</em>, <em>mute=False</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.cancel" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, it cancel the deferred and schedule callbacks.
-If the deferred is waiting for another <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, forward the
-cancellation to that one. If the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is already <a class="reference internal" href="#pulsar.Deferred.done" title="pulsar.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a>,
-it does nothing.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> &#8211; Optional message to pass to the when the <tt class="xref py py-class docutils literal"><span class="pre">CancelledError</span></tt>
-is initialised.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.running">
-<tt class="descname">running</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.running" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, always returns <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.get_result">
-<tt class="descname">get_result</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.get_result" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve the result is ready.</p>
-<p>If not raise <tt class="docutils literal"><span class="pre">InvalidStateError</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.add_done_callback">
-<tt class="descname">add_done_callback</tt><big>(</big><em>fn</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.add_done_callback" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, Add a callback to be run when the
-<a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> becomes done. The callback is called with a single argument,
-the <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> object.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.set_result">
-<tt class="descname">set_result</tt><big>(</big><em>result</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.set_result" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, same as <a class="reference internal" href="#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">callback()</span></tt></a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.set_exception">
-<tt class="descname">set_exception</tt><big>(</big><em>exc</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.set_exception" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> API method, same as <a class="reference internal" href="#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">callback()</span></tt></a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Deferred.add_callback">
-<tt class="descname">add_callback</tt><big>(</big><em>callback</em>, <em>errback=None</em>, <em>continuation=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.add_callback" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.Deferred.add_callback">
+<tt class="descname">add_callback</tt><big>(</big><em>callback</em>, <em>errback=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.add_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a <tt class="docutils literal"><span class="pre">callback</span></tt>, and an optional <tt class="docutils literal"><span class="pre">errback</span></tt>.</p>
 <p>Add the two functions to the list of callbaks. Both of them take at
-most one argument, the result passed to the <a class="reference internal" href="#pulsar.Deferred.callback" title="pulsar.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">callback()</span></tt></a> method.</p>
+most one argument, the result passed to the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.callback" title="pulsar.async.fallbacks.defer.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">callback()</span></tt></a> method.</p>
 <p>If the <tt class="docutils literal"><span class="pre">errback</span></tt> callable is provided it will be called when an
 exception occurs.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -934,78 +790,123 @@ exception occurs.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.add_errback">
-<tt class="descname">add_errback</tt><big>(</big><em>errback</em>, <em>continuation=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.add_errback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <a class="reference internal" href="#pulsar.Deferred.add_callback" title="pulsar.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> but only for errors.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.add_errback">
+<tt class="descname">add_errback</tt><big>(</big><em>errback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.add_errback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.add_errback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="pulsar.async.fallbacks.defer.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> but only for errors.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.add_both">
-<tt class="descname">add_both</tt><big>(</big><em>callback</em>, <em>continuation=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.add_both" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.Deferred.add_both">
+<tt class="descname">add_both</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.add_both"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.add_both" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equivalent to <cite>self.add_callback(callback, callback)</cite>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.callback">
-<tt class="descname">callback</tt><big>(</big><em>result=None</em>, <em>state=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.callback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run registered callbacks with the given <em>result</em>.
-This can only be run once. Later calls to this will raise
+<dt id="pulsar.async.fallbacks.defer.Deferred.callback">
+<tt class="descname">callback</tt><big>(</big><em>result</em>, <em>state=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run registered callbacks with the given <em>result</em>.</p>
+<p>This can only be run once. Later calls to this will raise
 <tt class="xref py py-class docutils literal"><span class="pre">InvalidStateError</span></tt>. If further callbacks are added after
-this point, <a class="reference internal" href="#pulsar.Deferred.add_callback" title="pulsar.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> will run the <em>callbacks</em> immediately.</p>
+this point, <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="pulsar.async.fallbacks.defer.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> will run the <em>callbacks</em> immediately.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the <em>result</em> input parameter</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._result" title="pulsar.async.fallbacks.defer.Deferred._result"><tt class="xref py py-attr docutils literal"><span class="pre">_result</span></tt></a> after all callbacks have been run.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.throw">
-<tt class="descname">throw</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Deferred.throw" title="Permalink to this definition">¶</a></dt>
-<dd><p>raise an exception only if <a class="reference internal" href="#pulsar.Deferred.done" title="pulsar.Deferred.done"><tt class="xref py py-meth docutils literal"><span class="pre">done()</span></tt></a> is <tt class="docutils literal"><span class="pre">True</span></tt> and
-the result is a <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a></p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.set_result">
+<tt class="descname">set_result</tt><big>(</big><em>result</em>, <em>state=None</em><big>)</big><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.set_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run registered callbacks with the given <em>result</em>.</p>
+<p>This can only be run once. Later calls to this will raise
+<tt class="xref py py-class docutils literal"><span class="pre">InvalidStateError</span></tt>. If further callbacks are added after
+this point, <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="pulsar.async.fallbacks.defer.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> will run the <em>callbacks</em> immediately.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._result" title="pulsar.async.fallbacks.defer.Deferred._result"><tt class="xref py py-attr docutils literal"><span class="pre">_result</span></tt></a> after all callbacks have been run.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.chain">
-<tt class="descname">chain</tt><big>(</big><em>deferred</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.chain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chain another <tt class="docutils literal"><span class="pre">deferred</span></tt> to this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> callbacks.</p>
-<p>This method adds callbacks to this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call
+<dt id="pulsar.async.fallbacks.defer.Deferred.set_exception">
+<tt class="descname">set_exception</tt><big>(</big><em>result</em>, <em>state=None</em><big>)</big><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.set_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run registered callbacks with the given <em>result</em>.</p>
+<p>This can only be run once. Later calls to this will raise
+<tt class="xref py py-class docutils literal"><span class="pre">InvalidStateError</span></tt>. If further callbacks are added after
+this point, <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="pulsar.async.fallbacks.defer.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> will run the <em>callbacks</em> immediately.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._result" title="pulsar.async.fallbacks.defer.Deferred._result"><tt class="xref py py-attr docutils literal"><span class="pre">_result</span></tt></a> after all callbacks have been run.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.fallbacks.defer.Deferred.set_timeout">
+<tt class="descname">set_timeout</tt><big>(</big><em>timeout</em>, <em>mute=False</em>, <em>exception_class=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.set_timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.set_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._timeout" title="pulsar.async.fallbacks.defer.Deferred._timeout"><tt class="xref py py-attr docutils literal"><span class="pre">_timeout</span></tt></a> for this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+<p>If this method is called more than once, the previous <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred._timeout" title="pulsar.async.fallbacks.defer.Deferred._timeout"><tt class="xref py py-attr docutils literal"><span class="pre">_timeout</span></tt></a>
+is cancelled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> &#8211; a timeout in seconds.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><tt class="docutils literal"><span class="pre">self</span></tt> so that other methods can be concatenated.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.fallbacks.defer.Deferred.chain">
+<tt class="descname">chain</tt><big>(</big><em>deferred</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chain another <tt class="docutils literal"><span class="pre">deferred</span></tt> to this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> callbacks.</p>
+<p>This method adds callbacks to this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call
 <tt class="docutils literal"><span class="pre">deferred</span></tt>&#8216;s callback or errback, as appropriate.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>deferred</strong> &#8211; a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which will partecipate in the
-callback chain of this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>deferred</strong> &#8211; a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which will partecipate in the
+callback chain of this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a></td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a></td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Deferred.then">
-<tt class="descname">then</tt><big>(</big><em>deferred=None</em><big>)</big><a class="headerlink" href="#pulsar.Deferred.then" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add another <tt class="docutils literal"><span class="pre">deferred</span></tt> to this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> callbacks.</p>
+<dt id="pulsar.async.fallbacks.defer.Deferred.then">
+<tt class="descname">then</tt><big>(</big><em>deferred=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Deferred.then"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Deferred.then" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add another <tt class="docutils literal"><span class="pre">deferred</span></tt> to this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> callbacks.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>deferred</strong> &#8211; Optional <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call back when this
-<a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> receives the result or the exception.
-If not supplied a new <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is created.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>deferred</strong> &#8211; Optional <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call back when this
+<a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> receives the result or the exception.
+If not supplied a new <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> is created.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <tt class="docutils literal"><span class="pre">deferred</span></tt> passed as parameter or the new deferred
 created.</td>
 </tr>
 </tbody>
 </table>
-<p>This method adds callbacks to this <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call
+<p>This method adds callbacks to this <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> to call
 <tt class="docutils literal"><span class="pre">deferred</span></tt>&#8216;s callback or errback, as appropriate.
 It is a shorthand way of performing the following:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">cbk</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
@@ -1027,7 +928,7 @@ It is a shorthand way of performing the following:</p>
 affected.</li>
 <li>The callbacks of <tt class="docutils literal"><span class="pre">d2</span></tt> won&#8217;t affect <tt class="docutils literal"><span class="pre">d1</span></tt> result.</li>
 </ul>
-<p>This method can be used instead of <a class="reference internal" href="#pulsar.Deferred.add_callback" title="pulsar.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> if a bright new
+<p>This method can be used instead of <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred.add_callback" title="pulsar.async.fallbacks.defer.Deferred.add_callback"><tt class="xref py py-meth docutils literal"><span class="pre">add_callback()</span></tt></a> if a bright new
 deferred is required:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">d2</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">then</span><span class="p">()</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
@@ -1037,128 +938,123 @@ deferred is required:</p>
 </dd></dl>
 
 </div>
+<div class="section" id="deferredtask">
+<h3>DeferredTask<a class="headerlink" href="#deferredtask" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.async.fallbacks.defer.DeferredTask">
+<em class="property">class </em><tt class="descclassname">pulsar.async.fallbacks.defer.</tt><tt class="descname">DeferredTask</tt><big>(</big><em>gen</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#DeferredTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.DeferredTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which consumes a <a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a>.</p>
+<p>The callback will occur once the coroutine has finished
+(when it raises StopIteration), or an unhandled exception occurs.
+Instances of <a class="reference internal" href="#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a> are never
+initialised directly, they are created by the <a class="reference internal" href="#pulsar.async.fallbacks.defer.async" title="pulsar.async.fallbacks.defer.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> or
+<a class="reference internal" href="#pulsar.async.fallbacks.defer.maybe_async" title="pulsar.async.fallbacks.defer.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a> functions when a generator is passed as argument.</p>
+</dd></dl>
+
+</div>
 <div class="section" id="multi-deferred">
 <h3>Multi Deferred<a class="headerlink" href="#multi-deferred" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.MultiDeferred">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">MultiDeferred</tt><big>(</big><em>data=None</em>, <em>type=None</em>, <em>raise_on_error=True</em>, <em>mute_failures=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.MultiDeferred">
+<em class="property">class </em><tt class="descclassname">pulsar.async.defer.</tt><tt class="descname">MultiDeferred</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred" title="Permalink to this definition">¶</a></dt>
 <dd><p>A :class:1Deferred` for a <tt class="docutils literal"><span class="pre">collection</span></tt> of asynchronous objects.</p>
 <p>The <tt class="docutils literal"><span class="pre">collection</span></tt> can be either a <tt class="docutils literal"><span class="pre">list</span></tt> or a <tt class="docutils literal"><span class="pre">dict</span></tt>.</p>
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.raise_on_error">
-<tt class="descname">raise_on_error</tt><a class="headerlink" href="#pulsar.MultiDeferred.raise_on_error" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.MultiDeferred.raise_on_error">
+<tt class="descname">raise_on_error</tt><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.raise_on_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.raise_on_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>When <tt class="docutils literal"><span class="pre">True</span></tt> and at least one value of the result collections is a
-<a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>, the callback will receive the failure rather than
+<a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>, the callback will receive the failure rather than
 the collection of results.</p>
 <p>Default <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.locked">
-<tt class="descname">locked</tt><a class="headerlink" href="#pulsar.MultiDeferred.locked" title="Permalink to this definition">¶</a></dt>
-<dd><p>When <tt class="docutils literal"><span class="pre">True</span></tt>, the <a class="reference internal" href="#pulsar.MultiDeferred.update" title="pulsar.MultiDeferred.update"><tt class="xref py py-meth docutils literal"><span class="pre">update()</span></tt></a> or <a class="reference internal" href="#pulsar.MultiDeferred.append" title="pulsar.MultiDeferred.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> methods can no
+<dt id="pulsar.async.defer.MultiDeferred.locked">
+<tt class="descname">locked</tt><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.locked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>When <tt class="docutils literal"><span class="pre">True</span></tt>, the <tt class="xref py py-meth docutils literal"><span class="pre">update()</span></tt> or <tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt> methods can no
 longer be used.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.type">
-<tt class="descname">type</tt><a class="headerlink" href="#pulsar.MultiDeferred.type" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.MultiDeferred.type">
+<tt class="descname">type</tt><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.type" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type of multi-deferred. Either a <tt class="docutils literal"><span class="pre">list</span></tt> or a <tt class="docutils literal"><span class="pre">Mapping</span></tt>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.total_time">
-<tt class="descname">total_time</tt><a class="headerlink" href="#pulsar.MultiDeferred.total_time" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.MultiDeferred.total_time">
+<tt class="descname">total_time</tt><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.total_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.total_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Total number of seconds taken to obtain the result.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.MultiDeferred.locked_time">
-<tt class="descname">locked_time</tt><a class="headerlink" href="#pulsar.MultiDeferred.locked_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of econds taken to obtain the result once <a class="reference internal" href="#pulsar.MultiDeferred.locked" title="pulsar.MultiDeferred.locked"><tt class="xref py py-class docutils literal"><span class="pre">locked</span></tt></a>.</p>
+<dt id="pulsar.async.defer.MultiDeferred.locked_time">
+<tt class="descname">locked_time</tt><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.locked_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.locked_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of econds taken to obtain the result once <tt class="xref py py-class docutils literal"><span class="pre">locked</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.MultiDeferred.lock">
-<tt class="descname">lock</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.lock" title="Permalink to this definition">¶</a></dt>
-<dd><p>Lock the <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> so that no new items can be added.
-If it was alread <a class="reference internal" href="#pulsar.MultiDeferred.locked" title="pulsar.MultiDeferred.locked"><tt class="xref py py-attr docutils literal"><span class="pre">locked</span></tt></a> a runtime exception occurs.</p>
+<dt id="pulsar.async.defer.MultiDeferred.lock">
+<tt class="descname">lock</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.lock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lock the <tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt> so that no new items can be added.</p>
+<p>If it was alread <tt class="xref py py-attr docutils literal"><span class="pre">locked</span></tt> a runtime exception occurs.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.MultiDeferred.update">
-<tt class="descname">update</tt><big>(</big><em>stream</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update the <a class="reference internal" href="#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt></a> with new data. It works for
-both <tt class="docutils literal"><span class="pre">list</span></tt> and <tt class="docutils literal"><span class="pre">dict</span></tt> <a class="reference internal" href="#pulsar.MultiDeferred.type" title="pulsar.MultiDeferred.type"><tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt></a>.</p>
+<dt id="pulsar.async.defer.MultiDeferred.update">
+<tt class="descname">update</tt><big>(</big><em>stream</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the <tt class="xref py py-class docutils literal"><span class="pre">MultiDeferred</span></tt> with new data. It works for
+both <tt class="docutils literal"><span class="pre">list</span></tt> and <tt class="docutils literal"><span class="pre">dict</span></tt> <tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.MultiDeferred.append">
-<tt class="descname">append</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#pulsar.MultiDeferred.append" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.defer.MultiDeferred.append">
+<tt class="descname">append</tt><big>(</big><em>value</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/defer.html#MultiDeferred.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.defer.MultiDeferred.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Append a new <tt class="docutils literal"><span class="pre">value</span></tt> to this asynchronous container.</p>
-<p>Works for a list <a class="reference internal" href="#pulsar.MultiDeferred.type" title="pulsar.MultiDeferred.type"><tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt></a> only.</p>
+<p>Works for a list <tt class="xref py py-attr docutils literal"><span class="pre">type</span></tt> only.</p>
 </dd></dl>
 
-</dd></dl>
-
-</div>
-<div class="section" id="task">
-<h3>Task<a class="headerlink" href="#task" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.Task">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Task</tt><big>(</big><em>gen</em>, <em>event_loop</em>, <em>canceller=None</em>, <em>timeout=None</em><big>)</big><a class="headerlink" href="#pulsar.Task" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> is a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which consumes a
-<a class="reference internal" href="../tutorials/coroutine.html#coroutine"><em>coroutine</em></a>.
-The callback will occur once the coroutine has finished
-(when it raises StopIteration), or an unhandled exception occurs.
-Instances of <a class="reference internal" href="#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> are never
-initialised directly, they are created by the <a class="reference internal" href="#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt></a>
-function when a generator is passed as argument.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="failure">
 <h3>Failure<a class="headerlink" href="#failure" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.Failure">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Failure</tt><big>(</big><em>exc_info</em><big>)</big><a class="headerlink" href="#pulsar.Failure" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.Failure">
+<em class="property">class </em><tt class="descclassname">pulsar.async.fallbacks.defer.</tt><tt class="descname">Failure</tt><big>(</big><em>exc_info</em>, <em>noisy=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure" title="Permalink to this definition">¶</a></dt>
 <dd><p>The asynchronous equivalent of python Exception.</p>
 <p>It has several useful methods and features which facilitates logging,
 and throwing exceptions.</p>
 <dl class="attribute">
-<dt id="pulsar.Failure.exc_info">
-<tt class="descname">exc_info</tt><a class="headerlink" href="#pulsar.Failure.exc_info" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.Failure.exc_info">
+<tt class="descname">exc_info</tt><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.exc_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>The exception as a three elements tuple
 (<tt class="docutils literal"><span class="pre">errorType</span></tt>, <tt class="docutils literal"><span class="pre">errvalue</span></tt>, <tt class="docutils literal"><span class="pre">traceback</span></tt>) occured during
-the execution of a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
+the execution of a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Failure.logged">
-<tt class="descname">logged</tt><a class="headerlink" href="#pulsar.Failure.logged" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if the <a class="reference internal" href="#pulsar.Failure.error" title="pulsar.Failure.error"><tt class="xref py py-attr docutils literal"><span class="pre">error</span></tt></a> was logged. It can be used for switching off
-logging for certain errors by setting:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">failure</span><span class="o">.</span><span class="n">logged</span> <span class="o">=</span> <span class="bp">True</span>
-</pre></div>
-</div>
+<dt id="pulsar.async.fallbacks.defer.Failure.logged">
+<tt class="descname">logged</tt><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.logged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.logged" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.error" title="pulsar.async.fallbacks.defer.Failure.error"><tt class="xref py py-attr docutils literal"><span class="pre">error</span></tt></a> was logged.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.Failure.error">
-<tt class="descname">error</tt><a class="headerlink" href="#pulsar.Failure.error" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.fallbacks.defer.Failure.error">
+<tt class="descname">error</tt><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.error" title="Permalink to this definition">¶</a></dt>
 <dd><p>The python <tt class="xref py py-class docutils literal"><span class="pre">Exception</span></tt> instance.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Failure.isinstance">
-<tt class="descname">isinstance</tt><big>(</big><em>classes</em><big>)</big><a class="headerlink" href="#pulsar.Failure.isinstance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if <a class="reference internal" href="#pulsar.Failure.error" title="pulsar.Failure.error"><tt class="xref py py-attr docutils literal"><span class="pre">error</span></tt></a> is an instance of exception <tt class="docutils literal"><span class="pre">classes</span></tt>.</p>
+<dt id="pulsar.async.fallbacks.defer.Failure.isinstance">
+<tt class="descname">isinstance</tt><big>(</big><em>classes</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.isinstance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.isinstance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.error" title="pulsar.async.fallbacks.defer.Failure.error"><tt class="xref py py-attr docutils literal"><span class="pre">error</span></tt></a> is an instance of exception <tt class="docutils literal"><span class="pre">classes</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Failure.throw">
-<tt class="descname">throw</tt><big>(</big><em>gen=None</em><big>)</big><a class="headerlink" href="#pulsar.Failure.throw" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raises the exception from the <a class="reference internal" href="#pulsar.Failure.exc_info" title="pulsar.Failure.exc_info"><tt class="xref py py-attr docutils literal"><span class="pre">exc_info</span></tt></a>.</p>
+<dt id="pulsar.async.fallbacks.defer.Failure.throw">
+<tt class="descname">throw</tt><big>(</big><em>gen=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.throw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.throw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raises the exception from the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.exc_info" title="pulsar.async.fallbacks.defer.Failure.exc_info"><tt class="xref py py-attr docutils literal"><span class="pre">exc_info</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1173,11 +1069,11 @@ supporting both synchronous and asynchronous flow controls.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Failure.log">
-<tt class="descname">log</tt><big>(</big><em>log=None</em>, <em>msg=None</em>, <em>level=None</em><big>)</big><a class="headerlink" href="#pulsar.Failure.log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Log the <a class="reference internal" href="#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> and set <a class="reference internal" href="#pulsar.Failure.logged" title="pulsar.Failure.logged"><tt class="xref py py-attr docutils literal"><span class="pre">logged</span></tt></a> to <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+<dt id="pulsar.async.fallbacks.defer.Failure.log">
+<tt class="descname">log</tt><big>(</big><em>log=None</em>, <em>msg=None</em>, <em>level=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> and set <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.logged" title="pulsar.async.fallbacks.defer.Failure.logged"><tt class="xref py py-attr docutils literal"><span class="pre">logged</span></tt></a> to <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
 <p>Logging for a given failure occurs once only. To suppress logging for
-a given failure set <a class="reference internal" href="#pulsar.Failure.logged" title="pulsar.Failure.logged"><tt class="xref py py-attr docutils literal"><span class="pre">logged</span></tt></a> to <tt class="docutils literal"><span class="pre">True</span></tt> of invoke the <a class="reference internal" href="#pulsar.Failure.mute" title="pulsar.Failure.mute"><tt class="xref py py-meth docutils literal"><span class="pre">mute()</span></tt></a>
+a given failure set <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.logged" title="pulsar.async.fallbacks.defer.Failure.logged"><tt class="xref py py-attr docutils literal"><span class="pre">logged</span></tt></a> to <tt class="docutils literal"><span class="pre">True</span></tt> of invoke the <a class="reference internal" href="#pulsar.async.fallbacks.defer.Failure.mute" title="pulsar.async.fallbacks.defer.Failure.mute"><tt class="xref py py-meth docutils literal"><span class="pre">mute()</span></tt></a>
 method.
 Returns <tt class="docutils literal"><span class="pre">self</span></tt> so that this method can easily be added as an error
 back to perform logging and propagate the failure. For example:</p>
@@ -1186,237 +1082,50 @@ back to perform logging and propagate the failure. For example:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Failure.mute">
-<tt class="descname">mute</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Failure.mute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mute logging and return self.</p>
+<dt id="pulsar.async.fallbacks.defer.Failure.mute">
+<tt class="descname">mute</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/fallbacks/defer.html#Failure.mute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.fallbacks.defer.Failure.mute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mute logging and return <tt class="docutils literal"><span class="pre">self</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
 
-</div>
-</div>
-<div class="section" id="events">
-<h2>Events<a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> class is for creating objects with events.
-These events can occur once only during the life of an <a class="reference internal" href="#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a>
-or can occur several times. Check the
-<a class="reference internal" href="../tutorials/events.html#event-handling"><em>event dispatching tutorial</em></a> for an overview.</p>
-<div class="section" id="event">
-<h3>Event<a class="headerlink" href="#event" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.Event">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Event</tt><a class="headerlink" href="#pulsar.Event" title="Permalink to this definition">¶</a></dt>
-<dd><p>An event managed by an <a class="reference internal" href="#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> class.</p>
-<dl class="attribute">
-<dt id="pulsar.Event.silenced">
-<tt class="descname">silenced</tt><a class="headerlink" href="#pulsar.Event.silenced" title="Permalink to this definition">¶</a></dt>
-<dd><p>Boolean indicating if this event is silenced.</p>
-<p>To silence an event one uses the <a class="reference internal" href="#pulsar.EventHandler.silence_event" title="pulsar.EventHandler.silence_event"><tt class="xref py py-meth docutils literal"><span class="pre">EventHandler.silence_event()</span></tt></a>
-method.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Event.bind">
-<tt class="descname">bind</tt><big>(</big><em>callback</em>, <em>errback=None</em><big>)</big><a class="headerlink" href="#pulsar.Event.bind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bind a <tt class="docutils literal"><span class="pre">callback</span></tt> for <tt class="docutils literal"><span class="pre">caller</span></tt> to this <a class="reference internal" href="#pulsar.Event" title="pulsar.Event"><tt class="xref py py-class docutils literal"><span class="pre">Event</span></tt></a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Event.has_fired">
-<tt class="descname">has_fired</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Event.has_fired" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if this event has fired.</p>
-<p>This only make sense for one time events.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Event.fire">
-<tt class="descname">fire</tt><big>(</big><em>arg</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.Event.fire" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fire this event.</p>
-<p>This method is called by the <a class="reference internal" href="#pulsar.EventHandler.fire_event" title="pulsar.EventHandler.fire_event"><tt class="xref py py-meth docutils literal"><span class="pre">EventHandler.fire_event()</span></tt></a> method.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.Event.silence">
-<tt class="descname">silence</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Event.silence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Silence this event.</p>
-<p>A silenced event won&#8217;t fire when the <a class="reference internal" href="#pulsar.Event.fire" title="pulsar.Event.fire"><tt class="xref py py-meth docutils literal"><span class="pre">fire()</span></tt></a> method is called.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="events-handler">
-<h3>Events Handler<a class="headerlink" href="#events-handler" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.EventHandler">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">EventHandler</tt><big>(</big><em>one_time_events=None</em>, <em>many_times_events=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler" title="Permalink to this definition">¶</a></dt>
-<dd><p>A Mixin for handling events.</p>
-<p>It handles one time events and events that occur several
-times. This mixin is used in <a class="reference internal" href="protocols.html#pulsar.Protocol" title="pulsar.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> and <a class="reference internal" href="protocols.html#pulsar.Producer" title="pulsar.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a>
-for scheduling connections and requests.</p>
-<dl class="attribute">
-<dt id="pulsar.EventHandler.ONE_TIME_EVENTS">
-<tt class="descname">ONE_TIME_EVENTS</tt><em class="property"> = ()</em><a class="headerlink" href="#pulsar.EventHandler.ONE_TIME_EVENTS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Event names which occur once only.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.EventHandler.MANY_TIMES_EVENTS">
-<tt class="descname">MANY_TIMES_EVENTS</tt><em class="property"> = ()</em><a class="headerlink" href="#pulsar.EventHandler.MANY_TIMES_EVENTS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Event names which occur several times.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.EventHandler.events">
-<tt class="descname">events</tt><a class="headerlink" href="#pulsar.EventHandler.events" title="Permalink to this definition">¶</a></dt>
-<dd><p>The dictionary of all events.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.event">
-<tt class="descname">event</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the <a class="reference internal" href="#pulsar.Event" title="pulsar.Event"><tt class="xref py py-class docutils literal"><span class="pre">Event</span></tt></a> for <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
-<p>If no event is registered returns nothing.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.bind_event">
-<tt class="descname">bind_event</tt><big>(</big><em>name</em>, <em>callback</em>, <em>errback=None</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.bind_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Register a <tt class="docutils literal"><span class="pre">callback</span></tt> with <tt class="docutils literal"><span class="pre">event</span></tt>.</p>
-<p><strong>The callback must be a callable accepting one parameter only</strong>,
-the instance firing the event or the first positional argument
-passed to the <a class="reference internal" href="#pulsar.EventHandler.fire_event" title="pulsar.EventHandler.fire_event"><tt class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></tt></a> method.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> &#8211; the event name. If the event is not available a warning
-message is logged.</li>
-<li><strong>callback</strong> &#8211; a callable receiving one positional parameter. It
-can also be a list/tuple of callables.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">nothing.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.bind_events">
-<tt class="descname">bind_events</tt><big>(</big><em>**events</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.bind_events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Register all known events found in <tt class="docutils literal"><span class="pre">events</span></tt> key-valued parameters.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.fire_event">
-<tt class="descname">fire_event</tt><big>(</big><em>name</em>, <em>arg=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.fire_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Dispatches <tt class="docutils literal"><span class="pre">arg</span></tt> or <tt class="docutils literal"><span class="pre">self</span></tt> to event <tt class="docutils literal"><span class="pre">name</span></tt> listeners.</p>
-<ul class="simple">
-<li>If event at <tt class="docutils literal"><span class="pre">name</span></tt> is a one-time event, it makes sure that it was
-not fired before.</li>
-</ul>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arg</strong> &#8211; optional argument passed as positional parameter to the
-event handler.</li>
-<li><strong>kwargs</strong> &#8211; optional key-valued parameters to pass to the event
-handler. Can only be used for
-<a class="reference internal" href="../tutorials/events.html#many-times-event"><em>many times events</em></a>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">for one-time events, it returns whatever is returned by the
-event handler. For many times events it returns nothing.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.silence_event">
-<tt class="descname">silence_event</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.silence_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Silence event <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
-<p>This causes the event not to fire at the <a class="reference internal" href="#pulsar.EventHandler.fire_event" title="pulsar.EventHandler.fire_event"><tt class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></tt></a> method
-is invoked with the event <tt class="docutils literal"><span class="pre">name</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.chain_event">
-<tt class="descname">chain_event</tt><big>(</big><em>other</em>, <em>name</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.chain_event" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chain the event <tt class="docutils literal"><span class="pre">name</span></tt> from <tt class="docutils literal"><span class="pre">other</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>other</strong> &#8211; an <a class="reference internal" href="#pulsar.EventHandler" title="pulsar.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a> to chain to.</li>
-<li><strong>name</strong> &#8211; event name to chain.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.EventHandler.copy_many_times_events">
-<tt class="descname">copy_many_times_events</tt><big>(</big><em>other</em><big>)</big><a class="headerlink" href="#pulsar.EventHandler.copy_many_times_events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Copy <a class="reference internal" href="../tutorials/events.html#many-times-event"><em>many times events</em></a> from  <tt class="docutils literal"><span class="pre">other</span></tt>.</p>
-<p>All many times events of <tt class="docutils literal"><span class="pre">other</span></tt> are copied to this handler
-provided the events handlers already exist.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+<span class="target" id="module-pulsar.async.queues"></span></div>
 </div>
 <div class="section" id="queues">
 <h2>Queues<a class="headerlink" href="#queues" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="queue">
 <h3>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.Queue">
-<em class="property">class </em><tt class="descclassname">pulsar.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=0</em>, <em>event_loop=None</em><big>)</big><a class="headerlink" href="#pulsar.Queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Asynchronous FIFO queue.</p>
+<dt id="pulsar.async.queues.Queue">
+<em class="property">class </em><tt class="descclassname">pulsar.async.queues.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=0</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>An <a class="reference internal" href="#pulsar.async.access.AsyncObject" title="pulsar.async.access.AsyncObject"><tt class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></tt></a> which is a <a class="reference external" href="http://en.wikipedia.org/wiki/FIFO">FIFO queue</a> with same
+interface as Queue class in the standard python library.</p>
 <dl class="attribute">
-<dt id="pulsar.Queue.maxsize">
-<tt class="descname">maxsize</tt><a class="headerlink" href="#pulsar.Queue.maxsize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Integer representing the upper bound limit on the number of items
-that can be placed in the queue.</p>
-<p>If <a class="reference internal" href="#pulsar.Queue.maxsize" title="pulsar.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> is less than or equal to zero, there is no upper bound.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.Queue.event_loop">
-<tt class="descname">event_loop</tt><a class="headerlink" href="#pulsar.Queue.event_loop" title="Permalink to this definition">¶</a></dt>
-<dd><p>The event loop running the queue</p>
+<dt id="pulsar.async.queues.Queue.maxsize">
+<tt class="descname">maxsize</tt><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.maxsize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.maxsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integer representing the upper bound limit on the number
+of items that can be placed in the queue.</p>
+<p>If <a class="reference internal" href="#pulsar.async.queues.Queue.maxsize" title="pulsar.async.queues.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> is less than or equal to zero, there is no
+upper bound.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.qsize">
-<tt class="descname">qsize</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Queue.qsize" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.queues.Queue.qsize">
+<tt class="descname">qsize</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.qsize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.qsize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Size of the queue.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.full">
-<tt class="descname">full</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Queue.full" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if there are <a class="reference internal" href="#pulsar.Queue.maxsize" title="pulsar.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> items in the queue.</p>
+<dt id="pulsar.async.queues.Queue.full">
+<tt class="descname">full</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.full"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if there are <a class="reference internal" href="#pulsar.async.queues.Queue.maxsize" title="pulsar.async.queues.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> items in the queue.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.put">
-<tt class="descname">put</tt><big>(</big><em>item</em>, <em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="headerlink" href="#pulsar.Queue.put" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.queues.Queue.put">
+<tt class="descname">put</tt><big>(</big><em>item</em>, <em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.put" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put an <tt class="docutils literal"><span class="pre">item</span></tt> in the queue.</p>
-<p>If you yield from <a class="reference internal" href="#pulsar.Queue.put" title="pulsar.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
+<p>If you yield from <a class="reference internal" href="#pulsar.async.queues.Queue.put" title="pulsar.async.queues.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
 (the default), wait until a item is added to the queue. Otherwise
 raise <tt class="docutils literal"><span class="pre">Full</span></tt> if no slots is available before <tt class="docutils literal"><span class="pre">timeout</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1431,7 +1140,7 @@ slot is immediately available.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> resulting in <tt class="docutils literal"><span class="pre">None</span></tt> if <tt class="docutils literal"><span class="pre">wait</span></tt> is
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> resulting in <tt class="docutils literal"><span class="pre">None</span></tt> if <tt class="docutils literal"><span class="pre">wait</span></tt> is
 <tt class="docutils literal"><span class="pre">True</span></tt>, otherwise <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 </td>
 </tr>
@@ -1440,18 +1149,18 @@ slot is immediately available.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.put_nowait">
-<tt class="descname">put_nowait</tt><big>(</big><em>item</em><big>)</big><a class="headerlink" href="#pulsar.Queue.put_nowait" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.queues.Queue.put_nowait">
+<tt class="descname">put_nowait</tt><big>(</big><em>item</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.put_nowait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.put_nowait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Put an item into the queue..</p>
 <p>Put an item if a slot is immediately available, otherwise raise Full.
 Equivalent to <tt class="docutils literal"><span class="pre">self.put(item,</span> <span class="pre">wait=False)</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.get">
-<tt class="descname">get</tt><big>(</big><em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="headerlink" href="#pulsar.Queue.get" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.queues.Queue.get">
+<tt class="descname">get</tt><big>(</big><em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove and return an item from the queue.</p>
-<p>If you yield from <a class="reference internal" href="#pulsar.Queue.get" title="pulsar.Queue.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
+<p>If you yield from <a class="reference internal" href="#pulsar.async.queues.Queue.get" title="pulsar.async.queues.Queue.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
 (the default), wait until a item is available. Otherwise raise
 <tt class="docutils literal"><span class="pre">Empty</span></tt> if no item is available before <tt class="docutils literal"><span class="pre">timeout</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1465,7 +1174,7 @@ immediately available.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> resulting in the item removed form the
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> resulting in the item removed form the
 queue if <tt class="docutils literal"><span class="pre">wait</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, otherwise the <tt class="docutils literal"><span class="pre">item</span></tt> removed from
 the queue.</p>
 </td>
@@ -1475,8 +1184,8 @@ the queue.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.Queue.get_nowait">
-<tt class="descname">get_nowait</tt><big>(</big><big>)</big><a class="headerlink" href="#pulsar.Queue.get_nowait" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.async.queues.Queue.get_nowait">
+<tt class="descname">get_nowait</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.get_nowait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.get_nowait" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove and return an item from the queue.</p>
 <p>Return an item if one is immediately available otherwise raise Empty.
 Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False)</span></tt>.</p>
@@ -1494,7 +1203,7 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -1511,40 +1220,40 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Asynchonous API</a><ul>
 <li><a class="reference internal" href="#event-loop">Event loop</a><ul>
+<li><a class="reference internal" href="#get-event-loop">get event loop</a></li>
+<li><a class="reference internal" href="#new-event-loop">new event loop</a></li>
 <li><a class="reference internal" href="#poller">Poller</a></li>
-<li><a class="reference internal" href="#timed-call">Timed Call</a></li>
 <li><a class="reference internal" href="#eventloop">EventLoop</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#async-discovery-functions">Async Discovery Functions</a><ul>
-<li><a class="reference internal" href="#maybe-async">Maybe Async</a></li>
-<li><a class="reference internal" href="#maybe-failure">Maybe Failure</a></li>
-<li><a class="reference internal" href="#set-async">Set Async</a></li>
-<li><a class="reference internal" href="#is-failure">Is failure</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#async-object-interface">Async object interface</a></li>
 <li><a class="reference internal" href="#async-utilities">Async Utilities</a><ul>
 <li><a class="reference internal" href="#async">Async</a></li>
-<li><a class="reference internal" href="#multi-async">Multi Async</a></li>
+<li><a class="reference internal" href="#maybe-async">Maybe Async</a></li>
 <li><a class="reference internal" href="#safe-async">Safe Async</a></li>
+<li><a class="reference internal" href="#maybe-failure">Maybe Failure</a></li>
+<li><a class="reference internal" href="#add-async-binding">Add async binding</a></li>
+<li><a class="reference internal" href="#is-failure">Is failure</a></li>
+<li><a class="reference internal" href="#multi-async">Multi Async</a></li>
 <li><a class="reference internal" href="#async-sleep">Async Sleep</a></li>
 <li><a class="reference internal" href="#async-while">Async While</a></li>
+<li><a class="reference internal" href="#run-in-loop-thread">Run in loop thread</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#asynchronous-classes">Asynchronous Classes</a><ul>
-<li><a class="reference internal" href="#deferred">Deferred</a></li>
+<li><a class="reference internal" href="#async-decorators">Async Decorators</a><ul>
+<li><a class="reference internal" href="#in-loop">In loop</a></li>
+<li><a class="reference internal" href="#in-loop-thread">In loop thread</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#deferred">Deferred</a><ul>
+<li><a class="reference internal" href="#id1">Deferred</a></li>
+<li><a class="reference internal" href="#deferredtask">DeferredTask</a></li>
 <li><a class="reference internal" href="#multi-deferred">Multi Deferred</a></li>
-<li><a class="reference internal" href="#task">Task</a></li>
 <li><a class="reference internal" href="#failure">Failure</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#events">Events</a><ul>
-<li><a class="reference internal" href="#event">Event</a></li>
-<li><a class="reference internal" href="#events-handler">Events Handler</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#queues">Queues</a><ul>
@@ -1584,10 +1293,13 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -1604,5 +1316,5 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
 
 </script>
 
-  </body>
+</body>
 </html>

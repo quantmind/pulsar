@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Twisted Integration &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Twisted Integration &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="Django Application" href="pulse.html" />
-    <link rel="prev" title="Publish/Subscribe" href="pubsub.html" /> 
-  </head>
-  <body>
+    <link rel="prev" title="Asynchronous HTTP client" href="http.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -43,16 +49,16 @@
           <a href="pulse.html" title="Django Application"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="pubsub.html" title="Publish/Subscribe"
+          <a href="http.html" title="Asynchronous HTTP client"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/twisted.html">release docs here</a>.
         </p>
     
@@ -75,16 +81,22 @@ for several protocols which can be used in pulsar by importing the
 </pre></div>
 </div>
 <p>The implementation replaces the twisted reactor with a proxy for
-<a class="reference internal" href="../api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.
+<a class="reference internal" href="../api/async.html#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.
 Twisted Deferred and Failures are made compatible with pulsar
-by installing two different discovery functions via the
-<a class="reference internal" href="../api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a> function.</p>
+by installing twisted asynchronous binding via the
+<a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</p>
 <p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.</p>
-<p>The Coverage report is switched off because twisted is not available
-in python 3.</p>
-<div class="section" id="pulsar-reactor">
-<h2>Pulsar Reactor<a class="headerlink" href="#pulsar-reactor" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pulsar.apps.tx.check_twisted">
+<tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>coro_or_future</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binding for twisted.</p>
+<p>Added to pulsar asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a>
+function.</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="pulsar.apps.tx.PulsarReactor">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/pulsar/apps/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
@@ -101,7 +113,7 @@ in python 3.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -118,17 +130,17 @@ in python 3.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Twisted Integration</a><ul>
-<li><a class="reference internal" href="#pulsar-reactor">Pulsar Reactor</a></li>
+<li><a class="reference internal" href="#implementation">Implementation</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="pubsub.html"
-                        title="previous chapter">Publish/Subscribe</a></p>
+  <p class="topless"><a href="http.html"
+                        title="previous chapter">Asynchronous HTTP client</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="pulse.html"
                         title="next chapter">Django Application</a></p>
@@ -155,10 +167,13 @@ in python 3.</p>
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -175,5 +190,5 @@ in python 3.</p>
 
 </script>
 
-  </body>
+</body>
 </html>

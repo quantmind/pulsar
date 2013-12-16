@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Websocket Chat Server &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Websocket Chat Server &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" />
     <link rel="prev" title="JSON-RPC Calculator" href="calculator.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -46,7 +52,7 @@
         <li class="right" >
           <a href="calculator.html" title="JSON-RPC Calculator"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/tutorials/chat.html">release docs here</a>.
         </p>
     
@@ -73,9 +79,9 @@
 <span class="target" id="module-examples.chat.manage"></span><p>This example is web-based chat application which exposes three different
 <a class="reference internal" href="../apps/wsgi/routing.html#wsgi-routing"><em>wsgi routers</em></a>:</p>
 <ul class="simple">
-<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.routers.Router</span></tt></a> to render the web page</li>
-<li>A <a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WebSocket" title="pulsar.apps.ws.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ws.WebSocket</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Chat" title="examples.chat.manage.Chat"><tt class="xref py py-class docutils literal"><span class="pre">Chat</span></tt></a> handler</li>
-<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.routers.Router</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Rpc" title="examples.chat.manage.Rpc"><tt class="xref py py-class docutils literal"><span class="pre">Rpc</span></tt></a> handler
+<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> to render the web page</li>
+<li>A <a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.websocket.WebSocket" title="pulsar.apps.ws.websocket.WebSocket"><tt class="xref py py-class docutils literal"><span class="pre">WebSocket</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Chat" title="examples.chat.manage.Chat"><tt class="xref py py-class docutils literal"><span class="pre">Chat</span></tt></a> handler</li>
+<li>A <a class="reference internal" href="../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router" title="pulsar.apps.wsgi.routers.Router"><tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt></a> with the <a class="reference internal" href="#examples.chat.manage.Rpc" title="examples.chat.manage.Rpc"><tt class="xref py py-class docutils literal"><span class="pre">Rpc</span></tt></a> handler
 for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><em>JSON-RPC</em></a> api.</li>
 </ul>
 <p>To run the server:</p>
@@ -84,24 +90,23 @@ for exposing a <a class="reference internal" href="../apps/rpc.html#apps-rpc"><e
 <p>and open web browsers at <a class="reference external" href="http://localhost:8060">http://localhost:8060</a></p>
 <p>To send messages from the JSON RPC open a python shell and:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060/rpc&#39;</span><span class="p">,</span> <span class="n">force_sync</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060/rpc&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&#39;Hi from rpc&#39;</span><span class="p">)</span>
 <span class="go">&#39;OK&#39;</span>
 </pre></div>
 </div>
-<p>This example uses the pulsar <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>Publish/Subscribe handler</em></a>
+<p>This example uses the pulsar <em class="xref std std-ref">Publish/Subscribe handler</em>
 to synchronise messages in a multiprocessing web server.</p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="examples.chat.manage.Chat">
-<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">Chat</tt><big>(</big><em>pubsub</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Chat" title="Permalink to this definition">¶</a></dt>
-<dd><p>The websocket handler (<a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.ws.WS</span></tt></a>) managing the chat
-application.</p>
+<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">Chat</tt><big>(</big><em>pubsub</em>, <em>channel</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Chat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Chat" title="Permalink to this definition">¶</a></dt>
+<dd><p>The websocket handler (<a class="reference internal" href="../apps/websockets.html#pulsar.apps.ws.WS" title="pulsar.apps.ws.WS"><tt class="xref py py-class docutils literal"><span class="pre">WS</span></tt></a>) managing the chat application.</p>
 <dl class="attribute">
 <dt id="examples.chat.manage.Chat.pubsub">
 <tt class="descname">pubsub</tt><a class="headerlink" href="#examples.chat.manage.Chat.pubsub" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe handler</em></a> created by the wsgi
+<dd><p>The <em class="xref std std-ref">publish/subscribe handler</em> created by the wsgi
 application in the <a class="reference internal" href="#examples.chat.manage.WebChat.setup" title="examples.chat.manage.WebChat.setup"><tt class="xref py py-meth docutils literal"><span class="pre">WebChat.setup()</span></tt></a> method.</p>
 </dd></dl>
 
@@ -109,8 +114,8 @@ application in the <a class="reference internal" href="#examples.chat.manage.Web
 <dt id="examples.chat.manage.Chat.on_open">
 <tt class="descname">on_open</tt><big>(</big><em>websocket</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Chat.on_open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Chat.on_open" title="Permalink to this definition">¶</a></dt>
 <dd><p>When a new websocket connection is established it creates a
-<a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe</em></a> client and adds it to the set
-of clients of the <a class="reference internal" href="#examples.chat.manage.Chat.pubsub" title="examples.chat.manage.Chat.pubsub"><tt class="xref py py-attr docutils literal"><span class="pre">pubsub</span></tt></a> handler.</p>
+new <tt class="xref py py-class docutils literal"><span class="pre">ChatClient</span></tt> and adds it to the set of clients of the
+<a class="reference internal" href="#examples.chat.manage.Chat.pubsub" title="examples.chat.manage.Chat.pubsub"><tt class="xref py py-attr docutils literal"><span class="pre">pubsub</span></tt></a> handler.</p>
 </dd></dl>
 
 <dl class="method">
@@ -123,7 +128,7 @@ of clients of the <a class="reference internal" href="#examples.chat.manage.Chat
 
 <dl class="class">
 <dt id="examples.chat.manage.Rpc">
-<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">Rpc</tt><big>(</big><em>pubsub</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">examples.chat.manage.</tt><tt class="descname">Rpc</tt><big>(</big><em>pubsub</em>, <em>channel</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="examples.chat.manage.Rpc.rpc_message">
 <tt class="descname">rpc_message</tt><big>(</big><em>request</em>, <em>message</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#Rpc.rpc_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.Rpc.rpc_message" title="Permalink to this definition">¶</a></dt>
@@ -139,18 +144,10 @@ of clients of the <a class="reference internal" href="#examples.chat.manage.Chat
 web-chat example.</p>
 <dl class="method">
 <dt id="examples.chat.manage.WebChat.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat.setup" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">setup</tt><big>(</big><em>environ</em><big>)</big><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat.setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called once only to setup the WSGI application handler.</p>
 <p>Check <a class="reference internal" href="../apps/wsgi/async.html#wsgi-lazy-handler"><em>lazy wsgi handler</em></a>
 section for further information.</p>
-<p>It creates a <a class="reference internal" href="../apps/pubsub.html#apps-pubsub"><em>publish/subscribe handler</em></a>
-and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</span></tt> channel.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="examples.chat.manage.WebChat.cfg">
-<tt class="descname">cfg</tt><a class="reference internal" href="../modules/examples/chat/manage.html#WebChat.cfg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.chat.manage.WebChat.cfg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the <tt class="docutils literal"><span class="pre">config</span></tt> object from the actor serving the webchat.</p>
 </dd></dl>
 
 </dd></dl>
@@ -164,7 +161,7 @@ and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -181,7 +178,7 @@ and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Websocket Chat Server</a><ul>
 <li><a class="reference internal" href="#implementation">Implementation</a></li>
@@ -218,10 +215,13 @@ and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -238,5 +238,5 @@ and subscribe it to the <tt class="docutils literal"><span class="pre">webchat</
 
 </script>
 
-  </body>
+</body>
 </html>

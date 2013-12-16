@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>examples.philosophers.manage &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>examples.philosophers.manage &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -46,7 +52,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/examples/philosophers/manage.html">release docs here</a>.
         </p>
     
@@ -61,7 +67,7 @@
             
   <h1>Source code for examples.philosophers.manage</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">The dining `philosophers`_ problem is an example problem often used in</span>
+<span class="sd">The dining philosophers_ problem is an example problem often used in</span>
 <span class="sd">concurrent algorithm design to illustrate synchronisation issues and</span>
 <span class="sd">techniques for resolving them.</span>
 
@@ -109,7 +115,9 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
-<span class="sd">.. _`philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem</span>
+
+<span class="sd">.. _philosophers: http://en.wikipedia.org/wiki/Dining_philosophers_problem</span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -178,8 +186,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">take_action</span><span class="p">(</span><span class="n">philosopher</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DiningPhilosophers.worker_info"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.worker_info">[docs]</a>    <span class="k">def</span> <span class="nf">worker_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Override :meth:`pulsar.Application.worker_info` to provide</span>
-<span class="sd">information about the philosopher.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Override :meth:`~.Application.worker_info` to provide</span>
+<span class="sd">        information about the philosopher.&#39;&#39;&#39;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">params</span>
         <span class="n">info</span><span class="p">[</span><span class="s">&#39;philosopher&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;number&#39;</span><span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
                                <span class="s">&#39;eaten&#39;</span><span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">eaten</span><span class="p">}</span>
@@ -187,9 +195,9 @@
 <div class="viewcode-block" id="DiningPhilosophers.take_action"><a class="viewcode-back" href="../../../tutorials/philosophers.html#examples.philosophers.manage.DiningPhilosophers.take_action">[docs]</a>    <span class="k">def</span> <span class="nf">take_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">philosopher</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The ``philosopher`` performs one of these two actions:</span>
 
-<span class="sd">* eat, if it has both forks and than :meth:`release_forks`.</span>
-<span class="sd">* try to :meth:`pickup_fork`, if he has less than 2 forks.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        * eat, if it has both forks and than :meth:`release_forks`.</span>
+<span class="sd">        * try to :meth:`pickup_fork`, if he has less than 2 forks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">philosopher</span><span class="o">.</span><span class="n">params</span>
         <span class="n">eaten</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">eaten</span> <span class="ow">or</span> <span class="mi">0</span>
         <span class="n">forks</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">forks</span>
@@ -289,7 +297,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -324,10 +332,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -344,5 +355,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

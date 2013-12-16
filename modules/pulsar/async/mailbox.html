@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.async.mailbox &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.async.mailbox &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar" href="../../pulsar.html" /> 
-  </head>
-  <body>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.async" href="../async.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,16 +44,16 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
+          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/async/mailbox.html">release docs here</a>.
         </p>
     
@@ -63,58 +69,72 @@
   <h1>Source code for pulsar.async.mailbox</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;Actors communicate with each other by sending and receiving messages.</span>
 <span class="sd">The :mod:`pulsar.async.mailbox` module implements the message passing layer</span>
-<span class="sd">via a bidirectional socket connections between the :class:`pulsar.Arbiter`</span>
-<span class="sd">and :class:`pulsar.Actor`.</span>
+<span class="sd">via a bidirectional socket connections between the :class:`.Arbiter`</span>
+<span class="sd">and any :class:`.Actor`.</span>
 
 <span class="sd">Message sending is asynchronous and safe, the message is guaranteed to</span>
 <span class="sd">eventually reach the recipient, provided that the recipient exists.</span>
 
 <span class="sd">The implementation details are outlined below:</span>
 
-<span class="sd">* Messages are sent via the :func:`pulsar.send` function, which is a proxy for</span>
-<span class="sd">  the :class:`pulsar.Actor.send` method. Here is how you ping actor ``abc``::</span>
+<span class="sd">* Messages are sent via the :func:`.send` function, which is a proxy for</span>
+<span class="sd">  the actor :meth:`~.Actor.send` method.</span>
+<span class="sd">  Here is how you ping actor ``abc`` in a coroutine::</span>
 
 <span class="sd">      from pulsar import send</span>
 
-<span class="sd">      send(&#39;abc&#39;, &#39;ping&#39;)</span>
+<span class="sd">      def example():</span>
+<span class="sd">          result = yield send(&#39;abc&#39;, &#39;ping&#39;)</span>
 
-<span class="sd">* The :class:`pulsar.Arbiter` mailbox is a TCP :class:`pulsar.Server`</span>
-<span class="sd">  accepting :class:`pulsar.Connection` from remote actors.</span>
-<span class="sd">* The :attr:`pulsar.Actor.mailbox` is a :class:`pulsar.Client` of the arbiter</span>
+<span class="sd">* The :class:`.Arbiter` :attr:`~pulsar.Actor.mailbox` is a :class:`.TcpServer`</span>
+<span class="sd">  accepting connections from remote actors.</span>
+<span class="sd">* The :attr:`.Actor.mailbox` is a :class:`.MailboxClient` of the arbiter</span>
 <span class="sd">  mailbox server.</span>
 <span class="sd">* When an actor sends a message to another actor, the arbiter mailbox behaves</span>
 <span class="sd">  as a proxy server by routing the message to the targeted actor.</span>
 <span class="sd">* Communication is bidirectional and there is **only one connection** between</span>
 <span class="sd">  the arbiter and any given actor.</span>
 <span class="sd">* Messages are encoded and decoded using the unmasked websocket protocol</span>
-<span class="sd">  implemented in :class:`pulsar.utils.websocket.FrameParser`.</span>
+<span class="sd">  implemented in :func:`.frame_parser`.</span>
 <span class="sd">* If, for some reasons, the connection between an actor and the arbiter</span>
 <span class="sd">  get broken, the actor will eventually stop running and garbaged collected.</span>
 
 
-<span class="sd">Actor mailbox protocol</span>
+<span class="sd">Implementation</span>
 <span class="sd">=========================</span>
 <span class="sd">  For the curious this is how the internal protocol is implemented</span>
 
-<span class="sd">  .. autoclass:: MailboxConsumer</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
+<span class="sd">Protocol</span>
+<span class="sd">~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: MailboxProtocol</span>
+<span class="sd">  :members:</span>
+<span class="sd">  :member-order: bysource</span>
+
+<span class="sd">Client</span>
+<span class="sd">~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: MailboxClient</span>
+<span class="sd">  :members:</span>
+<span class="sd">  :member-order: bysource</span>
+
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">HaltServer</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">FrameParser</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">frame_parser</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">maybe_async</span>
-<span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
-<span class="kn">from</span> <span class="nn">.clients</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">Request</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actorid</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">get_command</span><span class="p">,</span> <span class="n">ActorProxy</span>
+<span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">.clients</span> <span class="kn">import</span> <span class="n">AbstractClient</span>
 
 
 <span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.mailbox&#39;</span><span class="p">)</span>
@@ -156,11 +176,10 @@
         <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">Request</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A message which travels from actor to actor.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Message</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">future</span> <span class="o">=</span> <span class="n">future</span>
 
@@ -169,8 +188,7 @@
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">get_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;command&#39;</span><span class="p">:</span> <span class="n">command</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
                 <span class="s">&#39;sender&#39;</span><span class="p">:</span> <span class="n">actorid</span><span class="p">(</span><span class="n">sender</span><span class="p">),</span>
@@ -182,7 +200,7 @@
             <span class="n">data</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">future</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">ack</span><span class="p">):</span>
@@ -190,26 +208,25 @@
         <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="MailboxConsumer"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxConsumer">[docs]</a><span class="k">class</span> <span class="nc">MailboxConsumer</span><span class="p">(</span><span class="n">ProtocolConsumer</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The :class:`pulsar.ProtocolConsumer` for internal message passing</span>
-<span class="sd">between actors. Encoding and decoding uses the unmasked websocket</span>
-<span class="sd">protocol.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+<div class="viewcode-block" id="MailboxProtocol"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxProtocol">[docs]</a><span class="k">class</span> <span class="nc">MailboxProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The :class:`.Protocol` for internal message passing between actors.</span>
+
+<span class="sd">    Encoding and decoding uses the unmasked websocket protocol.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MailboxProtocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span> <span class="o">=</span> <span class="n">FrameParser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span> <span class="o">=</span> <span class="n">frame_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pyparser</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MailboxConsumer.request"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxConsumer.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="MailboxProtocol.request"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxProtocol.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Used by the server to send messages to the client.&#39;&#39;&#39;</span>
         <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">start_request</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
-
-    <span class="c">#######################################################################</span>
-    <span class="c">##    PROTOCOL CONSUMER IMPLEMENTATION</span></div>
+</div>
     <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c"># Feed data into the parser</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -218,23 +235,21 @@
                 <span class="n">message</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;Could not decode message body: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">e</span><span class="p">)</span>
-            <span class="n">maybe_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_responde</span><span class="p">(</span><span class="n">message</span><span class="p">),</span> <span class="n">event_loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">event_loop</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_on_message</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">start_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">req</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span> <span class="ow">and</span> <span class="s">&#39;ack&#39;</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="p">[</span><span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">req</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">start_request</span>
 
     <span class="c">########################################################################</span>
     <span class="c">##    INTERNALS</span>
+    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span> <span class="ow">and</span> <span class="s">&#39;ack&#39;</span> <span class="ow">in</span> <span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="p">[</span><span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">req</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
@@ -243,14 +258,21 @@
             <span class="n">failure</span><span class="o">.</span><span class="n">mute</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">failure</span>
 
-    <span class="k">def</span> <span class="nf">_responde</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="nd">@in_loop</span>
+    <span class="k">def</span> <span class="nf">_on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="n">command</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;command&#39;</span><span class="p">)</span>
-        <span class="c">#actor.logger.debug(&#39;handling %s&#39;, command)</span>
+        <span class="n">ack</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s">&#39;callback&#39;</span><span class="p">:</span>
-            <span class="c"># this is a callback</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">),</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ack</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;A callback without id&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ack</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;Callback </span><span class="si">%s</span><span class="s"> not in pending callbacks&#39;</span> <span class="o">%</span> <span class="n">ack</span><span class="p">)</span>
+            <span class="n">pending</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">target</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s">&#39;target&#39;</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -272,60 +294,72 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">actor</span> <span class="o">=</span> <span class="n">target</span>
                     <span class="n">command</span> <span class="o">=</span> <span class="n">get_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
-                    <span class="n">req</span> <span class="o">=</span> <span class="n">CommandRequest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">)</span>
+                    <span class="n">req</span> <span class="o">=</span> <span class="n">CommandRequest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">command</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">message</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">],</span>
                                            <span class="n">message</span><span class="p">[</span><span class="s">&#39;kwargs&#39;</span><span class="p">])</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
-            <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ack&#39;</span><span class="p">):</span>
-                <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">message</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">])</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">start_request</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ack</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ack</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ProtocolError</span><span class="p">(</span><span class="s">&#39;A callback without id&#39;</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ack</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;Callback </span><span class="si">%s</span><span class="s"> not in pending callbacks&#39;</span> <span class="o">%</span> <span class="n">ack</span><span class="p">)</span>
-        <span class="n">pending</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+                <span class="n">failure</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">failure</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ack</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">Message</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ack</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mh">0x2</span><span class="p">)</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
             <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-                <span class="k">raise</span>
+                <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
+                    <span class="k">raise</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Lost connection with arbiter&#39;</span><span class="p">)</span>
+                    <span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 
 </div>
-<span class="k">class</span> <span class="nc">MailboxClient</span><span class="p">(</span><span class="n">Client</span><span class="p">):</span>
-    <span class="c"># mailbox for actors client</span>
-    <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">MailboxConsumer</span>
-    <span class="n">max_reconnect</span> <span class="o">=</span> <span class="mi">0</span>
+<div class="viewcode-block" id="MailboxClient"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxClient">[docs]</a><span class="k">class</span> <span class="nc">MailboxClient</span><span class="p">(</span><span class="n">AbstractClient</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Used by actors to send messages to other actors via the arbiter.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">protocol_factory</span> <span class="o">=</span> <span class="n">MailboxProtocol</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">event_loop</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MailboxClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">event_loop</span><span class="o">=</span><span class="n">event_loop</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MailboxClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">address</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_consumer</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;Mailbox for </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">actor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MailboxClient</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">response</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consumer</span> <span class="o">=</span> <span class="n">resp</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consumer</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consumer</span>
 
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">nice_address</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">))</span>
 
+    <span class="nd">@in_loop</span>
     <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="c"># the request method</span>
-        <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span>
-                              <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">)</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="n">async</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">exc</span></div>
 </pre></div>
 
           </div>
@@ -333,7 +367,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -368,10 +402,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -388,5 +425,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

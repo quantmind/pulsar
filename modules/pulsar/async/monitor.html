@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.async.monitor &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.8.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.async" href="../async.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/async/monitor.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.async.monitor</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
+
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_deferred</span>
+<span class="kn">from</span> <span class="nn">.actor</span> <span class="kn">import</span> <span class="n">Actor</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">async_while</span>
+<span class="kn">from</span> <span class="nn">.concurrency</span> <span class="kn">import</span> <span class="n">concurrency</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Monitor&#39;</span><span class="p">,</span> <span class="s">&#39;PoolMixin&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_spawn_actor</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">aid</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="c"># Internal function which spawns a new Actor and return its</span>
+    <span class="c"># ActorProxyMonitor.</span>
+    <span class="c"># *cls* is the Actor class</span>
+    <span class="c"># *monitor* can be either the ariber or a monitor</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">PoolMixin</span><span class="p">):</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s">&#39;monitor&#39;</span>
+    <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">actorparams</span><span class="p">()</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;aid&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c"># monitor not available, this is the arbiter</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">!=</span> <span class="s">&#39;monitor&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;class </span><span class="si">%s</span><span class="s"> not a valid monitor&#39;</span> <span class="o">%</span> <span class="n">cls</span><span class="p">)</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s">&#39;arbiter&#39;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">aid</span><span class="p">:</span>
+                <span class="n">aid</span> <span class="o">=</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;exc_id&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="c">#</span>
+    <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kind</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">Actor</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Class </span><span class="si">%s</span><span class="s"> not a valid actor.&#39;</span> <span class="o">%</span> <span class="n">cls</span><span class="p">)</span>
+            <span class="n">kind</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">kind</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot spawn class </span><span class="si">%s</span><span class="s">. not a valid concurrency.&#39;</span>
+                        <span class="o">%</span> <span class="n">cls</span><span class="p">)</span>
+    <span class="n">actor_proxy</span> <span class="o">=</span> <span class="n">concurrency</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">cls</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                              <span class="n">aid</span><span class="o">=</span><span class="n">aid</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="c"># Add to the list of managed actors if this is a remote actor</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor_proxy</span><span class="p">,</span> <span class="n">Actor</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">actor_proxy</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">actor_proxy</span><span class="o">.</span><span class="n">monitor</span> <span class="o">=</span> <span class="n">monitor</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">[</span><span class="n">actor_proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">]</span> <span class="o">=</span> <span class="n">actor_proxy</span>
+        <span class="n">deferred</span> <span class="o">=</span> <span class="n">actor_proxy_deferred</span><span class="p">(</span><span class="n">actor_proxy</span><span class="p">)</span>
+        <span class="n">actor_proxy</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">deferred</span>
+
+
+<div class="viewcode-block" id="PoolMixin"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin">[docs]</a><span class="k">class</span> <span class="nc">PoolMixin</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Not an actor per se, this is a mixin for :class:`Actor`</span>
+<span class="sd">which manages a pool (group) of actors. Given an :attr:`actor_class`</span>
+<span class="sd">it makes sure there are always :attr:`cfg.workers` alive.</span>
+<span class="sd">It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.</span>
+
+<span class="sd">.. attribute:: managed_actors</span>
+
+<span class="sd">    dictionary with keys given by actor&#39;s ids and values by</span>
+<span class="sd">    :class:`ActorProxyMonitor` instances. These are the actors managed by the</span>
+<span class="sd">    pool.</span>
+
+<span class="sd">.. attribute:: terminated_actors</span>
+
+<span class="sd">    list of :class:`ActorProxyMonitor` which have been terminated</span>
+<span class="sd">    (the remote actor did not have a cleaned shutdown).</span>
+<span class="sd">&#39;&#39;&#39;</span>
+    <span class="n">CLOSE_TIMEOUT</span> <span class="o">=</span> <span class="mi">30000000000000</span>
+    <span class="n">actor_class</span> <span class="o">=</span> <span class="n">Actor</span>
+    <span class="sd">&#39;&#39;&#39;The class derived form :class:`Actor` which the monitor manages</span>
+<span class="sd">during its life time.</span>
+
+<span class="sd">    Default: :class:`Actor`&#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PoolMixin</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">impl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">terminated_actors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;actor_class&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span>
+
+    <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">):</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="s">&#39;aid&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">aid</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">elif</span> <span class="n">aid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">[</span><span class="n">aid</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="ow">and</span> <span class="n">aid</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">aid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span>
+
+<div class="viewcode-block" id="PoolMixin.spawn"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.spawn">[docs]</a>    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Spawn a new :class:`Actor` and return its</span>
+<span class="sd">        :class:`.ActorProxyMonitor`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">actor_class</span> <span class="o">=</span> <span class="n">actor_class</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span>
+        <span class="k">return</span> <span class="n">_spawn_actor</span><span class="p">(</span><span class="n">actor_class</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="PoolMixin.actorparams"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.actorparams">[docs]</a>    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns a dictionary of parameters for spawning actors.</span>
+
+<span class="sd">        The disctionary is passed to the spawn method when creating new</span>
+<span class="sd">        actors. Fire the :ref:`on_params actor hook &lt;actor-hooks&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_params&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</div>
+    <span class="k">def</span> <span class="nf">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">log</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Removing </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PoolMixin.manage_actors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.manage_actors">[docs]</a>    <span class="k">def</span> <span class="nf">manage_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Remove :class:`Actor` which are not alive from the</span>
+<span class="sd">:class:`PoolMixin.managed_actors` and return the number of actors still alive.</span>
+
+<span class="sd">:parameter stop: if ``True`` stops all alive actor.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="n">alive</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">aid</span><span class="p">,</span> <span class="n">actor</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)):</span>
+                <span class="n">alive</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manage_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">alive</span>
+</div>
+<div class="viewcode-block" id="PoolMixin.manage_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.manage_actor">[docs]</a>    <span class="k">def</span> <span class="nf">manage_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;If an actor failed to notify itself to the arbiter for more than</span>
+<span class="sd">the timeout, stop the actor.</span>
+
+<span class="sd">:param actor: the :class:`Actor` to manage.</span>
+<span class="sd">:param stop: if ``True``, stop the actor.</span>
+<span class="sd">:return: if the actor is alive 0 if it is not.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">should_be_alive</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">1</span>
+            <span class="n">actor</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">started_stopping</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">stopping_start</span><span class="p">)</span>
+        <span class="c"># if started_stopping is True, set stop to True</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">stop</span> <span class="ow">or</span> <span class="n">started_stopping</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">stop</span> <span class="ow">and</span> <span class="n">actor</span><span class="o">.</span><span class="n">notified</span><span class="p">:</span>
+            <span class="n">gap</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">actor</span><span class="o">.</span><span class="n">notified</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">timeout</span> <span class="o">=</span> <span class="n">gap</span> <span class="o">&gt;</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>   <span class="c"># we are stopping the actor</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">should_terminate</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span> <span class="ow">or</span> <span class="n">dt</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Terminating </span><span class="si">%s</span><span class="s">. No mailbox.&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Terminating </span><span class="si">%s</span><span class="s">. Could not stop after&#39;</span>
+                                        <span class="s">&#39; </span><span class="si">%.2f</span><span class="s"> seconds.&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+                <span class="n">actor</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">terminated_actors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">started_stopping</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Stopping </span><span class="si">%s</span><span class="s">. Timeout </span><span class="si">%.2f</span><span class="s">&#39;</span><span class="p">,</span>
+                                        <span class="n">actor</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Stopping </span><span class="si">%s</span><span class="s">.&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+</div>
+<div class="viewcode-block" id="PoolMixin.spawn_actors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.spawn_actors">[docs]</a>    <span class="k">def</span> <span class="nf">spawn_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Spawn new actors if needed. If the :class:`PoolMixin` is spawning</span>
+<span class="sd">do nothing.&#39;&#39;&#39;</span>
+        <span class="n">to_spawn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span> <span class="ow">and</span> <span class="n">to_spawn</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_spawn</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">spawn</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PoolMixin.stop_actors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.stop_actors">[docs]</a>    <span class="k">def</span> <span class="nf">stop_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Maintain the number of workers by spawning or killing</span>
+<span class="sd">as required.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
+            <span class="n">num_to_kill</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_to_kill</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">w</span><span class="p">,</span> <span class="n">kage</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">maxsize</span>
+                <span class="k">for</span> <span class="n">worker</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">):</span>
+                    <span class="n">age</span> <span class="o">=</span> <span class="n">worker</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">age</span>
+                    <span class="k">if</span> <span class="n">age</span> <span class="o">&lt;</span> <span class="n">kage</span><span class="p">:</span>
+                        <span class="n">w</span><span class="p">,</span> <span class="n">kage</span> <span class="o">=</span> <span class="n">w</span><span class="p">,</span> <span class="n">age</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">manage_actor</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="PoolMixin.close_actors"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.PoolMixin.close_actors">[docs]</a>    <span class="k">def</span> <span class="nf">close_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Close all managed :class:`Actor`.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">async_while</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">ACTOR_ACTION_TIMEOUT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">manage_actors</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="n">PoolMixin</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A monitor is a **very** special :class:`Actor`.</span>
+
+<span class="sd">    it is a :class:`PoolMixin` which shares the same :class:`EventLoop`</span>
+<span class="sd">    with the :class:`Arbiter` and therefore lives in the main thread</span>
+<span class="sd">    of the master process domain.</span>
+
+<span class="sd">    The Arbiter manages monitors which in turn manage a set of :class:`Actor`</span>
+<span class="sd">    performing similar tasks.</span>
+
+<span class="sd">    In other words, you may have a monitor managing actors for serving HTTP</span>
+<span class="sd">    requests on a given port, another monitor managing actors consuming tasks</span>
+<span class="sd">    from a task queue and so forth. You can think of :class:`Monitor` as</span>
+<span class="sd">    managers of pools of :class:`Actor`.</span>
+
+<span class="sd">    Monitors are created by invoking the :meth:`Arbiter.add_monitor`</span>
+<span class="sd">    functions and not by directly invoking the constructor. Therefore</span>
+<span class="sd">    adding a new monitor to the arbiter follows the pattern::</span>
+
+<span class="sd">        import pulsar</span>
+
+<span class="sd">        m = pulsar.arbiter().add_monitor(&#39;mymonitor&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span>
+
+    <span class="k">def</span> <span class="nf">is_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<div class="viewcode-block" id="Monitor.monitor_task"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.monitor.Monitor.monitor_task">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Monitor specific task called by the :meth:`Monitor.periodic_task`.</span>
+
+<span class="sd">        By default it does nothing. Override if you need to.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
+</div>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Monitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">started</span><span class="p">():</span>
+            <span class="n">info</span><span class="p">[</span><span class="s">&#39;actor&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;concurrency&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span><span class="p">,</span>
+                                  <span class="s">&#39;workers&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)})</span>
+            <span class="n">info</span><span class="p">[</span><span class="s">&#39;workers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">info</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">itervalues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span><span class="p">)</span>
+                               <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">info</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">info</span>
+
+    <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">):</span>
+        <span class="c">#Delegate get_actor to the arbiter</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Monitor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">aid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">a</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../content.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

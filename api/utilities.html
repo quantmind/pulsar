@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Tools &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Tools &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Exceptions" href="exceptions.html" />
-    <link rel="prev" title="Applications API" href="application.html" /> 
-  </head>
-  <body>
+    <link rel="prev" title="Application API" href="application.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -44,9 +50,9 @@
           <a href="exceptions.html" title="Exceptions"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="application.html" title="Applications API"
+          <a href="application.html" title="Application API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/api/utilities.html">release docs here</a>.
         </p>
     
@@ -312,115 +318,49 @@ OTHER DEALINGS IN THE SOFTWARE.</p>
 </div>
 <div class="section" id="module-pulsar.utils.websocket">
 <span id="websocket"></span><span id="tools-ws-parser"></span><h2>Websocket<a class="headerlink" href="#module-pulsar.utils.websocket" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> Protocol <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> and <a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> classes.
-These two classes can be used for both clients and server protocols.</p>
+<p><a class="reference external" href="http://tools.ietf.org/html/rfc6455">WebSocket</a> Protocol is implemented via the <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> and
+<a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> classes.</p>
+<p>To obtain a frame parser one should use the <a class="reference internal" href="#pulsar.utils.websocket.frame_parser" title="pulsar.utils.websocket.frame_parser"><tt class="xref py py-func docutils literal"><span class="pre">frame_parser()</span></tt></a> function.</p>
+<div class="section" id="frame-parser">
+<h3>frame parser<a class="headerlink" href="#frame-parser" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.utils.websocket.frame_parser">
+<tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">frame_parser</tt><big>(</big><em>version=None</em>, <em>kind=0</em>, <em>extensions=None</em>, <em>protocols=None</em>, <em>pyparser=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#frame_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.frame_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new <a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>version</strong> &#8211; protocol version, the default is 13</li>
+<li><strong>kind</strong> &#8211; the kind of parser, and integer between 0 and 3 (check the
+<a class="reference internal" href="#pulsar.utils.websocket.FrameParser" title="pulsar.utils.websocket.FrameParser"><tt class="xref py py-class docutils literal"><span class="pre">FrameParser</span></tt></a> documentation for details)</li>
+<li><strong>extensions</strong> &#8211; not used at the moment</li>
+<li><strong>protocols</strong> &#8211; not used at the moment</li>
+<li><strong>pyparser</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> (default <tt class="docutils literal"><span class="pre">False</span></tt>) uses the python frame
+parser implementation rather than the much faster cython
+implementation.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
 <div class="section" id="frame">
 <h3>Frame<a class="headerlink" href="#frame" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.websocket.Frame">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">Frame</tt><big>(</big><em>message=None</em>, <em>opcode=None</em>, <em>version=None</em>, <em>masking_key=None</em>, <em>final=False</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em>, <em>build_frame=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the framing protocol as defined by
-specification supporting protocol version 13:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">(</span><span class="s">&#39;hello world&#39;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">Frame</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="nb">bytes</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
-</pre></div>
-</div>
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.version">
-<tt class="descname">version</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.version" title="Permalink to this definition">¶</a></dt>
-<dd><p>The version of the frame protocol.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.masking_key">
-<tt class="descname">masking_key</tt><a class="headerlink" href="#pulsar.utils.websocket.Frame.masking_key" title="Permalink to this definition">¶</a></dt>
-<dd><p>The frame masking key used for encoding and decoding data.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.final">
-<tt class="descname">final</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.final"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.final" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag indicating if this is a final frame or not.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.masked">
-<tt class="descname">masked</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.masked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.masked" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicate if the frame is masked.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_message">
-<tt class="descname">is_message</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> message.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_bytes">
-<tt class="descname">is_bytes</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_bytes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_bytes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> message.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_data">
-<tt class="descname">is_data</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Indicate if the frame is a <tt class="docutils literal"><span class="pre">string</span></tt> or <tt class="docutils literal"><span class="pre">bytes</span></tt>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_ping">
-<tt class="descname">is_ping</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_ping" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> representing a ping.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_pong">
-<tt class="descname">is_pong</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_pong"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_pong" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> representing a pong.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.websocket.Frame.is_close">
-<tt class="descname">is_close</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.is_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.is_close" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> representing a close request.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.utils.websocket.Frame.mask">
-<tt class="descname">mask</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame.mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame.mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs the masking or un-masking operation on data using the
-simple masking algorithm:</p>
-<div class="highlight-python"><pre>j = i MOD 4
-transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
-</div>
-<p>This method is invoked when encoding/decoding frames with a <a class="reference internal" href="#pulsar.utils.websocket.Frame.masking_key" title="pulsar.utils.websocket.Frame.masking_key"><tt class="xref py py-attr docutils literal"><span class="pre">masking_key</span></tt></a>
-attribute set.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.utils.websocket.Frame.unmask">
-<tt class="descname">unmask</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#pulsar.utils.websocket.Frame.unmask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs the masking or un-masking operation on data using the
-simple masking algorithm:</p>
-<div class="highlight-python"><pre>j = i MOD 4
-transformed-octet-i = original-octet-i XOR masking-key-octet-j</pre>
-</div>
-<p>This method is invoked when encoding/decoding frames with a <a class="reference internal" href="#pulsar.utils.websocket.Frame.masking_key" title="pulsar.utils.websocket.Frame.masking_key"><tt class="xref py py-attr docutils literal"><span class="pre">masking_key</span></tt></a>
-attribute set.</p>
-</dd></dl>
-
-</dd></dl>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">Frame</tt><big>(</big><em>opcode</em>, <em>final</em>, <em>payload_length</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#Frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.Frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
-<div class="section" id="frame-parser">
-<h3>Frame Parser<a class="headerlink" href="#frame-parser" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h3>Frame Parser<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.utils.websocket.FrameParser">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version=None</em>, <em>kind=0</em>, <em>extensions=None</em>, <em>protocols=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">FrameParser</tt><big>(</big><em>version</em>, <em>kind</em>, <em>ProtocolError</em>, <em>extensions</em>, <em>protocols</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decoder and encoder for the websocket protocol.</p>
 <dl class="attribute">
 <dt id="pulsar.utils.websocket.FrameParser.version">
@@ -430,7 +370,7 @@ attribute set.</p>
 
 <dl class="attribute">
 <dt id="pulsar.utils.websocket.FrameParser.kind">
-<tt class="descname">kind</tt><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.kind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.kind" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">kind</tt><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.kind" title="Permalink to this definition">¶</a></dt>
 <dd><ul class="simple">
 <li>0 for parsing client&#8217;s frames and sending server frames (to be used
 in the server)</li>
@@ -438,25 +378,6 @@ in the server)</li>
 by the client)</li>
 <li>2 Assumes always unmasked data</li>
 </ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.utils.websocket.FrameParser.encode">
-<tt class="descname">encode</tt><big>(</big><em>data</em>, <em>final=True</em>, <em>masking_key=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.encode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encode data into a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>final</strong> &#8211; Indicating if this is a final Frame.</li>
-<li><strong>masking_key</strong> &#8211; Optional making key used only if <a class="reference internal" href="#pulsar.utils.websocket.FrameParser.kind" title="pulsar.utils.websocket.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 1
-(Client frames).</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -473,7 +394,7 @@ by the client)</li>
 
 <dl class="method">
 <dt id="pulsar.utils.websocket.FrameParser.close">
-<tt class="descname">close</tt><big>(</big><em>body=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.close" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">close</tt><big>(</big><em>code=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>return a <cite>close</cite> <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
 </dd></dl>
 
@@ -484,19 +405,31 @@ by the client)</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.websocket.FrameParser.replay_to">
-<tt class="descname">replay_to</tt><big>(</big><em>frame</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.replay_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.replay_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a> as a reply to <em>frame</em>.</p>
+<dt id="pulsar.utils.websocket.FrameParser.encode">
+<tt class="descname">encode</tt><big>(</big><em>message</em>, <em>final=True</em>, <em>masking_key=None</em>, <em>opcode=None</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode a <tt class="docutils literal"><span class="pre">message</span></tt> for writing into the wire.</p>
+<p>To produce several frames for a given large message use
+<a class="reference internal" href="#pulsar.utils.websocket.FrameParser.multi_encode" title="pulsar.utils.websocket.FrameParser.multi_encode"><tt class="xref py py-meth docutils literal"><span class="pre">multi_encode()</span></tt></a> method.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.websocket.FrameParser.decode">
-<tt class="descname">decode</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.decode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decode bytes data into a <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>. If <a class="reference internal" href="#pulsar.utils.websocket.FrameParser.kind" title="pulsar.utils.websocket.FrameParser.kind"><tt class="xref py py-attr docutils literal"><span class="pre">kind</span></tt></a> is 0
-it decodes into a client frame (masked frame) while if is 1 or 2 it decodes
-into a server frame (unmasked).</p>
+<dt id="pulsar.utils.websocket.FrameParser.multi_encode">
+<tt class="descname">multi_encode</tt><big>(</big><em>message</em>, <em>masking_key=None</em>, <em>opcode=-1</em>, <em>rsv1=0</em>, <em>rsv2=0</em>, <em>rsv3=0</em>, <em>max_payload=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#FrameParser.multi_encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.FrameParser.multi_encode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encode a <tt class="docutils literal"><span class="pre">message</span></tt> into several frames depending on size.</p>
+<p>Returns a generator of bytes to be sent over the wire.</p>
 </dd></dl>
 
+</dd></dl>
+
+</div>
+<div class="section" id="parse-close">
+<h3>parse_close<a class="headerlink" href="#parse-close" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.utils.websocket.parse_close">
+<tt class="descclassname">pulsar.utils.websocket.</tt><tt class="descname">parse_close</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/websocket.html#parse_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.websocket.parse_close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse the body of a close <a class="reference internal" href="#pulsar.utils.websocket.Frame" title="pulsar.utils.websocket.Frame"><tt class="xref py py-class docutils literal"><span class="pre">Frame</span></tt></a>.</p>
+<p>Returns a tuple (<tt class="docutils literal"><span class="pre">code</span></tt>, <tt class="docutils literal"><span class="pre">reason</span></tt>) if successful otherwise
+raise <tt class="xref py py-class docutils literal"><span class="pre">ProtocolError</span></tt>.</p>
 </dd></dl>
 
 </div>
@@ -512,21 +445,29 @@ the python <a class="reference external" href="http://docs.python.org/dev/librar
 <dt id="pulsar.utils.config.Config">
 <em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Config</tt><big>(</big><em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>apps=None</em>, <em>include=None</em>, <em>exclude=None</em>, <em>settings=None</em>, <em>prefix=None</em>, <em>name=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary-like container of <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> parameters for
-fine tuning pulsar servers. It provides easy access to <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt></a>
+fine tuning pulsar servers.</p>
+<p>It provides easy access to <a class="reference internal" href="#pulsar.utils.config.Setting.value" title="pulsar.utils.config.Setting.value"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.value</span></tt></a>
 attribute by exposing the <a class="reference internal" href="#pulsar.utils.config.Setting.name" title="pulsar.utils.config.Setting.name"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt></a> as attribute.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>description</strong> &#8211; description used when parsing the command line, same usage
-as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
+<li><strong>description</strong> &#8211; description used when parsing the command line,
+same usage as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
 <li><strong>epilog</strong> &#8211; epilog used when parsing the command line, same usage
 as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
 <li><strong>version</strong> &#8211; version used when parsing the command line, same usage
 as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
-<li><strong>apps</strong> &#8211; list of application namespaces to include in the <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a>
-attribute.</li>
+<li><strong>apps</strong> &#8211; list of application namespaces to include in the
+<a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> dictionary. For example if <tt class="docutils literal"><span class="pre">apps</span></tt> is set to
+<tt class="docutils literal"><span class="pre">['socket',</span> <span class="pre">'tasks']</span></tt>, the
+<a class="reference internal" href="../settings.html#setting-section-socket-servers"><em>socket server</em></a> and
+<a class="reference internal" href="../settings.html#setting-section-task-consumer"><em>task queue</em></a> settings are
+loaded in addition to the standard
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a>,
+<a class="reference internal" href="../settings.html#setting-section-worker-processes"><em>worker settings</em></a> and
+<a class="reference internal" href="../settings.html#setting-section-application-hooks"><em>hook settings</em></a>.</li>
 </ul>
 </td>
 </tr>
@@ -536,8 +477,8 @@ attribute.</li>
 <dt id="pulsar.utils.config.Config.settings">
 <tt class="descname">settings</tt><a class="headerlink" href="#pulsar.utils.config.Config.settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary of all <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> instances available in this
-<a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container. Keys are given by the <tt class="xref py py-attr docutils literal"><span class="pre">SettingBase.name</span></tt>
-attribute.</p>
+<a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.</p>
+<p>Keys are given by the <a class="reference internal" href="#pulsar.utils.config.Setting.name" title="pulsar.utils.config.Setting.name"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.name</span></tt></a> attribute.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -549,30 +490,50 @@ command line.</p>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.update">
-<tt class="descname">update</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-attr docutils literal"><span class="pre">Config</span></tt></a> with <tt class="docutils literal"><span class="pre">data</span></tt> which is either an
-instance of Mapping or <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a>.</p>
+<tt class="descname">update</tt><big>(</big><em>data</em>, <em>default=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-attr docutils literal"><span class="pre">Config</span></tt></a> with <tt class="docutils literal"><span class="pre">data</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> &#8211; must be a <tt class="docutils literal"><span class="pre">Mapping</span></tt> like object exposing the <tt class="docutils literal"><span class="pre">item</span></tt>
+method for iterating through key-value pairs.</li>
+<li><strong>default</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> the updated <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> will also
+set their <a class="reference internal" href="#pulsar.utils.config.Setting.default" title="pulsar.utils.config.Setting.default"><tt class="xref py py-attr docutils literal"><span class="pre">default</span></tt></a> attribute with the
+updating value (provided it is a valid one).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.config.Config.copy_globals">
+<tt class="descname">copy_globals</tt><big>(</big><em>cfg</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.copy_globals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.copy_globals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy global settings from <tt class="docutils literal"><span class="pre">cfg</span></tt> to this config.</p>
+<p>The settings are copied only if they were not already modified.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.get">
 <tt class="descname">get</tt><big>(</big><em>name</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the value at <tt class="docutils literal"><span class="pre">name</span></tt> for this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container
-following this algorithm:</p>
+<dd><p>Get the value at <tt class="docutils literal"><span class="pre">name</span></tt> for this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container</p>
+<p>The returned value is obtained from:</p>
 <ul class="simple">
-<li>returns the <tt class="docutils literal"><span class="pre">name</span></tt> value in the <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> dictionary if available.</li>
-<li>returns the <tt class="docutils literal"><span class="pre">name</span></tt> value in the <a class="reference internal" href="#pulsar.utils.config.Config.params" title="pulsar.utils.config.Config.params"><tt class="xref py py-attr docutils literal"><span class="pre">params</span></tt></a> dictionary if available.</li>
-<li>returns the <tt class="docutils literal"><span class="pre">default</span></tt> value.</li>
+<li>the value at <tt class="docutils literal"><span class="pre">name</span></tt> in the <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> dictionary
+if available.</li>
+<li>the value at <tt class="docutils literal"><span class="pre">name</span></tt> in the <a class="reference internal" href="#pulsar.utils.config.Config.params" title="pulsar.utils.config.Config.params"><tt class="xref py py-attr docutils literal"><span class="pre">params</span></tt></a> dictionary if available.</li>
+<li>the <tt class="docutils literal"><span class="pre">default</span></tt> value.</li>
 </ul>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.set">
 <tt class="descname">set</tt><big>(</big><em>name</em>, <em>value</em>, <em>default=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.set" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the configuration <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> at <em>name</em> with a new
-<em>value</em>. If the <em>name</em> is not in this container, an <tt class="xref py py-class docutils literal"><span class="pre">AttributeError</span></tt>
-is raised. If <tt class="docutils literal"><span class="pre">default</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, the <a class="reference internal" href="#pulsar.utils.config.Setting.default" title="pulsar.utils.config.Setting.default"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.default</span></tt></a> is
-also set.</p>
+<dd><p>Set the <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> at <tt class="docutils literal"><span class="pre">name</span></tt> with a new <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
+<p>If <tt class="docutils literal"><span class="pre">default</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, the <a class="reference internal" href="#pulsar.utils.config.Setting.default" title="pulsar.utils.config.Setting.default"><tt class="xref py py-attr docutils literal"><span class="pre">Setting.default</span></tt></a> is also set.</p>
 </dd></dl>
 
 <dl class="method">
@@ -584,32 +545,39 @@ settings via the <a class="reference internal" href="#pulsar.utils.config.Settin
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">an instance of <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt>.</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">an instance of <tt class="xref py py-class docutils literal"><span class="pre">ArgumentParser</span></tt>.</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.utils.config.Config.add_to_parser">
+<tt class="descname">add_to_parser</tt><big>(</big><em>parser</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.add_to_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.add_to_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add this container <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> to an existing <tt class="docutils literal"><span class="pre">parser</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.utils.config.Config.on_start">
 <tt class="descname">on_start</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.on_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.on_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Invoked by a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Application</span></tt> just before starting.</p>
+<dd><p>Invoked by a <a class="reference internal" href="application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> just before starting.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.utils.config.Config.address">
 <tt class="descname">address</tt><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.address"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.address" title="Permalink to this definition">¶</a></dt>
 <dd><p>An address to bind to, only available if a
-<a class="reference internal" href="../settings.html#setting-bind"><em>bind</em></a> setting has been added to this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a>
-container.</p>
+<a class="reference internal" href="../settings.html#setting-bind"><em>bind</em></a> setting has been added to this
+<a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.utils.config.Config.copy">
 <tt class="descname">copy</tt><big>(</big><em>name=None</em>, <em>prefix=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.copy" title="Permalink to this definition">¶</a></dt>
-<dd><p>A deep copy of this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container. If <tt class="docutils literal"><span class="pre">prefix</span></tt>
-is given, it prefixes all non
-<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a> with it.</p>
+<dd><p>A copy of this <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.</p>
+<p>If <tt class="docutils literal"><span class="pre">prefix</span></tt> is given, it prefixes all non
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a>
+with it. Used when multiple applications are loaded.</p>
 </dd></dl>
 
 </dd></dl>
@@ -620,8 +588,9 @@ is given, it prefixes all non
 <dl class="class">
 <dt id="pulsar.utils.config.Setting">
 <em class="property">class </em><tt class="descclassname">pulsar.utils.config.</tt><tt class="descname">Setting</tt><big>(</big><em>name=None</em>, <em>flags=None</em>, <em>action=None</em>, <em>type=None</em>, <em>default=None</em>, <em>nargs=None</em>, <em>desc=None</em>, <em>validator=None</em>, <em>app=None</em>, <em>meta=None</em>, <em>choices=None</em>, <em>const=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Setting" title="Permalink to this definition">¶</a></dt>
-<dd><p>A configuration parameter for pulsar.</p>
-<p>Parameters can be specified on the command line or on a config file.</p>
+<dd><p>Class for creating <em class="xref std std-ref">pulsar settings</em>.</p>
+<p>Most parameters can be specified on the command line,
+all of them on a <tt class="docutils literal"><span class="pre">config</span></tt> file.</p>
 <dl class="attribute">
 <dt id="pulsar.utils.config.Setting.virtual">
 <tt class="descname">virtual</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.utils.config.Setting.virtual" title="Permalink to this definition">¶</a></dt>
@@ -664,12 +633,8 @@ the value to validate.</p>
 <dl class="attribute">
 <dt id="pulsar.utils.config.Setting.is_global">
 <tt class="descname">is_global</tt><em class="property"> = False</em><a class="headerlink" href="#pulsar.utils.config.Setting.is_global" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag used by pulsar <a class="reference internal" href="../index.html#apps-framework"><em>application framework</em></a>
-when multiple application are used in a running server. If <tt class="docutils literal"><span class="pre">False</span></tt>
-additional settings will be added to the <a class="reference internal" href="#pulsar.utils.config.Config" title="pulsar.utils.config.Config"><tt class="xref py py-class docutils literal"><span class="pre">Config</span></tt></a> container.
-These settings are clones of this <a class="reference internal" href="#pulsar.utils.config.Setting" title="pulsar.utils.config.Setting"><tt class="xref py py-class docutils literal"><span class="pre">Setting</span></tt></a> with
-name given by each application name and underacsore <tt class="docutils literal"><span class="pre">_</span></tt>
-prefixing this <a class="reference internal" href="#pulsar.utils.config.Setting.name" title="pulsar.utils.config.Setting.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a>.</p>
+<dd><p><tt class="docutils literal"><span class="pre">True</span></tt> only for
+<a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a>.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -821,8 +786,8 @@ set the port if a port is not available in the <tt class="docutils literal"><spa
 <div class="section" id="system-info">
 <h3>System info<a class="headerlink" href="#system-info" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
-<dt id="pulsar.utils.system.system_info">
-<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">system_info</tt><big>(</big><em>pid=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/system.html#system_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.system_info" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.system.process_info">
+<tt class="descclassname">pulsar.utils.system.</tt><tt class="descname">process_info</tt><big>(</big><em>pid=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/system.html#process_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.system.process_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary of system information for the process <tt class="docutils literal"><span class="pre">pid</span></tt>.</p>
 <p>It uses the <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> module for the purpose. If <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a> is not available
 it returns an empty dictionary.</p>
@@ -858,40 +823,40 @@ positional argument to check. Default <tt class="docutils literal"><span class="
 <div class="section" id="module-pulsar.utils.structures">
 <span id="structures"></span><h2>Structures<a class="headerlink" href="#module-pulsar.utils.structures" title="Permalink to this headline">¶</a></h2>
 <p>Collection of data structures and function used throughout the library.</p>
-<div class="section" id="multivaluedict">
+<span class="target" id="module-pulsar.utils.structures.misc"></span><div class="section" id="multivaluedict">
 <h3>MultiValueDict<a class="headerlink" href="#multivaluedict" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.utils.structures.MultiValueDict">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.</tt><tt class="descname">MultiValueDict</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.misc.</tt><tt class="descname">MultiValueDict</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict" title="Permalink to this definition">¶</a></dt>
 <dd><p>A subclass of dictionary customized to handle multiple
 values for the same key.</p>
 <dl class="method">
-<dt id="pulsar.utils.structures.MultiValueDict.getlist">
-<tt class="descname">getlist</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict.getlist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict.getlist" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict.getlist">
+<tt class="descname">getlist</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict.getlist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict.getlist" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the list of values for the passed key.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.structures.MultiValueDict.extend">
-<tt class="descname">extend</tt><big>(</big><em>key</em>, <em>values</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict.extend" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict.extend">
+<tt class="descname">extend</tt><big>(</big><em>key</em>, <em>values</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict.extend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends an item to the internal list associated with key.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.structures.MultiValueDict.items">
-<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict.items" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict.items">
+<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a generator of (key, value) pairs.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.structures.MultiValueDict.lists">
-<tt class="descname">lists</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict.lists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict.lists" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict.lists">
+<tt class="descname">lists</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict.lists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict.lists" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of (key, list) pairs.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.utils.structures.MultiValueDict.values">
-<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#MultiValueDict.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.MultiValueDict.values" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.MultiValueDict.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#MultiValueDict.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.MultiValueDict.values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of the last value on every key list.</p>
 </dd></dl>
 
@@ -901,8 +866,8 @@ values for the same key.</p>
 <div class="section" id="attributedictionary">
 <span id="attribute-dictionary"></span><h3>AttributeDictionary<a class="headerlink" href="#attributedictionary" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.utils.structures.AttributeDictionary">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.</tt><tt class="descname">AttributeDictionary</tt><big>(</big><em>*iterable</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#AttributeDictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.AttributeDictionary" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.AttributeDictionary">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.misc.</tt><tt class="descname">AttributeDictionary</tt><big>(</big><em>*iterable</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#AttributeDictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.AttributeDictionary" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Mapping</span></tt> structures which exposes keys as attributes.</p>
 </dd></dl>
 
@@ -910,9 +875,153 @@ values for the same key.</p>
 <div class="section" id="frozendict">
 <h3>FrozenDict<a class="headerlink" href="#frozendict" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
-<dt id="pulsar.utils.structures.FrozenDict">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.</tt><tt class="descname">FrozenDict</tt><big>(</big><em>*iterable</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures.html#FrozenDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.FrozenDict" title="Permalink to this definition">¶</a></dt>
+<dt id="pulsar.utils.structures.misc.FrozenDict">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.misc.</tt><tt class="descname">FrozenDict</tt><big>(</big><em>*iterable</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/misc.html#FrozenDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.misc.FrozenDict" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary which cannot be changed once initialised.</p>
+</dd></dl>
+
+<span class="target" id="module-pulsar.utils.structures.skiplist"></span></div>
+<div class="section" id="skiplist">
+<h3>Skiplist<a class="headerlink" href="#skiplist" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.utils.structures.skiplist.Skiplist">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.skiplist.</tt><tt class="descname">Skiplist</tt><big>(</big><em>data=None</em>, <em>unique=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sorted collection supporting O(log n) insertion,
+removal, and lookup by rank.</p>
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear the container from all data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.extend">
+<tt class="descname">extend</tt><big>(</big><em>iterable</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extend this skiplist with an iterable over
+<tt class="docutils literal"><span class="pre">score</span></tt>, <tt class="docutils literal"><span class="pre">value</span></tt> pairs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.update">
+<tt class="descname">update</tt><big>(</big><em>iterable</em><big>)</big><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extend this skiplist with an iterable over
+<tt class="docutils literal"><span class="pre">score</span></tt>, <tt class="docutils literal"><span class="pre">value</span></tt> pairs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.rank">
+<tt class="descname">rank</tt><big>(</big><em>score</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.rank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.rank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the 0-based index (rank) of <tt class="docutils literal"><span class="pre">score</span></tt>.</p>
+<p>If the score is not available it returns a negative integer which
+absolute score is the right most closest index with score less than
+<tt class="docutils literal"><span class="pre">score</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.remove_range">
+<tt class="descname">remove_range</tt><big>(</big><em>start</em>, <em>end</em>, <em>callback=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.remove_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.remove_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a range by rank.</p>
+<p>This is equivalent to perform:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">l</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>on a python list.
+It returns the number of element removed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.remove_range_by_score">
+<tt class="descname">remove_range_by_score</tt><big>(</big><em>minval</em>, <em>maxval</em>, <em>include_min=True</em>, <em>include_max=True</em>, <em>callback=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.remove_range_by_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.remove_range_by_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a range with scores between <tt class="docutils literal"><span class="pre">minval</span></tt> and <tt class="docutils literal"><span class="pre">maxval</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>minval</strong> &#8211; the start value of the range to remove</li>
+<li><strong>maxval</strong> &#8211; the end value of the range to remove</li>
+<li><strong>include_min</strong> &#8211; whether or not to include <tt class="docutils literal"><span class="pre">minval</span></tt> in the
+values to remove</li>
+<li><strong>include_max</strong> &#8211; whether or not to include <tt class="docutils literal"><span class="pre">maxval</span></tt> in the
+scores to to remove</li>
+<li><strong>callback</strong> &#8211; optional callback function invoked for each
+score, value pair removed.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the number of elements removed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.skiplist.Skiplist.count">
+<tt class="descname">count</tt><big>(</big><em>minval</em>, <em>maxval</em>, <em>include_min=True</em>, <em>include_max=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/skiplist.html#Skiplist.count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.skiplist.Skiplist.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of elements in the skiplist with a score
+between min and max.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pulsar.utils.structures.zset"></span></div>
+<div class="section" id="zset">
+<h3>Zset<a class="headerlink" href="#zset" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.utils.structures.zset.Zset">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.structures.zset.</tt><tt class="descname">Zset</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ordered-set equivalent of redis zset.</p>
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.items">
+<tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterable over ordered score, value pairs of this <tt class="xref py py-class docutils literal"><span class="pre">zset</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.score">
+<tt class="descname">score</tt><big>(</big><em>member</em>, <em>default=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.score" title="Permalink to this definition">¶</a></dt>
+<dd><p>The score of a given member</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.update">
+<tt class="descname">update</tt><big>(</big><em>score_vals</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the <tt class="xref py py-class docutils literal"><span class="pre">zset</span></tt> with an iterable over pairs of
+scores and values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.remove">
+<tt class="descname">remove</tt><big>(</big><em>item</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove <tt class="docutils literal"><span class="pre">item</span></tt> for the <tt class="xref py py-class docutils literal"><span class="pre">zset</span></tt> it it exists.
+If found it returns the score of the item removed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.remove_range">
+<tt class="descname">remove_range</tt><big>(</big><em>start</em>, <em>end</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.remove_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.remove_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a range by score.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.remove_range_by_score">
+<tt class="descname">remove_range_by_score</tt><big>(</big><em>minval</em>, <em>maxval</em>, <em>include_min=True</em>, <em>include_max=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.remove_range_by_score"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.remove_range_by_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a range by score.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear this <tt class="xref py py-class docutils literal"><span class="pre">zset</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.structures.zset.Zset.rank">
+<tt class="descname">rank</tt><big>(</big><em>item</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/structures/zset.html#Zset.rank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.structures.zset.Zset.rank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the rank (index) of <tt class="docutils literal"><span class="pre">item</span></tt> in this <tt class="xref py py-class docutils literal"><span class="pre">zset</span></tt>.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -1029,7 +1138,7 @@ attributes which are not picklable.</p>
 <dl class="attribute">
 <dt id="pulsar.utils.log.LocalMixin.local">
 <tt class="descname">local</tt><a class="reference internal" href="../modules/pulsar/utils/log.html#LocalMixin.local"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.LocalMixin.local" title="Permalink to this definition">¶</a></dt>
-<dd><p>A lazy <a class="reference internal" href="#pulsar.utils.structures.AttributeDictionary" title="pulsar.utils.structures.AttributeDictionary"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.AttributeDictionary</span></tt></a>.</p>
+<dd><p>A lazy <tt class="xref py py-class docutils literal"><span class="pre">pulsar.utils.structures.AttributeDictionary</span></tt>.</p>
 <p>This attribute is removed when pickling an instance.</p>
 </dd></dl>
 
@@ -1088,102 +1197,50 @@ taken from python.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pulsar.utils.html">
-<span id="path"></span><h2>Path<a class="headerlink" href="#module-pulsar.utils.html" title="Permalink to this headline">¶</a></h2>
-<p>Utilities for HTML and text manipulation.</p>
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_AMPERSAND</tt><em class="property"> = '&amp;amp;'</em></dt>
-<dd><p>HTML &amp; symbol.</p>
+<div class="section" id="module-pulsar.utils.path">
+<span id="path"></span><h2>Path<a class="headerlink" href="#module-pulsar.utils.path" title="Permalink to this headline">¶</a></h2>
+<p>Stand alone compact module for managing python paths.</p>
+<dl class="class">
+<dt id="pulsar.utils.path.Path">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.path.</tt><tt class="descname">Path</tt><a class="reference internal" href="../modules/pulsar/utils/path.html#Path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.path.Path" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lightweight utility for the filesystem and python modules.</p>
+<dl class="method">
+<dt id="pulsar.utils.path.Path.add2python">
+<tt class="descname">add2python</tt><big>(</big><em>module=None</em>, <em>up=0</em>, <em>down=None</em>, <em>front=False</em>, <em>must_exist=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/path.html#Path.add2python"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.path.Path.add2python" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a directory to the python path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>module</strong> &#8211; Optional module name to try to import once we have found
+the directory</li>
+<li><strong>up</strong> &#8211; number of level to go up the directory three from
+<tt class="xref py py-attr docutils literal"><span class="pre">local_path</span></tt>.</li>
+<li><strong>down</strong> &#8211; Optional tuple of directory names to travel down once we have
+gone <em>up</em> levels.</li>
+<li><strong>front</strong> &#8211; Boolean indicating if we want to insert the new path at the
+front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> using <tt class="docutils literal"><span class="pre">sys.path.insert(0,path)</span></tt>.</li>
+<li><strong>must_exist</strong> &#8211; Boolean indicating if the module must exists.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_EMDASH</tt><em class="property"> = '&amp;mdash;'</em></dt>
-<dd><p>HTML &#8211; symbol.</p>
+<dl class="classmethod">
+<dt id="pulsar.utils.path.Path.cwd">
+<em class="property">classmethod </em><tt class="descname">cwd</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/path.html#Path.cwd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.path.Path.cwd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current working directory as a path object.</p>
 </dd></dl>
 
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_ENDASH</tt><em class="property"> = '&amp;ndash;'</em></dt>
-<dd><p>HTML - symbol.</p>
+<dl class="method">
+<dt id="pulsar.utils.path.Path.ispymodule">
+<tt class="descname">ispymodule</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/path.html#Path.ispymodule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.path.Path.ispymodule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if this <a class="reference internal" href="#pulsar.utils.path.Path" title="pulsar.utils.path.Path"><tt class="xref py py-class docutils literal"><span class="pre">Path</span></tt></a> is a python module.</p>
 </dd></dl>
 
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_GREATER_THEN</tt><em class="property"> = '&amp;gt;'</em></dt>
-<dd><p>HTML &gt; symbol.</p>
-</dd></dl>
-
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_LESS_THEN</tt><em class="property"> = '&amp;lt;'</em></dt>
-<dd><p>HTML &lt; symbol.</p>
-</dd></dl>
-
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">HTML_NON_BREACKING_SPACE</tt><em class="property"> = '&amp;nbsp;'</em></dt>
-<dd><p>HTML non breaking space symbol.</p>
-</dd></dl>
-
-<dl class="data">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">NOTHING</tt><em class="property"> = ('', b'', None)</em></dt>
-<dd><p>Tuple of elements considered as null.</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">capfirst</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#capfirst"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Capitalise the first letter of <tt class="docutils literal"><span class="pre">x</span></tt>.</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">child_tag</tt><big>(</big><em>tag</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#child_tag"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>The default children <tt class="docutils literal"><span class="pre">tag</span></tt> for a given <tt class="docutils literal"><span class="pre">tag</span></tt>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">csslink</tt></dt>
-<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">cssentry</span></tt></p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">escape</tt><big>(</big><em>html</em>, <em>force=False</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#escape"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Returns the given HTML with ampersands,
-quotes and angle brackets encoded.</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">mark_safe</tt><big>(</big><em>v</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#mark_safe"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Mar a string <tt class="docutils literal"><span class="pre">v</span></tt> as safe. A safe string won&#8217;t be escaped by the
-<a class="reference internal" href="#pulsar.utils.html.escape" title="pulsar.utils.html.escape"><tt class="xref py py-func docutils literal"><span class="pre">escape()</span></tt></a> function.</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">nicename</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#nicename"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Make <tt class="docutils literal"><span class="pre">name</span></tt> a more user friendly string.</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">slugify</tt><big>(</big><em>value</em>, <em>rtx='_'</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#slugify"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Normalizes string, removes non-alpha characters,
-and converts spaces to <tt class="docutils literal"><span class="pre">rtx</span></tt> character (hyphens or underscore).</p>
-</dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descclassname">pulsar.utils.html.</tt><tt class="descname">tag_attributes</tt><big>(</big><em>tag</em>, <em>type=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/html.html#tag_attributes"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Return a tuple of valid attributes for the HTML <tt class="docutils literal"><span class="pre">tag</span></tt> and optional
-<tt class="docutils literal"><span class="pre">type</span></tt>. If the <tt class="docutils literal"><span class="pre">tag</span></tt> is not found in the global <tt class="docutils literal"><span class="pre">HTML_ATTRIBUTES</span></tt>
-dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRIBUTES</span></tt> set is returned.</p>
 </dd></dl>
 
 </div>
@@ -1195,7 +1252,7 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -1212,7 +1269,7 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Tools</a><ul>
 <li><a class="reference internal" href="#module-pulsar.utils.httpurl">HTTP</a><ul>
@@ -1222,8 +1279,10 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.websocket">Websocket</a><ul>
+<li><a class="reference internal" href="#frame-parser">frame parser</a></li>
 <li><a class="reference internal" href="#frame">Frame</a></li>
-<li><a class="reference internal" href="#frame-parser">Frame Parser</a></li>
+<li><a class="reference internal" href="#id3">Frame Parser</a></li>
+<li><a class="reference internal" href="#parse-close">parse_close</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.config">Configuration</a><ul>
@@ -1241,18 +1300,20 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
 <li><a class="reference internal" href="#multivaluedict">MultiValueDict</a></li>
 <li><a class="reference internal" href="#attributedictionary">AttributeDictionary</a></li>
 <li><a class="reference internal" href="#frozendict">FrozenDict</a></li>
+<li><a class="reference internal" href="#skiplist">Skiplist</a></li>
+<li><a class="reference internal" href="#zset">Zset</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.html">HTML &amp; Text</a></li>
 <li><a class="reference internal" href="#module-pulsar.utils.log">Logging</a></li>
-<li><a class="reference internal" href="#module-pulsar.utils.html">Path</a></li>
+<li><a class="reference internal" href="#module-pulsar.utils.path">Path</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="application.html"
-                        title="previous chapter">Applications API</a></p>
+                        title="previous chapter">Application API</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="exceptions.html"
                         title="next chapter">Exceptions</a></p>
@@ -1279,10 +1340,13 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -1299,5 +1363,5 @@ dictionary, the <tt class="docutils literal"><span class="pre">GLOBAL_HTML_ATTRI
 
 </script>
 
-  </body>
+</body>
 </html>

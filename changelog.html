@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Release Notes &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Release Notes &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="shortcut icon" href="static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="index.html" />
     <link rel="next" title="Settings" href="settings.html" />
     <link rel="prev" title="Exceptions" href="api/exceptions.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -45,14 +51,14 @@
         <li class="right" >
           <a href="api/exceptions.html" title="Exceptions"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/changelog.html">release docs here</a>.
         </p>
     
@@ -67,13 +73,86 @@
             
   <div class="section" id="release-notes">
 <span id="changelog"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="ver-0-8-0-development">
-<h2>Ver. 0.8.0 - Development<a class="headerlink" href="#ver-0-8-0-development" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ver-0-8-0">
+<h2>Ver. 0.8.0<a class="headerlink" href="#ver-0-8-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.run_in_loop_thread()</span></tt> high level function. The function
-runs a callable in the event loop thread and returns <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+<li><strong>Asyncio Integration</strong><ul>
+<li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">asyncio</a> integration with several changes in internals. The integration
+works with all supported python versions.</li>
+<li>This version brings some backward incompatible changes for internals
+classes since we needed to bring in line the <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> class
+with <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">asyncio</a>.</li>
+<li>Asyncio event loop functions <a class="reference internal" href="api/async.html#pulsar.async.get_event_loop" title="pulsar.async.get_event_loop"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>, <a class="reference internal" href="api/async.html#pulsar.async.new_event_loop" title="pulsar.async.new_event_loop"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
+are available from pulsar top level module as well as asyncio
+(if available). In other words <tt class="docutils literal"><span class="pre">from</span> <span class="pre">pulsar</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> and
+<tt class="docutils literal"><span class="pre">from</span> <span class="pre">asyncio</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> are equivalent (provided pulsar is
+imported first).</li>
+</ul>
+</li>
+<li><strong>Core library</strong><ul>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.run_in_loop_thread" title="pulsar.async.defer.run_in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop_thread()</span></tt></a> high level function. This utility
+runs a callable in the event loop thread and returns a <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
 called back once the callable has a result/exception.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.in_loop" title="pulsar.async.defer.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="api/async.html#pulsar.async.defer.in_loop_thread" title="pulsar.async.defer.in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">in_loop_thread()</span></tt></a> decorators for
+member functions of <a class="reference internal" href="design.html#async-object"><em>async objects</em></a>.</li>
+<li><a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.async" title="pulsar.async.fallbacks.defer.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> is now a function, not a decorator.</li>
+<li>Added the new <a class="reference internal" href="api/protocols.html#pulsar.async.clients.Pool" title="pulsar.async.clients.Pool"><tt class="xref py py-class docutils literal"><span class="pre">Pool</span></tt></a> class for managing a pool of asynchronous
+connection with a server.</li>
+<li>Embedding third-party asynchronous frameworks can be achieved via the
+new <a class="reference internal" href="api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</li>
+<li>Removed <tt class="docutils literal"><span class="pre">Client</span></tt> class and replaced by <a class="reference internal" href="api/protocols.html#pulsar.async.clients.AbstractClient" title="pulsar.async.clients.AbstractClient"><tt class="xref py py-class docutils literal"><span class="pre">AbstractClient</span></tt></a> which
+in turns is a subclass of connections <a class="reference internal" href="api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a>.</li>
+<li>Removed <tt class="docutils literal"><span class="pre">force_sync</span></tt> parameter when creating synchronous components.
+Synchronous objects are now created by explicitly passing a new event
+loop during initialisation.
+Check the the <a class="reference internal" href="tutorials/sync.html#tutorials-synchronous"><em>synchronous components tutorial</em></a>
+for details.</li>
+<li>Added the <a class="reference internal" href="settings.html#setting-data-store"><em>data-store</em></a> setting for specifying
+the default data store of a running application.</li>
+<li>Added the <a class="reference internal" href="settings.html#setting-exc-id"><em>exc-id</em></a> setting which uniquely specify
+the identity of a running application. This is useful during testing.</li>
+</ul>
+</li>
+<li><strong>New data store module</strong><ul>
+<li>New <a class="reference internal" href="apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></tt></a> module for managing asynchronous data stores.</li>
+<li>Two stores available: <a class="reference external" href="http://redis.io/">redis</a> and <a class="reference internal" href="apps/data/pulsar.html#pulsar-data-store"><em>pulsar-ds</em></a>.</li>
+<li>Additional stores can be created by subclassing the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
+abstract class and registering it via the <a class="reference internal" href="apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.register_store" title="pulsar.apps.data.stores.pulsards.base.register_store"><tt class="xref py py-func docutils literal"><span class="pre">register_store()</span></tt></a> function.</li>
+<li>The <a class="reference internal" href="apps/data/pulsar.html#pulsar-data-store"><em>pulsar-ds</em></a> is a python implementation of
+the popular redis server. It implements most redis commands including
+scripting.</li>
+</ul>
+</li>
+<li><strong>Websockets</strong><ul>
+<li>the web socket <a class="reference internal" href="apps/websockets.html#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> method is invoked soon
+after upgrade headers are sent. No need to send a message from the client
+to kick start the bidirectional communication.</li>
+<li>Websocket C extensions for faster parsing/masking.</li>
+<li>Added support for sending <a class="reference internal" href="api/utilities.html#pulsar.utils.websocket.FrameParser.close" title="pulsar.utils.websocket.FrameParser.close"><tt class="xref py py-meth docutils literal"><span class="pre">close()</span></tt></a>
+frames with an optional status code, and for parsing close frames
+with a body via the <a class="reference internal" href="api/utilities.html#pulsar.utils.websocket.parse_close" title="pulsar.utils.websocket.parse_close"><tt class="xref py py-func docutils literal"><span class="pre">parse_close()</span></tt></a> function (for websocket clients).</li>
+</ul>
+</li>
+<li><strong>Miscellaneous</strong><ul>
+<li>The <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pubsub</span></tt> has been removed. Publish/subscribe
+handlersd are now available via the new <a class="reference internal" href="apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></tt></a> module.</li>
+<li>The <tt class="docutils literal"><span class="pre">Backend</span></tt> class has been removed.</li>
+<li>Improved <a class="reference internal" href="tutorials/django.html#tutorials-django"><em>django example</em></a> with possibility to
+choose different data stores for messages.</li>
+</ul>
+</li>
 <li><strong>821 regression tests</strong>, <strong>91% coverage</strong>.</li>
+</ul>
+</div>
+<div class="section" id="ver-0-7-3-2013-dec-12">
+<h2>Ver. 0.7.3 - 2013-Dec-12<a class="headerlink" href="#ver-0-7-3-2013-dec-12" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>A bug fix release.</li>
+<li><tt class="docutils literal"><span class="pre">setup.py</span></tt> only import pulsar version and skip the rest</li>
+<li>The <a class="reference internal" href="apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.wait_for_body_middleware" title="pulsar.apps.wsgi.middleware.wait_for_body_middleware"><tt class="xref py py-func docutils literal"><span class="pre">wait_for_body_middleware()</span></tt></a> read the HTTP body only without
+decoding it</li>
+<li>C extensions included in <tt class="docutils literal"><span class="pre">MANIFEST.in</span></tt> so that they can be compiled from PyPi</li>
+<li><strong>823 regression tests</strong>, <strong>91% coverage</strong></li>
 </ul>
 </div>
 <div class="section" id="ver-0-7-2-2013-oct-16">
@@ -99,52 +178,35 @@ has body to load.</li>
 </div>
 <div class="section" id="ver-0-7-0-2013-oct-13">
 <h2>Ver. 0.7.0 - 2013-Oct-13<a class="headerlink" href="#ver-0-7-0-2013-oct-13" title="Permalink to this headline">¶</a></h2>
-<ul>
-<li><p class="first">Several improvements and bug fixes in the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>
-including:</p>
-<blockquote>
-<div><ul class="simple">
-<li>SSL support</li>
-<li>Proxy and Tunneling</li>
-<li>Cookie support</li>
-<li>File upload</li>
-</ul>
-</div></blockquote>
-</li>
-<li><p class="first">Code coverage can be turned on by using the <tt class="docutils literal"><span class="pre">--coverage</span></tt> option. By
+<ul class="simple">
+<li>Several improvements and bug fixes in the <a class="reference internal" href="apps/http.html#apps-http"><em>Http Client</em></a>
+including:
+* SSL support
+* Proxy and Tunnelling
+* Cookie support
+* File upload</li>
+<li>Code coverage can be turned on by using the <tt class="docutils literal"><span class="pre">--coverage</span></tt> option. By
 passing in the command line <tt class="docutils literal"><span class="pre">--coveralls</span></tt> when testing, coverage is
-published to coveralls.io.</p>
-</li>
-<li><p class="first">WSGI responses 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
+published to coveralls.io.</li>
+<li>WSGI responses 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
 request URI is not an absolute URI. Follows the <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2">rfc2616 sec 5.2</a>
-guidelines.</p>
-</li>
-<li><p class="first">A new asynchronous <a class="reference internal" href="apps/redis.html#redis-client"><em>redis client</em></a>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</p>
-</li>
-<li><p class="first">Removed the specialised application worker and monitor classes.
+guidelines.</li>
+<li>A new asynchronous <em class="xref std std-ref">redis client</em>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</li>
+<li>Removed the specialised application worker and monitor classes.
 Use standard actor and monitor with specialised
-<a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</p>
-</li>
-<li><p class="first">Removed the global event dispatcher. No longer used. Less global variables
-the better.</p>
-</li>
-<li><p class="first">Protocol consumer to handle one request only. Better upgrade method for
-connections.</p>
-</li>
-<li><p class="first">Proper handling of secure connections in <a class="reference internal" href="apps/wsgi/index.html#apps-wsgi"><em>wsgi applications</em></a>.</p>
-</li>
-<li><p class="first">Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>WSGI Router</em></a>.</p>
-</li>
-<li><p class="first">Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
-element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</p>
-</li>
-<li><p class="first">Added <a class="reference internal" href="api/actor.html#pulsar.Actor.stream" title="pulsar.Actor.stream"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor.stream</span></tt></a> attribute to write messages without using
-the logger.</p>
-</li>
-<li><p class="first">Pass pep8 test.</p>
-</li>
-<li><p class="first"><strong>807 regression tests</strong>, <strong>90% coverage</strong>.</p>
-</li>
+<a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</li>
+<li>Removed the global event dispatcher. No longer used. Less global variables
+the better.</li>
+<li>Protocol consumer to handle one request only. Better upgrade method for
+connections.</li>
+<li>Proper handling of secure connections in <a class="reference internal" href="apps/wsgi/index.html#apps-wsgi"><em>wsgi applications</em></a>.</li>
+<li>Added <tt class="docutils literal"><span class="pre">accept_content_type</span></tt> method to <a class="reference internal" href="apps/wsgi/routing.html#wsgi-router"><em>WSGI Router</em></a>.</li>
+<li>Ability to add embedded css rules into the <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-head"><em>head</em></a>
+element of an <a class="reference internal" href="apps/wsgi/content.html#wsgi-html-document"><em>Html document</em></a>.</li>
+<li>Added <tt class="xref py py-class docutils literal"><span class="pre">Actor.stream</span></tt> attribute to write messages without using
+the logger.</li>
+<li>Pass pep8 test.</li>
+<li><strong>807 regression tests</strong>, <strong>90% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-6-0-2013-sep-05">
@@ -156,21 +218,21 @@ the logger.</p>
 <dt>Asynchronous framework:</dt>
 <dd><ul class="first last simple">
 <li>Removed <tt class="docutils literal"><span class="pre">is_async</span></tt> function. Not used.</li>
-<li>The <a class="reference internal" href="api/async.html#pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.async</span></tt></a> decorator always return a
-<a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, it never throws.</li>
-<li>Created the <a class="reference internal" href="api/async.html#pulsar.Poller" title="pulsar.Poller"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Poller</span></tt></a> base class for implementing different
+<li>The <tt class="xref py py-class docutils literal"><span class="pre">async</span></tt> decorator always return a
+<a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, it never throws.</li>
+<li>Created the <a class="reference internal" href="api/async.html#pulsar.async.pollers.Poller" title="pulsar.async.pollers.Poller"><tt class="xref py py-class docutils literal"><span class="pre">Poller</span></tt></a> base class for implementing different
 types of event loop pollers. Implementation available for <tt class="docutils literal"><span class="pre">epoll</span></tt>,
 <tt class="docutils literal"><span class="pre">kqueue</span></tt> and <tt class="docutils literal"><span class="pre">select</span></tt>.</li>
-<li>Modified <a class="reference internal" href="api/async.html#pulsar.Failure" title="pulsar.Failure"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Failure</span></tt></a> implementation to handle one <tt class="docutils literal"><span class="pre">exc_info</span></tt>
+<li>Modified <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> implementation to handle one <tt class="docutils literal"><span class="pre">exc_info</span></tt>
 only and better handling of unlogged failures.</li>
-<li>Added an asynchronous FIFO <a class="reference internal" href="api/async.html#pulsar.Queue" title="pulsar.Queue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Queue</span></tt></a>.</li>
-<li>Added <a class="reference internal" href="api/async.html#pulsar.async_while" title="pulsar.async_while"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.async_while()</span></tt></a> utility function.</li>
+<li>Added an asynchronous FIFO <a class="reference internal" href="api/async.html#pulsar.async.queues.Queue" title="pulsar.async.queues.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.async_while" title="pulsar.async.defer.async_while"><tt class="xref py py-func docutils literal"><span class="pre">async_while()</span></tt></a> utility function.</li>
 <li>Socket servers handle IPV6 addresses.</li>
 <li>Added <a class="reference internal" href="apps/socket.html#socket-server-ssl"><em>SSL support</em></a> for socket servers.</li>
 <li>Tasks throw errors back to the coroutine via the generator <tt class="docutils literal"><span class="pre">throw</span></tt>
 method.</li>
-<li>50% Faster <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> initialisation.</li>
-<li>Added <a class="reference internal" href="api/async.html#pulsar.Deferred.then" title="pulsar.Deferred.then"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.then()</span></tt></a> method for adding a deferred to a
+<li>50% Faster <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> initialisation.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred.then" title="pulsar.async.fallbacks.defer.Deferred.then"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.then()</span></tt></a> method for adding a deferred to a
 deferred&#8217;s callbacks without affecting the result.</li>
 </ul>
 </dd>
@@ -181,7 +243,7 @@ deferred&#8217;s callbacks without affecting the result.</li>
 <dd><ul class="first last simple">
 <li>Added <a class="reference internal" href="settings.html#setting-thread-workers"><em>&#8211;thread_workers</em></a> config option
 for controlling the default number of workers in actor thread pools.</li>
-<li>New asynchronous <a class="reference internal" href="api/actor.html#pulsar.ThreadPool" title="pulsar.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ThreadPool</span></tt></a> for CPU bound operations.</li>
+<li>New asynchronous <a class="reference internal" href="api/actor.html#pulsar.async.actor.ThreadPool" title="pulsar.async.actor.ThreadPool"><tt class="xref py py-class docutils literal"><span class="pre">ThreadPool</span></tt></a> for CPU bound operations.</li>
 <li><a class="reference internal" href="design.html#actor-hooks"><em>Actor&#8217;s hooks can be asynchronous</em></a>.</li>
 </ul>
 </dd>
@@ -191,13 +253,13 @@ for controlling the default number of workers in actor thread pools.</li>
 <dt>Applications:</dt>
 <dd><ul class="first last simple">
 <li>Added <tt class="docutils literal"><span class="pre">flush</span></tt> method to the
-<a class="reference internal" href="apps/tasks/backend.html#apps-taskqueue-backend"><em>task queue backend</em></a>.
+<em class="xref std std-ref">task queue backend</em>.
 The metod can be used to remove all tasks and empty the task queue.</li>
-<li>Better handling of <a class="reference internal" href="apps/tasks/jobs.html#job-non-overlap"><em>non-overlapping jobs</em></a>
+<li>Better handling of <a class="reference internal" href="apps/tasks.html#job-non-overlap"><em>non-overlapping jobs</em></a>
 in a task queue.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-when-exit"><em>when_exit</em></a> application hook.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-poller"><em>&#8211;io option</em></a> for controlling the default
-<a class="reference internal" href="api/async.html#pulsar.Poller" title="pulsar.Poller"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Poller</span></tt></a>.</li>
+<a class="reference internal" href="api/async.html#pulsar.async.pollers.Poller" title="pulsar.async.pollers.Poller"><tt class="xref py py-class docutils literal"><span class="pre">Poller</span></tt></a>.</li>
 <li>Critical bug fix in python 3 WSGI server.</li>
 <li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-show-leaks"><em>&#8211;show_leaks option</em></a>
@@ -216,7 +278,7 @@ via the <a class="reference internal" href="apps/wsgi/routing.html#wsgi-route-de
 <li><dl class="first docutils">
 <dt>Examples:</dt>
 <dd><ul class="first last simple">
-<li>Proxy server example uses the new <a class="reference internal" href="api/async.html#pulsar.Queue" title="pulsar.Queue"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Queue</span></tt></a>.</li>
+<li>Proxy server example uses the new <a class="reference internal" href="api/async.html#pulsar.async.queues.Queue" title="pulsar.async.queues.Queue"><tt class="xref py py-class docutils literal"><span class="pre">Queue</span></tt></a>.</li>
 </ul>
 </dd>
 </dl>
@@ -224,7 +286,7 @@ via the <a class="reference internal" href="apps/wsgi/routing.html#wsgi-route-de
 <li><dl class="first docutils">
 <dt>Miscellaneous:</dt>
 <dd><ul class="first last simple">
-<li>Added <a class="reference internal" href="api/exceptions.html#module-pulsar.utils.exceptions" title="pulsar.utils.exceptions"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.exceptions</span></tt></a> documentation.</li>
+<li>Added <a class="reference internal" href="api/exceptions.html#module-pulsar.utils.exceptions" title="pulsar.utils.exceptions"><tt class="xref py py-mod docutils literal"><span class="pre">exceptions</span></tt></a> documentation.</li>
 </ul>
 </dd>
 </dl>
@@ -251,9 +313,9 @@ they can easily be retrieved via the <tt class="docutils literal"><span class="p
 <ul class="simple">
 <li>Several bug fixes and more docs.</li>
 <li>Fixed <tt class="docutils literal"><span class="pre">ThreadPool</span></tt> for for python 2.6.</li>
-<li>Added the <a class="reference internal" href="api/async.html#pulsar.safe_async" title="pulsar.safe_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.safe_async()</span></tt></a> function for safely executing synchronous
+<li>Added the <a class="reference internal" href="api/async.html#pulsar.async.defer.safe_async" title="pulsar.async.defer.safe_async"><tt class="xref py py-func docutils literal"><span class="pre">safe_async()</span></tt></a> function for safely executing synchronous
 and asynchronous callables.</li>
-<li>The <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config.get" title="pulsar.utils.config.Config.get"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.utils.config.Config.get()</span></tt></a> method never fails. It return the
+<li>The <a class="reference internal" href="api/utilities.html#pulsar.utils.config.Config.get" title="pulsar.utils.config.Config.get"><tt class="xref py py-meth docutils literal"><span class="pre">Config.get()</span></tt></a> method never fails. It return the
 <tt class="docutils literal"><span class="pre">default</span></tt> value if the setting key is not available.</li>
 <li>Improved <tt class="docutils literal"><span class="pre">setup.py</span></tt> so that it does not log a python 2 module syntax error
 when installing for python 3.</li>
@@ -272,18 +334,18 @@ callable serving the request.</li>
 <dt>Asynchronous framework:</dt>
 <dd><ul class="first last simple">
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> implementation.</li>
-<li>New <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> compatible <a class="reference internal" href="api/async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.EventLoop</span></tt></a>.</li>
-<li>Added the <a class="reference internal" href="api/async.html#pulsar.Deferred.cancel" title="pulsar.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.cancel()</span></tt></a> method to cancel asynchronous
+<li>New <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> compatible <a class="reference internal" href="api/async.html#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.</li>
+<li>Added the <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred.cancel" title="pulsar.async.fallbacks.defer.Deferred.cancel"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.cancel()</span></tt></a> method to cancel asynchronous
 callbacks.</li>
-<li><a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> accepts a <em>timeout</em> as initialisation parameter.
+<li><a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> accepts a <em>timeout</em> as initialisation parameter.
 If a value greater than 0 is given, the deferred will add a timeout to the
 event loop to cancel itself in <em>timeout</em> seconds.</li>
-<li><a class="reference internal" href="api/async.html#pulsar.Task" title="pulsar.Task"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Task</span></tt></a> stops after the first error by default.
+<li><a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a> stops after the first error by default.
 This class replace the old DeferredGenerator and provides a cleaner
 API with inline syntax. Check the
 <a class="reference internal" href="tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a> tutorial for
 further information.</li>
-<li>Added <a class="reference internal" href="api/async.html#pulsar.async_sleep" title="pulsar.async_sleep"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.async_sleep()</span></tt></a> function.</li>
+<li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.async_sleep" title="pulsar.async.defer.async_sleep"><tt class="xref py py-func docutils literal"><span class="pre">async_sleep()</span></tt></a> function.</li>
 </ul>
 </dd>
 </dl>
@@ -291,13 +353,13 @@ further information.</li>
 <li><dl class="first docutils">
 <dt>Actors:</dt>
 <dd><ul class="first last simple">
-<li><a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> internal message passing uses the (unmasked)
+<li><a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> internal message passing uses the (unmasked)
 websocket protocol in a bidirectional communication between the
-<a class="reference internal" href="api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> and actors.</li>
+<a class="reference internal" href="api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> and actors.</li>
 <li>Spawning and stopping actors is monitored using a timeout set at 5 seconds.</li>
 <li>Added <a class="reference internal" href="api/actor.html#module-pulsar.async.consts" title="pulsar.async.consts"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.async.consts</span></tt></a> module for low level pulsar constants.</li>
 <li>Removed the requestloop attribute, the actor event loop is now accessed
-via the <a class="reference internal" href="api/actor.html#pulsar.Actor.event_loop" title="pulsar.Actor.event_loop"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.event_loop</span></tt></a> attribute or via the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a>
+via the <a class="reference internal" href="api/actor.html#pulsar.async.actor.Actor._loop" title="pulsar.async.actor.Actor._loop"><tt class="xref py py-attr docutils literal"><span class="pre">Actor._loop</span></tt></a> attribute or via the <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a>
 function <tt class="docutils literal"><span class="pre">get_event_loop</span></tt>.</li>
 </ul>
 </dd>
@@ -307,11 +369,10 @@ function <tt class="docutils literal"><span class="pre">get_event_loop</span></t
 <dt>Applications:</dt>
 <dd><ul class="first last simple">
 <li>Added ability to add Websocket sub-protocols and extensions.</li>
-<li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.http.HttpClient</span></tt></a> with websocket
-support.</li>
+<li>New asynchronous <a class="reference internal" href="apps/http.html#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a> with websocket support.</li>
 <li>Support <a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a> for faster http protocol parsing.</li>
 <li>Refactoring of asynchronous <a class="reference internal" href="apps/test.html#module-pulsar.apps.test" title="pulsar.apps.test"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.test</span></tt></a> application.</li>
-<li>Added <a class="reference internal" href="apps/pubsub.html#apps-pubsub"><em>Publish/Subscribe application</em></a>. The application
+<li>Added <em class="xref std std-ref">Publish/Subscribe application</em>. The application
 is used in the <a class="reference internal" href="tutorials/chat.html#tutorials-chat"><em>web chat</em></a> example.</li>
 <li>Added <a class="reference internal" href="apps/pulse.html#apps-pulse"><em>django application</em></a> for running a <a class="reference external" href="https://www.djangoproject.com/">django</a>
 site using pulsar.</li>
@@ -324,9 +385,9 @@ so that it can be used in any process domain.</li>
 <li><dl class="first docutils">
 <dt>Initial <a class="reference internal" href="apps/twisted.html#tutorials-twisted"><em>twisted integration</em></a>.</dt>
 <dd><ul class="first last simple">
-<li>Added <a class="reference internal" href="api/async.html#pulsar.set_async" title="pulsar.set_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt></a> function which can be used to change
-the asynchronous discovery functions <a class="reference internal" href="api/async.html#pulsar.maybe_async" title="pulsar.maybe_async"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_async()</span></tt></a>
-and <a class="reference internal" href="api/async.html#pulsar.maybe_failure" title="pulsar.maybe_failure"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_failure()</span></tt></a>. The function is used in the
+<li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt> function which can be used to change
+the asynchronous discovery functions <tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_async()</span></tt>
+and <tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_failure()</span></tt>. The function is used in the
 implementation of <a class="reference internal" href="apps/twisted.html#tutorials-twisted"><em>twisted integration</em></a> and could
 be used in conjunction with other asynchronous libraries as well.</li>
 <li>New <a class="reference internal" href="tutorials/webmail.html#tutorials-webmail"><em>Webmail example application</em></a> using twisted
@@ -335,7 +396,7 @@ IMAP4 protocol implementation.</li>
 </dd>
 </dl>
 </li>
-<li><p class="first">Added <a class="reference internal" href="api/utilities.html#pulsar.utils.structures.FrozenDict" title="pulsar.utils.structures.FrozenDict"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.structures.FrozenDict</span></tt></a>.</p>
+<li><p class="first">Added <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.structures.FrozenDict</span></tt>.</p>
 </li>
 <li><p class="first"><strong>444 regression tests</strong>, <strong>87% coverage</strong>.</p>
 </li>
@@ -363,12 +424,12 @@ IMAP4 protocol implementation.</li>
 <h2>Ver. 0.4.4 - 2013-Jan-13<a class="headerlink" href="#ver-0-4-4-2013-jan-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Documentation for development version hosted on github.</li>
-<li>Modified <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Actor.exit()</span></tt> so that it shuts down <a class="reference internal" href="api/actor.html#pulsar.Actor.mailbox" title="pulsar.Actor.mailbox"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.mailbox</span></tt></a>
+<li>Modified <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Actor.exit()</span></tt> so that it shuts down <tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.mailbox</span></tt>
 after closing the <tt class="xref py py-attr docutils literal"><span class="pre">pulsar.Actor.requestloop</span></tt>.</li>
 <li>Fixed bug which prevented <a class="reference internal" href="settings.html#setting-daemon"><em>daemonisation</em></a> in posix systems.</li>
 <li>Changed the <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.Deferred.result_or_self()</span></tt> method to return the
 <em>result</em> when the it is called and no callbacks are available.
-It avoids several unnecessary calls on deeply nested <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>
+It avoids several unnecessary calls on deeply nested <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt>
 (which sometimes caused maximum recursion depth exceeded).</li>
 <li>Fixed calculator example script.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
@@ -379,7 +440,7 @@ It avoids several unnecessary calls on deeply nested <a class="reference interna
 <ul class="simple">
 <li>Removed the tasks in event loop. A task can only be added by appending
 callbacks or timeouts.</li>
-<li>Fixed critical bug in <a class="reference internal" href="api/async.html#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.MultiDeferred</span></tt></a>.</li>
+<li>Fixed critical bug in <tt class="xref py py-class docutils literal"><span class="pre">pulsar.MultiDeferred</span></tt>.</li>
 <li>Test suite works with multiple test workers.</li>
 <li>Fixed issue #17 on asynchronous shell application.</li>
 <li>Dining philosophers example works on events only.</li>
@@ -391,7 +452,7 @@ callbacks or timeouts.</li>
 <h2>Ver. 0.4.2 - 2012-Dec-12<a class="headerlink" href="#ver-0-4-2-2012-dec-12" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Fixed bug in boolean validation.</li>
-<li>Refactored <a class="reference internal" href="apps/test.html#pulsar.apps.test.TestPlugin" title="pulsar.apps.test.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.test.TestPlugin</span></tt></a> to handle multi-parameters.</li>
+<li>Refactored <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.test.TestPlugin</span></tt> to handle multi-parameters.</li>
 <li>Removed unused code and increased test coverage.</li>
 <li><strong>338 regression tests</strong>, <strong>86% coverage</strong>.</li>
 </ul>
@@ -415,9 +476,9 @@ and <tt class="docutils literal"><span class="pre">encoding</span></tt> paramete
 <li>Support <a class="reference external" href="http://pypy.org/">pypy</a> and python 3.3.</li>
 <li>Added the new <a class="reference internal" href="api/utilities.html#module-pulsar.utils.httpurl" title="pulsar.utils.httpurl"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.utils.httpurl</span></tt></a> module for HTTP tools and HTTP
 synchronous and asynchronous clients.</li>
-<li>Refactored <a class="reference internal" href="api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> to be more compatible with twisted. You
+<li>Refactored <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt> to be more compatible with twisted. You
 can add separate callbacks for handling errors.</li>
-<li>Added <a class="reference internal" href="api/async.html#pulsar.MultiDeferred" title="pulsar.MultiDeferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.MultiDeferred</span></tt></a> for handling a group of asynchronous
+<li>Added <tt class="xref py py-class docutils literal"><span class="pre">pulsar.MultiDeferred</span></tt> for handling a group of asynchronous
 elements independent from each other.</li>
 <li>The <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Mailbox</span></tt> does not derive from <tt class="xref py py-class docutils literal"><span class="pre">threading.Thread</span></tt> so
 that the eventloop can be restarted.</li>
@@ -433,17 +494,17 @@ a dictionary.</li>
 <ul class="simple">
 <li>Development status set to <tt class="docutils literal"><span class="pre">Alpha</span></tt>.</li>
 <li>This version brings several bug fixes, more tests, more docs, and improvements
-in the <a class="reference internal" href="apps/tasks/intro.html#module-pulsar.apps.tasks" title="pulsar.apps.tasks"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tasks</span></tt></a> application.</li>
-<li>Added <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.tasks.Job.send_to_queue()</span></tt> method for allowing
-<tt class="xref py py-meth docutils literal"><span class="pre">pulsar.apps.tasks.Task()</span></tt> to create new tasks.</li>
-<li>The current <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> is always available on the current thread
+in the <a class="reference internal" href="apps/tasks.html#module-pulsar.apps.tasks" title="pulsar.apps.tasks"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tasks</span></tt></a> application.</li>
+<li>Added <tt class="xref py py-meth docutils literal"><span class="pre">Job.send_to_queue()</span></tt> method for allowing
+<tt class="xref py py-meth docutils literal"><span class="pre">Task()</span></tt> to create new tasks.</li>
+<li>The current <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt> is always available on the current thread
 <tt class="docutils literal"><span class="pre">actor</span></tt> attribute.</li>
 <li>Trap errors in <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.IOLoop.do_loop_tasks()</span></tt> to avoid having monitors
 crashing the arbiter.</li>
 <li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.system.system_info()</span></tt> function which returns system information
 regarding a running process. It requires <a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>.</li>
-<li>Added global <a class="reference internal" href="api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.spawn()</span></tt></a> and <a class="reference internal" href="api/actor.html#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.send()</span></tt></a> functions for
-creating and communicating between <a class="reference internal" href="api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a>.</li>
+<li>Added global <tt class="xref py py-func docutils literal"><span class="pre">pulsar.spawn()</span></tt> and <tt class="xref py py-func docutils literal"><span class="pre">pulsar.send()</span></tt> functions for
+creating and communicating between <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt>.</li>
 <li>Fixed critical bug in <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.net.HttpResponse.default_headers()</span></tt>.</li>
 <li>Added <tt class="xref py py-meth docutils literal"><span class="pre">pulsar.utils.http.Headers.pop()</span></tt> method.</li>
 <li>Allow <tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.tasks.Job.can_overlap</span></tt> to be a callable.</li>
@@ -512,7 +573,7 @@ asynchronous test suite and asynchronous shell.</li>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="index.html">
+<a href="content.html">
   <img class="logo" width="200" src="static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -529,10 +590,11 @@ asynchronous test suite and asynchronous shell.</li>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#ver-0-8-0-development">Ver. 0.8.0 - Development</a></li>
+<li><a class="reference internal" href="#ver-0-8-0">Ver. 0.8.0</a></li>
+<li><a class="reference internal" href="#ver-0-7-3-2013-dec-12">Ver. 0.7.3 - 2013-Dec-12</a></li>
 <li><a class="reference internal" href="#ver-0-7-2-2013-oct-16">Ver. 0.7.2 - 2013-Oct-16</a></li>
 <li><a class="reference internal" href="#ver-0-7-1-2013-oct-14">Ver. 0.7.1 - 2013-Oct-14</a></li>
 <li><a class="reference internal" href="#ver-0-7-0-2013-oct-13">Ver. 0.7.0 - 2013-Oct-13</a></li>
@@ -584,10 +646,13 @@ asynchronous test suite and asynchronous shell.</li>
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -604,5 +669,5 @@ asynchronous test suite and asynchronous shell.</li>
 
 </script>
 
-  </body>
+</body>
 </html>

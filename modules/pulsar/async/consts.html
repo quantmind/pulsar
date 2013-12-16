@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.async.consts &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.async.consts &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar" href="../../pulsar.html" /> 
-  </head>
-  <body>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.async" href="../async.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,16 +44,16 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../pulsar.html" accesskey="U">pulsar</a> &raquo;</li> 
+          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/async/consts.html">release docs here</a>.
         </p>
     
@@ -88,7 +94,7 @@
 <span class="sd">  :class:`pulsar.Actor.start` method is called.</span>
 <span class="sd">* ``ACTOR_STATES.STARTING = 2`` when :class:`pulsar.Actor.start` method</span>
 <span class="sd">  is called.</span>
-<span class="sd">* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up</span>
+<span class="sd">* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor._loop` is up</span>
 <span class="sd">  and running.</span>
 <span class="sd">* ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been</span>
 <span class="sd">  called for the first time and the actor is running.</span>
@@ -115,10 +121,6 @@
 <span class="sd">&#39;&#39;&#39;Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`</span>
 <span class="sd">periodic task.&#39;&#39;&#39;</span>
 <span class="c">#</span>
-<span class="c"># SPECIAL objects for Deferred</span>
-<span class="n">CONTINUE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
-<span class="n">NOT_DONE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
-
 <span class="n">DEFAULT_CONNECT_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">DEFAULT_ACCEPT_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="n">NUMBER_ACCEPTS</span> <span class="o">=</span> <span class="mi">30</span> <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s">&quot;posix&quot;</span> <span class="k">else</span> <span class="mi">1</span>
@@ -134,7 +136,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -169,10 +171,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -189,5 +194,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

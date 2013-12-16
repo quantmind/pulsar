@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Pulsar data store &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.8.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../index.html" />
+    <link rel="up" title="Data Stores" href="index.html" />
+    <link rel="next" title="Asynchronous Shell" href="../shell.html" />
+    <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../shell.html" title="Asynchronous Shell"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="odm.html" title="Object Data Mapper"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/apps/data/pulsar.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pulsar.apps.data.server.server">
+<span id="id1"></span><span id="pulsar-data-store"></span><h1>Pulsar data store<a class="headerlink" href="#module-pulsar.apps.data.server.server" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar-ds is a python implementation of the popular <a class="reference external" href="http://redis.io/">redis</a>
+data store. It uses pulsar asynchronous framework to create a
+single-threaded workers responding to TCP-requests in the same way
+as redis does.</p>
+<p>To run a stand alone server create a script with the following code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">PulsarDS</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">PulsarDS</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>More information on the <a class="reference internal" href="../../tutorials/pulsards.html#tutorials-pulsards"><em>pulsar data store example</em></a>.</p>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="key-value-store-application">
+<h3>Key Value Store Application<a class="headerlink" href="#key-value-store-application" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.server.server.PulsarDS">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.server.server.</tt><tt class="descname">PulsarDS</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/server/server.html#PulsarDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.server.server.PulsarDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="../socket.html#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> which serve a key-value store similar to redis.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="storage">
+<h3>Storage<a class="headerlink" href="#storage" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.data.server.server.Storage">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.data.server.server.</tt><tt class="descname">Storage</tt><big>(</big><em>server</em>, <em>cfg</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/server/server.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.server.server.Storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement redis commands.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="commands">
+<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="keys">
+<span id="redis-keys"></span><h3>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/del">del</a>, <a class="reference external" href="http://redis.io/commands/exists">exists</a>, <a class="reference external" href="http://redis.io/commands/expire">expire</a>, <a class="reference external" href="http://redis.io/commands/expireat">expireat</a>, <a class="reference external" href="http://redis.io/commands/keys">keys</a>, <a class="reference external" href="http://redis.io/commands/move">move</a>, <a class="reference external" href="http://redis.io/commands/persist">persist</a>, <a class="reference external" href="http://redis.io/commands/randomkey">randomkey</a>, <a class="reference external" href="http://redis.io/commands/rename">rename</a>, <a class="reference external" href="http://redis.io/commands/renameex">renameex</a>, <a class="reference external" href="http://redis.io/commands/sort">sort</a>, <a class="reference external" href="http://redis.io/commands/ttl">ttl</a>, <a class="reference external" href="http://redis.io/commands/type">type</a></p>
+</div>
+<div class="section" id="strings">
+<span id="redis-strings"></span><h3>Strings<a class="headerlink" href="#strings" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/append">append</a>, <a class="reference external" href="http://redis.io/commands/bitcount">bitcount</a>, <a class="reference external" href="http://redis.io/commands/bitop">bitop</a>, <a class="reference external" href="http://redis.io/commands/decr">decr</a>, <a class="reference external" href="http://redis.io/commands/decrby">decrby</a>, <a class="reference external" href="http://redis.io/commands/get">get</a>, <a class="reference external" href="http://redis.io/commands/getbit">getbit</a>, <a class="reference external" href="http://redis.io/commands/getrange">getrange</a>, <a class="reference external" href="http://redis.io/commands/getset">getset</a>, <a class="reference external" href="http://redis.io/commands/incr">incr</a>, <a class="reference external" href="http://redis.io/commands/incrby">incrby</a>, <a class="reference external" href="http://redis.io/commands/incrbyfloat">incrbyfloat</a>, <a class="reference external" href="http://redis.io/commands/mget">mget</a>, <a class="reference external" href="http://redis.io/commands/mset">mset</a>, <a class="reference external" href="http://redis.io/commands/msetnx">msetnx</a>, <a class="reference external" href="http://redis.io/commands/psetex">psetex</a>, <a class="reference external" href="http://redis.io/commands/set">set</a>, <a class="reference external" href="http://redis.io/commands/setbit">setbit</a>, <a class="reference external" href="http://redis.io/commands/setex">setex</a>, <a class="reference external" href="http://redis.io/commands/setnx">setnx</a>, <a class="reference external" href="http://redis.io/commands/setrange">setrange</a>, <a class="reference external" href="http://redis.io/commands/strlen">strlen</a></p>
+</div>
+<div class="section" id="hashes">
+<span id="redis-hashes"></span><h3>Hashes<a class="headerlink" href="#hashes" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/hdel">hdel</a>, <a class="reference external" href="http://redis.io/commands/hexists">hexists</a>, <a class="reference external" href="http://redis.io/commands/hget">hget</a>, <a class="reference external" href="http://redis.io/commands/hgetall">hgetall</a>, <a class="reference external" href="http://redis.io/commands/hincrby">hincrby</a>, <a class="reference external" href="http://redis.io/commands/hincrbyfloat">hincrbyfloat</a>, <a class="reference external" href="http://redis.io/commands/hkeys">hkeys</a>, <a class="reference external" href="http://redis.io/commands/hlen">hlen</a>, <a class="reference external" href="http://redis.io/commands/hmget">hmget</a>, <a class="reference external" href="http://redis.io/commands/hmset">hmset</a>, <a class="reference external" href="http://redis.io/commands/hset">hset</a>, <a class="reference external" href="http://redis.io/commands/hsetnx">hsetnx</a>, <a class="reference external" href="http://redis.io/commands/hvals">hvals</a></p>
+</div>
+<div class="section" id="lists">
+<span id="redis-lists"></span><h3>Lists<a class="headerlink" href="#lists" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/blpop">blpop</a>, <a class="reference external" href="http://redis.io/commands/brpop">brpop</a>, <a class="reference external" href="http://redis.io/commands/brpoplpush">brpoplpush</a>, <a class="reference external" href="http://redis.io/commands/lindex">lindex</a>, <a class="reference external" href="http://redis.io/commands/linsert">linsert</a>, <a class="reference external" href="http://redis.io/commands/llen">llen</a>, <a class="reference external" href="http://redis.io/commands/lpop">lpop</a>, <a class="reference external" href="http://redis.io/commands/lpush">lpush</a>, <a class="reference external" href="http://redis.io/commands/lpushx">lpushx</a>, <a class="reference external" href="http://redis.io/commands/lrange">lrange</a>, <a class="reference external" href="http://redis.io/commands/lrem">lrem</a>, <a class="reference external" href="http://redis.io/commands/lset">lset</a>, <a class="reference external" href="http://redis.io/commands/ltrim">ltrim</a>, <a class="reference external" href="http://redis.io/commands/rpop">rpop</a>, <a class="reference external" href="http://redis.io/commands/rpoplpush">rpoplpush</a>, <a class="reference external" href="http://redis.io/commands/rpush">rpush</a>, <a class="reference external" href="http://redis.io/commands/rpushx">rpushx</a></p>
+</div>
+<div class="section" id="sets">
+<span id="redis-sets"></span><h3>Sets<a class="headerlink" href="#sets" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/sadd">sadd</a>, <a class="reference external" href="http://redis.io/commands/scard">scard</a>, <a class="reference external" href="http://redis.io/commands/sdiff">sdiff</a>, <a class="reference external" href="http://redis.io/commands/sdiffstore">sdiffstore</a>, <a class="reference external" href="http://redis.io/commands/sinter">sinter</a>, <a class="reference external" href="http://redis.io/commands/sinterstore">sinterstore</a>, <a class="reference external" href="http://redis.io/commands/sismember">sismember</a>, <a class="reference external" href="http://redis.io/commands/smembers">smembers</a>, <a class="reference external" href="http://redis.io/commands/smove">smove</a>, <a class="reference external" href="http://redis.io/commands/spop">spop</a>, <a class="reference external" href="http://redis.io/commands/srandmember">srandmember</a>, <a class="reference external" href="http://redis.io/commands/srem">srem</a>, <a class="reference external" href="http://redis.io/commands/sunion">sunion</a>, <a class="reference external" href="http://redis.io/commands/sunionstore">sunionstore</a></p>
+</div>
+<div class="section" id="sorted-sets">
+<span id="redis-sorted-sets"></span><h3>Sorted Sets<a class="headerlink" href="#sorted-sets" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/zadd">zadd</a>, <a class="reference external" href="http://redis.io/commands/zcard">zcard</a>, <a class="reference external" href="http://redis.io/commands/zcount">zcount</a>, <a class="reference external" href="http://redis.io/commands/zincrby">zincrby</a>, <a class="reference external" href="http://redis.io/commands/zinterstore">zinterstore</a>, <a class="reference external" href="http://redis.io/commands/zrange">zrange</a>, <a class="reference external" href="http://redis.io/commands/zrangebyscore">zrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zrank">zrank</a>, <a class="reference external" href="http://redis.io/commands/zrem">zrem</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyrank">zremrangebyrank</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyscore">zremrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zrevrange">zrevrange</a>, <a class="reference external" href="http://redis.io/commands/zscore">zscore</a>, <a class="reference external" href="http://redis.io/commands/zunionstore">zunionstore</a></p>
+</div>
+<div class="section" id="pub-sub">
+<span id="redis-pub-sub"></span><h3>Pub/Sub<a class="headerlink" href="#pub-sub" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/psubscribe">psubscribe</a>, <a class="reference external" href="http://redis.io/commands/publish">publish</a>, <a class="reference external" href="http://redis.io/commands/pubsub">pubsub</a>, <a class="reference external" href="http://redis.io/commands/punsubscribe">punsubscribe</a>, <a class="reference external" href="http://redis.io/commands/subscribe">subscribe</a>, <a class="reference external" href="http://redis.io/commands/unsubscribe">unsubscribe</a></p>
+</div>
+<div class="section" id="transactions">
+<span id="redis-transactions"></span><h3>Transactions<a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/discard">discard</a>, <a class="reference external" href="http://redis.io/commands/exec">exec</a>, <a class="reference external" href="http://redis.io/commands/multi">multi</a>, <a class="reference external" href="http://redis.io/commands/unwatch">unwatch</a>, <a class="reference external" href="http://redis.io/commands/watch">watch</a></p>
+</div>
+<div class="section" id="scripting">
+<span id="redis-scripting"></span><h3>Scripting<a class="headerlink" href="#scripting" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/eval">eval</a>, <a class="reference external" href="http://redis.io/commands/evalsha">evalsha</a>, <a class="reference external" href="http://redis.io/commands/script">script</a></p>
+</div>
+<div class="section" id="connections">
+<span id="redis-connections"></span><h3>Connections<a class="headerlink" href="#connections" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/auth">auth</a>, <a class="reference external" href="http://redis.io/commands/echo">echo</a>, <a class="reference external" href="http://redis.io/commands/ping">ping</a>, <a class="reference external" href="http://redis.io/commands/quit">quit</a>, <a class="reference external" href="http://redis.io/commands/select">select</a></p>
+</div>
+<div class="section" id="server">
+<span id="redis-server"></span><h3>Server<a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://redis.io/commands/bgsave">bgsave</a>, <a class="reference external" href="http://redis.io/commands/client">client</a>, <a class="reference external" href="http://redis.io/commands/config">config</a>, <a class="reference external" href="http://redis.io/commands/dbsize">dbsize</a>, <a class="reference external" href="http://redis.io/commands/flushall">flushall</a>, <a class="reference external" href="http://redis.io/commands/flushdb">flushdb</a>, <a class="reference external" href="http://redis.io/commands/info">info</a>, <a class="reference external" href="http://redis.io/commands/lastsave">lastsave</a>, <a class="reference external" href="http://redis.io/commands/monitor">monitor</a>, <a class="reference external" href="http://redis.io/commands/save">save</a>, <a class="reference external" href="http://redis.io/commands/time">time</a></p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../content.html">
+  <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+  <h3><a href="../../content.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pulsar data store</a><ul>
+<li><a class="reference internal" href="#implementation">Implementation</a><ul>
+<li><a class="reference internal" href="#key-value-store-application">Key Value Store Application</a></li>
+<li><a class="reference internal" href="#storage">Storage</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#commands">Commands</a><ul>
+<li><a class="reference internal" href="#keys">Keys</a></li>
+<li><a class="reference internal" href="#strings">Strings</a></li>
+<li><a class="reference internal" href="#hashes">Hashes</a></li>
+<li><a class="reference internal" href="#lists">Lists</a></li>
+<li><a class="reference internal" href="#sets">Sets</a></li>
+<li><a class="reference internal" href="#sorted-sets">Sorted Sets</a></li>
+<li><a class="reference internal" href="#pub-sub">Pub/Sub</a></li>
+<li><a class="reference internal" href="#transactions">Transactions</a></li>
+<li><a class="reference internal" href="#scripting">Scripting</a></li>
+<li><a class="reference internal" href="#connections">Connections</a></li>
+<li><a class="reference internal" href="#server">Server</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="odm.html"
+                        title="previous chapter">Object Data Mapper</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../shell.html"
+                        title="next chapter">Asynchronous Shell</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../sources/apps/data/pulsar.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

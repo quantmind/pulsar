@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Socket Servers &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Socket Servers &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Pics" href="../pics.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -45,14 +51,14 @@
         <li class="right" >
           <a href="../pics.html" title="Pics"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/socket.html">release docs here</a>.
         </p>
     
@@ -68,9 +74,9 @@
   <div class="section" id="module-pulsar.apps.socket">
 <span id="socket-servers"></span><span id="apps-socket"></span><h1>Socket Servers<a class="headerlink" href="#module-pulsar.apps.socket" title="Permalink to this headline">¶</a></h1>
 <p>Asynchronous application for serving requests
-on sockets. This is the base class of <a class="reference internal" href="wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.WSGIServer</span></tt></a>.
+on sockets. This is the base class of <a class="reference internal" href="wsgi/intro.html#pulsar.apps.wsgi.WSGIServer" title="pulsar.apps.wsgi.WSGIServer"><tt class="xref py py-class docutils literal"><span class="pre">WSGIServer</span></tt></a>.
 All is needed by a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> is a callable which build a
-<a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> for each new client request received.
+<a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> for each new client request received.
 This is an example of a script for an Echo server:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
@@ -108,7 +114,7 @@ specific to sockets and can be used to fine tune your application:</p>
 </div>
 <div class="section" id="keep-alive">
 <h3>keep_alive<a class="headerlink" href="#keep-alive" title="Permalink to this headline">¶</a></h3>
-<p>To control how long a server <a class="reference internal" href="../api/protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Connection</span></tt></a> is kept alive after the
+<p>To control how long a server <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a> is kept alive after the
 last read from the remote client, one can use the
 <a class="reference internal" href="../settings.html#setting-keep-alive"><em>keep-alive</em></a> setting:</p>
 <div class="highlight-python"><pre>python script.py --keep-alive 10</pre>
@@ -134,9 +140,9 @@ This is how pre-forking servers operate.</p>
 <p>When running a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in threading mode:</p>
 <div class="highlight-python"><pre>python script.py --concurrency thread</pre>
 </div>
-<p>the number of <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt></a> serving the application is set
+<p>the number of <a class="reference internal" href="../api/actor.html#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> serving the application is set
 to <tt class="docutils literal"><span class="pre">0</span></tt> so that the application is actually served by the
-<a class="reference internal" href="../api/actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Arbiter</span></tt></a> event-loop (we refer this to a single process server).
+<a class="reference internal" href="../api/actor.html#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> event-loop (we refer this to a single process server).
 This configuration is used when debugging, testing, benchmarking or on small
 load servers.</p>
 <p>In addition, a <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> in multi-process mode is only available
@@ -155,7 +161,7 @@ the creation of sockets from file descriptors).</li>
 <dl class="class">
 <dt id="pulsar.apps.socket.SocketServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">SocketServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.Application</span></tt></a> which serve application on a socket.</p>
+<dd><p>A <a class="reference internal" href="../api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> which serve application on a socket.</p>
 <p>It bind a socket to a given address and listen for requests. The request
 handler is constructed from the callable passed during initialisation.</p>
 <dl class="attribute">
@@ -165,11 +171,10 @@ handler is constructed from the callable passed during initialisation.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.socket.SocketServer.protocol_consumer">
-<tt class="descname">protocol_consumer</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.protocol_consumer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Factory of <a class="reference internal" href="../api/protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.ProtocolConsumer</span></tt></a> used by the server.</p>
-<p>By default it returns the <a class="reference internal" href="../api/application.html#pulsar.apps.Application.callable" title="pulsar.apps.Application.callable"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.Application.callable</span></tt></a>
-attribute.</p>
+<dt id="pulsar.apps.socket.SocketServer.protocol_factory">
+<tt class="descname">protocol_factory</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.protocol_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.protocol_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Factory of <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.ProtocolConsumer" title="pulsar.async.protocols.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a> used by the server.</p>
+<p>By default it returns the <tt class="xref py py-meth docutils literal"><span class="pre">Application.callable()</span></tt>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -187,10 +192,23 @@ number of workers to 0.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pulsar.apps.socket.SocketServer.server_factory">
+<tt class="descname">server_factory</tt><big>(</big><em>*args</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.server_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.server_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.create_server">
-<tt class="descname">create_server</tt><big>(</big><em>worker</em>, <em>sock</em>, <em>ssl=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create the Server Protocol which will listen for requests. It
-uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.protocol_consumer" title="pulsar.apps.socket.SocketServer.protocol_consumer"><tt class="xref py py-meth docutils literal"><span class="pre">protocol_consumer()</span></tt></a> method as the protocol consumer factory.</p>
+<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.create_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the Server which will listen for requests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a>.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -205,7 +223,7 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -222,7 +240,7 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Socket Servers</a><ul>
 <li><a class="reference internal" href="#socket-server-settings">Socket Server Settings</a><ul>
@@ -270,10 +288,13 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -290,5 +311,5 @@ uses the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.pr
 
 </script>
 
-  </body>
+</body>
 </html>

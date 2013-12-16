@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.apps.tasks.models &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.tasks.models &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.tasks" href="../tasks.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,9 +44,8 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../tasks.html" accesskey="U">pulsar.apps.tasks</a> &raquo;</li> 
       </ul>
@@ -49,7 +54,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/tasks/models.html">release docs here</a>.
         </p>
     
@@ -74,9 +79,6 @@
 <span class="sd">* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.</span>
 
 <span class="sd">.. _job-callable:</span>
-
-<span class="sd">Implementing jobs</span>
-<span class="sd">========================</span>
 
 <span class="sd">To define a job is simple, subclass from :class:`Job` and implement the</span>
 <span class="sd">**job callable method**::</span>
@@ -113,39 +115,16 @@
 <span class="sd">Non overlapping Jobs</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
-<span class="sd">The :attr:`Job.can_overlap` attribute controls the way tasks are generated</span>
-<span class="sd">by a specific :class:`Job`. By default, a :class:`Job` creates a new task</span>
-<span class="sd">every time the :ref:`task backend &lt;apps-taskqueue-backend&gt;` requests it.</span>
+<span class="sd">The :attr:`~.Job.can_overlap` attribute controls the way tasks are generated</span>
+<span class="sd">by a specific :class:`Job`. By default, a :class:`.Job` creates a new task</span>
+<span class="sd">every time the :class:`.TaskBackend` requests it.</span>
 
-<span class="sd">However, when setting the :attr:`Job.can_overlap` attribute to ``False``,</span>
+<span class="sd">However, when setting the :attr:`~.Job.can_overlap` attribute to ``False``,</span>
 <span class="sd">a new task cannot be started unless a previous task of the same job</span>
 <span class="sd">is done.</span>
 
-
-<span class="sd">Job class</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: Job</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
-<span class="sd">Periodic job</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: PeriodicJob</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
-<span class="sd">Job registry</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autoclass:: JobRegistry</span>
-<span class="sd">   :members:</span>
-<span class="sd">   :member-order: bysource</span>
-
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
@@ -154,25 +133,21 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JobMetaClass&#39;</span><span class="p">,</span> <span class="s">&#39;Job&#39;</span><span class="p">,</span> <span class="s">&#39;PeriodicJob&#39;</span><span class="p">,</span>
-           <span class="s">&#39;anchorDate&#39;</span><span class="p">,</span> <span class="s">&#39;JobRegistry&#39;</span><span class="p">,</span> <span class="s">&#39;create_task_id&#39;</span><span class="p">]</span>
+           <span class="s">&#39;anchorDate&#39;</span><span class="p">,</span> <span class="s">&#39;JobRegistry&#39;</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">create_task_id</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
-
-
-<div class="viewcode-block" id="JobRegistry"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry">[docs]</a><span class="k">class</span> <span class="nc">JobRegistry</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+<div class="viewcode-block" id="JobRegistry"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.JobRegistry">[docs]</a><span class="k">class</span> <span class="nc">JobRegistry</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Site registry for tasks.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="JobRegistry.regular"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry.regular">[docs]</a>    <span class="k">def</span> <span class="nf">regular</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="JobRegistry.regular"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.JobRegistry.regular">[docs]</a>    <span class="k">def</span> <span class="nf">regular</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A generator of all regular jobs.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="s">&quot;regular&quot;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="JobRegistry.periodic"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry.periodic">[docs]</a>    <span class="k">def</span> <span class="nf">periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="JobRegistry.periodic"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.JobRegistry.periodic">[docs]</a>    <span class="k">def</span> <span class="nf">periodic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;A generator of all periodic jobs.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_types</span><span class="p">(</span><span class="s">&quot;periodic&quot;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="JobRegistry.register"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+<div class="viewcode-block" id="JobRegistry.register"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.JobRegistry.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Register a job in the job registry.</span>
 
 <span class="sd">        The task will be automatically instantiated if not already an</span>
@@ -183,7 +158,7 @@
             <span class="n">name</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">name</span>
             <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">job</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="JobRegistry.filter_types"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.JobRegistry.filter_types">[docs]</a>    <span class="k">def</span> <span class="nf">filter_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+<div class="viewcode-block" id="JobRegistry.filter_types"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.JobRegistry.filter_types">[docs]</a>    <span class="k">def</span> <span class="nf">filter_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a generator of all tasks of a specific type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">((</span><span class="n">job_name</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span> <span class="k">for</span> <span class="n">job_name</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="nb">type</span><span class="p">)</span>
@@ -209,7 +184,7 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">(</span><span class="s">&#39;JobBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">JobMetaClass</span><span class="p">(</span><span class="s">&#39;JobBase&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;abstract&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
     <span class="sd">&#39;&#39;&#39;The Job class which is used in a distributed task queue.</span>
 
 <span class="sd">.. attribute:: name</span>
@@ -265,67 +240,48 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Jobs must define the run method.&quot;</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Job.type"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.type">[docs]</a>    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Job.type"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.Job.type">[docs]</a>    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Type of Job, one of ``regular`` and ``periodic``.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="s">&#39;regular&#39;</span>
 </div>
-<div class="viewcode-block" id="Job.run_job"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.run_job">[docs]</a>    <span class="k">def</span> <span class="nf">run_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Run a new task in the task queue.</span>
+<div class="viewcode-block" id="Job.queue_task"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.Job.queue_task">[docs]</a>    <span class="k">def</span> <span class="nf">queue_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer</span><span class="p">,</span> <span class="n">jobname</span><span class="p">,</span> <span class="n">meta_params</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Queue a new task in the task queue.</span>
 
-<span class="sd">This utility method can be used from within the</span>
-<span class="sd">:ref:`job callable &lt;job-callable&gt;` method and it allows tasks to act</span>
-<span class="sd">as tasks factories.</span>
+<span class="sd">        This utility method can be used from within the</span>
+<span class="sd">        :ref:`job callable &lt;job-callable&gt;` method and it allows tasks to act</span>
+<span class="sd">        as tasks factories.</span>
 
-<span class="sd">:parameter consumer: the :class:`.TaskConsumer`</span>
-<span class="sd">    handling the :ref:`Task &lt;apps-taskqueue-task&gt;`. Must be the same instance</span>
-<span class="sd">    as the one passed to the :ref:`job callable &lt;job-callable&gt;` method.</span>
-<span class="sd">:parameter jobname: The name of the :class:`Job` to run.</span>
-<span class="sd">:parameter args: positional argument for the</span>
-<span class="sd">    :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd">:parameter kwargs: key-valued parameters for the</span>
-<span class="sd">    :ref:`job callable &lt;job-callable&gt;`.</span>
-<span class="sd">:return: a :class:`pulsar.Deferred` called back with the task id of the</span>
-<span class="sd">    new job.</span>
+<span class="sd">        :parameter consumer: the :class:`.TaskConsumer`</span>
+<span class="sd">            handling the :ref:`Task &lt;apps-taskqueue-task&gt;`.</span>
+<span class="sd">            Must be the same instance as the one passed to the</span>
+<span class="sd">            :ref:`job callable &lt;job-callable&gt;` method.</span>
+<span class="sd">        :parameter jobname: The name of the :class:`Job` to run.</span>
+<span class="sd">        :parameter kwargs: key-valued parameters for the</span>
+<span class="sd">            :ref:`job callable &lt;job-callable&gt;`.</span>
+<span class="sd">        :return: a :class:`.Deferred` called back with the task id.</span>
 
-<span class="sd">This method invokes the :meth:`.TaskBackend.run_job`</span>
-<span class="sd">method with the additional ``from_task`` argument equal to the</span>
-<span class="sd">id of the task invoking the method.</span>
-<span class="sd">&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">run_job</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span>
-                                        <span class="n">from_task</span><span class="o">=</span><span class="n">consumer</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+<span class="sd">        This method invokes the :meth:`.TaskBackend.queue_task`</span>
+<span class="sd">        method with the additional ``from_task`` argument equal to the</span>
+<span class="sd">        id of the task invoking the method.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">meta_params</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">meta_params</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">meta_params</span><span class="p">[</span><span class="s">&#39;from_task&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">task_id</span>
+        <span class="k">return</span> <span class="n">consumer</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">queue_task</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span> <span class="n">meta_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Job.generate_task_ids"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.Job.generate_task_ids">[docs]</a>    <span class="k">def</span> <span class="nf">generate_task_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Generate a task unique identifiers.</span>
+<div class="viewcode-block" id="Job.create_id"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.Job.create_id">[docs]</a>    <span class="k">def</span> <span class="nf">create_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a unique id for a task.</span>
 
-<span class="sd">:parameter args: tuple of positional arguments passed to the</span>
-<span class="sd">    :ref:`job callable &lt;job-callable&gt;` method.</span>
-<span class="sd">:parameter kwargs: dictionary of key-valued parameters passed to the</span>
-<span class="sd">    :ref:`job callable &lt;job-callable&gt;` method.</span>
-<span class="sd">:return: a two-elements tuple containing the unique id and an</span>
-<span class="sd">    identifier for overlapping tasks if the :attr:`can_overlap` results</span>
-<span class="sd">    in ``False``.</span>
+<span class="sd">        Called by the :class:`.TaskBackend` when a new task is about to be</span>
+<span class="sd">        queued.</span>
 
-<span class="sd">Called by the :ref:`TaskBackend &lt;apps-taskqueue-backend&gt;` when creating</span>
-<span class="sd">a new task.</span>
-<span class="sd">&#39;&#39;&#39;</span>
-        <span class="n">can_overlap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_overlap</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">can_overlap</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">):</span>
-            <span class="n">can_overlap</span> <span class="o">=</span> <span class="n">can_overlap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="nb">id</span> <span class="o">=</span> <span class="n">create_task_id</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">can_overlap</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">id</span><span class="p">,</span> <span class="bp">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">suffix</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-            <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
-                <span class="n">suffix</span> <span class="o">=</span> <span class="s">&#39; args(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
-                <span class="n">suffix</span> <span class="o">+=</span> <span class="s">&#39; kwargs(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)))</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
-            <span class="k">return</span> <span class="nb">id</span><span class="p">,</span> <span class="n">sha1</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
+<span class="sd">        :parameter kwargs: dictionary of parameters passed to the callable</span>
+<span class="sd">            method.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
 
 </div></div>
-<div class="viewcode-block" id="PeriodicJob"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.PeriodicJob">[docs]</a><span class="k">class</span> <span class="nc">PeriodicJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
+<div class="viewcode-block" id="PeriodicJob"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob">[docs]</a><span class="k">class</span> <span class="nc">PeriodicJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A periodic :class:`Job` implementation.&#39;&#39;&#39;</span>
     <span class="n">abstract</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">anchor</span> <span class="o">=</span> <span class="bp">None</span>
@@ -344,7 +300,7 @@
     <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&#39;periodic&#39;</span>
 
-<div class="viewcode-block" id="PeriodicJob.is_due"><a class="viewcode-back" href="../../../../apps/tasks/jobs.html#pulsar.apps.tasks.models.PeriodicJob.is_due">[docs]</a>    <span class="k">def</span> <span class="nf">is_due</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last_run_at</span><span class="p">):</span>
+<div class="viewcode-block" id="PeriodicJob.is_due"><a class="viewcode-back" href="../../../../apps/tasks.html#pulsar.apps.tasks.models.PeriodicJob.is_due">[docs]</a>    <span class="k">def</span> <span class="nf">is_due</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last_run_at</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns tuple of two items ``(is_due, next_time_to_run)``,</span>
 <span class="sd">where next time to run is in seconds. e.g.</span>
 
@@ -370,7 +326,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../../index.html">
+<a href="../../../../content.html">
   <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -405,10 +361,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -425,5 +384,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.test.plugins.base &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.8.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../../index.html" />
+    <link rel="up" title="pulsar.apps.test" href="../../test.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../../apps.html" >pulsar.apps</a> &raquo;</li>
+          <li><a href="../../test.html" accesskey="U">pulsar.apps.test</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/test/plugins/base.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.test.plugins.base</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">pulsar</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.test.result</span> <span class="kn">import</span> <span class="n">Plugin</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;WrapTest&#39;</span><span class="p">,</span>
+           <span class="s">&#39;TestOption&#39;</span><span class="p">,</span>
+           <span class="s">&#39;TestPlugin&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">as_test_setting</span><span class="p">(</span><span class="n">setting</span><span class="p">):</span>
+    <span class="n">setting</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
+    <span class="n">setting</span><span class="o">.</span><span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Test&quot;</span>
+    <span class="k">return</span> <span class="n">setting</span>
+
+
+<span class="k">class</span> <span class="nc">TestOption</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="s">&#39;test&#39;</span>
+    <span class="n">section</span> <span class="o">=</span> <span class="s">&quot;Test&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">WrapTest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Wrap an underlying test case&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="o">.</span><span class="n">_testMethodName</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testMethod</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">test</span><span class="o">.</span><span class="n">_testMethodName</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">_testMethodName</span>
+    <span class="n">__repr__</span> <span class="o">=</span> <span class="n">__str__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">original_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">WrapTest</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">original_test</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span>
+
+    <span class="k">def</span> <span class="nf">set_test_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_test</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_test</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># This is the actual function to implement</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">testMethod</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">TestPluginMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">TestPluginMeta</span><span class="p">):</span>
+                <span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">setting</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">iteritems</span><span class="p">(</span><span class="n">attrs</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">):</span>
+                <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">setting</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">as_test_setting</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;virtual&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="n">setting_name</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">setting_name</span><span class="p">:</span>
+                <span class="n">def_flag</span> <span class="o">=</span> <span class="s">&#39;--</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">setting_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39;-&#39;</span><span class="p">)</span>
+                <span class="n">action</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;action&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="nb">type</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">default</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">validator</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;validator&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">nargs</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;nargs&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">validator</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">default</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">is</span> <span class="bp">None</span>
+                        <span class="ow">and</span> <span class="n">nargs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">action</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">action</span> <span class="o">==</span> <span class="s">&#39;store_true&#39;</span><span class="p">:</span>
+                        <span class="n">action</span> <span class="o">=</span> <span class="s">&#39;store_true&#39;</span>
+                        <span class="n">default</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
+                    <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="s">&#39;store_false&#39;</span><span class="p">:</span>
+                        <span class="n">default</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">validator</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">validate_bool</span>
+                <span class="n">setting</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">setting_name</span><span class="p">,</span>
+                                         <span class="n">desc</span><span class="o">=</span><span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;desc&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+                                         <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">,</span>
+                                         <span class="n">flags</span><span class="o">=</span><span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;flags&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">def_flag</span><span class="p">]),</span>
+                                         <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">,</span>
+                                         <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span>
+                                         <span class="n">validator</span><span class="o">=</span><span class="n">validator</span><span class="p">,</span>
+                                         <span class="n">nargs</span><span class="o">=</span><span class="n">nargs</span><span class="p">)</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">as_test_setting</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
+        <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;config&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TestPluginMeta</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TestPlugin"><a class="viewcode-back" href="../../../../../apps/test.html#pulsar.apps.test.plugins.base.TestPlugin">[docs]</a><span class="k">class</span> <span class="nc">TestPlugin</span><span class="p">(</span><span class="n">TestPluginMeta</span><span class="p">(</span><span class="s">&#39;TestPluginBase&#39;</span><span class="p">,</span>
+                                <span class="p">(</span><span class="n">Plugin</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+    <span class="sd">&#39;&#39;&#39;Base class for :class:`.Plugin` which can be added to a</span>
+<span class="sd">    :class:`.TestSuite` to extend its functionalities.</span>
+
+<span class="sd">    If the class attribute :attr:`name` is not specified or its value validate</span>
+<span class="sd">    as ``True``, an additional :ref:`setting &lt;settings&gt;` is added to the</span>
+<span class="sd">    configuration.</span>
+<span class="sd">    In addition, a :class:`TestPlugin` can specify several additional</span>
+<span class="sd">    :ref:`settings &lt;settings&gt;` as class attributes. For example, the</span>
+<span class="sd">    :ref:`benchmark plugin &lt;bench-plugin&gt;` has an additional setting</span>
+<span class="sd">    for controlling the number of repetitions::</span>
+
+<span class="sd">        class Bench(TestPlugin):</span>
+<span class="sd">            desc = &quot;Run benchmarks function flagged with __benchmark__ attribute&quot;</span>
+<span class="sd">            repeat = pulsar.Setting(type=int,</span>
+<span class="sd">                                default=1,</span>
+<span class="sd">                                validator=pulsar.validate_pos_int,</span>
+<span class="sd">                                desc=&quot;Default number of repetition&quot;)</span>
+
+
+<span class="sd">    .. attribute:: name</span>
+
+<span class="sd">        Class attribute used for adding the default plugin</span>
+<span class="sd">        :ref:`setting &lt;settings&gt;`</span>
+<span class="sd">        to the configuration container of the test suite application.</span>
+<span class="sd">        If the attribute is not set, the class name in lower case is used.</span>
+<span class="sd">        If set and validate as not ``True``, no new :ref:`setting &lt;settings&gt;`</span>
+<span class="sd">        is added to the test suite configuration parameters. For example::</span>
+
+<span class="sd">            class MyPlugin(TestPlugin):</span>
+<span class="sd">                name = None</span>
+
+<span class="sd">        won&#39;t add the default plugin :ref:`setting &lt;settings&gt;`.</span>
+
+<span class="sd">    .. attribute:: desc</span>
+
+<span class="sd">        Class attribute used as the description of the :ref:`setting &lt;settings&gt;`.</span>
+<span class="sd">        If :attr:`name` is disabled, this attribute is not relevant.</span>
+
+<span class="sd">    .. attribute:: config</span>
+
+<span class="sd">        A :class:`.Config` container created by the :class:`TestPlugin`</span>
+<span class="sd">        metaclass. It collects the default setting, if</span>
+<span class="sd">        available, and any additional :ref:`settings &lt;settings&gt;` specified</span>
+<span class="sd">        as class attributes.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
+        <span class="n">o</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">o</span>
+
+    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">cfg</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../../content.html">
+  <img class="logo" width="200" src="../../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

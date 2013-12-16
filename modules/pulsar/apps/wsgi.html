@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.apps.wsgi &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.wsgi &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,9 +44,8 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
     </div>
@@ -48,7 +53,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/wsgi.html">release docs here</a>.
         </p>
     
@@ -81,8 +86,8 @@
 <span class="sd">    capabilities allow to handle the `c10k problem`_ with ease.</span>
 
 
-<span class="sd">An example of a web server written with :mod:`pulsar.apps.wsgi` which responds</span>
-<span class="sd">with ``Hello World!`` for every request::</span>
+<span class="sd">An example of a web server written with the :mod:`~pulsar.apps.wsgi`</span>
+<span class="sd">module which responds with ``Hello World!`` for every request::</span>
 
 <span class="sd">    from pulsar.apps import wsgi</span>
 
@@ -107,6 +112,7 @@
 <span class="sd">    python script.py --help</span>
 
 
+
 <span class="sd">WSGI Server</span>
 <span class="sd">===================</span>
 
@@ -121,7 +127,7 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">SocketServer</span><span class="p">,</span> <span class="n">Connection</span>
 
 <span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.content</span> <span class="kn">import</span> <span class="o">*</span>
@@ -139,17 +145,14 @@
     <span class="sd">&#39;&#39;&#39;A WSGI :class:`.SocketServer`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;wsgi&#39;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">,</span> <span class="s">&#39;wsgi&#39;</span><span class="p">],</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">],</span>
                         <span class="n">server_software</span><span class="o">=</span><span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">)</span>
 
-<div class="viewcode-block" id="WSGIServer.protocol_consumer"><a class="viewcode-back" href="../../../apps/wsgi/intro.html#pulsar.apps.wsgi.WSGIServer.protocol_consumer">[docs]</a>    <span class="k">def</span> <span class="nf">protocol_consumer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Build the :class:`.ProtocolConsumer` factory.</span>
-
-<span class="sd">        It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`</span>
-<span class="sd">        protocol consumer and the wsgi callable provided as parameter during</span>
-<span class="sd">        initialisation.&#39;&#39;&#39;</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">server_software</span><span class="p">)</span></div></div>
+    <span class="k">def</span> <span class="nf">protocol_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
+        <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span>
+                                   <span class="n">cfg</span><span class="o">.</span><span class="n">server_software</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -157,7 +160,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -192,10 +195,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -212,5 +218,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

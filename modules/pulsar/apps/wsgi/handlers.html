@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.apps.wsgi.handlers &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.wsgi.handlers &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,9 +44,8 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
       </ul>
@@ -49,7 +54,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/wsgi/handlers.html">release docs here</a>.
         </p>
     
@@ -146,14 +151,29 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
+
+<span class="sd">.. _wsgi-pulsar-variables:</span>
+
+<span class="sd">Pulsar Variables</span>
+<span class="sd">======================</span>
+<span class="sd">Pulsar inject two server-defined variables into the WSGI environ:</span>
+
+<span class="sd">* ``pulsar.connection``, the :class:`.Connection` serving the request</span>
+<span class="sd">* ``pulsar.cfg``, the :class:`.Config` dictionary of the server</span>
+
+<span class="sd">The event loop serving the application can be retrieved from the connection</span>
+<span class="sd">via the ``_loop`` attribute::</span>
+
+<span class="sd">    loop = environ[&#39;pulsar.connection&#39;]._loop</span>
+
 <span class="sd">.. _WSGI: http://www.wsgi.org</span>
 <span class="sd">.. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">coroutine_return</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_property</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Http404</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LocalMixin</span><span class="p">,</span> <span class="n">local_method</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span>
 <span class="kn">from</span> <span class="nn">.wrappers</span> <span class="kn">import</span> <span class="n">WsgiResponse</span>
@@ -165,34 +185,38 @@
 <div class="viewcode-block" id="WsgiHandler"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.WsgiHandler">[docs]</a><span class="k">class</span> <span class="nc">WsgiHandler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An handler for application conforming to python WSGI_.</span>
 
-<span class="sd">.. attribute:: middleware</span>
+<span class="sd">    .. attribute:: middleware</span>
 
-<span class="sd">    List of :ref:`asynchronous WSGI middleware &lt;wsgi-middleware&gt;` callables</span>
-<span class="sd">    which accept ``environ`` and ``start_response`` as arguments.</span>
-<span class="sd">    The order matter, since the response returned by the callable</span>
-<span class="sd">    is the non ``None`` value returned by a middleware.</span>
+<span class="sd">        List of :ref:`asynchronous WSGI middleware &lt;wsgi-middleware&gt;` callables</span>
+<span class="sd">        which accept ``environ`` and ``start_response`` as arguments.</span>
+<span class="sd">        The order matter, since the response returned by the callable</span>
+<span class="sd">        is the non ``None`` value returned by a middleware.</span>
 
-<span class="sd">.. attribute:: response_middleware</span>
+<span class="sd">    .. attribute:: response_middleware</span>
 
-<span class="sd">    List of functions of the form::</span>
+<span class="sd">        List of functions of the form::</span>
 
-<span class="sd">        def ..(environ, response):</span>
-<span class="sd">            ...</span>
+<span class="sd">            def ..(environ, response):</span>
+<span class="sd">                ...</span>
 
-<span class="sd">    where ``response`` is a :ref:`WsgiResponse &lt;wsgi-response&gt;`.</span>
-<span class="sd">    Pulsar contains some</span>
-<span class="sd">    :ref:`response middlewares &lt;wsgi-response-middleware&gt;`.</span>
+<span class="sd">        where ``response`` is a :ref:`WsgiResponse &lt;wsgi-response&gt;`.</span>
+<span class="sd">        Pulsar contains some</span>
+<span class="sd">        :ref:`response middlewares &lt;wsgi-response-middleware&gt;`.</span>
 
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">response_middleware</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">middleware</span><span class="p">:</span>
             <span class="n">middleware</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">middleware</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span> <span class="o">=</span> <span class="n">middleware</span> <span class="ow">or</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">response_middleware</span> <span class="o">=</span> <span class="n">response_middleware</span> <span class="ow">or</span> <span class="p">[]</span>
 
-    <span class="nd">@async</span><span class="p">(</span><span class="n">get_result</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The WSGI callable&#39;&#39;&#39;</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">_loop</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">),</span> <span class="n">loop</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">middleware</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -214,26 +238,32 @@
 </div>
 <div class="viewcode-block" id="LazyWsgi"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi">[docs]</a><span class="k">class</span> <span class="nc">LazyWsgi</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :ref:`wsgi handler &lt;wsgi-handlers&gt;` which loads the actual</span>
-<span class="sd">handler the first time it is called. Subclasses must implement</span>
-<span class="sd">the :meth:`setup` method.</span>
-<span class="sd">Useful when working in multiprocessing mode when the application</span>
-<span class="sd">handler must be a ``picklable`` instance. This handler can rebuild</span>
-<span class="sd">its wsgi :attr:`handler` every time is pickled and un-pickled without</span>
-<span class="sd">causing serialisation issues.&#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+<span class="sd">    handler the first time it is called.</span>
 
-    <span class="nd">@local_property</span>
-<div class="viewcode-block" id="LazyWsgi.handler"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi.handler">[docs]</a>    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="sd">    Subclasses must implement the :meth:`setup` method.</span>
+<span class="sd">    Useful when working in multiprocessing mode when the application</span>
+<span class="sd">    handler must be a ``picklable`` instance. This handler can rebuild</span>
+<span class="sd">    its wsgi :attr:`handler` every time is pickled and un-pickled without</span>
+<span class="sd">    causing serialisation issues.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">environ</span><span class="p">)(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">)</span>
+
+    <span class="nd">@local_method</span>
+    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The :ref:`wsgi application handler &lt;wsgi-handlers&gt;` which</span>
-<span class="sd">is loaded via the :meth:`setup` method, once only, when first accessed.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
-</div>
-<div class="viewcode-block" id="LazyWsgi.setup"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The setup function for this :class:`LazyWsgi`. Called once only</span>
-<span class="sd">the first time this application handler is invoked. This **must** be</span>
-<span class="sd">implemented by subclasses and **must** return a</span>
-<span class="sd">:ref:`wsgi application handler &lt;wsgi-handlers&gt;`.&#39;&#39;&#39;</span>
+<span class="sd">        is loaded via the :meth:`setup` method, once only,</span>
+<span class="sd">        when first accessed.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LazyWsgi.setup"><a class="viewcode-back" href="../../../../apps/wsgi/async.html#pulsar.apps.wsgi.handlers.LazyWsgi.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The setup function for this :class:`LazyWsgi`.</span>
+
+<span class="sd">        Called once only the first time this application handler is invoked.</span>
+<span class="sd">        This **must** be implemented by subclasses and **must** return a</span>
+<span class="sd">        :ref:`wsgi application handler &lt;wsgi-handlers&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
 </pre></div>
 
@@ -242,7 +272,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../../index.html">
+<a href="../../../../content.html">
   <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -277,10 +307,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -297,5 +330,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

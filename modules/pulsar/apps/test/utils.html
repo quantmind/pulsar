@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pulsar.apps.test.utils &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.test.utils &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.test" href="../test.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,9 +44,8 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../../../pulsar.html" >pulsar</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../test.html" accesskey="U">pulsar.apps.test</a> &raquo;</li> 
       </ul>
@@ -49,7 +54,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/test/utils.html">release docs here</a>.
         </p>
     
@@ -63,16 +68,53 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.test.utils</h1><div class="highlight"><pre>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">run on arbiter</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: run_on_arbiter</span>
+
+
+<span class="sd">sequential</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: sequential</span>
+
+
+<span class="sd">ActorTestMixin</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: ActorTestMixin</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+
+<span class="sd">AsyncAssert</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autoclass:: AsyncAssert</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+<span class="sd">run test server</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">.. autofunction:: run_test_server</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">TcpServer</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span>
+                    <span class="n">TcpServer</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar.async.proxy</span> <span class="kn">import</span> <span class="n">ActorProxyDeferred</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;run_on_arbiter&#39;</span><span class="p">,</span>
+           <span class="s">&#39;sequential&#39;</span><span class="p">,</span>
            <span class="s">&#39;NOT_TEST_METHODS&#39;</span><span class="p">,</span>
            <span class="s">&#39;ActorTestMixin&#39;</span><span class="p">,</span>
            <span class="s">&#39;AsyncAssert&#39;</span><span class="p">,</span>
@@ -145,27 +187,42 @@
 
 
 <div class="viewcode-block" id="run_on_arbiter"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.run_on_arbiter">[docs]</a><span class="k">def</span> <span class="nf">run_on_arbiter</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Decorator for running a test function in the :class:`pulsar.Arbiter`</span>
-<span class="sd">context domain. This can be useful to test Arbiter mechanics.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for running a test function in the :class:`.Arbiter`</span>
+<span class="sd">    context domain.</span>
+
+<span class="sd">    This can be useful to test Arbiter mechanics.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">f</span><span class="o">.</span><span class="n">testfunction</span> <span class="o">=</span> <span class="n">TestFunctionOnArbiter</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">f</span>
 
 </div>
+<div class="viewcode-block" id="sequential"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.sequential">[docs]</a><span class="k">def</span> <span class="nf">sequential</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator for a :class:`unittest.TestCase` which cause</span>
+<span class="sd">    its test functions to run sequentially rather than in an</span>
+<span class="sd">    asynchronous fashion.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">cls</span><span class="o">.</span><span class="n">_sequential_execution</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">cls</span>
+
+</div>
 <div class="viewcode-block" id="AsyncAssert"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.AsyncAssert">[docs]</a><span class="k">class</span> <span class="nc">AsyncAssert</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A `descriptor`_ which the :ref:`test-suite` add to all python</span>
-<span class="sd">:class:`unitest.TestCase`. It can be used to invoke the same</span>
-<span class="sd">``assertXXX`` methods available in the :class:`unitest.TestCase` with the</span>
-<span class="sd">added bonus they it waorks for asynchronous results too.</span>
+    <span class="sd">&#39;&#39;&#39;A `descriptor`_ added by the :ref:`test-suite` to all python</span>
+<span class="sd">    :class:`unittest.TestCase` loaded.</span>
 
-<span class="sd">The descriptor is available bia the ``async`` attribute. For example::</span>
+<span class="sd">    It can be used to invoke the same ``assertXXX`` methods available in</span>
+<span class="sd">    the :class:`unittest.TestCase` in an asynchronous fashion.</span>
 
-<span class="sd">    class MyTest(unittest.TestCase):</span>
+<span class="sd">    The descriptor is available via the ``async`` attribute.</span>
+<span class="sd">    For example::</span>
 
-<span class="sd">        def test1(self):</span>
-<span class="sd">            yield self.async.assertEqual(3, Deferred().callback(3))</span>
+<span class="sd">        class MyTest(unittest.TestCase):</span>
+
+<span class="sd">            def test1(self):</span>
+<span class="sd">                yield self.async.assertEqual(3, Deferred().callback(3))</span>
 
 
-<span class="sd">.. _descriptor: http://users.rcn.com/python/download/Descriptor.htm&#39;&#39;&#39;</span>
+<span class="sd">    .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
 
@@ -182,7 +239,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">yield</span> <span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">error</span><span class="p">:</span>
-            <span class="k">pass</span>
+            <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> not raised by </span><span class="si">%s</span><span class="s">&#39;</span>
                                              <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">))</span>
@@ -194,15 +251,15 @@
 <div class="viewcode-block" id="ActorTestMixin"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin">[docs]</a><span class="k">class</span> <span class="nc">ActorTestMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A mixin for :class:`unittest.TestCase`.</span>
 
-<span class="sd">Useful for classes testing spawning of actors.</span>
-<span class="sd">Make sure this is the first class you derive from, before the</span>
-<span class="sd">unittest.TestCase, so that the tearDown method is overwritten.</span>
+<span class="sd">    Useful for classes testing spawning of actors.</span>
+<span class="sd">    Make sure this is the first class you derive from, before the</span>
+<span class="sd">    unittest.TestCase, so that the tearDown method is overwritten.</span>
 
-<span class="sd">.. attribute:: concurrency</span>
+<span class="sd">    .. attribute:: concurrency</span>
 
-<span class="sd">    The concurrency model used to spawn actors via the :meth:`spawn`</span>
-<span class="sd">    method.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The concurrency model used to spawn actors via the :meth:`spawn`</span>
+<span class="sd">        method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">concurrency</span> <span class="o">=</span> <span class="s">&#39;thread&#39;</span>
 
     <span class="nd">@property</span>
@@ -211,14 +268,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawned</span>
 
-<div class="viewcode-block" id="ActorTestMixin.spawn"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn">[docs]</a>    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ActorTestMixin.spawn_actor"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.ActorTestMixin.spawn_actor">[docs]</a>    <span class="k">def</span> <span class="nf">spawn_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">concurrency</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Spawn a new actor and perform some tests.&#39;&#39;&#39;</span>
         <span class="n">concurrency</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">concurrency</span>
         <span class="n">ad</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="n">concurrency</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">ActorProxyDeferred</span><span class="p">))</span>
-        <span class="k">yield</span> <span class="n">ad</span>
-        <span class="n">proxy</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">ad</span><span class="p">,</span> <span class="n">ActorProxyDeferred</span><span class="p">))</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">ad</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
@@ -242,7 +298,7 @@
         <span class="n">tcls</span><span class="o">.</span><span class="n">async</span> <span class="o">=</span> <span class="n">AsyncAssert</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="show_leaks"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.show_leaks">[docs]</a><span class="k">def</span> <span class="nf">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Function to show memory leaks on a processed-based actor.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_process</span><span class="p">():</span>
         <span class="k">return</span>
@@ -262,20 +318,27 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_SHOW</span><span class="p">:</span>
             <span class="n">write</span><span class="p">(</span><span class="s">&#39;And </span><span class="si">%d</span><span class="s"> more&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gc</span><span class="o">.</span><span class="n">garbage</span><span class="p">)</span> <span class="o">-</span> <span class="n">MAX_SHOW</span><span class="p">))</span>
 
-</div>
+
 <span class="k">def</span> <span class="nf">hide_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">):</span>
     <span class="n">show_leaks</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
 
 <span class="nd">@contextmanager</span>
-<span class="k">def</span> <span class="nf">run_test_server</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="run_test_server"><a class="viewcode-back" href="../../../../apps/test.html#pulsar.apps.test.utils.run_test_server">[docs]</a><span class="k">def</span> <span class="nf">run_test_server</span><span class="p">(</span><span class="n">protocol_factory</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">address</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A context manager for running a test server::</span>
+
+<span class="sd">        with run_test_server(loop, protocol_factory) as server:</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    It creates a :class:`.TcpServer` and invoke</span>
+<span class="sd">    :meth:`~.TcpServer.stop_serving` on exit.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">address</span> <span class="o">=</span> <span class="n">address</span> <span class="ow">or</span> <span class="p">(</span><span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">server</span> <span class="o">=</span> <span class="n">TcpServer</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
-                       <span class="n">consumer_factory</span><span class="o">=</span><span class="n">consumer_factory</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">TcpServer</span><span class="p">(</span><span class="n">protocol_factory</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">server</span>
     <span class="k">finally</span><span class="p">:</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">()</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">stop_serving</span><span class="p">()</span></div>
 </pre></div>
 
           </div>
@@ -283,7 +346,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../../index.html">
+<a href="../../../../content.html">
   <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -318,10 +381,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -338,5 +404,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

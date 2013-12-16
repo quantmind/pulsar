@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Asynchronous Shell &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Asynchronous Shell &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="JSON-RPC" href="rpc.html" />
-    <link rel="prev" title="Asynchronous and Parallel Test Suite" href="test.html" /> 
-  </head>
-  <body>
+    <link rel="prev" title="Pulsar data store" href="data/pulsar.html" /> 
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -43,16 +49,16 @@
           <a href="rpc.html" title="JSON-RPC"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="test.html" title="Asynchronous and Parallel Test Suite"
+          <a href="data/pulsar.html" title="Pulsar data store"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/shell.html">release docs here</a>.
         </p>
     
@@ -78,8 +84,8 @@ To use write a little script, lets call it <tt class="docutils literal"><span cl
 <p>And run it:</p>
 <div class="highlight-python"><pre>python pshell.py</pre>
 </div>
-<span class="target" id="module-pulsar"></span><p>The shell has already <tt class="docutils literal"><span class="pre">pulsar</span></tt>, <a class="reference internal" href="../api/actor.html#pulsar.get_actor" title="pulsar.get_actor"><tt class="xref py py-func docutils literal"><span class="pre">get_actor()</span></tt></a>, <a class="reference internal" href="../api/actor.html#pulsar.spawn" title="pulsar.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a>,
-<a class="reference internal" href="../api/actor.html#pulsar.send" title="pulsar.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> and the <a class="reference internal" href="../api/actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> class in the global dictionary:</p>
+<span class="target" id="module-pulsar"></span><p>The shell has already <tt class="docutils literal"><span class="pre">pulsar</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">get_actor()</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt>,
+<tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt> and the <tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt> class in the global dictionary:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span>
 <span class="go">0.5.0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
@@ -99,14 +105,14 @@ To use write a little script, lets call it <tt class="docutils literal"><span cl
 <dd><dl class="method">
 <dt id="pulsar.apps.shell.PulsarShell.worker_start">
 <tt class="descname">worker_start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/shell.html#PulsarShell.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.shell.PulsarShell.worker_start" title="Permalink to this definition">¶</a></dt>
-<dd><p>When the worker starts, create the <a class="reference internal" href="../api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a>
+<dd><p>When the worker starts, create the <tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt>
 with one thread only and send the <tt class="xref py py-meth docutils literal"><span class="pre">interact()</span></tt> method to it.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.shell.PulsarShell.interact">
 <tt class="descname">interact</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/shell.html#PulsarShell.interact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.shell.PulsarShell.interact" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handled by the <a class="reference internal" href="../api/actor.html#pulsar.Actor.thread_pool" title="pulsar.Actor.thread_pool"><tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></a></p>
+<dd><p>Handled by the <tt class="xref py py-attr docutils literal"><span class="pre">Actor.thread_pool</span></tt></p>
 </dd></dl>
 
 </dd></dl>
@@ -120,7 +126,7 @@ with one thread only and send the <tt class="xref py py-meth docutils literal"><
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -137,7 +143,7 @@ with one thread only and send the <tt class="xref py py-meth docutils literal"><
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous Shell</a><ul>
 <li><a class="reference internal" href="#implementation">Implementation</a></li>
@@ -146,8 +152,8 @@ with one thread only and send the <tt class="xref py py-meth docutils literal"><
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="test.html"
-                        title="previous chapter">Asynchronous and Parallel Test Suite</a></p>
+  <p class="topless"><a href="data/pulsar.html"
+                        title="previous chapter">Pulsar data store</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="rpc.html"
                         title="next chapter">JSON-RPC</a></p>
@@ -174,10 +180,13 @@ with one thread only and send the <tt class="xref py py-meth docutils literal"><
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -194,5 +203,5 @@ with one thread only and send the <tt class="xref py py-meth docutils literal"><
 
 </script>
 
-  </body>
+</body>
 </html>

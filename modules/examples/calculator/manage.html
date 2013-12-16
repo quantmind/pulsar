@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>examples.calculator.manage &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>examples.calculator.manage &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -46,7 +52,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/examples/calculator/manage.html">release docs here</a>.
         </p>
     
@@ -69,7 +75,7 @@
 <span class="sd">Open a new shell and launch python and type::</span>
 
 <span class="sd">    &gt;&gt;&gt; from pulsar.apps import rpc</span>
-<span class="sd">    &gt;&gt;&gt; p = rpc.JsonProxy(&#39;http://localhost:8060&#39;, force_sync=True)</span>
+<span class="sd">    &gt;&gt;&gt; p = rpc.JsonProxy(&#39;http://localhost:8060&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; p.ping()</span>
 <span class="sd">    &#39;pong&#39;</span>
 <span class="sd">    &gt;&gt;&gt; p.functions_list()</span>
@@ -77,18 +83,18 @@
 <span class="sd">    &gt;&gt;&gt; p.calc.add(3,4)</span>
 <span class="sd">    7.0</span>
 
-<span class="sd">The ``force_sync`` keyword is used here to force the Json RPC client to</span>
-<span class="sd">wait for a full response rather than returning a :class:`pulsar.Deferred`.</span>
-<span class="sd">Check the :ref:`creating synchronous clients &lt;tutorials-synchronous&gt;` tutorial.</span>
-
 <span class="sd">Implementation</span>
 <span class="sd">-----------------</span>
 
 <span class="sd">The calculator rpc functions are implemented by the :class:`Calculator`</span>
 <span class="sd">handler, while the :class:`Root` handler exposes utility methods from</span>
-<span class="sd">the :class:`pulsar.apps.rpc.PulsarServerCommands` handler.</span>
+<span class="sd">the :class:`.PulsarServerCommands` handler.</span>
 
 <span class="sd">.. autoclass:: Calculator</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :member-order: bysource</span>
+
+<span class="sd">.. autoclass:: Root</span>
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
@@ -137,26 +143,28 @@
 
 <span class="k">class</span> <span class="nc">RequestCheck</span><span class="p">:</span>
 
-    <span class="c">#async()</span>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">()</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">True</span>
 
 
-<span class="k">class</span> <span class="nc">Root</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">PulsarServerCommands</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">rpc_dodgy_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<div class="viewcode-block" id="Root"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Root">[docs]</a><span class="k">class</span> <span class="nc">Root</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">PulsarServerCommands</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Add two rpc methods for testing to the :class:`.PulsarServerCommands`</span>
+<span class="sd">    handler.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+<div class="viewcode-block" id="Root.rpc_dodgy_method"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Root.rpc_dodgy_method">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_dodgy_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;This method will fails because the return object is not</span>
-<span class="sd">json serializable.&#39;&#39;&#39;</span>
+<span class="sd">        json serializable.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">Calculator</span>
-
+</div>
     <span class="n">rpc_check_request</span> <span class="o">=</span> <span class="n">RequestCheck</span><span class="p">()</span>
 
-
+</div>
 <div class="viewcode-block" id="Calculator"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator">[docs]</a><span class="k">class</span> <span class="nc">Calculator</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">JSONRPC</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.apps.rpc.JSONRPC` handler which implements few simple</span>
-<span class="sd">remote functions.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.JSONRPC` handler which implements few simple</span>
+<span class="sd">    remote methods.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 <div class="viewcode-block" id="Calculator.rpc_add"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Calculator.rpc_add">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add two numbers&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
@@ -175,7 +183,7 @@
 </div>
 <div class="viewcode-block" id="Site"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Site">[docs]</a><span class="k">class</span> <span class="nc">Site</span><span class="p">(</span><span class="n">wsgi</span><span class="o">.</span><span class="n">LazyWsgi</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;WSGI handler for the RPC server&#39;&#39;&#39;</span>
-<div class="viewcode-block" id="Site.setup"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Site.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Site.setup"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Site.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Called once to setup the list of wsgi middleware.&#39;&#39;&#39;</span>
         <span class="n">json_handler</span> <span class="o">=</span> <span class="n">Root</span><span class="p">()</span><span class="o">.</span><span class="n">putSubHandler</span><span class="p">(</span><span class="s">&#39;calc&#39;</span><span class="p">,</span> <span class="n">Calculator</span><span class="p">())</span>
         <span class="n">middleware</span> <span class="o">=</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">Router</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">json_handler</span><span class="p">,</span>
@@ -198,7 +206,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../index.html">
+<a href="../../../content.html">
   <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -233,10 +241,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -253,5 +264,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

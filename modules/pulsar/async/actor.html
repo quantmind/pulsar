@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.async.actor &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.8.0-beta.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="up" title="pulsar.async" href="../async.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/async/actor.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.async.actor</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HaltServer</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">system</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LogginMixin</span><span class="p">,</span> <span class="n">WritelnDecorator</span>
+
+<span class="kn">from</span> <span class="nn">.eventloop</span> <span class="kn">import</span> <span class="n">setid</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span>
+<span class="kn">from</span> <span class="nn">.threads</span> <span class="kn">import</span> <span class="n">ThreadPool</span>
+<span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">ActorProxy</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">,</span> <span class="n">ActorIdentity</span>
+<span class="kn">from</span> <span class="nn">.mailbox</span> <span class="kn">import</span> <span class="n">command_in_context</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">.cov</span> <span class="kn">import</span> <span class="n">Coverage</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;is_actor&#39;</span><span class="p">,</span> <span class="s">&#39;send&#39;</span><span class="p">,</span> <span class="s">&#39;Actor&#39;</span><span class="p">,</span> <span class="s">&#39;ACTOR_STATES&#39;</span><span class="p">,</span> <span class="s">&#39;Pulsar&#39;</span><span class="p">,</span> <span class="s">&#39;get_stream&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">is_actor</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Actor</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_stream</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Obtain the python stream handler given a config dictionary.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+    <span class="k">return</span> <span class="n">WritelnDecorator</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="send"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.send">[docs]</a><span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Send a :ref:`message &lt;api-remote_commands&gt;` to ``target``</span>
+
+<span class="sd">    The message is to perform a given ``action``. The actor sending the</span>
+<span class="sd">    message is obtained via the :func:`get_actor` function.</span>
+
+<span class="sd">    :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or</span>
+<span class="sd">        name of the target actor which will receive the message.</span>
+<span class="sd">    :parameter action: the :ref:`remote command &lt;api-remote_commands&gt;`</span>
+<span class="sd">        to perform in the ``target`` :class:`Actor`.</span>
+<span class="sd">    :parameter args: positional arguments to pass to the</span>
+<span class="sd">        :ref:`remote command &lt;api-remote_commands&gt;` ``action``.</span>
+<span class="sd">    :parameter params: dictionary of parameters to pass to</span>
+<span class="sd">        :ref:`remote command &lt;api-remote_commands&gt;` ``action``.</span>
+<span class="sd">    :return: a :class:`Deferred` if the action acknowledge the caller or</span>
+<span class="sd">        `None`.</span>
+
+<span class="sd">    Typical example::</span>
+
+<span class="sd">        &gt;&gt;&gt; a = spawn()</span>
+<span class="sd">        &gt;&gt;&gt; r = a.add_callback(lambda p: send(p,&#39;ping&#39;))</span>
+<span class="sd">        &gt;&gt;&gt; r.result()</span>
+<span class="sd">        &#39;pong&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+</div>
+<span class="k">class</span> <span class="nc">Pulsar</span><span class="p">(</span><span class="n">LogginMixin</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">configure_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">configure_logging</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Pulsar</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">configure_logging</span>
+        <span class="n">configure_logging</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span>
+                          <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                          <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
+                          <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
+        <span class="n">configure_logging</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                          <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                          <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
+                          <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor">[docs]</a><span class="k">class</span> <span class="nc">Actor</span><span class="p">(</span><span class="n">Pulsar</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">ActorIdentity</span><span class="p">,</span> <span class="n">Coverage</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;The base class for parallel execution in pulsar.</span>
+
+<span class="sd">    In computer science, the **Actor model** is a mathematical model</span>
+<span class="sd">    of concurrent computation that treats *actors* as the universal primitives</span>
+<span class="sd">    of computation.</span>
+<span class="sd">    In response to a message that it receives, an actor can make local</span>
+<span class="sd">    decisions, create more actors, send more messages, and determine how</span>
+<span class="sd">    to respond to the next message received.</span>
+
+<span class="sd">    The current implementation allows for actors to perform specific tasks</span>
+<span class="sd">    such as listening to a socket, acting as http server, consuming</span>
+<span class="sd">    a task queue and so forth.</span>
+
+<span class="sd">    To spawn a new actor::</span>
+
+<span class="sd">        &gt;&gt;&gt; from pulsar import spawn</span>
+<span class="sd">        &gt;&gt;&gt; a = spawn()</span>
+<span class="sd">        &gt;&gt;&gt; a.is_alive()</span>
+<span class="sd">        True</span>
+
+<span class="sd">    Here ``a`` is actually a reference to the remote actor, it is</span>
+<span class="sd">    an :class:`ActorProxy`.</span>
+
+<span class="sd">    **ATTRIBUTES**</span>
+
+<span class="sd">    .. attribute:: name</span>
+
+<span class="sd">        The name of this :class:`Actor`.</span>
+
+<span class="sd">    .. attribute:: aid</span>
+
+<span class="sd">        Unique ID for this :class:`Actor`.</span>
+
+<span class="sd">    .. attribute:: impl</span>
+
+<span class="sd">        The :class:`Concurrency` implementation for this :class:`Actor`.</span>
+
+<span class="sd">    .. attribute:: _loop</span>
+
+<span class="sd">        An :class:`.EventLoop` which listen for input/output events</span>
+<span class="sd">        on sockets or socket-like objects. It is the driver of the</span>
+<span class="sd">        :class:`Actor`. If the :attr:`_loop` stops, the :class:`Actor` stops</span>
+<span class="sd">        running and goes out of scope.</span>
+
+<span class="sd">    .. attribute:: mailbox</span>
+
+<span class="sd">        Used to send and receive :ref:`actor messages &lt;tutorials-messages&gt;`.</span>
+
+<span class="sd">    .. attribute:: address</span>
+
+<span class="sd">        The socket address for this :attr:`Actor.mailbox`.</span>
+
+<span class="sd">    .. attribute:: proxy</span>
+
+<span class="sd">        Instance of a :class:`ActorProxy` holding a reference</span>
+<span class="sd">        to this :class:`Actor`. The proxy is a lightweight representation</span>
+<span class="sd">        of the actor which can be shared across different processes</span>
+<span class="sd">        (i.e. it is picklable).</span>
+
+<span class="sd">    .. attribute:: state</span>
+
+<span class="sd">        The actor :ref:`numeric state &lt;actor-states&gt;`.</span>
+
+<span class="sd">    .. attribute:: thread_pool</span>
+
+<span class="sd">        A :class:`ThreadPool` associated with this :class:`Actor`.</span>
+<span class="sd">        This attribute is ``None`` unless one is created via the</span>
+<span class="sd">        :meth:`create_thread_pool` method.</span>
+
+<span class="sd">    .. attribute:: params</span>
+
+<span class="sd">        A :class:.AttributeDictionary` which contains</span>
+<span class="sd">        parameters which are passed to actors spawned by this actor.</span>
+
+<span class="sd">    .. attribute:: extra</span>
+
+<span class="sd">        A dictionary which can be populated with extra parameters useful</span>
+<span class="sd">        for other actors. This dictionary is included in the dictionary</span>
+<span class="sd">        returned by the :meth:`info` method.</span>
+<span class="sd">        Check the :ref:`info command &lt;actor_info_command&gt;` for how to obtain</span>
+<span class="sd">        information about an actor.</span>
+
+<span class="sd">    .. attribute:: info_state</span>
+
+<span class="sd">        Current state description string. One of ``initial``, ``running``,</span>
+<span class="sd">        ``stopping``, ``closed`` and ``terminated``.</span>
+
+<span class="sd">    .. attribute:: next_periodic_task</span>
+
+<span class="sd">        The :class:`TimedCall` for the next</span>
+<span class="sd">        :ref:`actor periodic task &lt;actor-periodic-task&gt;`.</span>
+
+<span class="sd">    .. attribute:: stream</span>
+
+<span class="sd">        A ``stream`` handler to write information messages without using</span>
+<span class="sd">        the :attr:`logger`.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span>
+    <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="s">&#39;on_params&#39;</span><span class="p">)</span>
+    <span class="n">exit_code</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">mailbox</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">signal_queue</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
+        <span class="n">EventHandler</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span> <span class="o">=</span> <span class="n">impl</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+            <span class="n">hook</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hook</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">hook</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="o">**</span><span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">servers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span>
+        <span class="n">setid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">post_fork</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">unique_name</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+
+    <span class="c">############################################################### PROPERTIES</span>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.name"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">name</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.aid"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.aid">[docs]</a>    <span class="k">def</span> <span class="nf">aid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">aid</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.impl"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.impl">[docs]</a>    <span class="k">def</span> <span class="nf">impl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cfg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">cfg</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.proxy"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.proxy">[docs]</a>    <span class="k">def</span> <span class="nf">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ActorProxy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.address"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.address">[docs]</a>    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">address</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor._loop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor._loop">[docs]</a>    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span><span class="o">.</span><span class="n">_loop</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.thread_pool"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.thread_pool">[docs]</a>    <span class="k">def</span> <span class="nf">thread_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.info_state"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.info_state">[docs]</a>    <span class="k">def</span> <span class="nf">info_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span>
+
+    <span class="c">#######################################################################</span>
+    <span class="c">##    HIGH LEVEL API METHODS</span>
+    <span class="c">#######################################################################</span></div>
+<div class="viewcode-block" id="Actor.start"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Called after forking to start the actor&#39;s life.</span>
+
+<span class="sd">        This is where logging is configured, the :attr:`mailbox` is</span>
+<span class="sd">        registered and the :attr:`_loop` is initialised and</span>
+<span class="sd">        started. Calling this method more than once does nothing.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">before_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">setup_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STARTING</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">()</span>
+</div>
+    <span class="nd">@in_loop</span>
+<div class="viewcode-block" id="Actor.send"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Send a message to ``target`` to perform ``action`` with given</span>
+<span class="sd">        positional ``args`` and key-valued ``kwargs``.</span>
+<span class="sd">        Always return a :class:`.Deferred`.&#39;&#39;&#39;</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="s">&#39;monitor&#39;</span> <span class="k">else</span> <span class="n">target</span>
+        <span class="n">mailbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mailbox</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
+            <span class="n">mailbox</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">mailbox</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">actor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">Actor</span><span class="p">):</span>
+                <span class="c"># this occur when sending a message from arbiter to monitors or</span>
+                <span class="c"># viceversa.</span>
+                <span class="k">return</span> <span class="n">command_in_context</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span><span class="p">):</span>
+                <span class="n">mailbox</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">mailbox</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mailbox</span><span class="p">,</span> <span class="s">&#39;request&#39;</span><span class="p">):</span>
+            <span class="c">#if not mailbox.closed:</span>
+            <span class="k">return</span> <span class="n">mailbox</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">CommandError</span><span class="p">(</span><span class="s">&#39;Cannot execute &quot;</span><span class="si">%s</span><span class="s">&quot; in </span><span class="si">%s</span><span class="s">. Unknown actor </span><span class="si">%s</span><span class="s">.&#39;</span>
+                               <span class="o">%</span> <span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s">&#39;Cannot spawn an actor from an actor.&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Actor.stop"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Gracefully stop the :class:`Actor`.</span>
+
+<span class="sd">        Implemented by the :meth:`Concurrency.stop` method of the :attr:`impl`</span>
+<span class="sd">        attribute.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Actor.create_thread_pool"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.create_thread_pool">[docs]</a>    <span class="k">def</span> <span class="nf">create_thread_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create a :class:`ThreadPool` for this :class:`Actor`</span>
+<span class="sd">        if not already present.</span>
+
+<span class="sd">        :param workers: number of threads to use in the :class:`ThreadPool`.</span>
+<span class="sd">            If not supplied, the value in the :ref:`setting-thread_workers`</span>
+<span class="sd">            setting is used.</span>
+<span class="sd">        :return: a :class:`ThreadPool`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">workers</span> <span class="o">=</span> <span class="n">workers</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">thread_workers</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span> <span class="o">=</span> <span class="n">ThreadPool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="n">workers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span>
+</div>
+<div class="viewcode-block" id="Actor.close_thread_pool"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.close_thread_pool">[docs]</a>    <span class="k">def</span> <span class="nf">close_thread_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Close the :attr:`thread_pool`.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span><span class="p">:</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">ACTOR_ACTION_TIMEOUT</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Waiting for thread pool to exit&#39;</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">add_errback</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span><span class="o">.</span><span class="n">terminate</span><span class="p">(</span><span class="n">timeout</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Thread pool </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_thread_pool</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="c">###############################################################  STATES</span></div>
+<div class="viewcode-block" id="Actor.is_running"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.is_running">[docs]</a>    <span class="k">def</span> <span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if actor is running, that is when the :attr:`state`</span>
+<span class="sd">is equal to :ref:`ACTOR_STATES.RUN &lt;actor-states&gt;` and the event loop is</span>
+<span class="sd">running.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Actor.started"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.started">[docs]</a>    <span class="k">def</span> <span class="nf">started</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if actor has started. It does not necessarily</span>
+<span class="sd">mean it is running. Its state is greater or equal</span>
+<span class="sd">:ref:`ACTOR_STATES.RUN &lt;actor-states&gt;`.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">&gt;=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">RUN</span>
+</div>
+<div class="viewcode-block" id="Actor.closed"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.closed">[docs]</a>    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if actor has exited in an clean fashion.</span>
+
+<span class="sd">        Its :attr:`state` is :ref:`ACTOR_STATES.CLOSE &lt;actor-states&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">CLOSE</span>
+</div>
+<div class="viewcode-block" id="Actor.stopped"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.stopped">[docs]</a>    <span class="k">def</span> <span class="nf">stopped</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if actor has exited.</span>
+
+<span class="sd">        Its :attr:`state` is greater or equal to</span>
+<span class="sd">        :ref:`ACTOR_STATES.CLOSE &lt;actor-states&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">&gt;=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">CLOSE</span>
+</div>
+<div class="viewcode-block" id="Actor.is_arbiter"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.is_arbiter">[docs]</a>    <span class="k">def</span> <span class="nf">is_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return ``True`` if ``self`` is the :class:`Arbiter`.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Actor.is_monitor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.is_monitor">[docs]</a>    <span class="k">def</span> <span class="nf">is_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return ``True`` if ``self`` is a :class:`Monitor`.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">False</span>
+</div>
+<div class="viewcode-block" id="Actor.is_process"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.is_process">[docs]</a>    <span class="k">def</span> <span class="nf">is_process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;boolean indicating if this is an actor on a child process.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">is_process</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">pickle</span><span class="o">.</span><span class="n">PicklingError</span><span class="p">(</span><span class="s">&#39;{0} - Cannot pickle Actor instances&#39;</span>
+                                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="c">#######################################################################</span>
+    <span class="c">#    INTERNALS</span>
+    <span class="c">#######################################################################</span>
+<div class="viewcode-block" id="Actor.get_actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.get_actor">[docs]</a>    <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Given an actor unique id return the actor proxy.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">aid</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">elif</span> <span class="n">aid</span> <span class="o">==</span> <span class="s">&#39;monitor&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="ow">or</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="Actor.info"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Return a nested dictionary of information related to the actor</span>
+<span class="sd">status and performance. The dictionary contains the following entries:</span>
+
+<span class="sd">* ``actor`` a dictionary containing information regarding the type of actor</span>
+<span class="sd">  and its status.</span>
+<span class="sd">* ``events`` a dictionary of information about the event loop running the</span>
+<span class="sd">  actor.</span>
+<span class="sd">* ``extra`` the :attr:`extra` attribute (which you can use to add stuff).</span>
+<span class="sd">* ``system`` system info.</span>
+
+<span class="sd">This method is invoked when you run the</span>
+<span class="sd">:ref:`info command &lt;actor_info_command&gt;` from another actor.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">started</span><span class="p">():</span>
+            <span class="k">return</span>
+        <span class="n">isp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_process</span><span class="p">()</span>
+        <span class="n">actor</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                 <span class="s">&#39;state&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">info_state</span><span class="p">,</span>
+                 <span class="s">&#39;actor_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span>
+                 <span class="s">&#39;uptime&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">,</span>
+                 <span class="s">&#39;thread_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tid</span><span class="p">,</span>
+                 <span class="s">&#39;process_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span>
+                 <span class="s">&#39;is_process&#39;</span><span class="p">:</span> <span class="n">isp</span><span class="p">,</span>
+                 <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">age</span><span class="p">}</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;callbacks&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">_ready</span><span class="p">),</span>
+                  <span class="s">&#39;io_loops&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">num_loops</span><span class="p">}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;actor&#39;</span><span class="p">:</span> <span class="n">actor</span><span class="p">,</span>
+                <span class="s">&#39;events&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span>
+                <span class="s">&#39;extra&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">isp</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s">&#39;system&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">process_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+</div>
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">exc</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">initial</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">when_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Unhandled exception in when_ready hook&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">exc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">run_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="n">HaltServer</span><span class="p">):</span>
+            <span class="n">exc</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">exc</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="n">exc</span><span class="o">.</span><span class="n">mute</span><span class="p">()</span>
+            <span class="k">raise</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">exc</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../content.html">
+  <img class="logo" width="200" src="../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

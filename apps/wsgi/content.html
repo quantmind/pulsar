@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Asynchronous Content &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Asynchronous Content &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,12 +28,14 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Asynchronous Middleware" href="middleware.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -46,7 +52,7 @@
         <li class="right" >
           <a href="middleware.html" title="Asynchronous Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -54,7 +60,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/wsgi/content.html">release docs here</a>.
         </p>
     
@@ -100,11 +106,11 @@ It is a smart way for concatenating asynchronous strings:</p>
 </pre></div>
 </div>
 <p>Once the deferred is done, we have the concatenated string:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="s">&#39;World!&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="s">&#39;World!&#39;</span><span class="p">)</span>
 <span class="go">&#39;World!&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">value</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
 <span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">value</span><span class="o">.</span><span class="n">result</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">value</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 <span class="go">&#39;Hello, World!&#39;</span>
 </pre></div>
 </div>
@@ -220,7 +226,7 @@ If <tt class="docutils literal"><span class="pre">child</span></tt> is <tt class
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.content">
 <tt class="descname">content</tt><big>(</big><em>request=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.content"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.content" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a> called once the string is ready.</p>
+<dd><p>Return a <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt> called once the string is ready.</p>
 <p>This method can be called once only since it invokes the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.stream" title="pulsar.apps.wsgi.content.AsyncString.stream"><tt class="xref py py-meth docutils literal"><span class="pre">stream()</span></tt></a>
 method.</p>
 </dd></dl>
@@ -253,7 +259,7 @@ invoked directly.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.http_response">
-<tt class="descname">http_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.http_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.http_response" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">http_response</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.http_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.http_response" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a, possibly, <a class="reference internal" href="async.html#wsgi-async"><em>asynchronous WSGI iterable</em></a>.
 This method asynchronously wait for <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">content()</span></tt></a> and subsequently
 starts the wsgi response.</p>
@@ -262,7 +268,7 @@ starts the wsgi response.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.content.AsyncString.to_string">
 <tt class="descname">to_string</tt><big>(</big><em>stream</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#AsyncString.to_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.AsyncString.to_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Once the <a class="reference internal" href="../../api/async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt></a>, returned by <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">content()</span></tt></a>
+<dd><p>Once the <tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt>, returned by <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content" title="pulsar.apps.wsgi.content.AsyncString.content"><tt class="xref py py-meth docutils literal"><span class="pre">content()</span></tt></a>
 method, is ready, this method get called to transform the stream into
 the content string. This method can be overwritten by derived classes.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -678,7 +684,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../index.html">
+<a href="../../content.html">
   <img class="logo" width="200" src="../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -695,7 +701,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <h3><a href="../../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous Content</a><ul>
 <li><a class="reference internal" href="#asynchronous-string">Asynchronous String</a></li>
@@ -744,10 +750,13 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -764,5 +773,5 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 
 </script>
 
-  </body>
+</body>
 </html>

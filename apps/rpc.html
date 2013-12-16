@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>JSON-RPC &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>JSON-RPC &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="WebSockets" href="websockets.html" />
     <link rel="prev" title="Asynchronous Shell" href="shell.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -45,14 +51,14 @@
         <li class="right" >
           <a href="shell.html" title="Asynchronous Shell"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/apps/rpc.html">release docs here</a>.
         </p>
     
@@ -151,7 +157,7 @@ Design to comply with the <a class="reference external" href="http://www.jsonrpc
 <h3>JsonProxy<a class="headerlink" href="#jsonproxy" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.rpc.JsonProxy">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">JsonProxy</tt><big>(</big><em>url</em>, <em>version=None</em>, <em>data=None</em>, <em>full_response=False</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.JsonProxy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.</tt><tt class="descname">JsonProxy</tt><big>(</big><em>url</em>, <em>version=None</em>, <em>data=None</em>, <em>full_response=False</em>, <em>http=None</em>, <em>timeout=None</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.JsonProxy" title="Permalink to this definition">¶</a></dt>
 <dd><p>A python Proxy class for <a class="reference internal" href="#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> Servers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -160,11 +166,12 @@ Design to comply with the <a class="reference external" href="http://www.jsonrpc
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>url</strong> &#8211; server location</li>
 <li><strong>version</strong> &#8211; JSONRPC server version. Default <tt class="docutils literal"><span class="pre">2.0</span></tt></li>
-<li><strong>id</strong> &#8211; optional request id, generated if not provided. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>id</strong> &#8211; optional request id, generated if not provided.
+Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li><strong>data</strong> &#8211; Extra data to include in all requests. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li><strong>full_response</strong> &#8211; return the full Http response rather than
 just the content.</li>
-<li><strong>http</strong> &#8211; <p>optional http opener. If provided it must have the <tt class="docutils literal"><span class="pre">request</span></tt>
+<li><strong>http</strong> &#8211; <p>optional http client. If provided it must have the <tt class="docutils literal"><span class="pre">request</span></tt>
 method available which must be of the form:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">body</span><span class="o">=...</span><span class="p">,</span> <span class="n">method</span><span class="o">=...</span><span class="p">)</span>
 </pre></div>
@@ -193,11 +200,11 @@ method available which must be of the form:</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.JsonProxy.timeit">
 <tt class="descname">timeit</tt><big>(</big><em>func</em>, <em>times</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pulsar.apps.rpc.JsonProxy.timeit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Usefull little utility for timing responses from server. The
-usage is simple:</p>
+<dd><p>Useful utility for timing responses from a server.</p>
+<p>The usage is simple:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&#39;ping&#39;</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&#39;ping&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="go">0.56...</span>
 </pre></div>
 </div>
@@ -306,7 +313,7 @@ information to the info dictionary.</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -323,7 +330,7 @@ information to the info dictionary.</p>
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="../content.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">JSON-RPC</a><ul>
 <li><a class="reference internal" href="#api">API</a><ul>
@@ -367,10 +374,13 @@ information to the info dictionary.</p>
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -387,5 +397,5 @@ information to the info dictionary.</p>
 
 </script>
 
-  </body>
+</body>
 </html>

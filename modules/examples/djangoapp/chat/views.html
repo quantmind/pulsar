@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>examples.djangoapp.chat.views &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>examples.djangoapp.chat.views &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,10 +28,12 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../../index.html" />
     <link rel="up" title="Module code" href="../../../index.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -38,7 +44,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li>
+        <li><a href="../../../../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
@@ -46,7 +52,7 @@
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/modules/examples/djangoapp/chat/views.html">release docs here</a>.
         </p>
     
@@ -61,12 +67,14 @@
             
   <h1>Source code for examples.djangoapp.chat.views</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">is_failure</span><span class="p">,</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span><span class="p">,</span> <span class="n">pubsub</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">HttpException</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span>
+<span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">PubSubClient</span><span class="p">,</span> <span class="n">create_store</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">lazyproperty</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">random_string</span>
 
 
 <span class="k">def</span> <span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
@@ -77,38 +85,58 @@
         <span class="p">},</span> <span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
 
 
-<span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="n">pubsub</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ChatClient</span><span class="p">(</span><span class="n">PubSubClient</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connection</span> <span class="o">=</span> <span class="n">connection</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">joined</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span> <span class="o">=</span> <span class="n">websocket</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">channel</span> <span class="o">==</span> <span class="s">&#39;webchat&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="c"># The message is an encoded JSON string</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Chat"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat">[docs]</a><span class="k">class</span> <span class="nc">Chat</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">WS</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;The websocket handler managing the chat application.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;:class:`.WS` handler managing the chat application.&#39;&#39;&#39;</span>
+    <span class="n">_store</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_pubsub</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="bp">None</span>
 
-    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="p">:</span>
-            <span class="c"># ``pulsar.cfg`` is injected by the pulsar server into</span>
-            <span class="c"># the wsgi environ. Here we pick up the name of the wsgi</span>
-            <span class="c"># application running the server. This is **only** needed by the</span>
-            <span class="c"># test suite which tests several servers/clients at once.</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.cfg&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span> <span class="o">=</span> <span class="n">pubsub</span><span class="o">.</span><span class="n">PubSub</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s">&#39;webchat&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="Chat.get_pubsub"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.get_pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">get_pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create the pubsub handler if not already available&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">:</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">data_store</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">pubsub</span><span class="p">()</span>
+            <span class="n">webchat</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:webchat&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+            <span class="n">chatuser</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:chatuser&#39;</span> <span class="o">%</span> <span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">webchat</span><span class="p">,</span> <span class="n">chatuser</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span>
-
+</div>
 <div class="viewcode-block" id="Chat.on_open"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_open">[docs]</a>    <span class="k">def</span> <span class="nf">on_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A new websocket connection is established.</span>
 
 <span class="sd">        Add it to the set of clients listening for messages.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">Client</span><span class="p">(</span><span class="n">websocket</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_pubsub</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span><span class="o">.</span><span class="n">add_client</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">(</span><span class="n">websocket</span><span class="p">))</span>
+        <span class="n">user</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+        <span class="n">users_key</span> <span class="o">=</span> <span class="s">&#39;webchatusers:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+        <span class="c"># add counter to users</span>
+        <span class="n">registered</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hincrby</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">registered</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s">&#39;joined&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Chat.on_close"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_close">[docs]</a>    <span class="k">def</span> <span class="nf">on_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Leave the chat room</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">user</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+        <span class="n">users_key</span> <span class="o">=</span> <span class="s">&#39;webchatusers:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span>
+        <span class="n">registered</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hincrby</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">registered</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;chatuser&#39;</span><span class="p">,</span> <span class="s">&#39;gone&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">registered</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">hdel</span><span class="p">(</span><span class="n">users_key</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Chat.on_message"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.Chat.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;When a new message arrives, it publishes to all listening clients.</span>
@@ -121,15 +149,30 @@
                     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="n">user</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">():</span>
-                    <span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">user</span> <span class="o">=</span> <span class="s">&#39;anonymous&#39;</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span> <span class="s">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()}</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">pubsub</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;webchat&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">websocket</span><span class="p">,</span> <span class="s">&#39;webchat&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">session</span> <span class="o">=</span> <span class="n">websocket</span><span class="o">.</span><span class="n">handshake</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;django.session&#39;</span><span class="p">)</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;chatuser&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="s">&#39;an_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">random_string</span><span class="p">(</span><span class="n">length</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="n">session</span><span class="p">[</span><span class="s">&#39;chatuser&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user</span>
+            <span class="k">return</span> <span class="n">user</span><span class="p">,</span> <span class="bp">False</span>
 
-</div></div>
+    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">websocket</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">user</span><span class="p">,</span> <span class="n">authenticated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">websocket</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">message</span><span class="p">,</span>
+               <span class="s">&#39;user&#39;</span><span class="p">:</span> <span class="n">user</span><span class="p">,</span>
+               <span class="s">&#39;authenticated&#39;</span><span class="p">:</span> <span class="n">authenticated</span><span class="p">,</span>
+               <span class="s">&#39;channel&#39;</span><span class="p">:</span> <span class="n">channel</span><span class="p">}</span>
+        <span class="n">channel</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">websocket</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+
+</div>
 <div class="viewcode-block" id="middleware"><a class="viewcode-back" href="../../../../tutorials/django.html#examples.djangoapp.chat.views.middleware">[docs]</a><span class="k">class</span> <span class="nc">middleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Django middleware for serving the Chat websocket.&#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -139,7 +182,11 @@
         <span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
         <span class="n">environ</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span>
         <span class="n">environ</span><span class="p">[</span><span class="s">&#39;django.user&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;django.session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">session</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_web_socket</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">HttpException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="c"># we have a response, this is the websocket upgrade.</span>
             <span class="c"># Convert to django response</span>
@@ -149,7 +196,8 @@
                 <span class="n">resp</span><span class="p">[</span><span class="n">header</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
             <span class="k">return</span> <span class="n">resp</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span></div>
+            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;django.user&#39;</span><span class="p">)</span>
+            <span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;django.session&#39;</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -157,7 +205,7 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../../../../index.html">
+<a href="../../../../content.html">
   <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -192,10 +240,13 @@
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -212,5 +263,5 @@
 
 </script>
 
-  </body>
+</body>
 </html>

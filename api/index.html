@@ -1,20 +1,24 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>API &mdash; pulsar 0.8.0-beta.1 documentation</title>
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>API &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.1',
+        VERSION:     '0.8.0-beta.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,11 +28,13 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.1 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
     <link rel="next" title="Asynchonous API" href="async.html" />
     <link rel="prev" title="Benchmarking" href="../tutorials/benchmarking.html" /> 
-  </head>
-  <body>
+</head>
+ <body>
+
+
 
     <div class="related">
       <h3>Navigation</h3>
@@ -45,14 +51,14 @@
         <li class="right" >
           <a href="../tutorials/benchmarking.html" title="Benchmarking"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.1 documentation</a> &raquo;</li> 
+        <li><a href="../content.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
 <div class="header">
     
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/api/index.html">release docs here</a>.
         </p>
     
@@ -65,51 +71,64 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-pulsar"></span><div class="section" id="api">
+  <div class="section" id="api">
 <span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="primitives">
-<span id="pulsar-primitives"></span><h2>Primitives<a class="headerlink" href="#primitives" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar is built on top of a set of <strong>primitive</strong> classes which handle the
-different aspects of the concurrent framework.
-These primitive classes are:</p>
-<ul class="simple">
-<li><a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>: handles scheduling of asynchronous and recurrent events.
-Designed to conform with <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> eventloop interface.</li>
-<li><a class="reference internal" href="async.html#pulsar.Deferred" title="pulsar.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>: handles asynchronous call backs. Designed along the
-lines of <a class="reference external" href="http://en.wikipedia.org/wiki/Futures_and_promises">futures</a> or promises, with a similar implementation
-of <a class="reference external" href="http://twistedmatrix.com/">twisted</a> deferred.</li>
-<li><a class="reference internal" href="actor.html#pulsar.Actor" title="pulsar.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>: manage parallel execution in threads or processes.
-Each live actor has its own <a class="reference internal" href="async.html#pulsar.EventLoop" title="pulsar.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.</li>
-<li><a class="reference internal" href="protocols.html#pulsar.Transport" title="pulsar.Transport"><tt class="xref py py-class docutils literal"><span class="pre">Transport</span></tt></a>: abstract class handling end-to-end communication
-services for applications. Designed to conform with <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> transport interface.</li>
-<li><a class="reference internal" href="protocols.html#pulsar.ProtocolConsumer" title="pulsar.ProtocolConsumer"><tt class="xref py py-class docutils literal"><span class="pre">ProtocolConsumer</span></tt></a>: base class for consuming stream of data provided
-by the <a class="reference internal" href="protocols.html#pulsar.Transport" title="pulsar.Transport"><tt class="xref py py-class docutils literal"><span class="pre">Transport</span></tt></a> via a <a class="reference internal" href="protocols.html#pulsar.Server" title="pulsar.Server"><tt class="xref py py-class docutils literal"><span class="pre">Server</span></tt></a> or <a class="reference internal" href="protocols.html#pulsar.Client" title="pulsar.Client"><tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt></a>
-<a class="reference internal" href="protocols.html#pulsar.Connection" title="pulsar.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a>.</li>
-</ul>
-</div>
-<div class="section" id="framework">
-<span id="pulsar-framework"></span><h2>Framework<a class="headerlink" href="#framework" title="Permalink to this headline">¶</a></h2>
-<p>A second layer of classes, forming the concurrent framework, is built
-directly on top of <a class="reference internal" href="#pulsar-primitives"><em>pulsar primitives</em></a>. These
-<strong>framework</strong> classes are:</p>
-<ul class="simple">
-<li><a class="reference internal" href="actor.html#pulsar.Arbiter" title="pulsar.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> manages the execution of pulsar-powered applications.</li>
-<li><a class="reference internal" href="application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">apps.Application</span></tt></a> is the base class for all higher level pulsar usage.</li>
-</ul>
-</div>
-<div class="section" id="contents">
-<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="async.html">Asynchonous API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="actor.html">Actors API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocols.html">Protocols/Transports API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stream.html">Tcp Stream API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="application.html">Applications API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utilities.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="async.html">Asynchonous API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="async.html#event-loop">Event loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#async-object-interface">Async object interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#async-utilities">Async Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#async-decorators">Async Decorators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#deferred">Deferred</a></li>
+<li class="toctree-l2"><a class="reference internal" href="async.html#queues">Queues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="actor.html">Actors API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#high-level-functions">High Level Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#actors">Actors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#actor-internals">Actor Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#messages">Messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#concurrency">Concurrency</a></li>
+<li class="toctree-l2"><a class="reference internal" href="actor.html#module-pulsar.async.consts">Constants</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Event API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="events.html#abstract-event">Abstract Event</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#event">Event</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#one-time">One time</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html#events-handler">Events Handler</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="protocols.html">Protocols/Transports API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html#transports">Transports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html#protocols">Protocols</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html#producers">Producers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocols.html#clients">Clients</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="application.html">Application API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="application.html#configurator">Configurator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="application.html#application">Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="application.html#multi-app">Multi App</a></li>
+<li class="toctree-l2"><a class="reference internal" href="application.html#get-application">Get application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="application.html#when-monitor-start">When monitor start</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.httpurl">HTTP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.websocket">Websocket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.config">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.internet">Socket and addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.system">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.structures">Structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.html">HTML &amp; Text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.log">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-pulsar.utils.path">Path</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>
-</div>
 </div>
 </div>
 
@@ -119,7 +138,7 @@ directly on top of <a class="reference internal" href="#pulsar-primitives"><em>p
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper"><p class="logo">
-<a href="../index.html">
+<a href="../content.html">
   <img class="logo" width="200" src="../static/pulsar.png" alt="pulsar" title="Pulsar"/>
 </a>
 </p>
@@ -136,18 +155,6 @@ directly on top of <a class="reference internal" href="#pulsar-primitives"><em>p
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">API</a><ul>
-<li><a class="reference internal" href="#primitives">Primitives</a></li>
-<li><a class="reference internal" href="#framework">Framework</a></li>
-<li><a class="reference internal" href="#contents">Contents</a><ul>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
   <p class="topless"><a href="../tutorials/benchmarking.html"
                         title="previous chapter">Benchmarking</a></p>
@@ -177,10 +184,13 @@ directly on top of <a class="reference internal" href="#pulsar-primitives"><em>p
       <div class="clearer"></div>
     </div>
 
-    <div class="footer">
-        &copy; Copyright 2011-2013, Luca Sbardella.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
-    </div>
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -197,5 +207,5 @@ directly on top of <a class="reference internal" href="#pulsar-primitives"><em>p
 
 </script>
 
-  </body>
+</body>
 </html>
