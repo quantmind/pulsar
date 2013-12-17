@@ -27,6 +27,11 @@ class CommandNotFound(CommandError):
 class ProtocolError(PulsarException):
     '''Raised when the protocol encounter unexpected data. It will close
 the socket connection.'''
+    status_code = None
+
+    def ProtocolError(self, msg=None, status_code=None):
+        super(ProtocolError, self).__init__(msg)
+        self.status_code = status_code
 
 
 class TooManyConnections(PulsarException):
@@ -34,6 +39,10 @@ class TooManyConnections(PulsarException):
 
 
 class EventAlreadyRegistered(PulsarException):
+    pass
+
+
+class InvalidOperation(PulsarException):
     pass
 
 
@@ -98,8 +107,8 @@ Introduces the following attributes:
 class HttpRedirect(HttpException):
     '''An :class:`HttpException` for redirects.
 
-The :attr:`HttpException.status` is set to ``302`` by default.
-'''
+    The :attr:`~HttpException.status` is set to ``302`` by default.
+    '''
     status = 302
 
     def __init__(self, location, status=None, headers=None, **kw):
@@ -112,7 +121,8 @@ The :attr:`HttpException.status` is set to ``302`` by default.
     def location(self):
         '''The value in the ``Location`` header entry.
 
-It is a proxy for ``self.headers['location'].'''
+        Equivalent to ``self.headers['location']``.
+        '''
         return self.headers['location']
 
 

@@ -1,36 +1,47 @@
-from pulsar import Deferred
-from pulsar.utils.pep import new_event_loop
+from pulsar import Deferred, new_event_loop, coroutine_return
 from pulsar.apps.test import unittest
 
+DELAY = 0
 
 def async_func(loop, value):
-    p = Deferred()
-    loop.call_later(0.01, p.callback, value)
+    p = Deferred(loop)
+    loop.call_later(DELAY, p.callback, value)
     return p
+
 
 def sub_sub(loop, num):
     a = yield async_func(loop, num)
     b = yield async_func(loop, num)
-    yield a+b
- 
+    yield 0
+    coroutine_return(a+b)
+
+
 def sub(loop, num):
     a = yield async_func(loop, num)
     b = yield async_func(loop, num)
     c = yield sub_sub(loop, num)
-    yield a+b+c
- 
+    coroutine_return(a+b+c)
+
+
 def main(d, loop, num):
     a = yield async_func(loop, num)
     b = yield sub(loop, num)
     c = yield sub(loop, num)
     d.callback(a+b+c)
-    
-    
+
+
 class TestCoroutine(unittest.TestCase):
-    
+    __benchmark__ = True
+    __number__ = 100
+
+    def setUp(self):
+        self.loop = new_event_loop()
+
     def test_coroutine(self):
-        loop = new_event_loop(iothreadloop=False)
-        d= Deferred()
-        loop.call_soon(main, d, loop, 1)
-        loop.run_until_complete(d)
-        self.assertEqual(d.result, 9)
+        deferred = Deferred(self.loop)
+        self.loop.call_soon(main, deferred, self.loop, 1)
+        self.loop.run_until_complete(deferred)
+        self.assertEqual(deferred.result(), 9)
+
+    def getTime(self, dt):
+        return dt - 9*DELAY

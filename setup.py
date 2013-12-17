@@ -5,7 +5,7 @@ from setuptools import setup
 from distutils.command.install_data import install_data
 from distutils.command.install import INSTALL_SCHEMES
 
-#from lib.setup import libparams, BuildFailed
+os.environ['pulsar_setup_running'] = 'yes'
 
 package_name = 'pulsar'
 package_fullname = package_name

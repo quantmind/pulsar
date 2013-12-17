@@ -6,34 +6,19 @@ except ImportError:
 
 from pulsar.apps.test import unittest
 
-from . import test_local
+from . import test_pulsards
 
 
-def redis_pubsub_test(self, app):
-    pubsub = app.backend.pubsub
-    con_str = pubsub.backend.connection_string
-    self.assertTrue('namespace=%s.' % app.name in con_str)
-    self.assertFalse('name=%s' % app.name in con_str)
-
-
-@unittest.skipUnless(stdnet, 'Requires python-stdnet')
-class TestRedisTaskQueueOnThread(test_local.TestTaskQueueOnThread):
+class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
     #schedule_periodic = False
 
     @classmethod
     def task_backend(cls):
-        return cls.cfg.backend_server or 'redis://127.0.0.1:6379'
-
-    def pubsub_test(self, app):
-        redis_pubsub_test(self, app)
+        return 'redis://%s' % cls.cfg.redis_server
 
 
-@unittest.skipUnless(stdnet, 'Requires python-stdnet')
-class TestRedisTaskQueueOnProcess(test_local.TestTaskQueueOnProcess):
+class TestRedisTaskQueueOnProcess(test_pulsards.TestTaskQueueOnProcess):
 
     @classmethod
     def task_backend(cls):
-        return cls.cfg.backend_server or 'redis://127.0.0.1:6379'
-
-    def pubsub_test(self, app):
-        redis_pubsub_test(self, app)
+        return 'redis://%s' % cls.cfg.redis_server

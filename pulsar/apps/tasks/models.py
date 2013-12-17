@@ -10,9 +10,6 @@ with one :class:`Job`, which can be of two types:
 
 .. _job-callable:
 
-Implementing jobs
-========================
-
 To define a job is simple, subclass from :class:`Job` and implement the
 **job callable method**::
 
@@ -48,39 +45,16 @@ This allows for cooperative task execution on each task thread workers.
 Non overlapping Jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :attr:`Job.can_overlap` attribute controls the way tasks are generated
-by a specific :class:`Job`. By default, a :class:`Job` creates a new task
-every time the :ref:`task backend <apps-taskqueue-backend>` requests it.
+The :attr:`~.Job.can_overlap` attribute controls the way tasks are generated
+by a specific :class:`Job`. By default, a :class:`.Job` creates a new task
+every time the :class:`.TaskBackend` requests it.
 
-However, when setting the :attr:`Job.can_overlap` attribute to ``False``,
+However, when setting the :attr:`~.Job.can_overlap` attribute to ``False``,
 a new task cannot be started unless a previous task of the same job
 is done.
 
-
-Job class
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Job
-   :members:
-   :member-order: bysource
-
-Periodic job
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PeriodicJob
-   :members:
-   :member-order: bysource
-
-Job registry
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobRegistry
-   :members:
-   :member-order: bysource
-
 '''
 from datetime import datetime, date
-from hashlib import sha1
 import logging
 
 from pulsar.utils.pep import iteritems
@@ -89,11 +63,7 @@ from pulsar.utils.security import gen_unique_id
 
 
 __all__ = ['JobMetaClass', 'Job', 'PeriodicJob',
-           'anchorDate', 'JobRegistry', 'create_task_id']
-
-
-def create_task_id():
-    return gen_unique_id()[:8]
+           'anchorDate', 'JobRegistry']
 
 
 class JobRegistry(dict):
@@ -204,60 +174,41 @@ implemented by subclasses.'''
         '''Type of Job, one of ``regular`` and ``periodic``.'''
         return 'regular'
 
-    def run_job(self, consumer, jobname, *args, **kwargs):
-        '''Run a new task in the task queue.
+    def queue_task(self, consumer, jobname, meta_params=None, **kwargs):
+        '''Queue a new task in the task queue.
 
-This utility method can be used from within the
-:ref:`job callable <job-callable>` method and it allows tasks to act
-as tasks factories.
+        This utility method can be used from within the
+        :ref:`job callable <job-callable>` method and it allows tasks to act
+        as tasks factories.
 
-:parameter consumer: the :class:`.TaskConsumer`
-    handling the :ref:`Task <apps-taskqueue-task>`. Must be the same instance
-    as the one passed to the :ref:`job callable <job-callable>` method.
-:parameter jobname: The name of the :class:`Job` to run.
-:parameter args: positional argument for the
-    :ref:`job callable <job-callable>`.
-:parameter kwargs: key-valued parameters for the
-    :ref:`job callable <job-callable>`.
-:return: a :class:`pulsar.Deferred` called back with the task id of the
-    new job.
+        :parameter consumer: the :class:`.TaskConsumer`
+            handling the :ref:`Task <apps-taskqueue-task>`.
+            Must be the same instance as the one passed to the
+            :ref:`job callable <job-callable>` method.
+        :parameter jobname: The name of the :class:`Job` to run.
+        :parameter kwargs: key-valued parameters for the
+            :ref:`job callable <job-callable>`.
+        :return: a :class:`.Deferred` called back with the task id.
 
-This method invokes the :meth:`.TaskBackend.run_job`
-method with the additional ``from_task`` argument equal to the
-id of the task invoking the method.
-'''
-        return consumer.backend.run_job(jobname, args, kwargs,
-                                        from_task=consumer.task_id)
+        This method invokes the :meth:`.TaskBackend.queue_task`
+        method with the additional ``from_task`` argument equal to the
+        id of the task invoking the method.
+        '''
+        if meta_params is None:
+            meta_params = {}
+        meta_params['from_task'] = consumer.task_id
+        return consumer.backend.queue_task(jobname, meta_params, **kwargs)
 
-    def generate_task_ids(self, args, kwargs):
-        '''Generate a task unique identifiers.
+    def create_id(self, kwargs):
+        '''Create a unique id for a task.
 
-:parameter args: tuple of positional arguments passed to the
-    :ref:`job callable <job-callable>` method.
-:parameter kwargs: dictionary of key-valued parameters passed to the
-    :ref:`job callable <job-callable>` method.
-:return: a two-elements tuple containing the unique id and an
-    identifier for overlapping tasks if the :attr:`can_overlap` results
-    in ``False``.
+        Called by the :class:`.TaskBackend` when a new task is about to be
+        queued.
 
-Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when creating
-a new task.
-'''
-        can_overlap = self.can_overlap
-        if hasattr(can_overlap, '__call__'):
-            can_overlap = can_overlap(*args, **kwargs)
-        id = create_task_id()
-        if can_overlap:
-            return id, None
-        else:
-            suffix = ''
-            if args:
-                suffix = ' args(%s)' % ', '.join((str(a) for a in args))
-            if kwargs:
-                suffix += ' kwargs(%s)' % ', '.join(
-                    ('%s=%s' % (k, kwargs[k]) for k in sorted(kwargs)))
-            name = '%s%s' % (self.name, suffix)
-            return id, sha1(name.encode('utf-8')).hexdigest()[:8]
+        :parameter kwargs: dictionary of parameters passed to the callable
+            method.
+        '''
+        return gen_unique_id()[:8]
 
 
 class PeriodicJob(Job):

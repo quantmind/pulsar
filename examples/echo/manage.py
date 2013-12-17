@@ -6,43 +6,6 @@ and therefore the :class:`EchoProtocol` will also be used as based class for
 The code for this example is located in the :mod:`examples.echo.manage`
 module.
 
-Writing the Client
-=========================
-
-There are two classes one needs to implement in order to have a flexible client
-for Echo servers, or for any TCP servers.
-
-The first class implements the :class:`pulsar.ProtocolConsumer` as it is
-described in the next session, while the second class implements the
-:class:`pulsar.Client` which is a thread safe
-pool of connections to remote servers.
-
-The protocol consumer
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-The first step is to subclass :class:`pulsar.ProtocolConsumer` to create the
-:class:`EchoProtocol` used by the client. The :class:`EchoProtocol` is needed
-for two reasons:
-
-* It encodes and sends the request to the remote server via the
-  :meth:`EchoProtocol.start_request` method.
-* It listens for incoming data from the remote server via the
-  :meth:`EchoProtocol.data_received` method.
-
-
-The client
-~~~~~~~~~~~~~~~
-
-Pulsar provides :ref:`additional classes <clients-api>` for writing
-clients handling multiple requests. Here we subclass the :class:`pulsar.Client`
-and implement the :class:`Echo.request` method. :class:`Echo` is the main
-client class, used in all interactions with the echo server::
-
-    >>> pool = Echo()
-    >>> echo = pool.client(('127,0,0,1', 8080))
-    >>> response = echo(b'Hello!')
-
-
 Run The example
 ====================
 
@@ -53,15 +16,27 @@ To run the server::
 Open a new shell, in this directory, launch python and type::
 
     >>> from manage import Echo
-    >>> echo = Echo(force_sync=True).client(('localhost',8060))
+    >>> echo = Echo(('localhost',8060))
+    >>> echo(b'Hello!')
+    b'Hello!'
 
-The `force_sync` set to ``True``, force the client to wait for results rather
-than returning a :class:`pulsar.Deferred`.
-Check the :ref:`creating synchronous clients <tutorials-synchronous>` tutorial
-for further information.
+Writing the Client
+=========================
+The first step is to write a small class handling a connection
+pool with the remote server. The :class:`Echo` class does just that,
+it subclass the handy :class:`.AbstractClient` and uses
+the asynchronous :class:`.Pool` of connections as backbone.
 
-    >>> echo(b'Hello')
-    b'Hello'
+The second step is the implementation of the :class:`.EchoProtocol`,
+a subclass of :class:`.ProtocolConsumer`.
+The :class:`EchoProtocol` is needed for two reasons:
+
+* It encodes and sends the request to the remote server via the
+  :meth:`~EchoProtocol.start_request` method.
+* It listens for incoming data from the remote server via the
+  :meth:`~EchoProtocol.data_received` method.
+
+
 
 Implementation
 ==================
@@ -87,6 +62,8 @@ Echo Client
    :members:
    :member-order: bysource
 
+   .. automethod:: __call__
+
 Echo Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -102,11 +79,13 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
+from pulsar import (coroutine_return, Pool, in_loop_thread, get_event_loop,
+                    new_event_loop, Connection, AbstractClient)
 from pulsar.apps.socket import SocketServer
 
 
 class EchoProtocol(pulsar.ProtocolConsumer):
-    '''An echo :class:`pulsar.ProtocolConsumer` for client and servers.
+    '''An echo :class:`~.ProtocolConsumer` for client and servers.
 
     The only difference between client and server is the implementation
     of the :meth:`response` method.
@@ -117,7 +96,7 @@ class EchoProtocol(pulsar.ProtocolConsumer):
     '''The buffer for long messages'''
 
     def data_received(self, data):
-        '''Implements the :meth:`pulsar.Protocol.data_received` method.
+        '''Implements the :meth:`~.ProtocolConsumer.data_received` method.
 
         It simply search for the :attr:`separator` and, if found, it invokes
         the :meth:`response` method with the value of the message.
@@ -133,23 +112,26 @@ class EchoProtocol(pulsar.ProtocolConsumer):
             self.buffer = self.buffer + data
 
     def start_request(self):
-        '''Override :meth:`pulsar.Protocol.start_request` to write
-the message ended by the :attr:`separator` into the transport.'''
-        self.transport.write(self.request.message + self.separator)
+        '''Override :meth:`~.ProtocolConsumer.start_request` to write
+        the message ended by the :attr:`separator` into the transport.
+        '''
+        self.transport.write(self._request + self.separator)
 
     def response(self, data):
         '''Clients return the message so that the
-:attr:`pulsar.ProtocolConsumer.on_finished` deferred is called back with the
-message value, while servers sends the message back to the client.'''
+        :attr:`.ProtocolConsumer.on_finished` is called back with the
+        message value, while servers sends the message back to the client.
+        '''
         return data[:-len(self.separator)]
 
 
 class EchoServerProtocol(EchoProtocol):
-    '''The :class:`pulsar.ProtocolConsumer` used by the echo :func:`server`.'''
-
+    '''The :class:`EchoProtocol` used by the echo :func:`server`.
+    '''
     def response(self, data):
-        '''Override :meth:`EchoProtocol.response` method by writing the
-``data`` received back to the client.'''
+        '''Override :meth:`~EchoProtocol.response` method by writing the
+        ``data`` received back to the client.
+        '''
         self.transport.write(data)
         data = data[:-len(self.separator)]
         # If we get a QUIT message, close the transport.
@@ -159,47 +141,71 @@ class EchoServerProtocol(EchoProtocol):
         return data
 
 
-class Echo(pulsar.Client):
-    '''Echo :class:`pulsar.Client`.
+class Echo(AbstractClient):
+    '''A client for the echo server.
+
+    :param address: set the :attr:`address` attribute
+    :param full_response: set the :attr:`full_response` attribute
+    :param pool_size: used when initialising the connetion :attr:`pool`.
+    :param loop: Optional event loop to set the :attr:`_loop` attribute.
+
+    .. attribute:: _loop
+
+        The event loop used by the client IO requests.
+
+        The event loop is store at this attribute so that asynchronous
+        method decorators such as :func:`.in_loop_thread` can be used.
+
+    .. attribute:: address
+
+        remote server TCP address.
+
+    .. attribute:: pool
+
+        Asynchronous connection :class:`.Pool`.
 
     .. attribute:: full_response
 
-        Flag indicating if the :meth:`request` method should return the
+        Flag indicating if the callable method should result into the
         :class:`EchoProtocol` handling the request (``True``) or a
-        :class:`Deferred` which will result in the server response message
-        (``False``).
+        the server response message (``False``).
 
         Default: ``False``
     '''
-    consumer_factory = EchoProtocol
+    protocol_factory = partial(Connection, EchoProtocol)
 
-    def setup(self, full_response=False, **params):
+    def __init__(self, address, full_response=False, pool_size=10, loop=None):
+        super(Echo, self).__init__(loop)
+        self.address = address
         self.full_response = full_response
+        self.pool = Pool(self.connect, pool_size, self._loop)
 
-    def client(self, address):
-        '''Utility for returning a function which interact with one server.
+    def connect(self):
+        return self.create_connection(self.address)
+
+    @in_loop_thread
+    def __call__(self, message):
+        '''Send a ``message`` to the server and wait for a response.
+
+        :return: a :class:`.Deferred`
         '''
-        return partial(self.request, address)
-
-    def request(self, address, message):
-        '''Build the client request send it to the server.
-        '''
-        request = pulsar.Request(address, self.timeout)
-        request.message = message
-        response = self.response(request)
-        if self.full_response:
-            return response
-        elif response.on_finished.done():
-            return response.buffer
-        else:
-            return response.on_finished.add_callback(lambda r: r.buffer)
+        connection = yield self.pool.connect()
+        with connection:
+            consumer = connection.current_consumer()
+            consumer.start(message)
+            result = yield consumer.on_finished
+            result = consumer if self.full_response else consumer.buffer
+            coroutine_return(result)
 
 
-def server(description=None, **kwargs):
-    '''Create the :class:`pulsar.apps.socket.SocketServer` instance with
-:class:`EchoServerProtocol` as protocol factory.'''
+def server(name=None, description=None, **kwargs):
+    '''Create the :class:`.SocketServer` with :class:`EchoServerProtocol`
+    as protocol factory.
+    '''
+    name = name or 'echoserver'
     description = description or 'Echo Server'
-    return SocketServer(EchoServerProtocol, description=description, **kwargs)
+    return SocketServer(EchoServerProtocol, name=name,
+                        description=description, **kwargs)
 
 
 if __name__ == '__main__':  # pragma nocover

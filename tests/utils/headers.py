@@ -109,3 +109,4 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 2)
         self.assertEqual(h['accept-encoding'], 'gzip2, deflate2')
         self.assertEqual(h['accept'], 'text/html, */*; q=0.8')
+

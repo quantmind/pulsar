@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from pulsar import multi_async, Failure
+from pulsar import multi_async, Failure, coroutine_return
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
 
@@ -29,21 +29,13 @@ else:  # pragma nocover
         mock = None
 
 
-__all__ = ['sequential', 'unittest', 'mock']
-
-
-def sequential(cls):
-    '''Decorator for a :class:`TestCase` which cause its test functions to run
-sequentially rather than in an asynchronous fashion.'''
-    cls._sequential_execution = True
-    return cls
+__all__ = ['unittest', 'mock']
 
 
 class Test(tasks.Job):
-    '''A :ref:`Job <job-callable>` for running tests on a task queue.
+    '''A :class:`.Job` for running tests on a task queue.
     '''
-    def __call__(self, consumer, testcls, tag):
-        # The callable method. Return a coroutine.
+    def __call__(self, consumer, testcls=None, tag=None):
         suite = consumer.worker.app
         suite.local.pop('runner')
         runner = suite.runner
@@ -51,13 +43,17 @@ class Test(tasks.Job):
             testcls = testcls()
         testcls.tag = tag
         testcls.cfg = consumer.worker.cfg
-        suite.logger.debug('Testing %s', testcls.__name__)
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
             return self.run(runner, testcls, all_tests, consumer.worker.cfg)
         else:
             return runner.result
+
+    def create_id(self, kwargs):
+        tid = super(Test, self).create_id(kwargs)
+        testcls = kwargs.get('testcls')
+        return '%s_%s' % (testcls.__name__, tid) if testcls else tid
 
     def run(self, runner, testcls, all_tests, cfg):
         '''Run all test functions from the :attr:`testcls`.
@@ -95,8 +91,8 @@ class Test(tasks.Job):
         if not skip_tests:
             yield self._run(runner, testcls, 'tearDownClass', timeout,
                             add_err=False)
-        yield runner.result
         runner.stopTestClass(testcls)
+        coroutine_return(runner.result)
 
     def run_test(self, test, runner, cfg):
         '''Run a ``test`` function using the following algorithm

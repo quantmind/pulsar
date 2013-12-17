@@ -19,5 +19,7 @@ examples/webmail/config.py
 examples/djangoapp/test.db
 test.pid
 pulsar.egg-info
-extensions/src/cparser.cpp
+extensions/lua/lua.c
+extensions/lib/lib.cpp
 .coveralls.yml
+*.rdb

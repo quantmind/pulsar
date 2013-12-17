@@ -1,17 +1,17 @@
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system
+from pulsar import system, HaltServer
 from pulsar.utils.security import gen_unique_id
-from pulsar.utils.pep import new_event_loop, itervalues
+from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import get_actor, set_actor, remove_actor, logger
+from .access import new_event_loop, get_actor, set_actor, logger
 from .threads import Thread
-from .mailbox import MailboxClient, MailboxConsumer, ProxyMailbox
+from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure, Deferred
 from .eventloop import signal, StopEventLoop
-from .stream import TcpServer
+from .protocols import Connection, TcpServer
 from .pollers import POLLERS
 from .consts import *
 
@@ -92,7 +92,7 @@ system is chosen.'''
 
     def run_actor(self, actor):
         '''Start running the ``actor``.'''
-        actor.event_loop.run_forever()
+        actor._loop.run_forever()
 
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``.
@@ -117,7 +117,7 @@ system is chosen.'''
 
     def started(self, actor, result=None):
         actor.logger.info('%s started', actor)
-        actor.fire_event('start')
+        return actor.fire_event('start')
 
     def get_actor(self):
         self.daemon = True
@@ -126,32 +126,33 @@ system is chosen.'''
         #pickle.dumps(self.params)
         return ActorProxyMonitor(self)
 
-    def create_mailbox(self, actor, event_loop):
+    def create_mailbox(self, actor, loop):
         '''Create the mailbox for ``actor``.'''
         set_actor(actor)
-        client = MailboxClient(actor.monitor.address, actor, event_loop)
-        client.event_loop.call_soon_threadsafe(self.hand_shake, actor)
-        client.bind_event('finish', lambda result: event_loop.stop())
+        client = MailboxClient(actor.monitor.address, actor, loop)
+        loop.call_soon_threadsafe(self.hand_shake, actor)
+        client.bind_event('finish', lambda result: loop.stop())
         return client
 
     def periodic_task(self, actor):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
-This is an internal method called periodically by the :attr:`Actor.event_loop`
+This is an internal method called periodically by the :attr:`Actor._loop`
 to ping the actor monitor. If successful return a :class:`Deferred` called
 back with the acknowledgement from the monitor.
 '''
         actor.next_periodic_task = None
         ack = None
         if actor.is_running():
-            actor.logger.debug('notifying the monitor')
+            if actor.cfg.debug:
+                actor.logger.debug('notify monitor')
             # if an error occurs, shut down the actor
             ack = actor.send('monitor', 'notify', actor.info())\
                        .add_errback(actor.stop)
             next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
         else:
             next = 0
-        actor.next_periodic_task = actor.event_loop.call_later(
+        actor.next_periodic_task = actor._loop.call_later(
             min(next, MAX_NOTIFY), self.periodic_task, actor)
         return ack
 
@@ -180,22 +181,20 @@ back with the acknowledgement from the monitor.
             stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
             if (isinstance(stopping, Deferred) and
-                    actor.event_loop.is_running()):
+                    actor._loop.is_running()):
                 actor.logger.debug('async stopping')
                 stopping.add_both(lambda r: self._stop_actor(actor))
             else:
                 self._stop_actor(actor)
         elif actor.stopped():
             # The actor has finished the stopping process.
-            #Remove itself from the actors dictionary
-            remove_actor(actor)
             actor.fire_event('stop')
         return actor.event('stop')
 
     def _stop_actor(self, actor):
         '''Exit from the :class:`Actor` domain.'''
         actor.state = ACTOR_STATES.CLOSE
-        if actor.event_loop.is_running():
+        if actor._loop.is_running():
             actor.logger.debug('Closing mailbox')
             actor.mailbox.close()
         else:
@@ -213,9 +212,10 @@ class ProcessMixin(object):
         actor.start_coverage()
 
     def setup_event_loop(self, actor):
-        event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
-                                    poll_timeout=actor.params.poll_timeout)
-        actor.mailbox = self.create_mailbox(actor, event_loop)
+        loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
+                              poll_timeout=actor.params.poll_timeout,
+                              iothreadloop=True, noisy=actor.cfg.noisy)
+        actor.mailbox = self.create_mailbox(actor, loop)
         proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
         if system.set_proctitle(proc_name):
             actor.logger.debug('Set process title to %s', proc_name)
@@ -224,14 +224,14 @@ class ProcessMixin(object):
             actor.logger.debug('Installing signals')
             for sig in system.EXIT_SIGNALS:
                 try:
-                    actor.event_loop.add_signal_handler(
-                        sig, self.handle_exit_signal, actor)
+                    actor._loop.add_signal_handler(
+                        sig, self.handle_exit_signal, actor, sig)
                 except ValueError:
                     pass
 
-    def handle_exit_signal(self, actor, sig, frame):
+    def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
-        actor.event_loop.exit_signal = sig
+        actor._loop.exit_signal = sig
         raise StopEventLoop
 
 
@@ -247,10 +247,13 @@ class MonitorMixin(object):
         return self.actor.is_alive()
 
     def hand_shake(self, actor):
-        ''':class:`MonitorMixin` doesn't do hand shakes'''
+        ''':class:`MonitorMixin` doesn't do hand shakes.
+
+        Switch state to ``RUN`` and fire the ``start`` event.
+        '''
         actor.state = ACTOR_STATES.RUN
         actor.bind_event('start', self.periodic_task, actor.stop)
-        actor.fire_event('start')
+        return actor.fire_event('start')
 
     @property
     def pid(self):
@@ -265,12 +268,12 @@ the **mainthread** of the master process and therefore do not require
 to be spawned.'''
     def setup_event_loop(self, actor):
         actor.mailbox = ProxyMailbox(actor)
-        actor.mailbox.event_loop.call_soon_threadsafe(self.hand_shake, actor)
+        actor.mailbox._loop.call_soon_threadsafe(self.hand_shake, actor)
 
     def run_actor(self, actor):
         return -1
 
-    def create_mailbox(self, actor, event_loop):
+    def create_mailbox(self, actor, loop):
         pass
 
     def periodic_task(self, actor):
@@ -284,7 +287,7 @@ to be spawned.'''
             actor.spawn_actors()
             actor.stop_actors()
             actor.monitor_task()
-        actor.next_periodic_task = actor.event_loop.call_later(
+        actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
         # Return actor!
         return actor
@@ -298,7 +301,8 @@ to be spawned.'''
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
-
+    '''Concurrency implementation for the :class:`.Arbiter`
+    '''
     def is_arbiter(self):
         return True
 
@@ -309,17 +313,18 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             system.daemonize()
         actor.start_coverage()
 
-    def create_mailbox(self, actor, event_loop):
+    def create_mailbox(self, actor, loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(event_loop, '127.0.0.1', 0,
-                            consumer_factory=MailboxConsumer,
+        mailbox = TcpServer(MailboxProtocol, loop, ('127.0.0.1', 0),
                             name='mailbox')
         # when the mailbox stop, close the event loop too
-        mailbox.bind_event('stop', lambda _: event_loop.stop())
-        mailbox.bind_event('start', lambda _: event_loop.call_soon_threadsafe(
-            self.hand_shake, actor))
+        mailbox.bind_event('stop', lambda _: loop.stop())
+        mailbox.bind_event(
+            'start',
+            lambda _: loop.call_soon_threadsafe(self.hand_shake, actor),
+            self._bailout)
         mailbox.start_serving()
         return mailbox
 
@@ -338,18 +343,18 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                         actor._remove_actor(m)
                 else:
                     m.start()
-        actor.next_periodic_task = actor.event_loop.call_later(
+        actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
         return actor
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''
-        if actor.event_loop.running:
+        if actor._loop.is_running():
             self._exit_arbiter(actor)
         else:
             actor.logger.debug('Restarts event loop to stop actors')
-            actor.event_loop.clear()
-            actor.event_loop.call_soon_threadsafe(self._exit_arbiter, actor)
+            actor._loop.clear()
+            actor._loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
 
     def _exit_arbiter(self, actor, res=None):
@@ -362,6 +367,10 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             active = multi_async((actor.close_monitors(),
                                   actor.close_actors()))
             active.add_both(partial(self._exit_arbiter, actor))
+
+    def _bailout(self, failure):
+        failure.log()
+        raise HaltServer
 
 
 def run_actor(self):
@@ -405,13 +414,14 @@ class ActorThread(Concurrency, Thread):
 
     def loop(self):
         if self._actor:
-            return self._actor.event_loop
+            return self._actor._loop
 
     def setup_event_loop(self, actor):
         '''Create the event loop but don't install signals.'''
-        event_loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
-                                    poll_timeout=actor.params.poll_timeout)
-        actor.mailbox = self.create_mailbox(actor, event_loop)
+        loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
+                              poll_timeout=actor.params.poll_timeout,
+                              iothreadloop=True, noisy=actor.cfg.noisy)
+        actor.mailbox = self.create_mailbox(actor, loop)
 
 
 concurrency_models = {'arbiter': ArbiterConcurrency,

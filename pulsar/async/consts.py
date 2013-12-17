@@ -25,7 +25,7 @@ They are:
   :class:`pulsar.Actor.start` method is called.
 * ``ACTOR_STATES.STARTING = 2`` when :class:`pulsar.Actor.start` method
   is called.
-* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor.event_loop` is up
+* ``ACTOR_STATES.RUN = 3`` when :class:`pulsar.Actor._loop` is up
   and running.
 * ``ACTOR_STATES.STOPPING = 4`` when :class:`pulsar.Actor.stop` has been
   called for the first time and the actor is running.
@@ -52,10 +52,6 @@ MONITOR_TASK_PERIOD = 2
 '''Interval for :class:`pulsar.Monitor` and :class:`pulsar.Arbiter`
 periodic task.'''
 #
-# SPECIAL objects for Deferred
-CONTINUE = object()
-NOT_DONE = object()
-
 DEFAULT_CONNECT_TIMEOUT = 10
 DEFAULT_ACCEPT_TIMEOUT = 10
 NUMBER_ACCEPTS = 30 if platform.type == "posix" else 1

@@ -19,7 +19,7 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Deferred, Failure
+from pulsar import HttpException, ProtocolError, Deferred, Failure, in_loop
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -57,7 +57,7 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
     headers = Headers()
     stream = StreamReader(request_headers, parser)
     return wsgi_environ(stream, ('127.0.0.1', 8060), '777.777.777.777:8080',
-                        request_headers, headers, https=secure, extra=extra)
+                        headers, https=secure, extra=extra)
 
 
 class StreamReader:
@@ -109,7 +109,7 @@ class StreamReader:
     def read(self, maxbuf=None):
         '''Return bytes in the buffer.
 
-        If the stream is not yet ready, return a :class:`pulsar.Deferred`
+        If the stream is not yet ready, return a :class:`.Deferred`
         which results in the bytes read.
         '''
         if not self._waiting:
@@ -136,16 +136,12 @@ class StreamReader:
             body, self.buffer = body[:maxbuf], body[maxbuf:]
         return body
 
-    def data_processed(self, protocol, data=None):
-        '''Callback by the protocol when new body data is received.'''
-        if self.parser.is_message_complete():
-            self.on_message_complete.callback(None)
 
-
-def wsgi_environ(stream, address, client_address, request_headers,
-                 headers, server_software=None, https=False, extra=None):
+def wsgi_environ(stream, address, client_address, headers,
+                 server_software=None, https=False, extra=None):
     protocol = stream.protocol()
     parser = stream.parser
+    request_headers = stream.headers
     raw_uri = parser.get_url()
     request_uri = urlparse(raw_uri)
     #
@@ -272,7 +268,8 @@ class HttpServerResponse(ProtocolConsumer):
     '''
     _status = None
     _headers_sent = None
-    _request_headers = None
+    _stream = None
+    _buffer = None
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
@@ -291,18 +288,28 @@ class HttpServerResponse(ProtocolConsumer):
         Once we have a full HTTP message, build the wsgi ``environ`` and
         delegate the response to the :func:`wsgi_callable` function.
         '''
-        p = self.parser
-        if p.execute(bytes(data), len(data)) == len(data):
-            if self._request_headers is None and p.is_headers_complete():
-                self._request_headers = Headers(p.get_headers(), kind='client')
-                stream = StreamReader(self._request_headers, p, self.transport)
-                self.bind_event('data_processed', stream.data_processed)
-                environ = self.wsgi_environ(stream)
-                self.event_loop.async(self._response(environ))
-        else:
-            # This is a parsing error, the client must have sent
-            # bogus data
-            raise ProtocolError
+        parser = self.parser
+        processed = parser.execute(data, len(data))
+        if not self._stream and parser.is_headers_complete():
+            headers = Headers(parser.get_headers(), kind='client')
+            self._stream = StreamReader(headers, parser, self.transport)
+            self._response(self.wsgi_environ())
+        #
+        done = parser.is_message_complete()
+        if done and not self._stream.on_message_complete.done():
+            self._stream.on_message_complete.callback(None)
+        #
+        if processed < len(data):
+            if not done:
+                # This is a parsing error, the client must have sent
+                # bogus data
+                raise ProtocolError
+            else:
+                if not self._buffer:
+                    self._buffer = data[processed:]
+                    self.bind_event('post_request', self._new_request)
+                else:
+                    self._buffer += data[processed:]
 
     @property
     def status(self):
@@ -408,6 +415,7 @@ class HttpServerResponse(ProtocolConsumer):
 
     ########################################################################
     ##    INTERNALS
+    @in_loop
     def _response(self, environ):
         exc_info = None
         try:
@@ -445,13 +453,13 @@ class HttpServerResponse(ProtocolConsumer):
                 try:
                     wsgi_iter.close()
                 except Exception:
-                    LOGGER.exception('Error while closing wsgi iterator')
-        self.finish_wsgi()
+                    self.logger.exception('Error while closing wsgi iterator')
+        yield self.finish_wsgi()
 
     def finish_wsgi(self):
         if not self.keep_alive:
             self.connection.close()
-        self.finished()
+        return self.finished()
 
     def is_chunked(self):
         '''Check if the response uses chunked transfer encoding.
@@ -487,23 +495,30 @@ class HttpServerResponse(ProtocolConsumer):
             headers['connection'] = 'close'
         # If client sent cookies and set-cookies header is not available
         # set the cookies
-        if 'cookie' in self._request_headers and not 'set-cookie' in headers:
-            headers['Set-cookie'] = self._request_headers['cookie']
+        if 'cookie' in self._stream.headers and not 'set-cookie' in headers:
+            headers['Set-cookie'] = self._stream.headers['cookie']
         return headers
 
-    def wsgi_environ(self, stream):
+    def wsgi_environ(self):
         #return a the WSGI environ dictionary
-        parser = self.parser
         https = True if is_tls(self.transport.sock) else False
         multiprocess = (self.cfg.concurrency == 'process')
-        environ = wsgi_environ(stream, self.transport.address, self.address,
-                               self._request_headers, self.headers,
+        environ = wsgi_environ(self._stream, self.transport.address,
+                               self.address,
+                               self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,
                                extra={'pulsar.connection': self.connection,
                                       'pulsar.cfg': self.cfg,
                                       'wsgi.multiprocess': multiprocess})
-        self.keep_alive = keep_alive(self.headers, parser.get_version())
+        self.keep_alive = keep_alive(self.headers, self.parser.get_version())
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ
+
+    def _new_request(self, response):
+        connection = response._connection
+        if not connection.closed:
+            connection.data_received(response._buffer)
+            return connection._current_consumer
+        return response

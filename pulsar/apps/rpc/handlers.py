@@ -1,6 +1,6 @@
 import inspect
 
-from pulsar import HttpException
+from pulsar import HttpException, raise_error_and_log
 from pulsar.utils.tools import checkarity
 
 __all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
@@ -74,7 +74,8 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
         except TypeError:
             msg = checkarity(func, args, kwargs)
             if msg:
-                raise InvalidParams('Invalid Parameters. %s' % msg)
+                error = InvalidParams('Invalid Parameters. %s' % msg)
+                raise_error_and_log(error, level='warning')
             else:
                 raise
 
@@ -163,7 +164,8 @@ is the root handler.'''
 
     def get_handler(self, method):
         if not method:
-            raise NoSuchFunction('RPC method not supplied')
+            error = NoSuchFunction('RPC method not supplied')
+            raise_error_and_log(error, level='warning')
         bits = method.split(self.separator, 1)
         handler = self
         method_name = bits[-1]
@@ -177,7 +179,8 @@ is the root handler.'''
         if method_name in handler.rpc_methods:
             return getattr(handler, '%s_%s' % (self.serve_as, method_name))
         else:
-            raise NoSuchFunction('RPC method "%s" not available.' % method)
+            error = NoSuchFunction('RPC method "%s" not available.' % method)
+            raise_error_and_log(error, level='warning')
 
     def listFunctions(self, prefix=''):
         for name in sorted(self.rpc_methods):

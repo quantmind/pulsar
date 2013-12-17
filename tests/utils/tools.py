@@ -39,7 +39,7 @@ class TestArityCheck(unittest.TestCase):
                          '"f0" has missing "b" parameter.')
         self.assertEqual(arity_check(f0, a=3, c=5, d=6),
                          '"f0" takes 2 parameters. 3 given.')
-        
+
     def testArity0WidthDiscount(self):
         f0 = f0_discount
         fname = f0.__name__
@@ -87,9 +87,9 @@ class TestArityCheck(unittest.TestCase):
 
 class TestPidfile(ActorTestMixin, unittest.TestCase):
     concurrency = 'process'
-    
+
     def testCreate(self):
-        proxy = yield self.spawn(name='pippo')
+        proxy = yield self.spawn_actor(name='pippo')
         info = yield send(proxy, 'info')
         result = info['actor']
         self.assertTrue(result['is_process'])
@@ -109,18 +109,19 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
         p1.unlink()
         p.unlink()
         self.assertFalse(os.path.exists(p.fname))
-        
-    
+
+
 class TestSystemInfo(unittest.TestCase):
 
     def testMe(self):
         worker = get_actor()
-        info = system.system_info(worker.pid)
+        info = system.process_info(worker.pid)
+        info2 = system.process_info()
         self.assertTrue(isinstance(info, dict))
 
 
 class TestFunctions(unittest.TestCase):
-    
+
     def test_convert_bytes(self):
         from pulsar.utils.system import convert_bytes
         self.assertEqual(convert_bytes(None), '#NA')
@@ -133,7 +134,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(convert_bytes(1024**6), '1.0EB')
         self.assertEqual(convert_bytes(1024**7), '1.0ZB')
         self.assertEqual(convert_bytes(1024**8), '1.0YB')
-        
+
     def test_nice_number(self):
         self.assertEqual(nice_number(0), 'zero')
         self.assertEqual(nice_number(1), 'one')
@@ -141,7 +142,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(nice_number(1, 'bla'), 'one bla')
         self.assertEqual(nice_number(10, 'bla'), 'ten blas')
         self.assertEqual(nice_number(23, 'bla', 'blax'), 'twenty three blax')
-        
+
     def test_nice_number_large(self):
         self.assertEqual(nice_number(100), 'one hundred')
         self.assertEqual(nice_number(203), 'two hundred and three')
@@ -150,4 +151,3 @@ class TestFunctions(unittest.TestCase):
                 'fifty one million, three hundred forty five thousand, '
                 'six hundred and eighteen')
 
-        

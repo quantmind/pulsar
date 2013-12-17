@@ -12,14 +12,14 @@ from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, Monitor, _spawn_actor
 from .defer import multi_async
 from .access import get_actor, set_actor
-from . import proxy
+from .proxy import actor_proxy_deferred
 
 
 __all__ = ['arbiter', 'spawn', 'Arbiter']
 
 
-def arbiter(commands_set=None, **params):
-    '''Obtain the :class:`Arbiter`.
+def arbiter(**params):
+    '''Obtain the :class:`.Arbiter`.
 
     It returns the arbiter instance only if we are on the arbiter
     context domain, otherwise it returns nothing.
@@ -32,13 +32,12 @@ def arbiter(commands_set=None, **params):
         return arbiter
 
 
-# TODO: why cfg is set to None?
-def spawn(cfg=None, **kwargs):
-    '''Spawn a new :class:`Actor` and return an :class:`ActorProxyDeferred`.
+def spawn(**kwargs):
+    '''Spawn a new :class:`Actor` and return an :class:`.ActorProxyDeferred`.
 
-    This method can be used from any :class:`Actor`.
-    If not in the :class:`Arbiter` domain, the method sends a request
-    to the :class:`Arbiter` to spawn a new actor.
+    This method can be used from any :class:`.Actor`.
+    If not in the :class:`.Arbiter` domain, the method sends a request
+    to the :class:`.Arbiter` to spawn a new actor.
     Once the arbiter creates the actor it returns the ``proxy`` to the
     original caller.
 
@@ -46,13 +45,13 @@ def spawn(cfg=None, **kwargs):
 
     These optional parameters are:
 
-    * ``actor_class`` a custom :class:`Actor` subclass
     * ``aid`` the actor id
     * ``name`` the actor name
     * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
       and ``stop``
+    * ``actor_class`` a custom :class:`Actor` subclass (never used)
 
-    :return: an :class:`ActorProxyDeferred`.
+    :return: an :class:`.ActorProxyDeferred`.
 
     A typical usage::
 
@@ -63,7 +62,7 @@ def spawn(cfg=None, **kwargs):
         'ba42b02b'
         >>> a.called
         True
-        >>> p = a.result
+        >>> p = a.result()
         >>> p.address
         ('127.0.0.1', 46691)
     '''
@@ -75,7 +74,7 @@ def spawn(cfg=None, **kwargs):
     if not isinstance(actor, Arbiter):
         # send the request to the arbiter
         msg = actor.send('arbiter', 'spawn', **kwargs)
-        return proxy.ActorProxyDeferred(aid, msg)
+        return actor_proxy_deferred(aid, msg)
     else:
         return actor.spawn(**kwargs)
 

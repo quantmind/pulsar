@@ -68,7 +68,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar import (Http404, PermissionDenied, HttpException, HttpRedirect,
-                    async, Failure, multi_async)
+                    multi_async)
 
 from .route import Route
 from .utils import wsgi_request
@@ -209,9 +209,6 @@ request, the ``get(self, request)`` method must be implemented.
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            if rparameters.pop('async', False):  # asynchronous method
-                handler = async()(handler)
-                handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
@@ -349,7 +346,8 @@ in the :attr:`response_content_types` list.'''
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
-``None`` if the path could not be resolved.'''
+        ``None`` if the path could not be resolved.
+        '''
         urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
@@ -366,11 +364,11 @@ in the :attr:`response_content_types` list.'''
         else:
             return self, match
 
-    @async(get_result=True)
     def response(self, environ, args):
         '''Once the :meth:`resolve` method has matched the correct
-:class:`Router` for serving the request, this matched router invokes
-this method to produce the WSGI response.'''
+        :class:`Router` for serving the request, this matched router invokes
+        this method to produce the WSGI response.
+        '''
         request = wsgi_request(environ, self, args)
         # Set the response content type
         request.response.content_type = self.content_type(request)
@@ -379,28 +377,16 @@ this method to produce the WSGI response.'''
         if callable is None:
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
-        # make sure cache does not contain asynchronous data
-        async_cache = multi_async(request.cache, raise_on_error=False)
-        cache = yield async_cache
-        if async_cache.num_failures:
-            for key, value in list(cache.items()):
-                if isinstance(value, Failure):
-                    cache.pop(key)
-            environ['pulsar.cache'] = cache
-            yield async_cache.failures
-        else:
-            environ['pulsar.cache'] = cache
-            yield callable(request)
+        return callable(request)
 
-    @async(get_result=True)
     def redirect(self, environ, path):
-        request = wsgi_request(environ, self)
-        environ['pulsar.cache'] = yield multi_async(request.cache)
         raise HttpRedirect(path)
 
     def add_child(self, router):
-        '''Add a new :class:`Router` to the :attr:`routes` list. If this
-:class:`Router` is a leaf route, add a slash to the url.'''
+        '''Add a new :class:`Router` to the :attr:`routes` list.
+
+        If this :class:`Router` is a leaf route, add a slash to the url.
+        '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
         if self.route.is_leaf:
@@ -441,15 +427,16 @@ set to the url of this :class:`Router`.'''
 
     def sitemap(self, root=None):
         '''This utility method returns a sitemap starting at root.
-If *root* is ``None`` it starts from this :class:`Router`.
 
-:param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
-:param root: Optional url path where to start the sitemap.
-    By default it starts from this :class:`Router`. Pass `"/"` to
-    start from the root :class:`Router`.
-:param levels: Number of nested levels to include.
-:return: A list of children
-'''
+        If *root* is ``None`` it starts from this :class:`Router`.
+
+        :param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
+        :param root: Optional url path where to start the sitemap.
+            By default it starts from this :class:`Router`. Pass `"/"` to
+            start from the root :class:`Router`.
+        :param levels: Number of nested levels to include.
+        :return: A list of children
+        '''
         if not root:
             root = self
         else:
@@ -461,8 +448,9 @@ If *root* is ``None`` it starts from this :class:`Router`.
         return list(self.routes)
 
     def encoding(self, request):
-        '''The encoding to use for the response. By default it
-returns ``utf-8``.'''
+        '''The encoding to use for the response.
+
+        By default it returns ``utf-8``.'''
         return 'utf-8'
 
 

@@ -1,5 +1,5 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
-from pulsar import send, Queue
+from pulsar import send, Queue, new_event_loop
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import unittest, dont_run_with_thread
@@ -9,8 +9,8 @@ from .manage import server
 
 class Echo(WS):
 
-    def __init__(self):
-        self.queue = Queue()
+    def __init__(self, loop=None):
+        self.queue = Queue(loop=loop)
 
     def get(self):
         return self.queue.get()
@@ -19,11 +19,14 @@ class Echo(WS):
         return self.queue.put(message)
 
     def on_ping(self, ws, body):
-        super(Echo, self).on_ping(ws, body)
+        ws.pong(body)
         return self.queue.put('PING: %s' % body.decode('utf-8'))
 
     def on_pong(self, ws, body):
         return self.queue.put('PONG: %s' % body.decode('utf-8'))
+
+    def on_close(self, ws):
+        return self.queue.put('CLOSE')
 
 
 class TestWebSocketThread(unittest.TestCase):
@@ -51,28 +54,25 @@ class TestWebSocketThread(unittest.TestCase):
 
     def testBadRequests(self):
         c = HttpClient()
-        response = yield c.post(self.ws_uri).on_finished
+        response = yield c.post(self.ws_uri)
         self.assertEqual(response.status_code, 405)
         #
         response = yield c.get(self.ws_uri,
-                               headers=[('Sec-Websocket-Key', '')]
-                               ).on_finished
+                               headers=[('Sec-Websocket-Key', '')])
         self.assertEqual(response.status_code, 400)
         #
         response = yield c.get(self.ws_uri,
-                               headers=[('Sec-Websocket-Key', 'bla')]
-                               ).on_finished
+                               headers=[('Sec-Websocket-Key', 'bla')])
         self.assertEqual(response.status_code, 400)
         #
         response = yield c.get(self.ws_uri,
-                               headers=[('Sec-Websocket-version', 'xxx')]
-                               ).on_finished
+                               headers=[('Sec-Websocket-version', 'xxx')])
         self.assertEqual(response.status_code, 400)
 
     def test_upgrade(self):
         c = HttpClient()
         handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        ws = yield c.get(self.ws_echo, websocket_handler=handler)
         response = ws.handshake
         self.assertEqual(response.status_code, 101)
         self.assertEqual(response.headers['upgrade'], 'websocket')
@@ -80,7 +80,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(ws.handler, handler)
         #
         # on_finished
-        self.assertFalse(response.on_finished.done())
+        self.assertTrue(response.on_finished.done())
         self.assertFalse(ws.on_finished.done())
         # Send a message to the websocket
         ws.write('Hi there!')
@@ -90,7 +90,7 @@ class TestWebSocketThread(unittest.TestCase):
     def test_ping(self):
         c = HttpClient()
         handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        ws = yield c.get(self.ws_echo, websocket_handler=handler)
         #
         # ASK THE SERVER TO SEND A PING FRAME
         ws.write('send ping TESTING PING')
@@ -100,11 +100,47 @@ class TestWebSocketThread(unittest.TestCase):
     def test_pong(self):
         c = HttpClient()
         handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler).on_headers
+        ws = yield c.get(self.ws_echo, websocket_handler=handler)
         #
         ws.ping('TESTING CLIENT PING')
         message = yield handler.get()
         self.assertEqual(message, 'PONG: TESTING CLIENT PING')
+
+    def test_pong(self):
+        c = HttpClient()
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler)
+        #
+        ws.ping('TESTING CLIENT PING')
+        message = yield handler.get()
+        self.assertEqual(message, 'PONG: TESTING CLIENT PING')
+
+    def test_close(self):
+        c = HttpClient()
+        handler = Echo()
+        ws = yield c.get(self.ws_echo, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
+        ws.write('send close 1001')
+        message = yield handler.get()
+        self.assertEqual(message, 'CLOSE')
+        self.assertTrue(ws.close_reason)
+        self.assertEqual(ws.close_reason[0], 1001)
+        self.assertTrue(ws._connection.closed)
+
+    def test_close_sync(self):
+        loop = new_event_loop()
+        c = HttpClient(loop=loop)
+        handler = Echo(loop)
+        ws = c.get(self.ws_echo, websocket_handler=handler)
+        self.assertEqual(ws.event('post_request').fired(), 0)
+        self.assertEqual(ws._loop, loop)
+        self.assertFalse(ws._loop.is_running())
+        ws.write('send close 1001')
+        message = ws._loop.run_until_complete(handler.get())
+        self.assertEqual(message, 'CLOSE')
+        self.assertTrue(ws.close_reason)
+        self.assertEqual(ws.close_reason[0], 1001)
+        self.assertTrue(ws._connection.closed)
 
 
 @dont_run_with_thread

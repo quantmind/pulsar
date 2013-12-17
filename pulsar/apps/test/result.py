@@ -1,24 +1,3 @@
-'''
-:class:`Plugin` is the interface used by the test suite to add functionalities.
-Some plugins, such as the :class:`TestRunner` are used by default.
-
-Plugin
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Plugin
-   :members:
-   :member-order: bysource
-
-
-Test Runner
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TestRunner
-   :members:
-   :member-order: bysource
-
-
-'''
 from copy import deepcopy
 
 from pulsar import Failure
@@ -40,61 +19,90 @@ STDERR_LINE = '\nStderr:\n%s'
 
 
 class Plugin(object):
-    '''Interface for all classes which are part of of the :class:`TestRunner`,
-including :class:`TestRunner` itself, :class:`TestResult`
-and :class:`pulsar.apps.test.TestPlugin`.'''
+    '''The interface for all classes which are part of of the
+    :class:`.TestRunner`.
+
+    Most classes used by the test application are plugins, for
+    example the :class:`.TestRunner` itself,
+    the :class:`.TestResult` and the :class:`.TestPlugin`.
+    '''
+    result = None
+    '''An optional result'''
+    stream = None
+    '''handle for writing text on the default output.
+
+    Set by the :class:`.TestRunner` at runtime.
+    '''
     descriptions = None
 
     def configure(self, cfg):
-        '''Called once just after construction of
-a :class:`TestRunner` and therefore **before any test class is loaded**.
-This is a chance to configure the :class:`Plugin` or global variables
-which may affect the way tests are run.
-If it returns something other than ``None`` (for example an abort message)
-it will stop the configuration of all subsequent plugins and quit the test.
+        '''Called once just after construction of a :class:`.TestRunner`
+           and **before any test class is loaded**.
 
-:parameter cfg: a :class:`pulsar.utils.config.Config`.
-:return: ``None`` unless the tests runner must be stopped.
-'''
+        This is a chance to configure the :class:`.Plugin` or global variables
+        which may affect the way tests are run.
+        If it returns something other than ``None`` (for example an abort
+        message) it will stop the configuration of all subsequent
+        plugins and quit the test.
+
+        :parameter cfg: a :class:`.Config`.
+        :return: ``None`` unless the tests runner must be stopped.
+        '''
         pass
 
     @property
     def name(self):
         return self.__class__.__name__.lower()
 
-    def on_start(self):
-        '''Called by :ref:`TestSuite <test-suite>` once only at startup.
+    @property
+    def count(self):
+        return self.result.count if self.result else 0
 
-This callback is invoked once all tests are loaded but but before the test
-suite starts running them.'''
+    @property
+    def testsRun(self):
+        return self.result.testsRun if self.result else 0
+
+    def on_start(self):
+        '''Called by the :class:`.TestSuite` once only at startup.
+
+        This callback is invoked once all tests are loaded but before
+        the test suite starts running them.
+        '''
         pass
 
     def on_end(self):
-        '''Called by :ref:`TestSuite <test-suite>` just before it stops.'''
+        '''Called by the :class:`.TestSuite` just before it stops.
+        '''
         pass
 
     def loadTestsFromTestCase(self, testcls):
-        '''Called when loading tests form ``testcls``.
+        '''Called when loading tests from the ``testcls`` class.
 
         Can be used to modify the number of test functions loaded.'''
         pass
 
     def startTestClass(self, testcls):
-        '''Called just before a ``testcls`` runs its tests.'''
+        '''Called just before a ``testcls`` runs its tests.
+        '''
         pass
 
     def stopTestClass(self, testcls):
-        '''Called just after a ``testcls`` has run its tests.'''
+        '''Called just after a ``testcls`` has run its tests.
+        '''
         pass
 
     def startTest(self, test):
-        '''Called just before a ``test`` function is executed. This is run
-just before ``_pre_setup`` method.'''
+        '''Called just before a ``test`` function is executed.
+
+        This is run just before ``_pre_setup`` method.
+        '''
         pass
 
     def stopTest(self, test):
-        '''Called just after a ``test`` function has finished. This is run just
-after the ``_post_teardown`` method.'''
+        '''Called just after a ``test`` function has finished.
+
+        This is run just after the ``_post_teardown`` method.
+        '''
         pass
 
     def before_test_function_run(self, test, local):
@@ -108,12 +116,18 @@ finished.'''
         pass
 
     def addSuccess(self, test):
+        '''Called when a ``test`` function succeed
+        '''
         pass
 
     def addFailure(self, test, err):
+        '''Called when a ``test`` function as a (test) failure
+        '''
         pass
 
     def addError(self, test, err):
+        '''Called when a ``test`` function as an (unexpected) error
+        '''
         pass
 
     def addExpectedFailure(self, test, err):
@@ -140,20 +154,7 @@ finished.'''
             return teststr
 
 
-class TestResultProxy(Plugin):  # pragma    nocover
-    result = None
-    stream = None
-
-    @property
-    def count(self):
-        return self.result.count if self.result else 0
-
-    @property
-    def testsRun(self):
-        return self.result.testsRun if self.result else 0
-
-
-class TestStream(TestResultProxy):  # pragma    nocover
+class TestStream(Plugin):  # pragma    nocover
     '''Handle the writing of test results'''
     separator1 = '=' * 70
     separator2 = '-' * 70
@@ -280,10 +281,14 @@ class TestStream(TestResultProxy):  # pragma    nocover
 
 
 class TestResult(Plugin):
-    '''A result of a test run.'''
+    '''A :class:`Plugin` for collecting results/failures for test runs.
+
+    Each :class:`.Plugin` can access the :class:`.TestRunner` ``result``
+    object via the :attr:`~Plugin.result` attribute.
+    '''
     def __init__(self, descriptions=True):
         self.descriptions = descriptions
-        self.testsRun = 0
+        self._testsRun = 0
         self._count = 0
         self.failures = []
         self.errors = []
@@ -295,16 +300,31 @@ class TestResult(Plugin):
     def count(self):
         return self._count
 
+    @property
+    def testsRun(self):
+        return self._testsRun
+
+    @property
+    def result(self):
+        return self
+
     def startTest(self, test):
-        self.testsRun += 1
+        '''Increase the test counter
+        '''
+        self._testsRun += 1
 
     def addError(self, test, err):
-        """Called when an error has occurred. 'err' is a tuple of values as
-        returned by sys.exc_info().
-        """
+        '''Called when an unexpected error has occurred.
+
+        ``err`` is a tuple of values as returned by ``sys.exc_info()``
+        '''
         self._add_error(test, err, self.errors)
 
     def addFailure(self, test, err):
+        '''Called when an test failure has occurred.
+
+        ``err`` is a tuple of values as returned by ``sys.exc_info()``
+        '''
         self._add_error(test, err, self.failures)
 
     def addSkip(self, test, reason):
@@ -327,7 +347,7 @@ class TestResult(Plugin):
 
     def add(self, result):
         self._count += 1
-        self.testsRun += result.testsRun
+        self._testsRun += result.testsRun
         self.failures.extend(result.failures)
         self.errors.extend(result.errors)
         self.skipped.extend(result.skipped)
@@ -354,8 +374,9 @@ def testsafe(name, return_val=None):
     return _
 
 
-class TestRunner(TestResultProxy):
-    '''An asynchronous test runner'''
+class TestRunner(Plugin):
+    '''A :class:`Plugin` for asynchronously running tests.
+    '''
     def __init__(self, plugins, stream, writercls=None, descriptions=True,
                  logger=None):
         self.descriptions = descriptions

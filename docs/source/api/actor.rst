@@ -1,4 +1,4 @@
-.. module:: pulsar
+.. module:: pulsar.async.actor
 
 .. _actor-api:
 
@@ -15,7 +15,7 @@ High Level Functions
 spawn
 ~~~~~~~~~~~~~~
 
-.. autofunction:: spawn
+.. autofunction:: pulsar.async.arbiter.spawn
 
 .. _send-function:
 
@@ -34,7 +34,7 @@ get_actor
 arbiter
 ~~~~~~~~~~~~~~
 
-.. autofunction:: arbiter
+.. autofunction:: pulsar.async.arbiter.arbiter
 
 
 .. _api-actors:
@@ -56,7 +56,7 @@ Actor
 Monitor
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Monitor
+.. autoclass:: pulsar.async.monitor.Monitor
    :members:
    :member-order: bysource
 
@@ -64,7 +64,7 @@ Monitor
 Arbiter
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: Arbiter
+.. autoclass:: pulsar.async.arbiter.Arbiter
    :members:
    :member-order: bysource
 
@@ -75,7 +75,7 @@ Actor Internals
 PoolMixin
 ~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: PoolMixin
+.. autoclass:: pulsar.async.monitor.PoolMixin
    :members:
    :member-order: bysource
 
@@ -91,7 +91,7 @@ ActorProxy
 ActorProxyDeferred
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ActorProxyDeferred
+.. autoclass:: pulsar.async.proxy.ActorProxyDeferred
    :members:
    :member-order: bysource
 
@@ -139,22 +139,16 @@ is available in the design documentation.
 pulsar command
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: command
+.. autoclass:: pulsar.async.commands.command
 
 
-Mailbox Consumer
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.mailbox.MailboxConsumer
-   :members:
-   :member-order: bysource
-
+.. module:: pulsar.async.concurrency
 
 Concurrency
 ==================
 
-The :class:`Concurrency` class implements the behaviour of an :class:`Actor`
-and therefore allows for decoupling between the :class:`Actor` abstraction
+The :class:`Concurrency` class implements the behaviour of an :class:`.Actor`
+and therefore allows for decoupling between the :class:`.Actor` abstraction
 and its implementation (`bridge pattern`).
 
 Base Concurrency
@@ -168,7 +162,7 @@ Base Concurrency
 Monitor Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.async.concurrency.MonitorConcurrency
+.. autoclass:: MonitorConcurrency
    :members:
    :member-order: bysource
 
@@ -176,7 +170,7 @@ Monitor Concurrency
 Arbiter Concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.async.concurrency.ArbiterConcurrency
+.. autoclass:: ArbiterConcurrency
    :members:
    :member-order: bysource
 

@@ -1,33 +1,20 @@
 from collections import deque
 
-from .defer import get_event_loop, CancelledError, Deferred
+from .access import get_event_loop, AsyncObject
+from .defer import Deferred
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
 
 
-class errback:
-    __slots__ = ['error']
+class Queue(AsyncObject):
+    '''An :class:`.AsyncObject` which is a `FIFO queue`_ with same
+    interface as Queue class in the standard python library.
 
-    def __init__(self, error):
-        self.error = error
-
-    def __call__(self, failure):
-        if isinstance(failure.error, CancelledError):
-            failure.mute()
-            raise self.error
-        else:
-            return failure
-
-
-class Queue:
-    '''Asynchronous FIFO queue.
+    .. _`FIFO queue`: http://en.wikipedia.org/wiki/FIFO
     '''
-    def __init__(self, maxsize=0, event_loop=None):
-        if event_loop:
-            self._event_loop = event_loop
-        else:
-            self._event_loop = get_event_loop()
+    def __init__(self, maxsize=0, loop=None):
+        self._loop = loop or get_event_loop()
         self._lock = Lock()
         self._maxsize = max(maxsize or 0, 0)
         self._queue = deque()
@@ -36,16 +23,16 @@ class Queue:
 
     @property
     def maxsize(self):
-        '''Integer representing the upper bound limit on the number of items
-that can be placed in the queue.
+        '''Integer representing the upper bound limit on the number
+        of items that can be placed in the queue.
 
-If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
+        If :attr:`maxsize` is less than or equal to zero, there is no
+        upper bound.
+        '''
         return self._maxsize
 
-    @property
-    def event_loop(self):
-        '''The event loop running the queue'''
-        return self._event_loop
+    def __contains__(self, item):
+        return item in self._queue
 
     def qsize(self):
         '''Size of the queue.'''
@@ -83,9 +70,8 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 # add it to the putters queue if we can wait
                 if self._maxsize and self._maxsize <= self.qsize():
                     if wait:
-                        waiter = Deferred(event_loop=self._event_loop,
-                                          timeout=timeout)
-                        waiter.add_errback(errback(Full))
+                        waiter = Deferred(loop=self._loop)
+                        waiter.set_timeout(timeout, exception_class=Full)
                         self._putters.append((item, waiter))
                     else:
                         raise Full
@@ -119,7 +105,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
         :param timeout: optional timeout in seconds.
         :param wait: optional flag for returning the ``item`` if one is
             immediately available.
-        :return: a :class:`Deferred` resulting in the item removed form the
+        :return: a :class:`.Deferred` resulting in the item removed form the
             queue if ``wait`` is ``True``, otherwise the ``item`` removed from
             the queue.
         '''
@@ -130,7 +116,7 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                     assert self.full(), 'queue non-full with putters'
                     self._queue.append(new_item)
                     if wait:
-                        self._event_loop.call_soon(putter.callback, None)
+                        self._loop.call_soon(putter.callback, None)
                     else:
                         putter.callback(None)
                     break
@@ -143,9 +129,10 @@ If :attr:`maxsize` is less than or equal to zero, there is no upper bound.'''
                 else:
                     return item
             elif wait:
-                item = Deferred(event_loop=self._event_loop, timeout=timeout)
+                item = Deferred(self._loop)
+                item.set_timeout(timeout, exception_class=Empty)
                 self._waiting.append(item)
-                return item.add_errback(errback(Empty))
+                return item
             else:
                 raise Empty
 

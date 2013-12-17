@@ -21,9 +21,13 @@ And type::
 
 Open a web browser at http://localhost:8060 and you should see the web app.
 
-For information on twised IMAP4 client library check this example:
+For information on twisted IMAP4 client library check this example:
 
 http://twistedmatrix.com/documents/current/mail/examples/imap4client.py
+
+Other python examples of webmail:
+
+* https://github.com/khamidou/kite
 
 Implementation
 ==================

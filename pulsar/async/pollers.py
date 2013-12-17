@@ -38,10 +38,10 @@ class Poller(object):
         '''Return the handlers for file descriptor ``fd``.'''
         return self._handlers[fd]
 
-    def install_waker(self, event_loop):
+    def install_waker(self, loop):
         '''Install event loop waker.'''
         waker = Waker()
-        event_loop.add_reader(waker, waker.consume)
+        loop.add_reader(waker, waker.consume)
         return waker
 
     def add_reader(self, fd, handler):
@@ -151,21 +151,30 @@ class Poller(object):
         if events & READ:
             processed = True
             if reader:
-                reader()
+                if reader._cancelled:
+                    loop.remove_reader(fd)
+                else:
+                    loop._add_callback(reader)
             else:
                 loop.logger.warning('Read callback without handler for file'
                                     ' descriptor %s.', fd)
         if events & WRITE:
             processed = True
             if writer:
-                writer()
+                if writer._cancelled:
+                    loop.remove_writer(fd)
+                else:
+                    loop._add_callback(writer)
             else:
                 loop.logger.warning('Write callback without handler for file'
                                     ' descriptor %s.', fd)
         if events & ERROR:
             processed = True
             if error:
-                error()
+                if error._cancelled:
+                    loop.remove_error(fd)
+                else:
+                    loop._add_callback(error)
             else:
                 loop.logger.warning('Error callback without handler for file'
                                     ' descriptor %s.', fd)
@@ -188,9 +197,6 @@ class Poller(object):
 
     def poll(self, timeout=1):
         raise NotImplementedError
-
-    def check_stream(self):
-        pass
 
     def _register(self, fd, events, old_events=None):
         raise NotImplementedError

@@ -1,4 +1,3 @@
-.. module:: pulsar
 
 .. _protocol-api:
 
@@ -7,76 +6,83 @@ Protocols/Transports API
 ================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm as well as :class:`Server` and
-:class:`Client` base classes. :class:`Transport`
-and :class:`Protocol` are designed to
-comply with pep-3156_ specification
+implementing the Protocol/Transport paradigm. :class:`.SocketTransport`
+and :class:`.Protocol` are designed to comply with pep-3156_ specification
+and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
+
+.. _eventloop-class:
+
+.. note:: **Event Loop classes**
+
+    An event-loop class create objects with the ``_loop``
+    attribute which is the ``asincio.eventloop`` controlling the event-loop
+    object.
+
 
 Transports
-==========================
+=================
 
-Transport
-~~~~~~~~~~~~~~~~~~
+The :class:`.SocketTransport` is used as base class for all socket transports
+and it is the only class in this section which is also used outside
+TCP sockets.
 
-.. autoclass:: Transport
-   :members:
-   :member-order: bysource
-   
-   
 SocketTransport
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: SocketTransport
+.. autoclass:: pulsar.async.internet.SocketTransport
    :members:
    :member-order: bysource
-   
-  
+
+
+.. module:: pulsar.async.stream
+
+SocketStreamTransport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SocketStreamTransport
+   :members:
+   :member-order: bysource
+
+
+SocketStreamSslTransport
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: SocketStreamSslTransport
+   :members:
+   :member-order: bysource
+
+
+.. module:: pulsar.async.protocols
+
 Protocols
-==========================
-
-BaseProtocol
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: BaseProtocol
-   :members:
-   :member-order: bysource
+=================
 
 
 Protocol
-~~~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~~~
 .. autoclass:: Protocol
    :members:
    :member-order: bysource
-   
-   
-DatagramProtocol
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: DatagramProtocol
-   :members:
-   :member-order: bysource
-
 
 Connection
 ~~~~~~~~~~~~~~
 .. autoclass:: Connection
    :members:
    :member-order: bysource
-   
-   
+
+
 Protocol Consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProtocolConsumer
    :members:
-   :member-order: bysource      
+   :member-order: bysource
 
 
 Producers
-==========================
+=================
 
-Producers are factory of connections with end-points. They are used by
-both servers and clients classes.
+Producers are factory of :class:`.Protocol` with end-points.
+They are used by both servers and clients classes.
 
 Producer
 ~~~~~~~~~~~~~~~~~
@@ -84,46 +90,49 @@ Producer
    :members:
    :member-order: bysource
 
-Connection Producer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionProducer
+
+TcpServer
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TcpServer
    :members:
    :member-order: bysource
 
-Server
-~~~~~~~~~~~~~~~~
-.. autoclass:: Server
-   :members:
-   :member-order: bysource
+.. module:: pulsar.async.clients
 
 .. _clients-api:
 
 Clients
 =================
 
+
 This section introduces classes implementing the transport/protocol paradigm
-for clients with several connections to a remote :class:`Server`.
-:class:`Client` is the main class here, and :class:`Client.request`
-is the single most important method a subclass must implement.
+for clients with several connections to a remote :class:`.TcpServer`.
 
-Client
+
+Abstract Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Client
+
+.. autoclass:: AbstractClient
    :members:
    :member-order: bysource
 
 
-Client Connection Pool
+Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionPool
+
+.. autoclass:: Pool
    :members:
    :member-order: bysource
 
-Request
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Request
+
+Pool Connection
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PoolConnection
    :members:
    :member-order: bysource
-   
+
+
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

@@ -1,23 +1,4 @@
-'''\
-Pulsar ships with an asynchronous :class:`TaskQueue` built on top
-:ref:`pulsar application framework <apps-framework>`. Task queues are used
-as a mechanism to distribute work across threads/processes or machines.
-Pulsar :class:`TaskQueue` is highly customizable, it can run in multi-threading
-or multiprocessing (default) mode and can share :class:`.Task` across
-several machines.
-By creating :class:`.Job` classes in a similar way you do for celery_,
-this application gives you all you need for running them with very
-little setup effort::
-
-    from pulsar.apps import tasks
-
-    if __name__ == '__main__':
-        tasks.TaskQueue(tasks_path=['path.to.tasks.*']).start()
-
-Check the :ref:`task queue tutorial <tutorials-taskqueue>` for a running
-example with simple tasks.
-
-To get started, follow the these points:
+'''To get started, follow the these simple guidelines:
 
 * Create the script which runs your application, in the
   :ref:`taskqueue tutorial <tutorials-taskqueue>` the script is called
@@ -25,7 +6,9 @@ To get started, follow the these points:
 * Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented. It
   can be a directory containing several submodules as explained in the
   :ref:`task paths parameter <app-tasks_path>`.
-
+* Write a simple :class:`.PeriodicJob` class with a
+  :ref:`callable method <job-callable>`
+* Run your script, sit back and relax.
 
 .. _app-taskqueue-job:
 
@@ -86,17 +69,21 @@ Task queue application
 
 .. _celery: http://celeryproject.org/
 '''
-from datetime import datetime
+import time
 
 import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
+from pulsar.apps.data import start_store, DEFAULT_PULSAR_STORE_ADDRESS
+from pulsar.utils.pep import pickle
 
 from .models import *
-from .states import *
-from .backends import *
+from .backend import *
 from .rpc import *
+from .states import *
 
+
+DEFAULT_TASK_BACKEND = 'pulsar://%s/1' % DEFAULT_PULSAR_STORE_ADDRESS
 
 section_docs['Task Consumer'] = '''
 This section covers configuration parameters used by CPU bound type
@@ -129,16 +116,15 @@ class ConcurrentTasks(TaskSetting):
 class TaskBackendConnection(TaskSetting):
     name = "task_backend"
     flags = ["--task-backend"]
-    default = "local://"
+    default = ""
+    meta = 'CONNECTION_STRING'
     desc = '''\
-        Task backend.
+        Connection string for the backend storing :class:`.Task`.
 
-        A task backend is string which connect to the backend storing Tasks)
-        which accepts one parameter only and returns an instance of a
-        distributed queue which has the same API as
-        :class:`.MessageQueue`. The only parameter passed to the
-        task queue factory is a :class:`.Config` instance.
-        This parameters is used by :class:`.TaskQueue` application.'''
+        If the value is not available (default) it uses as fallback the
+        :ref:`data_store <setting-data_store>` value. If still not
+        set, it uses the ``%s`` value.
+        ''' % DEFAULT_TASK_BACKEND
 
 
 class TaskPaths(TaskSetting):
@@ -191,21 +177,18 @@ class TaskQueue(pulsar.Application):
         '''
         if self.callable:
             self.callable()
-        self.backend = TaskBackend.make(
-            self.cfg.task_backend,
-            name=self.name,
-            task_paths=self.cfg.task_paths,
-            schedule_periodic=self.cfg.schedule_periodic,
-            max_tasks=self.cfg.max_requests,
-            backlog=self.cfg.concurrent_tasks)
+        connection_string = (self.cfg.task_backend or self.cfg.data_store or
+                             DEFAULT_TASK_BACKEND)
+        store = yield start_store(connection_string, loop=monitor._loop)
+        self._create_backend(store)
 
     def monitor_task(self, monitor):
-        '''Override the :meth:`.Application.monitor_task` callback.
+        '''Override the :meth:`~.Application.monitor_task` callback.
 
         Check if the :attr:`backend` needs to schedule new tasks.
         '''
         if self.backend and monitor.is_running():
-            if self.backend.next_run <= datetime.now():
+            if self.backend.next_run <= time.time():
                 self.backend.tick()
 
     def worker_start(self, worker):
@@ -215,13 +198,32 @@ class TaskQueue(pulsar.Application):
         self.backend.close(worker)
 
     def actorparams(self, monitor, params):
-        params['app'].cfg.set('schedule_periodic', False)
+        # makes sure workers are only consuming tasks, not scheduling.
+        backend = params['app'].backend
+        if backend.schedule_periodic:
+            backend = pickle.loads(pickle.dumps(backend))
+            backend.schedule_periodic = False
+            params['app'].backend = backend
 
     def worker_info(self, worker, info=None):
         be = self.backend
         tasks = {'concurrent': list(be.concurrent_tasks),
                  'processed': be.processed}
         info['tasks'] = tasks
+
+    def _create_backend(self, store):
+        task_backend = task_backends.get(store.name)
+        if not task_backend:
+            raise pulsar.ImproperlyConfigured(
+                'Task backend for %s not available' % store.name)
+        self.backend = task_backend(
+            store.dns,
+            name=self.name,
+            task_paths=self.cfg.task_paths,
+            schedule_periodic=self.cfg.schedule_periodic,
+            max_tasks=self.cfg.max_requests,
+            backlog=self.cfg.concurrent_tasks)
+        self.logger.debug('created %s', self.backend)
 
 
 @command()

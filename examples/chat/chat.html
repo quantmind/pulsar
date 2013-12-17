@@ -63,11 +63,6 @@ body {
             ws.send(msg);
             message.val('');
         });
-        ws.onopen = function() {
-            // Send empty message so that we connect this client
-            ws.send('');
-        };
-        
     });
 }(jQuery));
 </script>

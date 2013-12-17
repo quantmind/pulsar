@@ -1,5 +1,5 @@
 '''
-Importing this module add this extra settings to pulsar
+Importing this module to add this extra settings to pulsar
 '''
 import pulsar
 

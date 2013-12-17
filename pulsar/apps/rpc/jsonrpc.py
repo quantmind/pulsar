@@ -13,7 +13,8 @@ http://groups.google.com/group/json-rpc/web/json-rpc-2-0
 import sys
 from functools import partial
 
-from pulsar import async, Failure, multi_async, maybe_failure
+from pulsar import (Failure, multi_async, maybe_failure, in_loop_thread,
+                    coroutine_return)
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -40,7 +41,6 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
     def __call__(self, request):
         return Json(self._call(request)).http_response(request)
 
-    @async()
     def _call(self, request):
         response = request.response
         data = {}
@@ -89,8 +89,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
 
 
 class JsonCall:
-
-    dlots = ('_client', '_name')
+    slots = ('_client', '_name')
 
     def __init__(self, client, name):
         self._client = client
@@ -119,60 +118,57 @@ class JsonCall:
 class JsonProxy(object):
     '''A python Proxy class for :class:`JSONRPC` Servers.
 
-:param url: server location
-:param version: JSONRPC server version. Default ``2.0``
-:param id: optional request id, generated if not provided. Default ``None``.
-:param data: Extra data to include in all requests. Default ``None``.
-:param full_response: return the full Http response rather than
-    just the content.
-:param http: optional http opener. If provided it must have the ``request``
-    method available which must be of the form::
+    :param url: server location
+    :param version: JSONRPC server version. Default ``2.0``
+    :param id: optional request id, generated if not provided.
+        Default ``None``.
+    :param data: Extra data to include in all requests. Default ``None``.
+    :param full_response: return the full Http response rather than
+        just the content.
+    :param http: optional http client. If provided it must have the ``request``
+        method available which must be of the form::
 
-        http.request(url, body=..., method=...)
+            http.request(url, body=..., method=...)
 
-    Default ``None``.
+        Default ``None``.
 
-Lets say your RPC server is running at ``http://domain.name.com/``::
+    Lets say your RPC server is running at ``http://domain.name.com/``::
 
-    >>> a = JsonProxy('http://domain.name.com/')
-    >>> a.add(3,4)
-    7
-    >>> a.ping()
-    'pong'
+        >>> a = JsonProxy('http://domain.name.com/')
+        >>> a.add(3,4)
+        7
+        >>> a.ping()
+        'pong'
 
-'''
+    '''
     separator = '.'
     default_version = '2.0'
     default_timeout = 30
 
     def __init__(self, url, version=None, data=None,
-                 full_response=False, **kw):
-        self.__url = url
-        self.__version = version or self.__class__.default_version
+                 full_response=False, http=None, timeout=None, **kw):
+        self._url = url
+        self._version = version or self.__class__.default_version
         self._full_response = full_response
-        self.__data = data if data is not None else {}
-        self.local = AttributeDictionary()
-        self.setup(**kw)
-
-    def setup(self, http=None, timeout=None, **kw):
+        self._data = data if data is not None else {}
         if not http:
             timeout = timeout if timeout is not None else self.default_timeout
             http = HttpClient(timeout=timeout, **kw)
         http.headers['accept'] = 'application/json, text/*; q=0.5'
         http.headers['content-type'] = 'application/json'
-        self.local.http = http
+        self._http = http
 
     @property
     def url(self):
-        return self.__url
-
-    @property
-    def http(self):
-        return self.local.http
+        return self._url
 
     @property
     def version(self):
-        return self.__version
+        return self._version
+
+    @property
+    def _loop(self):
+        return self._http._loop
 
     def makeid(self):
         '''Can be re-implemented by your own Proxy'''
@@ -188,41 +184,37 @@ Lets say your RPC server is running at ``http://domain.name.com/``::
         return JsonCall(self, name)
 
     def timeit(self, func, times, *args, **kwargs):
-        '''Usefull little utility for timing responses from server. The
-usage is simple::
+        '''Useful utility for timing responses from a server.
 
-    >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
-    >>> p.timeit('ping',10)
-    0.56...
-    '''
+        The usage is simple::
+
+            >>> from pulsar.apps import rpc
+            >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
+            >>> p.timeit('ping', 10)
+            0.56...
+        '''
         func = getattr(self, func)
         return multi_async((func(*args, **kwargs) for t in range(times)))
 
+    @in_loop_thread
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')
-        resp = self.http.post(self.url, data=body)
+        resp = yield self._http._request('POST', self._url, data=body)
         if self._full_response:
-            return resp
-        res = resp.on_finished.add_callback(self._end_call)
-        return res.result if self.http.force_sync else res
-
-    def _end_call(self, resp):
-        content = resp.decode_content()
-        if resp.is_error:
-            if 'error' in content:
-                return self.loads(content)
-            else:
-                resp.raise_for_status()
+            coroutine_return(resp)
         else:
-            return self.loads(content)
+            content = resp.decode_content()
+            if resp.is_error:
+                if 'error' not in content:
+                    resp.raise_for_status()
+            coroutine_return(self.loads(content))
 
     def _get_data(self, func_name, *args, **kwargs):
         id = self.makeid()
         params = self.get_params(*args, **kwargs)
         data = {'method': func_name, 'params': params, 'id': id,
-                'jsonrpc': self.__version}
+                'jsonrpc': self._version}
         return data
 
     def get_params(self, *args, **kwargs):
@@ -231,7 +223,7 @@ usage is simple::
         Mixing positional and named parameters in one
         call is not possible.
         '''
-        kwargs.update(self.__data)
+        kwargs.update(self._data)
         if args and kwargs:
             raise ValueError('Cannot mix positional and named parameters')
         if args:

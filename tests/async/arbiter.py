@@ -83,8 +83,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         name = 'testSpawning-%s' % self.concurrency
         future = spawn(name=name, concurrency=self.concurrency)
         self.assertTrue(future.aid in arbiter.managed_actors)
-        yield future
-        proxy = future.result
+        proxy = yield future
         self.assertEqual(future.aid, proxy.aid)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
@@ -103,7 +102,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-timeout-%s' % self.concurrency
-        proxy = yield self.spawn(name=name, timeout=1)
+        proxy = yield self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
@@ -123,7 +122,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-term-%s' % self.concurrency
-        proxy = yield self.spawn(name=name, timeout=1)
+        proxy = yield self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
@@ -147,7 +146,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'actor-term-%s' % self.concurrency
-        proxy = yield self.spawn(name=name)
+        proxy = yield self.spawn_actor(name=name)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]

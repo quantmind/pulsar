@@ -8,6 +8,8 @@ import logging
 from threading import Lock
 from multiprocessing import current_process
 
+from .pep import force_native_str
+
 win32 = sys.platform == "win32"
 
 if sys.version_info < (2, 7):    # pragma    nocover
@@ -80,10 +82,10 @@ def local_method(f):
     '''
     name = f.__name__
 
-    def _(self):
+    def _(self, *args):
         local = self.local
         if name not in local:
-            setattr(local, name, f(self))
+            setattr(local, name, f(self, *args))
         return getattr(local, name)
     return _
 
@@ -91,7 +93,37 @@ def local_method(f):
 def local_property(f):
     '''Decorator to be used in conjunction with :class:`LocalMixin` methods.
     '''
-    return property(local_method(f), doc=f.__doc__)
+    name = f.__name__
+
+    def _(self):
+        local = self.local
+        if name not in local:
+            setattr(local, name, f(self))
+        return getattr(local, name)
+
+    return property(_, doc=f.__doc__)
+
+
+def lazy_string(f):
+    def _(*args, **kwargs):
+        return LazyString(f, *args, **kwargs)
+    return _
+
+
+class LazyString:
+    __slots__ = ('value', 'f', 'args', 'kwargs')
+
+    def __init__(self, f, *args, **kwargs):
+        self.value = None
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        if self.value is None:
+            self.value = force_native_str(self.f(*self.args, **self.kwargs))
+        return self.value
+    __repr__ = __str__
 
 
 class WritelnDecorator(object):

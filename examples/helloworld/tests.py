@@ -1,7 +1,6 @@
 '''Tests the "helloworld" example.
 '''
 from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
-from pulsar import MultiDeferred
 from pulsar.utils.pep import range
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
@@ -42,7 +41,7 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testResponse(self):
         c = self.client
-        response = yield c.get(self.uri).on_finished
+        response = yield c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         content = response.get_content()
         self.assertEqual(content, b'Hello World!\n')
@@ -53,18 +52,13 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testTimeIt(self):
         c = self.client
-        response = c.timeit(5, 'get', self.uri)
+        response = c.timeit(5, c.get, self.uri)
         #cc = list(c.connection_pools.values())[0]._concurrent_connections
         #self.assertTrue(cc)
         yield response
         self.assertTrue(response.locked_time >= 0)
         self.assertTrue(response.total_time >= response.locked_time)
         self.assertEqual(response.num_failures, 0)
-
-    def test_getbench(self):
-        c = self.client
-        yield MultiDeferred((c.get(self.uri) for _ in range(1))).lock()
-    test_getbench.__benchmark__ = True
 
 
 @dont_run_with_thread

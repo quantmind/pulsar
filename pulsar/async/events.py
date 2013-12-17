@@ -1,43 +1,37 @@
 from inspect import isgenerator
 
-from pulsar.utils.pep import itervalues
+from pulsar.utils.pep import iteritems
 
-from .defer import Deferred, maybe_async
-from .access import logger
-
-
-__all__ = ['EventHandler', 'Event']
+from .defer import Deferred, async, InvalidStateError
+from .access import AsyncObject
 
 
-class Event(object):
-    '''An event managed by an :class:`EventHandler` class.'''
+__all__ = ['EventHandler', 'Event', 'OneTime']
+
+
+class AbstractEvent(object):
+    '''Abstract event handler.'''
     _silenced = False
 
     @property
     def silenced(self):
         '''Boolean indicating if this event is silenced.
 
-        To silence an event one uses the :meth:`EventHandler.silence_event`
-        method.
+        To silence an event one uses the :meth:`silence` method.
         '''
         return self._silenced
 
     def bind(self, callback, errback=None):
-        '''Bind a ``callback`` for ``caller`` to this :class:`Event`.'''
-        pass
-
-    def has_fired(self):
-        '''Check if this event has fired.
-
-        This only make sense for one time events.
+        '''Bind a ``callback`` and an optional ``errback`` to this event.
         '''
-        return True
+        raise NotImplementedError
+
+    def fired(self):
+        '''The number of times this event has fired'''
+        raise NotImplementedError
 
     def fire(self, arg, **kwargs):
-        '''Fire this event.
-
-        This method is called by the :meth:`EventHandler.fire_event` method.
-        '''
+        '''Fire this event.'''
         raise NotImplementedError
 
     def silence(self):
@@ -47,97 +41,107 @@ class Event(object):
         '''
         self._silenced = True
 
-    def chain(self, event):
-        raise NotImplementedError
 
-
-class ManyEvent(Event):
-
-    def __init__(self, name):
-        self.name = name
+class Event(AbstractEvent, AsyncObject):
+    '''The default implementation of :class:`AbstractEvent`.
+    '''
+    def __init__(self, loop=None):
         self._handlers = []
+        self._fired = 0
+        self._loop = loop
 
     def __repr__(self):
         return repr(self._handlers)
     __str__ = __repr__
 
     def bind(self, callback, errback=None):
-        assert errback is None, 'errback not supported in many-times events'
+        if errback:
+            raise ValueError('errback not supported in many-times events')
         self._handlers.append(callback)
+
+    def fired(self):
+        return self._fired
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
+            self._fired += 1
             for hnd in self._handlers:
                 try:
                     g = hnd(arg, **kwargs)
                 except Exception:
-                    logger().exception('Exception while firing "%s" '
-                                       'event for %s', self.name, arg)
+                    self.logger.exception('Exception while firing event')
                 else:
                     if isgenerator(g):
                         # Add it to the event loop
-                        maybe_async(g)
+                        async(g)
 
 
-class OneTime(Deferred, Event):
+class OneTime(Deferred, AbstractEvent):
+    '''An :class:`AbstractEvent` which can be fired once only.
 
-    def __init__(self, name):
-        super(OneTime, self).__init__()
-        self.name = name
-        self._events = Deferred()
+    This event handler is a :class:`.Deferred`.
+
+    Implemented mainly for the one time events of the :class:`EventHandler`.
+    There shouldn't be any reason to use this class on its own.
+    '''
+    _events = None
+
+    @property
+    def events(self):
+        if self._events is None:
+            self._events = Deferred(self._loop)
+        return self._events
 
     def bind(self, callback, errback=None):
-        self._events.add_callback(callback, errback)
+        self.events.add_callback(callback, errback)
 
-    def has_fired(self):
-        return self._events.done()
+    def fired(self):
+        return int(self.events.done())
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
-            if self._events.done():
-                logger().warning('Event "%s" already fired for %s',
-                                 self.name, arg)
+            if kwargs:
+                raise ValueError(("One time events don't support "
+                                  "key-value parameters"))
             else:
-                assert not kwargs, ("One time events can don't support "
-                                    "key-value parameters")
-                result = self._events.callback(arg)
+                result = self.events.callback(arg)
                 if isinstance(result, Deferred):
                     # a deferred, add a check at the end of the callback pile
-                    return self._events.add_callback(self._check, self._check)
-                elif not self._chained_to:
+                    return self.events.add_callback(self._check, self._check)
+                else:
                     return self.callback(result)
 
     def _check(self, result):
-        if self._events._callbacks:
+        if self.events.has_callbacks:
             # other callbacks have been added,
             # put another check at the end of the pile
-            return self._events.add_callback(self._check, self._check)
-        elif not self._chained_to:
+            return self.events.add_callback(self._check, self._check)
+        else:
             return self.callback(result)
 
 
-class EventHandler(object):
+class EventHandler(AsyncObject):
     '''A Mixin for handling events.
 
-    It handles one time events and events that occur several
-    times. This mixin is used in :class:`Protocol` and :class:`Producer`
-    for scheduling connections and requests.
+    It handles :class:`OneTime` events and :class:`Event` that occur
+    several times.
     '''
     ONE_TIME_EVENTS = ()
     '''Event names which occur once only.'''
     MANY_TIMES_EVENTS = ()
     '''Event names which occur several times.'''
-    def __init__(self, one_time_events=None, many_times_events=None):
+    def __init__(self, loop=None, one_time_events=None,
+                 many_times_events=None):
         one = self.ONE_TIME_EVENTS
         if one_time_events:
             one = set(one)
             one.update(one_time_events)
-        events = dict(((e, OneTime(e)) for e in one))
+        events = dict(((name, OneTime(loop=loop)) for name in one))
         many = self.MANY_TIMES_EVENTS
         if many_times_events:
             many = set(many)
             many.update(many_times_events)
-        events.update(((e, ManyEvent(e)) for e in many))
+        events.update(((name, Event(loop=loop)) for name in many))
         self._events = events
 
     @property
@@ -147,9 +151,9 @@ class EventHandler(object):
         return self._events
 
     def event(self, name):
-        '''Return the :class:`Event` for ``name``.
+        '''Returns the :class:`Event` at ``name``.
 
-        If no event is registered returns nothing.
+        If no event is registered for ``name`` returns nothing.
         '''
         return self._events.get(name)
 
@@ -167,7 +171,7 @@ class EventHandler(object):
         :return: nothing.
         '''
         if name not in self._events:
-            self._events[name] = ManyEvent(name)
+            self._events[name] = Event()
         event = self._events[name]
         if isinstance(callback, (list, tuple)):
             assert errback is None, "list of callbacks with errback"
@@ -178,10 +182,21 @@ class EventHandler(object):
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
+
+        The events callbacks can be specified as a single callable or as
+        list/tuple of callabacks or (callback, erroback) tuples.
         '''
         for name in self._events:
             if name in events:
-                self.bind_event(name, events[name])
+                callbacks = events[name]
+                if not isinstance(callbacks, (list, tuple)):
+                    self.bind_event(name, callbacks)
+                else:
+                    for callable in callbacks:
+                        if isinstance(callable, tuple):
+                            self.bind_event(name, *callable)
+                        else:
+                            self.bind_event(name, callable)
 
     def fire_event(self, name, arg=None, **kwargs):
         """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
@@ -200,9 +215,12 @@ class EventHandler(object):
         if arg is None:
             arg = self
         if name in self._events:
-            return self._events[name].fire(arg, **kwargs)
+            try:
+                return self._events[name].fire(arg, **kwargs)
+            except InvalidStateError:
+                self.logger.error('Event %s already fired' % name)
         else:
-            logger().warning('Unknown event "%s" for %s', name, self)
+            self.logger.warning('Unknown event "%s" for %s', name, self)
 
     def silence_event(self, name):
         '''Silence event ``name``.
@@ -214,18 +232,6 @@ class EventHandler(object):
         if event:
             event.silence()
 
-    def chain_event(self, other, name):
-        '''Chain the event ``name`` from ``other``.
-
-        :param other: an :class:`EventHandler` to chain to.
-        :param name: event name to chain.
-        '''
-        event = self._events.get(name)
-        if event and isinstance(other, EventHandler):
-            event2 = other._events.get(name)
-            if event2:
-                event.chain(event2)
-
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
 
@@ -234,9 +240,9 @@ class EventHandler(object):
         '''
         if isinstance(other, EventHandler):
             events = self._events
-            for event in itervalues(other._events):
-                if isinstance(event, ManyEvent):
-                    ev = events.get(event.name)
+            for name, event in iteritems(other._events):
+                if isinstance(event, Event):
+                    ev = events.get(name)
                     # If the event is available add it
                     if ev:
                         for callback in event._handlers:

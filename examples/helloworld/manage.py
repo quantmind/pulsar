@@ -18,25 +18,28 @@ try:
 except ImportError:  # pragma nocover
     import sys
     sys.path.append('../../')
+from pulsar import MethodNotAllowed
 from pulsar.apps import wsgi
 
 
 def hello(environ, start_response):
     '''The WSGI_ application handler which returns an iterable
-over the "Hello World!" message.'''
-    data = b'Hello World!\n'
-    status = '200 OK'
-    response_headers = [
-        ('Content-type', 'text/plain'),
-        ('Content-Length', str(len(data)))
-    ]
-    start_response(status, response_headers)
-    return iter([data])
+    over the "Hello World!" message.'''
+    if environ['REQUEST_METHOD'] == 'GET':
+        data = b'Hello World!\n'
+        status = '200 OK'
+        response_headers = [
+            ('Content-type', 'text/plain'),
+            ('Content-Length', str(len(data)))
+        ]
+        start_response(status, response_headers)
+        return iter([data])
+    else:
+        raise MethodNotAllowed
 
 
 def server(description=None, **kwargs):
-    '''Create the :class:`pulsar.apps.wsgi.WSGIServer` running :func:`hello`.
-    '''
+    '''Create the :class:`.WSGIServer` running :func:`hello`.'''
     description = description or 'Pulsar Hello World Application'
     return wsgi.WSGIServer(hello, description=description, **kwargs)
 

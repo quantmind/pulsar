@@ -81,14 +81,29 @@ Lazy Wsgi Handler
    :members:
    :member-order: bysource
 
+
+.. _wsgi-pulsar-variables:
+
+Pulsar Variables
+======================
+Pulsar inject two server-defined variables into the WSGI environ:
+
+* ``pulsar.connection``, the :class:`.Connection` serving the request
+* ``pulsar.cfg``, the :class:`.Config` dictionary of the server
+
+The event loop serving the application can be retrieved from the connection
+via the ``_loop`` attribute::
+
+    loop = environ['pulsar.connection']._loop
+
 .. _WSGI: http://www.wsgi.org
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
 import sys
 
+from pulsar import async, Http404, Failure, coroutine_return
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.log import LocalMixin, local_property
-from pulsar import Http404, async, Failure, coroutine_return
+from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
 from .wrappers import WsgiResponse
@@ -100,34 +115,38 @@ __all__ = ['WsgiHandler', 'LazyWsgi']
 class WsgiHandler(object):
     '''An handler for application conforming to python WSGI_.
 
-.. attribute:: middleware
+    .. attribute:: middleware
 
-    List of :ref:`asynchronous WSGI middleware <wsgi-middleware>` callables
-    which accept ``environ`` and ``start_response`` as arguments.
-    The order matter, since the response returned by the callable
-    is the non ``None`` value returned by a middleware.
+        List of :ref:`asynchronous WSGI middleware <wsgi-middleware>` callables
+        which accept ``environ`` and ``start_response`` as arguments.
+        The order matter, since the response returned by the callable
+        is the non ``None`` value returned by a middleware.
 
-.. attribute:: response_middleware
+    .. attribute:: response_middleware
 
-    List of functions of the form::
+        List of functions of the form::
 
-        def ..(environ, response):
-            ...
+            def ..(environ, response):
+                ...
 
-    where ``response`` is a :ref:`WsgiResponse <wsgi-response>`.
-    Pulsar contains some
-    :ref:`response middlewares <wsgi-response-middleware>`.
+        where ``response`` is a :ref:`WsgiResponse <wsgi-response>`.
+        Pulsar contains some
+        :ref:`response middlewares <wsgi-response-middleware>`.
 
-'''
+    '''
     def __init__(self, middleware=None, response_middleware=None, **kwargs):
         if middleware:
             middleware = list(middleware)
         self.middleware = middleware or []
         self.response_middleware = response_middleware or []
 
-    @async(get_result=True)
     def __call__(self, environ, start_response):
         '''The WSGI callable'''
+        c = environ.get('pulsar.connection')
+        loop = c._loop if c else None
+        return async(self._call(environ, start_response), loop)
+
+    def _call(self, environ, start_response):
         resp = None
         for middleware in self.middleware:
             try:
@@ -149,24 +168,30 @@ class WsgiHandler(object):
 
 class LazyWsgi(LocalMixin):
     '''A :ref:`wsgi handler <wsgi-handlers>` which loads the actual
-handler the first time it is called. Subclasses must implement
-the :meth:`setup` method.
-Useful when working in multiprocessing mode when the application
-handler must be a ``picklable`` instance. This handler can rebuild
-its wsgi :attr:`handler` every time is pickled and un-pickled without
-causing serialisation issues.'''
+    handler the first time it is called.
+
+    Subclasses must implement the :meth:`setup` method.
+    Useful when working in multiprocessing mode when the application
+    handler must be a ``picklable`` instance. This handler can rebuild
+    its wsgi :attr:`handler` every time is pickled and un-pickled without
+    causing serialisation issues.
+    '''
     def __call__(self, environ, start_response):
-        return self.handler(environ, start_response)
+        return self.handler(environ)(environ, start_response)
 
-    @local_property
-    def handler(self):
+    @local_method
+    def handler(self, environ=None):
         '''The :ref:`wsgi application handler <wsgi-handlers>` which
-is loaded via the :meth:`setup` method, once only, when first accessed.'''
-        return self.setup()
+        is loaded via the :meth:`setup` method, once only,
+        when first accessed.
+        '''
+        return self.setup(environ)
 
-    def setup(self):
-        '''The setup function for this :class:`LazyWsgi`. Called once only
-the first time this application handler is invoked. This **must** be
-implemented by subclasses and **must** return a
-:ref:`wsgi application handler <wsgi-handlers>`.'''
+    def setup(self, environ=None):
+        '''The setup function for this :class:`LazyWsgi`.
+
+        Called once only the first time this application handler is invoked.
+        This **must** be implemented by subclasses and **must** return a
+        :ref:`wsgi application handler <wsgi-handlers>`.
+        '''
         raise NotImplementedError

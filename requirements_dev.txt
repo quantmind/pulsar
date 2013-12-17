@@ -1,5 +1,4 @@
 coverage
-redis
 http-parser
 cython
 django

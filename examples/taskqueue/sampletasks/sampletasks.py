@@ -24,7 +24,7 @@ function defined which accept key-valued parameters only.'''
 class Addition(tasks.Job):
     timeout = timedelta(seconds=60)
 
-    def __call__(self, consumer, a, b):
+    def __call__(self, consumer, a=0, b=0):
         return a + b
 
 
@@ -42,7 +42,7 @@ class Asynchronous(tasks.Job):
 class NotOverLap(tasks.Job):
     can_overlap = False
 
-    def __call__(self, consumer, lag):
+    def __call__(self, consumer, lag=1):
         start = time.time()
         yield async_sleep(lag)
         yield time.time() - start
@@ -65,7 +65,7 @@ class StandardDeviation(tasks.Job):
         if inputs is None:
             for n in range(sample):
                 inputs = [random() for i in range(size)]
-                self.run_job(consumer, self.name, inputs=inputs)
+                self.queue_task(consumer, self.name, inputs=inputs)
             return 'produced %s new tasks' % sample
         else:
             time.sleep(0.1)

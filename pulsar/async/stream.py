@@ -1,21 +1,3 @@
-'''
-The :mod:`pulsar.async.stream` implements classes and functions for
-handling TCP streams.
-
-SocketStreamTransport
-============================
-
-.. autoclass:: SocketStreamTransport
-   :members:
-   :member-order: bysource
-
-TcpServer
-============================
-
-.. autoclass:: TcpServer
-   :members:
-   :member-order: bysource
-'''
 import os
 import sys
 import socket
@@ -25,13 +7,16 @@ from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
-                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE)
+                                   ESHUTDOWN, BUFFER_MAX_SIZE,
+                                   SOCKET_INTERRUPT_ERRORS)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
-from .defer import multi_async, Deferred
-from .internet import SocketTransport, AF_INET6
-from .protocols import Server, logger
+from .access import logger
+from .defer import Failure, multi_async, Deferred, coroutine_return, in_loop
+from .events import EventHandler
+from .internet import Server, SocketTransport, AF_INET6
+
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
 # Got this error on pypy
@@ -43,58 +28,54 @@ class TooManyConsecutiveWrite(PulsarException):
     '''Raise when too many consecutive writes are attempted.'''
 
 
+def raise_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    if eno not in SOCKET_INTERRUPT_ERRORS:
+        args = getattr(e, 'args', None)
+        if isinstance(args, tuple) and len(args) == 2:
+            eno = args[0]
+    return eno not in SOCKET_INTERRUPT_ERRORS
+
+
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
 
-The primary feature of a stream transport is sending bytes to a protocol
-and receiving bytes from the underlying protocol. Writing to the transport
-is done using the :meth:`write` and :meth:`writelines` methods.
-The latter method is a performance optimisation, to allow software to take
-advantage of specific capabilities in some transport mechanisms.'''
+    The primary feature of a stream transport is sending bytes to a protocol
+    and receiving bytes from the underlying protocol. Writing to the transport
+    is done using the :meth:`write` and :meth:`writelines` methods.
+    The latter method is a performance optimisation, to allow software to take
+    advantage of specific capabilities in some transport mechanisms.
+    '''
     _paused_reading = False
-    _paused_writing = False
 
     def _do_handshake(self):
-        self._event_loop.add_reader(self._sock_fd, self._ready_read)
-        self._event_loop.call_soon(self._protocol.connection_made, self)
+        self._loop.add_reader(self._sock_fd, self._ready_read)
+        self._loop.call_soon(self._protocol.connection_made, self)
 
-    def pause(self):    # pragma    nocover
-        """A :class:`SocketStreamTransport` can be paused and resumed.
-Invoking this method will cause the transport to buffer data coming
-from protocols but not sending it to the :attr:`protocol`. In other words,
-no data will be passed to the :meth:`pulsar.Protocol.data_received` method
-until :meth:`resume` is called."""
-        if not self._paused_reading:
-            self._paused_reading = True
+    def pause_reading(self):
+        '''Suspend delivery of data to the protocol until a subsequent
+        :meth:`resume_reading` call.
 
-    def resume(self):    # pragma    nocover
-        """Resume the receiving end. Data received will once again be
-passed to the :meth:`pulsar.Protocol.data_received` method."""
+        Between :meth:`pause_reading` and :meth:`resume_reading`, the
+        protocol's data_received() method will not be called.
+        '''
+        if self._closing:
+            raise RuntimeError('Cannot pause_reading() when closing')
         if self._paused_reading:
-            self._paused_reading = False
-            buffer = self._read_buffer
-            self._read_buffer = []
-            for chunk in buffer:
-                self._data_received(chunk)
+            raise RuntimeError('Already paused')
+        self._paused_reading = True
+        self._loop.remove_reader(self._sock_fd)
 
-    def pause_writing(self):    # pragma    nocover
-        '''Suspend sending data to the network until a subsequent
-:meth:`resume_writing` call. Between :meth:`pause_writing` and
-:meth:`resume_writing` the transport's :meth:`write` method will just
-be accumulating data in an internal buffer.'''
-        if not self._paused_writing:
-            self._paused_writing = True
-            self._event_loop.remove_writer(self._sock_fd)
-
-    def resume_writing(self):    # pragma    nocover
-        '''Restart sending data to the network.'''
-        if self._paused_writing:
-            if self._write_buffer:
-                self._event_loop.add_writer(self._sock_fd, self._write_ready)
-            self._paused_writing = False
+    def resume_reading(self):
+        """Resume the receiving end."""
+        if not self._paused_reading:
+            raise RuntimeError('Not paused')
+        self._paused_reading = False
+        if not self._closing:
+            self._loop.add_reader(self._sock_fd)
 
     def write(self, data):
-        '''Write chunk of ``data`` to the endpoint.
+        '''Write chunk of ``data`` to the end-point.
         '''
         if not data:
             return
@@ -103,43 +84,41 @@ be accumulating data in an internal buffer.'''
         if data:
             # Add data to the buffer
             assert isinstance(data, bytes)
-            if len(data) > WRITE_BUFFER_MAX_SIZE:
-                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
-                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
+            if len(data) > BUFFER_MAX_SIZE:
+                for i in range(0, len(data), BUFFER_MAX_SIZE):
+                    self._write_buffer.append(data[i:i+BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
-        if self._paused_writing:
-            return
         # Try to write only when not waiting for write callbacks
         if not is_writing:
             self._consecutive_writes = 0
             self._ready_write()
             if self._write_buffer:    # still writing
-                self._event_loop.add_writer(self._sock_fd, self._ready_write)
+                self._loop.add_writer(self._sock_fd, self._ready_write)
             elif self._closing:
-                self._event_loop.call_soon(self._shutdown)
+                self._loop.call_soon(self._shutdown)
         else:
             self._consecutive_writes += 1
             if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
                 self.abort(TooManyConsecutiveWrite())
 
     def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport."""
-        for data in list_of_data:
-            self.write(data)
+        '''Write a list (or any iterable) of data bytes to the transport.
+        '''
+        self.write(b''.join(list_of_data))
+
+    ##    INTERNALS
 
     def _write_continue(self, e):
-        return e.args[0] in TRY_WRITE_AGAIN
+        return e.args and e.args[0] in TRY_WRITE_AGAIN
 
     def _read_continue(self, e):
-        return e.args[0] == EWOULDBLOCK
+        return e.args and e.args[0] == EWOULDBLOCK
 
     def _ready_write(self):
         # Do the actual writing
         buffer = self._write_buffer
         tot_bytes = 0
-        if self._paused_writing:
-            return tot_bytes
         if not buffer:
             self.logger.warning('handling write on a 0 length buffer')
         try:
@@ -160,60 +139,46 @@ be accumulating data in an internal buffer.'''
             failure = sys.exc_info()
         else:
             if not self._write_buffer:
-                self._event_loop.remove_writer(self._sock_fd)
+                self._loop.remove_writer(self._sock_fd)
                 if self._closing:
-                    self._event_loop.call_soon(self._shutdown)
+                    self._loop.call_soon(self._shutdown)
             return tot_bytes
         if not self._closing:
             self.abort(failure)
 
     def _ready_read(self):
-        # Read from the socket until we get EWOULDBLOCK or equivalent.
-        # If any other error occur, abort the connection and re-raise.
-        passes = 0
-        chunk = True
         try:
-            while chunk:
+            try:
+                chunk = self._sock.recv(self._read_chunk_size)
+            except self.SocketError as e:
+                if self._read_continue(e):
+                    return
+                if raise_socket_error(e):
+                    raise
+                else:
+                    chunk = None
+            if chunk:
+                self._protocol.data_received(chunk)
+            else:
                 try:
-                    chunk = self._sock.recv(self._read_chunk_size)
-                except self.SocketError as e:
-                    if self._read_continue(e):
-                        return
-                    else:
-                        raise
-                if chunk:
-                    if self._paused_reading:
-                        self._read_buffer.append(chunk)
-                    else:
-                        self._protocol.data_received(chunk)
-                elif not passes and chunk == b'':
-                    # We got empty data. Close the socket
-                    try:
-                        self._protocol.eof_received()
-                    finally:
-                        self.close()
-                passes += 1
+                    self._protocol.eof_received()
+                finally:
+                    self.close()
             return
         except self.SocketError:
             failure = None if self._closing else sys.exc_info()
         except Exception:
             failure = sys.exc_info()
         if failure:
-            self.abort(failure)
-
-    def mute_read_error(self, error):
-        '''Return ``True`` if a socket error from a read operation is muted.
-
-        This is when the socket cannot send sinse the socket has started
-        shutting down already.
-        '''
-        return error.errno in (ESHUTDOWN,)
+            self.abort(Failure(failure))
 
 
 class SocketStreamSslTransport(SocketStreamTransport):
-    SocketError = getattr(ssl, 'SSLError', None)
+    '''A :class:`SocketStreamTransport` with Transport Layer Security
+    '''
+    SocketError = (getattr(ssl, 'SSLError', None), socket.error)
 
-    def __init__(self, event_loop, rawsock, protocol, sslcontext,
+    def __init__(self, loop, rawsock, protocol, sslcontext,
                  server_side=True, server_hostname=None, **kwargs):
         sslcontext = ssl_context(sslcontext, server_side=server_side)
         sslsock = sslcontext.wrap_socket(rawsock, server_side=server_side,
@@ -224,7 +189,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
         self._handshake_reading = False
         # waiting for writing handshake
         self._handshake_writing = False
-        super(SocketStreamSslTransport, self).__init__(event_loop, sslsock,
+        super(SocketStreamSslTransport, self).__init__(loop, sslsock,
                                                        protocol, **kwargs)
 
     @property
@@ -244,7 +209,7 @@ class SocketStreamSslTransport(SocketStreamTransport):
                            ssl.SSL_ERROR_WANT_READ)
 
     def _do_handshake(self):
-        loop = self._event_loop
+        loop = self._loop
         try:
             self._sock.do_handshake()
         except self.SocketError as e:
@@ -259,11 +224,10 @@ class SocketStreamSslTransport(SocketStreamTransport):
                 loop.add_writer(self._sock_fd, self._do_handshake)
                 return
             else:
-                raise
+                failure = sys.exc_info()
         except Exception:
             failure = sys.exc_info()
         else:
-            loop = self._event_loop
             if self._handshake_reading:
                 loop.remove_reader(self._sock_fd)
                 loop.add_reader(self._sock_fd, self._ready_read)
@@ -274,75 +238,27 @@ class SocketStreamSslTransport(SocketStreamTransport):
                 loop.add_writer(self._sock_fd, self._ready_write)
             self._handshake_reading = False
             self._handshake_writing = False
-            self._event_loop.call_soon(self._protocol.connection_made, self)
+            loop.call_soon(self._protocol.connection_made, self)
             return
         self.abort(failure)
 
 
-class TcpServer(Server):
-    '''A TCP :class:`pulsar.Server`.
-
-    .. attribute:: consumer_factory
-
-        Callable or a :class:`pulsar.ProtocolConsumer` class for producing
-        :class:`ProtocolConsumer` which handle the receiving, decoding and
-        sending of data.
-
-    '''
-    def start_serving(self, backlog=100, sslcontext=None):
-        '''Start serving the Tcp socket.
-
-        :param backlog: Number of maximum connections
-        :param sslcontext: optional SSLContext object.
-        :return: a :class:`pulsar.Deferred` called back when the server is
-            serving the socket.'''
-        if not self.event('start').done():
-            res = self._event_loop.start_serving(self.protocol_factory,
-                                                 host=self._host,
-                                                 port=self._port,
-                                                 sock=self._sock,
-                                                 backlog=backlog,
-                                                 ssl=sslcontext)
-            return res.add_callback(self._got_sockets
-                                    ).add_both(partial(self.fire_event,
-                                                       'start'))
-
-    def stop_serving(self):
-        '''Stop serving the :class:`pulsar.Server.sock`'''
-        if self._sock:
-            sock, self._sock = self._sock, None
-            self._event_loop.call_soon_threadsafe(self._stop_serving, sock)
-
-    def close(self):
-        '''Same as :meth:`stop_serving` method.'''
-        self.stop_serving()
-
-    def _got_sockets(self, sockets):
-        self._sock = sockets[0]
-        self.logger.info('%s serving on %s', self._name,
-                         format_address(self.address))
-        return self
-
-    def _stop_serving(self, sock):
-        self._event_loop.stop_serving(sock)
-        self.fire_event('stop')
-
-
-def create_connection(event_loop, protocol_factory, host, port, ssl,
+##    INTERNALS
+def create_connection(loop, protocol_factory, host, port, ssl,
                       family, proto, flags, sock, local_addr):
     if host is not None or port is not None:
         if sock is not None:
             raise ValueError(
                 'host/port and sock can not be specified at the same time')
-        fs = [event_loop.getaddrinfo(host, port, family=family,
-                                     type=socket.SOCK_STREAM, proto=proto,
-                                     flags=flags)]
+        fs = [loop.getaddrinfo(host, port, family=family,
+                               type=socket.SOCK_STREAM, proto=proto,
+                               flags=flags)]
         if local_addr is not None:
-            fs.append(event_loop.getaddrinfo(
+            fs.append(loop.getaddrinfo(
                 *local_addr, family=family,
                 type=socket.SOCK_STREAM, proto=proto, flags=flags))
         #
-        fs = yield multi_async(fs)
+        fs = yield multi_async(fs, loop=loop)
         if len(fs) == 2:
             laddr_infos = fs[1]
             if not laddr_infos:
@@ -350,7 +266,7 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
         else:
             laddr_infos = None
         #
-        socket_factory = getattr(event_loop, 'socket_factory', socket.socket)
+        socket_factory = getattr(loop, 'socket_factory', socket.socket)
         exceptions = []
         for family, type, proto, cname, address in fs[0]:
             try:
@@ -372,25 +288,18 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
                         sock.close()
                         sock = None
                         continue
-                yield event_loop.sock_connect(sock, address)
-            except socket.error as exc:
+                yield loop.sock_connect(sock, address)
+            except socket.error:
                 if sock is not None:
                     sock.close()
-                exceptions.append(exc)
+                f = Failure(sys.exc_info())
+                f.mute()
+                exceptions.append(f)
             else:
                 break
         else:
-            if len(exceptions) == 1:
-                raise exceptions[0]
-            else:
-                # If they all have the same str(), raise one.
-                model = str(exceptions[0])
-                if all(str(exc) == model for exc in exceptions):
-                    raise exceptions[0]
-                # Raise a combined exception so the user can see all
-                # the various error messages.
-                raise socket.error('Multiple exceptions: {}'.format(
-                    ', '.join(str(exc) for exc in exceptions)))
+            if exceptions:
+                exceptions[0].throw()
 
     elif sock is None:
         raise ValueError(
@@ -401,13 +310,13 @@ def create_connection(event_loop, protocol_factory, host, port, ssl,
     if ssl:
         sslcontext = None if isinstance(ssl, bool) else ssl
         transport = SocketStreamSslTransport(
-            event_loop, sock, protocol, sslcontext, server_side=False)
+            loop, sock, protocol, sslcontext, server_side=False)
     else:
-        transport = SocketStreamTransport(event_loop, sock, protocol)
-    yield transport, protocol
+        transport = SocketStreamTransport(loop, sock, protocol)
+    coroutine_return((transport, protocol))
 
 
-def start_serving(event_loop, protocol_factory, host, port, ssl,
+def start_serving(loop, protocol_factory, host, port, ssl,
                   family, flags, sock, backlog, reuse_address):
     #Coroutine which starts socket servers
     if host is not None or port is not None:
@@ -420,13 +329,13 @@ def start_serving(event_loop, protocol_factory, host, port, ssl,
         if host == '':
             host = None
 
-        infos = yield event_loop.getaddrinfo(
+        infos = yield loop.getaddrinfo(
             host, port, family=family,
             type=socket.SOCK_STREAM, proto=0, flags=flags)
         if not infos:
             raise socket.error('getaddrinfo() returned empty list')
         #
-        socket_factory = getattr(event_loop, 'socket_factory', socket.socket)
+        socket_factory = getattr(loop, 'socket_factory', socket.socket)
         completed = False
         try:
             for af, socktype, proto, canonname, sa in infos:
@@ -454,28 +363,26 @@ def start_serving(event_loop, protocol_factory, host, port, ssl,
                 for sock in sockets:
                     sock.close()
     else:
-        if sock is None:
+        if not sock:
             raise ValueError(
                 'host and port was not specified and no sock specified')
-        sockets = [sock]
+        sockets = sock if isinstance(sock, list) else [sock]
 
+    server = Server(loop, sockets)
     for sock in sockets:
         sock.listen(backlog)
         sock.setblocking(False)
-        event_loop.add_reader(sock.fileno(), sock_accept_connection,
-                              event_loop, protocol_factory, sock, ssl)
-    yield sockets
+        loop.add_reader(sock.fileno(), sock_accept_connection, loop,
+                        protocol_factory, sock, ssl)
+    coroutine_return(server)
 
 
-def sock_connect(event_loop, sock, address, future=None):
+def sock_connect(loop, sock, address, future=None):
     fd = sock.fileno()
     connect = False
     if future is None:
-        def canceller(d):
-            event_loop.remove_connector(fd)
-            d._suppressAlreadyCalled = True
-        #
-        future = Deferred(canceller=canceller, event_loop=event_loop)
+        future = Deferred(loop=loop).add_errback(
+            partial(remove_connector, loop, fd))
         connect = True
     try:
         if connect:
@@ -483,13 +390,13 @@ def sock_connect(event_loop, sock, address, future=None):
                 sock.connect(address)
             except socket.error as e:
                 if e.args[0] in TRY_WRITE_AGAIN:
-                    event_loop.add_connector(fd, sock_connect, event_loop,
-                                             sock, address, future)
+                    loop.add_connector(fd, sock_connect, loop, sock,
+                                       address, future)
                     return future
                 else:
                     raise
         else:   # This is the callback from the event loop
-            event_loop.remove_connector(fd)
+            loop.remove_connector(fd)
             if future.cancelled():
                 return
             err = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
@@ -497,39 +404,11 @@ def sock_connect(event_loop, sock, address, future=None):
                 # Jump to the except clause below.
                 raise socket.error(err, 'Connect call failed')
             future.callback(None)
-    except Exception as exc:
-        return future.callback(exc)
+    except Exception:
+        return future.callback(sys.exc_info())
 
 
-def sock_accept(event_loop, sock, future=None):    # pragma    nocover
-    #TODO
-    #do we need this function?
-    fd = sock.fileno()
-    if future is None:
-        future = Deferred()
-    else:
-        event_loop.remove_reader(fd)
-    if not future.cancelled():
-        try:
-            conn, address = sock.accept()
-            conn.setblocking(False)
-            future.set_result((conn, address))
-        except socket.error as e:
-            if e.args[0] in TRY_READ_AGAIN:
-                event_loop.add_reader(fd, sock_accept, event_loop, sock,
-                                      future)
-            elif e.args[0] == EPERM:
-                # Netfilter on Linux may have rejected the
-                # connection, but we get told to try to accept() anyway.
-                return sock_accept(event_loop, sock, future)
-            else:
-                future.callback(e)
-        except Exception as e:
-            future.callback(e)
-    return future
-
-
-def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
+def sock_accept_connection(loop, protocol_factory, sock, ssl):
     '''Used by start_serving.'''
     try:
         for i in range(NUMBER_ACCEPTS):
@@ -543,16 +422,21 @@ def sock_accept_connection(event_loop, protocol_factory, sock, ssl):
                     # connection, but we get told to try to accept() anyway.
                     continue
                 elif e.args[0] in ACCEPT_ERRORS:
-                    logger(event_loop).info(
+                    logger(loop).info(
                         'Could not accept new connection %s: %s', i+1, e)
                     break
                 raise
             protocol = protocol_factory()
             if ssl:
-                SocketStreamSslTransport(event_loop, conn, protocol, ssl,
+                SocketStreamSslTransport(loop, conn, protocol, ssl,
                                          extra={'addr': address})
             else:
-                SocketStreamTransport(event_loop, conn, protocol,
+                SocketStreamTransport(loop, conn, protocol,
                                       extra={'addr': address})
     except Exception:
-        logger(event_loop).exception('Could not accept new connection')
+        logger(loop).exception('Could not accept new connection')
+
+
+def remove_connector(loop, fd, failure):
+    loop.remove_connector(fd)
+    return failure

@@ -1,8 +1,7 @@
 '''Operative system specific functions and classes.
-
-Epoll and Select
-====================
 '''
+import os
+
 from .runtime import Platform
 
 platform = Platform()
@@ -43,7 +42,7 @@ kilo, mega, giga, tera, peta, exa, zetta, yotta'''
     return "%sB" % b
 
 
-def system_info(pid=None):
+def process_info(pid=None):
     '''Returns a dictionary of system information for the process ``pid``.
 
     It uses the psutil_ module for the purpose. If psutil_ is not available

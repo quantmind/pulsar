@@ -1,9 +1,9 @@
 '''This example is web-based chat application which exposes three different
 :ref:`wsgi routers <wsgi-routing>`:
 
-* A :class:`pulsar.apps.wsgi.routers.Router` to render the web page
-* A :class:`pulsar.apps.ws.WebSocket` with the :class:`Chat` handler
-* A :class:`pulsar.apps.wsgi.routers.Router` with the :class:`Rpc` handler
+* A :class:`.Router` to render the web page
+* A :class:`.WebSocket` with the :class:`Chat` handler
+* A :class:`.Router` with the :class:`Rpc` handler
   for exposing a :ref:`JSON-RPC <apps-rpc>` api.
 
 To run the server::
@@ -15,7 +15,7 @@ and open web browsers at http://localhost:8060
 To send messages from the JSON RPC open a python shell and::
 
     >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc', force_sync=True)
+    >>> p = rpc.JsonProxy('http://127.0.0.1:8060/rpc')
     >>> p.message('Hi from rpc')
     'OK'
 
@@ -45,48 +45,60 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
-from pulsar.utils.path import Path
-from pulsar.apps import ws, wsgi, rpc, pubsub
+from pulsar import get_actor, coroutine_return
+from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
+from pulsar.apps.ws import WS, WebSocket
+from pulsar.apps.rpc import PulsarServerCommands
+from pulsar.apps.data import (create_store, start_store, PubSubClient,
+                              DEFAULT_PULSAR_STORE_ADDRESS)
 from pulsar.utils.system import json
+from pulsar.utils.pep import to_string
 
 CHAT_DIR = os.path.dirname(__file__)
 
-stdnet = Path(__file__).add2python('stdnet', 3, down=['python-stdnet'],
-                                   must_exist=False)
-if stdnet:
-    # Add option to use redis pubsub instead of local pubsub
-    # If we are testsing don't do anything, the setting is already available
-    import pulsar.utils.settings.backend
 
+class ChatClient(PubSubClient):
+    __slots__ = ('connection', 'channel')
 
-class PubSubClient(pubsub.Client):
-
-    def __init__(self, connection):
+    def __init__(self, connection, channel):
         self.connection = connection
+        self.channel = channel
 
     def __call__(self, channel, message):
-        if channel == 'webchat':
-            self.connection.write(message)
+        self.connection.write(message)
+
+
+class Protocol:
+
+    def encode(self, message):
+        '''Encode a message when publishing.'''
+        if not isinstance(message, dict):
+            message = {'message': message}
+        message['time'] = time.time()
+        return json.dumps(message)
+
+    def decode(self, message):
+        return to_string(message)
 
 
 ##    Web Socket Chat handler
-class Chat(ws.WS):
-    '''The websocket handler (:class:`pulsar.apps.ws.WS`) managing the chat
-application.
+class Chat(WS):
+    '''The websocket handler (:class:`.WS`) managing the chat application.
 
-.. attribute:: pubsub
+    .. attribute:: pubsub
 
-    The :ref:`publish/subscribe handler <apps-pubsub>` created by the wsgi
-    application in the :meth:`WebChat.setup` method.
-'''
-    def __init__(self, pubsub):
+        The :ref:`publish/subscribe handler <apps-pubsub>` created by the wsgi
+        application in the :meth:`WebChat.setup` method.
+    '''
+    def __init__(self, pubsub, channel):
         self.pubsub = pubsub
+        self.channel = channel
 
     def on_open(self, websocket):
         '''When a new websocket connection is established it creates a
-:ref:`publish/subscribe <apps-pubsub>` client and adds it to the set
-of clients of the :attr:`pubsub` handler.'''
-        self.pubsub.add_client(PubSubClient(websocket))
+        new :class:`ChatClient` and adds it to the set of clients of the
+        :attr:`pubsub` handler.'''
+        self.pubsub.add_client(ChatClient(websocket, self.channel))
 
     def on_message(self, websocket, msg):
         '''When a new message arrives, it publishes to all listening clients.
@@ -99,44 +111,44 @@ of clients of the :attr:`pubsub` handler.'''
                     lines.append(l)
             msg = ' '.join(lines)
             if msg:
-                self.pubsub.publish('webchat', msg)
+                self.pubsub.publish(self.channel, msg)
 
 
 ##    RPC MIDDLEWARE To publish messages
-class Rpc(rpc.PulsarServerCommands):
+class Rpc(PulsarServerCommands):
 
-    def __init__(self, pubsub, **kwargs):
+    def __init__(self, pubsub, channel, **kwargs):
         self.pubsub = pubsub
+        self.channel = channel
         super(Rpc, self).__init__(**kwargs)
 
     def rpc_message(self, request, message):
         '''Publish a message via JSON-RPC'''
-        self.pubsub.publish('webchat', message)
+        self.pubsub.publish(self.channel, message)
         return 'OK'
 
 
-class WebChat(wsgi.LazyWsgi):
+class WebChat(LazyWsgi):
     '''This is the :ref:`wsgi application <wsgi-handlers>` for this
-web-chat example.'''
+    web-chat example.'''
     def __init__(self, server_name):
         self.name = server_name
 
-    def setup(self):
+    def setup(self, environ):
         '''Called once only to setup the WSGI application handler.
 
         Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
         section for further information.
-
-        It creates a :ref:`publish/subscribe handler <apps-pubsub>`
-        and subscribe it to the ``webchat`` channel.
         '''
-        backend = self.cfg.get('backend_server')
-        self.pubsub = pubsub.PubSub(backend, name=self.name,
-                                    encoder=self.encode_message)
-        self.pubsub.subscribe('webchat')
-        return wsgi.WsgiHandler([wsgi.Router('/', get=self.home_page),
-                                 ws.WebSocket('/message', Chat(self.pubsub)),
-                                 wsgi.Router('/rpc', post=Rpc(self.pubsub))])
+        cfg = environ['pulsar.cfg']
+        loop = environ['pulsar.connection']._loop
+        self.store = create_store(cfg.data_store, loop=loop)
+        pubsub = self.store.pubsub(protocol=Protocol())
+        channel = '%s_webchat' % self.name
+        pubsub.subscribe(channel)
+        return WsgiHandler([Router('/', get=self.home_page),
+                            WebSocket('/message', Chat(pubsub, channel)),
+                            Router('/rpc', post=Rpc(pubsub, channel))])
 
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
@@ -144,24 +156,17 @@ web-chat example.'''
         request.response.content = data % request.environ
         return request.response
 
-    def encode_message(self, message):
-        if not isinstance(message, dict):
-            message = {'message': message}
-        message['time'] = time.time()
-        return json.dumps(message)
 
-    @property
-    def cfg(self):
-        '''Get the ``config`` object from the actor serving the webchat.'''
-        actor = pulsar.get_actor()
-        if actor.is_arbiter():
-            actor = actor.get_actor(self.name)
-        return actor.cfg
-
-
-def server(callable=None, name=None, **kwargs):
+def server(callable=None, name=None, data_store=None, **params):
     name = name or 'wsgi'
-    return wsgi.WSGIServer(callable=WebChat(name), name=name, **kwargs)
+    if not data_store:
+        actor = get_actor()
+        if actor:
+            data_store = actor.cfg.data_store
+        if not data_store:
+            data_store = 'pulsar://%s/3' % DEFAULT_PULSAR_STORE_ADDRESS
+    return WSGIServer(callable=WebChat(name), name=name,
+                      data_store=data_store, **params)
 
 
 if __name__ == '__main__':  # pragma nocover

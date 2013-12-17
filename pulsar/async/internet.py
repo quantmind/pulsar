@@ -1,13 +1,12 @@
-import io
 import socket
 from collections import deque
 
-from pulsar.utils.internet import nice_address
+from pulsar.utils.internet import nice_address, BUFFER_MAX_SIZE
 
-from .access import logger
+from .defer import Deferred, in_loop
+from .access import asyncio, AsyncObject
 
-__all__ = ['BaseProtocol', 'Protocol', 'DatagramProtocol',
-           'Transport', 'SocketTransport']
+__all__ = ['SocketTransport']
 
 
 AF_INET6 = getattr(socket, 'AF_INET6', 0)
@@ -18,134 +17,58 @@ if hasattr(socket, 'AF_UNIX'):
     FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
 
 
-class BaseProtocol:
-    """ABC for base protocol class.
-
-    Usually user implements protocols that derived from BaseProtocol
-    like :class:`Protocol` or :class:`DatagramProtocol`.
-
-    The only case when BaseProtocol should be implemented directly is
-    write-only transport like write pipe
-    """
-    def connection_made(self, transport):
-        """Called when a connection is made.
-
-        The argument is the :class:`Transport` representing the pipe
-        connection.
-        When the connection is closed, :meth:`connection_lost` is called.
-        """
-
-    def connection_lost(self, exc):
-        """Called when the connection is lost or closed.
-
-        The argument is an exception object or None (the latter
-        meaning a regular EOF is received or the connection was
-        aborted or closed).
-        """
-
-
-class Protocol(BaseProtocol):
-    """ABC representing a protocol for a stream.
-
-    The user should implement this interface.  They can inherit from
-    this class but don't need to.  The implementations here do
-    nothing (they don't raise exceptions).
-
-    When the user wants to requests a transport, they pass a protocol
-    factory to a utility function (e.g., EventLoop.create_connection()).
-
-    When the connection is made successfully, connection_made() is
-    called with a suitable transport object.  Then data_received()
-    will be called 0 or more times with data (bytes) received from the
-    transport; finally, connection_lost() will be called exactly once
-    with either an exception object or None as an argument.
-
-    State machine of calls:
-
-      start -> CM [-> DR*] [-> ER?] -> CL -> end
-    """
-    def data_received(self, data):
-        """Called when some data is received.
-
-        The argument is a bytes object.
-        """
-
-    def eof_received(self):
-        """Called when the other end calls write_eof() or equivalent.
-
-        The default implementation does nothing.
-
-        TODO: By default close the transport.  But we don't have the
-        transport as an instance variable (connection_made() may not
-        set it).
-        """
-
-
-class DatagramProtocol(BaseProtocol):
-    """ABC representing a datagram protocol."""
-
-    def datagram_received(self, data, addr):
-        """Called when some datagram is received."""
-
-    def connection_refused(self, exc):
-        """Connection is refused."""
-
-
-class Transport(object):
-    '''Base class for transports.
-
-    Design to conform with pep-3156_ as close as possible until it is
-    finalised. A transport is an abstraction on top of a socket or
-    something similar. Form pep-3153_:
-
-    Transports talk to two things: the other side of the
-    connection on one hand, and a :attr:`protocol` on the other. It's a bridge
-    between the specific underlying transfer mechanism and the protocol.
-    Its job can be described as allowing the protocol to just send and
-    receive bytes, taking care of all of the magic that needs to happen to
-    those bytes to be eventually sent across the wire.
-
-    .. attribute:: event_loop
-
-        The :class:`EventLoop` for this :class:`Transport`.
-
-    .. attribute:: protocol
-
-        The :class:`Protocol` for this :class:`Transport`.
+class Server(asyncio.AbstractServer):
+    '''Base class for pulsar socket servers.
     '''
-    def get_extra_info(self, name, default=None):
-        return default
+    def __init__(self, loop, sockets):
+        self._loop = loop
+        self.sockets = sockets
+        self._waiters = []
+
+    def close(self):
+        sockets = self.sockets
+        if sockets is not None:
+            self.sockets = None
+            loop = self._loop
+            for sock in sockets:
+                loop.remove_reader(sock.fileno())
+            waiters = self._waiters
+            self._waiters = None
+            for waiter in waiters:
+                if not waiter.done():
+                    waiter.set_result(self)
+
+    def wait_closed(self):
+        if self.sockets is None:
+            return
+        waiter = Deferred(loop=self.loop)
+        self.waiters.append(waiter)
+        return waiter
 
 
-class SocketTransport(Transport):
-    '''A :class:`Transport` for sockets.
+class SocketTransport(asyncio.Transport, AsyncObject):
+    '''An ``asyncio.Transport`` for sockets.
 
-    :parameter event_loop: Set the :attr:`Transport.event_loop` attribute.
-    :parameter sock: Set the :attr:`sock` attribute.
-    :parameter protocol: set the :class:`Transport.protocol` attribute.
-
-    When a new :class:`SocketTransport` is created, it adds a read handler
-    to the :attr:`Transport.event_loop` and notifies the
-    :attr:`Transport.protocol` that the connection is available via the
-    :meth:`BaseProtocol.connection_made` method.
+    :param loop: Set the :attr:`_loop` attribute.
+    :param sock: Set the :attr:`_sock` attribute.
+    :param protocol: set the :attr:`_protocol` attribute.
     '''
     SocketError = socket.error
 
-    def __init__(self, event_loop, sock, protocol, extra=None,
+    def __init__(self, loop, sock, protocol, extra=None,
                  max_buffer_size=None, read_chunk_size=None):
+        super(SocketTransport, self).__init__(extra)
         self._protocol = protocol
         self._sock = sock
         self._sock.setblocking(False)
         self._sock_fd = sock.fileno()
-        self._event_loop = event_loop
+        self._loop = loop
         self._closing = False
-        self._extra = extra or {}
-        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
+        self._read_chunk_size = read_chunk_size or BUFFER_MAX_SIZE
         self._read_buffer = []
         self._conn_lost = 0
         self._consecutive_writes = 0
         self._write_buffer = deque()
-        self.logger = logger(event_loop)
         self._do_handshake()
 
     def __repr__(self):
@@ -161,7 +84,7 @@ class SocketTransport(Transport):
 
     @property
     def sock(self):
-        '''The socket for this :class:`SocketTransport`.'''
+        '''The socket for this transport.'''
         return self._sock
 
     @property
@@ -178,6 +101,8 @@ class SocketTransport(Transport):
 
     @property
     def protocol(self):
+        '''The protocol for this socket transport.
+        '''
         return self._protocol
 
     @property
@@ -188,10 +113,6 @@ class SocketTransport(Transport):
             except (OSError, socket.error):
                 return None
 
-    @property
-    def event_loop(self):
-        return self._event_loop
-
     def fileno(self):
         if self._sock:
             return self._sock.fileno()
@@ -199,15 +120,18 @@ class SocketTransport(Transport):
     def get_extra_info(self, name, default=None):
         if name == 'socket':
             name = 'sock'
-        return self.__dict__.get('_%s' % name, default)
+        if name in self._extra:
+            return self._extra[name]
+        else:
+            return self.__dict__.get('_%s' % name, default)
 
     def close(self, async=True, exc=None):
         """Closes the transport.
 
         Buffered data will be flushed asynchronously.  No more data
         will be received.  After all buffered data is flushed, the
-        :class:`BaseProtocol.connection_lost` method will (eventually) called
-        with ``None`` as its argument.
+        :attr:`protocol` ``connection_lost`` method will (eventually) called
+        with ``exc`` as its argument.
         """
         if not self.closing:
             self._closing = True
@@ -216,16 +140,16 @@ class SocketTransport(Transport):
                 self._sock.shutdown(socket.SHUT_RD)
             except Exception:
                 pass
-            self._event_loop.remove_reader(self._sock_fd)
+            self._loop.remove_reader(self._sock_fd)
             if not async or not self._write_buffer:
-                self._event_loop.call_soon(self._shutdown, exc)
+                self._loop.call_soon(self._shutdown, exc)
 
     def abort(self, exc=None):
         """Closes the transport immediately.
 
-        Buffered data will be lost.  No more data will be received.
-        The :class:`BaseProtocol.connection_lost` method will (eventually) be
-        called with ``None`` as its argument.
+        Buffered data will be lost. No more data will be received.
+        The :attr:`protocol` ``connection_lost`` method will (eventually) be
+        called with ``exc`` as its argument.
         """
         self.close(async=False, exc=exc)
 
@@ -245,7 +169,7 @@ class SocketTransport(Transport):
     def _shutdown(self, exc=None):
         if self._sock is not None:
             self._write_buffer = deque()
-            self._event_loop.remove_writer(self._sock_fd)
+            self._loop.remove_writer(self._sock_fd)
             try:
                 self._sock.shutdown(socket.SHUT_WR)
                 self._sock.close()

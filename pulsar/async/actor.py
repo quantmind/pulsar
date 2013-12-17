@@ -6,7 +6,7 @@ from pulsar.utils.pep import pickle
 from pulsar.utils.log import LogginMixin, WritelnDecorator
 
 from .eventloop import setid
-from .defer import Failure
+from .defer import in_loop, Failure
 from .events import EventHandler
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
@@ -51,7 +51,7 @@ def send(target, action, *args, **params):
 
         >>> a = spawn()
         >>> r = a.add_callback(lambda p: send(p,'ping'))
-        >>> r.result
+        >>> r.result()
         'pong'
     '''
     return get_actor().send(target, action, *args, **params)
@@ -71,7 +71,7 @@ class Pulsar(LogginMixin):
                           handlers=self.cfg.loghandlers)
 
 
-class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
+class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
     '''The base class for parallel execution in pulsar.
 
     In computer science, the **Actor model** is a mathematical model
@@ -109,11 +109,11 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
         The :class:`Concurrency` implementation for this :class:`Actor`.
 
-    .. attribute:: event_loop
+    .. attribute:: _loop
 
-        An instance of :class:`EventLoop` which listen for input/output events
-        on sockets or socket-like :class:`Transport`. It is the driver of the
-        :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
+        An :class:`.EventLoop` which listen for input/output events
+        on sockets or socket-like objects. It is the driver of the
+        :class:`Actor`. If the :attr:`_loop` stops, the :class:`Actor` stops
         running and goes out of scope.
 
     .. attribute:: mailbox
@@ -143,7 +143,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: params
 
-        A :class:`pulsar.utils.structures.AttributeDictionary` which contains
+        A :class:.AttributeDictionary` which contains
         parameters which are passed to actors spawned by this actor.
 
     .. attribute:: extra
@@ -177,7 +177,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     next_periodic_task = None
 
     def __init__(self, impl):
-        super(Actor, self).__init__()
+        EventHandler.__init__(self)
         self.state = ACTOR_STATES.INITIAL
         self._thread_pool = None
         self.__impl = impl
@@ -229,8 +229,8 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         return self.mailbox.address
 
     @property
-    def event_loop(self):
-        return self.mailbox.event_loop
+    def _loop(self):
+        return self.mailbox._loop
 
     @property
     def thread_pool(self):
@@ -246,8 +246,8 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     def start(self):
         '''Called after forking to start the actor's life.
 
-        This is where logging is configured, the :attr:`Actor.mailbox` is
-        registered and the :attr:`Actor.event_loop` is initialised and
+        This is where logging is configured, the :attr:`mailbox` is
+        registered and the :attr:`_loop` is initialised and
         started. Calling this method more than once does nothing.
         '''
         if self.state == ACTOR_STATES.INITIAL:
@@ -258,11 +258,29 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    def send(self, target, action, *args, **kw):
+    @in_loop
+    def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
-positional ``args`` and key-valued ``kwargs``.
-Always return a :class:`Deferred`.'''
-        return self.event_loop.async(self._send(target, action, *args, **kw))
+        positional ``args`` and key-valued ``kwargs``.
+        Always return a :class:`.Deferred`.'''
+        target = self.monitor if target == 'monitor' else target
+        mailbox = self.mailbox
+        if isinstance(target, ActorProxyMonitor):
+            mailbox = target.mailbox
+        else:
+            actor = self.get_actor(target)
+            if isinstance(actor, Actor):
+                # this occur when sending a message from arbiter to monitors or
+                # viceversa.
+                return command_in_context(action, self, actor, args, kwargs)
+            elif isinstance(actor, ActorProxyMonitor):
+                mailbox = actor.mailbox
+        if hasattr(mailbox, 'request'):
+            #if not mailbox.closed:
+            return mailbox.request(action, self, target, args, kwargs)
+        else:
+            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
+                               % (action, self, target))
 
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
@@ -304,7 +322,7 @@ Always return a :class:`Deferred`.'''
         '''``True`` if actor is running, that is when the :attr:`state`
 is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
 running.'''
-        return self.state == ACTOR_STATES.RUN and self.event_loop.is_running()
+        return self.state == ACTOR_STATES.RUN and self._loop.is_running()
 
     def started(self):
         '''``True`` if actor has started. It does not necessarily
@@ -378,13 +396,13 @@ This method is invoked when you run the
                  'process_id': self.pid,
                  'is_process': isp,
                  'age': self.impl.age}
-        events = {'callbacks': len(self.event_loop._callbacks),
-                  'io_loops': self.event_loop.num_loops}
+        events = {'callbacks': len(self._loop._ready),
+                  'io_loops': self._loop.num_loops}
         data = {'actor': actor,
                 'events': events,
                 'extra': self.extra}
         if isp:
-            data['system'] = system.system_info(self.pid)
+            data['system'] = system.process_info(self.pid)
         self.fire_event('on_info', info=data)
         return data
 
@@ -406,23 +424,3 @@ This method is invoked when you run the
         finally:
             if exc != -1:
                 self.stop(exc)
-
-    def _send(self, target, action, *args, **kwargs):
-        target = self.monitor if target == 'monitor' else target
-        mailbox = self.mailbox
-        if isinstance(target, ActorProxyMonitor):
-            mailbox = target.mailbox
-        else:
-            actor = self.get_actor(target)
-            if isinstance(actor, Actor):
-                # this occur when sending a message from arbiter to monitors or
-                # viceversa.
-                return command_in_context(action, self, actor, args, kwargs)
-            elif isinstance(actor, ActorProxyMonitor):
-                mailbox = actor.mailbox
-        if hasattr(mailbox, 'request'):
-            #if not mailbox.closed:
-            return mailbox.request(action, self, target, args, kwargs)
-        else:
-            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
-                               % (action, self, target))

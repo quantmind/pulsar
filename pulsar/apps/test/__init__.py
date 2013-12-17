@@ -210,18 +210,18 @@ long a test function can wait for results. This is what the
 Set the test timeout to 10 seconds.
 
 
-Plugins
+Test Plugins
 ==================
-A :class:`TestPlugin` is a way to extend the test suite with additional
+A :class:`.TestPlugin` is a way to extend the test suite with additional
 :ref:`options <test-suite-options>` and behaviours implemented in
 the various plugin's callbacks.
 There are two basic rules for plugins:
 
-* Plugin classes should subclass :class:`TestPlugin`.
-* Plugins may implement any of the methods described in the class
-  :class:`result.Plugin` interface.
+* Test plugin classes should subclass :class:`.TestPlugin`.
+* Test plugins may implement any of the methods described in the class
+  :class:`.Plugin` interface.
 
-Pulsar ships with two plugins:
+Pulsar ships with two battery-included plugins:
 
 .. _bench-plugin:
 
@@ -239,17 +239,13 @@ Profile
 .. automodule:: pulsar.apps.test.plugins.profile
 
 
-.. module:: pulsar.apps.test
-
 API
 =========
-
-.. _test-suite:
 
 Test Suite
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestSuite
+.. autoclass:: pulsar.apps.test.TestSuite
    :members:
    :member-order: bysource
 
@@ -260,41 +256,57 @@ Test Loader
 .. automodule:: pulsar.apps.test.loader
 
 
-Plugins
-~~~~~~~~~~~~~~~~~~~~~~~
+Plugin
+~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: pulsar.apps.test.result
+.. autoclass:: pulsar.apps.test.result.Plugin
+   :members:
+   :member-order: bysource
 
 
-.. module:: pulsar.apps.test
+Test Runner
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestRunner
+   :members:
+   :member-order: bysource
+
+
+Test Result
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestResult
+   :members:
+   :member-order: bysource
 
 
 Test Plugin
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestPlugin
+.. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
    :members:
    :member-order: bysource
 
-.. _unittest2: http://pypi.python.org/pypi/unittest2
-.. _mock: http://pypi.python.org/pypi/mock
-
 Utilities
-~~~~~~~~~~~~~~~
+================
 
 .. automodule:: pulsar.apps.test.utils
-    :members:
+
+.. _unittest2: http://pypi.python.org/pypi/unittest2
+.. _mock: http://pypi.python.org/pypi/mock
 '''
 import sys
 
 import pulsar
-from pulsar import EventHandler, maybe_failure
+from pulsar import EventHandler, maybe_failure, multi_async, Failure
 from pulsar.apps import tasks
+from pulsar.apps.data import PulsarDS, create_store
 from pulsar.utils.log import local_property
 from pulsar.utils.config import section_docs
-from pulsar.utils.pep import default_timer
+from pulsar.utils.pep import default_timer, to_string
 
 from .case import *
+from .populate import populate
 from .result import *
 from .plugins.base import *
 from .loader import *
@@ -370,7 +382,7 @@ class TestExcludeLabels(TestOption):
 class TestSize(TestOption):
     name = 'size'
     flags = ['--size']
-    #choices = ('tiny','small','normal','big','huge')
+    choices = ('tiny', 'small', 'normal', 'big', 'huge')
     default = 'normal'
     desc = """Optional test size."""
 
@@ -406,8 +418,9 @@ class TestShowLeaks(TestOption):
     default = 0
     desc = """Shows memory leaks.
 
-    Run the garbadge collector before a process-based actor dies and shows
-    the memory leak report."""
+    Run the garbage collector before a process-based actor dies and shows
+    the memory leak report.
+    """
 
 
 class TestLogFailures(TestOption):
@@ -433,6 +446,14 @@ class TestCoveralls(TestOption):
     desc = """Send coverage report to coveralls.io."""
 
 
+class RedisServer(TestOption):
+    name = 'redis_server'
+    flags = ['--redis-server']
+    meta = "CONNECTION_STRING"
+    default = '127.0.0.1:6379/9'
+    desc = 'Connection string for the redis server used in testing'
+
+
 pyver = '%s.%s' % (sys.version_info[:2])
 
 
@@ -456,11 +477,11 @@ class TestSuite(tasks.TaskQueue):
 
         If not provided it is set as default to ``["tests"]`` which loads all
         python module from the tests module in a recursive fashion.
-        Check the the :class:`TestLoader` for detailed information.
+        Check the the :class:`.TestLoader` for detailed information.
 
     :parameter result_class: Optional class for collecting test results.
-        By default it used the standard ``unittest.TextTestResult``.
-    :parameter plugins: Optional list of :class:`TestPlugin` instances.
+        By default it used the standard :class:`.TestResult`.
+    :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
@@ -470,7 +491,8 @@ class TestSuite(tasks.TaskQueue):
 
     @local_property
     def runner(self):
-        '''The :class:`TestRunner` driving the test case.'''
+        '''The :class:`.TestRunner` driving test cases.
+        '''
         if unittest is None:    # pragma    nocover
             raise ImportError('python %s requires unittest2 library for '
                               'pulsar test suite application' % pyver)
@@ -525,7 +547,13 @@ class TestSuite(tasks.TaskQueue):
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        super(TestSuite, self).monitor_start(monitor)
+        # Create a datastore for this test suite
+        server = PulsarDS(bind='127.0.0.1:0', workers=0,
+                          key_value_save=[],
+                          name='%s_store' % self.name)
+        yield server()
+        store = create_store('pulsar://%s:%s' % (server.address))
+        self._create_backend(store)
         loader = self.local.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
@@ -547,22 +575,30 @@ class TestSuite(tasks.TaskQueue):
                 self.fire_event('tests', tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
+                queued = []
+                self._tests_done = set()
+                self._tests_queued = None
+                self.backend.bind_event('task_done', self._test_done)
                 for tag, testcls in self.local.tests:
-                    self.backend.run('test', testcls, tag)
-                monitor.event_loop.call_repeatedly(1, self._check_queue)
+                    r = self.backend.queue_task('test', testcls=testcls,
+                                                tag=tag)
+                    queued.append(r)
+                queued = yield multi_async(queued)
+                self._tests_queued = set(queued)
+                yield self._test_done()
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:   # pragma    nocover
-            self.logger.critical('Error occurred before starting tests',
-                                 exc_info=True)
+            Failure(sys.exc_info()).critical(
+                'Error occurred while starting tests')
             monitor.arbiter.stop()
 
     @local_property
     def events(self):
-        '''Events for the application: ``ready```, ``start``, ``stop``.'''
+        '''Events for the application: ``ready``, ``start``, ``stop``.'''
         return EventHandler(one_time_events=('ready', 'start', 'stop'),
                             many_times_events=('tests',))
 
@@ -575,19 +611,28 @@ class TestSuite(tasks.TaskQueue):
             cfg.settings.update(plugin.config.settings)
         return cfg
 
-    def _check_queue(self):
+    def arbiter_params(self):
+        params = super(TestSuite, self).arbiter_params()
+        params['concurrency'] = self.cfg.concurrency
+        return params
+
+    def _test_done(self, task_id=None):
         runner = self.runner
-        tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
-        if len(tests) == len(self.local.tests):
-            self.logger.info('All tests have finished.')
-            time_taken = default_timer() - self._time_start
-            for task in tests:
-                runner.add(task.result)
-            runner.on_end()
-            runner.printSummary(time_taken)
-            # Shut down the arbiter
-            if runner.result.errors or runner.result.failures:
-                exit_code = 2
-            else:
-                exit_code = 0
-            raise pulsar.HaltServer(exit_code=exit_code)
+        if task_id:
+            self._tests_done.add(to_string(task_id))
+        if self._tests_queued is not None:
+            left = self._tests_queued.difference(self._tests_done)
+            if not left:
+                tests = yield self.backend.get_tasks(self._tests_done)
+                self.logger.info('All tests have finished.')
+                time_taken = default_timer() - self._time_start
+                for task in tests:
+                    runner.add(task['result'])
+                runner.on_end()
+                runner.printSummary(time_taken)
+                # Shut down the arbiter
+                if runner.result.errors or runner.result.failures:
+                    exit_code = 2
+                else:
+                    exit_code = 0
+                raise pulsar.HaltServer(exit_code=exit_code)

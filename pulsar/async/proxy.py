@@ -4,8 +4,7 @@ from pulsar.utils.pep import default_timer
 from .defer import Deferred
 from .consts import *
 
-__all__ = ['ActorProxyDeferred',
-           'ActorProxy',
+__all__ = ['ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
            'command',
@@ -66,6 +65,18 @@ class ActorIdentity(object):
         return self.aid
 
 
+def actor_proxy_deferred(aid, msg=None):
+    self = ActorProxyDeferred()
+    if isinstance(aid, ActorProxyMonitor):
+        aid.callback = self
+        self.aid = aid.aid
+    else:
+        self.aid = aid
+        # Listen for the callbacks and errorbacks
+        msg.add_callback(self.callback, self.callback)
+    return self
+
+
 class ActorProxyDeferred(Deferred, ActorIdentity):
     '''A :class:`Deferred` for an :class:`ActorProxy`.
 
@@ -77,16 +88,6 @@ class ActorProxyDeferred(Deferred, ActorIdentity):
         The the remote :attr:`Actor` id
 
     '''
-    def __init__(self, aid, msg=None):
-        super(ActorProxyDeferred, self).__init__()
-        if isinstance(aid, ActorProxyMonitor):
-            aid.callback = self
-            self.aid = aid.aid
-        else:
-            self.aid = aid
-            # Listen for the callbacks and errorbacks
-            msg.add_both(self.callback)
-
     def __repr__(self):
         return '%s(%s)' % (self.__class__, self.aid)
     __str__ = __repr__
@@ -123,8 +124,7 @@ class ActorProxy(ActorIdentity):
         self.aid = impl.aid
         self.name = impl.name
         self.cfg = impl.cfg
-        if hasattr(impl, 'address'):
-            self.address = impl.address
+        self.address = getattr(impl, 'address', None)
 
     def __repr__(self):
         return '%s(%s)' % (self.name, self.aid)
@@ -168,7 +168,7 @@ class ActorProxyMonitor(ActorProxy):
         This is the connection with the remote actor. It is available once the
         :ref:`actor handshake <handshake>` between the actor and the monitor
         has completed. The :attr:`mailbox` is a server-side
-        :class:`pulsar.async.mailbox.MailboxConsumer` instance and it is used
+        :class:`.MailboxProtocol` instance and it is used
         by the :func:`send` function to send messages to the remote actor.
     '''
     monitor = None

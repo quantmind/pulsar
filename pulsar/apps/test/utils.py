@@ -1,13 +1,50 @@
+'''
+run on arbiter
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: run_on_arbiter
+
+
+sequential
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: sequential
+
+
+ActorTestMixin
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ActorTestMixin
+   :members:
+   :member-order: bysource
+
+
+AsyncAssert
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AsyncAssert
+   :members:
+   :member-order: bysource
+
+run test server
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: run_test_server
+'''
+import sys
 import gc
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
 
 import pulsar
-from pulsar import safe_async, get_actor, send, multi_async, TcpServer
+from pulsar import (safe_async, get_actor, send, multi_async,
+                    TcpServer, coroutine_return)
+from pulsar.async.proxy import ActorProxyDeferred
 
 
 __all__ = ['run_on_arbiter',
+           'sequential',
            'NOT_TEST_METHODS',
            'ActorTestMixin',
            'AsyncAssert',
@@ -80,27 +117,42 @@ class TestFunctionOnArbiter(TestFunction):
 
 
 def run_on_arbiter(f):
-    '''Decorator for running a test function in the :class:`pulsar.Arbiter`
-context domain. This can be useful to test Arbiter mechanics.'''
+    '''Decorator for running a test function in the :class:`.Arbiter`
+    context domain.
+
+    This can be useful to test Arbiter mechanics.
+    '''
     f.testfunction = TestFunctionOnArbiter(f.__name__)
     return f
 
 
+def sequential(cls):
+    '''Decorator for a :class:`unittest.TestCase` which cause
+    its test functions to run sequentially rather than in an
+    asynchronous fashion.
+    '''
+    cls._sequential_execution = True
+    return cls
+
+
 class AsyncAssert(object):
-    '''A `descriptor`_ which the :ref:`test-suite` add to all python
-:class:`unitest.TestCase`. It can be used to invoke the same
-``assertXXX`` methods available in the :class:`unitest.TestCase` with the
-added bonus they it waorks for asynchronous results too.
+    '''A `descriptor`_ added by the :ref:`test-suite` to all python
+    :class:`unittest.TestCase` loaded.
 
-The descriptor is available bia the ``async`` attribute. For example::
+    It can be used to invoke the same ``assertXXX`` methods available in
+    the :class:`unittest.TestCase` in an asynchronous fashion.
 
-    class MyTest(unittest.TestCase):
+    The descriptor is available via the ``async`` attribute.
+    For example::
 
-        def test1(self):
-            yield self.async.assertEqual(3, Deferred().callback(3))
+        class MyTest(unittest.TestCase):
+
+            def test1(self):
+                yield self.async.assertEqual(3, Deferred().callback(3))
 
 
-.. _descriptor: http://users.rcn.com/python/download/Descriptor.htm'''
+    .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm
+    '''
     def __init__(self, test=None):
         self.test = test
 
@@ -117,7 +169,7 @@ The descriptor is available bia the ``async`` attribute. For example::
         try:
             yield callable(*args, **kwargs)
         except error:
-            pass
+            coroutine_return(None)
         except Exception:
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))
@@ -129,15 +181,15 @@ The descriptor is available bia the ``async`` attribute. For example::
 class ActorTestMixin(object):
     '''A mixin for :class:`unittest.TestCase`.
 
-Useful for classes testing spawning of actors.
-Make sure this is the first class you derive from, before the
-unittest.TestCase, so that the tearDown method is overwritten.
+    Useful for classes testing spawning of actors.
+    Make sure this is the first class you derive from, before the
+    unittest.TestCase, so that the tearDown method is overwritten.
 
-.. attribute:: concurrency
+    .. attribute:: concurrency
 
-    The concurrency model used to spawn actors via the :meth:`spawn`
-    method.
-'''
+        The concurrency model used to spawn actors via the :meth:`spawn`
+        method.
+    '''
     concurrency = 'thread'
 
     @property
@@ -146,14 +198,13 @@ unittest.TestCase, so that the tearDown method is overwritten.
             self._spawned = []
         return self._spawned
 
-    def spawn(self, concurrency=None, **kwargs):
+    def spawn_actor(self, concurrency=None, **kwargs):
         '''Spawn a new actor and perform some tests.'''
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
-        self.assertTrue(isinstance(ad, pulsar.ActorProxyDeferred))
-        yield ad
-        proxy = ad.result
+        self.assertTrue(isinstance(ad, ActorProxyDeferred))
+        proxy = yield ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)
@@ -203,10 +254,17 @@ def hide_leaks(actor):
 
 
 @contextmanager
-def run_test_server(loop, consumer_factory, address=None):
+def run_test_server(protocol_factory, loop, address=None, **kw):
+    '''A context manager for running a test server::
+
+        with run_test_server(loop, protocol_factory) as server:
+            ...
+
+    It creates a :class:`.TcpServer` and invoke
+    :meth:`~.TcpServer.stop_serving` on exit.
+    '''
     address = address or ('127.0.0.1', 0)
-    server = TcpServer(loop, '127.0.0.1', 0,
-                       consumer_factory=consumer_factory)
+    server = TcpServer(protocol_factory, loop, address, **kw)
     try:
         yield server
     finally:

@@ -8,10 +8,10 @@ from pulsar.utils.system import json
 from .manage import server
 
 
-class MessageHandler(ws.WS):
+class Message(ws.WS):
 
-    def __init__(self):
-        self.queue = Queue()
+    def __init__(self, loop):
+        self.queue = Queue(loop=loop)
 
     def get(self):
         return self.queue.get()
@@ -40,16 +40,28 @@ class TestWebChat(unittest.TestCase):
             yield send('arbiter', 'kill_actor', cls.app.name)
 
     def test_home(self):
-        response = yield self.http.get(self.uri).on_finished
+        response = yield self.http.get(self.uri)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers['content-type'], 'text/html')
 
+    def test_handshake(self):
+        ws = yield self.http.get(self.ws)
+        response = ws.handshake
+        self.assertEqual(ws.status_code, 101)
+        self.assertEqual(ws.headers['upgrade'], 'websocket')
+        self.assertEqual(response.connection, ws.connection)
+        self.assertTrue(ws.connection)
+        #
+        # The connection should not be in the connection pool
+        pool = self.http.connection_pools.get(ws._request.key)
+        self.assertIsInstance(pool, self.http.connection_pool)
+        self.assertFalse(ws.connection in pool)
+
     def test_rpc(self):
         '''Send a message to the rpc'''
-        ws = yield self.http.get(self.ws,
-                                 websocket_handler=MessageHandler()
-                                 ).on_headers
-        self.assertEqual(ws.handshake.status_code, 101)
+        loop = self.http._loop
+        ws = yield self.http.get(self.ws, websocket_handler=Message(loop))
+        self.assertEqual(ws.status_code, 101)
         ws.write('Hello there!')
         data = yield ws.handler.get()
         data = json.loads(data)
@@ -59,14 +71,6 @@ class TestWebChat(unittest.TestCase):
         data = yield ws.handler.get()
         data = json.loads(data)
         self.assertEqual(data['message'], 'Hi!')
-
-    def test_handshake(self):
-        ws = yield self.http.get(self.ws).on_headers
-        response = ws.handshake
-        self.assertEqual(response.status_code, 101)
-        self.assertEqual(response.headers['upgrade'], 'websocket')
-        self.assertEqual(response.connection, ws.connection)
-        self.assertTrue(ws.connection)
 
     def test_invalid_method(self):
         p = rpc.JsonProxy(self.uri)

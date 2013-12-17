@@ -1,5 +1,5 @@
 '''Tests the RPC "calculator" example.'''
-from pulsar import send
+from pulsar import send, new_event_loop
 from pulsar.apps import rpc
 from pulsar.apps.test import unittest, dont_run_with_thread
 
@@ -20,7 +20,7 @@ class TestRpcOnThread(unittest.TestCase):
         cls.app = yield send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
-        cls.sync = rpc.JsonProxy(cls.uri, force_sync=True)
+        cls.sync = rpc.JsonProxy(cls.uri, loop=new_event_loop())
 
     @classmethod
     def tearDownClass(cls):
@@ -39,7 +39,7 @@ class TestRpcOnThread(unittest.TestCase):
     def test_handler(self):
         s = self.app
         self.assertTrue(s.callable)
-        wsgi_handler = s.callable.handler
+        wsgi_handler = s.callable.handler({})
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')
@@ -98,16 +98,25 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
-        monitor = response['monitors'][self.app.name]
-        if 'sockets' in monitor:
+        app = response['monitors'][self.app.name]
+        if 'tcpserver' in app:
             self.assertEqual(self.concurrency, 'thread')
-            sockets = monitor['sockets']
-            socket = sockets[0]
-            self.assertEqual(socket['address'], '%s:%s' % self.app.address)
+            self.assertFalse(app['workers'])
+            self._check_tcpserver(app['tcpserver']['server'])
         else:
             self.assertEqual(self.concurrency, 'process')
-            workers = monitor['workers']
+            workers = app['workers']
             self.assertEqual(len(workers), 1)
+            worker = workers[0]
+            if 'tcpserver' in worker:
+                # TODO remove this if clause
+                self._check_tcpserver(worker['tcpserver']['server'])
+
+    def _check_tcpserver(self, server):
+        sockets = server['sockets']
+        self.assertEqual(len(sockets), 1)
+        sock = sockets[0]
+        self.assertEqual(sock['address'], '%s:%s' % self.app.address)
 
     def testInvalidParams(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)

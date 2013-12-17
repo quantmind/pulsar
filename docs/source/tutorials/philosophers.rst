@@ -1,4 +1,4 @@
-.. _philosophers:
+.. _dining-philosophers:
 
 ========================
 Dining Philosophers
