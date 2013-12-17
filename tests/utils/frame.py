@@ -37,26 +37,12 @@ class FrameTest(unittest.TestCase):
         self.assertEqual(server.encode_mask_length, 4)
 
     def testCloseFrame(self):
+        parser = self.parser(kind=2)
         close_message = struct.pack('!H', 1000) + b'OK'
-        f = Frame(close_message, opcode=0x8)
-        self.assertTrue(f.is_close)
-        self.assertEqual(close_message, f.msg[2:])
+        f = parser.encode(close_message, opcode=0x8)
+        self.assertEqual(close_message, f[2:])
 
     def testControlFrames(self):
-        parser = FrameParser()
-        f = parser.close()
-        self.assertEqual(f.opcode, 0x8)
-        self.assertTrue(f.payload_length <= 125)
-        f = parser.ping('Hello')
-        self.assertEqual(f.opcode, 0x9)
-        self.assertEqual(int2bytes(0x89,0x05,0x48,0x65,0x6c,0x6c,0x6f), f.msg)
-        self.assertTrue(f.payload_length <= 125)
-        r = parser.replay_to(f)
-        self.assertTrue(r)
-        self.assertEqual(r.opcode, 0xA)
-        f = parser.pong()
-        self.assertEqual(f.opcode, 0xA)
-        self.assertTrue(f.payload_length <= 125)
         s = self.parser()
         c = self.parser(kind=1)
         #

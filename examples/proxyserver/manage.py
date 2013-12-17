@@ -56,6 +56,7 @@ SERVER_SOFTWARE = 'Pulsar-proxy-server/%s' % pulsar.version
 ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = SERVER_SOFTWARE
 
+
 def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
     headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])

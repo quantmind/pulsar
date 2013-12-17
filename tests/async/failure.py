@@ -73,12 +73,3 @@ class TestFailure(unittest.TestCase):
         self.assertEqual(failure.exc_info, failure2.exc_info)
         failure.mute()
         self.assertRaises(ValueError, failure.throw)
-
-    def testLog(self):
-        failure = maybe_failure(Exception('test'))
-        error = failure.error
-        log = mock.MagicMock(name='log')
-        failure.log = log
-        del failure
-        gc.collect()
-        log.assert_called_once_with()
