@@ -28,7 +28,7 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import handle_wsgi_error, LOGGER, HOP_HEADERS
+from .utils import handle_wsgi_error, HOP_HEADERS
 
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
@@ -380,8 +380,8 @@ class HttpServerResponse(ProtocolConsumer):
                 # this should be considered a fatal error for an application
                 # to attempt sending them, but we don't raise an error,
                 # just log a warning
-                LOGGER.warning('Application handler passing hop header "%s"',
-                               header)
+                self.logger.warning('Application passing hop header "%s"',
+                                    header)
                 continue
             self.headers.add_header(header, value)
         return self.write

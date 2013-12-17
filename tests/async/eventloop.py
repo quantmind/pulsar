@@ -177,7 +177,7 @@ class TestEventLoop(unittest.TestCase):
         event_loop.call_later(10, d.callback, 'OK')
         self.assertRaises(TimeoutError, event_loop.run_until_complete, d)
         self.assertTrue(d.done())
-        mute_failure(self, d._result)
+        d.exception()  # mute failure
         self.assertFalse(event_loop.is_running())
 
     def test_run_in_thread_loop(self):

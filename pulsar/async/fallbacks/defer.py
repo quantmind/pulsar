@@ -300,20 +300,10 @@ class Deferred(object):
     def __str__(self):
         return self. __repr__()
 
-    @property
-    def timeout(self):
-        '''The ``asyncio.TimerHandle`` which handles the timeout of this
-        :class:`Deferred`.
-
-        Available only when a timeout is set.
-        '''
-        return self._timeout
-
-    @property
     def has_callbacks(self):
-        '''``True`` if this :class:`Deferred` has callbacks.
+        '''The number of callbacks.
         '''
-        return bool(self._callbacks)
+        return len(self._callbacks) if self._callbacks else 0
 
     # Future methods, PEP 3156
 

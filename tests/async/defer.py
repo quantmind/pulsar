@@ -58,13 +58,12 @@ class TestDeferred(unittest.TestCase):
     def test_None_callback(self):
         d = Deferred()
         d.add_callback(None)
-        self.assertEqual(d._callbacks, None)
+        self.assertEqual(d.has_callbacks(), 0)
         d.add_callback(None, None)
-        self.assertEqual(d._callbacks, None)
+        self.assertEqual(d.has_callbacks(), 0)
         errback = lambda r: r
         d.add_callback(None, errback)
-        self.assertTrue(d._callbacks)
-        self.assertEqual(d._callbacks[0][:2], (None, errback))
+        self.assertTrue(d.has_callbacks())
 
     def testWrongOperations(self):
         d = Deferred()
@@ -96,7 +95,7 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(d.done())
         self.assertEqual(d._paused, 1)
         self.assertIsInstance(result, Deferred)
-        self.assertEqual(len(result._callbacks), 1)
+        self.assertEqual(result.has_callbacks(), 1)
         self.assertFalse(result.done())
         result.set_result('luca')
         self.assertTrue(result.done())
@@ -124,8 +123,8 @@ class TestDeferred(unittest.TestCase):
         # still the same deferred
         self.assertEqual(a._waiting, d)
         #
-        self.assertEqual(len(d._callbacks), 2)
-        self.assertEqual(len(rd._callbacks), 1)
+        self.assertEqual(d.has_callbacks(), 2)
+        self.assertEqual(rd.has_callbacks(), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
         self.assertFalse(a.done())
@@ -153,8 +152,8 @@ class TestDeferred(unittest.TestCase):
         self.assertTrue(d.done())
         self.assertEqual(d._paused, 1)
         # The generator has added its consume callback
-        self.assertEqual(len(d._callbacks), 2)
-        self.assertEqual(len(rd._callbacks), 1)
+        self.assertEqual(d.has_callbacks(), 2)
+        self.assertEqual(rd.has_callbacks(), 1)
         #
         self.assertEqual(rd.r, ('ciao',))
         self.assertFalse(a.done())

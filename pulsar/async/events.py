@@ -112,7 +112,7 @@ class OneTime(Deferred, AbstractEvent):
                     return self.callback(result)
 
     def _check(self, result):
-        if self.events.has_callbacks:
+        if self.events.has_callbacks():
             # other callbacks have been added,
             # put another check at the end of the pile
             return self.events.add_callback(self._check, self._check)

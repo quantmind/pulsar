@@ -171,15 +171,14 @@ def maybe_failure(value):
 
 
 cdef class Deferred:
-    cdef int _paused
+    cdef int _c_paused
     cdef bint _runningCallbacks
     cdef bint _suppressAlreadyCalled
-    cdef object _timeout
+    cdef object _c_timeout
     cdef object _callbacks
-    cdef object _chained_to
     cdef object _event_loop
     cdef object _result
-    cdef Deferred __chained_to
+    cdef Deferred _c_chained_to
     cdef int _state_code
 
     def __cinit__(self, object loop=None):
@@ -196,15 +195,18 @@ cdef class Deferred:
 
     @property
     def _chained_to(self):
-        return self.__chained_to
+        return self._c_chained_to
 
     @property
-    def timeout(self):
-        return self._timeout
+    def _timeout(self):
+        return self._c_timeout
 
     @property
+    def _paused(self):
+        return self._c_paused
+
     def has_callbacks(self):
-        return len(self._callbacks) > 0 if self._callbacks else False
+        return len(self._callbacks) if self._callbacks else 0
 
     def __repr__(self):
         v = self.__class__.__name__
@@ -250,8 +252,6 @@ cdef class Deferred:
     def exception(self):
         if self._state_code == _PENDING:
             raise InvalidStateError('Result is not ready.')
-        if self._state_code == _CANCELLED:
-            self._result.throw()
         if isinstance(self._result, Failure):
             self._result.mute()
             return self._result
@@ -323,18 +323,18 @@ cdef class Deferred:
 
     def set_timeout(self, timeout, mute=False, exception_class=None):
         if timeout and timeout > 0:
-            if self._timeout:
-                self._timeout.cancel()
+            if self._c_timeout:
+                self._c_timeout.cancel()
             # create the timeout. We don't cancel the timeout after
             # a callback is received since the result may be still asynchronous
             exception_class = exception_class or TimeoutError
-            self._timeout = self._loop.call_later(
+            self._c_timeout = self._loop.call_later(
                 timeout, self.cancel, 'timeout (%s seconds)' % timeout,
                 mute, exception_class)
         return self
 
     cpdef Deferred chain(self, Deferred deferred):
-        deferred.__chained_to = self
+        deferred._c_chained_to = self
         return self.add_callback(deferred.callback, deferred.callback)
 
     def then(self, deferred=None):
@@ -352,7 +352,7 @@ cdef class Deferred:
 
     cdef _run_callbacks(self):
         if (self._state_code == _PENDING or self._runningCallbacks or
-                self._paused):
+                self._c_paused):
             return
         while self._callbacks:
             callbacks = self._callbacks.popleft()
@@ -371,7 +371,7 @@ cdef class Deferred:
                     # received an asynchronous instance, add a continuation
                     if isinstance(self._result, Deferred):
                         # Add a pause
-                        self._paused += 1
+                        self._c_paused += 1
                         # Add a callback to the result to resume callbacks
                         self._result.add_callback(self._continue,
                                                   self._continue)
@@ -379,7 +379,7 @@ cdef class Deferred:
 
     def _continue(self, result):
         self._result = result
-        self._paused -= 1
+        self._c_paused -= 1
         self._run_callbacks()
         return self._result
 
@@ -404,12 +404,16 @@ class DoneCallback:
 
 cdef class DeferredTask(Deferred):
     cdef object _gen
-    cdef Deferred _waiting
+    cdef Deferred _c_waiting
 
     cdef start(self, gen):
         self._gen = gen
-        self._waiting = None
+        self._c_waiting = None
         self._consume(None)
+
+    @property
+    def _waiting(self):
+        return self._c_waiting
 
     def _consume(self, result):
         cdef bint switch = False
@@ -440,8 +444,8 @@ cdef class DeferredTask(Deferred):
             if isinstance(result, Deferred):
                 # async result add callback/errorback and transfer control
                 # to the event loop
-                self._waiting = result.add_callback(self._restart,
-                                                    self._restart)
+                self._c_waiting = result.add_callback(self._restart,
+                                                      self._restart)
                 return None, True
             elif result == NOT_DONE:
                 # transfer control to the event loop
@@ -460,7 +464,7 @@ cdef class DeferredTask(Deferred):
         return result, False
 
     def _restart(self, result):
-        self._waiting = None
+        self._c_waiting = None
         # restart the coroutine in the same event loop it was started
         self._event_loop.call_soon_threadsafe(self._consume, result)
         # Important, this is a callback of a deferred, therefore we return
@@ -468,8 +472,8 @@ cdef class DeferredTask(Deferred):
         return result
 
     def cancel(self, msg='', mute=False, exception_class=None):
-        if self._waiting:
-            self._waiting.cancel(msg, mute, exception_class)
+        if self._c_waiting:
+            self._c_waiting.cancel(msg, mute, exception_class)
         else:
             super(DeferredTask, self).cancel(msg, mute, exception_class)
 

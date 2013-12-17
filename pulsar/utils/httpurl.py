@@ -389,6 +389,10 @@ SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(
     HEADER_FIELDS['entity'], HEADER_FIELDS['response'])
 ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
 ALL_HEADER_FIELDS_DICT = dict(((k.lower(), k) for k in ALL_HEADER_FIELDS))
+CRLF = '\r\n'
+LWS = '\r\n '
+HEADER_FIELDS_JOINER = {'Set-Cookie': None,
+                        'Set-Cookie2': None}
 
 TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
                       'server': SERVER_HEADER_FIELDS,
@@ -496,36 +500,37 @@ def parse_dict_header(value):
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 
-It has a dictionary like interface with few extra functions to facilitate
-the insertion of multiple header values. Header fields are
-**case insensitive**, therefore doing::
+    It has a dictionary like interface with few extra functions to facilitate
+    the insertion of multiple header values. Header fields are
+    **case insensitive**, therefore doing::
 
-    >>> h = Headers()
-    >>> h['Content-Length'] = '1050'
+        >>> h = Headers()
+        >>> h['Content-Length'] = '1050'
 
-is equivalent to
+    is equivalent to
 
-    >>> h['content-length'] = '1050'
+        >>> h['content-length'] = '1050'
 
-:param headers: optional iterable over header field/value pairs.
-:param kind: optional headers type, one of ``server``, ``client`` or ``both``.
-:param strict: if ``True`` only valid headers field will be included.
+    :param headers: optional iterable over header field/value pairs.
+    :param kind: optional headers type, one of ``server``, ``client`` or
+        ``both``.
+    :param strict: if ``True`` only valid headers field will be included.
 
-This :class:`Headers` container maintains an ordering as suggested by
-http://www.w3.org/Protocols/rfc2616/rfc2616.html:
+    This :class:`Headers` container maintains an ordering as suggested by
+    http://www.w3.org/Protocols/rfc2616/rfc2616.html:
 
-.. epigraph::
+    .. epigraph::
 
-    The order in which header fields with differing field names are received
-    is not significant. However, it is "good practice" to send general-header
-    fields first, followed by request-header or response-header fields, and
-    ending with the entity-header fields.
+        The order in which header fields with differing field names are
+        received is not significant. However, it is "good practice" to send
+        general-header fields first, followed by request-header or
+        response-header fields, and ending with the entity-header fields.
 
-    -- rfc2616 section 4.2
+        -- rfc2616 section 4.2
 
-The strict parameter is rarely used and it forces the omission on non-standard
-header fields.
-'''
+    The strict parameter is rarely used and it forces the omission on
+    non-standard header fields.
+    '''
     def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
@@ -669,15 +674,12 @@ results in::
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])
-            lower_values = [v.lower() for v in values]
-            for value in self.get_values(value):
-                if params:
-                    value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
-                                                          in params.items())))
-                lower_value = value.lower()
-                if lower_value not in lower_values:
-                    lower_values.append(lower_value)
-                    values.append(value)
+            value = value.strip()
+            if params:
+                value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
+                                                      in params.items())))
+            if value not in values:
+                values.append(value)
             self._headers[key] = values
 
     def remove_header(self, key, value=None):
@@ -707,6 +709,8 @@ results in::
 
     def _ordered(self):
         hf = HEADER_FIELDS
+        hj = HEADER_FIELDS_JOINER
+        dj = ', '
         order = (('general', []), ('request', []),
                  ('response', []), ('entity', []))
         headers = self._headers
@@ -719,7 +723,12 @@ results in::
                 group.append(key)
         for _, group in order:
             for k in group:
-                yield "%s: %s" % (k, ', '.join(headers[k]))
+                joiner = hj.get(k, dj)
+                if not joiner:
+                    for header in headers[k]:
+                        yield "%s: %s" % (k, header)
+                else:
+                    yield "%s: %s" % (k, joiner.join(headers[k]))
         yield ''
         yield ''
 
