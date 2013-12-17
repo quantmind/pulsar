@@ -703,4 +703,7 @@ the event loop to poll with a 0 timeout all the times.'''
             raise StopEventLoop
         else:
             for fd, events in event_pairs:
-                callbacks.append(partial(io.handle_events, self, fd, events))
+                try:
+                    io.handle_events(self, fd, events)
+                except KeyError:
+                    pass

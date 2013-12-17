@@ -1,3 +1,8 @@
+Ver. 0.7.4 - 2013-Dec-12
+===========================
+* Another bug fix release.
+* **822 regression tests**, **91% coverage**
+
 Ver. 0.7.3 - 2013-Dec-12
 ===========================
 * A bug fix release.
