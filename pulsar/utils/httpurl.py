@@ -389,7 +389,8 @@ SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(
     HEADER_FIELDS['entity'], HEADER_FIELDS['response'])
 ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
 ALL_HEADER_FIELDS_DICT = dict(((k.lower(), k) for k in ALL_HEADER_FIELDS))
-
+HEADER_FIELDS_JOINER = {'Set-Cookie': None,
+                        'Set-Cookie2': None}
 TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
                       'server': SERVER_HEADER_FIELDS,
                       'both': ALL_HEADER_FIELDS}
@@ -707,6 +708,8 @@ results in::
 
     def _ordered(self):
         hf = HEADER_FIELDS
+        hj = HEADER_FIELDS_JOINER
+        dj = ', '
         order = (('general', []), ('request', []),
                  ('response', []), ('entity', []))
         headers = self._headers
@@ -719,7 +722,12 @@ results in::
                 group.append(key)
         for _, group in order:
             for k in group:
-                yield "%s: %s" % (k, ', '.join(headers[k]))
+                joiner = hj.get(k, dj)
+                if not joiner:
+                    for header in headers[k]:
+                        yield "%s: %s" % (k, header)
+                else:
+                    yield "%s: %s" % (k, joiner.join(headers[k]))
         yield ''
         yield ''
 

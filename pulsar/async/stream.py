@@ -177,7 +177,7 @@ advantage of specific capabilities in some transport mechanisms.'''
                     self._read_buffer.append(chunk)
                 else:
                     self._protocol.data_received(chunk)
-            elif not passes and chunk == b'':
+            else:
                 # We got empty data. Close the socket
                 try:
                     self._protocol.eof_received()
