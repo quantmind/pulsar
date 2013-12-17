@@ -30,7 +30,7 @@ from .httpurl import urlsplit, parse_qsl, urlencode
 from .pep import native_str, ispy3k
 from .exceptions import SSLError
 
-WRITE_BUFFER_MAX_SIZE = 128 * 1024  # 128 kb
+BUFFER_MAX_SIZE = 256 * 1024  # 256 kb
 
 if platform.is_windows:    # pragma    nocover
     EPERM = object()

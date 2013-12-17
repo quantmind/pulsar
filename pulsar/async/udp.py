@@ -2,7 +2,7 @@ import socket
 
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
-                                   ECONNREFUSED, WRITE_BUFFER_MAX_SIZE)
+                                   ECONNREFUSED, BUFFER_MAX_SIZE)
 
 from .internet import SocketTransport
 from .consts import LOG_THRESHOLD_FOR_CONNLOST_WRITES
@@ -37,9 +37,9 @@ class SocketDatagramTransport(SocketTransport):
         writing = self.writing
         if data:
             assert isinstance(data, bytes)
-            if len(data) > WRITE_BUFFER_MAX_SIZE:
-                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
-                    chunk = data[i:i+WRITE_BUFFER_MAX_SIZE]
+            if len(data) > BUFFER_MAX_SIZE:
+                for i in range(0, len(data), BUFFER_MAX_SIZE):
+                    chunk = data[i:i+BUFFER_MAX_SIZE]
                     self._write_buffer.append((chunk, addr))
             else:
                 self._write_buffer.append((data, addr))

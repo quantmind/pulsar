@@ -25,7 +25,8 @@ from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
-                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE)
+                                   ESHUTDOWN, BUFFER_MAX_SIZE,
+                                   SOCKET_INTERRUPT_ERRORS)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
@@ -43,6 +44,15 @@ class TooManyConsecutiveWrite(PulsarException):
     '''Raise when too many consecutive writes are attempted.'''
 
 
+def raise_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    if eno not in SOCKET_INTERRUPT_ERRORS:
+        args = getattr(e, 'args', None)
+        if isinstance(args, tuple) and len(args) == 2:
+            eno = args[0]
+    return eno not in SOCKET_INTERRUPT_ERRORS
+
+
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
 
@@ -52,46 +62,32 @@ is done using the :meth:`write` and :meth:`writelines` methods.
 The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.'''
     _paused_reading = False
-    _paused_writing = False
 
     def _do_handshake(self):
         self._event_loop.add_reader(self._sock_fd, self._ready_read)
         self._event_loop.call_soon(self._protocol.connection_made, self)
 
-    def pause(self):    # pragma    nocover
-        """A :class:`SocketStreamTransport` can be paused and resumed.
-Invoking this method will cause the transport to buffer data coming
-from protocols but not sending it to the :attr:`protocol`. In other words,
-no data will be passed to the :meth:`pulsar.Protocol.data_received` method
-until :meth:`resume` is called."""
-        if not self._paused_reading:
-            self._paused_reading = True
+    def pause_reading(self):
+        '''Suspend delivery of data to the protocol until a subsequent
+        :meth:`resume_reading` call.
 
-    def resume(self):    # pragma    nocover
-        """Resume the receiving end. Data received will once again be
-passed to the :meth:`pulsar.Protocol.data_received` method."""
+        Between :meth:`pause_reading` and :meth:`resume_reading`, the
+        protocol's data_received() method will not be called.
+        '''
+        if self._closing:
+            raise RuntimeError('Cannot pause_reading() when closing')
         if self._paused_reading:
-            self._paused_reading = False
-            buffer = self._read_buffer
-            self._read_buffer = []
-            for chunk in buffer:
-                self._data_received(chunk)
+            raise RuntimeError('Already paused')
+        self._paused_reading = True
+        self._loop.remove_reader(self._sock_fd)
 
-    def pause_writing(self):    # pragma    nocover
-        '''Suspend sending data to the network until a subsequent
-:meth:`resume_writing` call. Between :meth:`pause_writing` and
-:meth:`resume_writing` the transport's :meth:`write` method will just
-be accumulating data in an internal buffer.'''
-        if not self._paused_writing:
-            self._paused_writing = True
-            self._event_loop.remove_writer(self._sock_fd)
-
-    def resume_writing(self):    # pragma    nocover
-        '''Restart sending data to the network.'''
-        if self._paused_writing:
-            if self._write_buffer:
-                self._event_loop.add_writer(self._sock_fd, self._write_ready)
-            self._paused_writing = False
+    def resume_reading(self):
+        """Resume the receiving end."""
+        if not self._paused_reading:
+            raise RuntimeError('Not paused')
+        self._paused_reading = False
+        if not self._closing:
+            self._loop.add_reader(self._sock_fd)
 
     def write(self, data):
         '''Write chunk of ``data`` to the endpoint.
@@ -103,13 +99,11 @@ be accumulating data in an internal buffer.'''
         if data:
             # Add data to the buffer
             assert isinstance(data, bytes)
-            if len(data) > WRITE_BUFFER_MAX_SIZE:
-                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
-                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
+            if len(data) > BUFFER_MAX_SIZE:
+                for i in range(0, len(data), BUFFER_MAX_SIZE):
+                    self._write_buffer.append(data[i:i+BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
-        if self._paused_writing:
-            return
         # Try to write only when not waiting for write callbacks
         if not is_writing:
             self._consecutive_writes = 0
@@ -124,9 +118,11 @@ be accumulating data in an internal buffer.'''
                 self.abort(TooManyConsecutiveWrite())
 
     def writelines(self, list_of_data):
-        """Write a list (or any iterable) of data bytes to the transport."""
-        for data in list_of_data:
-            self.write(data)
+        '''Write a list (or any iterable) of data bytes to the transport.
+        '''
+        self.write(b''.join(list_of_data))
+
+    ##    INTERNALS
 
     def _write_continue(self, e):
         return e.args[0] in TRY_WRITE_AGAIN
@@ -138,8 +134,6 @@ be accumulating data in an internal buffer.'''
         # Do the actual writing
         buffer = self._write_buffer
         tot_bytes = 0
-        if self._paused_writing:
-            return tot_bytes
         if not buffer:
             self.logger.warning('handling write on a 0 length buffer')
         try:
@@ -168,31 +162,27 @@ be accumulating data in an internal buffer.'''
             self.abort(failure)
 
     def _ready_read(self):
-        # Read from the socket until we get EWOULDBLOCK or equivalent.
-        # If any other error occur, abort the connection and re-raise.
-        passes = 0
-        chunk = True
         try:
-            while chunk:
+            try:
+                chunk = self._sock.recv(self._read_chunk_size)
+            except self.SocketError as e:
+                if self._read_continue(e):
+                    return
+                if raise_socket_error(e):
+                    raise
+                else:
+                    chunk = None
+            if chunk:
+                if self._paused_reading:
+                    self._read_buffer.append(chunk)
+                else:
+                    self._protocol.data_received(chunk)
+            elif not passes and chunk == b'':
+                # We got empty data. Close the socket
                 try:
-                    chunk = self._sock.recv(self._read_chunk_size)
-                except self.SocketError as e:
-                    if self._read_continue(e):
-                        return
-                    else:
-                        raise
-                if chunk:
-                    if self._paused_reading:
-                        self._read_buffer.append(chunk)
-                    else:
-                        self._protocol.data_received(chunk)
-                elif not passes and chunk == b'':
-                    # We got empty data. Close the socket
-                    try:
-                        self._protocol.eof_received()
-                    finally:
-                        self.close()
-                passes += 1
+                    self._protocol.eof_received()
+                finally:
+                    self.close()
             return
         except self.SocketError:
             failure = None if self._closing else sys.exc_info()

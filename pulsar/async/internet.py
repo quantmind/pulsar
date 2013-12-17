@@ -1,8 +1,7 @@
-import io
 import socket
 from collections import deque
 
-from pulsar.utils.internet import nice_address
+from pulsar.utils.internet import nice_address, BUFFER_MAX_SIZE
 
 from .access import logger
 
@@ -140,7 +139,7 @@ class SocketTransport(Transport):
         self._event_loop = event_loop
         self._closing = False
         self._extra = extra or {}
-        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
+        self._read_chunk_size = read_chunk_size or BUFFER_MAX_SIZE
         self._read_buffer = []
         self._conn_lost = 0
         self._consecutive_writes = 0
