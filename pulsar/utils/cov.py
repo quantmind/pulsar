@@ -68,8 +68,9 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
     coverage = Coverage(data_file=data_file)
     coverage.load()
     if http is None:
+        from pulsar import new_event_loop
         from pulsar.apps.http import HttpClient
-        http = HttpClient(force_sync=True)
+        http = HttpClient(loop=new_event_loop())
     if not service_job_id:
         service_job_id = os.environ.get('TRAVIS_JOB_ID', '')
         if service_job_id:

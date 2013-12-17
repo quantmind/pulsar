@@ -554,7 +554,7 @@ the event loop to poll with a 0 timeout all the times.'''
         try:
             event_pairs = io.poll(timeout)
         except Exception as e:
-            if self._raise_loop_error(e):
+            if raise_socket_error(e) and self.running:
                 raise
         except KeyboardInterrupt:
             raise StopEventLoop
