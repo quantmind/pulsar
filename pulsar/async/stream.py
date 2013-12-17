@@ -8,7 +8,8 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
                                    ESHUTDOWN, BUFFER_MAX_SIZE,
-                                   SOCKET_INTERRUPT_ERRORS)
+                                   SOCKET_INTERRUPT_ERRORS,
+                                   SOCKET_WRITE_ERRORS)
 from pulsar.utils.structures import merge_prefix
 
 from .consts import NUMBER_ACCEPTS
@@ -35,6 +36,11 @@ def raise_socket_error(e):
         if isinstance(args, tuple) and len(args) == 2:
             eno = args[0]
     return eno not in SOCKET_INTERRUPT_ERRORS
+
+
+def raise_write_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    return eno not in SOCKET_WRITE_ERRORS
 
 
 class SocketStreamTransport(SocketTransport):
@@ -94,6 +100,7 @@ class SocketStreamTransport(SocketTransport):
             self._consecutive_writes = 0
             self._ready_write()
             if self._write_buffer:    # still writing
+                self.logger.debug('adding writer for %s', self)
                 self._loop.add_writer(self._sock_fd, self._ready_write)
             elif self._closing:
                 self._loop.call_soon(self._shutdown)
@@ -133,8 +140,10 @@ class SocketStreamTransport(SocketTransport):
                 except self.SocketError as e:
                     if self._write_continue(e):
                         break
-                    else:
+                    if raise_write_socket_error(e):
                         raise
+                    else:
+                        return self.abort()
         except Exception:
             failure = sys.exc_info()
         else:

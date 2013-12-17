@@ -176,8 +176,8 @@ class Poller(object):
                 else:
                     loop._add_callback(error)
             else:
-                loop.logger.warning('Error callback without handler for file'
-                                    ' descriptor %s.', fd)
+                loop.logger.debug('Error callback without handler for file'
+                                  ' descriptor %s.', fd)
         if not processed:
             loop.logger.warning('Could not handle events %s on %s', events, fd)
 
