@@ -8,7 +8,7 @@ activities in different threads and/or processes.
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
-:Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
+:Platforms: Linux, OSX, Windows. Python 2.6, 2.7, 3.3, pypy_
 :Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
     task queue, wsgi, websocket, redis, json-rpc
 

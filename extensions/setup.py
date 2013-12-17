@@ -11,12 +11,8 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
-try:
-    import numpy
-    include_dirs = [numpy.get_include()]
-except ImportError:
-    include_dirs = []
 
+include_dirs = []
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 if sys.platform == 'win32' and sys.version_info > (2, 6):
    # 2.6's distutils.msvc9compiler can raise an IOError when failing to
