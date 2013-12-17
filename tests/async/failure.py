@@ -49,13 +49,13 @@ class TestFailure(unittest.TestCase):
         self.assertTrue('Exception: test' in val)
         mute_failure(self, failure)
 
-    def testRemote(self):
+    def __testRemote(self):
         failure = maybe_failure(Exception('testRemote'))
         failure.mute()
         remote = pickle.loads(pickle.dumps(failure))
         self.assertTrue(remote.logged)
 
-    def testRemoteExcInfo(self):
+    def __testRemoteExcInfo(self):
         failure = maybe_failure(Exception('testRemoteExcInfo'))
         remote = pickle.loads(pickle.dumps(failure))
         # Now create a failure from the remote.exc_info
