@@ -15,6 +15,7 @@ Ver. 0.8.0
 
 * **Core library**
 
+  * Removed support for python 3.2.
   * Added :func:`.run_in_loop_thread` high level function. This utility
     runs a callable in the event loop thread and returns a :class:`.Deferred`
     called back once the callable has a result/exception.
