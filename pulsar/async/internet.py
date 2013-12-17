@@ -1,11 +1,10 @@
-import io
 import socket
 from collections import deque
 
-from pulsar.utils.internet import nice_address
+from pulsar.utils.internet import nice_address, BUFFER_MAX_SIZE
 
 from .defer import Deferred, in_loop
-from .access import asyncio, logger
+from .access import asyncio, AsyncObject
 
 __all__ = ['SocketTransport']
 
@@ -47,12 +46,12 @@ class Server(asyncio.AbstractServer):
         return waiter
 
 
-class SocketTransport(asyncio.Transport):
-    '''A ``asyncio.Transport`` for sockets.
+class SocketTransport(asyncio.Transport, AsyncObject):
+    '''An ``asyncio.Transport`` for sockets.
 
     :param loop: Set the :attr:`_loop` attribute.
     :param sock: Set the :attr:`_sock` attribute.
-    :param protocol: set the :attr:`protocol` attribute.
+    :param protocol: set the :attr:`_protocol` attribute.
     '''
     SocketError = socket.error
 
@@ -65,12 +64,11 @@ class SocketTransport(asyncio.Transport):
         self._sock_fd = sock.fileno()
         self._loop = loop
         self._closing = False
-        self._read_chunk_size = read_chunk_size or io.DEFAULT_BUFFER_SIZE
+        self._read_chunk_size = read_chunk_size or BUFFER_MAX_SIZE
         self._read_buffer = []
         self._conn_lost = 0
         self._consecutive_writes = 0
         self._write_buffer = deque()
-        self.logger = logger(loop)
         self._do_handshake()
 
     def __repr__(self):
@@ -86,7 +84,7 @@ class SocketTransport(asyncio.Transport):
 
     @property
     def sock(self):
-        '''The socket for this :class:`SocketTransport`.'''
+        '''The socket for this transport.'''
         return self._sock
 
     @property

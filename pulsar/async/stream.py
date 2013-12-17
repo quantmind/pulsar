@@ -7,7 +7,7 @@ from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
                                    format_address, ssl_context, ssl,
-                                   ESHUTDOWN, WRITE_BUFFER_MAX_SIZE,
+                                   ESHUTDOWN, BUFFER_MAX_SIZE,
                                    SOCKET_INTERRUPT_ERRORS)
 from pulsar.utils.structures import merge_prefix
 
@@ -40,14 +40,13 @@ def raise_socket_error(e):
 class SocketStreamTransport(SocketTransport):
     '''A :class:`pulsar.SocketTransport` for TCP streams.
 
-The primary feature of a stream transport is sending bytes to a protocol
-and receiving bytes from the underlying protocol. Writing to the transport
-is done using the :meth:`write` and :meth:`writelines` methods.
-The latter method is a performance optimisation, to allow software to take
-advantage of specific capabilities in some transport mechanisms.'''
+    The primary feature of a stream transport is sending bytes to a protocol
+    and receiving bytes from the underlying protocol. Writing to the transport
+    is done using the :meth:`write` and :meth:`writelines` methods.
+    The latter method is a performance optimisation, to allow software to take
+    advantage of specific capabilities in some transport mechanisms.
+    '''
     _paused_reading = False
-    _paused_writing = False
-    _read_buffer = None
 
     def _do_handshake(self):
         self._loop.add_reader(self._sock_fd, self._ready_read)
@@ -60,39 +59,23 @@ advantage of specific capabilities in some transport mechanisms.'''
         Between :meth:`pause_reading` and :meth:`resume_reading`, the
         protocol's data_received() method will not be called.
         '''
-        if not self._paused_reading:
-            self._paused_reading = True
+        if self._closing:
+            raise RuntimeError('Cannot pause_reading() when closing')
+        if self._paused_reading:
+            raise RuntimeError('Already paused')
+        self._paused_reading = True
+        self._loop.remove_reader(self._sock_fd)
 
     def resume_reading(self):
         """Resume the receiving end."""
-        if self._paused_reading:
-            self._paused_reading = False
-            buffer = self._read_buffer
-            self._read_buffer = None
-            for chunk in buffer:
-                self._protocol.data_received(chunk)
-
-    def pause_writing(self):
-        '''Suspend sending data to the network until a subsequent
-        :meth:`resume_writing` call.
-
-        Between :meth:`pause_writing` and :meth:`resume_writing` the
-        transport's :meth:`write` method will just be accumulating data
-        in an internal buffer.
-        '''
-        if not self._paused_writing:
-            self._paused_writing = True
-            self._loop.remove_writer(self._sock_fd)
-
-    def resume_writing(self):    # pragma    nocover
-        '''Restart sending data to the network.'''
-        if self._paused_writing:
-            self._paused_writing = False
-            if self._write_buffer:
-                self._loop.add_writer(self._sock_fd, self._write_ready)
+        if not self._paused_reading:
+            raise RuntimeError('Not paused')
+        self._paused_reading = False
+        if not self._closing:
+            self._loop.add_reader(self._sock_fd)
 
     def write(self, data):
-        '''Write chunk of ``data`` to the endpoint.
+        '''Write chunk of ``data`` to the end-point.
         '''
         if not data:
             return
@@ -101,13 +84,11 @@ advantage of specific capabilities in some transport mechanisms.'''
         if data:
             # Add data to the buffer
             assert isinstance(data, bytes)
-            if len(data) > WRITE_BUFFER_MAX_SIZE:
-                for i in range(0, len(data), WRITE_BUFFER_MAX_SIZE):
-                    self._write_buffer.append(data[i:i+WRITE_BUFFER_MAX_SIZE])
+            if len(data) > BUFFER_MAX_SIZE:
+                for i in range(0, len(data), BUFFER_MAX_SIZE):
+                    self._write_buffer.append(data[i:i+BUFFER_MAX_SIZE])
             else:
                 self._write_buffer.append(data)
-        if self._paused_writing:
-            return
         # Try to write only when not waiting for write callbacks
         if not is_writing:
             self._consecutive_writes = 0
@@ -121,6 +102,13 @@ advantage of specific capabilities in some transport mechanisms.'''
             if self._consecutive_writes > MAX_CONSECUTIVE_WRITES:
                 self.abort(TooManyConsecutiveWrite())
 
+    def writelines(self, list_of_data):
+        '''Write a list (or any iterable) of data bytes to the transport.
+        '''
+        self.write(b''.join(list_of_data))
+
+    ##    INTERNALS
+
     def _write_continue(self, e):
         return e.args and e.args[0] in TRY_WRITE_AGAIN
 
@@ -131,8 +119,6 @@ advantage of specific capabilities in some transport mechanisms.'''
         # Do the actual writing
         buffer = self._write_buffer
         tot_bytes = 0
-        if self._paused_writing:
-            return tot_bytes
         if not buffer:
             self.logger.warning('handling write on a 0 length buffer')
         try:
@@ -161,31 +147,23 @@ advantage of specific capabilities in some transport mechanisms.'''
             self.abort(failure)
 
     def _ready_read(self):
-        # Read from the socket until we get EWOULDBLOCK or equivalent.
-        # If any other error occur, abort the connection and re-raise.
-        chunk = True
         try:
-            while chunk:
+            try:
+                chunk = self._sock.recv(self._read_chunk_size)
+            except self.SocketError as e:
+                if self._read_continue(e):
+                    return
+                if raise_socket_error(e):
+                    raise
+                else:
+                    chunk = None
+            if chunk:
+                self._protocol.data_received(chunk)
+            else:
                 try:
-                    chunk = self._sock.recv(self._read_chunk_size)
-                except self.SocketError as e:
-                    if self._read_continue(e):
-                        return
-                    if raise_socket_error(e):
-                        raise
-                    else:
-                        chunk = b''
-                if chunk:
-                    if self._paused_reading:
-                        self._read_buffer.append(chunk)
-                    else:
-                        self._protocol.data_received(chunk)
-                if chunk == b'':
-                    # We got empty data. Close the socket
-                    try:
-                        self._protocol.eof_received()
-                    finally:
-                        self.close()
+                    self._protocol.eof_received()
+                finally:
+                    self.close()
             return
         except self.SocketError:
             failure = None if self._closing else sys.exc_info()
@@ -193,14 +171,6 @@ advantage of specific capabilities in some transport mechanisms.'''
             failure = sys.exc_info()
         if failure:
             self.abort(Failure(failure))
-
-    def mute_read_error(self, error):
-        '''Return ``True`` if a socket error from a read operation is muted.
-
-        This is when the socket cannot send sinse the socket has started
-        shutting down already.
-        '''
-        return error.errno in (ESHUTDOWN,)
 
 
 class SocketStreamSslTransport(SocketStreamTransport):
