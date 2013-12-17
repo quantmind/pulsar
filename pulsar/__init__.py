@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -
-VERSION = (0, 8, 0, 'alpha', 2)
+VERSION = (0, 8, 0, 'beta', 2)
 
 import os
 

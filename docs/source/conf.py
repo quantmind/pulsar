@@ -61,7 +61,7 @@ html_sidebars = {
 }
 exclude_trees = []
 html_additional_pages = {
-    'index': 'index.html',
+#    'index': 'index.html',
 }
 
 # -- Options for HTML output ---------------------------------------------------

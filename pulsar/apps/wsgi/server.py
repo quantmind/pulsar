@@ -269,6 +269,7 @@ class HttpServerResponse(ProtocolConsumer):
     _status = None
     _headers_sent = None
     _stream = None
+    _buffer = None
     SERVER_SOFTWARE = pulsar.SERVER_SOFTWARE
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
@@ -304,7 +305,11 @@ class HttpServerResponse(ProtocolConsumer):
                 # bogus data
                 raise ProtocolError
             else:
-                return data[processed:]
+                if not self._buffer:
+                    self._buffer = data[processed:]
+                    self.bind_event('post_request', self._new_request)
+                else:
+                    self._buffer += data[processed:]
 
     @property
     def status(self):
@@ -419,7 +424,6 @@ class HttpServerResponse(ProtocolConsumer):
             wsgi_iter = self.wsgi_callable(environ, self.start_response)
             yield self._async_wsgi(wsgi_iter)
         except IOError:     # client disconnected, end this connection
-            print('here')
             self.finished()
         except Exception:
             exc_info = sys.exc_info()
@@ -511,3 +515,10 @@ class HttpServerResponse(ProtocolConsumer):
         self.headers.update([('Server', self.SERVER_SOFTWARE),
                              ('Date', format_date_time(time.time()))])
         return environ
+
+    def _new_request(self, response):
+        connection = response._connection
+        if not connection.closed:
+            connection.data_received(response._buffer)
+            return connection._current_consumer
+        return response
