@@ -19,8 +19,10 @@ cdef extern from *:
 
 if PY_MAJOR_VERSION < 3:
     string_type = unicode
+    int_type = (int, long)
 else:
     string_type = str
+    int_type = long
 
 
 cdef inline bytes to_bytes(object value, str encoding):
@@ -134,7 +136,8 @@ cdef class Lua:
             bname = to_bytes(name, 'utf-8')
             lua.lua_setglobal(self.state, bname)
         else:
-            raise RuntimeError('Could not set global variable %s' % name)
+            raise RuntimeError('Could not set global variable %s to %s' %
+                               (name, value))
 
     def __enter__(self):
         self.lock.acquire()
@@ -280,8 +283,8 @@ cdef inline int _py_to_lua(lua_State *state, object o, Lua runtime=None):
         lua.lua_pushboolean(state, <bint>o)
     elif type(o) is float:
         lua.lua_pushnumber(state, <float>cpython.float.PyFloat_AS_DOUBLE(o))
-    elif isinstance(o, long):
-        lua.lua_pushnumber(state, <float>cpython.long.PyLong_AsDouble(o))
+    elif isinstance(o, int_type):
+        lua.lua_pushnumber(state, <float>o)
     elif isinstance(o, bytes):
         b = <bytes>o
         lua.lua_pushlstring(state, b, len(b))
