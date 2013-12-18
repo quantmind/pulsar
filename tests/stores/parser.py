@@ -5,13 +5,14 @@ from pulsar.apps.test import unittest
 from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
                               InvalidResponse)
 
-def lua_nested_table(nesting):
-    s = b''.join((b'1234567890' for n in range(100)))
+def lua_nested_table(nesting, s=100):
+    s = b''.join((b'1234567890' for n in range(s)))
     pres = [100, s]
     result = pres
     for i in range(nesting):
         res = [-8, s, None]
-        dres = {1: 'valid', 'bla': 6}
+        #dres = {1: 'valid', 'bla': 6}
+        dres = 1
         pres.extend((res, res, dres))
         pres = res
     return result
@@ -95,6 +96,28 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res2[0], b'100')
         self.assertEqual(res2[1], result[1])
 
+    def test_nested_bug_fixer(self):
+        p = self.parser()
+        result = [b'100',
+                  b'1234567890',
+                  [b'-8', b'1234567890', None],
+                  [b'-8', b'1234567890', None],
+                  b'1']
+        data = p.multi_bulk(result)
+        chunks = [b'*5\r\n$3\r\n100',
+                  b'\r\n$10\r\n12345',
+                  b'67890\r\n*3',
+                  b'\r\n$2\r',
+                  b'\n-8\r\n$10\r',
+                  b'\n1234567890\r\n$-1\r\n',
+                  b'*3\r\n$2\r\n-8\r\n$10\r\n1234567890\r\n$-1\r\n$1\r\n1\r\n']
+        self.assertEqual(data, b''.join(chunks))
+        for chunk in chunks[:-1]:
+            p.feed(chunk)
+            self.assertEqual(p.get(), False)
+        p.feed(chunks[-1])
+        self.assertEqual(p.get(), result)
+
     def test_nested_a_drop_at_a_time(self):
         p = self.parser()
         result = lua_nested_table(3)
@@ -102,7 +125,7 @@ class TestParser(unittest.TestCase):
         while data:
             self.assertEqual(p.get(), False)
             i = randint(1, 30)
-            data, chunk = data[i:], data[:i]
+            chunk, data = data[:i], data[i:]
             p.feed(chunk)
         res2 = p.get()
         self.assertEqual(len(res2), len(result))

@@ -176,6 +176,7 @@ cdef class ArrayTask(Task):
     cdef object decode(self, RedisParser parser, object result):
         cdef long length = self._length
         cdef list response = self._response
+        parser._current = None
         if response is None:
             self._response = response = []
         if length >= 0:

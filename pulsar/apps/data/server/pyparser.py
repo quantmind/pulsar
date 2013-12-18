@@ -53,6 +53,7 @@ class ArrayTask(object):
         self.next = next
 
     def decode(self, parser, result):
+        parser._current = None
         length = self._length
         if length >= 0:
             response = self._response
