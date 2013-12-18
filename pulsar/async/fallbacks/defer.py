@@ -532,6 +532,7 @@ class Deferred(object):
     def _run_callbacks(self):
         if self._state == _PENDING or self._runningCallbacks or self._paused:
             return
+        __skip_traceback__ = True
         loop = self._loop
         noisy = getattr(loop, 'noisy', False)
         while self._callbacks:

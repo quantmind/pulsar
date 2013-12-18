@@ -269,23 +269,38 @@ class RedisCommands(StoreMixin):
         yield eq(c.hincrbyfloat(key, 'foo', -1.1), 2.4)
         yield self._remove_and_push(key)
 
-    def test_hkeys_hlen_hmget(self):
+    def test_hkeys_hvals_hlen_hmget(self):
         key = self.randomkey()
         eq = self.async.assertEqual
         c = self.client
         h = {b'f1': b'1', b'f2': b'hello', b'f3': b'foo'}
         yield eq(c.hkeys(key), [])
+        yield eq(c.hvals(key), [])
         yield eq(c.hlen(key), 0)
         yield eq(c.hmset(key, h), True)
         keys = yield c.hkeys(key)
+        vals = yield c.hvals(key)
         self.assertEqual(sorted(keys), sorted(h))
+        self.assertEqual(sorted(vals), sorted(h.values()))
         yield eq(c.hlen(key), 3)
         yield eq(c.hmget(key, 'f1', 'f3', 'hj'),
                  {'f1': b'1', 'f3': b'foo', 'hj': None})
         yield self._remove_and_push(key)
         yield self.async.assertRaises(ResponseError, c.hkeys, key)
+        yield self.async.assertRaises(ResponseError, c.hvals, key)
         yield self.async.assertRaises(ResponseError, c.hlen, key)
         yield self.async.assertRaises(ResponseError, c.hmget, key, 'f1', 'f2')
+
+    def test_hsetnx(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hsetnx(key, 'a', 'foo'), 1)
+        yield eq(c.hget(key, 'a'), b'foo')
+        yield eq(c.hsetnx(key, 'a', 'bla'), 0)
+        yield eq(c.hget(key, 'a'), b'foo')
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hsetnx, key, 'a', 'jk')
 
     ###########################################################################
     ##    LISTS
