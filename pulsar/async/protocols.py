@@ -395,21 +395,17 @@ class Connection(Protocol):
         consumer._connection = self
         consumer.connection_made(self)
 
-    def data_received(self, data, arg=None):
+    def data_received(self, data):
         '''Delegates handling of data to the :meth:`current_consumer`.
 
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         '''
         self._cancel_timeout()
-        consumer = self.current_consumer()
-        data = consumer._data_received(data)
-        if data:
-            consumer.on_finished.add_callback(
-                partial(self.data_received, data))
-        else:
-            self._add_idle_timeout()
-        return arg
+        while data:
+            consumer = self.current_consumer()
+            data = consumer._data_received(data)
+        self._add_idle_timeout()
 
     def connection_lost(self, exc):
         '''It performs these actions in the following order:
