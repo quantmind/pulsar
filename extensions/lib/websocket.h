@@ -4,8 +4,8 @@
 #include <Python.h>
 
 
-inline PyObject* websocket_mask(const char* chunk, const char* key,
-        size_t chunk_length, size_t mask_length) {
+PyObject* websocket_mask(const char* chunk, const char* key,
+                         size_t chunk_length, size_t mask_length) {
     size_t i;
     char* buf;
     PyObject* result = PyBytes_FromStringAndSize(NULL, chunk_length);

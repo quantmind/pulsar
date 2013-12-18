@@ -131,7 +131,7 @@ class Consumer(pulsar.ProtocolConsumer):
         conn = self._connection
         args = self._request[0]
         if len(self._request) == 2:
-            chunk = conn.parser.multi_bulk(args)
+            chunk = conn.parser.pack_command(args)
         else:
             chunk = conn.parser.pack_pipeline(args)
         conn._transport.write(chunk)

@@ -20,6 +20,6 @@ examples/djangoapp/test.db
 test.pid
 pulsar.egg-info
 extensions/lua/lua.c
-extensions/lib/lib.cpp
+extensions/lib/lib.c
 .coveralls.yml
 *.rdb

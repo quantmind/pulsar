@@ -113,12 +113,31 @@ class Parser(object):
         '''
         return null_array if args is None else b''.join(self._pack(args))
 
+    def pack_command(self, args):
+        '''Encode a command to send to the server.
+
+        Used by redis clients
+        '''
+        return b''.join(self._pack_command(args))
+
     def pack_pipeline(self, commands):
         '''Packs pipeline commands into bytes.'''
-        pack = lambda *args: b''.join(self._pack(args))
+        pack = lambda *args: b''.join(self._pack_command(args))
         return b''.join(starmap(pack, (args for args, _ in commands)))
 
     #    INTERNALS
+    def _pack_command(self, args):
+        crlf = b'\r\n'
+        yield ('*%d\r\n' % len(args)).encode('utf-8')
+        for value in args:
+            if isinstance(value, string_type):
+                value = value.encode('utf-8')
+            elif not isinstance(value, bytes):
+                value = str(value).encode('utf-8')
+            yield ('$%d\r\n' % len(value)).encode('utf-8')
+            yield value
+            yield crlf
+
     def _pack(self, args):
         crlf = b'\r\n'
         yield ('*%d\r\n' % len(args)).encode('utf-8')
@@ -135,7 +154,7 @@ class Parser(object):
                 yield value
                 yield crlf
             elif hasattr(value, 'items'):
-                for value in self._pack(self._lua_dict(value)):
+                for value in self._pack(tuple(self._lua_dict(value))):
                     yield value
             elif hasattr(value, '__len__'):
                 for value in self._pack(value):

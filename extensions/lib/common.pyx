@@ -17,8 +17,10 @@ ispy3k = sys.version_info >= (3, 0)
 
 if ispy3k:
     string_type = str
+    strict_string_type = str
 else:
     string_type = basestring
+    strict_string_type = unicode
     range = xrange
 
 

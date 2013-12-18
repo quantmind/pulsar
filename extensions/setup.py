@@ -70,7 +70,6 @@ def lib_extension():
     include_dirs.append(path)
     return Extension('pulsar.utils.lib',
                      [os.path.join(path, 'lib.pyx')],
-                     language='c++',
                      include_dirs=include_dirs)
 
 
