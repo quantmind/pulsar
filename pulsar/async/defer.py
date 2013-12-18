@@ -1,13 +1,12 @@
 import sys
 from collections import Mapping
 
-from pulsar import HAS_C_EXTENSIONS
 from pulsar.utils.pep import iteritems
 
 from .access import get_event_loop, get_request_loop
 from .consts import MAX_ASYNC_WHILE
 
-if HAS_C_EXTENSIONS:
+if False:   # pragma nocover
     from pulsar.utils.lib import (Deferred, DeferredTask, Failure, async,
                                   maybe_async, maybe_failure, NOT_DONE,
                                   add_async_binding, set_access,
