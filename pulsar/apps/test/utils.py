@@ -161,6 +161,7 @@ class AsyncAssert(object):
 
     def __getattr__(self, name):
         def _(*args, **kwargs):
+            __skip_traceback__ = True
             args = yield multi_async(args)
             yield getattr(self.test, name)(*args, **kwargs)
         return _

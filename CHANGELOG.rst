@@ -66,7 +66,7 @@ Ver. 0.8.0
   * Improved :ref:`django example <tutorials-django>` with possibility to
     choose different data stores for messages.
 
-* **1,030 regression tests**, **91% coverage**.
+* **1,033 regression tests**, **91% coverage**.
 
 Ver. 0.7.3 - 2013-Dec-12
 ===========================

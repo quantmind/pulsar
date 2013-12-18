@@ -10,6 +10,7 @@ from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
 
 
 class StoreMixin(object):
+    client = None
     redis_py_parser = False
 
     @classmethod
@@ -23,6 +24,12 @@ class StoreMixin(object):
     @classmethod
     def randomkey(cls, length=None):
         return random_string(length=length)
+
+    def _remove_and_push(self, key, rem=1):
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.delete(key), rem)
+        yield eq(c.rpush(key, 'bla'), 1)
 
 
 class RedisCommands(StoreMixin):
@@ -58,11 +65,14 @@ class RedisCommands(StoreMixin):
         yield eq(c.get(key), b'a1')
         yield eq(c.append(key, 'a2'), 4)
         yield eq(c.get(key), b'a1a2')
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.append, key, 'g')
 
     def test_bitcount(self):
         key = self.randomkey()
         c = self.client
         eq = self.async.assertEqual
+        yield eq(c.bitcount(key), 0)
         yield eq(c.setbit(key, 5, 1), 0)
         yield eq(c.bitcount(key), 1)
         yield eq(c.setbit(key, 6, 1), 0)
@@ -79,6 +89,8 @@ class RedisCommands(StoreMixin):
         yield eq(c.bitcount(key, 2, -1), 3)
         yield eq(c.bitcount(key, -2, -1), 2)
         yield eq(c.bitcount(key, 1, 1), 1)
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.bitcount, key)
 
     def test_bitop_not_empty_string(self):
         key = self.randomkey()
@@ -192,12 +204,88 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         eq = self.async.assertEqual
         c = self.client
+        yield eq(c.hdel(key, 'f1', 'f2', 'gh'), 0)
         yield eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}), True)
         yield eq(c.hdel(key, 'f1', 'f2', 'gh'), 2)
         yield eq(c.hdel(key, 'fgf'), 0)
         yield eq(c.type(key), 'hash')
         yield eq(c.hdel(key, 'f3'), 1)
         yield eq(c.type(key), 'none')
+        yield self._remove_and_push(key, 0)
+        yield self.async.assertRaises(ResponseError, c.hdel, key, 'foo')
+
+    def test_hexists(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hexists(key, 'foo'), False)
+        yield eq(c.hmset(key, {'f1': 1, 'f2': 'hello', 'f3': 'foo'}), True)
+        yield eq(c.hexists(key, 'f3'), True)
+        yield eq(c.hexists(key, 'f5'), False)
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hexists, key, 'foo')
+
+    def test_hset_hget(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hget(key, 'foo'), None)
+        yield eq(c.hset(key, 'foo', 4), 1)
+        yield eq(c.hget(key, 'foo'), b'4')
+        yield eq(c.hset(key, 'foo', 6), 0)
+        yield eq(c.hget(key, 'foo'), b'6')
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hset, key, 'foo', 7)
+        yield self.async.assertRaises(ResponseError, c.hget, key, 'foo')
+        yield self.async.assertRaises(ResponseError, c.hmset, key, 'foo')
+
+    def test_hgetall(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        h = {b'f1': b'1', b'f2': b'hello', b'f3': b'foo'}
+        yield eq(c.hgetall(key), {})
+        yield eq(c.hmset(key, h), True)
+        yield eq(c.hgetall(key), h)
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hgetall, key)
+
+    def test_hincrby(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hincrby(key, 'foo', 1), 1)
+        yield eq(c.hincrby(key, 'foo', 2), 3)
+        yield eq(c.hincrby(key, 'foo', -1), 2)
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hincrby, key, 'foo', 3)
+
+    def test_hincrbyfloat(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.hincrbyfloat(key, 'foo', 1), 1.0)
+        yield eq(c.hincrbyfloat(key, 'foo', 2.5), 3.5)
+        yield eq(c.hincrbyfloat(key, 'foo', -1.1), 2.4)
+        yield self._remove_and_push(key)
+
+    def test_hkeys_hlen_hmget(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        h = {b'f1': b'1', b'f2': b'hello', b'f3': b'foo'}
+        yield eq(c.hkeys(key), [])
+        yield eq(c.hlen(key), 0)
+        yield eq(c.hmset(key, h), True)
+        keys = yield c.hkeys(key)
+        self.assertEqual(sorted(keys), sorted(h))
+        yield eq(c.hlen(key), 3)
+        yield eq(c.hmget(key, 'f1', 'f3', 'hj'),
+                 {'f1': b'1', 'f3': b'foo', 'hj': None})
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.hkeys, key)
+        yield self.async.assertRaises(ResponseError, c.hlen, key)
+        yield self.async.assertRaises(ResponseError, c.hmget, key, 'f1', 'f2')
 
     ###########################################################################
     ##    LISTS
@@ -358,6 +446,7 @@ class RedisCommands(StoreMixin):
         yield eq(c.sadd(key2, 2, 3, 4), 3)
         yield eq(c.sunionstore(des, key, key2), 4)
         yield eq(c.smembers(des), set([b'1', b'2', b'3', b'4']))
+
     ###########################################################################
     ##    SORTED SETS
     def test_zadd_zcard(self):

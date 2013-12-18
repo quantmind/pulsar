@@ -54,7 +54,7 @@ from pulsar.utils.structures import Dict, Zset, Deque
 from pulsar.utils.pep import map, range, zip, pickle, ispy3k
 try:
     from pulsar.utils.lua import Lua
-except ImportError:
+except ImportError:     # pragma    nocover
     Lua = None
 
 
@@ -89,9 +89,6 @@ class RedisParserSetting(Global):
 
     Mainly used for benchmarking purposes.
     '''
-
-    def parser_class(self):
-        return PyRedisParser if self.value else RedisParser
 
 
 class PulsarDsSetting(pulsar.Setting):
@@ -285,7 +282,7 @@ class Storage(object):
             self.lua.register('redis', LuaClient(self),
                               'call', 'pcall', 'error_reply', 'status_reply')
             self.version = '2.6.16'
-        else:
+        else:   # pragma    nocover
             self.lua = None
             self.version = '2.4.10'
         self._loaddb()
@@ -945,9 +942,10 @@ class Storage(object):
             db._data[key] = value
         elif not isinstance(value, self.hash_type):
             return client.reply_wrongtype()
+        avail = (field in value)
         value[field] = request[3]
         self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
-        client.reply_zero() if field in value else client.reply_one()
+        client.reply_zero() if avail else client.reply_one()
 
     @command('Hashes', True)
     def hsetnx(self, client, request, N):

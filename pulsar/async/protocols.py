@@ -5,8 +5,7 @@ import pulsar
 from pulsar import ProtocolError
 from pulsar.utils.internet import nice_address, format_address
 
-from .defer import (multi_async, log_failure, in_loop, coroutine_return,
-                    NOT_DONE)
+from .defer import (multi_async, in_loop, coroutine_return, NOT_DONE)
 from .events import EventHandler
 from .access import asyncio, get_event_loop, new_event_loop
 
@@ -175,7 +174,6 @@ class ProtocolConsumer(EventHandler):
 
         By default it calls the :meth:`finished` method. It can be overwritten
         to handle the potential exception ``exc``.'''
-        log_failure(exc)
         return self.finished(exc)
 
     def finished(self, exc=None):
@@ -420,8 +418,6 @@ class Connection(Protocol):
             self._cancel_timeout()
             if self._current_consumer:
                 self._current_consumer.connection_lost(exc)
-            else:
-                log_failure(exc)
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.
