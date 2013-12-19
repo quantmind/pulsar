@@ -301,7 +301,7 @@ import pulsar
 from pulsar import EventHandler, maybe_failure, multi_async, Failure
 from pulsar.apps import tasks
 from pulsar.apps.data import PulsarDS, create_store
-from pulsar.utils.log import local_property
+from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs
 from pulsar.utils.pep import default_timer, to_string
 
@@ -489,7 +489,7 @@ class TestSuite(tasks.TaskQueue):
                         task_paths=['pulsar.apps.test.case'],
                         plugins=())
 
-    @local_property
+    @lazyproperty
     def runner(self):
         '''The :class:`.TestRunner` driving test cases.
         '''
@@ -507,7 +507,7 @@ class TestSuite(tasks.TaskQueue):
             raise ExitTest(str(abort_message))
         return runner
 
-    @local_property
+    @lazyproperty
     def loader(self):
         #When config is available load the tests and check what type of
         #action is required.
@@ -552,9 +552,9 @@ class TestSuite(tasks.TaskQueue):
                           key_value_save=[],
                           name='%s_store' % self.name)
         yield server()
-        store = create_store('pulsar://%s:%s' % (server.address))
-        self._create_backend(store)
-        loader = self.local.loader
+        store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]))
+        self.get_backend(store)
+        loader = self.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
         if self.cfg.show_leaks:
@@ -563,7 +563,7 @@ class TestSuite(tasks.TaskQueue):
             arbiter = pulsar.arbiter()
             arbiter.cfg.set('when_exit', show)
         try:
-            self.local.tests = tests = []
+            tests = []
             self.runner.on_start()
             for tag, testcls in loader.testclasses(tags, exclude_tags):
                 suite = self.runner.loadTestsFromTestCase(testcls)
@@ -572,14 +572,13 @@ class TestSuite(tasks.TaskQueue):
             self._time_start = None
             if tests:
                 self.logger.info('loaded %s test classes', len(tests))
-                self.fire_event('tests', tests=tests)
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
                 queued = []
                 self._tests_done = set()
                 self._tests_queued = None
                 self.backend.bind_event('task_done', self._test_done)
-                for tag, testcls in self.local.tests:
+                for tag, testcls in tests:
                     r = self.backend.queue_task('test', testcls=testcls,
                                                 tag=tag)
                     queued.append(r)
@@ -595,12 +594,6 @@ class TestSuite(tasks.TaskQueue):
             Failure(sys.exc_info()).critical(
                 'Error occurred while starting tests')
             monitor.arbiter.stop()
-
-    @local_property
-    def events(self):
-        '''Events for the application: ``ready``, ``start``, ``stop``.'''
-        return EventHandler(one_time_events=('ready', 'start', 'stop'),
-                            many_times_events=('tests',))
 
     @classmethod
     def create_config(cls, *args, **kwargs):

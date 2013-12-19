@@ -50,12 +50,14 @@ class TaskQueueBase(object):
                    task_backend=cls.task_backend(),
                    script=__file__,
                    schedule_periodic=cls.schedule_periodic)
-        cls.apps = yield send('arbiter', 'run', s)
+        cfgs = yield send('arbiter', 'run', s)
+        cls.apps = [cfg.application.from_config(cfg) for cfg in cfgs]
+        rpc_address = cfgs[1].addresses[0]
         # make sure the time out is high enough (bigger than test-timeout)
-        cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.apps[1].address,
+        cls.proxy = rpc.JsonProxy('http://%s:%s' % rpc_address,
                                   timeout=cls.rpc_timeout)
         # Now flush the task queue
-        backend = cls.apps[0].backend
+        backend = cls.apps[0].get_backend()
         yield backend.flush()
 
     @classmethod
@@ -66,6 +68,17 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
+    def test_rpc_next_scheduled_tasks(self):
+        next = yield self.proxy.next_scheduled_tasks()
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
+        self.assertTrue(next)
+        self.assertEqual(len(next), 2)
+        self.assertEqual(next[0], 'testperiodic')
+        self.assertTrue(next[1] >= 0)
+
+class f:
     def test_run_new_simple_task(self):
         r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
         r = yield self.proxy.wait_for_task(r)

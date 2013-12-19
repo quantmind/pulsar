@@ -31,6 +31,12 @@ class StoreMixin(object):
         yield eq(c.delete(key), rem)
         yield eq(c.rpush(key, 'bla'), 1)
 
+    def _remove_and_sadd(self, key, rem=1):
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.delete(key), rem)
+        yield eq(c.sadd(key, 'bla'), 1)
+
 
 class RedisCommands(StoreMixin):
 
@@ -311,6 +317,7 @@ class RedisCommands(StoreMixin):
         bk2 = key2.encode('utf-8')
         eq = self.async.assertEqual
         c = self.client
+        yield self.async.assertRaises(ResponseError, c.blpop, key1, 'bla')
         yield eq(c.rpush(key1, 1, 2), 2)
         yield eq(c.rpush(key2, 3, 4), 2)
         yield eq(c.blpop((key2, key1), 1), (bk2, b'3'))
@@ -320,6 +327,112 @@ class RedisCommands(StoreMixin):
         yield eq(c.blpop((key2, key1), 1), None)
         yield eq(c.rpush(key1, '1'), 1)
         yield eq(c.blpop(key1, 1), (bk1, b'1'))
+
+    def test_brpop(self):
+        key1 = self.randomkey()
+        key2 = key1 + 'x'
+        bk1 = key1.encode('utf-8')
+        bk2 = key2.encode('utf-8')
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.rpush(key1, 1, 2), 2)
+        yield eq(c.rpush(key2, 3, 4), 2)
+        yield eq(c.brpop((key2, key1), 1), (bk2, b'4'))
+        yield eq(c.brpop((key2, key1), 1), (bk2, b'3'))
+        yield eq(c.brpop((key2, key1), 1), (bk1, b'2'))
+        yield eq(c.brpop((key2, key1), 1), (bk1, b'1'))
+        yield eq(c.brpop((key2, key1), 1), None)
+        yield eq(c.rpush(key1, '1'), 1)
+        yield eq(c.brpop(key1, 1), (bk1, b'1'))
+
+    def test_lindex_llen(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.lindex(key, '0'), None)
+        yield eq(c.llen(key), 0)
+        yield eq(c.rpush(key, '1', '2', '3'), 3)
+        yield eq(c.lindex(key, '0'), b'1')
+        yield eq(c.lindex(key, '1'), b'2')
+        yield eq(c.lindex(key, '2'), b'3')
+        yield eq(c.lindex(key, '3'), None)
+        yield eq(c.llen(key), 3)
+        yield self._remove_and_sadd(key)
+        yield self.async.assertRaises(ResponseError, c.lindex, key, '1')
+        yield self.async.assertRaises(ResponseError, c.llen, key)
+
+    def test_linsert(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.linsert(key, 'after', '2', '2.5'), 0)
+        yield eq(c.rpush(key, '1', '2', '3'), 3)
+        yield eq(c.linsert(key, 'after', '2', '2.5'), 4)
+        yield eq(c.lrange(key, 0, -1), [b'1', b'2', b'2.5', b'3'])
+        yield eq(c.linsert(key, 'before', '2', '1.5'), 5)
+        yield eq(c.lrange(key, 0, -1), [b'1', b'1.5', b'2', b'2.5', b'3'])
+        yield eq(c.linsert(key, 'before', '100', '1.5'), -1)
+        yield self.async.assertRaises(ResponseError, c.linsert, key,
+                                      'banana', '2', '2.5')
+        yield self._remove_and_sadd(key)
+        yield self.async.assertRaises(ResponseError, c.linsert, key,
+                                      'after', '2', '2.5')
+
+    def test_lpop(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.lpop(key), None)
+        yield eq(c.rpush(key, 1, 2), 2)
+        yield eq(c.lpop(key), b'1')
+        yield eq(c.lpop(key), b'2')
+        yield eq(c.lpop(key), None)
+        yield eq(c.type(key), 'none')
+        yield self._remove_and_sadd(key, 0)
+        yield self.async.assertRaises(ResponseError, c.lpop, key)
+        yield self.async.assertRaises(ResponseError, c.lpush, key, 4)
+
+    def test_rpop(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.rpop(key), None)
+        yield eq(c.rpush(key, 1, 2), 2)
+        yield eq(c.rpop(key), b'2')
+        yield eq(c.rpop(key), b'1')
+        yield eq(c.rpop(key), None)
+        yield eq(c.type(key), 'none')
+
+    def test_lpushx_rpushx(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.lpushx(key, 'b'), 0)
+        yield eq(c.rpushx(key, 'b'), 0)
+        yield eq(c.lrange(key, 0, -1), [])
+        yield eq(c.lpush(key, 'a'), 1)
+        yield eq(c.lpushx(key, 'b'), 2)
+        yield eq(c.rpushx(key, 'c'), 3)
+        yield eq(c.lrange(key, 0, -1), [b'b', b'a', b'c'])
+        yield self._remove_and_sadd(key)
+        yield self.async.assertRaises(ResponseError, c.lpushx, key, 'g')
+
+    def test_lrem(self):
+        key = self.randomkey()
+        eq = self.async.assertEqual
+        c = self.client
+        yield eq(c.lrem(key, 1, 'a'), 0)
+        yield eq(c.rpush(key, 'a', 'a', 'a', 'b', 'a', 'a'), 6)
+        yield eq(c.lrem(key, 1, 'a'), 1)
+        yield eq(c.lrange(key, 0, -1), [b'a', b'a', b'b', b'a', b'a'])
+        yield eq(c.lrem(key, -1, 'a'), 1)
+        yield eq(c.lrange(key, 0, -1), [b'a', b'a', b'b', b'a'])
+        yield eq(c.lrem(key, 0, 'a'), 3)
+        yield self.async.assertRaises(ResponseError, c.lrem, key, 'g', 'foo')
+        yield eq(c.lrange(key, 0, -1), [b'b'])
+        yield eq(c.lrem(key, 0, 'b'), 1)
+        yield self._remove_and_sadd(key, 0)
+        yield self.async.assertRaises(ResponseError, c.lrem, key, 1)
 
     ###########################################################################
     ##    SETS

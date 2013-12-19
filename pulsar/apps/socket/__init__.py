@@ -184,7 +184,6 @@ class SocketServer(pulsar.Application):
         The socket address, available once the application has started.
     '''
     name = 'socket'
-    address = None
     cfg = pulsar.Config(apps=['socket'])
 
     def protocol_factory(self):
@@ -192,7 +191,7 @@ class SocketServer(pulsar.Application):
 
         By default it returns the :meth:`.Application.callable`.
         '''
-        return partial(Connection, self.callable)
+        return partial(Connection, self.cfg.callable)
 
     def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
@@ -227,8 +226,7 @@ class SocketServer(pulsar.Application):
         server.close()
         monitor.params.sockets = sockets
         monitor.params.ssl = ssl
-        self.addresses = addresses
-        self.address = addresses[0]
+        cfg.addresses = addresses
 
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''

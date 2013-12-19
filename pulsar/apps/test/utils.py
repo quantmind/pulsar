@@ -78,8 +78,8 @@ class TestCallable:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        return safe_async(test_function).add_both(partial(self._end, actor))\
-                                        .set_timeout(self.timeout)
+        return safe_async(test_function).add_both(
+            partial(self._end, actor)).set_timeout(self.timeout)
 
     def _end(self, actor, result):
         if self.istest:

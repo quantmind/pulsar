@@ -1,6 +1,4 @@
 '''Replicate asyncio basic functionalities'''
-from heapq import heappush
-
 from pulsar.utils.pep import default_timer, ispy3k
 
 fallback = True
@@ -120,30 +118,6 @@ class BaseEventLoop(AbstractEventLoop):
     def time(self):
         return default_timer()
 
-    def call_later(self, delay, callback, *args):
-        """Arrange for a callback to be called at a given time.
-
-        Return a Handle: an opaque object with a cancel() method that
-        can be used to cancel the call.
-
-        The delay can be an int or float, expressed in seconds.  It is
-        always a relative time.
-
-        Each callback will be called exactly once.  If two callbacks
-        are scheduled for exactly the same time, it undefined which
-        will be called first.
-
-        Any positional arguments after the callback will be passed to
-        the callback when it is called.
-        """
-        return self.call_at(self.time() + delay, callback, *args)
-
-    def call_at(self, when, callback, *args):
-        """Like call_later(), but uses an absolute time."""
-        timer = TimerHandle(when, callback, args)
-        heappush(self._scheduled, timer)
-        return timer
-
     def call_soon(self, callback, *args):
         handle = TimerHandle(None, callback, args)
         self._ready.append(handle)
@@ -160,16 +134,6 @@ class BaseEventLoop(AbstractEventLoop):
 
     def _write_to_self(self):
         raise NotImplementedError
-
-    def _add_callback(self, handle):
-        """Add a Handle to ready or scheduled."""
-        assert isinstance(handle, Handle), 'A Handle is required here'
-        if handle._cancelled:
-            return
-        if isinstance(handle, TimerHandle):
-            heappush(self._scheduled, handle)
-        else:
-            self._ready.append(handle)
 
 
 ###########################################################################

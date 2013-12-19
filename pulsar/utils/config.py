@@ -30,6 +30,7 @@ from . import system
 from .internet import parse_address
 from .importer import import_system_file
 from .httpurl import HttpParser as PyHttpParser
+from .log import configured_logger
 from .pep import to_bytes, iteritems, native_str
 
 
@@ -337,6 +338,25 @@ class Config(object):
 
     def __deepcopy__(self, memo):
         return self.copy()
+
+    def configured_logger(self, name=None):
+        '''Configured logger.
+        '''
+        logger = configured_logger(logger='pulsar',
+                                   config=self.logconfig,
+                                   level=self.loglevel,
+                                   handlers=self.loghandlers)
+        if name:
+            return configured_logger(logger='pulsar.%s' % name,
+                                     config=self.logconfig,
+                                     level=self.loglevel,
+                                     handlers=self.loghandlers)
+        if self.name:
+            return configured_logger(logger='pulsar.%s' % self.name,
+                                     config=self.logconfig,
+                                     level=self.loglevel,
+                                     handlers=self.loghandlers)
+        return logger
 
     ########################################################################
     ##    INTERNALS

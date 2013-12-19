@@ -41,6 +41,7 @@ import os
 import re
 import time
 import math
+import pickle
 from random import choice
 from hashlib import sha1
 from itertools import islice, chain
@@ -51,7 +52,7 @@ import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
-from pulsar.utils.pep import map, range, zip, pickle, ispy3k
+from pulsar.utils.pep import map, range, zip, ispy3k
 try:
     from pulsar.utils.lua import Lua
 except ImportError:     # pragma    nocover
@@ -986,7 +987,7 @@ class Storage(object):
         except Exception:
             return client.reply_error(self.SYNTAX_ERROR)
         keys = request[1:-1]
-        if not self._bpop(client, request[0], keys):
+        if not self._bpop(client, request, keys):
             client.blocked = Blocked(client, request[0], keys, timeout)
 
     @command('Lists', True, script=0)
@@ -1002,7 +1003,7 @@ class Storage(object):
             return client.reply_error(self.SYNTAX_ERROR)
         key, dest = request[1:-1]
         keys = (key,)
-        if not self._bpop(client, request[0], keys, dest):
+        if not self._bpop(client, request, keys, dest):
             client.blocked = Blocked(client, request[0], keys, timeout, dest)
 
     @command('Lists')
@@ -1037,14 +1038,19 @@ class Storage(object):
             assert value
             where = request[2].lower()
             pivot = request[3]
+            l1 = len(value)
             if where == b'before':
                 value.insert_before(request[3], request[4])
             elif where == b'after':
                 value.insert_after(request[3], request[4])
             else:
                 return client.reply_error('cannot insert to list')
-            self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
-            client.reply_int(len(value))
+            l2 = len(value)
+            if l2 - l1:
+                self._signal(self.NOTIFY_LIST, db, request[0], key, 1)
+                client.reply_int(l2)
+            else:
+                client.reply_int(-1)
 
     @command('Lists')
     def llen(self, client, request, N):
@@ -1119,7 +1125,7 @@ class Storage(object):
             client.reply_wrongtype()
         else:
             assert value
-            if request[0] == 'lpush':
+            if request[0] == 'lpushx':
                 value.appendleft(request[2])
             else:
                 value.append(request[2])
@@ -2192,30 +2198,25 @@ class Storage(object):
         try:
             increment = type(request[3])
         except Exception:
-            client.reply_error(
+            return client.reply_error(
                 'value is not an %s or out of range' % type.__name__)
-            return
         db = client.db
         hash = db.get(key)
         if hash is None:
-            db._data[key] = self.hash_type({field: increment})
-            result = increment
-        elif getattr(hash, 'datatype', 'hash'):
-            if not field in hash:
-                hash[field] = str(increment).encode('utf-8')
-                result = increment
-            else:
-                try:
-                    value = type(hash[field])
-                except Exception:
-                    client.reply_error(
-                        'hash value is not an %s' % type.__name__)
-                    return
-                result = value + increment
-                hash[field] = str(result).encode('utf-8')
-        else:
-            client.reply_wrongtype()
-        return result
+            hash = self.hash_type()
+            db._data[key] = hash
+        elif not isinstance(hash, self.hash_type):
+            return client.reply_wrongtype()
+        if field in hash:
+            try:
+                value = type(hash[field])
+            except Exception:
+                return client.reply_error(
+                    'hash value is not an %s' % type.__name__)
+            increment += value
+        hash[field] = increment
+        self._signal(self.NOTIFY_HASH, db, request[0], key, 1)
+        return increment
 
     def _setoper(self, client, oper, keys, dest=None):
         db = client.db

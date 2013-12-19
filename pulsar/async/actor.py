@@ -1,9 +1,9 @@
 import sys
 from time import time
+import pickle
 
 from pulsar import HaltServer, CommandError, system
-from pulsar.utils.pep import pickle
-from pulsar.utils.log import LogginMixin, WritelnDecorator
+from pulsar.utils.log import WritelnDecorator
 
 from .eventloop import setid
 from .defer import in_loop, Failure
@@ -16,7 +16,7 @@ from .cov import Coverage
 from .consts import *
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'get_stream']
+__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'get_stream']
 
 
 def is_actor(obj):
@@ -57,21 +57,7 @@ def send(target, action, *args, **params):
     return get_actor().send(target, action, *args, **params)
 
 
-class Pulsar(LogginMixin):
-
-    def configure_logging(self, **kwargs):
-        configure_logging = super(Pulsar, self).configure_logging
-        configure_logging(logger='pulsar',
-                          config=self.cfg.logconfig,
-                          level=self.cfg.loglevel,
-                          handlers=self.cfg.loghandlers)
-        configure_logging(logger='pulsar.%s' % self.name,
-                          config=self.cfg.logconfig,
-                          level=self.cfg.loglevel,
-                          handlers=self.cfg.loghandlers)
-
-
-class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
+class Actor(EventHandler, ActorIdentity, Coverage):
     '''The base class for parallel execution in pulsar.
 
     In computer science, the **Actor model** is a mathematical model
@@ -175,6 +161,7 @@ class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
     mailbox = None
     signal_queue = None
     next_periodic_task = None
+    _logger = None
 
     def __init__(self, impl):
         EventHandler.__init__(self)
@@ -240,6 +227,12 @@ class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
 
+    @property
+    def logger(self):
+        '''The logger for this object
+        '''
+        return self._logger
+
     #######################################################################
     ##    HIGH LEVEL API METHODS
     #######################################################################
@@ -253,7 +246,7 @@ class Actor(Pulsar, EventHandler, ActorIdentity, Coverage):
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
             self._started = time()
-            self.configure_logging()
+            self._logger = self.cfg.configured_logger(self.name)
             self.__impl.setup_event_loop(self)
             self.state = ACTOR_STATES.STARTING
             self._run()

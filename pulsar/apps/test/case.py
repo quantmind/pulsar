@@ -36,9 +36,7 @@ class Test(tasks.Job):
     '''A :class:`.Job` for running tests on a task queue.
     '''
     def __call__(self, consumer, testcls=None, tag=None):
-        suite = consumer.worker.app
-        suite.local.pop('runner')
-        runner = suite.runner
+        runner = consumer.worker.app.runner
         if not isinstance(testcls, type):
             testcls = testcls()
         testcls.tag = tag

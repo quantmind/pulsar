@@ -53,10 +53,10 @@ Client
 import sys
 import logging
 import socket
+import pickle
 from collections import namedtuple
 
 from pulsar import ProtocolError, CommandError, HaltServer
-from pulsar.utils.pep import pickle
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id

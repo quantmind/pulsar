@@ -67,15 +67,12 @@ import os
 import sys
 from hashlib import sha1
 from inspect import getfile
+from functools import partial
 
 import pulsar
-from pulsar import get_actor, EventHandler, coroutine_return, Config, Event
+from pulsar import (get_actor, coroutine_return, Config,
+                    multi_async, Deferred, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import pickle
-from pulsar.utils.internet import (parse_connection_string,
-                                   get_connection_string)
-from pulsar.utils.log import LocalMixin, local_property
-from pulsar.utils.importer import import_module
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -84,12 +81,13 @@ when_monitor_start = []
 
 
 def get_application(name):
-    '''Fetch the :class:`Application` associated with ``name`` if available.
+    '''Fetch an :class:`Application` configurator associated with ``name``
+    if available.
 
-This function may return an :ref:`asynchronous component <coroutine>`.
-The application name is set during initialisation. Check the
-:attr:`Configurator.name` attribute for more information.
-'''
+    This function may return an :ref:`asynchronous component <coroutine>`.
+    The application name is set during initialisation. Check the
+    :attr:`Configurator.name` attribute for more information.
+    '''
     actor = get_actor()
     if actor:
         if actor.is_arbiter():
@@ -101,13 +99,15 @@ The application name is set during initialisation. Check the
 def _get_app(arbiter, name):
     monitor = arbiter.get_actor(name)
     if monitor:
-        return monitor.params.app
+        return monitor.start_event
 
 
 def monitor_start(self):
+    start_event = self.params.get('start_event')
     app = self.params.app
     try:
         self.app = app
+        self.start_event = start_event
         self.bind_event('on_params', monitor_params)
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
@@ -118,12 +118,12 @@ def monitor_start(self):
         yield app.monitor_start(self)
         if not self.cfg.workers:
             yield app.worker_start(self)
-        result = app
+        result = self.cfg
     except Exception:
         result = sys.exc_info()
         raise
     finally:
-        yield app.fire_event('start', result)
+        start_event.callback(result)
     coroutine_return(self)
 
 
@@ -135,12 +135,9 @@ def monitor_stopping(self):
 
 
 def monitor_stop(self):
-    try:
-        if not self.cfg.workers:
-            yield self.app.worker_stop(self)
-        yield self.app.monitor_stop(self)
-    finally:
-        yield self.app.fire_event('stop')
+    if not self.cfg.workers:
+        yield self.app.worker_stop(self)
+    yield self.app.monitor_stop(self)
     coroutine_return(self)
 
 
@@ -152,16 +149,18 @@ def monitor_info(self, info=None):
 
 
 def monitor_params(self, params=None):
-    app = self.app
-    params.update({'app': pickle.loads(pickle.dumps(app)),
+    app = params.pop('app')
+    params.update({'cfg': app.cfg.copy(),
                    'name': '{0}-worker'.format(app.name),
                    'start': worker_start})
     app.actorparams(self, params)
 
 
 def worker_start(self):
-    app = self.params.app
-    self.app = app
+    app = getattr(self, 'app', None)
+    if app is None:
+        cfg = self.cfg
+        self.app = app = cfg.application.from_config(cfg)
     self.bind_event('on_info', app.worker_info)
     self.bind_event('stopping', app.worker_stopping)
     self.bind_event('stop', app.worker_stop)
@@ -217,7 +216,10 @@ class Configurator(object):
         Full path of the script which starts the application or ``None``.
         Evaluated during initialization via the :meth:`python_path` method.
     '''
+    argv = None
     name = None
+    parse_console = False
+    script = None
     cfg = Config()
 
     def __init__(self,
@@ -240,10 +242,11 @@ class Configurator(object):
         else:
             cfg.update(params)
         self.cfg = cfg
-        self.cfg.description = description or self.cfg.description
-        self.cfg.epilog = epilog or self.cfg.epilog
-        self.cfg.version = version or self.cfg.version
-        self.cfg.name = self.name
+        cfg.description = description or self.cfg.description
+        cfg.epilog = epilog or self.cfg.epilog
+        cfg.version = version or self.cfg.version
+        cfg.name = self.name
+        cfg.application = cls
         self.argv = argv
         self.parsed_console = parse_console
         self.script = self.python_path(script)
@@ -279,9 +282,9 @@ class Configurator(object):
         if not script:
             try:
                 import __main__
-            except ImportError:  # pragma    nocover
+                script = getfile(__main__)
+            except Exception:  # pragma    nocover
                 return
-            script = getfile(__main__)
         script = os.path.realpath(script)
         path = os.path.dirname(script)
         if path not in sys.path:
@@ -348,6 +351,16 @@ class Configurator(object):
                     continue
                 self.cfg.set(k.lower(), v)
 
+    def start(self):
+        '''Invoked the application callable method and start
+        the :class:`.Arbiter` if it wasn't already started.
+        '''
+        on_start = self()
+        arbiter = pulsar.arbiter()
+        if arbiter and on_start:
+            arbiter.start()
+        return self
+
     @classmethod
     def create_config(cls, params, prefix=None, name=None):
         '''Create a new :class:`.Config` container.
@@ -362,7 +375,7 @@ class Configurator(object):
         return cfg
 
 
-class Application(Configurator, pulsar.Pulsar):
+class Application(Configurator):
     """An application interface.
 
     Applications can be of any sorts or forms and the library is shipped with
@@ -373,11 +386,6 @@ class Application(Configurator, pulsar.Pulsar):
     * It derives from :class:`Configurator` so that it has all the
       functionalities to parse command line arguments and setup the
       :attr:`~Configurator.cfg` placeholder of :class:`.Setting`.
-    * Instances must be picklable. If non-picklable data needs to be accessed
-      in an :class:`Application` instance, it should be stored on the
-      ``local`` attribute dictionary via the :func:`.local_property`
-      or or :func:`.local_method` decorators (:class:`Application` derives
-      from :class:`.LocalMixin`).
     * Instances of an :class:`Application` are callable objects accepting
       the calling actor as only argument. The callable method should
       not be overwritten, instead one should overwrites the application
@@ -401,16 +409,17 @@ class Application(Configurator, pulsar.Pulsar):
     """
     def __init__(self, callable=None, load_config=True, **params):
         super(Application, self).__init__(load_config=load_config, **params)
-        self.callable = callable
+        self.cfg.callable = callable
         if load_config:
             self.load_config()
 
-    @local_property
-    def events(self):
-        '''One time events for the application: ``ready``,
-        ``start``, ``stop``.
-        '''
-        return EventHandler(one_time_events=('ready', 'start', 'stop'))
+    @classmethod
+    def from_config(cls, cfg):
+        c = cls.__new__(cls)
+        c.name = cfg.name
+        c.cfg = cfg
+        c.logger = cfg.configured_logger()
+        return c
 
     @property
     def stream(self):
@@ -440,8 +449,7 @@ class Application(Configurator, pulsar.Pulsar):
             monitor = actor.get_actor(self.name)
         if monitor is None and (not actor or actor.is_arbiter()):
             self.cfg.on_start()
-            self.configure_logging()
-            self.fire_event('ready')
+            self.logger = self.cfg.configured_logger()
             if not actor:   # arbiter not available
                 # This application is starts the arbiter
                 cfg = Config()
@@ -449,29 +457,16 @@ class Application(Configurator, pulsar.Pulsar):
                 actor = pulsar.arbiter(cfg=cfg)
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
+                start = Deferred()
                 if actor.started():
-                    self._add_to_arbiter(actor)
+                    self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.
-                    actor.bind_event('start', self._add_to_arbiter)
+                    actor.bind_event('start',
+                                     partial(self._add_to_arbiter, start))
+                return start
             else:
                 return
-        return self.event('start')
-
-    def fire_event(self, name, *args, **kw):
-        '''Fire event ``name``.'''
-        if len(args) > 2:
-            raise TypeError('fire_event takes at most 1 argument (%s given)'
-                            % len(args))
-        arg = args[0] if args else self
-        return self.events.fire_event(name, arg, **kw)
-
-    def bind_event(self, name, callback):
-        '''Bind ``callback`` to event ``name``.'''
-        return self.events.bind_event(name, callback)
-
-    def event(self, name):
-        '''Return the event ``name``.'''
-        return self.events.event(name)
+        raise ImproperlyConfigured('Already started or not in arbiter domain')
 
     # WORKERS CALLBACKS
     def worker_start(self, worker):
@@ -525,20 +520,11 @@ class Application(Configurator, pulsar.Pulsar):
         return dict(((s.name, s.value) for s in self.cfg.settings.values()
                      if s.is_global))
 
-    def start(self):
-        '''Invoked the application callable method and start
-        the :class:`.Arbiter` if it wasn't already started.
-        '''
-        on_start = self()
-        arbiter = pulsar.arbiter()
-        if arbiter and on_start:
-            arbiter.start()
-        return self
-
     #   INTERNALS
-    def _add_to_arbiter(self, arbiter):
+    def _add_to_arbiter(self, start, arbiter):
         monitor = arbiter.add_monitor(
-            self.name, app=self, cfg=self.cfg, start=monitor_start)
+            self.name, app=self, cfg=self.cfg,
+            start=monitor_start, start_event=start)
         self.cfg = monitor.cfg
         return arbiter
 
@@ -611,9 +597,7 @@ class MultiApp(Configurator):
                     params['version'] = self.version
                 else:
                     params = kwargs
-                app = App(**params)
-                app()
-                self._apps.append(app)
+                self._apps.append(App(**params))
         return self._apps
 
     def new_app(self, App, prefix=None, callable=None, **params):
@@ -648,21 +632,13 @@ class MultiApp(Configurator):
         return prefix, (App, name, callable, cfg)
 
     def __call__(self, actor=None):
-        return pulsar.multi_async((app(actor) for app in self.apps()))
-
-    def start(self):
-        '''Use this method to start all applications at once.'''
-        self.apps()
-        arbiter = pulsar.arbiter()
-        if arbiter:
-            arbiter.start()
+        return multi_async((app(actor) for app in self.apps()))
 
     ##    INTERNALS
     def _iter_app(self, app_name_callables):
         main = app_name_callables.pop('', None)
         if not main:
-            raise pulsar.ImproperlyConfigured(
-                'No main application in MultiApp')
+            raise ImproperlyConfigured('No main application in MultiApp')
         yield main
         for app in app_name_callables.values():
             yield app

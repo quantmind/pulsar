@@ -47,7 +47,7 @@ except ImportError:  # pragma nocover
 from pulsar.apps import ws, wsgi
 from pulsar.utils.system import json
 try:
-    from pulsar.apps.tx import twisted
+    from .tx import twisted
     from twisted.internet import protocol, endpoints, reactor
     from twisted.mail import imap4
 except ImportError:  # pragma    nocover

@@ -271,7 +271,7 @@ class Deque(collections.deque):
                 l = list(self)
             while count:
                 try:
-                    index = l.remove(elem)
+                    l.remove(elem)
                     count -= 1
                 except ValueError:
                     break

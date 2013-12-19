@@ -3,9 +3,9 @@ import sys
 import socket
 import errno
 from types import GeneratorType
-from heapq import heappop
+from heapq import heappop, heappush
 from collections import deque
-from threading import current_thread
+from threading import current_thread, Lock
 try:
     import signal
 except ImportError:     # pragma    nocover
@@ -160,6 +160,7 @@ class EventLoop(BaseEventLoop):
         self._num_loops = 0
         self._default_executor = None
         self._waker = self._io.install_waker(self)
+        self._lock = Lock()
 
     def __repr__(self):
         return self.name
@@ -267,6 +268,34 @@ loop of the thread where it is run.'''
         if executor is None:
             raise ImproperlyConfigured('No executor available')
         return executor.apply(callback, *args)
+
+    def call_later(self, delay, callback, *args):
+        """Arrange for a callback to be called at a given time.
+
+        Return a Handle: an opaque object with a cancel() method that
+        can be used to cancel the call.
+
+        The delay can be an int or float, expressed in seconds.  It is
+        always a relative time.
+
+        Each callback will be called exactly once.  If two callbacks
+        are scheduled for exactly the same time, it undefined which
+        will be called first.
+
+        Any positional arguments after the callback will be passed to
+        the callback when it is called.
+        """
+        return self.call_at(self.time() + delay, callback, *args)
+
+    def call_at(self, when, callback, *args):
+        '''Like call_later(), but uses an absolute time.
+
+        This method is thread safe.
+        '''
+        timer = TimerHandle(when, callback, args)
+        with self._lock:
+            heappush(self._scheduled, timer)
+        return timer
 
     #################################################    INTERNET NAME LOOKUPS
     def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
@@ -564,3 +593,14 @@ the event loop to poll with a 0 timeout all the times.'''
                     io.handle_events(self, fd, events)
                 except KeyError:
                     pass
+
+    def _add_callback(self, handle):
+        """Add a Handle to ready or scheduled."""
+        assert isinstance(handle, Handle), 'A Handle is required here'
+        if handle._cancelled:
+            return
+        if isinstance(handle, TimerHandle):
+            with self._lock:
+                heappush(self._scheduled, handle)
+        else:
+            self._ready.append(handle)

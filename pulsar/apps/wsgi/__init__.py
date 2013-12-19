@@ -81,6 +81,6 @@ class WSGIServer(SocketServer):
 
     def protocol_factory(self):
         cfg = self.cfg
-        consumer_factory = partial(HttpServerResponse, self.callable, cfg,
+        consumer_factory = partial(HttpServerResponse, cfg.callable, cfg,
                                    cfg.server_software)
         return partial(Connection, consumer_factory)

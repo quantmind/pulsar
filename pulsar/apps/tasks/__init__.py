@@ -74,8 +74,8 @@ import time
 import pulsar
 from pulsar import command
 from pulsar.utils.config import section_docs
-from pulsar.apps.data import start_store, DEFAULT_PULSAR_STORE_ADDRESS
-from pulsar.utils.pep import pickle
+from pulsar.apps.data import (start_store, create_store,
+                              DEFAULT_PULSAR_STORE_ADDRESS)
 
 from .models import *
 from .backend import *
@@ -175,12 +175,12 @@ class TaskQueue(pulsar.Application):
         It calles the :attr:`.Application.callable` (if available)
         and create the :attr:`backend`.
         '''
-        if self.callable:
-            self.callable()
+        if self.cfg.callable:
+            self.cfg.callable()
         connection_string = (self.cfg.task_backend or self.cfg.data_store or
                              DEFAULT_TASK_BACKEND)
         store = yield start_store(connection_string, loop=monitor._loop)
-        self._create_backend(store)
+        self.get_backend(store)
 
     def monitor_task(self, monitor):
         '''Override the :meth:`~.Application.monitor_task` callback.
@@ -192,18 +192,15 @@ class TaskQueue(pulsar.Application):
                 self.backend.tick()
 
     def worker_start(self, worker):
-        self.backend.start(worker)
+        self.get_backend().start(worker)
 
     def worker_stopping(self, worker):
         self.backend.close(worker)
 
     def actorparams(self, monitor, params):
         # makes sure workers are only consuming tasks, not scheduling.
-        backend = params['app'].backend
-        if backend.schedule_periodic:
-            backend = pickle.loads(pickle.dumps(backend))
-            backend.schedule_periodic = False
-            params['app'].backend = backend
+        cfg = params['cfg']
+        cfg.set('schedule_periodic', False)
 
     def worker_info(self, worker, info=None):
         be = self.backend
@@ -211,19 +208,25 @@ class TaskQueue(pulsar.Application):
                  'processed': be.processed}
         info['tasks'] = tasks
 
-    def _create_backend(self, store):
-        task_backend = task_backends.get(store.name)
-        if not task_backend:
-            raise pulsar.ImproperlyConfigured(
-                'Task backend for %s not available' % store.name)
-        self.backend = task_backend(
-            store.dns,
-            name=self.name,
-            task_paths=self.cfg.task_paths,
-            schedule_periodic=self.cfg.schedule_periodic,
-            max_tasks=self.cfg.max_requests,
-            backlog=self.cfg.concurrent_tasks)
-        self.logger.debug('created %s', self.backend)
+    def get_backend(self, store=None):
+        if self.backend is None:
+            if store is None:
+                store = create_store(self.cfg.task_backend)
+            else:
+                self.cfg.set('task_backend', store.dns)
+            task_backend = task_backends.get(store.name)
+            if not task_backend:
+                raise pulsar.ImproperlyConfigured(
+                    'Task backend for %s not available' % store.name)
+            self.backend = task_backend(
+                store, self.logger,
+                name=self.name,
+                task_paths=self.cfg.task_paths,
+                schedule_periodic=self.cfg.schedule_periodic,
+                max_tasks=self.cfg.max_requests,
+                backlog=self.cfg.concurrent_tasks)
+            self.logger.debug('created %s', self.backend)
+        return self.backend
 
 
 @command()

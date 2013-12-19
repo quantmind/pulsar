@@ -23,16 +23,20 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
     kind = None
     if issubclass(cls, PoolMixin):
         kind = 'monitor'
+    if monitor:
+        params = monitor.actorparams()
+        name = params.pop('name', name)
+        aid = params.pop('aid', aid)
+        cfg = params.pop('cfg', cfg)
+
+    # get config if not available
     if cfg is None:
         if monitor:
             cfg = monitor.cfg.copy()
         else:
             cfg = pulsar.Config()
-    if monitor:
-        params = monitor.actorparams()
-        name = params.pop('name', name)
-        aid = params.pop('aid', aid)
-    else:  # monitor not available, this is the arbiter
+
+    if not monitor:  # monitor not available, this is the arbiter
         if kind != 'monitor':
             raise TypeError('class %s not a valid monitor' % cls)
         kind = 'arbiter'
@@ -41,6 +45,7 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
             if not aid:
                 aid = gen_unique_id()[:8]
             cfg.set('exc_id', aid)
+    #
     for key, value in iteritems(kw):
         if key in cfg.settings:
             cfg.set(key, value)

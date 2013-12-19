@@ -1,9 +1,10 @@
+import pickle
 from copy import copy
 from datetime import date, datetime
 from base64 import b64encode
 
 from pulsar.utils.html import UnicodeMixin
-from pulsar.utils.pep import itervalues, pickle, to_string
+from pulsar.utils.pep import itervalues, to_string
 
 
 class Field(UnicodeMixin):

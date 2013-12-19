@@ -68,6 +68,7 @@ Ver. 0.8.0
   * Removed the twisted integration module and moved to the example directory.
     The integration is not tested enough and therefore cannot be part of the
     main distribution.
+  * :class:`.Application` does not require to create picklable objects.
 
 * **1,033 regression tests**, **91% coverage**.
 

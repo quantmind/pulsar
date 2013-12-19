@@ -79,7 +79,7 @@ from pulsar import (in_loop, Failure, EventHandler, PulsarException,
                     get_request_loop, raise_error_and_log)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
-from pulsar.utils.log import (LocalMixin, local_property, local_method,
+from pulsar.utils.log import (LocalMixin, lazyproperty, lazymethod,
                               LazyString)
 
 from .models import JobRegistry
@@ -220,7 +220,7 @@ class TaskClient(PubSubClient):
         self._be.events.fire_event(channel, message)
 
 
-class TaskBackend(LocalMixin):
+class TaskBackend(object):
     '''A backend class for running :class:`.Task`.
     A :class:`TaskBackend` is responsible for creating tasks and put them
     into the distributed queue.
@@ -273,58 +273,41 @@ class TaskBackend(LocalMixin):
         attribute.
 
     '''
-    def __init__(self, store_dns, task_paths=None, schedule_periodic=False,
-                 backlog=1, max_tasks=0, name=None, poll_timeout=None):
-        self._store_dns = store_dns
+    task_poller = None
+
+    def __init__(self, store, logger, task_paths=None,
+                 schedule_periodic=False, backlog=1, max_tasks=0, name=None,
+                 poll_timeout=None):
+        self.store = store
+        self.logger = logger
         self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
         self.max_tasks = max_tasks
         self.poll_timeout = max(poll_timeout or 0, 2)
+        self.concurrent_tasks = set()
         self.processed = 0
         self.schedule_periodic = schedule_periodic
         self.next_run = time.time()
+        self.callbacks = {}
+        self.models = odm.Mapper(self.store)
+        self.models.register(Task)
+        c = self.channel
+        self.events = EventHandler(many_times_events=(c('task_queued'),
+                                                      c('task_started'),
+                                                      c('task_done')))
 
     def __repr__(self):
         if self.schedule_periodic:
-            return 'task scheduler %s' % self._store_dns
+            return 'task scheduler %s' % self.store.dns
         else:
-            return 'task consumer %s' % self._store_dns
+            return 'task consumer %s' % self.store.dns
     __str__ = __repr__
-
-    @local_property
-    def events(self):
-        c = self.channel
-        return EventHandler(many_times_events=(c('task_queued'),
-                                               c('task_started'),
-                                               c('task_done')))
 
     @property
     def _loop(self):
         '''Eventloop running this task backend'''
         return self.store._loop
-
-    @property
-    def logger(self):
-        return self.store._loop.logger
-
-    @local_property
-    def store(self):
-        '''The :ref:`data store <data-stores>` client where tasks are queued
-        '''
-        return create_store(self._store_dns)
-
-    @local_property
-    def models(self):
-        models = odm.Mapper(self.store)
-        models.register(Task)
-        return models
-
-    @local_property
-    def concurrent_tasks(self):
-        '''Set of :class:`.Task` ids which are currently being executed.
-        '''
-        return set()
 
     @property
     def num_concurrent_tasks(self):
@@ -334,19 +317,15 @@ class TaskBackend(LocalMixin):
         '''
         return len(self.concurrent_tasks)
 
-    @local_property
+    @lazyproperty
     def entries(self):
         return self._setup_schedule()
 
-    @local_property
+    @lazyproperty
     def registry(self):
         '''The :class:`.JobRegistry` for this backend.
         '''
         return JobRegistry.load(self.task_paths)
-
-    @local_property
-    def callbacks(self):
-        return {}
 
     def channel(self, name):
         return '%s_%s' % (self.name, name)
@@ -443,10 +422,10 @@ class TaskBackend(LocalMixin):
         Here, the ``worker`` creates its thread pool via
         :meth:`.Actor.create_thread_pool` and register the
         :meth:`may_pool_task` callback in its event loop.'''
+        assert self.task_poller is None
         worker.create_thread_pool()
-        self.local.task_poller = worker._loop.call_soon(
-            self.may_pool_task, worker)
-        worker.logger.debug('started polling tasks')
+        self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
+        self.logger.debug('started polling tasks')
         store = self.store
 
     def close(self, worker):
@@ -454,10 +433,10 @@ class TaskBackend(LocalMixin):
 
         Invoked by the :class:`.Actor` when stopping.
         '''
-        if self.local.task_poller:
-            self.local.task_poller.cancel()
-            self.local.task_poller = None
-            worker.logger.debug('stopped polling tasks')
+        if self.task_poller:
+            self.task_poller.cancel()
+            self.task_poller = None
+            self.logger.debug('stopped polling tasks')
             #self.pubsub.close()
             #self.store.close()
 
@@ -596,12 +575,12 @@ class TaskBackend(LocalMixin):
         if worker.is_running():
             thread_pool = worker.thread_pool
             if not thread_pool:
-                worker.logger.warning('No thread pool, cannot poll tasks.')
+                self.logger.warning('No thread pool, cannot poll tasks.')
             elif self.num_concurrent_tasks < self.backlog:
                 if self.max_tasks and self.processed >= self.max_tasks:
                     if not self.num_concurrent_tasks:
-                        worker.logger.warning(
-                            'Processed %s tasks. Restarting.')
+                        self.logger.warning('Processed %s tasks. Restarting.',
+                                            self.processed)
                         worker.stop()
                         coroutine_return()
                 else:
@@ -611,8 +590,8 @@ class TaskBackend(LocalMixin):
                         self.concurrent_tasks.add(task['id'])
                         thread_pool.apply(self._execute_task, worker, task)
             else:
-                worker.logger.debug('%s concurrent requests. Cannot poll.',
-                                    self.num_concurrent_tasks)
+                self.logger.debug('%s concurrent requests. Cannot poll.',
+                                  self.num_concurrent_tasks)
                 next_time = 1
         worker._loop.call_later(next_time, self.may_pool_task, worker)
 
@@ -634,7 +613,7 @@ class TaskBackend(LocalMixin):
                 if expiry and time_ended > expiry:
                     raise TaskTimeout
                 else:
-                    consumer.logger.info('starting %s', task_info)
+                    self.logger.info('starting %s', task_info)
                     kwargs = task.get('kwargs') or {}
                     task.clear_update(id=task_id, status=states.STARTED,
                                       time_started=time_ended,
@@ -644,16 +623,16 @@ class TaskBackend(LocalMixin):
                     result = yield job(consumer, **kwargs)
                     status = states.SUCCESS
             else:
-                consumer.logger.error('invalid status for %s', task_info)
+                self.logger.error('invalid status for %s', task_info)
                 self.concurrent_tasks.discard(task_id)
                 coroutine_return(task_id)
         except TaskTimeout:
-            consumer.logger.info('%s timed-out', task_info)
+            self.logger.info('%s timed-out', task_info)
             result = None
             status = states.REVOKED
         except Exception:
             failure = Failure(sys.exc_info())
-            failure.log(msg='failure in %s' % task_info, log=consumer.logger)
+            failure.log(msg='failure in %s' % task_info, log=self.logger)
             result = str(failure)
             status = states.FAILURE
         #
@@ -665,7 +644,7 @@ class TaskBackend(LocalMixin):
             self.concurrent_tasks.discard(task_id)
             yield self.finish_task(task_id, lock_id)
         #
-        consumer.logger.info('finished %s', task_info)
+        self.logger.info('finished %s', task_info)
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)
 
@@ -780,11 +759,11 @@ class SchedulerEntry(object):
 
 class PulsarTaskBackend(TaskBackend):
 
-    @local_property
+    @lazyproperty
     def store_client(self):
         return self.store.client()
 
-    @local_method
+    @lazymethod
     def pubsub(self):
         pubsub = self.store.pubsub()
         pubsub.add_client(TaskClient(self))
