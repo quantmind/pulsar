@@ -103,7 +103,7 @@ def _get_app(arbiter, name):
 
 
 def monitor_start(self):
-    start_event = self.params.get('start_event')
+    start_event = self.params.pop('start_event')
     app = self.params.app
     try:
         self.app = app
