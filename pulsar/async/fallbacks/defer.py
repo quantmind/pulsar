@@ -668,7 +668,7 @@ class AsyncBindings:
         :return: a :class:`Deferred`.
         '''
         if self._bindings:
-            for binding in bindings:
+            for binding in self._bindings:
                 d = binding(coro_or_future, loop)
                 if d is not None:
                     return d

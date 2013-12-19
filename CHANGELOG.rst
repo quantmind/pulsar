@@ -65,6 +65,9 @@ Ver. 0.8.0
   * The ``Backend`` class has been removed.
   * Improved :ref:`django example <tutorials-django>` with possibility to
     choose different data stores for messages.
+  * Removed the twisted integration module and moved to the example directory.
+    The integration is not tested enough and therefore cannot be part of the
+    main distribution.
 
 * **1,033 regression tests**, **91% coverage**.
 
