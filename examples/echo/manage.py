@@ -153,7 +153,7 @@ class Echo(AbstractClient):
 
         The event loop used by the client IO requests.
 
-        The event loop is store at this attribute so that asynchronous
+        The event loop is stored at this attribute so that asynchronous
         method decorators such as :func:`.in_loop_thread` can be used.
 
     .. attribute:: address
@@ -166,8 +166,8 @@ class Echo(AbstractClient):
 
     .. attribute:: full_response
 
-        Flag indicating if the callable method should result into the
-        :class:`EchoProtocol` handling the request (``True``) or a
+        Flag indicating if the callable method should return the
+        :class:`EchoProtocol` handling the request (``True``) or
         the server response message (``False``).
 
         Default: ``False``

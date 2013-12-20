@@ -52,8 +52,6 @@ Implementation
 
 '''
 import random
-import time
-from functools import partial
 try:
     import pulsar
 except ImportError:
@@ -115,14 +113,17 @@ class DiningPhilosophers(pulsar.Application):
         self.not_available_forks = set()
 
     def worker_start(self, philosopher):
-        self.take_action(philosopher)
+        self.eaten = 0
+        self.thinking = 0
+        self.started_waiting = 0
+        self.forks = []
+        philosopher._loop.call_soon(self.take_action, philosopher)
 
     def worker_info(self, philosopher, info=None):
         '''Override :meth:`~.Application.worker_info` to provide
         information about the philosopher.'''
-        params = philosopher.params
-        info['philosopher'] = {'number': params.number,
-                               'eaten': params.eaten}
+        info['philosopher'] = {'number': philosopher.number,
+                               'eaten': self.eaten}
 
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
@@ -130,79 +131,73 @@ class DiningPhilosophers(pulsar.Application):
         * eat, if it has both forks and than :meth:`release_forks`.
         * try to :meth:`pickup_fork`, if he has less than 2 forks.
         '''
-        params = philosopher.params
-        eaten = params.eaten or 0
-        forks = params.forks
-        started_waiting = params.started_waiting or 0
-        pick_up_fork = True
+        loop = philosopher._loop
+        eaten = self.eaten
+        forks = self.forks
         if forks:
-            max_eat_period = 2*self.cfg.eating_period
+            #
             # Two forks. Eat!
             if len(forks) == 2:
-                params.thinking = 0
-                eaten += 1
-                philosopher.logger.info("%s eating... So far %s times",
-                                        philosopher.name, eaten)
-                try:
-                    time.sleep(max_eat_period*random.random())
-                except IOError:
-                    pass
-                params.eaten = eaten
+                self.thinking = 0
+                self.eaten += 1
+                philosopher.logger.info("eating... So far %s times",
+                                        self.eaten)
                 pick_up_fork = False
-            # One fork only! release fork or try to pick up one
+                eat_time = 2*self.cfg.eating_period*random.random()
+                return loop.call_later(eat_time, self.release_forks,
+                                       philosopher)
+            #
+            # One fork only! release fork or try to pick one up one
             elif len(forks) == 1:
                 waiting_period = 2*self.cfg.waiting_period*random.random()
-                if started_waiting == 0:
-                    params.started_waiting = time.time()
-                elif time.time() - started_waiting > waiting_period:
-                    pick_up_fork = False
-            elif len(forks) > 2:
-                philosopher.logger.critical('%s has more than 2 forks!!!',
-                                            philosopher.name)
-                pick_up_fork = False
+                if self.started_waiting == 0:
+                    self.started_waiting = loop.time()
+                elif loop.time() - self.started_waiting > waiting_period:
+                    philosopher.logger.debug("tired of waiting")
+                    return self.release_forks(philosopher)
+            #
+            # this should never happen
+            elif len(forks) > 2:    # pragma    nocover
+                philosopher.logger.critical('more than 2 forks!!!')
+                return self.release_forks(philosopher)
         else:
-            thinking = params.thinking or 0
-            if not thinking:
+            if not self.thinking:
                 philosopher.logger.warning('%s thinking...', philosopher.name)
-            params.thinking = thinking + 1
-        # Take action
-        if pick_up_fork:
-            self.pickup_fork(philosopher)
-        else:
-            self.release_forks(philosopher)
+            self.thinking += 1
+        loop.call_soon(self.pickup_fork, philosopher)
 
     def pickup_fork(self, philosopher):
-        '''The philosopher has less than two forks. Check if forks are
-available.'''
-        right_fork = philosopher.params.number
-        return philosopher.send(philosopher.monitor, 'pickup_fork', right_fork
-                                ).add_callback(partial(self._continue,
-                                                       philosopher))
+        '''The philosopher has less than two forks.
 
-    def release_forks(self, philosopher):
-        '''The ``philosopher`` has just eaten and is ready to release both
-forks. This method release them, one by one, by sending the ``put_down``
-action to the monitor.'''
-        forks = philosopher.params.forks
-        philosopher.params.forks = []
-        philosopher.params.started_waiting = 0
-        for fork in forks:
-            philosopher.logger.debug('Putting down fork %s', fork)
-            philosopher.send('monitor', 'putdown_fork', fork)
-        # once released all the forks wait for a moment
-        time.sleep(self.cfg.waiting_period)
-        self._continue(None, philosopher)
-
-    def _continue(self, philosopher, fork):
+        Check if forks are available.
+        '''
+        fork = yield philosopher.send(philosopher.monitor, 'pickup_fork',
+                                      philosopher.number)
         if fork:
-            forks = philosopher.params.forks
+            forks = self.forks
             if fork in forks:
                 philosopher.logger.error('Got fork %s. I already have it',
                                          fork)
             else:
                 philosopher.logger.debug('Got fork %s.', fork)
                 forks.append(fork)
-        self.take_action(philosopher)
+        philosopher._loop.call_soon(self.take_action, philosopher)
+
+    def release_forks(self, philosopher):
+        '''The ``philosopher`` has just eaten and is ready to release both
+        forks.
+
+        This method release them, one by one, by sending the ``put_down``
+        action to the monitor.
+        '''
+        forks = self.forks
+        self.forks = []
+        self.started_waiting = 0
+        for fork in forks:
+            philosopher.logger.debug('Putting down fork %s', fork)
+            philosopher.send('monitor', 'putdown_fork', fork)
+        philosopher._loop.call_later(self.cfg.waiting_period, self.take_action,
+                                     philosopher)
 
     def actorparams(self, monitor, params):
         avail = set(range(1, monitor.cfg.workers+1))
@@ -214,10 +209,7 @@ action to the monitor.'''
                 avail = None
                 break
         number = min(avail) if avail else len(monitor.managed_actors) + 1
-        name = 'Philosopher %s' % number
-        params.update({'name': name,
-                       'number': number,
-                       'forks': []})
+        params.update({'name': 'Philosopher %s' % number, 'number': number})
 
 
 if __name__ == '__main__':
