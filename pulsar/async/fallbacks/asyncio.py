@@ -1,5 +1,5 @@
 '''Replicate asyncio basic functionalities'''
-from pulsar.utils.pep import default_timer, ispy3k
+from pulsar.utils.pep import default_timer
 
 fallback = True
 

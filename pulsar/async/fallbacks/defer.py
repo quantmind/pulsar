@@ -3,7 +3,7 @@ import traceback
 from collections import deque, namedtuple
 from inspect import isgenerator, istraceback
 
-from ..access import asyncio, get_request_loop, get_event_loop, logger
+from ..access import get_request_loop, get_event_loop, logger
 
 
 NOT_DONE = object()
@@ -42,10 +42,6 @@ _FINISHED = 'FINISHED'
 
 async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
 log_exc_info = ('error', 'critical')
-
-
-class FutureTypeError(TypeError):
-    '''raised when invoking ``async`` on a wrong type.'''
 
 
 def is_relevant_tb(tb):
@@ -601,6 +597,7 @@ class DeferredTask(Deferred):
             result = e.value
             conclude = True
         except StopIteration:
+            result = None
             conclude = True
         except Exception:
             result = sys.exc_info()

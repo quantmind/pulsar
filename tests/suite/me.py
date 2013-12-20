@@ -3,7 +3,8 @@ import os
 from threading import current_thread
 
 import pulsar
-from pulsar import send, multi_async, is_failure, get_event_loop
+from pulsar import (send, multi_async, is_failure, get_event_loop,
+                    coroutine_return)
 from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.version import get_version
@@ -16,7 +17,7 @@ def simple_function(actor):
 def wait(actor, period=0.5):
     start = actor._loop.time()
     yield pulsar.async_sleep(period)
-    yield actor._loop.time() - start
+    coroutine_return(actor._loop.time() - start)
 
 
 class TestTestWorker(unittest.TestCase):

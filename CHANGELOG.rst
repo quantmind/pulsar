@@ -16,6 +16,8 @@ Ver. 0.8.0
 * **Core library**
 
   * Removed support for python 3.2.
+  * :ref:`Coroutines <coroutine>` can return a value via the
+    :func:`.coroutine_return` function. Otherwise they return ``None``.
   * Added :func:`.run_in_loop_thread` high level function. This utility
     runs a callable in the event loop thread and returns a :class:`.Deferred`
     called back once the callable has a result/exception.
@@ -50,7 +52,7 @@ Ver. 0.8.0
 
 * **Websockets**
 
-  * the web socket :meth:`~pulsar.apps.ws.WS.on_open` method is invoked soon
+  * The web socket :meth:`~pulsar.apps.ws.WS.on_open` method is invoked soon
     after upgrade headers are sent. No need to send a message from the client
     to kick start the bidirectional communication.
   * Websocket C extensions for faster parsing/masking.
@@ -69,6 +71,8 @@ Ver. 0.8.0
     The integration is not tested enough and therefore cannot be part of the
     main distribution.
   * :class:`.Application` does not require to create picklable objects.
+  * More robust serialisation of ``TestCase`` methods when used with the
+    :func:`.run_on_arbiter` decorator.
 
 * **1,033 regression tests**, **91% coverage**.
 

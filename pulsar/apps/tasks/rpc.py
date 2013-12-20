@@ -1,5 +1,5 @@
 import pulsar
-from pulsar import raise_error_and_log
+from pulsar import raise_error_and_log, coroutine_return
 from pulsar.apps import rpc
 
 from .backend import Task, TaskNotAvailable
@@ -52,7 +52,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         included in the list.
         '''
         task_backend = yield self.task_backend()
-        yield task_backend.job_list(jobnames=jobnames)
+        coroutine_return(task_backend.job_list(jobnames=jobnames))
 
     def rpc_next_scheduled_tasks(self, request, jobnames=None):
         return self._rq(request, 'next_scheduled', jobnames=jobnames)
@@ -67,21 +67,21 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         It returns the task :attr:`~Task.id`.
         '''
         result = yield self.queue_task(request, jobname, **kw)
-        yield task_to_json(result)
+        coroutine_return(task_to_json(result))
 
     def rpc_get_task(self, request, id=None):
         '''Retrieve a task from its id'''
         if id:
             task_backend = yield self.task_backend()
             result = yield task_backend.get_task(id)
-            yield task_to_json(result)
+            coroutine_return(task_to_json(result))
 
     def rpc_get_tasks(self, request, **filters):
         '''Retrieve a list of tasks which satisfy key-valued filters'''
         if filters:
             task_backend = yield self.task_backend()
             result = yield task_backend.get_tasks(**filters)
-            yield task_to_json(result)
+            coroutine_return(task_to_json(result))
 
     def rpc_wait_for_task(self, request, id=None, timeout=None):
         '''Wait for a task to have finished.
@@ -93,12 +93,12 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         if id:
             task_backend = yield self.task_backend()
             result = yield task_backend.wait_for_task(id, timeout=timeout)
-            yield task_to_json(result)
+            coroutine_return(task_to_json(result))
 
     def rpc_num_tasks(self, request):
         '''Return the approximate number of tasks in the task queue.'''
         task_backend = yield self.task_backend()
-        yield task_backend.num_tasks()
+        coroutine_return(task_backend.num_tasks())
 
     ########################################################################
     ##    INTERNALS
@@ -106,7 +106,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         if not self._task_backend:
             app = yield pulsar.get_application(self.taskqueue)
             self._task_backend = app.get_backend()
-        yield self._task_backend
+        coroutine_return(self._task_backend)
 
     def queue_task(self, request, jobname, meta_data=None, **kw):
         if not jobname:
@@ -115,7 +115,8 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         meta_data = meta_data or {}
         meta_data.update(self.task_request_parameters(request))
         task_backend = yield self.task_backend()
-        yield task_backend.queue_task(jobname, meta_data, **kw)
+        result = yield task_backend.queue_task(jobname, meta_data, **kw)
+        coroutine_return(result)
 
     def task_request_parameters(self, request):
         '''**Internal function** which returns a dictionary of parameters

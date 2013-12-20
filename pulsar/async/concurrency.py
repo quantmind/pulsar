@@ -11,7 +11,7 @@ from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .defer import multi_async, maybe_failure, Failure, Deferred
 from .eventloop import signal, StopEventLoop
-from .protocols import Connection, TcpServer
+from .protocols import TcpServer
 from .pollers import POLLERS
 from .consts import *
 

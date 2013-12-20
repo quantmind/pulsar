@@ -86,7 +86,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(r['result'], 90)
 
     def test_ping_store(self):
-        tq = self.apps[0]
+        tq = self.tq
         self.assertTrue(tq.backend)
         backend = tq.backend
         store = backend.store
@@ -94,7 +94,7 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.async.assertEqual(client.ping(), True)
 
     def test_pickled_app(self):
-        tq = self.apps[0]
+        tq = self.tq
         self.assertEqual(tq.name, self.name())
         self.assertTrue(tq.backend)
         backend = tq.backend
@@ -132,12 +132,13 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
     def test_rpc_meta(self):
         app = self.rpc
+        cfg = app.cfg
         self.assertTrue(app)
         self.assertEqual(app.name, self.rpc_name())
-        self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
-        self.assertNotEqual(app.cfg.address, app.address)
-        self.assertEqual(app.cfg.concurrency, self.concurrency)
-        wsgi_handler = app.callable.handler()
+        self.assertEqual(cfg.address, ('127.0.0.1', 0))
+        self.assertNotEqual(cfg.addresses[0], cfg.address)
+        self.assertEqual(cfg.concurrency, self.concurrency)
+        wsgi_handler = cfg.callable.handler()
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertTrue(router.post)

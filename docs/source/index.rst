@@ -38,5 +38,4 @@ located in the :mod:`pulsar.apps` module.
    apps/rpc
    apps/websockets
    apps/http
-   apps/twisted
    apps/pulse

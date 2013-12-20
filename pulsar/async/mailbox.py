@@ -56,12 +56,12 @@ import socket
 import pickle
 from collections import namedtuple
 
-from pulsar import ProtocolError, CommandError, HaltServer
+from pulsar import ProtocolError, CommandError
 from pulsar.utils.internet import nice_address
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
-from .access import asyncio, get_actor
+from .access import get_actor
 from .defer import Failure, Deferred, coroutine_return, in_loop
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol

@@ -1,11 +1,11 @@
 '''Deferred and asynchronous tools.'''
-from pulsar import Deferred, maybe_async
+from pulsar import Deferred, maybe_async, coroutine_return
 from pulsar.apps.test import unittest, mute_failure
 
 
 def c_summation(value):
     result = yield value
-    yield result + 2
+    coroutine_return(result + 2)
 
 
 class TestCoroDeferred(unittest.TestCase):

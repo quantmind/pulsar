@@ -18,11 +18,14 @@ pulsar:
 * A :ref:`coroutine <coroutine>`, a generator which consumes values.
   For example::
 
+      from pulsar import coroutine_result
+
       def my_async_generator(...):
           yield something_but_dont_care_what_it_returns()
           ...
           bla = yield something_and_care_what_it_returns()
-          yield do_something(bla)
+          result = yield do_something(bla)
+          coroutine_result(result)
 
   a coroutine is obtained by calling the generator function::
 
@@ -136,7 +139,8 @@ Let's consider the following code::
           yield something_but_dont_care_what_it_returns()
           ...
           bla = yield something_and_care_what_it_returns()
-          yield do_something(bla)
+          result = yield do_something(bla)
+          coroutine_return(result)
 
     def my_async_generator():
           result = yield d
@@ -148,18 +152,21 @@ function::
     o = my_async_generator()
 
 ``o`` is has not yet started. To use it, it must be added to pulsar
-asynchronous engine via the :func:`maybe_async` function::
+asynchronous engine via the :func:`.async` function::
 
-    task = maybe_async(o, get_result=False)
+    task = async(o)
 
 task is a :class:`.DeferredTask` instance.
+
+Coroutines can return values via the :func:`.coroutine_return` function.
+Otherwise they always return ``None`` (unless exceptions occur).
 
 Deferred Task
 ===================
 A :class:`.DeferredTask` is a specialised :class:`.Deferred` which consumes
 :ref:`coroutines <coroutine>`.
 A coroutine is transformed into a :class:`.DeferredTask`
-via the :func:`maybe_async` function or the :class:`async` decorator.
+via the :func:`.async` function or the :class:`async` decorator.
 
 A task consumes a coroutine until the coroutine yield an asynchronous component
 not yet done. When this appends, the task pauses and returns the control of execution.
@@ -173,7 +180,7 @@ Collections
 ============================
 When dealing with several asynchronous components in a collection such as
 a list, tuple, set or even a dictionary (values only, keys must be synchronous
-python types), one can use the :func:`multi_async` function to create
+python types), one can use the :func:`.multi_async` function to create
 an asynchronous component which will be ready once all the components
 are ready.
 
@@ -195,7 +202,7 @@ the execution of the ``callable`` it is decorating and return
 a :class:`.Deferred`.
 The returned :class:`.Deferred` can already be called if the original ``callable``
 returned a synchronous result or fails (in which case the deferred has
-a :class:`Failure` as result).
+a :class:`.Failure` as result).
 
 If :class:`async` decorates a generator function, it access the
 event loop, via the ``get_event_loop`` function, and creates a

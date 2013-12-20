@@ -8,7 +8,6 @@ if ispy3k:
     long = int
     string_type = str
 else:   # pragma    nocover
-    from itertools import imap as map
     string_type = unicode
 
 nil = b'$-1\r\n'

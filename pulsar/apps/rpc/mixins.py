@@ -1,4 +1,4 @@
-from pulsar import send
+from pulsar import send, coroutine_return
 
 from .jsonrpc import JSONRPC
 
@@ -25,7 +25,8 @@ class PulsarServerCommands(JSONRPC):
         information.
         '''
         info = yield send('arbiter', 'info')
-        yield self.extra_server_info(request, info)
+        info = yield self.extra_server_info(request, info)
+        coroutine_return(info)
 
     def rpc_functions_list(self, request):
         '''List of (method name, method document) pair of all method exposed

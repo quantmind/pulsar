@@ -64,7 +64,6 @@ class ClientMixin(object):
             if info:
                 handle = getattr(self.store, info.method_name)
         #
-        flag = self.flag
         if self.channels or self.patterns:
             if command not in self.store.SUBSCRIBE_COMMANDS:
                 return self.reply_error(self.store.PUBSUB_ONLY)
@@ -209,13 +208,13 @@ class LuaClient(ClientMixin):
     def call(self, *args):
         try:
             return self._call(*args)
-        except Exception:
+        except Exception as e:
             return self.reply_error(str(e))
 
     def pcall(self, *args):
         try:
             return self._call(*args)
-        except Exception:
+        except Exception as e:
             return self.reply_error(str(e))
 
     def error_reply(self, error_string, prefix=None):

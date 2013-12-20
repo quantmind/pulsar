@@ -207,7 +207,7 @@ class TestDeferred(unittest.TestCase):
             try:
                 yield Deferred().set_timeout(1)
             except TimeoutError:
-                yield 'OK'
+                coroutine_return('OK')
         result = yield gen()
         self.assertEqual(result, 'OK')
 

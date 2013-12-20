@@ -3,7 +3,7 @@ from collections import deque
 
 from pulsar.utils.internet import nice_address, BUFFER_MAX_SIZE
 
-from .defer import Deferred, in_loop
+from .defer import Deferred
 from .access import asyncio, AsyncObject
 
 __all__ = ['SocketTransport']

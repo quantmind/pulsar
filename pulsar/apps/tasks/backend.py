@@ -369,13 +369,13 @@ class TaskBackend(object):
                     when_done = callbacks.pop(task_id, None)
                     if when_done:
                         when_done.callback(task)
-                    coroutine_return(task)
                 else:
                     when_done = callbacks.get(task_id)
                     if not when_done:
                         # No deferred, create one
                         callbacks[task_id] = when_done = Deferred()
-                    yield when_done
+                    task = yield when_done
+                coroutine_return(task)
 
         return run_in_loop_thread(self._loop, _, task_id).set_timeout(timeout)
 

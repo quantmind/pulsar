@@ -298,7 +298,7 @@ Utilities
 import sys
 
 import pulsar
-from pulsar import EventHandler, maybe_failure, multi_async, Failure
+from pulsar import maybe_failure, multi_async, Failure
 from pulsar.apps import tasks
 from pulsar.apps.data import PulsarDS, create_store
 from pulsar.utils.log import lazyproperty

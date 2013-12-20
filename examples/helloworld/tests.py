@@ -9,7 +9,7 @@ from .manage import server
 
 
 class TestHelloWorldThread(unittest.TestCase):
-    app = None
+    app_cfg = None
     concurrency = 'thread'
 
     @classmethod
@@ -20,14 +20,14 @@ class TestHelloWorldThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.name(), concurrency=cls.concurrency,
                    bind='127.0.0.1:0')
-        cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.client = HttpClient()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg is not None:
+            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     @run_on_arbiter
     def testMeta(self):

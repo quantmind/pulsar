@@ -845,7 +845,7 @@ class RedisCommands(StoreMixin):
 
 
 class TestPulsarStore(RedisCommands, unittest.TestCase):
-    app = None
+    app_cfg = None
 
     @classmethod
     def setUpClass(cls):
@@ -853,16 +853,16 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
                           bind='127.0.0.1:0',
                           concurrency=cls.cfg.concurrency,
                           redis_py_parser=cls.redis_py_parser)
-        cls.app = yield pulsar.send('arbiter', 'run', server)
-        cls.store = cls.create_store('pulsar://%s:%s/9' % cls.app.address)
-        cls.sync_store = cls.create_store(
-            'pulsar://%s:%s/10' % cls.app.address, loop=new_event_loop())
+        cls.app_cfg = yield pulsar.send('arbiter', 'run', server)
+        uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
+        cls.store = cls.create_store('%s/9' % uri)
+        cls.sync_store = cls.create_store('%s/10' % uri, loop=new_event_loop())
         cls.client = cls.store.client()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app is not None:
-            yield pulsar.send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg is not None:
+            yield pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
 
 
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')

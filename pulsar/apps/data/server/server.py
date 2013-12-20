@@ -355,7 +355,7 @@ class Storage(object):
         key = request[1]
         try:
             db2 = self.databases.get(int(request[2]))
-            if not db:
+            if not db2:
                 raise ValueError
         except Exception:
             return client.reply_error('Invalid database')
@@ -689,7 +689,6 @@ class Storage(object):
     @command('Strings', True)
     def set(self, client, request, N):
         check_input(request, N < 2 or N > 8)
-        db = client.db
         it = 2
         extra = set(self._set_options)
         seconds = 0
@@ -1037,7 +1036,6 @@ class Storage(object):
         else:
             assert value
             where = request[2].lower()
-            pivot = request[3]
             l1 = len(value)
             if where == b'before':
                 value.insert_before(request[3], request[4])
@@ -1541,7 +1539,7 @@ class Storage(object):
         else:
             try:
                 start, end = self._range_values(value, request[2], request[3])
-            except exception:
+            except Exception:
                 return client.reply_error(self.SYNTAX_ERROR)
             reverse = (request[0] == b'zrevrange')
             if N == 4:

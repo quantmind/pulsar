@@ -24,9 +24,11 @@ else:
                                   InvalidStateError, FutureTypeError)
 
 __all__ = ['Deferred',
+           'Error',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
+           'FutureTypeError',
            'log_failure',
            'Failure',
            'maybe_failure',
@@ -47,13 +49,27 @@ __all__ = ['Deferred',
 
 
 def coroutine_return(value=None):
+    '''Use this function to return ``value`` from a
+    :ref:`coroutine <coroutine>`.
+
+    For example::
+
+        def mycoroutine():
+            a = yield ...
+            yield ...
+            ...
+            coroutine_return('OK')
+
+    If a coroutine does not invoke this function, its result is ``None``.
+    '''
     raise CoroutineReturn(value)
 
 
 def iterdata(stream, start=0):
-    '''Iterate over a stream which is either a dictionary or a list. This
-iterator is over key-value pairs for a dictionary, and index-value pairs
-for a list.'''
+    '''Iterate over a stream which is either a dictionary or a list.
+
+    This iterator is over key-value pairs for a dictionary, and
+    index-value pairs for a list.'''
     if isinstance(stream, Mapping):
         return iteritems(stream)
     else:
@@ -68,7 +84,7 @@ def multi_async(iterable=None, loop=None, lock=True, **kwargs):
 
 
 def is_failure(obj, *classes):
-    '''Check if ``obj`` is a :class:`Failure`.
+    '''Check if ``obj`` is a :class:`.Failure`.
 
     If optional ``classes`` are given, it checks if the error is an instance
     of those classes.
@@ -79,7 +95,7 @@ def is_failure(obj, *classes):
 
 
 def log_failure(value):
-    '''Lag a :class:`Failure` if ``value`` is one.
+    '''Lag a :class:`.Failure` if ``value`` is one.
 
     Return ``value``.
     '''
@@ -106,7 +122,7 @@ the coroutine after ``timeout`` seconds. For example::
     yield async_sleep(2)
     ...
 
-This function returns a :class:`Deferred` called back in ``timeout`` seconds
+This function returns a :class:`.Deferred` called back in ``timeout`` seconds
 with the ``timeout`` value.
 '''
     def _cancel(failure):
@@ -119,7 +135,7 @@ with the ``timeout`` value.
 
 
 def safe_async(callable, *args, **kwargs):
-    '''Safely execute a ``callable`` and always return a :class:`Deferred`.
+    '''Safely execute a ``callable`` and always return a :class:`.Deferred`.
 
     Never throws.
     '''
@@ -141,7 +157,7 @@ def async_while(timeout, while_clause, *args):
     :parameter while_clause: while clause callable.
     :parameter args: optional arguments to pass to the ``while_clause``
         callable.
-    :return: A :class:`Deferred`.
+    :return: A :class:`.Deferred`.
     '''
     loop = get_event_loop()
 
@@ -254,7 +270,7 @@ class MultiDeferred(Deferred):
     @property
     def raise_on_error(self):
         '''When ``True`` and at least one value of the result collections is a
-        :class:`Failure`, the callback will receive the failure rather than
+        :class:`.Failure`, the callback will receive the failure rather than
         the collection of results.
 
         Default ``True``.

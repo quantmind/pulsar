@@ -1,6 +1,12 @@
-.. _tutorials-webmail:
+.. _tutorials-twisted:
 
-==================
+======================
+Twisted Integration
+======================
+
+.. automodule:: examples.webmail.tx
+
+
 Web Mail
 ==================
 

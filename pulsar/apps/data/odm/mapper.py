@@ -1,5 +1,3 @@
-from inspect import ismodule, isclass
-
 from pulsar import EventHandler
 from .query import AbstractQuery, Query
 from .transaction import Transaction, ModelDictionary

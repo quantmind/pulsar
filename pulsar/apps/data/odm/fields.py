@@ -1,10 +1,7 @@
 import pickle
-from copy import copy
-from datetime import date, datetime
 from base64 import b64encode
 
 from pulsar.utils.html import UnicodeMixin
-from pulsar.utils.pep import itervalues, to_string
 
 
 class Field(UnicodeMixin):
@@ -139,9 +136,7 @@ class Field(UnicodeMixin):
         class when :class:`Metaclass` is initialised. It fills
         :attr:`Field.name` and :attr:`Field.model`. This is an internal
         function users should never call.'''
-        if self.name:
-            raise FieldError('Field %s is already registered\
- with a model' % self)
+        assert not self.name, 'Field %s is already registered' % self
         self.name = name
         self.attname = self.get_attname()
         self.model = model

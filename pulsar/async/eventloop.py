@@ -16,11 +16,11 @@ from pulsar.utils.pep import range
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_data, LOGGER
-from .defer import maybe_async, async, DeferredTask, Deferred, Failure
+from .defer import maybe_async, async, DeferredTask, Failure
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
 from .udp import create_datagram_endpoint
-from .consts import DEFAULT_CONNECT_TIMEOUT, DEFAULT_ACCEPT_TIMEOUT
+from .consts import DEFAULT_CONNECT_TIMEOUT
 from .pollers import DefaultIO
 
 __all__ = ['EventLoop']
@@ -263,7 +263,7 @@ loop of the thread where it is run.'''
     def run_in_executor(self, executor, callback, *args):
         '''Arrange to call ``callback(*args)`` in an ``executor``.
 
-        Return a :class:`Deferred` called once the callback has finished.'''
+        Return a :class:`.Deferred` called once the callback has finished.'''
         executor = executor or self._default_executor
         if executor is None:
             raise ImproperlyConfigured('No executor available')
@@ -431,7 +431,7 @@ default signal handler ``signal.SIG_DFL``.'''
         :param local_addr: if supplied, it must be a 2-tuple
             ``(host, port)`` for the socket to bind to as its source address
             before connecting.
-        :return: a :class:`Deferred` and its result on success is the
+        :return: a :class:`.Deferred` and its result on success is the
             ``(transport, protocol)`` pair.
 
         If a failure prevents the creation of a successful connection, an
@@ -468,7 +468,7 @@ default signal handler ``signal.SIG_DFL``.'''
             ``TIME_WAIT`` state, without waiting for its natural timeout to
             expire. If not specified will automatically be set to ``True``
             on UNIX.
-        :return: a :class:`Deferred` whose result will be a list of socket
+        :return: a :class:`.Deferred` whose result will be a list of socket
             objects which will later be handled by ``protocol_factory``.
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
@@ -485,7 +485,7 @@ default signal handler ``signal.SIG_DFL``.'''
     def sock_connect(self, sock, address):
         '''Connect ``sock`` to the given ``address``.
 
-        Returns a :class:`Deferred` whose result on success will be ``None``.
+        Returns a :class:`.Deferred` whose result on success will be ``None``.
         '''
         return sock_connect(self, sock, address)
 
@@ -578,7 +578,6 @@ the event loop to poll with a 0 timeout all the times.'''
                     msg='Unhandled exception in event loop callback.')
 
     def _poll(self, timeout):
-        callbacks = self._ready
         io = self._io
         try:
             event_pairs = io.poll(timeout)

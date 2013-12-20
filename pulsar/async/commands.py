@@ -2,7 +2,7 @@ from time import time
 
 from pulsar import CommandError
 
-from .defer import async_while
+from .defer import async_while, coroutine_return
 from .proxy import command, ActorProxyMonitor
 
 
@@ -95,6 +95,5 @@ Return 'killed abc` if successful, otherwise it returns ``None``.
         proxy = yield async_while(timeout, arb.get_actor, aid)
         if proxy:
             arb.logger.warning('Could not kill actor %s', aid)
-            yield None
         else:
-            yield 'killed %s' % aid
+            coroutine_return('killed %s' % aid)

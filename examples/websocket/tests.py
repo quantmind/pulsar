@@ -30,22 +30,23 @@ class Echo(WS):
 
 
 class TestWebSocketThread(unittest.TestCase):
-    app = None
+    app_cfg = None
     concurrency = 'thread'
 
     @classmethod
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
                    concurrency=cls.concurrency)
-        cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.ws_uri = 'ws://{0}:{1}/data'.format(*cls.app.address)
-        cls.ws_echo = 'ws://{0}:{1}/echo'.format(*cls.app.address)
+        cls.app_cfg = yield send('arbiter', 'run', s)
+        addr = cls.app_cfg.addresses[0]
+        cls.uri = 'http://{0}:{1}'.format(*addr)
+        cls.ws_uri = 'ws://{0}:{1}/data'.format(*addr)
+        cls.ws_echo = 'ws://{0}:{1}/echo'.format(*addr)
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg is not None:
+            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def testHyBiKey(self):
         w = WebSocket('/', None)

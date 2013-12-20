@@ -3,9 +3,9 @@ from functools import reduce
 from pulsar.utils.internet import is_socket_closed
 
 from .access import AsyncObject
-from .defer import coroutine_return, multi_async, TimeoutError, NOT_DONE
+from .defer import coroutine_return, multi_async
 from .protocols import Producer
-from .queues import Queue, Full, Empty
+from .queues import Queue, Full
 
 
 __all__ = ['Pool', 'PoolConnection', 'AbstractClient']
@@ -180,7 +180,7 @@ class PoolConnection(object):
         '''Checkout a new connection from ``pool``.
         '''
         connection = yield pool._get()
-        yield cls(pool, connection)
+        coroutine_return(cls(pool, connection))
 
 
 class AbstractClient(Producer):

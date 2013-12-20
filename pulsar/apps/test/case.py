@@ -138,12 +138,11 @@ class Test(tasks.Job):
         if method:
             try:
                 yield runner.run_test_function(test, method, timeout)
-                yield previous
             except Exception as error:
                 add_err = False if previous else add_err
-                yield self.add_failure(test, runner, error, add_err=add_err)
-        else:
-            yield previous
+                previous = self.add_failure(test, runner, error,
+                                            add_err=add_err)
+        coroutine_return(previous)
 
     def add_failure(self, test, runner, error, exc_info=None, add_err=True):
         '''Add ``error`` to the list of errors.

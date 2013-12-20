@@ -31,7 +31,6 @@ run test server
 
 .. autofunction:: run_test_server
 '''
-import sys
 import gc
 from inspect import isclass
 from functools import partial
@@ -41,6 +40,7 @@ import pulsar
 from pulsar import (safe_async, get_actor, send, multi_async,
                     TcpServer, coroutine_return)
 from pulsar.async.proxy import ActorProxyDeferred
+from pulsar.utils.importer import module_attribute
 
 
 __all__ = ['run_on_arbiter',
@@ -57,7 +57,7 @@ NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass', 'run_test_server')
 
 
-class TestCallable:
+class TestCallable(object):
 
     def __init__(self, test, method_name, istest, timeout):
         self.test = test
@@ -87,7 +87,35 @@ class TestCallable:
         return result
 
 
-class TestFunction:
+class SafeTest(object):
+    '''Make sure the test object or class is picklable
+    '''
+    def __init__(self, test):
+        self.test = test
+
+    def __getattr__(self, name):
+        return getattr(self.test, name)
+
+    def __getstate__(self):
+        if isclass(self.test):
+            cls = self.test
+            data = None
+        else:
+            cls = self.test.__class__
+            data = self.test.__dict__.copy()
+        return ('%s.%s' % (cls.__module__, cls.__name__), data)
+
+    def __setstate__(self, state):
+        mod, data = state
+        test = module_attribute(mod)
+        inject_async_assert(test)
+        if data is not None:
+            test = test.__new__(test)
+            test.__dict__.update(data)
+        self.test = test
+
+
+class TestFunction(object):
 
     def __init__(self, method_name):
         self.method_name = method_name
@@ -99,15 +127,14 @@ class TestFunction:
 
     def __call__(self, test, timeout):
         callable = TestCallable(test, self.method_name, self.istest, timeout)
-        return self.run(callable)
-
-    def run(self, callable):
         return callable(get_actor())
 
 
 class TestFunctionOnArbiter(TestFunction):
 
-    def run(self, callable):
+    def __call__(self, test, timeout):
+        test = SafeTest(test)
+        callable = TestCallable(test, self.method_name, self.istest, timeout)
         actor = get_actor()
         if actor.is_monitor():
             return callable(actor)
@@ -149,6 +176,7 @@ class AsyncAssert(object):
 
             def test1(self):
                 yield self.async.assertEqual(3, Deferred().callback(3))
+                ...
 
 
     .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm
@@ -163,7 +191,8 @@ class AsyncAssert(object):
         def _(*args, **kwargs):
             __skip_traceback__ = True
             args = yield multi_async(args)
-            yield getattr(self.test, name)(*args, **kwargs)
+            result = yield getattr(self.test, name)(*args, **kwargs)
+            coroutine_return(result)
         return _
 
     def assertRaises(self, error, callable, *args, **kwargs):
@@ -210,7 +239,7 @@ class ActorTestMixin(object):
         self.assertEqual(proxy.aid, ad.aid)
         self.assertEqual(proxy.proxy, proxy)
         self.assertTrue(proxy.cfg)
-        yield proxy
+        coroutine_return(proxy)
 
     def stop_actors(self, *args):
         all = args or self.all_spawned

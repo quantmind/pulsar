@@ -20,11 +20,12 @@ except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
-from pulsar import HttpRedirect, HttpException, version, JAPANESE
+from pulsar import (HttpRedirect, HttpException, version, JAPANESE,
+                    coroutine_return)
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import route, Html, Json, HtmlDocument
+from pulsar.apps.wsgi import route, Html, Json, HtmlDocument, GZipMiddleware
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
@@ -109,7 +110,7 @@ class HttpBin(wsgi.Router):
     @route('gzip', title='Returns gzip encoded data')
     def gzip(self, request):
         response = yield self.info_data_response(request, gzipped=True)
-        yield wsgi.middleware.GZipMiddleware(10)(request.environ, response)
+        coroutine_return(GZipMiddleware(10)(request.environ, response))
 
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
@@ -143,10 +144,9 @@ class HttpBin(wsgi.Router):
 
             def generate(self):
                 #yield a byte so that headers are sent
-                yield '{'
+                yield b''
                 # we must have the headers now
-                headers = json.dumps(dict(self.headers))
-                yield headers[1:]
+                yield json.dumps(dict(self.headers))
         gen = Gen()
         self.bind_server_event(request, 'on_headers', gen)
         request.response.content = gen.generate()
@@ -258,7 +258,7 @@ class HttpBin(wsgi.Router):
             data.update((('args', dict(args)),
                          ('files', dict(jfiles))))
         data.update(params)
-        yield data
+        coroutine_return(data)
 
     def getheaders(self, request):
         headers = Headers(kind='client')

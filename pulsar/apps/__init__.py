@@ -81,8 +81,7 @@ when_monitor_start = []
 
 
 def get_application(name):
-    '''Fetch an :class:`Application` configurator associated with ``name``
-    if available.
+    '''Fetch an :class:`Application` associated with ``name`` if available.
 
     This function may return an :ref:`asynchronous component <coroutine>`.
     The application name is set during initialisation. Check the
@@ -90,21 +89,26 @@ def get_application(name):
     '''
     actor = get_actor()
 
-    def _():
-        if actor.is_arbiter():
-            cfg = yield _get_app(actor, name)
-        else:
-            cfg = yield actor.send('arbiter', 'run', _get_app, name)
-        coroutine_return(cfg.app() if cfg else None)
-
     if actor:
-        return async(_(), actor._loop)
+        if actor.is_arbiter():
+            return _get_app(actor, name, False)
+        else:
+            return _get_remote_app(actor, name)
 
 
-def _get_app(arbiter, name):
+def _get_remote_app(actor, name):
+    cfg = yield actor.send('arbiter', 'run', _get_app, name)
+    coroutine_return(cfg.app() if cfg else None)
+
+
+def _get_app(arbiter, name, safe=True):
     monitor = arbiter.get_actor(name)
     if monitor:
-        return monitor.start_event
+        cfg = yield monitor.start_event
+        if safe:
+            coroutine_return(cfg)
+        else:
+            coroutine_return(monitor.app)
 
 
 def monitor_start(self):

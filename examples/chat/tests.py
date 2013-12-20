@@ -21,23 +21,23 @@ class Message(ws.WS):
 
 
 class TestWebChat(unittest.TestCase):
-    app = None
+    app_cfg = None
     concurrency = 'thread'
 
     @classmethod
     def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
                    concurrency=cls.concurrency)
-        cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://%s:%s' % cls.app.address
-        cls.ws = 'ws://%s:%s/message' % cls.app.address
+        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.uri = 'http://%s:%s' % cls.app_cfg.addresses[0]
+        cls.ws = 'ws://%s:%s/message' % cls.app_cfg.addresses[0]
         cls.rpc = rpc.JsonProxy('%s/rpc' % cls.uri)
         cls.http = http.HttpClient()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg is not None:
+            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_home(self):
         response = yield self.http.get(self.uri)

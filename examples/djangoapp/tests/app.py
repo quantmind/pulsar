@@ -1,5 +1,5 @@
 '''Tests django chat application.'''
-from pulsar import send, get_application, Queue
+from pulsar import send, get_application, Queue, coroutine_return
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import unittest, dont_run_with_thread
@@ -13,9 +13,9 @@ except ImportError:
 
 
 def start_server(actor, name, argv):
-    app = manage.execute_from_command_line(argv)
+    manage.execute_from_command_line(argv)
     app = yield get_application(name)
-    yield app.event('start')
+    coroutine_return(app.cfg)
 
 
 class MessageHandler(ws.WS):
@@ -33,7 +33,7 @@ class MessageHandler(ws.WS):
 @unittest.skipUnless(manage, 'Requires django')
 class TestDjangoChat(unittest.TestCase):
     concurrency = 'thread'
-    app = None
+    app_cfg = None
 
     @classmethod
     def setUpClass(cls):
@@ -45,16 +45,17 @@ class TestDjangoChat(unittest.TestCase):
                 '--exc-id', cls.exc_id,
                 '--pulse-app-name', name,
                 '--data-store', cls.data_store()]
-        cls.app = yield send('arbiter', 'run', start_server, name, argv)
-        assert cls.app.cfg.exc_id == cls.exc_id, "Bad execution id"
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
-        cls.ws = 'ws://{0}:{1}/message'.format(*cls.app.address)
+        cls.app_cfg = yield send('arbiter', 'run', start_server, name, argv)
+        assert cls.app_cfg.exc_id == cls.exc_id, "Bad execution id"
+        addr = cls.app_cfg.addresses[0]
+        cls.uri = 'http://{0}:{1}'.format(*addr)
+        cls.ws = 'ws://{0}:{1}/message'.format(*addr)
         cls.http = http.HttpClient()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app:
-            return send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg:
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     @classmethod
     def data_store(cls):

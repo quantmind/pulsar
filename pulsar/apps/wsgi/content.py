@@ -132,7 +132,8 @@ Html Factory
 from collections import Mapping
 from functools import partial
 
-from pulsar import multi_async, maybe_async, is_failure, safe_async, Deferred
+from pulsar import (multi_async, maybe_async, is_failure, safe_async, Deferred,
+                    coroutine_return)
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -346,7 +347,7 @@ starts the wsgi response.'''
         response.content_type = self.content_type
         body = yield self.content(request)
         response.content = body
-        yield response
+        coroutine_return(response)
 
     def to_string(self, stream):
         '''Once the :class:`pulsar.Deferred`, returned by :meth:`content`
@@ -1011,4 +1012,4 @@ class HtmlDocument(Html):
 
     def _head(self, request, body):
         head = yield self.head.content(request)
-        yield '%s\n%s' % (head, body)
+        coroutine_return('%s\n%s' % (head, body))

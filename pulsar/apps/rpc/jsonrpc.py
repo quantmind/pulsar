@@ -85,7 +85,7 @@ Design to comply with the `JSON-RPC 2.0`_ Specification.
             res['error'] = result
         else:
             res['result'] = result
-        yield res
+        coroutine_return(res)
 
 
 class JsonCall:

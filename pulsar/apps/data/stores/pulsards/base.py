@@ -442,10 +442,12 @@ def start_store(url, **kw):
             if not host:
                 raise
             # First check if a pulsar store is installed in the arbiter
-            cfg = yield get_application('pulsards')
-            if not cfg:
-                # No create one
+            app = yield get_application('pulsards')
+            if not app:
+                # Not available create one
                 cfg = yield send('arbiter', 'run', PulsarDS(bind=host))
+            else:
+                cfg = app.cfg
             store._host = cfg.addresses[0]
             dns = store._buildurl()
             store = create_store(dns, **kw)

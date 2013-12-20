@@ -146,7 +146,7 @@ class testWsgiApplication(unittest.TestCase):
     def testBuildWsgiApp(self):
         appserver = wsgi.WSGIServer()
         self.assertEqual(appserver.name, 'wsgi')
-        self.assertEqual(appserver.callable, None)
+        self.assertEqual(appserver.cfg.callable, None)
 
     def testWsgiHandler(self):
         hnd = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,

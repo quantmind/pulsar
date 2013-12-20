@@ -4,7 +4,7 @@ from datetime import timedelta
 from random import random
 from functools import reduce
 
-from pulsar import get_request_loop, async_sleep
+from pulsar import get_request_loop, async_sleep, coroutine_return
 from pulsar.apps import tasks
 
 
@@ -35,8 +35,8 @@ class Asynchronous(tasks.Job):
         start = time.time()
         loop = rl.num_loops
         yield async_sleep(lag)
-        yield {'time': time.time() - start,
-               'loops': rl.num_loops - loop}
+        coroutine_return({'time': time.time() - start,
+                          'loops': rl.num_loops - loop})
 
 
 class NotOverLap(tasks.Job):
@@ -45,7 +45,7 @@ class NotOverLap(tasks.Job):
     def __call__(self, consumer, lag=1):
         start = time.time()
         yield async_sleep(lag)
-        yield time.time() - start
+        coroutine_return(time.time() - start)
 
 
 class CheckWorker(tasks.Job):

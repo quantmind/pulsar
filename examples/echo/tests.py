@@ -7,35 +7,37 @@ from .manage import server, Echo, EchoServerProtocol
 
 class TestEchoServerThread(unittest.TestCase):
     concurrency = 'thread'
-    server = None
+    server_cfg = None
 
     @classmethod
     def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
                    backlog=1024, concurrency=cls.concurrency)
-        cls.server = yield send('arbiter', 'run', s)
-        cls.client = Echo(cls.server.address)
+        cls.server_cfg = yield send('arbiter', 'run', s)
+        cls.client = Echo(cls.server_cfg.addresses[0])
 
     @classmethod
     def tearDownClass(cls):
-        if cls.server:
-            yield send('arbiter', 'kill_actor', cls.server.name)
+        if cls.server_cfg:
+            return send('arbiter', 'kill_actor', cls.server_cfg.name)
 
     def sync_client(self):
-        return Echo(self.server.address, loop=new_event_loop())
+        return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
 
     ##    TEST THE SERVER APPLICATION
     @run_on_arbiter
     def test_server_on_arbiter(self):
         app = yield get_application(self.__class__.__name__.lower())
-        self.assertTrue(app.address)
-        self.assertTrue(app.cfg.address)
-        self.assertNotEqual(app.address, app.cfg.address)
+        cfg = app.cfg
+        self.assertTrue(cfg.addresses)
+        self.assertTrue(cfg.address)
+        self.assertNotEqual(cfg.addresses[0], cfg.address)
 
     def test_server(self):
-        self.assertTrue(self.server)
-        self.assertEqual(self.server.callable, EchoServerProtocol)
-        self.assertTrue(self.server.address)
+        server = self.server_cfg.app()
+        self.assertTrue(server)
+        self.assertEqual(server.cfg.callable, EchoServerProtocol)
+        self.assertTrue(server.cfg.addresses)
 
     ##    TEST CLIENT INTERACTION
     def test_ping(self):
@@ -64,13 +66,13 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertTrue(c.pool.available)
 
     def test_info(self):
-        info = yield send(self.server.name, 'info')
+        info = yield send(self.server_cfg.name, 'info')
         self.assertIsInstance(info, dict)
-        self.assertEqual(info['actor']['name'], self.server.name)
+        self.assertEqual(info['actor']['name'], self.server_cfg.name)
         self.assertEqual(info['actor']['concurrency'], self.concurrency)
 
     def test_connection(self):
-        client = Echo(self.server.address, full_response=True)
+        client = Echo(self.server_cfg.addresses[0], full_response=True)
         response = yield client(b'test connection')
         self.assertEqual(response.buffer, b'test connection')
         connection = response.connection
@@ -78,7 +80,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(str(connection.transport)[:4], 'TCP ')
 
     def test_connection_pool(self):
-        client = Echo(self.server.address, pool_size=2)
+        client = Echo(self.server_cfg.addresses[0], pool_size=2)
         self.assertEqual(client.pool.pool_size, 2)
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)

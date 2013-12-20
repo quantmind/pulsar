@@ -38,8 +38,11 @@ def import_modules(modules):
 
 
 def module_attribute(dotpath, default=None, safe=False):
-    '''Load an attribute from a module. If the module or the attribute
-is not available, return the default argument if *safe* is `True`.'''
+    '''Load an attribute from a module.
+
+    If the module or the attribute is not available, return the default
+    argument if *safe* is `True`.
+    '''
     if dotpath:
         bits = str(dotpath).split('.')
         try:
