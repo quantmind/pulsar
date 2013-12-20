@@ -101,7 +101,6 @@ during its life time.
         super(PoolMixin, self).__init__(impl)
         self.managed_actors = {}
         self.terminated_actors = []
-        self.actor_class = self.params.pop('actor_class') or self.actor_class
 
     def get_actor(self, aid):
         aid = getattr(aid, 'aid', aid)
@@ -125,7 +124,7 @@ during its life time.
         The disctionary is passed to the spawn method when creating new
         actors. Fire the :ref:`on_params actor hook <actor-hooks>`.
         '''
-        data = dict(self.params)
+        data = {}
         self.fire_event('on_params', params=data)
         return data
 

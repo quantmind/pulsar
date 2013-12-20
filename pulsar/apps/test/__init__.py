@@ -489,8 +489,7 @@ class TestSuite(tasks.TaskQueue):
                         task_paths=['pulsar.apps.test.case'],
                         plugins=())
 
-    @lazyproperty
-    def runner(self):
+    def new_runner(self):
         '''The :class:`.TestRunner` driving test cases.
         '''
         if unittest is None:    # pragma    nocover
@@ -505,6 +504,7 @@ class TestSuite(tasks.TaskQueue):
         abort_message = runner.configure(self.cfg)
         if abort_message:    # pragma    nocover
             raise ExitTest(str(abort_message))
+        self.runner = runner
         return runner
 
     @lazyproperty
@@ -513,7 +513,7 @@ class TestSuite(tasks.TaskQueue):
         #action is required.
         modules = self.cfg.get('modules')
         # Create a runner and configure it
-        runner = self.runner
+        runner = self.new_runner()
         if not modules:
             modules = ['tests']
         if hasattr(modules, '__call__'):
@@ -564,9 +564,9 @@ class TestSuite(tasks.TaskQueue):
             arbiter.cfg.set('when_exit', show)
         try:
             tests = []
-            self.runner.on_start()
+            loader.runner.on_start()
             for tag, testcls in loader.testclasses(tags, exclude_tags):
-                suite = self.runner.loadTestsFromTestCase(testcls)
+                suite = loader.runner.loadTestsFromTestCase(testcls)
                 if suite and suite._tests:
                     tests.append((tag, testcls))
             self._time_start = None

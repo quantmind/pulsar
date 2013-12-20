@@ -105,7 +105,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     def task_backend(self):
         if not self._task_backend:
             app = yield pulsar.get_application(self.taskqueue)
-            self._task_backend = app.backend
+            self._task_backend = app.get_backend()
         yield self._task_backend
 
     def queue_task(self, request, jobname, meta_data=None, **kw):

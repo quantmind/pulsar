@@ -112,6 +112,7 @@ class Config(object):
         Dictionary of additional parameters which cannot be parsed in the
         command line.
     '''
+    application = None
     exclude_from_config = set(('config',))
 
     def __init__(self, description=None, epilog=None,
@@ -275,6 +276,10 @@ class Config(object):
         for sett in self.settings.values():
             sett.on_start()
 
+    def app(self):
+        if self.application:
+            return self.application.from_config(self)
+
     @property
     def workers(self):
         return self.settings['workers'].get()
@@ -333,12 +338,6 @@ class Config(object):
         me.params = me.params.copy()
         return me
 
-    def __copy__(self):
-        return self.copy()
-
-    def __deepcopy__(self, memo):
-        return self.copy()
-
     def configured_logger(self, name=None):
         '''Configured logger.
         '''
@@ -357,6 +356,12 @@ class Config(object):
                                      level=self.loglevel,
                                      handlers=self.loghandlers)
         return logger
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
 
     ########################################################################
     ##    INTERNALS

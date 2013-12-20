@@ -2,7 +2,7 @@
 from random import random
 from time import time
 
-from pulsar import send, get_application, multi_async
+from pulsar import send, multi_async
 from pulsar.apps import tasks, rpc
 from pulsar.apps.test import unittest, dont_run_with_thread
 
@@ -24,7 +24,8 @@ class TaskQueueBase(object):
     # long enough to allow to wait for tasks
     rpc_timeout = 500
     concurrent_tasks = 6
-    apps = ()
+    tq = None
+    rpc = None
 
     @classmethod
     def name(cls):
@@ -51,19 +52,19 @@ class TaskQueueBase(object):
                    script=__file__,
                    schedule_periodic=cls.schedule_periodic)
         cfgs = yield send('arbiter', 'run', s)
-        cls.apps = [cfg.application.from_config(cfg) for cfg in cfgs]
-        rpc_address = cfgs[1].addresses[0]
+        cls.tq = cfgs[0].app()
+        cls.rpc = cfgs[1].app()
         # make sure the time out is high enough (bigger than test-timeout)
-        cls.proxy = rpc.JsonProxy('http://%s:%s' % rpc_address,
+        cls.proxy = rpc.JsonProxy('http://%s:%s' % cls.rpc.cfg.addresses[0],
                                   timeout=cls.rpc_timeout)
         # Now flush the task queue
-        backend = cls.apps[0].get_backend()
+        backend = cls.tq.get_backend()
         yield backend.flush()
 
     @classmethod
     def tearDownClass(cls):
-        cmnds = [send('arbiter', 'kill_actor', a.name) for a in cls.apps]
-        yield multi_async(cmnds)
+        yield multi_async((send('arbiter', 'kill_actor', a.name)
+                           for a in (cls.tq, cls.rpc) if a is not None))
 
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
@@ -78,7 +79,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(next[0], 'testperiodic')
         self.assertTrue(next[1] >= 0)
 
-class f:
     def test_run_new_simple_task(self):
         r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
         r = yield self.proxy.wait_for_task(r)
@@ -104,7 +104,7 @@ class f:
 
     def test_meta(self):
         '''Tests meta attributes of taskqueue'''
-        app = yield get_application(self.name())
+        app = self.tq
         self.assertTrue(app)
         self.assertEqual(app.name, self.name())
         self.assertFalse(app.cfg.address)
@@ -126,12 +126,12 @@ class f:
 
     def test_pubsub(self):
         '''Tests pubsub handler'''
-        app = yield get_application(self.name())
+        app = self.tq
         pubsub = app.backend.pubsub()
         self.assertEqual(pubsub.store, app.backend.store)
 
     def test_rpc_meta(self):
-        app = yield get_application(self.rpc_name())
+        app = self.rpc
         self.assertTrue(app)
         self.assertEqual(app.name, self.rpc_name())
         self.assertEqual(app.cfg.address, ('127.0.0.1', 0))
@@ -146,7 +146,7 @@ class f:
         self.assertEqual(tq, self.name())
 
     def test_registry(self):
-        app = yield get_application(self.name())
+        app = self.tq
         self.assertTrue(isinstance(app.backend.registry, dict))
         regular = app.backend.registry.regular()
         periodic = app.backend.registry.periodic()
@@ -154,7 +154,7 @@ class f:
         self.assertTrue(periodic)
 
     def test_queue_task_asynchronous_from_test(self):
-        app = yield get_application(self.name())
+        app = self.tq
         r = yield app.backend.queue_task('asynchronous', lag=3)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
@@ -171,7 +171,7 @@ class f:
         self.assertTrue(result['time'] > 3)
 
     def test_queue_task_asynchronous_wait_on_test(self):
-        app = yield get_application(self.name())
+        app = self.tq
         r = yield self.proxy.queue_task(jobname='asynchronous', lag=3)
         r = yield app.backend.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
@@ -186,7 +186,7 @@ class f:
         self.assertEqual(r['status'], tasks.REVOKED)
 
     def test_run_new_simple_task_from_test(self):
-        app = yield get_application(self.name())
+        app = self.tq
         r = yield app.backend.queue_task('addition', a=1, b=2)
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
@@ -200,7 +200,7 @@ class f:
 
     def test_not_overlap(self):
         sec = 2 + random()
-        app = yield get_application(self.name())
+        app = self.tq
         self.assertEqual(app.name, app.backend.name)
         self.assertTrue('notoverlap' in app.backend.registry)
         r1 = yield app.backend.queue_task('notoverlap', lag=sec)
@@ -236,7 +236,7 @@ class f:
 
     def __test_delete_task(self):
         #ISSUE #56
-        app = yield get_application(self.name())
+        app = self.tq
         id = yield app.backend.queue_task(jobname='addition', a=1, b=4)
         r1 = yield app.backend.wait_for_task(id)
         self.assertEqual(r1.result, 5)
@@ -269,7 +269,7 @@ class f:
 
     ##    RPC TESTS
     def test_check_next_run(self):
-        app = yield get_application(self.name())
+        app = self.tq
         backend = app.backend
         backend.tick()
         #self.assertTrue(backend.next_run > now)
@@ -304,7 +304,7 @@ class f:
     def test_id_not_overlap(self):
         '''Check `generate_task_ids` when `can_overlap` attribute is set to
         False.'''
-        app = yield get_application(self.name())
+        app = self.tq
         job = app.backend.registry['notoverlap']
         self.assertEqual(job.type, 'regular')
         self.assertFalse(job.can_overlap)

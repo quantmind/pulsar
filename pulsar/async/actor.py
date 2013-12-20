@@ -127,11 +127,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         This attribute is ``None`` unless one is created via the
         :meth:`create_thread_pool` method.
 
-    .. attribute:: params
-
-        A :class:.AttributeDictionary` which contains
-        parameters which are passed to actors spawned by this actor.
-
     .. attribute:: extra
 
         A dictionary which can be populated with extra parameters useful
@@ -159,8 +154,9 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     MANY_TIMES_EVENTS = ('on_info', 'on_params')
     exit_code = None
     mailbox = None
-    signal_queue = None
+    monitor = None
     next_periodic_task = None
+    poll_timeout = None
     _logger = None
 
     def __init__(self, impl):
@@ -172,8 +168,8 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             hook = impl.params.pop(name, None)
             if hook:
                 self.bind_event(name, hook)
-        self.monitor = impl.params.pop('monitor', None)
-        self.params = AttributeDictionary(**impl.params)
+        for name, value in impl.params.items():
+            setattr(self, name, value)
         self.servers = {}
         self.extra = {}
         self.stream = get_stream(self.cfg)

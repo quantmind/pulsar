@@ -195,7 +195,8 @@ class TaskQueue(pulsar.Application):
         self.get_backend().start(worker)
 
     def worker_stopping(self, worker):
-        self.backend.close(worker)
+        if self.backend:
+            self.backend.close(worker)
 
     def actorparams(self, monitor, params):
         # makes sure workers are only consuming tasks, not scheduling.
@@ -204,9 +205,10 @@ class TaskQueue(pulsar.Application):
 
     def worker_info(self, worker, info=None):
         be = self.backend
-        tasks = {'concurrent': list(be.concurrent_tasks),
-                 'processed': be.processed}
-        info['tasks'] = tasks
+        if be:
+            tasks = {'concurrent': list(be.concurrent_tasks),
+                     'processed': be.processed}
+            info['tasks'] = tasks
 
     def get_backend(self, store=None):
         if self.backend is None:

@@ -224,9 +224,12 @@ class SocketServer(pulsar.Application):
             addresses.append(sock.getsockname())
             sockets.append(WrapSocket(sock))
         server.close()
-        monitor.params.sockets = sockets
-        monitor.params.ssl = ssl
+        monitor.sockets = sockets
+        monitor.ssl = ssl
         cfg.addresses = addresses
+
+    def actorparams(self, monitor, params):
+        params.update({'sockets': monitor.sockets, 'ssl': monitor.ssl})
 
     def worker_start(self, worker):
         '''Start the worker by invoking the :meth:`create_server` method.'''
@@ -260,7 +263,7 @@ class SocketServer(pulsar.Application):
 
         :return: a :class:`.TcpServer`.
         '''
-        sockets = [sock.sock for sock in worker.params.sockets]
+        sockets = [sock.sock for sock in worker.sockets]
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:
@@ -276,7 +279,7 @@ class SocketServer(pulsar.Application):
             callback = getattr(cfg, event)
             if callback != pass_through:
                 server.bind_event(event, callback)
-        server.start_serving(cfg.backlog, sslcontext=worker.params.ssl)
+        server.start_serving(cfg.backlog, sslcontext=worker.ssl)
         return server
 
     def _stop_worker(self, worker, exc):

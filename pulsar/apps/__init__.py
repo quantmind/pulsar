@@ -70,7 +70,7 @@ from inspect import getfile
 from functools import partial
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config,
+from pulsar import (get_actor, coroutine_return, Config, async,
                     multi_async, Deferred, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -89,11 +89,16 @@ def get_application(name):
     :attr:`Configurator.name` attribute for more information.
     '''
     actor = get_actor()
-    if actor:
+
+    def _():
         if actor.is_arbiter():
-            return _get_app(actor, name)
+            cfg = yield _get_app(actor, name)
         else:
-            return actor.send('arbiter', 'run', _get_app, name)
+            cfg = yield actor.send('arbiter', 'run', _get_app, name)
+        coroutine_return(cfg.app() if cfg else None)
+
+    if actor:
+        return async(_(), actor._loop)
 
 
 def _get_app(arbiter, name):
@@ -103,11 +108,9 @@ def _get_app(arbiter, name):
 
 
 def monitor_start(self):
-    start_event = self.params.pop('start_event')
-    app = self.params.app
+    start_event = self.start_event
+    app = self.app
     try:
-        self.app = app
-        self.start_event = start_event
         self.bind_event('on_params', monitor_params)
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
@@ -149,7 +152,7 @@ def monitor_info(self, info=None):
 
 
 def monitor_params(self, params=None):
-    app = params.pop('app')
+    app = self.app
     params.update({'cfg': app.cfg.copy(),
                    'name': '{0}-worker'.format(app.name),
                    'start': worker_start})
