@@ -1,6 +1,8 @@
-Ver. 0.7.4 - 2013-Dec-12
+Ver. 0.7.4 - 2013-Dec-22
 ===========================
-* Another bug fix release.
+* A bug fix release.
+* Fixes an issue with Cookie handling in the wsgi application.
+* Don't log errors when writing back to a stale client
 * **822 regression tests**, **91% coverage**
 
 Ver. 0.7.3 - 2013-Dec-12

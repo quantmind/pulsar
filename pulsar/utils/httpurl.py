@@ -600,7 +600,7 @@ header fields.
         key = header_field(key, self.all_headers, self.strict)
         if key and value is not None:
             if not isinstance(value, list):
-                value = self.get_values(value)
+                value = [value]
             self._headers[key] = value
 
     def get(self, key, default=None):
@@ -670,14 +670,11 @@ results in::
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
             values = self._headers.get(key, [])
-            lower_values = [v.lower() for v in values]
-            for value in self.get_values(value):
-                if params:
-                    value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
-                                                          in params.items())))
-                lower_value = value.lower()
-                if lower_value not in lower_values:
-                    lower_values.append(lower_value)
+            value = value.strip()
+            if params:
+                value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
+                                                      in params.items())))
+            if value not in values:
                     values.append(value)
             self._headers[key] = values
 
@@ -730,10 +727,6 @@ results in::
                     yield "%s: %s" % (k, joiner.join(headers[k]))
         yield ''
         yield ''
-
-    ##    INTERNALS
-    def get_values(self, value):
-        return [v for v in (v.strip() for v in value.split(',')) if v]
 
 
 ###############################################################################
