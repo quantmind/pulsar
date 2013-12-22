@@ -226,7 +226,6 @@ class Configurator(object):
     argv = None
     name = None
     parse_console = False
-    script = None
     cfg = Config()
 
     def __init__(self,
@@ -256,7 +255,7 @@ class Configurator(object):
         cfg.application = cls
         self.argv = argv
         self.parsed_console = parse_console
-        self.script = self.python_path(script)
+        self.cfg.script = self.script = self.python_path(script)
 
     @property
     def version(self):
@@ -269,8 +268,8 @@ class Configurator(object):
 
         Evaluated from the :attr:`script` attribute.
         '''
-        if self.script:
-            return os.path.dirname(self.script)
+        if self.cfg.script:
+            return os.path.dirname(self.cfg.script)
 
     def __repr__(self):
         return self.name

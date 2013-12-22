@@ -552,7 +552,8 @@ class TestSuite(tasks.TaskQueue):
                           key_value_save=[],
                           name='%s_store' % self.name)
         yield server()
-        store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]))
+        store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
+                             pool_size=2)
         self.get_backend(store)
         loader = self.loader
         tags = self.cfg.labels

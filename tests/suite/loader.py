@@ -13,9 +13,9 @@ class TestTestLoader(unittest.TestCase):
     @run_on_arbiter
     def test_testsuite(self):
         app = yield get_application('test')
-        self.assertTrue(app.script)
+        self.assertTrue(app.cfg.script)
         #self.assertEqual(app.script, sys.argv[0])
-        self.assertEqual(os.path.dirname(app.script), app.root_dir)
+        self.assertEqual(os.path.dirname(app.cfg.script), app.root_dir)
         self.assertEqual(app.cfg.modules, ('tests',
                                           ('examples', 'tests'),
                                           ('examples', 'test_*')))

@@ -1,7 +1,7 @@
 import sys
 from collections import Mapping
 
-from pulsar.utils.pep import iteritems
+from pulsar.utils.pep import iteritems, default_timer
 
 from .access import get_event_loop, get_request_loop
 from .consts import MAX_ASYNC_WHILE
@@ -262,7 +262,7 @@ class MultiDeferred(Deferred):
         if not issubclass(type, (list, Mapping)):
             type = list
         self._stream = type()
-        self._time_start = self._loop.time()
+        self._time_start = default_timer()
         if data:
             self.update(data)
         return self
@@ -315,7 +315,7 @@ class MultiDeferred(Deferred):
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +
                                ' cannot be locked twice.')
-        self._time_locked = self._loop.time()
+        self._time_locked = default_timer()
         self._locked = True
         if not self._deferred:
             self._finish()
@@ -367,7 +367,7 @@ both ``list`` and ``dict`` :attr:`type`.'''
             raise RuntimeError(self.__class__.__name__ +
                                ' cannot finish whilst waiting for '
                                'dependents %r' % self._deferred)
-        self._time_finished = self._loop.time()
+        self._time_finished = default_timer()
         if self.raise_on_error and self._failures:
             self.callback(self._failures[0])
         else:

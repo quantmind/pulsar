@@ -7,5 +7,6 @@ from . import client
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
 class TestHttpClientWithPythonParser(client.TestHttpClient):
 
-    def parser(self):
+    @classmethod
+    def parser(cls):
         return HttpParser

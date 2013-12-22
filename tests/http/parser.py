@@ -6,7 +6,8 @@ from pulsar.utils import httpurl
 
 class TestPythonHttpParser(unittest.TestCase):
 
-    def parser(self, **kwargs):
+    @classmethod
+    def parser(cls, **kwargs):
         return httpurl.HttpParser(**kwargs)
 
     def __test_amazon_protocol_error(self):
@@ -168,5 +169,6 @@ class TestPythonHttpParser(unittest.TestCase):
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
 class TestCHttpParser(TestPythonHttpParser):
 
-    def parser(self, **kwargs):
+    @classmethod
+    def parser(cls, **kwargs):
         return httpurl.CHttpParser(**kwargs)

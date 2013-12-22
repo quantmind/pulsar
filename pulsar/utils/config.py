@@ -112,6 +112,7 @@ class Config(object):
         Dictionary of additional parameters which cannot be parsed in the
         command line.
     '''
+    script = None
     application = None
     exclude_from_config = set(('config',))
 
