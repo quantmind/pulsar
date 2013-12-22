@@ -604,7 +604,7 @@ class Headers(object):
         key = header_field(key, self.all_headers, self.strict)
         if key and value is not None:
             if not isinstance(value, list):
-                value = self.get_values(value)
+                value = [value]
             self._headers[key] = value
 
     def get(self, key, default=None):
@@ -731,10 +731,6 @@ results in::
                     yield "%s: %s" % (k, joiner.join(headers[k]))
         yield ''
         yield ''
-
-    ##    INTERNALS
-    def get_values(self, value):
-        return [v for v in (v.strip() for v in value.split(',')) if v]
 
 
 ###############################################################################

@@ -160,9 +160,9 @@ class TaskQueue(pulsar.Application):
     :ref:`schedule_periodic <setting-schedule_periodic>` flag is ``True``.
     '''
     backend = None
-    '''The :ref:`TaskBackend <apps-taskqueue-backend>` for this task queue.
+    '''The :class:`.TaskBackend` for this task queue.
 
-    This picklable attribute is available once the :class:`TaskQueue` has
+    Available once the :class:`TaskQueue` has
     started (when the :meth:`monitor_start` method is invoked by the
     :class:`.Monitor` running it).
     '''

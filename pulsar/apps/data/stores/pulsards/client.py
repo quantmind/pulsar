@@ -33,6 +33,13 @@ class Executor:
         return self.client.execute(self.command, *args, **options)
 
 
+class ResponseError:
+    __slots__ = ('exception',)
+
+    def __init__(self, exception):
+        self.exception = exception
+
+
 def dict_merge(*dicts):
     merged = {}
     [merged.update(d) for d in dicts]
@@ -115,6 +122,8 @@ class Consumer(pulsar.ProtocolConsumer):
                             lambda v: float(v) if v is not None else v),
         string_keys_to_dict('ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
                             values_to_zset),
+        string_keys_to_dict('EXISTS',
+                            lambda r: bool(r)),
         {
             'PING': lambda r: r == b'PONG',
             'PUBSUB': pubsub_callback,
@@ -154,18 +163,19 @@ class Consumer(pulsar.ProtocolConsumer):
                     if response is None:
                         self.bind_event('post_request', lambda r: None)
                 else:
-                    raise response
+                    response = ResponseError(response)
                 self.finished(response)
         else:   # pipeline
             commands, raise_on_error, responses = request
+            error = None
             while response is not False:
-                if isinstance(response, Exception) and raise_on_error:
-                    raise response
+                if (isinstance(response, Exception) and raise_on_error
+                        and not error):
+                    error = response
                 responses.append(response)
                 response = parser.get()
             if len(responses) == len(commands):
                 response = []
-                error = None
                 for cmds, resp in zip(commands[1:-1], responses[-1]):
                     args, options = cmds
                     if isinstance(resp, Exception) and not error:
@@ -173,7 +183,7 @@ class Consumer(pulsar.ProtocolConsumer):
                     resp = self.parse_response(resp, args[0], options)
                     response.append(resp)
                 if error and raise_on_error:
-                    raise error
+                    response = ResponseError(error)
                 self.finished(response)
 
 

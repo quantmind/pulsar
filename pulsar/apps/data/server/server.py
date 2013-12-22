@@ -299,6 +299,11 @@ class Storage(object):
         client.reply_int(result)
 
     @command('Keys')
+    def dump(self, client, request, N):
+        check_input(request, N != 1)
+        client.reply_bulk()
+
+    @command('Keys')
     def exists(self, client, request, N):
         check_input(request, N != 1)
         if client.db.exists(request[1]):

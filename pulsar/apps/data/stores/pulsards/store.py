@@ -5,13 +5,13 @@ from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
 from pulsar.utils.pep import to_string, zip
 
 from .base import register_store, Store, Command
-from .client import Client, Pipeline, Consumer
+from .client import Client, Pipeline, Consumer, ResponseError
 from .pubsub import PubSub
 from ...server import redis_parser
 
 
 class PulsarStoreConnection(Connection):
-    '''Used both by client and server'''
+
     def __init__(self, *args, **kw):
         super(PulsarStoreConnection, self).__init__(*args, **kw)
         self.parser = self._producer._parser_class()
@@ -75,8 +75,8 @@ class PulsarStore(Store):
         connection = yield self._pool.connect()
         with connection:
             result = yield connection.execute(*args, **options)
-            if isinstance(result, Exception):
-                raise result
+            if isinstance(result, ResponseError):
+                raise result.exception
             coroutine_return(result)
 
     @in_loop_thread
@@ -84,6 +84,8 @@ class PulsarStore(Store):
         conn = yield self._pool.connect()
         with conn:
             result = yield conn.execute_pipeline(commands, raise_on_error)
+            if isinstance(result, ResponseError):
+                raise result.exception
             coroutine_return(result)
 
     def connect(self, protocol_factory=None):

@@ -14,12 +14,13 @@ class StoreMixin(object):
     redis_py_parser = False
 
     @classmethod
-    def create_store(cls, address, namespace=None, **kw):
+    def create_store(cls, address, namespace=None, pool_size=2, **kw):
         if cls.redis_py_parser:
             kw['parser_class'] = redis_parser(True)
         if not namespace:
             namespace = cls.randomkey(6).lower()
-        return create_store(address, namespace=namespace, **kw)
+        return create_store(address, namespace=namespace,
+                            pool_size=pool_size, **kw)
 
     @classmethod
     def randomkey(cls, length=None):
@@ -43,6 +44,15 @@ class RedisCommands(StoreMixin):
     def test_store(self):
         store = self.store
         self.assertEqual(len(store.namespace), 7)
+
+    def test_exists(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.exists(key), False)
+        yield eq(c.set(key, 'hello'), True)
+        yield eq(c.exists(key), True)
+        yield eq(c.delete(key), 1)
 
     def test_watch(self):
         key1 = self.randomkey()

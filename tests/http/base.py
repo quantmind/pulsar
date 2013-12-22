@@ -68,14 +68,15 @@ class TestHttpClientBase:
         '''When tunneling, the client needs to perform an extra request.'''
         return int(self.with_proxy and self.with_tls)
 
-    def client(self, loop=None, parser=None, **kwargs):
+    def client(self, loop=None, parser=None, pool_size=2, **kwargs):
         parser = self.parser()
         if self.with_proxy:
             kwargs['proxy_info'] = {'http': self.proxy_uri,
                                     'https': self.proxy_uri,
                                     'ws': self.proxy_uri,
                                     'wss': self.proxy_uri}
-        return HttpClient(loop=loop, parser=parser, **kwargs)
+        return HttpClient(loop=loop, parser=parser, pool_size=pool_size,
+                          **kwargs)
 
     def parser(self):
         return None
@@ -122,13 +123,13 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def __test_HttpResponse(self):
+    def test_HttpResponse(self):
         r = HttpResponse()
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<None>')
         self.assertEqual(r.headers, None)
 
-    def __test_client(self):
+    def test_client(self):
         http = self.client(max_redirects=5, timeout=33)
         self.assertTrue('accept-encoding' in http.headers)
         self.assertEqual(http.timeout, 33)
