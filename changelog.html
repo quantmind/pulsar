@@ -90,6 +90,9 @@ imported first).</li>
 </ul>
 </li>
 <li><strong>Core library</strong><ul>
+<li>Removed support for python 3.2.</li>
+<li><a class="reference internal" href="tutorials/coroutine.html#coroutine"><em>Coroutines</em></a> can return a value via the
+<a class="reference internal" href="api/async.html#pulsar.async.defer.coroutine_return" title="pulsar.async.defer.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function. Otherwise they return <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.run_in_loop_thread" title="pulsar.async.defer.run_in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop_thread()</span></tt></a> high level function. This utility
 runs a callable in the event loop thread and returns a <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
 called back once the callable has a result/exception.</li>
@@ -124,7 +127,7 @@ scripting.</li>
 </ul>
 </li>
 <li><strong>Websockets</strong><ul>
-<li>the web socket <a class="reference internal" href="apps/websockets.html#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> method is invoked soon
+<li>The web socket <a class="reference internal" href="apps/websockets.html#pulsar.apps.ws.WS.on_open" title="pulsar.apps.ws.WS.on_open"><tt class="xref py py-meth docutils literal"><span class="pre">on_open()</span></tt></a> method is invoked soon
 after upgrade headers are sent. No need to send a message from the client
 to kick start the bidirectional communication.</li>
 <li>Websocket C extensions for faster parsing/masking.</li>
@@ -139,9 +142,15 @@ handlersd are now available via the new <a class="reference internal" href="apps
 <li>The <tt class="docutils literal"><span class="pre">Backend</span></tt> class has been removed.</li>
 <li>Improved <a class="reference internal" href="tutorials/django.html#tutorials-django"><em>django example</em></a> with possibility to
 choose different data stores for messages.</li>
+<li>Removed the twisted integration module and moved to the example directory.
+The integration is not tested enough and therefore cannot be part of the
+main distribution.</li>
+<li><a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> does not require to create picklable objects.</li>
+<li>More robust serialisation of <tt class="docutils literal"><span class="pre">TestCase</span></tt> methods when used with the
+<a class="reference internal" href="apps/test.html#pulsar.apps.test.utils.run_on_arbiter" title="pulsar.apps.test.utils.run_on_arbiter"><tt class="xref py py-func docutils literal"><span class="pre">run_on_arbiter()</span></tt></a> decorator.</li>
 </ul>
 </li>
-<li><strong>821 regression tests</strong>, <strong>91% coverage</strong>.</li>
+<li><strong>1,033 regression tests</strong>, <strong>91% coverage</strong>.</li>
 </ul>
 </div>
 <div class="section" id="ver-0-7-3-2013-dec-12">
@@ -383,14 +392,14 @@ so that it can be used in any process domain.</li>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>Initial <a class="reference internal" href="apps/twisted.html#tutorials-twisted"><em>twisted integration</em></a>.</dt>
+<dt>Initial <a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>twisted integration</em></a>.</dt>
 <dd><ul class="first last simple">
 <li>Added <tt class="xref py py-func docutils literal"><span class="pre">pulsar.set_async()</span></tt> function which can be used to change
 the asynchronous discovery functions <tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_async()</span></tt>
 and <tt class="xref py py-func docutils literal"><span class="pre">pulsar.maybe_failure()</span></tt>. The function is used in the
-implementation of <a class="reference internal" href="apps/twisted.html#tutorials-twisted"><em>twisted integration</em></a> and could
+implementation of <a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>twisted integration</em></a> and could
 be used in conjunction with other asynchronous libraries as well.</li>
-<li>New <a class="reference internal" href="tutorials/webmail.html#tutorials-webmail"><em>Webmail example application</em></a> using twisted
+<li>New <em class="xref std std-ref">Webmail example application</em> using twisted
 IMAP4 protocol implementation.</li>
 </ul>
 </dd>

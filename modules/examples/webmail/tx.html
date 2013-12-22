@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.tx &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>examples.webmail.tx &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar.apps" href="../apps.html" /> 
+    <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
 
@@ -45,8 +45,7 @@
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li><a href="../../../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -54,7 +53,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/tx.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/modules/examples/webmail/tx.html">release docs here</a>.
         </p>
     
 </div>
@@ -66,7 +65,7 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <h1>Source code for pulsar.apps.tx</h1><div class="highlight"><pre>
+  <h1>Source code for examples.webmail.tx</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">Pulsar concurrent framework and applications can be used with twisted_, an</span>
 <span class="sd">event driven network engine for python. Twisted has implementation</span>
@@ -115,7 +114,7 @@
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">add_async_binding</span>
 
 
-<div class="viewcode-block" id="check_twisted"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.check_twisted">[docs]</a><span class="k">def</span> <span class="nf">check_twisted</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
+<div class="viewcode-block" id="check_twisted"><a class="viewcode-back" href="../../../tutorials/webmail.html#examples.webmail.tx.check_twisted">[docs]</a><span class="k">def</span> <span class="nf">check_twisted</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Binding for twisted.</span>
 
 <span class="sd">    Added to pulsar asynchronous engine via the :func:`.add_async_binding`</span>
@@ -132,7 +131,7 @@
 <span class="n">add_async_binding</span><span class="p">(</span><span class="n">check_twisted</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../apps/twisted.html#pulsar.apps.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
+<div class="viewcode-block" id="PulsarReactor"><a class="viewcode-back" href="../../../tutorials/webmail.html#examples.webmail.tx.PulsarReactor">[docs]</a><span class="k">class</span> <span class="nc">PulsarReactor</span><span class="p">(</span><span class="n">PosixReactorBase</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
     <span class="sd">&#39;&#39;&#39;A twisted reactor which acts as a proxy to pulsar eventloop.</span>
 
 <span class="sd">    The event loop is obtained via the ``get_event_loop`` function.</span>

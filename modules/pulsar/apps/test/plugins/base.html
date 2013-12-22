@@ -177,7 +177,6 @@
 <span class="sd">    for controlling the number of repetitions::</span>
 
 <span class="sd">        class Bench(TestPlugin):</span>
-<span class="sd">            desc = &quot;Run benchmarks function flagged with __benchmark__ attribute&quot;</span>
 <span class="sd">            repeat = pulsar.Setting(type=int,</span>
 <span class="sd">                                default=1,</span>
 <span class="sd">                                validator=pulsar.validate_pos_int,</span>
@@ -200,7 +199,8 @@
 
 <span class="sd">    .. attribute:: desc</span>
 
-<span class="sd">        Class attribute used as the description of the :ref:`setting &lt;settings&gt;`.</span>
+<span class="sd">        Class attribute used as the description of the</span>
+<span class="sd">        :ref:`setting &lt;settings&gt;`.</span>
 <span class="sd">        If :attr:`name` is disabled, this attribute is not relevant.</span>
 
 <span class="sd">    .. attribute:: config</span>

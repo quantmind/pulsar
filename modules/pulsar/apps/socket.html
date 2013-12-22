@@ -253,7 +253,6 @@
 <span class="sd">        The socket address, available once the application has started.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;socket&#39;</span>
-    <span class="n">address</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">apps</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">])</span>
 
 <div class="viewcode-block" id="SocketServer.protocol_factory"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.protocol_factory">[docs]</a>    <span class="k">def</span> <span class="nf">protocol_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -261,7 +260,7 @@
 
 <span class="sd">        By default it returns the :meth:`.Application.callable`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="SocketServer.monitor_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Create the socket listening to the ``bind`` address.</span>
@@ -294,11 +293,13 @@
             <span class="n">addresses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sock</span><span class="o">.</span><span class="n">getsockname</span><span class="p">())</span>
             <span class="n">sockets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">WrapSocket</span><span class="p">(</span><span class="n">sock</span><span class="p">))</span>
         <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="n">sockets</span>
-        <span class="n">monitor</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span> <span class="o">=</span> <span class="n">sockets</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span> <span class="o">=</span> <span class="n">ssl</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span> <span class="o">=</span> <span class="n">addresses</span>
 </div>
+    <span class="k">def</span> <span class="nf">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sockets&#39;</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">sockets</span><span class="p">,</span> <span class="s">&#39;ssl&#39;</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">ssl</span><span class="p">})</span>
+
 <div class="viewcode-block" id="SocketServer.worker_start"><a class="viewcode-back" href="../../../apps/socket.html#pulsar.apps.socket.SocketServer.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Start the worker by invoking the :meth:`create_server` method.&#39;&#39;&#39;</span>
         <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_server</span><span class="p">(</span><span class="n">worker</span><span class="p">)</span>
@@ -331,7 +332,7 @@
 
 <span class="sd">        :return: a :class:`.TcpServer`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">sockets</span> <span class="o">=</span> <span class="p">[</span><span class="n">sock</span><span class="o">.</span><span class="n">sock</span> <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">sockets</span><span class="p">]</span>
+        <span class="n">sockets</span> <span class="o">=</span> <span class="p">[</span><span class="n">sock</span><span class="o">.</span><span class="n">sock</span> <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">sockets</span><span class="p">]</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
         <span class="n">max_requests</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">max_requests</span>
         <span class="k">if</span> <span class="n">max_requests</span><span class="p">:</span>
@@ -347,7 +348,7 @@
             <span class="n">callback</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">event</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">callback</span> <span class="o">!=</span> <span class="n">pass_through</span><span class="p">:</span>
                 <span class="n">server</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
-        <span class="n">server</span><span class="o">.</span><span class="n">start_serving</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">backlog</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">ssl</span><span class="p">)</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">start_serving</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">backlog</span><span class="p">,</span> <span class="n">sslcontext</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">ssl</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">server</span>
 </div>
     <span class="k">def</span> <span class="nf">_stop_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>

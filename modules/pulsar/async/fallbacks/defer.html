@@ -72,10 +72,11 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span><span class="p">,</span> <span class="n">namedtuple</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isgenerator</span><span class="p">,</span> <span class="n">istraceback</span>
 
-<span class="kn">from</span> <span class="nn">..access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">get_request_loop</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..access</span> <span class="kn">import</span> <span class="n">get_request_loop</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">logger</span>
 
 
 <span class="n">NOT_DONE</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
 
 <span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Raised when no other information is available on a Failure&#39;&#39;&#39;</span>
@@ -110,10 +111,6 @@
 
 <span class="n">async_exec_info</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;async_exec_info&#39;</span><span class="p">,</span> <span class="s">&#39;error_class error trace&#39;</span><span class="p">)</span>
 <span class="n">log_exc_info</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;error&#39;</span><span class="p">,</span> <span class="s">&#39;critical&#39;</span><span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">FutureTypeError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;raised when invoking ``async`` on a wrong type.&#39;&#39;&#39;</span>
 
 
 <span class="k">def</span> <span class="nf">is_relevant_tb</span><span class="p">(</span><span class="n">tb</span><span class="p">):</span>
@@ -368,20 +365,10 @@
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span> <span class="n">__repr__</span><span class="p">()</span>
 
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="Deferred.timeout"><a class="viewcode-back" href="../../../../api/async.html#pulsar.async.fallbacks.defer.Deferred.timeout">[docs]</a>    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The ``asyncio.TimerHandle`` which handles the timeout of this</span>
-<span class="sd">        :class:`Deferred`.</span>
-
-<span class="sd">        Available only when a timeout is set.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span>
-</div>
-    <span class="nd">@property</span>
 <div class="viewcode-block" id="Deferred.has_callbacks"><a class="viewcode-back" href="../../../../api/async.html#pulsar.async.fallbacks.defer.Deferred.has_callbacks">[docs]</a>    <span class="k">def</span> <span class="nf">has_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;``True`` if this :class:`Deferred` has callbacks.</span>
+        <span class="sd">&#39;&#39;&#39;The number of callbacks.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span> <span class="k">else</span> <span class="mi">0</span>
 
     <span class="c"># Future methods, PEP 3156</span>
 </div>
@@ -610,6 +597,7 @@
     <span class="k">def</span> <span class="nf">_run_callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">_PENDING</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runningCallbacks</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paused</span><span class="p">:</span>
             <span class="k">return</span>
+        <span class="n">__skip_traceback__</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="n">loop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span>
         <span class="n">noisy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="s">&#39;noisy&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
@@ -678,6 +666,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">value</span>
             <span class="n">conclude</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="n">conclude</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
@@ -745,7 +734,7 @@
 <span class="sd">        :return: a :class:`Deferred`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bindings</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">binding</span> <span class="ow">in</span> <span class="n">bindings</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">binding</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bindings</span><span class="p">:</span>
                 <span class="n">d</span> <span class="o">=</span> <span class="n">binding</span><span class="p">(</span><span class="n">coro_or_future</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">d</span>

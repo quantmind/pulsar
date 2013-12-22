@@ -150,7 +150,7 @@
 
     <span class="k">def</span> <span class="nf">protocol_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span>
+        <span class="n">consumer_factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">HttpServerResponse</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">callable</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span>
                                    <span class="n">cfg</span><span class="o">.</span><span class="n">server_software</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">Connection</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">)</span></div>
 </pre></div>

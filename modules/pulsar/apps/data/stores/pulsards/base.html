@@ -513,11 +513,11 @@
             <span class="c"># First check if a pulsar store is installed in the arbiter</span>
             <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">get_application</span><span class="p">(</span><span class="s">&#39;pulsards&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="p">:</span>
-                <span class="c"># No create one</span>
-                <span class="n">app</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">PulsarDS</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">host</span><span class="p">))</span>
+                <span class="c"># Not available create one</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;run&#39;</span><span class="p">,</span> <span class="n">PulsarDS</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">host</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">)</span>
-            <span class="n">store</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">address</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">cfg</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">dns</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">_buildurl</span><span class="p">()</span>
             <span class="n">store</span> <span class="o">=</span> <span class="n">create_store</span><span class="p">(</span><span class="n">dns</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
@@ -529,13 +529,6 @@
             <span class="k">return</span> <span class="s">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">host</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">host</span>
-
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="n">app</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">app</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">cls</span><span class="p">):</span>
-            <span class="k">return</span>
 
 
 <span class="k">def</span> <span class="nf">_start_store</span><span class="p">(</span><span class="n">monitor</span><span class="p">):</span>

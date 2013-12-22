@@ -392,9 +392,9 @@ By default it used the standard <a class="reference internal" href="#pulsar.apps
 </tr>
 </tbody>
 </table>
-<dl class="attribute">
-<dt id="pulsar.apps.test.TestSuite.runner">
-<tt class="descname">runner</tt><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.runner" title="Permalink to this definition">¶</a></dt>
+<dl class="method">
+<dt id="pulsar.apps.test.TestSuite.new_runner">
+<tt class="descname">new_runner</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.new_runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.new_runner" title="Permalink to this definition">¶</a></dt>
 <dd><p>The <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> driving test cases.</p>
 </dd></dl>
 
@@ -402,12 +402,6 @@ By default it used the standard <a class="reference internal" href="#pulsar.apps
 <dt id="pulsar.apps.test.TestSuite.monitor_start">
 <tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.monitor_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>When the monitor starts load all test classes into the queue</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.test.TestSuite.events">
-<tt class="descname">events</tt><a class="reference internal" href="../modules/pulsar/apps/test.html#TestSuite.events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.TestSuite.events" title="Permalink to this definition">¶</a></dt>
-<dd><p>Events for the application: <tt class="docutils literal"><span class="pre">ready</span></tt>, <tt class="docutils literal"><span class="pre">start</span></tt>, <tt class="docutils literal"><span class="pre">stop</span></tt>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -736,7 +730,6 @@ In addition, a <tt class="xref py py-class docutils literal"><span class="pre">T
 <a class="reference internal" href="#bench-plugin"><em>benchmark plugin</em></a> has an additional setting
 for controlling the number of repetitions:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Bench</span><span class="p">(</span><span class="n">TestPlugin</span><span class="p">):</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;Run benchmarks function flagged with __benchmark__ attribute&quot;</span>
     <span class="n">repeat</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Setting</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
                         <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                         <span class="n">validator</span><span class="o">=</span><span class="n">pulsar</span><span class="o">.</span><span class="n">validate_pos_int</span><span class="p">,</span>
@@ -762,7 +755,8 @@ is added to the test suite configuration parameters. For example:</p>
 <dl class="attribute">
 <dt id="pulsar.apps.test.loader.TestPlugin.desc">
 <tt class="descname">desc</tt><a class="headerlink" href="#pulsar.apps.test.loader.TestPlugin.desc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class attribute used as the description of the <a class="reference internal" href="../settings.html#settings"><em>setting</em></a>.
+<dd><p>Class attribute used as the description of the
+<a class="reference internal" href="../settings.html#settings"><em>setting</em></a>.
 If <a class="reference internal" href="#pulsar.apps.test.loader.TestPlugin.name" title="pulsar.apps.test.loader.TestPlugin.name"><tt class="xref py py-attr docutils literal"><span class="pre">name</span></tt></a> is disabled, this attribute is not relevant.</p>
 </dd></dl>
 
@@ -843,6 +837,7 @@ For example:</p>
 
     <span class="k">def</span> <span class="nf">test1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">async</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">()</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
 </dd></dl>

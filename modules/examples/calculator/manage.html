@@ -111,7 +111,7 @@
 
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">normalvariate</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span><span class="p">,</span> <span class="n">wsgi</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">JSON_CONTENT_TYPES</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="nb">range</span>
@@ -146,7 +146,7 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">()</span>
         <span class="k">assert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;method&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">True</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Root"><a class="viewcode-back" href="../../../tutorials/calculator.html#examples.calculator.manage.Root">[docs]</a><span class="k">class</span> <span class="nc">Root</span><span class="p">(</span><span class="n">rpc</span><span class="o">.</span><span class="n">PulsarServerCommands</span><span class="p">):</span>

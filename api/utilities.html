@@ -115,7 +115,8 @@ the insertion of multiple header values. Header fields are
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>headers</strong> &#8211; optional iterable over header field/value pairs.</li>
-<li><strong>kind</strong> &#8211; optional headers type, one of <tt class="docutils literal"><span class="pre">server</span></tt>, <tt class="docutils literal"><span class="pre">client</span></tt> or <tt class="docutils literal"><span class="pre">both</span></tt>.</li>
+<li><strong>kind</strong> &#8211; optional headers type, one of <tt class="docutils literal"><span class="pre">server</span></tt>, <tt class="docutils literal"><span class="pre">client</span></tt> or
+<tt class="docutils literal"><span class="pre">both</span></tt>.</li>
 <li><strong>strict</strong> &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> only valid headers field will be included.</li>
 </ul>
 </td>
@@ -125,14 +126,14 @@ the insertion of multiple header values. Header fields are
 <p>This <a class="reference internal" href="#pulsar.utils.httpurl.Headers" title="pulsar.utils.httpurl.Headers"><tt class="xref py py-class docutils literal"><span class="pre">Headers</span></tt></a> container maintains an ordering as suggested by
 <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http://www.w3.org/Protocols/rfc2616/rfc2616.html</a>:</p>
 <blockquote class="epigraph">
-<div><p>The order in which header fields with differing field names are received
-is not significant. However, it is &#8220;good practice&#8221; to send general-header
-fields first, followed by request-header or response-header fields, and
-ending with the entity-header fields.</p>
+<div><p>The order in which header fields with differing field names are
+received is not significant. However, it is &#8220;good practice&#8221; to send
+general-header fields first, followed by request-header or
+response-header fields, and ending with the entity-header fields.</p>
 <p class="attribution">&mdash;rfc2616 section 4.2</p>
 </div></blockquote>
-<p>The strict parameter is rarely used and it forces the omission on non-standard
-header fields.</p>
+<p>The strict parameter is rarely used and it forces the omission on
+non-standard header fields.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.update">
 <tt class="descname">update</tt><big>(</big><em>iterable</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.update" title="Permalink to this definition">¶</a></dt>
@@ -578,6 +579,12 @@ settings via the <a class="reference internal" href="#pulsar.utils.config.Settin
 <p>If <tt class="docutils literal"><span class="pre">prefix</span></tt> is given, it prefixes all non
 <a class="reference internal" href="../settings.html#setting-section-global-server-settings"><em>global settings</em></a>
 with it. Used when multiple applications are loaded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.utils.config.Config.configured_logger">
+<tt class="descname">configured_logger</tt><big>(</big><em>name=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/config.html#Config.configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.config.Config.configured_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configured logger.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1151,31 +1158,16 @@ attributes which are not picklable.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="pulsar.utils.log.LogginMixin">
-<em class="property">class </em><tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">LogginMixin</tt><a class="reference internal" href="../modules/pulsar/utils/log.html#LogginMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.LogginMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.utils.log.LocalMixin" title="pulsar.utils.log.LocalMixin"><tt class="xref py py-class docutils literal"><span class="pre">LocalMixin</span></tt></a> used throughout the library.</p>
-<p>It provides built in logging object and utilities for pickle.</p>
-<dl class="method">
-<dt id="pulsar.utils.log.LogginMixin.configure_logging">
-<tt class="descname">configure_logging</tt><big>(</big><em>logger=None</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#LogginMixin.configure_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.LogginMixin.configure_logging" title="Permalink to this definition">¶</a></dt>
-<dd><p>Configure logging.</p>
-<p>This function is invoked every time an instance of this class is
-un-serialised (possibly in a different process domain).</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.utils.log.LogginMixin.logger">
-<tt class="descname">logger</tt><a class="reference internal" href="../modules/pulsar/utils/log.html#LogginMixin.logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.LogginMixin.logger" title="Permalink to this definition">¶</a></dt>
-<dd><p>A python logger for this instance.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="pulsar.utils.log.WritelnDecorator">
 <em class="property">class </em><tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">WritelnDecorator</tt><big>(</big><em>stream</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#WritelnDecorator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.WritelnDecorator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to decorate file-like objects with a handy &#8216;writeln&#8217; method.
 taken from python.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.log.configured_logger">
+<tt class="descclassname">pulsar.utils.log.</tt><tt class="descname">configured_logger</tt><big>(</big><em>logger</em>, <em>config=None</em>, <em>level=None</em>, <em>handlers=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/log.html#configured_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.log.configured_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configured logger.</p>
 </dd></dl>
 
 <dl class="function">

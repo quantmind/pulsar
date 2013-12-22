@@ -198,7 +198,7 @@ message value, while servers sends the message back to the client.</p>
 <dt id="examples.echo.manage.Echo._loop">
 <tt class="descname">_loop</tt><a class="headerlink" href="#examples.echo.manage.Echo._loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event loop used by the client IO requests.</p>
-<p>The event loop is store at this attribute so that asynchronous
+<p>The event loop is stored at this attribute so that asynchronous
 method decorators such as <a class="reference internal" href="../api/async.html#pulsar.async.defer.in_loop_thread" title="pulsar.async.defer.in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">in_loop_thread()</span></tt></a> can be used.</p>
 </dd></dl>
 
@@ -217,8 +217,8 @@ method decorators such as <a class="reference internal" href="../api/async.html#
 <dl class="attribute">
 <dt id="examples.echo.manage.Echo.full_response">
 <tt class="descname">full_response</tt><a class="headerlink" href="#examples.echo.manage.Echo.full_response" title="Permalink to this definition">¶</a></dt>
-<dd><p>Flag indicating if the callable method should result into the
-<a class="reference internal" href="#examples.echo.manage.EchoProtocol" title="examples.echo.manage.EchoProtocol"><tt class="xref py py-class docutils literal"><span class="pre">EchoProtocol</span></tt></a> handling the request (<tt class="docutils literal"><span class="pre">True</span></tt>) or a
+<dd><p>Flag indicating if the callable method should return the
+<a class="reference internal" href="#examples.echo.manage.EchoProtocol" title="examples.echo.manage.EchoProtocol"><tt class="xref py py-class docutils literal"><span class="pre">EchoProtocol</span></tt></a> handling the request (<tt class="docutils literal"><span class="pre">True</span></tt>) or
 the server response message (<tt class="docutils literal"><span class="pre">False</span></tt>).</p>
 <p>Default: <tt class="docutils literal"><span class="pre">False</span></tt></p>
 </dd></dl>

@@ -98,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">ispy3k</span>
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">SSLError</span>
 
-<span class="n">WRITE_BUFFER_MAX_SIZE</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="mi">1024</span>  <span class="c"># 128 kb</span>
+<span class="n">BUFFER_MAX_SIZE</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">1024</span>  <span class="c"># 256 kb</span>
 
 <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">is_windows</span><span class="p">:</span>    <span class="c"># pragma    nocover</span>
     <span class="n">EPERM</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
@@ -124,11 +124,14 @@
     <span class="c"># Nor ENOMEM</span>
     <span class="n">ENOMEM</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
     <span class="n">EAGAIN</span> <span class="o">=</span> <span class="n">EWOULDBLOCK</span>
+    <span class="n">SOCKET_WRITE_ERRORS</span> <span class="o">=</span> <span class="p">(</span><span class="n">EINTR</span><span class="p">,</span> <span class="n">ECONNRESET</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">errno</span> <span class="kn">import</span> <span class="p">(</span><span class="n">EPERM</span><span class="p">,</span> <span class="n">EINVAL</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EALREADY</span><span class="p">,</span>
                        <span class="n">ECONNRESET</span><span class="p">,</span> <span class="n">EISCONN</span><span class="p">,</span> <span class="n">ENOTCONN</span><span class="p">,</span> <span class="n">EINTR</span><span class="p">,</span> <span class="n">ENOBUFS</span><span class="p">,</span> <span class="n">EMFILE</span><span class="p">,</span>
                        <span class="n">ENFILE</span><span class="p">,</span> <span class="n">ENOMEM</span><span class="p">,</span> <span class="n">EAGAIN</span><span class="p">,</span> <span class="n">ECONNABORTED</span><span class="p">,</span> <span class="n">EADDRINUSE</span><span class="p">,</span>
-                       <span class="n">EMSGSIZE</span><span class="p">,</span> <span class="n">ENETRESET</span><span class="p">,</span> <span class="n">ETIMEDOUT</span><span class="p">,</span> <span class="n">ECONNREFUSED</span><span class="p">,</span> <span class="n">ESHUTDOWN</span><span class="p">)</span>
+                       <span class="n">EMSGSIZE</span><span class="p">,</span> <span class="n">ENETRESET</span><span class="p">,</span> <span class="n">ETIMEDOUT</span><span class="p">,</span> <span class="n">ECONNREFUSED</span><span class="p">,</span> <span class="n">ESHUTDOWN</span><span class="p">,</span>
+                       <span class="n">EPIPE</span><span class="p">)</span>
+    <span class="n">SOCKET_WRITE_ERRORS</span> <span class="o">=</span> <span class="p">(</span><span class="n">EPIPE</span><span class="p">,</span> <span class="n">EINTR</span><span class="p">,</span> <span class="n">ECONNRESET</span><span class="p">)</span>
 
 <span class="n">ACCEPT_ERRORS</span> <span class="o">=</span> <span class="p">(</span><span class="n">EMFILE</span><span class="p">,</span> <span class="n">ENOBUFS</span><span class="p">,</span> <span class="n">ENFILE</span><span class="p">,</span> <span class="n">ENOMEM</span><span class="p">,</span> <span class="n">ECONNABORTED</span><span class="p">)</span>
 <span class="n">TRY_WRITE_AGAIN</span> <span class="o">=</span> <span class="p">(</span><span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">ENOBUFS</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">)</span>

@@ -275,13 +275,6 @@ This attribute is <tt class="docutils literal"><span class="pre">None</span></tt
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.async.actor.Actor.params">
-<tt class="descname">params</tt><a class="headerlink" href="#pulsar.async.actor.Actor.params" title="Permalink to this definition">¶</a></dt>
-<dd><p>A :class:.AttributeDictionary` which contains
-parameters which are passed to actors spawned by this actor.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.async.actor.Actor.extra">
 <tt class="descname">extra</tt><a class="headerlink" href="#pulsar.async.actor.Actor.extra" title="Permalink to this definition">¶</a></dt>
 <dd><p>A dictionary which can be populated with extra parameters useful
@@ -309,7 +302,13 @@ information about an actor.</p>
 <dt id="pulsar.async.actor.Actor.stream">
 <tt class="descname">stream</tt><a class="headerlink" href="#pulsar.async.actor.Actor.stream" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="docutils literal"><span class="pre">stream</span></tt> handler to write information messages without using
-the <tt class="xref py py-attr docutils literal"><span class="pre">logger</span></tt>.</p>
+the <a class="reference internal" href="#pulsar.async.actor.Actor.logger" title="pulsar.async.actor.Actor.logger"><tt class="xref py py-attr docutils literal"><span class="pre">logger</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.async.actor.Actor.logger">
+<tt class="descname">logger</tt><a class="reference internal" href="../modules/pulsar/async/actor.html#Actor.logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.actor.Actor.logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>The logger for this object</p>
 </dd></dl>
 
 <dl class="method">
@@ -981,7 +980,7 @@ the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</spa
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'INITIAL': 0, 'CLOSE': 5, 'STOPPING': 4, 'TERMINATE': 6, 'STARTING': 2, 'INACTIVE': 1, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'TERMINATE': 6, 'STARTING': 2, 'INITIAL': 0, 'RUN': 3, 'STOPPING': 4, 'INACTIVE': 1, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'CLOSE': 5}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

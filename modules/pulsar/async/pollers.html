@@ -245,8 +245,8 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">loop</span><span class="o">.</span><span class="n">_add_callback</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">loop</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Error callback without handler for file&#39;</span>
-                                    <span class="s">&#39; descriptor </span><span class="si">%s</span><span class="s">.&#39;</span><span class="p">,</span> <span class="n">fd</span><span class="p">)</span>
+                <span class="n">loop</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Error callback without handler for file&#39;</span>
+                                  <span class="s">&#39; descriptor </span><span class="si">%s</span><span class="s">.&#39;</span><span class="p">,</span> <span class="n">fd</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">processed</span><span class="p">:</span>
             <span class="n">loop</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Could not handle events </span><span class="si">%s</span><span class="s"> on </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">fd</span><span class="p">)</span>
 </div>

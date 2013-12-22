@@ -115,7 +115,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">ws</span><span class="p">,</span> <span class="n">wsgi</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
+    <span class="kn">from</span> <span class="nn">.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
     <span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">protocol</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">reactor</span>
     <span class="kn">from</span> <span class="nn">twisted.mail</span> <span class="kn">import</span> <span class="n">imap4</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>

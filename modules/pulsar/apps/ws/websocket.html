@@ -127,7 +127,9 @@
         <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="mi">101</span>
         <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
         <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-        <span class="n">connection</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">]</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
         <span class="n">factory</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">WebSocketProtocol</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
         <span class="n">connection</span><span class="o">.</span><span class="n">upgrade</span><span class="p">(</span><span class="n">factory</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
@@ -209,6 +211,7 @@
 <span class="sd">        Available when a close frame is received.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">close_reason</span> <span class="o">=</span> <span class="bp">None</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handshake</span><span class="p">,</span> <span class="n">handler</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">WebSocketProtocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shut_down</span><span class="p">)</span>

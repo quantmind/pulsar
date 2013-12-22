@@ -101,7 +101,6 @@
 
 <span class="sd">.. autofunction:: run_test_server</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">isclass</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
@@ -111,6 +110,7 @@
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">safe_async</span><span class="p">,</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">send</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span>
                     <span class="n">TcpServer</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.proxy</span> <span class="kn">import</span> <span class="n">ActorProxyDeferred</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.importer</span> <span class="kn">import</span> <span class="n">module_attribute</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;run_on_arbiter&#39;</span><span class="p">,</span>
@@ -127,7 +127,7 @@
                     <span class="s">&#39;setUpClass&#39;</span><span class="p">,</span> <span class="s">&#39;tearDownClass&#39;</span><span class="p">,</span> <span class="s">&#39;run_test_server&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">TestCallable</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">TestCallable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">istest</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
@@ -148,8 +148,8 @@
             <span class="n">test</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">before_test_function_run</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
         <span class="n">inject_async_assert</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
         <span class="n">test_function</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">safe_async</span><span class="p">(</span><span class="n">test_function</span><span class="p">)</span><span class="o">.</span><span class="n">add_both</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="n">actor</span><span class="p">))</span>\
-                                        <span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">safe_async</span><span class="p">(</span><span class="n">test_function</span><span class="p">)</span><span class="o">.</span><span class="n">add_both</span><span class="p">(</span>
+            <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="n">actor</span><span class="p">))</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">:</span>
@@ -157,7 +157,35 @@
         <span class="k">return</span> <span class="n">result</span>
 
 
-<span class="k">class</span> <span class="nc">TestFunction</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">SafeTest</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Make sure the test object or class is picklable</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">):</span>
+            <span class="n">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">__class__</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">__module__</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">mod</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">module_attribute</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+        <span class="n">inject_async_assert</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+            <span class="n">test</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
+
+
+<span class="k">class</span> <span class="nc">TestFunction</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span> <span class="o">=</span> <span class="n">method_name</span>
@@ -169,15 +197,14 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="nb">callable</span> <span class="o">=</span> <span class="n">TestCallable</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">callable</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get_actor</span><span class="p">())</span>
 
 
 <span class="k">class</span> <span class="nc">TestFunctionOnArbiter</span><span class="p">(</span><span class="n">TestFunction</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">callable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">SafeTest</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+        <span class="nb">callable</span> <span class="o">=</span> <span class="n">TestCallable</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">istest</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_monitor</span><span class="p">():</span>
             <span class="k">return</span> <span class="nb">callable</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
@@ -219,6 +246,7 @@
 
 <span class="sd">            def test1(self):</span>
 <span class="sd">                yield self.async.assertEqual(3, Deferred().callback(3))</span>
+<span class="sd">                ...</span>
 
 
 <span class="sd">    .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm</span>
@@ -231,8 +259,10 @@
 
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">__skip_traceback__</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="n">args</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">multi_async</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_</span>
 
     <span class="k">def</span> <span class="nf">assertRaises</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -279,7 +309,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="n">ad</span><span class="o">.</span><span class="n">aid</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">proxy</span><span class="p">,</span> <span class="n">proxy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">proxy</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">proxy</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">stop_actors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="nb">all</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_spawned</span>

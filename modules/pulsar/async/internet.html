@@ -67,14 +67,13 @@
           <div class="body">
             
   <h1>Source code for pulsar.async.internet</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span><span class="p">,</span> <span class="n">BUFFER_MAX_SIZE</span>
 
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">in_loop</span>
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Deferred</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">AsyncObject</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;SocketTransport&#39;</span><span class="p">]</span>
 
@@ -116,12 +115,12 @@
         <span class="k">return</span> <span class="n">waiter</span>
 
 
-<div class="viewcode-block" id="SocketTransport"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.internet.SocketTransport">[docs]</a><span class="k">class</span> <span class="nc">SocketTransport</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Transport</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A ``asyncio.Transport`` for sockets.</span>
+<div class="viewcode-block" id="SocketTransport"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.internet.SocketTransport">[docs]</a><span class="k">class</span> <span class="nc">SocketTransport</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">Transport</span><span class="p">,</span> <span class="n">AsyncObject</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An ``asyncio.Transport`` for sockets.</span>
 
 <span class="sd">    :param loop: Set the :attr:`_loop` attribute.</span>
 <span class="sd">    :param sock: Set the :attr:`_sock` attribute.</span>
-<span class="sd">    :param protocol: set the :attr:`protocol` attribute.</span>
+<span class="sd">    :param protocol: set the :attr:`_protocol` attribute.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">SocketError</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span>
 
@@ -134,13 +133,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">loop</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_closing</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_read_chunk_size</span> <span class="o">=</span> <span class="n">read_chunk_size</span> <span class="ow">or</span> <span class="n">io</span><span class="o">.</span><span class="n">DEFAULT_BUFFER_SIZE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read_chunk_size</span> <span class="o">=</span> <span class="n">read_chunk_size</span> <span class="ow">or</span> <span class="n">BUFFER_MAX_SIZE</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_read_buffer</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_conn_lost</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_writes</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_do_handshake</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">loop</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">loop</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Opened new socket </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">address</span>
@@ -155,7 +155,7 @@
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="SocketTransport.sock"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.internet.SocketTransport.sock">[docs]</a>    <span class="k">def</span> <span class="nf">sock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The socket for this :class:`SocketTransport`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The socket for this transport.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span>
 </div>
     <span class="nd">@property</span>
@@ -241,6 +241,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">remove_writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock_fd</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">_io</span><span class="o">.</span><span class="n">_handlers</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Close socket </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SHUT_WR</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>

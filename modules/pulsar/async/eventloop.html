@@ -72,9 +72,9 @@
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">GeneratorType</span>
-<span class="kn">from</span> <span class="nn">heapq</span> <span class="kn">import</span> <span class="n">heappop</span>
+<span class="kn">from</span> <span class="nn">heapq</span> <span class="kn">import</span> <span class="n">heappop</span><span class="p">,</span> <span class="n">heappush</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">current_thread</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">current_thread</span><span class="p">,</span> <span class="n">Lock</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">signal</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
@@ -85,11 +85,11 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.exceptions</span> <span class="kn">import</span> <span class="n">StopEventLoop</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span>
 
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">thread_data</span><span class="p">,</span> <span class="n">LOGGER</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">DeferredTask</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">maybe_async</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">DeferredTask</span><span class="p">,</span> <span class="n">Failure</span>
 <span class="kn">from</span> <span class="nn">.stream</span> <span class="kn">import</span> <span class="p">(</span><span class="n">create_connection</span><span class="p">,</span> <span class="n">start_serving</span><span class="p">,</span> <span class="n">sock_connect</span><span class="p">,</span>
                      <span class="n">raise_socket_error</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.udp</span> <span class="kn">import</span> <span class="n">create_datagram_endpoint</span>
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">DEFAULT_CONNECT_TIMEOUT</span><span class="p">,</span> <span class="n">DEFAULT_ACCEPT_TIMEOUT</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">DEFAULT_CONNECT_TIMEOUT</span>
 <span class="kn">from</span> <span class="nn">.pollers</span> <span class="kn">import</span> <span class="n">DefaultIO</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;EventLoop&#39;</span><span class="p">]</span>
@@ -217,11 +217,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">setup_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">io</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">poll_timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                   <span class="n">iothreadloop</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">noisy</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+                   <span class="n">iothreadloop</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">noisy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_io</span> <span class="o">=</span> <span class="n">io</span> <span class="ow">or</span> <span class="n">DefaultIO</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_signal_handlers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">poll_timeout</span> <span class="o">=</span> <span class="n">poll_timeout</span> <span class="k">if</span> <span class="n">poll_timeout</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">poll_timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">noisy</span> <span class="o">=</span> <span class="n">noisy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">LOGGER</span>
         <span class="n">close_on_exec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_io</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iothreadloop</span> <span class="o">=</span> <span class="n">iothreadloop</span>
@@ -229,6 +230,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_loops</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_executor</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_waker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_io</span><span class="o">.</span><span class="n">install_waker</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
@@ -331,11 +333,39 @@
 <div class="viewcode-block" id="EventLoop.run_in_executor"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.run_in_executor">[docs]</a>    <span class="k">def</span> <span class="nf">run_in_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Arrange to call ``callback(*args)`` in an ``executor``.</span>
 
-<span class="sd">        Return a :class:`Deferred` called once the callback has finished.&#39;&#39;&#39;</span>
+<span class="sd">        Return a :class:`.Deferred` called once the callback has finished.&#39;&#39;&#39;</span>
         <span class="n">executor</span> <span class="o">=</span> <span class="n">executor</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_executor</span>
         <span class="k">if</span> <span class="n">executor</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;No executor available&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="EventLoop.call_later"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.call_later">[docs]</a>    <span class="k">def</span> <span class="nf">call_later</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arrange for a callback to be called at a given time.</span>
+
+<span class="sd">        Return a Handle: an opaque object with a cancel() method that</span>
+<span class="sd">        can be used to cancel the call.</span>
+
+<span class="sd">        The delay can be an int or float, expressed in seconds.  It is</span>
+<span class="sd">        always a relative time.</span>
+
+<span class="sd">        Each callback will be called exactly once.  If two callbacks</span>
+<span class="sd">        are scheduled for exactly the same time, it undefined which</span>
+<span class="sd">        will be called first.</span>
+
+<span class="sd">        Any positional arguments after the callback will be passed to</span>
+<span class="sd">        the callback when it is called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_at</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">delay</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="EventLoop.call_at"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.call_at">[docs]</a>    <span class="k">def</span> <span class="nf">call_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">when</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Like call_later(), but uses an absolute time.</span>
+
+<span class="sd">        This method is thread safe.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">timer</span> <span class="o">=</span> <span class="n">TimerHandle</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">heappush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="p">,</span> <span class="n">timer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">timer</span>
 
     <span class="c">#################################################    INTERNET NAME LOOKUPS</span></div>
     <span class="k">def</span> <span class="nf">getaddrinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">proto</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -471,7 +501,7 @@
 <span class="sd">        :param local_addr: if supplied, it must be a 2-tuple</span>
 <span class="sd">            ``(host, port)`` for the socket to bind to as its source address</span>
 <span class="sd">            before connecting.</span>
-<span class="sd">        :return: a :class:`Deferred` and its result on success is the</span>
+<span class="sd">        :return: a :class:`.Deferred` and its result on success is the</span>
 <span class="sd">            ``(transport, protocol)`` pair.</span>
 
 <span class="sd">        If a failure prevents the creation of a successful connection, an</span>
@@ -508,7 +538,7 @@
 <span class="sd">            ``TIME_WAIT`` state, without waiting for its natural timeout to</span>
 <span class="sd">            expire. If not specified will automatically be set to ``True``</span>
 <span class="sd">            on UNIX.</span>
-<span class="sd">        :return: a :class:`Deferred` whose result will be a list of socket</span>
+<span class="sd">        :return: a :class:`.Deferred` whose result will be a list of socket</span>
 <span class="sd">            objects which will later be handled by ``protocol_factory``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span>
@@ -525,7 +555,7 @@
 <div class="viewcode-block" id="EventLoop.sock_connect"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.sock_connect">[docs]</a>    <span class="k">def</span> <span class="nf">sock_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Connect ``sock`` to the given ``address``.</span>
 
-<span class="sd">        Returns a :class:`Deferred` whose result on success will be ``None``.</span>
+<span class="sd">        Returns a :class:`.Deferred` whose result on success will be ``None``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="n">sock_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">)</span>
 
@@ -618,12 +648,11 @@
                     <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Unhandled exception in event loop callback.&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-        <span class="n">callbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span>
         <span class="n">io</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_io</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">event_pairs</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raise_loop_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">raise_socket_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
                 <span class="k">raise</span>
         <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">StopEventLoop</span>
@@ -632,7 +661,18 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">io</span><span class="o">.</span><span class="n">handle_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="n">events</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                    <span class="k">pass</span></div>
+                    <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_add_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a Handle to ready or scheduled.&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">Handle</span><span class="p">),</span> <span class="s">&#39;A Handle is required here&#39;</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">_cancelled</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">TimerHandle</span><span class="p">):</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="n">heappush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="p">,</span> <span class="n">handle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

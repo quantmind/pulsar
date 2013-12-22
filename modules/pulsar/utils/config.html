@@ -98,6 +98,7 @@
 <span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="n">parse_address</span>
 <span class="kn">from</span> <span class="nn">.importer</span> <span class="kn">import</span> <span class="n">import_system_file</span>
 <span class="kn">from</span> <span class="nn">.httpurl</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">PyHttpParser</span>
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">configured_logger</span>
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">native_str</span>
 
 
@@ -179,6 +180,7 @@
 <span class="sd">        Dictionary of additional parameters which cannot be parsed in the</span>
 <span class="sd">        command line.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">application</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">exclude_from_config</span> <span class="o">=</span> <span class="nb">set</span><span class="p">((</span><span class="s">&#39;config&#39;</span><span class="p">,))</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">epilog</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -342,6 +344,10 @@
         <span class="k">for</span> <span class="n">sett</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">sett</span><span class="o">.</span><span class="n">on_start</span><span class="p">()</span>
 </div>
+    <span class="k">def</span> <span class="nf">app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">application</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">workers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s">&#39;workers&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
@@ -399,6 +405,25 @@
             <span class="n">me</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">setting</span>
         <span class="n">me</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">me</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">me</span>
+</div>
+<div class="viewcode-block" id="Config.configured_logger"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.config.Config.configured_logger">[docs]</a>    <span class="k">def</span> <span class="nf">configured_logger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Configured logger.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span>
+                                   <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                                   <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
+                                   <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">,</span>
+                                     <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                                     <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
+                                     <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">configured_logger</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                     <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
+                                     <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
+                                     <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logger</span>
 </div>
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>

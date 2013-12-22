@@ -122,15 +122,15 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">HaltServer</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">CommandError</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.websocket</span> <span class="kn">import</span> <span class="n">frame_parser</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">get_actor</span>
+<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
 <span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actorid</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">get_command</span><span class="p">,</span> <span class="n">ActorProxy</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Protocol</span>

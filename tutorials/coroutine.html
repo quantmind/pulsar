@@ -87,11 +87,14 @@ pulsar:</p>
 </li>
 <li><p class="first">A <a class="reference internal" href="#coroutine"><em>coroutine</em></a>, a generator which consumes values.
 For example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_result</span>
+
+<span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
     <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
     <span class="o">...</span>
     <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-    <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+    <span class="n">coroutine_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>a coroutine is obtained by calling the generator function:</p>
@@ -197,7 +200,8 @@ Let&#8217;s consider the following code:</p>
       <span class="k">yield</span> <span class="n">something_but_dont_care_what_it_returns</span><span class="p">()</span>
       <span class="o">...</span>
       <span class="n">bla</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">something_and_care_what_it_returns</span><span class="p">()</span>
-      <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">do_something</span><span class="p">(</span><span class="n">bla</span><span class="p">)</span>
+      <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">my_async_generator</span><span class="p">():</span>
       <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">d</span>
@@ -210,18 +214,20 @@ function:</p>
 </pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">o</span></tt> is has not yet started. To use it, it must be added to pulsar
-asynchronous engine via the <tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt> function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">get_result</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.async" title="pulsar.async.fallbacks.defer.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">task</span> <span class="o">=</span> <span class="n">async</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>task is a <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a> instance.</p>
+<p>Coroutines can return values via the <a class="reference internal" href="../api/async.html#pulsar.async.defer.coroutine_return" title="pulsar.async.defer.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function.
+Otherwise they always return <tt class="docutils literal"><span class="pre">None</span></tt> (unless exceptions occur).</p>
 </div>
 <div class="section" id="deferred-task">
 <h2>Deferred Task<a class="headerlink" href="#deferred-task" title="Permalink to this headline">¶</a></h2>
 <p>A <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a> is a specialised <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which consumes
 <a class="reference internal" href="#coroutine"><em>coroutines</em></a>.
 A coroutine is transformed into a <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a>
-via the <tt class="xref py py-func docutils literal"><span class="pre">maybe_async()</span></tt> function or the <a class="reference internal" href="../api/async.html#module-pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator.</p>
+via the <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.async" title="pulsar.async.fallbacks.defer.async"><tt class="xref py py-func docutils literal"><span class="pre">async()</span></tt></a> function or the <a class="reference internal" href="../api/async.html#module-pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorator.</p>
 <p>A task consumes a coroutine until the coroutine yield an asynchronous component
 not yet done. When this appends, the task pauses and returns the control of execution.
 Before it returns, it adds a <tt class="docutils literal"><span class="pre">callback</span></tt> (and <tt class="docutils literal"><span class="pre">errback</span></tt>) to the <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
@@ -233,7 +239,7 @@ A task in this state is said to be <strong>suspended</strong>.</p>
 <h2>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h2>
 <p>When dealing with several asynchronous components in a collection such as
 a list, tuple, set or even a dictionary (values only, keys must be synchronous
-python types), one can use the <tt class="xref py py-func docutils literal"><span class="pre">multi_async()</span></tt> function to create
+python types), one can use the <a class="reference internal" href="../api/async.html#pulsar.async.defer.multi_async" title="pulsar.async.defer.multi_async"><tt class="xref py py-func docutils literal"><span class="pre">multi_async()</span></tt></a> function to create
 an asynchronous component which will be ready once all the components
 are ready.</p>
 </div>
@@ -248,7 +254,7 @@ the execution of the <tt class="docutils literal"><span class="pre">callable</sp
 a <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.
 The returned <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> can already be called if the original <tt class="docutils literal"><span class="pre">callable</span></tt>
 returned a synchronous result or fails (in which case the deferred has
-a <tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt> as result).</p>
+a <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a> as result).</p>
 <p>If <a class="reference internal" href="../api/async.html#module-pulsar.async" title="pulsar.async"><tt class="xref py py-class docutils literal"><span class="pre">async</span></tt></a> decorates a generator function, it access the
 event loop, via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function, and creates a
 <a class="reference internal" href="../api/async.html#pulsar.async.fallbacks.defer.DeferredTask" title="pulsar.async.fallbacks.defer.DeferredTask"><tt class="xref py py-class docutils literal"><span class="pre">DeferredTask</span></tt></a>.</p>

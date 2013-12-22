@@ -279,80 +279,56 @@
         <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="LogginMixin"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.log.LogginMixin">[docs]</a><span class="k">class</span> <span class="nc">LogginMixin</span><span class="p">(</span><span class="n">LocalMixin</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`LocalMixin` used throughout the library.</span>
-
-<span class="sd">    It provides built in logging object and utilities for pickle.</span>
+<div class="viewcode-block" id="configured_logger"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.log.configured_logger">[docs]</a><span class="k">def</span> <span class="nf">configured_logger</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Configured logger.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="LogginMixin.logger"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.log.LogginMixin.logger">[docs]</a>    <span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;A python logger for this instance.&#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">logger</span>
+    <span class="k">with</span> <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;lock&#39;</span><span class="p">):</span>
+        <span class="n">logconfig</span> <span class="o">=</span> <span class="n">original</span> <span class="o">=</span> <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;_config_logging&#39;</span><span class="p">)</span>
+        <span class="c"># if the logger was not configured, do so.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">logconfig</span><span class="p">:</span>
+            <span class="n">logconfig</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">LOGGING_CONFIG</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
+                <span class="n">update_config</span><span class="p">(</span><span class="n">logconfig</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+            <span class="n">original</span> <span class="o">=</span> <span class="n">logconfig</span>
+            <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;_config_logging&#39;</span><span class="p">,</span> <span class="n">logconfig</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logconfig</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">logconfig</span><span class="p">)</span>
+            <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;disable_existing_loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;loggers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+                <span class="n">lv</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">level</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">lv</span> <span class="ow">in</span> <span class="n">logging</span><span class="o">.</span><span class="n">_levelNames</span><span class="p">:</span>
+                    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">_levelNames</span><span class="p">[</span><span class="n">lv</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
+        <span class="c"># No loggers configured. This means no logconfig setting</span>
+        <span class="c"># parameter was used. Set up the root logger with default</span>
+        <span class="c"># loggers</span>
+        <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">:</span>
+            <span class="n">handlers</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;silent&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span> <span class="ow">or</span> <span class="p">[</span><span class="s">&#39;console&#39;</span><span class="p">]</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLevelName</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">logger</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">original</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="s">&#39;loggers&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">logconfig</span><span class="p">:</span>
+                <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">level</span><span class="p">,</span> <span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span> <span class="s">&#39;propagate&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
+            <span class="n">original</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">][</span><span class="n">logger</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span>
+            <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">][</span><span class="n">logger</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">original</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;root&#39;</span><span class="p">):</span>
+            <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;root&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span>
+                                 <span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">level</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">logconfig</span><span class="p">:</span>
+            <span class="n">dictConfig</span><span class="p">(</span><span class="n">logconfig</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+
 </div>
-    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_log_info&#39;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">(</span><span class="o">**</span><span class="n">info</span><span class="p">)</span>
-
-<div class="viewcode-block" id="LogginMixin.configure_logging"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.log.LogginMixin.configure_logging">[docs]</a>    <span class="k">def</span> <span class="nf">configure_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                          <span class="n">handlers</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Configure logging.</span>
-
-<span class="sd">        This function is invoked every time an instance of this class is</span>
-<span class="sd">        un-serialised (possibly in a different process domain).</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_lock</span><span class="p">:</span>
-            <span class="n">logconfig</span> <span class="o">=</span> <span class="n">original</span> <span class="o">=</span> <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;_config_logging&#39;</span><span class="p">)</span>
-            <span class="c"># if the logger was not configured, do so.</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">logconfig</span><span class="p">:</span>
-                <span class="n">logconfig</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">LOGGING_CONFIG</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
-                    <span class="n">update_config</span><span class="p">(</span><span class="n">logconfig</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-                <span class="n">original</span> <span class="o">=</span> <span class="n">logconfig</span>
-                <span class="n">process_global</span><span class="p">(</span><span class="s">&#39;_config_logging&#39;</span><span class="p">,</span> <span class="n">logconfig</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">logconfig</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">logconfig</span><span class="p">)</span>
-                <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;disable_existing_loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;loggers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-                <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">level</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
-                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-                    <span class="n">lv</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">level</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">lv</span> <span class="ow">in</span> <span class="n">logging</span><span class="o">.</span><span class="n">_levelNames</span><span class="p">:</span>
-                        <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">_levelNames</span><span class="p">[</span><span class="n">lv</span><span class="p">]</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
-            <span class="c"># No loggers configured. This means no logconfig setting</span>
-            <span class="c"># parameter was used. Set up the root logger with default</span>
-            <span class="c"># loggers</span>
-            <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span><span class="p">:</span>
-                <span class="n">handlers</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;silent&#39;</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">handlers</span> <span class="o">=</span> <span class="n">handlers</span> <span class="ow">or</span> <span class="p">[</span><span class="s">&#39;console&#39;</span><span class="p">]</span>
-            <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLevelName</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
-            <span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">logger</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">original</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="s">&#39;loggers&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">logconfig</span><span class="p">:</span>
-                    <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">l</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">level</span><span class="p">,</span> <span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span> <span class="s">&#39;propagate&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
-                <span class="n">original</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">][</span><span class="n">logger</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span>
-                <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;loggers&#39;</span><span class="p">][</span><span class="n">logger</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">original</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;root&#39;</span><span class="p">):</span>
-                <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;root&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span>
-                                     <span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">level</span><span class="p">}</span>
-            <span class="k">if</span> <span class="n">logconfig</span><span class="p">:</span>
-                <span class="n">dictConfig</span><span class="p">(</span><span class="n">logconfig</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_log_info</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;logger&#39;</span><span class="p">:</span> <span class="n">logger</span><span class="p">,</span>
-                              <span class="s">&#39;level&#39;</span><span class="p">:</span> <span class="n">level</span><span class="p">,</span>
-                              <span class="s">&#39;handlers&#39;</span><span class="p">:</span> <span class="n">handlers</span><span class="p">,</span>
-                              <span class="s">&#39;config&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
-
-</div></div>
 <span class="n">WHITE</span> <span class="o">=</span> <span class="mi">37</span>
 <span class="n">COLOURS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;red&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span>
            <span class="s">&#39;green&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>

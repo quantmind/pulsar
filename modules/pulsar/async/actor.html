@@ -69,10 +69,10 @@
   <h1>Source code for pulsar.async.actor</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HaltServer</span><span class="p">,</span> <span class="n">CommandError</span><span class="p">,</span> <span class="n">system</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">pickle</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">LogginMixin</span><span class="p">,</span> <span class="n">WritelnDecorator</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.log</span> <span class="kn">import</span> <span class="n">WritelnDecorator</span>
 
 <span class="kn">from</span> <span class="nn">.eventloop</span> <span class="kn">import</span> <span class="n">setid</span>
 <span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">Failure</span>
@@ -85,7 +85,7 @@
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="o">*</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;is_actor&#39;</span><span class="p">,</span> <span class="s">&#39;send&#39;</span><span class="p">,</span> <span class="s">&#39;Actor&#39;</span><span class="p">,</span> <span class="s">&#39;ACTOR_STATES&#39;</span><span class="p">,</span> <span class="s">&#39;Pulsar&#39;</span><span class="p">,</span> <span class="s">&#39;get_stream&#39;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;is_actor&#39;</span><span class="p">,</span> <span class="s">&#39;send&#39;</span><span class="p">,</span> <span class="s">&#39;Actor&#39;</span><span class="p">,</span> <span class="s">&#39;ACTOR_STATES&#39;</span><span class="p">,</span> <span class="s">&#39;get_stream&#39;</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">is_actor</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
@@ -126,21 +126,7 @@
     <span class="k">return</span> <span class="n">get_actor</span><span class="p">()</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
 </div>
-<span class="k">class</span> <span class="nc">Pulsar</span><span class="p">(</span><span class="n">LogginMixin</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">configure_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">configure_logging</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Pulsar</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">configure_logging</span>
-        <span class="n">configure_logging</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar&#39;</span><span class="p">,</span>
-                          <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
-                          <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
-                          <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
-        <span class="n">configure_logging</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="s">&#39;pulsar.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                          <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">logconfig</span><span class="p">,</span>
-                          <span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loglevel</span><span class="p">,</span>
-                          <span class="n">handlers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">loghandlers</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="Actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor">[docs]</a><span class="k">class</span> <span class="nc">Actor</span><span class="p">(</span><span class="n">Pulsar</span><span class="p">,</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">ActorIdentity</span><span class="p">,</span> <span class="n">Coverage</span><span class="p">):</span>
+<div class="viewcode-block" id="Actor"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor">[docs]</a><span class="k">class</span> <span class="nc">Actor</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="n">ActorIdentity</span><span class="p">,</span> <span class="n">Coverage</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The base class for parallel execution in pulsar.</span>
 
 <span class="sd">    In computer science, the **Actor model** is a mathematical model</span>
@@ -210,11 +196,6 @@
 <span class="sd">        This attribute is ``None`` unless one is created via the</span>
 <span class="sd">        :meth:`create_thread_pool` method.</span>
 
-<span class="sd">    .. attribute:: params</span>
-
-<span class="sd">        A :class:.AttributeDictionary` which contains</span>
-<span class="sd">        parameters which are passed to actors spawned by this actor.</span>
-
 <span class="sd">    .. attribute:: extra</span>
 
 <span class="sd">        A dictionary which can be populated with extra parameters useful</span>
@@ -242,8 +223,10 @@
     <span class="n">MANY_TIMES_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="s">&#39;on_params&#39;</span><span class="p">)</span>
     <span class="n">exit_code</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">mailbox</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">signal_queue</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">monitor</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">next_periodic_task</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">poll_timeout</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_logger</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">impl</span><span class="p">):</span>
         <span class="n">EventHandler</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -254,8 +237,8 @@
             <span class="n">hook</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">hook</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">hook</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">monitor</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;monitor&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">AttributeDictionary</span><span class="p">(</span><span class="o">**</span><span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">impl</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">servers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extra</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stream</span> <span class="o">=</span> <span class="n">get_stream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
@@ -308,6 +291,12 @@
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Actor.info_state"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.info_state">[docs]</a>    <span class="k">def</span> <span class="nf">info_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">]</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Actor.logger"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.actor.Actor.logger">[docs]</a>    <span class="k">def</span> <span class="nf">logger</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The logger for this object</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span>
 
     <span class="c">#######################################################################</span>
     <span class="c">##    HIGH LEVEL API METHODS</span>
@@ -322,7 +311,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">INITIAL</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">before_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">configured_logger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__impl</span><span class="o">.</span><span class="n">setup_event_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">ACTOR_STATES</span><span class="o">.</span><span class="n">STARTING</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">()</span>

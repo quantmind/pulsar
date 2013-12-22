@@ -71,7 +71,7 @@
 
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">CommandError</span>
 
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">async_while</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">async_while</span><span class="p">,</span> <span class="n">coroutine_return</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">ActorProxyMonitor</span>
 
 
@@ -164,9 +164,8 @@
         <span class="n">proxy</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">async_while</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">arb</span><span class="o">.</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">proxy</span><span class="p">:</span>
             <span class="n">arb</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Could not kill actor </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="s">&#39;killed </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">aid</span>
+            <span class="n">coroutine_return</span><span class="p">(</span><span class="s">&#39;killed </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">aid</span><span class="p">)</span>
 </pre></div>
 
           </div>

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Web Mail &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>Twisted Integration &mdash; pulsar 0.8.0-beta.2 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -73,15 +73,49 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="web-mail">
-<span id="tutorials-webmail"></span><h1>Web Mail<a class="headerlink" href="#web-mail" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-examples.webmail.tx">
+<span id="twisted-integration"></span><span id="tutorials-twisted"></span><h1>Twisted Integration<a class="headerlink" href="#module-examples.webmail.tx" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar concurrent framework and applications can be used with <a class="reference external" href="http://twistedmatrix.com/">twisted</a>, an
+event driven network engine for python. Twisted has implementation
+for several protocols which can be used in pulsar by importing the
+<tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.tx</span></tt> module:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.tx</span> <span class="kn">import</span> <span class="n">twisted</span>
+</pre></div>
+</div>
+<p>The implementation replaces the twisted reactor with a proxy for
+<a class="reference internal" href="../api/async.html#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.
+Twisted Deferred and Failures are made compatible with pulsar
+by installing twisted asynchronous binding via the
+<a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</p>
+<p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
+twisted implementation is switched off.</p>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="examples.webmail.tx.check_twisted">
+<tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>coro_or_future</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binding for twisted.</p>
+<p>Added to pulsar asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a>
+function.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="examples.webmail.tx.PulsarReactor">
+<em class="property">class </em><tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">PulsarReactor</tt><a class="reference internal" href="../modules/examples/webmail/tx.html#PulsarReactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.PulsarReactor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A twisted reactor which acts as a proxy to pulsar eventloop.</p>
+<p>The event loop is obtained via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> function.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="web-mail">
+<h2>Web Mail<a class="headerlink" href="#web-mail" title="Permalink to this headline">¶</a></h2>
 <p>The code for this example is located in the <a class="reference internal" href="#module-examples.webmail.manage" title="examples.webmail.manage"><tt class="xref py py-mod docutils literal"><span class="pre">examples.webmail.manage</span></tt></a> module.</p>
 <span class="target" id="module-examples.webmail.manage"></span><p>The example is a <a class="reference internal" href="../apps/wsgi/index.html#apps-wsgi"><em>WSGI application</em></a>
 with a <a class="reference internal" href="../apps/websockets.html#apps-ws"><em>websocket middleware</em></a> which connects to an
 IMAP4 server to retrieve and send emails.</p>
 <p>The connection with the IMAP4 server is obtained using the IMAP4 API in
 twisted 12.3 or later. The example uses
-<a class="reference internal" href="../apps/twisted.html#tutorials-twisted"><em>pulsar-twisted integration</em></a> module.</p>
+<a class="reference internal" href="#tutorials-twisted"><em>pulsar-twisted integration</em></a> module.</p>
 <p>To run the server you need to create a <tt class="xref py py-mod docutils literal"><span class="pre">config.py</span></tt> file in the
 the <tt class="xref py py-mod docutils literal"><span class="pre">examples.webmail</span></tt> directory containing:</p>
 <div class="highlight-python"><pre># the adress of your mail server
@@ -100,8 +134,8 @@ mail_password=</pre>
 <ul class="simple">
 <li><a class="reference external" href="https://github.com/khamidou/kite">https://github.com/khamidou/kite</a></li>
 </ul>
-<div class="section" id="implementation">
-<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Implementation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="examples.webmail.manage.WsMail">
 <em class="property">class </em><tt class="descclassname">examples.webmail.manage.</tt><tt class="descname">WsMail</tt><a class="reference internal" href="../modules/examples/webmail/manage.html#WsMail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.manage.WsMail" title="Permalink to this definition">¶</a></dt>
@@ -115,6 +149,7 @@ sending mail via the twisted IMAP4 library.</p>
 
 </dd></dl>
 
+</div>
 </div>
 </div>
 
@@ -143,8 +178,12 @@ sending mail via the twisted IMAP4 library.</p>
 <br>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Web Mail</a><ul>
+<li><a class="reference internal" href="#">Twisted Integration</a><ul>
 <li><a class="reference internal" href="#implementation">Implementation</a></li>
+<li><a class="reference internal" href="#web-mail">Web Mail</a><ul>
+<li><a class="reference internal" href="#id1">Implementation</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

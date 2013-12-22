@@ -98,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span><span class="p">,</span> <span class="n">is_tls</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">LOGGER</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s">&#39;MAX_CHUNK_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;test_wsgi_environ&#39;</span><span class="p">]</span>
@@ -339,6 +339,7 @@
     <span class="n">_status</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_headers_sent</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_stream</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_buffer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">SERVER_SOFTWARE</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
     <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="n">ProtocolConsumer</span><span class="o">.</span><span class="n">ONE_TIME_EVENTS</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;on_headers&#39;</span><span class="p">,)</span>
 
@@ -374,7 +375,11 @@
                 <span class="c"># bogus data</span>
                 <span class="k">raise</span> <span class="n">ProtocolError</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;post_request&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_request</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_buffer</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">processed</span><span class="p">:]</span>
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -445,8 +450,8 @@
                 <span class="c"># this should be considered a fatal error for an application</span>
                 <span class="c"># to attempt sending them, but we don&#39;t raise an error,</span>
                 <span class="c"># just log a warning</span>
-                <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Application handler passing hop header &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span><span class="p">,</span>
-                               <span class="n">header</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Application passing hop header &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span><span class="p">,</span>
+                                    <span class="n">header</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">write</span>
@@ -489,7 +494,6 @@
             <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c"># client disconnected, end this connection</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&#39;here&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
@@ -580,7 +584,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">get_version</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">([(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">),</span>
                              <span class="p">(</span><span class="s">&#39;Date&#39;</span><span class="p">,</span> <span class="n">format_date_time</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))])</span>
-        <span class="k">return</span> <span class="n">environ</span></div>
+        <span class="k">return</span> <span class="n">environ</span>
+
+    <span class="k">def</span> <span class="nf">_new_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">_connection</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">connection</span><span class="o">.</span><span class="n">closed</span><span class="p">:</span>
+            <span class="n">connection</span><span class="o">.</span><span class="n">data_received</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">_buffer</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">connection</span><span class="o">.</span><span class="n">_current_consumer</span>
+        <span class="k">return</span> <span class="n">response</span></div>
 </pre></div>
 
           </div>

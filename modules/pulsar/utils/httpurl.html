@@ -457,6 +457,10 @@
     <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s">&#39;entity&#39;</span><span class="p">],</span> <span class="n">HEADER_FIELDS</span><span class="p">[</span><span class="s">&#39;response&#39;</span><span class="p">])</span>
 <span class="n">ALL_HEADER_FIELDS</span> <span class="o">=</span> <span class="n">CLIENT_HEADER_FIELDS</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">SERVER_HEADER_FIELDS</span><span class="p">)</span>
 <span class="n">ALL_HEADER_FIELDS_DICT</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ALL_HEADER_FIELDS</span><span class="p">))</span>
+<span class="n">CRLF</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
+<span class="n">LWS</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s"> &#39;</span>
+<span class="n">HEADER_FIELDS_JOINER</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Set-Cookie&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                        <span class="s">&#39;Set-Cookie2&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
 
 <span class="n">TYPE_HEADER_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;client&#39;</span><span class="p">:</span> <span class="n">CLIENT_HEADER_FIELDS</span><span class="p">,</span>
                       <span class="s">&#39;server&#39;</span><span class="p">:</span> <span class="n">SERVER_HEADER_FIELDS</span><span class="p">,</span>
@@ -564,36 +568,37 @@
 <div class="viewcode-block" id="Headers"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers">[docs]</a><span class="k">class</span> <span class="nc">Headers</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Utility for managing HTTP headers for both clients and servers.</span>
 
-<span class="sd">It has a dictionary like interface with few extra functions to facilitate</span>
-<span class="sd">the insertion of multiple header values. Header fields are</span>
-<span class="sd">**case insensitive**, therefore doing::</span>
+<span class="sd">    It has a dictionary like interface with few extra functions to facilitate</span>
+<span class="sd">    the insertion of multiple header values. Header fields are</span>
+<span class="sd">    **case insensitive**, therefore doing::</span>
 
-<span class="sd">    &gt;&gt;&gt; h = Headers()</span>
-<span class="sd">    &gt;&gt;&gt; h[&#39;Content-Length&#39;] = &#39;1050&#39;</span>
+<span class="sd">        &gt;&gt;&gt; h = Headers()</span>
+<span class="sd">        &gt;&gt;&gt; h[&#39;Content-Length&#39;] = &#39;1050&#39;</span>
 
-<span class="sd">is equivalent to</span>
+<span class="sd">    is equivalent to</span>
 
-<span class="sd">    &gt;&gt;&gt; h[&#39;content-length&#39;] = &#39;1050&#39;</span>
+<span class="sd">        &gt;&gt;&gt; h[&#39;content-length&#39;] = &#39;1050&#39;</span>
 
-<span class="sd">:param headers: optional iterable over header field/value pairs.</span>
-<span class="sd">:param kind: optional headers type, one of ``server``, ``client`` or ``both``.</span>
-<span class="sd">:param strict: if ``True`` only valid headers field will be included.</span>
+<span class="sd">    :param headers: optional iterable over header field/value pairs.</span>
+<span class="sd">    :param kind: optional headers type, one of ``server``, ``client`` or</span>
+<span class="sd">        ``both``.</span>
+<span class="sd">    :param strict: if ``True`` only valid headers field will be included.</span>
 
-<span class="sd">This :class:`Headers` container maintains an ordering as suggested by</span>
-<span class="sd">http://www.w3.org/Protocols/rfc2616/rfc2616.html:</span>
+<span class="sd">    This :class:`Headers` container maintains an ordering as suggested by</span>
+<span class="sd">    http://www.w3.org/Protocols/rfc2616/rfc2616.html:</span>
 
-<span class="sd">.. epigraph::</span>
+<span class="sd">    .. epigraph::</span>
 
-<span class="sd">    The order in which header fields with differing field names are received</span>
-<span class="sd">    is not significant. However, it is &quot;good practice&quot; to send general-header</span>
-<span class="sd">    fields first, followed by request-header or response-header fields, and</span>
-<span class="sd">    ending with the entity-header fields.</span>
+<span class="sd">        The order in which header fields with differing field names are</span>
+<span class="sd">        received is not significant. However, it is &quot;good practice&quot; to send</span>
+<span class="sd">        general-header fields first, followed by request-header or</span>
+<span class="sd">        response-header fields, and ending with the entity-header fields.</span>
 
-<span class="sd">    -- rfc2616 section 4.2</span>
+<span class="sd">        -- rfc2616 section 4.2</span>
 
-<span class="sd">The strict parameter is rarely used and it forces the omission on non-standard</span>
-<span class="sd">header fields.</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    The strict parameter is rarely used and it forces the omission on</span>
+<span class="sd">    non-standard header fields.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;server&#39;</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">kind</span> <span class="o">=</span> <span class="n">header_type</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="s">&#39;both&#39;</span><span class="p">)</span>
@@ -737,15 +742,12 @@
         <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="n">lower_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_values</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">; </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kv</span> <span class="k">for</span> <span class="n">kv</span>
-                                                          <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
-                <span class="n">lower_value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">lower_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lower_values</span><span class="p">:</span>
-                    <span class="n">lower_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lower_value</span><span class="p">)</span>
-                    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">; </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kv</span> <span class="k">for</span> <span class="n">kv</span>
+                                                      <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
 </div>
 <div class="viewcode-block" id="Headers.remove_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -775,6 +777,8 @@
 </div>
     <span class="k">def</span> <span class="nf">_ordered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">hf</span> <span class="o">=</span> <span class="n">HEADER_FIELDS</span>
+        <span class="n">hj</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span>
+        <span class="n">dj</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span>
         <span class="n">order</span> <span class="o">=</span> <span class="p">((</span><span class="s">&#39;general&#39;</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s">&#39;request&#39;</span><span class="p">,</span> <span class="p">[]),</span>
                  <span class="p">(</span><span class="s">&#39;response&#39;</span><span class="p">,</span> <span class="p">[]),</span> <span class="p">(</span><span class="s">&#39;entity&#39;</span><span class="p">,</span> <span class="p">[]))</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span>
@@ -787,7 +791,12 @@
                 <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                <span class="n">joiner</span> <span class="o">=</span> <span class="n">hj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dj</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">joiner</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                        <span class="k">yield</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">headers</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
         <span class="k">yield</span> <span class="s">&#39;&#39;</span>
         <span class="k">yield</span> <span class="s">&#39;&#39;</span>
 

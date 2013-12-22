@@ -526,7 +526,7 @@ instance.</p>
 <h3>TaskBackend<a class="headerlink" href="#taskbackend" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="pulsar.apps.tasks.backend.TaskBackend">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backend.</tt><tt class="descname">TaskBackend</tt><big>(</big><em>store_dns</em>, <em>task_paths=None</em>, <em>schedule_periodic=False</em>, <em>backlog=1</em>, <em>max_tasks=0</em>, <em>name=None</em>, <em>poll_timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.tasks.backend.</tt><tt class="descname">TaskBackend</tt><big>(</big><em>store</em>, <em>logger</em>, <em>task_paths=None</em>, <em>schedule_periodic=False</em>, <em>backlog=1</em>, <em>max_tasks=0</em>, <em>name=None</em>, <em>poll_timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend" title="Permalink to this definition">¶</a></dt>
 <dd><p>A backend class for running <a class="reference internal" href="#pulsar.apps.tasks.backend.Task" title="pulsar.apps.tasks.backend.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a>.
 A <a class="reference internal" href="#pulsar.apps.tasks.backend.TaskBackend" title="pulsar.apps.tasks.backend.TaskBackend"><tt class="xref py py-class docutils literal"><span class="pre">TaskBackend</span></tt></a> is responsible for creating tasks and put them
 into the distributed queue.
@@ -586,21 +586,9 @@ attribute.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pulsar.apps.tasks.backend.TaskBackend.store">
-<tt class="descname">store</tt><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend.store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend.store" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <a class="reference internal" href="data/clients.html#data-stores"><em>data store</em></a> client where tasks are queued</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pulsar.apps.tasks.backend.TaskBackend.concurrent_tasks">
-<tt class="descname">concurrent_tasks</tt><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend.concurrent_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend.concurrent_tasks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set of <a class="reference internal" href="#pulsar.apps.tasks.backend.Task" title="pulsar.apps.tasks.backend.Task"><tt class="xref py py-class docutils literal"><span class="pre">Task</span></tt></a> ids which are currently being executed.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="pulsar.apps.tasks.backend.TaskBackend.num_concurrent_tasks">
 <tt class="descname">num_concurrent_tasks</tt><a class="reference internal" href="../modules/pulsar/apps/tasks/backend.html#TaskBackend.num_concurrent_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.tasks.backend.TaskBackend.num_concurrent_tasks" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of <a class="reference internal" href="#pulsar.apps.tasks.backend.TaskBackend.concurrent_tasks" title="pulsar.apps.tasks.backend.TaskBackend.concurrent_tasks"><tt class="xref py py-attr docutils literal"><span class="pre">concurrent_tasks</span></tt></a>.</p>
+<dd><p>The number of <tt class="xref py py-attr docutils literal"><span class="pre">concurrent_tasks</span></tt>.</p>
 <p>This number is never greater than the <a class="reference internal" href="#pulsar.apps.tasks.backend.TaskBackend.backlog" title="pulsar.apps.tasks.backend.TaskBackend.backlog"><tt class="xref py py-attr docutils literal"><span class="pre">backlog</span></tt></a> attribute.</p>
 </dd></dl>
 

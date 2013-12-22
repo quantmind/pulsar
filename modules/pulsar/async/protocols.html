@@ -71,11 +71,9 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ProtocolError</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span><span class="p">,</span> <span class="n">format_address</span>
 
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="p">(</span><span class="n">multi_async</span><span class="p">,</span> <span class="n">log_failure</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span>
-                    <span class="n">NOT_DONE</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">NOT_DONE</span>
 <span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">EventHandler</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">new_event_loop</span>
 
@@ -244,7 +242,6 @@
 
 <span class="sd">        By default it calls the :meth:`finished` method. It can be overwritten</span>
 <span class="sd">        to handle the potential exception ``exc``.&#39;&#39;&#39;</span>
-        <span class="n">log_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="ProtocolConsumer.finished"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.ProtocolConsumer.finished">[docs]</a>    <span class="k">def</span> <span class="nf">finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -464,21 +461,17 @@
         <span class="n">consumer</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="n">consumer</span><span class="o">.</span><span class="n">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Connection.data_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Connection.data_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.data_received">[docs]</a>    <span class="k">def</span> <span class="nf">data_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Delegates handling of data to the :meth:`current_consumer`.</span>
 
 <span class="sd">        Once done set a timeout for idle connections when a</span>
 <span class="sd">        :attr:`~Protocol.timeout` is a positive number (of seconds).</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">()</span>
-        <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">consumer</span><span class="o">.</span><span class="n">on_finished</span><span class="o">.</span><span class="n">add_callback</span><span class="p">(</span>
-                <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_received</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_add_idle_timeout</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">arg</span>
+        <span class="k">while</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">consumer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_consumer</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">_data_received</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_idle_timeout</span><span class="p">()</span>
 </div>
 <div class="viewcode-block" id="Connection.connection_lost"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.connection_lost">[docs]</a>    <span class="k">def</span> <span class="nf">connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;It performs these actions in the following order:</span>
@@ -493,8 +486,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_current_consumer</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log_failure</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Connection.upgrade"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection.upgrade">[docs]</a>    <span class="k">def</span> <span class="nf">upgrade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">consumer_factory</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Upgrade the :func:`_consumer_factory` callable.</span>

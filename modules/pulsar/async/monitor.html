@@ -92,16 +92,20 @@
     <span class="n">kind</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">PoolMixin</span><span class="p">):</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="s">&#39;monitor&#39;</span>
+    <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">actorparams</span><span class="p">()</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;aid&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;cfg&#39;</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+
+    <span class="c"># get config if not available</span>
     <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">monitor</span><span class="p">:</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">actorparams</span><span class="p">()</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="n">aid</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;aid&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c"># monitor not available, this is the arbiter</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">monitor</span><span class="p">:</span>  <span class="c"># monitor not available, this is the arbiter</span>
         <span class="k">if</span> <span class="n">kind</span> <span class="o">!=</span> <span class="s">&#39;monitor&#39;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;class </span><span class="si">%s</span><span class="s"> not a valid monitor&#39;</span> <span class="o">%</span> <span class="n">cls</span><span class="p">)</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="s">&#39;arbiter&#39;</span>
@@ -110,6 +114,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">aid</span><span class="p">:</span>
                 <span class="n">aid</span> <span class="o">=</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;exc_id&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
+    <span class="c">#</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="n">kw</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -165,7 +170,6 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">PoolMixin</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">impl</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">managed_actors</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">terminated_actors</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;actor_class&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">actor_class</span>
 
     <span class="k">def</span> <span class="nf">get_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aid</span><span class="p">):</span>
         <span class="n">aid</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="s">&#39;aid&#39;</span><span class="p">,</span> <span class="n">aid</span><span class="p">)</span>
@@ -189,7 +193,7 @@
 <span class="sd">        The disctionary is passed to the spawn method when creating new</span>
 <span class="sd">        actors. Fire the :ref:`on_params actor hook &lt;actor-hooks&gt;`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;on_params&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
 </div>

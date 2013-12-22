@@ -96,7 +96,7 @@ TCP sockets.</p>
 <dl class="class">
 <dt id="pulsar.async.internet.SocketTransport">
 <em class="property">class </em><tt class="descclassname">pulsar.async.internet.</tt><tt class="descname">SocketTransport</tt><big>(</big><em>loop</em>, <em>sock</em>, <em>protocol</em>, <em>extra=None</em>, <em>max_buffer_size=None</em>, <em>read_chunk_size=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/internet.html#SocketTransport"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.internet.SocketTransport" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <tt class="docutils literal"><span class="pre">asyncio.Transport</span></tt> for sockets.</p>
+<dd><p>An <tt class="docutils literal"><span class="pre">asyncio.Transport</span></tt> for sockets.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -104,7 +104,7 @@ TCP sockets.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>loop</strong> &#8211; Set the <tt class="xref py py-attr docutils literal"><span class="pre">_loop</span></tt> attribute.</li>
 <li><strong>sock</strong> &#8211; Set the <tt class="xref py py-attr docutils literal"><span class="pre">_sock</span></tt> attribute.</li>
-<li><strong>protocol</strong> &#8211; set the <tt class="xref py py-attr docutils literal"><span class="pre">protocol</span></tt> attribute.</li>
+<li><strong>protocol</strong> &#8211; set the <tt class="xref py py-attr docutils literal"><span class="pre">_protocol</span></tt> attribute.</li>
 </ul>
 </td>
 </tr>
@@ -119,7 +119,7 @@ TCP sockets.</p>
 <dl class="attribute">
 <dt id="pulsar.async.internet.SocketTransport.sock">
 <tt class="descname">sock</tt><a class="reference internal" href="../modules/pulsar/async/internet.html#SocketTransport.sock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.internet.SocketTransport.sock" title="Permalink to this definition">¶</a></dt>
-<dd><p>The socket for this <tt class="xref py py-class docutils literal"><span class="pre">SocketTransport</span></tt>.</p>
+<dd><p>The socket for this transport.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -172,7 +172,7 @@ called with <tt class="docutils literal"><span class="pre">exc</span></tt> as it
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">pulsar.SocketTransport</span></tt> for TCP streams.</p>
 <p>The primary feature of a stream transport is sending bytes to a protocol
 and receiving bytes from the underlying protocol. Writing to the transport
-is done using the <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.write" title="pulsar.async.stream.SocketStreamTransport.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> and <tt class="xref py py-meth docutils literal"><span class="pre">writelines()</span></tt> methods.
+is done using the <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.write" title="pulsar.async.stream.SocketStreamTransport.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> and <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.writelines" title="pulsar.async.stream.SocketStreamTransport.writelines"><tt class="xref py py-meth docutils literal"><span class="pre">writelines()</span></tt></a> methods.
 The latter method is a performance optimisation, to allow software to take
 advantage of specific capabilities in some transport mechanisms.</p>
 <dl class="method">
@@ -191,33 +191,15 @@ protocol&#8217;s data_received() method will not be called.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.stream.SocketStreamTransport.pause_writing">
-<tt class="descname">pause_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.pause_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.pause_writing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Suspend sending data to the network until a subsequent
-<a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.resume_writing" title="pulsar.async.stream.SocketStreamTransport.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a> call.</p>
-<p>Between <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.pause_writing" title="pulsar.async.stream.SocketStreamTransport.pause_writing"><tt class="xref py py-meth docutils literal"><span class="pre">pause_writing()</span></tt></a> and <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.resume_writing" title="pulsar.async.stream.SocketStreamTransport.resume_writing"><tt class="xref py py-meth docutils literal"><span class="pre">resume_writing()</span></tt></a> the
-transport&#8217;s <a class="reference internal" href="#pulsar.async.stream.SocketStreamTransport.write" title="pulsar.async.stream.SocketStreamTransport.write"><tt class="xref py py-meth docutils literal"><span class="pre">write()</span></tt></a> method will just be accumulating data
-in an internal buffer.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.stream.SocketStreamTransport.resume_writing">
-<tt class="descname">resume_writing</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.resume_writing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.resume_writing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restart sending data to the network.</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.async.stream.SocketStreamTransport.write">
 <tt class="descname">write</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write chunk of <tt class="docutils literal"><span class="pre">data</span></tt> to the endpoint.</p>
+<dd><p>Write chunk of <tt class="docutils literal"><span class="pre">data</span></tt> to the end-point.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.async.stream.SocketStreamTransport.mute_read_error">
-<tt class="descname">mute_read_error</tt><big>(</big><em>error</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.mute_read_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.mute_read_error" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return <tt class="docutils literal"><span class="pre">True</span></tt> if a socket error from a read operation is muted.</p>
-<p>This is when the socket cannot send sinse the socket has started
-shutting down already.</p>
+<dt id="pulsar.async.stream.SocketStreamTransport.writelines">
+<tt class="descname">writelines</tt><big>(</big><em>list_of_data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/stream.html#SocketStreamTransport.writelines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.stream.SocketStreamTransport.writelines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a list (or any iterable) of data bytes to the transport.</p>
 </dd></dl>
 
 </dd></dl>
@@ -375,7 +357,7 @@ method.</p>
 
 <dl class="method">
 <dt id="pulsar.async.protocols.Connection.data_received">
-<tt class="descname">data_received</tt><big>(</big><em>data</em>, <em>arg=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection.data_received" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">data_received</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/protocols.html#Connection.data_received"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.protocols.Connection.data_received" title="Permalink to this definition">¶</a></dt>
 <dd><p>Delegates handling of data to the <a class="reference internal" href="#pulsar.async.protocols.Connection.current_consumer" title="pulsar.async.protocols.Connection.current_consumer"><tt class="xref py py-meth docutils literal"><span class="pre">current_consumer()</span></tt></a>.</p>
 <p>Once done set a timeout for idle connections when a
 <a class="reference internal" href="#pulsar.async.protocols.Protocol.timeout" title="pulsar.async.protocols.Protocol.timeout"><tt class="xref py py-attr docutils literal"><span class="pre">timeout</span></tt></a> is a positive number (of seconds).</p>

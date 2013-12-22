@@ -87,6 +87,12 @@ Maybe Failure
 .. autofunction:: maybe_failure
 
 
+Coroutine return
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: coroutine_return
+
+
 Add async binding
 ~~~~~~~~~~~~~~~~~~~~~~
 .. function:: add_async_binding(binding)
