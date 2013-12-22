@@ -9,12 +9,12 @@ class TestRedisStore(RedisCommands, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         addr = 'redis://%s' % cls.cfg.redis_server
-        cls.store = cls.create_store(addr)
+        cls.store = cls.create_store(addr, pool_size=1)
         cls.sync_store = cls.create_store(addr, loop=new_event_loop())
         cls.client = cls.store.client()
 
 
 @unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
-class TestRedisPoolPythonParser(TestRedisStore):
+class TestRedisStorePythonParser(TestRedisStore):
     pass
 

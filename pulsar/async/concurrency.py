@@ -214,7 +214,8 @@ class ProcessMixin(object):
     def setup_event_loop(self, actor):
         loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                               poll_timeout=actor.poll_timeout,
-                              iothreadloop=True, noisy=actor.cfg.noisy)
+                              iothreadloop=True, noisy=actor.cfg.noisy,
+                              debug=actor.cfg.debug)
         actor.mailbox = self.create_mailbox(actor, loop)
         proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
         if system.set_proctitle(proc_name):
@@ -420,7 +421,8 @@ class ActorThread(Concurrency, Thread):
         '''Create the event loop but don't install signals.'''
         loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
                               poll_timeout=actor.poll_timeout,
-                              iothreadloop=True, noisy=actor.cfg.noisy)
+                              iothreadloop=True, noisy=actor.cfg.noisy,
+                              debug=actor.cfg.debug)
         actor.mailbox = self.create_mailbox(actor, loop)
 
 

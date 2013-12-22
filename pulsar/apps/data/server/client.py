@@ -182,7 +182,7 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
     def reply_multi_bulk_len(self, value):
         self._write(self.store._parser.multi_bulk_len(value))
 
-    # Connection Implementaton
+    # Protocol Implementaton
     def data_received(self, data):
         self.parser.feed(data)
         request = self.parser.get()

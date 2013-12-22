@@ -148,11 +148,12 @@ class EventLoop(BaseEventLoop):
         self.clear()
 
     def setup_loop(self, io=None, logger=None, poll_timeout=None,
-                   iothreadloop=False, noisy=False):
+                   iothreadloop=False, noisy=False, debug=False):
         self._io = io or DefaultIO()
         self._signal_handlers = {}
         self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
         self.noisy = noisy
+        self.debug = debug
         self.logger = logger or LOGGER
         close_on_exec(self._io.fileno())
         self._iothreadloop = iothreadloop

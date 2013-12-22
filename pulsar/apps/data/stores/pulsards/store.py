@@ -75,6 +75,8 @@ class PulsarStore(Store):
         connection = yield self._pool.connect()
         with connection:
             result = yield connection.execute(*args, **options)
+            if isinstance(result, Exception):
+                raise result
             coroutine_return(result)
 
     @in_loop_thread

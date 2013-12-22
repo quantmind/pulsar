@@ -70,6 +70,8 @@ class SocketTransport(asyncio.Transport, AsyncObject):
         self._consecutive_writes = 0
         self._write_buffer = deque()
         self._do_handshake()
+        if loop.debug:
+            loop.logger.debug('Opened new socket %s', self)
 
     def __repr__(self):
         address = self.address
@@ -170,6 +172,9 @@ class SocketTransport(asyncio.Transport, AsyncObject):
         if self._sock is not None:
             self._write_buffer = deque()
             self._loop.remove_writer(self._sock_fd)
+            if self._loop.debug:
+                assert self._sock_fd not in self._loop._io._handlers
+                self._loop.logger.debug('Close socket %s', self)
             try:
                 self._sock.shutdown(socket.SHUT_WR)
                 self._sock.close()
