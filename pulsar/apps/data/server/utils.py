@@ -1,3 +1,16 @@
+import shutil
+
+from pulsar.utils.log import configured_logger
+from pulsar.utils.pep import pickle
+
+
+def save_data(cfg, filename, data):
+    logger = cfg.configured_logger('ds')
+    temp = 'temp_%s' % filename
+    with open(temp, 'wb') as file:
+        pickle.dump(data, file, protocol=2)
+    shutil.move(temp, filename)
+    logger.info('wrote data into "%s"', filename)
 
 
 def sort_command(store, client, request, value):

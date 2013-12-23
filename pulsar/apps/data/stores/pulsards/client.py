@@ -112,7 +112,7 @@ class Consumer(pulsar.ProtocolConsumer):
 
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
-            'FLUSHALL FLUSHDB HMSET LSET LTRIM MSET RENAME '
+            'BGSAVE FLUSHALL FLUSHDB HMSET LSET LTRIM MSET RENAME RESTORE '
             'SAVE SELECT SHUTDOWN SLAVEOF SET WATCH UNWATCH',
             lambda r: r == b'OK'
         ),
@@ -122,7 +122,8 @@ class Consumer(pulsar.ProtocolConsumer):
                             lambda v: float(v) if v is not None else v),
         string_keys_to_dict('ZRANGE ZRANGEBYSCORE ZREVRANGE ZREVRANGEBYSCORE',
                             values_to_zset),
-        string_keys_to_dict('EXISTS',
+        string_keys_to_dict('EXISTS EXPIRE EXPIREAT PEXPIRE PEXPIREAT '
+                            'PERSIST RENAMENX',
                             lambda r: bool(r)),
         {
             'PING': lambda r: r == b'PONG',

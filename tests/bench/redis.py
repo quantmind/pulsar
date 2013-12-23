@@ -31,7 +31,7 @@ class RedisPyParser(unittest.TestCase):
                     for s in range(nsize)]
         cls.data_bytes = [(''.join((choice(characters) for l in range(20)))
                            ).encode('utf-8') for s in range(nsize)]
-        cls.parser = redis_parser(cls.redis_py_parser)
+        cls.parser = redis_parser(cls.redis_py_parser)()
         cls.chunk = cls.parser.multi_bulk(cls.data)
 
     def test_pack_command(self):

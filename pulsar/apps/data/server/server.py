@@ -41,18 +41,18 @@ import os
 import re
 import time
 import math
-import pickle
 from random import choice
 from hashlib import sha1
 from itertools import islice, chain
 from functools import partial, reduce
 from collections import namedtuple
+from multiprocessing import Process
 
 import pulsar
 from pulsar.apps.socket import SocketServer
 from pulsar.utils.config import Global
 from pulsar.utils.structures import Dict, Zset, Deque
-from pulsar.utils.pep import map, range, zip, ispy3k
+from pulsar.utils.pep import map, range, zip, ispy3k, pickle
 try:
     from pulsar.utils.lua import Lua
 except ImportError:     # pragma    nocover
@@ -60,7 +60,7 @@ except ImportError:     # pragma    nocover
 
 
 from .parser import redis_parser
-from .utils import sort_command, count_bytes, and_op, or_op, xor_op
+from .utils import sort_command, count_bytes, and_op, or_op, xor_op, save_data
 from .client import (command, PulsarStoreClient, LuaClient, Blocked,
                      COMMANDS_INFO, check_input, redis_to_py_pattern)
 
@@ -201,6 +201,7 @@ class Storage(object):
         self.cfg = cfg
         self._password = cfg.key_value_password.encode('utf-8')
         self._filename = cfg.key_value_filename
+        self._writer = None
         self._server = server
         self._loop = server._loop
         self._parser = server._parser_class()
@@ -216,6 +217,7 @@ class Storage(object):
         self._watching = set()
         # The set of clients which issued the monitor command
         self._monitors = set()
+        self.logger = server.logger
         #
         self.NOTIFY_KEYSPACE = (1 << 0)
         self.NOTIFY_KEYEVENT = (1 << 1)
@@ -258,9 +260,12 @@ class Storage(object):
         self.SYNTAX_ERROR = 'Syntax error'
         self.SUBSCRIBE_COMMANDS = ('psubscribe', 'punsubscribe', 'subscribe',
                                    'unsubscribe', 'quit')
+        self.encoder = pickle
         self.hash_type = Dict
         self.list_type = Deque
         self.zset_type = Zset
+        self.data_types = (bytearray, set, self.hash_type,
+                           self.list_type, self.zset_type)
         self.zset_aggregate = {b'min': min,
                                b'max': max,
                                b'sum': sum}
@@ -301,7 +306,11 @@ class Storage(object):
     @command('Keys')
     def dump(self, client, request, N):
         check_input(request, N != 1)
-        client.reply_bulk()
+        value = client.db.get(request[1])
+        if value is None:
+            client.reply_bulk()
+        else:
+            client.reply_bulk(self.encoder.dumps(value))
 
     @command('Keys')
     def exists(self, client, request, N):
@@ -312,7 +321,7 @@ class Storage(object):
             client.reply_zero()
 
     @command('Keys', True)
-    def expire(self, client, request, N):
+    def expire(self, client, request, N, m=1):
         check_input(request, N != 2)
         try:
             timeout = int(request[2])
@@ -322,12 +331,12 @@ class Storage(object):
             if timeout:
                 if timeout < 0:
                     return client.reply_error(self.INVALID_TIMEOUT)
-                if client.db.expire(request[1], timeout):
+                if client.db.expire(request[1], m*timeout):
                     return client.reply_one()
             client.reply_zero()
 
     @command('Keys', True)
-    def expireat(self, client, request, N):
+    def expireat(self, client, request, N, M=1):
         check_input(request, N != 2)
         try:
             timeout = int(request[2])
@@ -337,7 +346,8 @@ class Storage(object):
             if timeout:
                 if timeout < 0:
                     return client.reply_error(self.INVALID_TIMEOUT)
-                if client.db.expireat(request[1], timeout):
+                timeout = M*timeout - time.time()
+                if client.db.expire(request[1], timeout):
                     return client.reply_one()
             client.reply_zero()
 
@@ -360,7 +370,7 @@ class Storage(object):
         key = request[1]
         try:
             db2 = self.databases.get(int(request[2]))
-            if not db2:
+            if db2 is None:
                 raise ValueError
         except Exception:
             return client.reply_error('Invalid database')
@@ -382,6 +392,19 @@ class Storage(object):
             client.reply_one()
         else:
             client.reply_zero()
+
+    @command('Keys', True)
+    def pexpire(self, client, request, N):
+        self.expire(client, request, N, 0.001)
+
+    @command('Keys', True)
+    def pexpireat(self, client, request, N, M=1):
+        self.expireat(client, request, N, 0.001)
+
+    @command('Keys')
+    def pttl(self, client, request, N):
+        check_input(request, N != 1)
+        client.reply_int(client.db.ttl(request[1], 1000))
 
     @command('Keys')
     def randomkey(self, client, request, N):
@@ -410,7 +433,8 @@ class Storage(object):
                 result = 1
             else:
                 result = 0
-                db.rem(key2)
+                if db.pop(key2) is not None:
+                    self._signal(self.NOTIFY_GENERIC, db, 'del', key2)
             db.pop(key1)
             event = self._type_event_map[type(value)]
             dirty = 1 if event == self.NOTIFY_STRING else len(value)
@@ -419,8 +443,30 @@ class Storage(object):
             client.reply_one() if result else client.reply_ok()
 
     @command('Keys', True)
-    def renameex(self, client, request, N):
+    def renamenx(self, client, request, N):
         self.rename(client, request, N, True)
+
+    @command('Keys', True)
+    def restore(self, client, request, N):
+        check_input(request, N != 3)
+        key = request[1]
+        db = client.db
+        try:
+            value = self.encoder.loads(request[3])
+        except Exception:
+            value = None
+        if not isinstance(value, self.data_types):
+            return client.reply_error('Could not decode value')
+        try:
+            ttl = int(request[2])
+        except Exception:
+            return client.reply_error(self.INVALID_TIMEOUT)
+        if db.pop(key) is not None:
+            self._signal(self.NOTIFY_GENERIC, db, 'del', key)
+        db._data[key] = value
+        if ttl > 0:
+            db.expire(key, ttl)
+        client.reply_ok()
 
     @command('Keys', True)
     def sort(self, client, request, N):
@@ -2343,16 +2389,31 @@ class Storage(object):
         yield 'cmd=%s' % client.last_command
 
     def _save(self, async=True):
-        self._dirty = 0
-        self._last_save = int(time.time())
-        dbs = [(db._num, db._data) for db in self.databases.values()
-               if len(db._data)]
-        with open(self._filename, 'wb') as file:
-            pickle.dump((1.0, dbs), file, protocol=2)
+        writer = self._writer
+        if writer and writer.is_alive():
+            self.logger.warning('Cannot save, background saving in progress')
+        else:
+            data = self._dbs()
+            self._dirty = 0
+            self._last_save = int(time.time())
+            if async:
+                self.logger.debug('Saving database in background process')
+                self._writer = Process(target=save_data,
+                                       args=(self.cfg, self._filename, data))
+                self._writer.start()
+            else:
+                self.logger.debug('Saving database')
+                save_data(self.cfg, self._filename, data)
+
+    def _dbs(self):
+        data = [(db._num, db._data) for db in self.databases.values()
+                if len(db._data)]
+        return (1, data)
 
     def _loaddb(self):
         filename = self._filename
         if os.path.isfile(filename):
+            self.logger.info('loading data from "%s"', filename)
             with open(filename, 'rb') as file:
                 data = pickle.load(file)
             version, dbs = data
@@ -2541,18 +2602,6 @@ class Db(object):
             timeout, self._do_expire, key), value)
         return True
 
-    def expireat(self, key, timeout):
-        if key in self._expires:
-            handle, value = self._expires.pop(key)
-            handle.cancel()
-        elif key in self._data:
-            value = self._data.pop(key)
-        else:
-            return False
-        self._expires[key] = (self._loop.call_later(
-            timeout - time.time(), self._do_expire, key), value)
-        return True
-
     def persist(self, key):
         if key in self._expires:
             self.store._hit_keys += 1
@@ -2566,11 +2615,11 @@ class Db(object):
             self.store._missed_keys += 1
         return False
 
-    def ttl(self, key):
+    def ttl(self, key, m=1):
         if key in self._expires:
             self.store._hit_keys += 1
             handle, value = self._expires[key]
-            return max(0, int(handle._when - self._loop.time()))
+            return max(0, int(m*(handle._when - self._loop.time())))
         elif key in self._data:
             self.store._hit_keys += 1
             return -1

@@ -4,7 +4,6 @@ import socket
 import errno
 from types import GeneratorType
 from heapq import heappop, heappush
-from collections import deque
 from threading import current_thread, Lock
 try:
     import signal
@@ -492,7 +491,7 @@ default signal handler ``signal.SIG_DFL``.'''
 
     #################################################    NON PEP METHODS
     def clear(self):
-        self._ready = deque()
+        self._ready = []
         self._scheduled = []
 
     def _write_to_self(self):
@@ -559,11 +558,9 @@ the event loop to poll with a 0 timeout all the times.'''
             self._ready.append(heappop(self._scheduled))
         #
         # Run callbacks
-        callbacks = self._ready
-        todo = len(callbacks)
-        for i in range(todo):
+        callbacks, self._ready = self._ready, []
+        for handle in callbacks:
             exc_info = None
-            handle = callbacks.popleft()
             try:
                 if not handle._cancelled:
                     value = handle._callback(*handle._args)

@@ -120,7 +120,7 @@ system is chosen.'''
         return actor.fire_event('start')
 
     def get_actor(self):
-        self.daemon = True
+        self.daemon = False
         self.params['monitor'] = get_proxy(self.params['monitor'])
         # make sure these parameters are picklable
         #pickle.dumps(self.params)

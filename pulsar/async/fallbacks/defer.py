@@ -174,8 +174,8 @@ class Failure(object):
         Without ``gen``, this method is used when interacting with libraries
         supporting both synchronous and asynchronous flow controls.
         '''
+        __skip_traceback__ = True
         if gen:
-            __skip_traceback__ = True
             return gen.throw(self.exc_info[0], self.exc_info[1])
         else:
             # mute only this Failure, not the error

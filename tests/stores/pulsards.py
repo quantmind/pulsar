@@ -1,4 +1,5 @@
 import binascii
+import time
 
 import pulsar
 from pulsar import new_event_loop
@@ -45,6 +46,20 @@ class RedisCommands(StoreMixin):
         store = self.store
         self.assertEqual(len(store.namespace), 7)
 
+    ###########################################################################
+    ##    KEYS
+    def test_dump_restore(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.dump(key), None)
+        yield eq(c.set(key, 'hello'), True)
+        value = yield c.dump(key)
+        self.assertTrue(value)
+        yield self.async.assertRaises(ResponseError, c.restore, key, 0, 'bla')
+        yield eq(c.restore(key+'2', 0, value), True)
+        yield eq(c.get(key+'2'), b'hello')
+
     def test_exists(self):
         key = self.randomkey()
         c = self.client
@@ -53,6 +68,85 @@ class RedisCommands(StoreMixin):
         yield eq(c.set(key, 'hello'), True)
         yield eq(c.exists(key), True)
         yield eq(c.delete(key), 1)
+
+    def test_expire_persist_ttl(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield self.async.assertRaises(ResponseError, c.expire, key, 'bla')
+        yield eq(c.expire(key, 1), False)
+        yield eq(c.set(key, 1), True)
+        yield eq(c.expire(key, 3), True)
+        ttl = yield c.ttl(key)
+        self.assertTrue(ttl > 0 and ttl <= 3)
+        yield eq(c.persist(key), True)
+        yield eq(c.ttl(key), -1)
+        yield eq(c.persist(key), False)
+
+    def test_expireat(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield self.async.assertRaises(ResponseError, c.expireat, key, 'bla')
+        t = int(time.time() + 3)
+        yield eq(c.expireat(key, t), False)
+        yield eq(c.set(key, 1), True)
+        t = int(time.time() + 3)
+        yield eq(c.expireat(key, t), True)
+        ttl = yield c.ttl(key)
+        self.assertTrue(ttl > 0 and ttl <= 3)
+        yield eq(c.persist(key), True)
+        yield eq(c.ttl(key), -1)
+        yield eq(c.persist(key), False)
+
+    def test_keys(self):
+        key = self.randomkey()
+        keya = '%s_a' % key
+        keyb = '%s_a' % key
+        keyc = '%sc' % key
+        c = self.client
+        eq = self.async.assertEqual
+        keys_with_underscores = set([keya.encode('utf-8'),
+                                     keyb.encode('utf-8')])
+        keys = keys_with_underscores.union(set([keyc.encode('utf-8')]))
+        yield eq(c.mset(keya, 1, keyb, 2, keyc, 3), True)
+        k1 = yield c.keys('%s_*' % key)
+        k2 = yield c.keys('%s*' % key)
+        self.assertEqual(set(k1), keys_with_underscores)
+        self.assertEqual(set(k2), keys)
+
+    def test_move(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        db = 3 if c.store.database == 4 else 4
+        yield self.async.assertRaises(ResponseError, c.move, key, 'bla')
+        yield eq(c.move(key, db), False)
+        yield eq(c.set(key, 'ciao'), True)
+        yield eq(c.move(key, db), True)
+        s2 = self.create_store(self.store.dns, database=db)
+        c2 = s2.client()
+        yield eq(c2.get(key), b'ciao')
+        yield eq(c.exists(key), False)
+        yield eq(c.set(key, 'foo'), True)
+        yield eq(c.move(key, db), False)
+        yield eq(c.exists(key), True)
+
+    def test_rename_renamenx(self):
+        key = self.randomkey()
+        des = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield self.async.assertRaises(ResponseError, c.rename, key, des)
+        yield eq(c.set(key, 'hello'), True)
+        yield self.async.assertRaises(ResponseError, c.rename, key, key)
+        yield eq(c.rename(key, des), True)
+        yield eq(c.exists(key), False)
+        yield eq(c.get(des), b'hello')
+        yield eq(c.set(key, 'ciao'), True)
+        yield eq(c.renamenx(key, des), False)
+        yield eq(c.renamenx(key, des+'a'), True)
+        yield eq(c.exists(key), False)
 
     def test_watch(self):
         key1 = self.randomkey()
