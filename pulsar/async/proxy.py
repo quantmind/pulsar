@@ -89,7 +89,10 @@ class ActorProxyDeferred(Deferred, ActorIdentity):
 
     '''
     def __repr__(self):
-        return '%s(%s)' % (self.__class__, self.aid)
+        if self.done():
+            return '%s(%s)' % (self.__class__.__name__, self.aid)
+        else:
+            return '%s(%s) PENDING' % (self.__class__.__name__, self.aid)
     __str__ = __repr__
 
 

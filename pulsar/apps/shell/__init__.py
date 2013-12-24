@@ -124,14 +124,14 @@ with one thread only and send the :meth:`interact` method to it.'''
             readline.set_completer(
                 rlcompleter.Completer(imported_objects).complete)
             readline.parse_and_bind("tab:complete")
-        self.local.console = self.cfg.console_class(imported_objects)
-        self.local.console.setup()
+        self.console = self.cfg.console_class(imported_objects)
+        self.console.setup()
         worker.thread_pool.apply(self.interact, worker)
 
     def interact(self, worker):
         '''Handled by the :attr:`Actor.thread_pool`'''
         try:
-            self.local.console.interact(self.cfg.timeout)
+            self.console.interact(self.cfg.timeout)
             worker.thread_pool.apply(self.interact, worker)
         except:
             worker.send('arbiter', 'stop')
