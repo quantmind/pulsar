@@ -196,7 +196,8 @@ pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 
 
 class Storage(object):
-    '''Implement redis commands.'''
+    '''Implement redis commands.
+    '''
     def __init__(self, server, cfg):
         self.cfg = cfg
         self._password = cfg.key_value_password.encode('utf-8')
@@ -256,6 +257,7 @@ class Storage(object):
         self.PUBSUB_ONLY = ('only (P)SUBSCRIBE / (P)UNSUBSCRIBE / QUIT '
                             'allowed in this context')
         self.INVALID_SCORE = 'Invalid score value'
+        self.NOT_SUPPORTED = 'Command not yet supported'
         self.OUT_OF_BOUND = 'Out of bound'
         self.SYNTAX_ERROR = 'Syntax error'
         self.SUBSCRIBE_COMMANDS = ('psubscribe', 'punsubscribe', 'subscribe',
@@ -364,6 +366,10 @@ class Storage(object):
                   gr.search(key.decode('utf-8', err))]
         client.reply_multi_bulk(result)
 
+    @command('Keys', supported=False)
+    def migrate(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
     @command('Keys', True)
     def move(self, client, request, N):
         check_input(request, N != 2)
@@ -373,7 +379,7 @@ class Storage(object):
             if db2 is None:
                 raise ValueError
         except Exception:
-            return client.reply_error('Invalid database')
+            return client.reply_zero()
         db = client.db
         value = db.get(key)
         if db2.exists(key) or value is None:
@@ -384,6 +390,10 @@ class Storage(object):
         db2._data[key] = value
         self._signal(self._type_event_map[type(value)], db2, 'set', key, 1)
         client.reply_one()
+
+    @command('Keys', supported=False)
+    def object(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     @command('Keys', True)
     def persist(self, client, request, N):
@@ -492,6 +502,10 @@ class Storage(object):
         else:
             result = self._type_name_map[type(value)]
         client.reply_status(result)
+
+    @command('Keys', supported=False)
+    def scan(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     ###########################################################################
     ##    STRING COMMANDS
@@ -623,7 +637,7 @@ class Storage(object):
             if len(string) > byte:
                 bit = 7 - (bitoffset & 7)
                 v = string[byte] & (1 << bit)
-                client.reply_int(v)
+                client.reply_int(1 if v else 0)
             else:
                 client.reply_zero()
 
@@ -638,7 +652,7 @@ class Storage(object):
                                       request[0])
         string = client.db.get(request[1])
         if string is None:
-            client.reply_bulk()
+            client.reply_bulk(b'')
         elif not isinstance(string, bytearray):
             client.reply_wrongtype()
         else:
@@ -1026,6 +1040,10 @@ class Storage(object):
             client.reply_multi_bulk(tuple(value.values()))
         else:
             client.reply_wrongtype()
+
+    @command('Hashes', supported=False)
+    def hscan(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     ###########################################################################
     ##    LIST COMMANDS
@@ -1497,6 +1515,10 @@ class Storage(object):
         check_input(request, N < 2)
         self._setoper(client, 'union', request[2:], request[1])
 
+    @command('Sets', supported=False)
+    def sscan(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
     ###########################################################################
     ##    SORTED SETS COMMANDS
     @command('Sorted Sets', True)
@@ -1728,9 +1750,13 @@ class Storage(object):
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
             client.reply_int(removed)
 
-    @command('Sorted Sets')
+    @command('Sorted Sets', supported=False)
     def zrevrange(self, client, request, N):
-        self.range(client, request, N)
+        client.reply_error(self.NOT_SUPPORTED)
+
+    @command('Sorted Sets', supported=False)
+    def zrevrangebyscore(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     @command('Sorted Sets')
     def zscore(self, client, request, N):
@@ -1751,6 +1777,10 @@ class Storage(object):
     @command('Sorted Sets', True)
     def zunionstore(self, client, request, N):
         self._zsetoper(client, request, N)
+
+    @command('Sorted Sets', supported=False)
+    def zscan(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     ###########################################################################
     ##    PUBSUB COMMANDS
@@ -1999,6 +2029,10 @@ class Storage(object):
 
     ###########################################################################
     ##    SERVER COMMANDS
+    @command('Server', supported=False)
+    def bgrewriteaof(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
     @command('Server')
     def bgsave(self, client, request, N):
         check_input(request, N)
@@ -2053,6 +2087,10 @@ class Storage(object):
         check_input(request, N != 0)
         client.reply_int(len(client.db))
 
+    @command('Server', supported=False, subcommands=['object', 'segfault'])
+    def debug(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
     @command('Server', True)
     def flushdb(self, client, request, N):
         check_input(request, N)
@@ -2089,6 +2127,22 @@ class Storage(object):
         check_input(request, N)
         self._save(False)
         client.reply_ok()
+
+    @command('Server', supported=False)
+    def shutdown(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
+    @command('Server', supported=False)
+    def slaveof(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
+    @command('Server', supported=False)
+    def slowlog(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
+
+    @command('Server', supported=False)
+    def sync(self, client, request, N):
+        client.reply_error(self.NOT_SUPPORTED)
 
     @command('Server')
     def time(self, client, request, N):

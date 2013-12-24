@@ -120,7 +120,7 @@ class RedisCommands(StoreMixin):
         c = self.client
         eq = self.async.assertEqual
         db = 3 if c.store.database == 4 else 4
-        yield self.async.assertRaises(ResponseError, c.move, key, 'bla')
+        yield eq(c.move(key, 'bla'), False)
         yield eq(c.move(key, db), False)
         yield eq(c.set(key, 'ciao'), True)
         yield eq(c.move(key, db), True)
@@ -130,6 +130,14 @@ class RedisCommands(StoreMixin):
         yield eq(c.exists(key), False)
         yield eq(c.set(key, 'foo'), True)
         yield eq(c.move(key, db), False)
+        yield eq(c.exists(key), True)
+
+    def test_randomkey(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.mset(key, 1, key+'a', 2, key+'b', 3), True)
+        key = yield c.randomkey()
         yield eq(c.exists(key), True)
 
     def test_rename_renamenx(self):
@@ -267,6 +275,43 @@ class RedisCommands(StoreMixin):
         self.assertEqual(int(binascii.hexlify(res1), 16), 0x0102FF00)
         self.assertEqual(int(binascii.hexlify(res2), 16), 0x0102FFFF)
         self.assertEqual(int(binascii.hexlify(res3), 16), 0x000000FF)
+
+    def test_getbit(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.getbit(key, 5), 0)
+        yield eq(c.setbit(key, 5, 1), 0)
+        yield eq(c.getbit(key, 5), 1)
+        yield self.async.assertRaises(ResponseError, c.getbit, key, -1)
+        yield eq(c.getbit(key, 4), 0)
+        yield eq(c.setbit(key, 4, 1), 0)
+        # set bit 4
+        yield eq(c.getbit(key, 4), 1)
+        yield eq(c.getbit(key, 5), 1)
+        # set bit 5 again
+        yield eq(c.setbit(key, 5, 1), 1)
+        yield eq(c.getbit(key, 5), 1)
+        #
+        yield eq(c.getbit(key, 30), 0)
+        #
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.getbit, key, 1)
+
+    def test_getrange(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield eq(c.getrange(key, 0, 0), b'')
+        yield eq(c.set(key, 'Hello there'), True)
+        yield eq(c.getrange(key, 0, 0), b'H')
+        yield eq(c.getrange(key, 0, 4), b'Hello')
+        yield eq(c.getrange(key, 5, 5), b' ')
+        yield eq(c.getrange(key, 20, 25), b'')
+        yield eq(c.getrange(key, -5, -1), b'there')
+        yield self.async.assertRaises(ResponseError, c.getrange, key, 1, 'b')
+        yield self._remove_and_push(key)
+        yield self.async.assertRaises(ResponseError, c.getrange, key, 1, 2)
 
     def test_decr(self):
         key = self.randomkey()

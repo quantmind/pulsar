@@ -140,7 +140,7 @@ To access the :class:`.Arbiter`, from the main process, one can use the
 :func:`.arbiter` high level function::
 
     >>> arbiter = pulsar.arbiter()
-    >>> arbiter.running()
+    >>> arbiter.is_running()
     False
 
 .. _concurrency:

@@ -21,22 +21,33 @@ class RedisCommands(Directive):
 
     def sections(self):
         sec = {}
+        unsupported = []
         sections = OrderedDict()
         for info in COMMANDS_INFO.values():
             if info.group not in sections:
                 sections[info.group] = []
             group = sections[info.group]
-            group.append(info)
-        return sections.items()
+            if info.supported:
+                group.append(info)
+            else:
+                unsupported.append(info)
+        return unsupported, sections
 
     def text(self):
-        for section, commands in self.sections():
-            s = section.lower().replace(' ', '-')
-            yield '.. _redis-{0}:\n\n\
-{1}\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n'.format(s, section)
-            yield ', '.join(('`%s <%s>`_' % (command.name, command.url) for
-                             command in sorted(commands, key=lambda x: x.name)))
+        unsupported, sections = self.sections()
+        if unsupported:
+            yield '**Commands not yet supported**: %s' % self.links(unsupported)
             yield '\n'
+        for section, commands in sections.items():
+            s = section.lower().replace(' ', '-')
+            yield ('.. _redis-{0}:\n\n''{1}\n'
+                   '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n').format(s, section)
+            yield self.links(commands)
+            yield '\n'
+
+    def links(self, commands):
+        return ', '.join(('`%s <%s>`_' % (command.name, command.url) for
+                          command in sorted(commands, key=lambda x: x.name)))
 
     def run(self):
         env = self.state.document.settings.env

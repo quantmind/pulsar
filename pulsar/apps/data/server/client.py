@@ -19,13 +19,16 @@ def check_input(request, failed):
 
 
 class command:
-    '''Decorator for server commands
+    '''Decorator for pulsar-ds server commands
     '''
-    def __init__(self, group, write=False, name=None, script=1):
+    def __init__(self, group, write=False, name=None,
+                 script=1, supported=True, subcommands=None):
         self.group = group
         self.write = write
         self.name = name
         self.script = script
+        self.supported = supported
+        self.subcommands = subcommands
 
     @property
     def url(self):
