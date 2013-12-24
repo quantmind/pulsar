@@ -25,11 +25,11 @@ For example, this statement creates a synchronous :class:`.HttpClient`::
     >>> client._loop.is_running()
     False
 
-You can now exceute asynchronous requests::
+You can now execute synchronous requests::
 
     >>> response = client.get('https://pypi.python.org/pypi/pulsar/json')
 
-Under the hood, pulsar treats a synchronous clients exactly in the same way as
+Under the hood, pulsar treats a synchronous request exactly in the same way as
 an asynchronous one with the only difference that the :class:`.EventLoop`
 is always used via the :meth:`~.EventLoop.run_until_complete`
 method to wait for the response to be available.

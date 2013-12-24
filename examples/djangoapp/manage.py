@@ -17,8 +17,8 @@ This example uses the :ref:`django pulse <apps-pulse>` application.
 Message and data backend
 ============================
 
-By default, messages are from connected clients are synchronised via the
-:ref:`pulsar data store <pulsards>` which starts when the django
+By default, messages from connected (websocket) clients are synchronised via
+the :ref:`pulsar data store <pulsards>` which starts when the django
 site starts. It is possible to specify a different data store via the
 :ref:`stats-store options <setting-data_store>`.
 
