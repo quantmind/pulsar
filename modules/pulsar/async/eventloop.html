@@ -9,16 +9,16 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.eventloop &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>pulsar.async.eventloop &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.2',
+        VERSION:     '0.8.0-beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -73,7 +73,6 @@
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">GeneratorType</span>
 <span class="kn">from</span> <span class="nn">heapq</span> <span class="kn">import</span> <span class="n">heappop</span><span class="p">,</span> <span class="n">heappush</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">current_thread</span><span class="p">,</span> <span class="n">Lock</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">signal</span>
@@ -561,7 +560,7 @@
 
     <span class="c">#################################################    NON PEP METHODS</span></div>
     <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">_write_to_self</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -628,11 +627,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">heappop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduled</span><span class="p">))</span>
         <span class="c">#</span>
         <span class="c"># Run callbacks</span>
-        <span class="n">callbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span>
-        <span class="n">todo</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">todo</span><span class="p">):</span>
+        <span class="n">callbacks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready</span><span class="p">,</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">handle</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
             <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="n">handle</span> <span class="o">=</span> <span class="n">callbacks</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">handle</span><span class="o">.</span><span class="n">_cancelled</span><span class="p">:</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="o">*</span><span class="n">handle</span><span class="o">.</span><span class="n">_args</span><span class="p">)</span>

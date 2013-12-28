@@ -9,16 +9,16 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Django with Pulsar &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>Django with Pulsar &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.2',
+        VERSION:     '0.8.0-beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
     <link rel="next" title="Dining Philosophers" href="philosophers.html" />
     <link rel="prev" title="A Task Queue with a JSON-RPC Api" href="taskqueue.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="taskqueue.html" title="A Task Queue with a JSON-RPC Api"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
@@ -90,8 +90,8 @@ Requires django 1.4 or above. To run:</p>
 <p>This example uses the <a class="reference internal" href="../apps/pulse.html#apps-pulse"><em>django pulse</em></a> application.</p>
 <div class="section" id="message-and-data-backend">
 <h2>Message and data backend<a class="headerlink" href="#message-and-data-backend" title="Permalink to this headline">¶</a></h2>
-<p>By default, messages are from connected clients are synchronised via the
-<em class="xref std std-ref">pulsar data store</em> which starts when the django
+<p>By default, messages from connected (websocket) clients are synchronised via
+the <em class="xref std std-ref">pulsar data store</em> which starts when the django
 site starts. It is possible to specify a different data store via the
 <a class="reference internal" href="../settings.html#setting-data-store"><em>stats-store options</em></a>.</p>
 <p>For example, it is possible to use <a class="reference external" href="http://redis.io/">redis</a> as an alternative datastore

@@ -9,16 +9,16 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Pulsar data store &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>Pulsar data store &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.2',
+        VERSION:     '0.8.0-beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Asynchronous Shell" href="../shell.html" />
     <link rel="prev" title="Object Data Mapper" href="odm.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="odm.html" title="Object Data Mapper"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -110,9 +110,10 @@ as redis does.</p>
 </div>
 <div class="section" id="commands">
 <h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<p><strong>Commands not yet supported</strong>: <a class="reference external" href="http://redis.io/commands/bgrewriteaof">bgrewriteaof</a>, <a class="reference external" href="http://redis.io/commands/debug">debug</a>, <a class="reference external" href="http://redis.io/commands/hscan">hscan</a>, <a class="reference external" href="http://redis.io/commands/migrate">migrate</a>, <a class="reference external" href="http://redis.io/commands/object">object</a>, <a class="reference external" href="http://redis.io/commands/scan">scan</a>, <a class="reference external" href="http://redis.io/commands/shutdown">shutdown</a>, <a class="reference external" href="http://redis.io/commands/slaveof">slaveof</a>, <a class="reference external" href="http://redis.io/commands/slowlog">slowlog</a>, <a class="reference external" href="http://redis.io/commands/sscan">sscan</a>, <a class="reference external" href="http://redis.io/commands/sync">sync</a>, <a class="reference external" href="http://redis.io/commands/zrevrange">zrevrange</a>, <a class="reference external" href="http://redis.io/commands/zrevrangebyscore">zrevrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zscan">zscan</a></p>
 <div class="section" id="keys">
 <span id="redis-keys"></span><h3>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="http://redis.io/commands/del">del</a>, <a class="reference external" href="http://redis.io/commands/exists">exists</a>, <a class="reference external" href="http://redis.io/commands/expire">expire</a>, <a class="reference external" href="http://redis.io/commands/expireat">expireat</a>, <a class="reference external" href="http://redis.io/commands/keys">keys</a>, <a class="reference external" href="http://redis.io/commands/move">move</a>, <a class="reference external" href="http://redis.io/commands/persist">persist</a>, <a class="reference external" href="http://redis.io/commands/randomkey">randomkey</a>, <a class="reference external" href="http://redis.io/commands/rename">rename</a>, <a class="reference external" href="http://redis.io/commands/renameex">renameex</a>, <a class="reference external" href="http://redis.io/commands/sort">sort</a>, <a class="reference external" href="http://redis.io/commands/ttl">ttl</a>, <a class="reference external" href="http://redis.io/commands/type">type</a></p>
+<p><a class="reference external" href="http://redis.io/commands/del">del</a>, <a class="reference external" href="http://redis.io/commands/dump">dump</a>, <a class="reference external" href="http://redis.io/commands/exists">exists</a>, <a class="reference external" href="http://redis.io/commands/expire">expire</a>, <a class="reference external" href="http://redis.io/commands/expireat">expireat</a>, <a class="reference external" href="http://redis.io/commands/keys">keys</a>, <a class="reference external" href="http://redis.io/commands/move">move</a>, <a class="reference external" href="http://redis.io/commands/persist">persist</a>, <a class="reference external" href="http://redis.io/commands/pexpire">pexpire</a>, <a class="reference external" href="http://redis.io/commands/pexpireat">pexpireat</a>, <a class="reference external" href="http://redis.io/commands/pttl">pttl</a>, <a class="reference external" href="http://redis.io/commands/randomkey">randomkey</a>, <a class="reference external" href="http://redis.io/commands/rename">rename</a>, <a class="reference external" href="http://redis.io/commands/renamenx">renamenx</a>, <a class="reference external" href="http://redis.io/commands/restore">restore</a>, <a class="reference external" href="http://redis.io/commands/sort">sort</a>, <a class="reference external" href="http://redis.io/commands/ttl">ttl</a>, <a class="reference external" href="http://redis.io/commands/type">type</a></p>
 </div>
 <div class="section" id="strings">
 <span id="redis-strings"></span><h3>Strings<a class="headerlink" href="#strings" title="Permalink to this headline">¶</a></h3>
@@ -132,7 +133,7 @@ as redis does.</p>
 </div>
 <div class="section" id="sorted-sets">
 <span id="redis-sorted-sets"></span><h3>Sorted Sets<a class="headerlink" href="#sorted-sets" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="http://redis.io/commands/zadd">zadd</a>, <a class="reference external" href="http://redis.io/commands/zcard">zcard</a>, <a class="reference external" href="http://redis.io/commands/zcount">zcount</a>, <a class="reference external" href="http://redis.io/commands/zincrby">zincrby</a>, <a class="reference external" href="http://redis.io/commands/zinterstore">zinterstore</a>, <a class="reference external" href="http://redis.io/commands/zrange">zrange</a>, <a class="reference external" href="http://redis.io/commands/zrangebyscore">zrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zrank">zrank</a>, <a class="reference external" href="http://redis.io/commands/zrem">zrem</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyrank">zremrangebyrank</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyscore">zremrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zrevrange">zrevrange</a>, <a class="reference external" href="http://redis.io/commands/zscore">zscore</a>, <a class="reference external" href="http://redis.io/commands/zunionstore">zunionstore</a></p>
+<p><a class="reference external" href="http://redis.io/commands/zadd">zadd</a>, <a class="reference external" href="http://redis.io/commands/zcard">zcard</a>, <a class="reference external" href="http://redis.io/commands/zcount">zcount</a>, <a class="reference external" href="http://redis.io/commands/zincrby">zincrby</a>, <a class="reference external" href="http://redis.io/commands/zinterstore">zinterstore</a>, <a class="reference external" href="http://redis.io/commands/zrange">zrange</a>, <a class="reference external" href="http://redis.io/commands/zrangebyscore">zrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zrank">zrank</a>, <a class="reference external" href="http://redis.io/commands/zrem">zrem</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyrank">zremrangebyrank</a>, <a class="reference external" href="http://redis.io/commands/zremrangebyscore">zremrangebyscore</a>, <a class="reference external" href="http://redis.io/commands/zscore">zscore</a>, <a class="reference external" href="http://redis.io/commands/zunionstore">zunionstore</a></p>
 </div>
 <div class="section" id="pub-sub">
 <span id="redis-pub-sub"></span><h3>Pub/Sub<a class="headerlink" href="#pub-sub" title="Permalink to this headline">¶</a></h3>

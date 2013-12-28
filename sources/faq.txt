@@ -37,7 +37,7 @@ No, pulsar is a concurrent framework based on Actor primitives, check the
 :ref:`design documentation <design>` for more information. Twisted is a library
 which can be used to write a pulsar equivalent and it has a vast array of
 protocols which pulsar will never have. However, pulsar and twisted have in common
-the :class:`pulsar.Deferred` implementation.
+the :class:`.Deferred` implementation.
 You can use twisted protocols within pulsar if you like, check
 :ref:`pulsar & twisted integration <tutorials-twisted>` for more information.
 
@@ -80,5 +80,5 @@ Pause execution asynchronously
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Within a :ref:`coroutine <coroutine>` you can pause execution by using
-the :func:`pulsar.async_sleep` function. The function switches task and resumes
+the :func:`.async_sleep` function. The function switches task and resumes
 the coroutine after *timeout* seconds.

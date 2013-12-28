@@ -9,16 +9,16 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.defer &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>pulsar.async.defer &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.2',
+        VERSION:     '0.8.0-beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -70,7 +70,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">default_timer</span>
 
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_event_loop</span><span class="p">,</span> <span class="n">get_request_loop</span>
 <span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">MAX_ASYNC_WHILE</span>
@@ -331,7 +331,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)):</span>
             <span class="nb">type</span> <span class="o">=</span> <span class="nb">list</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span> <span class="o">=</span> <span class="nb">type</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_start</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
@@ -384,7 +384,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_locked</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span> <span class="o">+</span>
                                <span class="s">&#39; cannot be locked twice.&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_time_locked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_locked</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_locked</span> <span class="o">=</span> <span class="bp">True</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_finish</span><span class="p">()</span>
@@ -436,7 +436,7 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span> <span class="o">+</span>
                                <span class="s">&#39; cannot finish whilst waiting for &#39;</span>
                                <span class="s">&#39;dependents </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deferred</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_time_finished</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_finished</span> <span class="o">=</span> <span class="n">default_timer</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_error</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_failures</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_failures</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>

@@ -9,16 +9,16 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.shell &mdash; pulsar 0.8.0-beta.2 documentation</title>
+    <title>pulsar.apps.shell &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.2',
+        VERSION:     '0.8.0-beta.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.2 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.2 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -193,14 +193,14 @@
             <span class="n">readline</span><span class="o">.</span><span class="n">set_completer</span><span class="p">(</span>
                 <span class="n">rlcompleter</span><span class="o">.</span><span class="n">Completer</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span><span class="o">.</span><span class="n">complete</span><span class="p">)</span>
             <span class="n">readline</span><span class="o">.</span><span class="n">parse_and_bind</span><span class="p">(</span><span class="s">&quot;tab:complete&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">console</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">console_class</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">console</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">console_class</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PulsarShell.interact"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.interact">[docs]</a>    <span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handled by the :attr:`Actor.thread_pool`&#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
             <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="n">worker</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span></div></div>
