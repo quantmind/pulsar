@@ -767,8 +767,8 @@ class Noisy(Global):
     desc = """\
         Log Failures as soon as they occur.
 
-        This option is really need during development when
-        needing to find difficult bugs
+        This option is really needed during development when hunting
+        for hidden bugs
         """
 
 

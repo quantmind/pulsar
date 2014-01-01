@@ -35,7 +35,7 @@ class create_echo_server(object):
         coroutine_return(actor)
 
     def _stop_server(self, actor):
-        yield actor.servers['echo'].close_connections()
+        yield actor.servers['echo'].close()
         coroutine_return(actor)
 
 

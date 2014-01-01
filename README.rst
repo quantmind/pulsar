@@ -69,28 +69,26 @@ If cython_ is available, c extensions will be compiled and installed.
 
 Applications
 ==============
-Pulsar design allows for a host of different applications to be implemented
-in an elegant and efficient way. Out of the box it is shipped with the
-the following:
+Pulsar design allows for a host of different asynchronous applications
+to be implemented in an elegant and efficient way.
+Out of the box it is shipped with the the following:
 
-* Socket servers.
-* WSGI server.
-* JSON-RPC WSGI middleware.
-* Web Sockets WSGI middleware.
-* Publish/Subscribe middleware.
-* Distributed task queue.
-* Shell for asynchronous scripting.
-* Asynchronous test suite.
-* Asynchronous data stores.
-* Application to run a django_ site with pulsar.
-* twisted_ integration (python 2 only).
+* Socket servers
+* WSGI server
+* JSON-RPC
+* Web Sockets
+* Task queue
+* Shell
+* Test suite
+* Data stores
+* Integration with django_
 
 .. _examples:
 
 Examples
 =============
 Check out the ``examples`` directory for various working applications created
-using pulsar alone. It includes:
+using pulsar. It includes:
 
 * Hello world! wsgi example.
 * An Httpbin wsgi application (similar to http://httpbin.org/).
@@ -132,8 +130,6 @@ uses them to add additional functionalities or improve performance:
 * psutil_: if installed, a ``system`` key is available in the dictionary
   returned by Actor info method.
 * ujson_: if installed it is used instead of the native ``json`` module.
-* twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
-  with twisted protocols.
 * django_: required by the ``pulsar.apps.pulse`` application.
 
 

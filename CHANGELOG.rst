@@ -17,7 +17,8 @@ Ver. 0.8.0
 
   * Removed support for python 3.2.
   * :ref:`Coroutines <coroutine>` can return a value via the
-    :func:`.coroutine_return` function. Otherwise they return ``None``.
+    :func:`.coroutine_return` function only, otherwise they return ``None``.
+    This is what twisted does and makes applications less error prone.
   * Added :func:`.run_in_loop_thread` high level function. This utility
     runs a callable in the event loop thread and returns a :class:`.Deferred`
     called back once the callable has a result/exception.
@@ -63,7 +64,7 @@ Ver. 0.8.0
 * **Miscellaneous**
 
   * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
-    handlersd are now available via the new :mod:`pulsar.apps.data` module.
+    implementations are now available in the new :mod:`pulsar.apps.data` module.
   * The ``Backend`` class has been removed.
   * Improved :ref:`django example <tutorials-django>` with possibility to
     choose different data stores for messages.

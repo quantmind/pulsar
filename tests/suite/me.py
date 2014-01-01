@@ -32,7 +32,7 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.info_state, 'running')
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
-        self.assertTrue(worker.impl.daemon)
+        self.assertFalse(worker.impl.daemon)
         self.assertFalse(worker.is_monitor())
         self.assertEqual(str(worker.impl), worker.impl.unique_name)
 
