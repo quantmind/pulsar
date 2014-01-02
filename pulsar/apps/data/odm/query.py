@@ -61,11 +61,25 @@ def query_op(f):
             q = self._clone()
             return f(q, *args, **kwargs)
         else:
-            raise QueryError('Cannot use %s with %s' % name, self._store)
+            raise QueryError('Cannot use "%s" query with %s' %
+                             (name, self._store))
 
     _.__doc__ = f.__doc__
     _.__name__ = name
     return _
+
+
+def update_dict(a, b):
+    if a is None:
+        a = {}
+    a.update(b)
+    return a
+
+
+def update_tuple(a, b):
+    if a is None:
+        a = ()
+    return a + b
 
 
 class Query(object):
@@ -104,7 +118,7 @@ class Query(object):
             qs = manager.query().filter(group='planet')
         '''
         if kwargs:
-            self._filters = update(self._filters, kwargs)
+            self._filters = update_dict(self._filters, kwargs)
         return self
 
     @query_op
@@ -121,7 +135,7 @@ class Query(object):
 
         '''
         if kwargs:
-            self._excludes = update(self._excludes, kwargs)
+            self._excludes = update_dict(self._excludes, kwargs)
         return self
 
     @query_op

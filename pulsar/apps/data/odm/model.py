@@ -13,7 +13,7 @@ try:
 except ImportError:
     CModelBase = None
 
-from .fields import Field
+from .fields import Field, AutoIdField
 
 
 class_prepared = Event()
@@ -154,10 +154,13 @@ class ModelMeta(object):
                  abstract=False, **kwargs):
         self.model = model
         self.abstract = abstract
+        self.scalarfields = []
+        self.manytomany = []
+        self.indices = []
         self.dfields = {}
         self.converters = {}
         self.model._meta = self
-        self.app_label = app_label
+        self.app_label = make_app_label(model, app_label)
         self.name = (name or model.__name__).lower()
         if not table_name:
             if self.app_label:
@@ -169,6 +172,7 @@ class ModelMeta(object):
         # Check if PK field exists
         pk = None
         pkname = pkname or 'id'
+        scalarfields = []
         for name in fields:
             field = fields[name]
             if field.primary_key:
@@ -180,11 +184,11 @@ class ModelMeta(object):
         if pk is None and not self.abstract:
             # ID field not available, create one
             pk = AutoIdField(primary_key=True)
-        fields.pop(pkname, None)
-        for name, field in fields.items():
-            field.register_with_model(name, model)
-        if pk is not None:
+        if not self.abstract:
+            fields.pop(pkname, None)
             pk.register_with_model(pkname, model)
+            for name, field in fields.items():
+                field.register_with_model(name, model)
         self.ordering = None
         if ordering:
             self.ordering = self.get_sorting(ordering, ImproperlyConfigured)
@@ -300,7 +304,34 @@ of fields names and a list of field attribute names.'''
         return names, atts
 
 
-class PyModelBase(dict):
+class ModelType(type(dict)):
+    '''Model metaclass'''
+    def __new__(cls, name, bases, attrs):
+        meta = attrs.pop('Meta', None)
+        if isclass(meta):
+            meta = dict(((k, v) for k, v in meta.__dict__.items()
+                         if not k.startswith('__')))
+        else:
+            meta = meta or {}
+        cls.extend_meta(meta, attrs)
+        fields = get_fields(bases, attrs)
+        new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
+        ModelMeta(new_class, fields, **meta)
+        class_prepared.fire(new_class)
+        return new_class
+
+    @classmethod
+    def extend_meta(cls, meta, attrs):
+        for name in ('register', 'abstract', 'attributes'):
+            if name in attrs:
+                meta[name] = attrs.pop(name)
+
+
+class Model(ModelType('ModelBase', (dict,), {'abstract': True})):
+    '''A model is a python ``dict`` which represents and item (row)
+    in a data-store collection (table).
+    '''
+    abstract = True
 
     def __init__(self, *args, **kwargs):
         self._access_cache = set()
@@ -310,18 +341,18 @@ class PyModelBase(dict):
 
     def __getitem__(self, field):
         field = mstr(field)
-        value = super(PyModelBase, self).__getitem__(field)
+        value = super(Model, self).__getitem__(field)
         if field not in self._access_cache:
             self._access_cache.add(field)
             if field in self._meta.converters:
                 value = self._meta.converters[field](value)
-                super(PyModelBase, self).__setitem__(field, value)
+                super(Model, self).__setitem__(field, value)
         return value
 
     def __setitem__(self, field, value):
         field = mstr(field)
         self._access_cache.discard(field)
-        super(PyModelBase, self).__setitem__(field, value)
+        super(Model, self).__setitem__(field, value)
         self._modified = 1
 
     def get(self, field, default=None):
@@ -335,19 +366,19 @@ class PyModelBase(dict):
             iterable = args[0]
             if isinstance(iterable, Mapping):
                 iterable = iteritems(iterable)
-            super(PyModelBase, self).update(((mstr(k), v)
-                                             for k, v in iterable))
+            super(Model, self).update(((mstr(k), v)
+                                       for k, v in iterable))
             self._modified = 1
         elif args:
             raise TypeError('expected at most 1 arguments, got %s' % len(args))
         if kwargs:
-            super(PyModelBase, self).update(**kwargs)
+            super(Model, self).update(**kwargs)
             self._modified = 1
 
     def clear(self):
         if self:
             self._modified = 1
-            super(PyModelBase, self).clear()
+            super(Model, self).clear()
 
     def clear_update(self, *args, **kwargs):
         self.clear()
@@ -391,39 +422,18 @@ class PyModelBase(dict):
                     yield key, value
 
 
-class ModelType(type(dict)):
-    '''Model metaclass'''
-    def __new__(cls, name, bases, attrs):
-        meta = attrs.pop('Meta', None)
-        if isclass(meta):
-            meta = dict(((k, v) for k, v in meta.__dict__.items()
-                         if not k.startswith('__')))
-        else:
-            meta = meta or {}
-        cls.extend_meta(meta, attrs)
-        fields = get_fields(bases, attrs)
-        new_class = super(ModelType, cls).__new__(cls, name, bases, attrs)
-        ModelMeta(new_class, fields, **meta)
-        class_prepared.fire(new_class)
-        return new_class
-
-    @classmethod
-    def extend_meta(cls, meta, attrs):
-        for name in ('register', 'abstract', 'attributes'):
-            if name in attrs:
-                meta[name] = attrs.pop(name)
+PyModel = Model
 
 
-class PyModel(ModelType('_PyModelBase', (PyModelBase,), {'abstract': True})):
-    abstract = True
+def create_model(name, **params):
+    '''Create a :class:`.Model` class.
 
-
-if CModelBase:
-    class Model(ModelType('_ModelBase', (CModelBase,), {'abstract': True})):
-        abstract = True
-
-else:
-    Model = PyModel
+    :param name: Name of the model class.
+    :param params: key-valued parameter to pass to the :class:`ModelMeta`
+        constructor.
+    :return: a local :class:`Model` class.
+    '''
+    return ModelType(name, (Model,), params)
 
 
 if ispy3k:

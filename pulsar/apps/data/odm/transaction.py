@@ -1,6 +1,8 @@
 from pulsar import EventHandler, coroutine_return, in_loop, InvalidOperation
 from pulsar.utils.pep import iteritems
 
+from .model import Model
+
 from ..stores import Command
 
 
@@ -105,6 +107,19 @@ class Transaction(EventHandler):
         if store not in self._commands:
             self._commands[store] = []
         self._commands[store].append(Command(model, Command.INSERT))
+
+    def update(self, instance_or_query, **kw):
+        '''Update an ``instance`` or a ``query``'''
+        if isinstance(instance_or_query, Model):
+            pkvalue = instance_or_query.pkvalue()
+            data = dict(instance_or_query)
+            data.update(kw)
+        manager = self.mapper[model]
+        store = manager._store
+        if store not in self._commands:
+            self._commands[store] = []
+        self._commands[store].append(Command(instance_or_query,
+                                             Command.UPDATE))
 
     def execute(self, *args, **kw):
         '''Queue a command in the default data store.

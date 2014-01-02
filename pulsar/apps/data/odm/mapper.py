@@ -1,5 +1,10 @@
+from inspect import ismodule
+
 from pulsar import EventHandler
-from .query import AbstractQuery, Query
+from pulsar.utils.pep import native_str
+from pulsar.utils.importer import import_module
+
+from .query import AbstractQuery, Query, QueryError
 from .transaction import Transaction, ModelDictionary
 from .model import ModelType
 from ..stores import create_store
@@ -68,10 +73,10 @@ class Manager(AbstractQuery):
         return self._store._loop
 
     def __str__(self):
-        if self.store:
+        if self._store:
             return '{0}({1} - {2})'.format(self.__class__.__name__,
                                            self._meta,
-                                           self.store)
+                                           self._store)
         else:
             return '{0}({1})'.format(self.__class__.__name__, self._meta)
     __repr__ = __str__
@@ -91,7 +96,12 @@ class Manager(AbstractQuery):
     def get(self, *args, **kw):
         if len(args) == 1:
             return self._read_store.get_model(self._model, args[0])
+        elif args:
+            raise QueryError("'get' expected at most 1 argument, %s given" %
+                             len(args))
         else:
+            qs = self.filter(**kw)
+            return self._get(qs)
             raise NotImplementedError
 
     def filter(self, **kwargs):
@@ -125,6 +135,7 @@ class Manager(AbstractQuery):
         with self._mapper.begin() as t:
             t.add(self._model(*args, **kwargs))
         return t.wait(self._get_instance)
+    insert = new
 
     def save(self, instance):
         '''Save an existing ``instance`` of :attr:`_model`.
@@ -340,53 +351,59 @@ if no managers were removed.'''
 
     def register_applications(self, applications, models=None, stores=None):
         '''A higher level registration functions for group of models located
-on application modules.
-It uses the :func:`model_iterator` function to iterate
-through all :class:`.Model` models available in ``applications``
-and register them using the :func:`register` low level method.
+        on application modules.
+        It uses the :func:`model_iterator` function to iterate
+        through all :class:`.Model` models available in ``applications``
+        and register them using the :func:`register` low level method.
 
-:parameter applications: A String or a list of strings representing
-    python dotted paths where models are implemented.
-:parameter models: Optional list of models to include. If not provided
-    all models found in *applications* will be included.
-:parameter stores: optional dictionary which map a model or an
-    application to a store :ref:`connection string <connection-string>`.
-:rtype: A list of registered :class:`.Model`.
+        :parameter applications: A String or a list of strings representing
+            python dotted paths where models are implemented.
+        :parameter models: Optional list of models to include. If not provided
+            all models found in *applications* will be included.
+        :parameter stores: optional dictionary which map a model or an
+            application to a store
+            :ref:`connection string <connection-string>`.
+        :rtype: A list of registered :class:`.Model`.
 
-For example::
+        For example::
 
 
-    mapper.register_application_models('mylib.myapp')
-    mapper.register_application_models(['mylib.myapp', 'another.path'])
-    mapper.register_application_models(pythonmodule)
-    mapper.register_application_models(['mylib.myapp',pythonmodule])
+            mapper.register_application_models('mylib.myapp')
+            mapper.register_application_models(['mylib.myapp', 'another.path'])
+            mapper.register_application_models(pythonmodule)
+            mapper.register_application_models(['mylib.myapp',pythonmodule])
 
-'''
+        '''
         return list(self._register_applications(applications, models,
                                                 stores))
 
     def create_all(self):
         '''Loop though :attr:`registered_models` and issue the
-:meth:`Manager.create_all` method.'''
+        :meth:`Manager.create_all` method.'''
         for manager in self._registered_models.values():
             manager.create_all()
 
     # PRIVATE METHODS
-    def _register_applications(self, applications, models, backends):
-        backends = backends or {}
-        for model in model_iterator(applications):
+    def _register_applications(self, applications, models, stores):
+        stores = stores or {}
+        for model in self.model_iterator(applications):
             name = str(model._meta)
             if models and name not in models:
                 continue
-            if name not in backends:
+            if name not in stores:
                 name = model._meta.app_label
-            kwargs = backends.get(name, self._default_store)
+            kwargs = stores.get(name, self._default_store)
             if not isinstance(kwargs, dict):
                 kwargs = {'backend': kwargs}
             else:
                 kwargs = kwargs.copy()
             if self.register(model, include_related=False, **kwargs):
                 yield model
+
+    def valid_model(self, model):
+        if isinstance(model, ModelType):
+            return hasattr(model, '_meta')
+        return False
 
     def models_from_model(self, model, include_related=False, exclude=None):
         '''Generator of all model in model.'''
@@ -404,8 +421,49 @@ For example::
                                     exclude=exclude):
                                 yield m
 
-    def valid_model(self, model):
-        return isinstance(model, ModelType)
+    def model_iterator(self, application, include_related=True, exclude=None):
+        '''A generator of :class:`.Model` classes found in *application*.
+
+        :parameter application: A python dotted path or an iterable over
+            python dotted-paths where models are defined.
+
+        Only models defined in these paths are considered.
+        '''
+        if exclude is None:
+            exclude = set()
+        application = native_str(application)
+        if ismodule(application) or isinstance(application, str):
+            if ismodule(application):
+                mod, application = application, application.__name__
+            else:
+                try:
+                    mod = import_module(application)
+                except ImportError:
+                    # the module is not there
+                    mod = None
+            if mod:
+                label = application.split('.')[-1]
+                try:
+                    mod_models = import_module('.models', application)
+                except ImportError:
+                    mod_models = mod
+                label = getattr(mod_models, 'app_label', label)
+                models = set()
+                for name in dir(mod_models):
+                    value = getattr(mod_models, name)
+                    for model in self.models_from_model(
+                            value, include_related=include_related,
+                            exclude=exclude):
+                        if (model._meta.app_label == label
+                                and model not in models):
+                            models.add(model)
+                            yield model
+        else:
+            for app in application:
+                for m in self.model_iterator(app,
+                                             include_related=include_related,
+                                             exclude=exclude):
+                    yield m
 
 
 class LazyProxy(object):

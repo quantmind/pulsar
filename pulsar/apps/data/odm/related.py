@@ -1,6 +1,6 @@
 from functools import partial
 
-from .model import class_prepared
+from .model import class_prepared, create_model
 from .mapper import Manager, LazyProxy
 from .fields import FieldError, Field, CompositeIdField
 
@@ -46,7 +46,8 @@ class_prepared.bind(do_pending_lookups)
 
 def Many2ManyThroughModel(field):
     '''Create a Many2Many through model with two foreign key fields and a
-CompositeFieldId depending on the two foreign keys.'''
+    CompositeFieldId depending on the two foreign keys.
+    '''
     name_model = field.model._meta.name
     name_relmodel = field.relmodel._meta.name
     # The two models are the same.
@@ -56,10 +57,8 @@ CompositeFieldId depending on the two foreign keys.'''
     # Create the through model
     if through is None:
         name = '{0}_{1}'.format(name_model, name_relmodel)
-
-        class Meta:
-            app_label = field.model._meta.app_label
-        through = ModelType(name, (StdModel,), {'Meta': Meta})
+        through = create_model(name,
+                               meta={'app_label': field.model._meta.app_label})
         field.through = through
     # The first field
     field1 = ForeignKey(field.model,
@@ -127,7 +126,7 @@ of a related model.
 
 .. attribute:: relmodel
 
-    The :class:`StdModel` this related manager relates to.
+    The :class:`.Model` this related manager relates to.
 
 .. attribute:: related_instance
 
@@ -141,19 +140,6 @@ of a related model.
 
     def __get__(self, instance, instance_type=None):
         return self.__class__(self.field, self.model, instance)
-
-    def session(self, session=None):
-        '''Override :meth:`Manager.session` so that this
-        :class:`RelatedManager` can retrieve the session from the
-        :attr:`related_instance` if available.
-        '''
-        if self.related_instance:
-            session = self.related_instance.session
-        # we have a session, we either create a new one return the same session
-        if session is None:
-            raise QuerySetError('Related manager can be accessed only from\
- a loaded instance of its related model.')
-        return session
 
 
 class One2ManyRelatedManager(RelatedManager):
@@ -182,7 +168,7 @@ via a simple attribute of the model.'''
 
 
 class Many2ManyRelatedManager(One2ManyRelatedManager):
-    '''A specialized :class:`Manager` for handling
+    '''A specialised :class:`.Manager` for handling
 many-to-many relationships under the hood.
 When a model has a :class:`ManyToManyField`, instances
 of that model will have access to the related objects via a simple
@@ -249,10 +235,10 @@ class ForeignKey(Field):
     Requires a positional argument: the class to which the model is related.
     For example::
 
-        class Folder(odm.StdModel):
+        class Folder(odm.Model):
             name = odm.CharField()
 
-        class File(odm.StdModel):
+        class File(odm.Model):
             folder = odm.ForeignKey(Folder, related_name='files')
 
     To create a recursive relationship, an object that has a many-to-one
@@ -285,7 +271,7 @@ class ForeignKey(Field):
     def register_with_related_model(self):
         # add the RelatedManager proxy to the model holding the field
         setattr(self.model, self.name, self.proxy_class(self))
-        related.load_relmodel(self, self._set_relmodel)
+        load_relmodel(self, self._set_relmodel)
 
     def _set_relmodel(self, relmodel):
         self.relmodel = relmodel
@@ -309,3 +295,74 @@ class ForeignKey(Field):
 
     def get_attname(self):
         return '%s_id' % self.name
+
+
+class ManyToManyField(Field):
+    '''A :ref:`many-to-many <many-to-many>` relationship.
+    Like :class:`ForeignKey`, it requires a positional argument, the class
+    to which the model is related and it accepts **related_name** as extra
+    argument.
+
+    .. attribute:: related_name
+
+        Optional name to use for the relation from the related object
+        back to ``self``. For example::
+
+            class Group(odm.StdModel):
+                name = odm.SymbolField(unique=True)
+
+            class User(odm.StdModel):
+                name = odm.SymbolField(unique=True)
+                groups = odm.ManyToManyField(Group, related_name='users')
+
+        To use it::
+
+            >>> g = Group(name='developers').save()
+            >>> g.users.add(User(name='john').save())
+            >>> u.users.add(User(name='mark').save())
+
+        and to remove::
+
+            >>> u.following.remove(User.objects.get(name='john'))
+
+    .. attribute:: through
+
+        An optional :class:`StdModel` to use for creating the many-to-many
+        relationship can be passed to the constructor, via the **through**
+        keyword.
+        If such a model is not passed, under the hood, a
+        :class:`ManyToManyField` creates a new *model* with name constructed
+        from the field name and the model holding the field.
+        In the example above it would be *group_user*.
+        This model contains two :class:`ForeignKeys`, one to model holding the
+        :class:`ManyToManyField` and the other to the *related_model*.
+    '''
+    def __init__(self, model, through=None, related_name=None, **kwargs):
+        self.through = through
+        self.relmodel = model
+        self.related_name = related_name
+        super(ManyToManyField, self).__init__(model, **kwargs)
+
+    def register_with_model(self, name, model):
+        super(ManyToManyField, self).register_with_model(name, model)
+        if not model._meta.abstract:
+            load_relmodel(self, self._set_relmodel)
+
+    def _set_relmodel(self, relmodel):
+        self.relmodel = relmodel
+        if not self.related_name:
+            self.related_name = '%s_set' % self.model._meta.name
+        Many2ManyThroughModel(self)
+
+    def get_attname(self):
+        return None
+
+    def todelete(self):
+        return False
+
+    def add_to_fields(self):
+        #A many to many field is a dummy field. All it does it provides a proxy
+        #for the through model. Remove it from the fields dictionary
+        #and addit to the list of many_to_many
+        self._meta.dfields.pop(self.name)
+        self._meta.manytomany.append(self.name)

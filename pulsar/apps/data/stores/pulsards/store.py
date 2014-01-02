@@ -3,6 +3,7 @@ from functools import partial
 from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
                     get_actor)
 from pulsar.utils.pep import to_string, zip
+from pulsar.utils.system import json
 
 from .base import register_store, Store, Command
 from .client import Client, Pipeline, Consumer, ResponseError
@@ -31,6 +32,7 @@ class PulsarStore(Store):
     '''Pulsar :class:`.Store` implementation.
     '''
     protocol_factory = partial(PulsarStoreConnection, Consumer)
+    supported_queries = frozenset(('filter', 'exclude'))
 
     def _init(self, namespace=None, parser_class=None, pool_size=50,
               decode_responses=False, **kwargs):
@@ -104,21 +106,35 @@ class PulsarStore(Store):
         coroutine_return(connection)
 
     def execute_transaction(self, commands):
+        '''Execute a :class:`.Transaction`
+        '''
         pipe = self.pipeline()
-        namespace = self.namespace
         for command in commands:
             action = command.action
             if not action:
                 pipe.execute(*command.args)
             elif action == Command.INSERT:
                 model = command.args
-                key = '%s%s:%s' % (namespace,
-                                   model._meta.table_name,
-                                   model.pkvalue() or '')
+                pkvalue = model.pkvalue()
+                key = self.basekey(model._meta, pkvalue)
                 pipe.hmset(key, model._to_store(self))
             else:
                 raise NotImplementedError
         return pipe.commit()
+
+    def __create_table(self, model):
+        meta = model._meta
+        indexes = []
+        unique = []
+        for index in meta.indexes:
+            if index.unique:
+                unique.append(index.name)
+            else:
+                indexes.append(index.name)
+        data = json.dumps({'name': self.basekey(meta),
+                           'indexes': indexes,
+                           'unique': unique})
+        return self.client()
 
     def get_model(self, model, pk):
         key = '%s%s:%s' % (self.namespace, model._meta.table_name,
@@ -127,14 +143,8 @@ class PulsarStore(Store):
 
     def compile_query(self, query):
         pipe = self.pipeline()
-        meta = query._meta
-        if query._filters:
-            filters = query.aggregated(query._filters)
-        for task_id in ids:
-            key = c('task:%s' % to_string(task_id))
-            pipe.execute('hgetall', key, factory=Task)
-        result = yield pipe.commit()
-        coroutine_return(result)
+        compiled = CompiledQuery(self.pipeline())
+        return compiled
 
     def flush(self):
         return self.execute('flushdb')
@@ -142,6 +152,20 @@ class PulsarStore(Store):
     def close(self):
         '''Close all open connections.'''
         return self._pool.close()
+
+    def has_query(self, query_type):
+        return query_type in self.supported_queries
+
+    def basekey(self, meta, *args):
+        key = '%s%s' % (self.namespace, meta.table_name)
+        postfix = ':'.join((to_string(p) for p in args if p is not None))
+        return '%s:%s' % (key, postfix) if postfix else key
+
+class CompiledQuery(object):
+
+    def __init__(self, pipe, query):
+        self.pipe = pipe
+
 
 
 register_store('pulsar',

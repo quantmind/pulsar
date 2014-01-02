@@ -8,6 +8,10 @@ class FieldError(RuntimeError):
     pass
 
 
+def get_field_type(field):
+    return getattr(field, 'repr_type', 'text')
+
+
 class Field(UnicodeMixin):
     '''Base class of all :mod:`.odm` Fields.
 
@@ -127,7 +131,7 @@ class Field(UnicodeMixin):
             self.required = False
             self.unique = False
             self.index = False
-        self.meta = None
+        self._meta = None
         self.name = None
         self.model = None
         self._default = extras.pop('default', self._default)
@@ -144,13 +148,20 @@ class Field(UnicodeMixin):
         self.name = name
         self.attname = self.get_attname()
         self.model = model
-        meta = model._meta
-        self.meta = meta
+        self._meta = meta = model._meta
         meta.dfields[name] = self
         if self.to_python:
             meta.converters[name] = self.to_python
         if self.primary_key:
-            model._meta.pk = self
+            meta.pk = self
+        self.add_to_fields()
+
+    def add_to_fields(self):
+        '''Add this :class:`Field` to the fields of :attr:`model`.
+        '''
+        self._meta.scalarfields.append(self)
+        if self.index:
+            self._meta.indices.append(self)
 
     def get_attname(self):
         '''Generate the :attr:`attname` at runtime'''
@@ -186,7 +197,7 @@ class AutoIdField(Field):
 
 
 class IntegerField(Field):
-
+    repr_type = 'numeric'
     def to_python(self, value, store=None):
         try:
             return int(value)
@@ -196,7 +207,24 @@ class IntegerField(Field):
     to_json = to_python
 
 
+class BooleanField(Field):
+    repr_type = 'bool'
+    def to_python(self, value, store=None):
+        try:
+            return bool(int(value))
+        except Exception:
+            return None
+    to_json = to_python
+
+    def to_store(self, value, store=None):
+        try:
+            return 1 if value else 0
+        except Exception:
+            return None
+
+
 class FloatField(Field):
+    repr_type = 'numeric'
 
     def to_python(self, value, store=None):
         try:
@@ -230,6 +258,97 @@ class PickleField(Field):
             value = self.to_store(value)
             if value is not None:
                 return b64encode(value).decode('utf-8')
+
+
+class JSONField(CharField):
+    '''A JSON field which implements automatic conversion to
+and from an object and a JSON string. It is the responsability of the
+user making sure the object is JSON serializable.
+
+There are few extra parameters which can be used to customize the
+behaviour and how the field is stored in the back-end server.
+
+:parameter encoder_class: The JSON class used for encoding.
+
+    Default: :class:`stdnet.utils.jsontools.JSONDateDecimalEncoder`.
+
+:parameter decoder_hook: A JSON decoder function.
+
+    Default: :class:`stdnet.utils.jsontools.date_decimal_hook`.
+
+:parameter as_string: Set the :attr:`as_string` attribute.
+
+    Default ``True``.
+
+.. attribute:: as_string
+
+    A boolean indicating if data should be serialized
+    into a single JSON string or it should be used to create several
+    fields prefixed with the field name and the double underscore ``__``.
+
+    Default ``True``.
+
+    Effectively, a :class:`JSONField` with ``as_string`` attribute set to
+    ``False`` is a multifield, in the sense that it generates several
+    field-value pairs. For example, lets consider the following::
+
+        class MyModel(odm.StdModel):
+            name = odm.SymbolField()
+            data = odm.JSONField(as_string=False)
+
+    And::
+
+        >>> m = MyModel(name='bla',
+        ...             data={'pv': {'': 0.5, 'mean': 1, 'std': 3.5}})
+        >>> m.cleaned_data
+        {'name': 'bla', 'data__pv': 0.5, 'data__pv__mean': '1',
+         'data__pv__std': '3.5', 'data': '""'}
+        >>>
+
+    The reason for setting ``as_string`` to ``False`` is to allow
+    the :class:`JSONField` to define several fields at runtime,
+    without introducing new :class:`Field` in your model class.
+    These fields behave exactly like standard fields and therefore you
+    can, for example, sort queries with respect to them::
+
+        >>> MyModel.objects.query().sort_by('data__pv__std')
+        >>> MyModel.objects.query().sort_by('-data__pv')
+
+    which can be rather useful feature.
+'''
+    _default = {}
+
+    def to_python(self, value, backend=None):
+        if value is None:
+            return self.get_default()
+        try:
+            return self.encoder.loads(value)
+        except TypeError:
+            return value
+
+    def serialise(self, value, lookup=None):
+        if lookup:
+            value = range_lookups[lookup](value)
+        return self.encoder.dumps(value)
+
+    def value_from_data(self, instance, data):
+        if self.as_string:
+            return data.pop(self.attname, None)
+        else:
+            return flat_to_nested(data, instance=instance,
+                                  attname=self.attname,
+                                  loads=self.encoder.loads)
+
+    def get_sorting(self, name, errorClass):
+        pass
+
+    def get_lookup(self, name, errorClass):
+        if self.as_string:
+            return super(JSONField, self).get_lookup(name, errorClass)
+        else:
+            if name:
+                name = JSPLITTER.join((self.attname, name))
+            return (name, None)
 
 
 class CompositeIdField(Field):
@@ -269,9 +388,6 @@ class CompositeIdField(Field):
                 raise FieldError('Composite id field "%s" in in "%s" model.' %
                                  (field, model._meta))
             field = model._meta.dfields[field]
-            if field.internal_type not in ('text', 'numeric'):
-                raise FieldError('Composite id field "%s" not valid type.' %
-                                 field)
             fields.append(field)
         self.fields = tuple(fields)
         return super(CompositeIdField, self).register_with_model(name, model)

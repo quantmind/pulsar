@@ -2,6 +2,8 @@
 Tha main component for pulsar datastore clients is the :class:`.Store`
 class which encapsulates the essential API for communicating and executing
 commands on remote servers.
+A :class:`.Store` can also implement several methods for managing
+the higher level :ref:`object data mapper <odm>`.
 
 Implement a Store
 ==================
@@ -9,25 +11,25 @@ Implement a Store
 When implementing a new :class:`.Store` there are several methods which need
 to be covered:
 
- * :meth:`Store.connect` to create a new connection
- * :meth:`Store.execute` to execute a command on the store server
+* :meth:`Store.connect` to create a new connection
+* :meth:`Store.execute` to execute a command on the store server
 
 API
 ============
 
-create store
+Create store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: create_store
 
 
-start store
+Start store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: start_store
 
 
-register a new store
+Register a new store
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: register_store
@@ -149,7 +151,8 @@ class Store(Producer):
 
     @property
     def encoding(self):
-        '''Store encoding.'''
+        '''Store encoding (usually ``utf-8``)
+        '''
         return self._encoding
 
     @property
@@ -189,24 +192,6 @@ class Store(Producer):
         '''
         raise NotImplementedError
 
-    def create_table(self, model):
-        '''Create the table for ``model``.
-        '''
-        pass
-
-    def execute_transaction(self, commands):
-        '''Execute a list of ``commands`` in a :class:`.Transaction`
-        '''
-        raise NotImplementedError
-
-    def compile_query(self, query):
-        raise NotImplementedError
-
-    def get_model(self, model, pk):
-        '''Fetch an instance of a ``model`` with primary key ``pk``.
-        '''
-        raise NotImplementedError
-
     def close(self):
         '''Close all open connections.'''
         raise NotImplementedError
@@ -215,6 +200,45 @@ class Store(Producer):
         '''Flush the store.'''
         raise NotImplementedError
 
+    #    ODM SUPPORT
+    #######################
+    def create_table(self, model):
+        '''Create the table for ``model``.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        By default it does nothing.
+        '''
+        pass
+
+    def execute_transaction(self, commands):
+        '''Execute a list of ``commands`` in a :class:`.Transaction`.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        '''
+        raise NotImplementedError
+
+    def compile_query(self, query):
+        raise NotImplementedError
+
+    def get_model(self, model, pkvalue):
+        '''Fetch an instance of a ``model`` with primary key ``pkvalue``.
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        '''
+        raise NotImplementedError
+
+    def has_query(self, query_type):
+        '''Check if this :class:`.Store` supports ``query_type``.
+
+        :param query_type: a string indicating the query type to check
+        (``filter``, ``exclude``, ``search``).
+
+        This method is used by the :ref:`object data mapper <odm>`.
+        '''
+        return False
+
+    #    INTERNALS
+    #######################
     def _init(self, **kw):  # pragma    nocover
         pass
 

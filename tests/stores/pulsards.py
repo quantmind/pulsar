@@ -12,6 +12,7 @@ from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
 
 class StoreMixin(object):
     client = None
+    pulsar_app_cfg = None
     redis_py_parser = False
 
     @classmethod
@@ -26,6 +27,21 @@ class StoreMixin(object):
     @classmethod
     def randomkey(cls, length=None):
         return random_string(length=length)
+
+    @classmethod
+    def create_pulsar_store(cls):
+        server = PulsarDS(name=cls.__name__.lower(),
+                          bind='127.0.0.1:0',
+                          concurrency=cls.cfg.concurrency,
+                          redis_py_parser=cls.redis_py_parser)
+        cls.pulsar_app_cfg = yield pulsar.send('arbiter', 'run', server)
+        uri = 'pulsar://%s:%s' % cls.pulsar_app_cfg.addresses[0]
+        cls.store = cls.create_store('%s/9' % uri)
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.pulsar_app_cfg is not None:
+            yield pulsar.send('arbiter', 'kill_actor', cls.pulsar_app_cfg.name)
 
     def _remove_and_push(self, key, rem=1):
         c = self.client
@@ -998,20 +1014,9 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        server = PulsarDS(name=cls.__name__.lower(),
-                          bind='127.0.0.1:0',
-                          concurrency=cls.cfg.concurrency,
-                          redis_py_parser=cls.redis_py_parser)
-        cls.app_cfg = yield pulsar.send('arbiter', 'run', server)
-        uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
-        cls.store = cls.create_store('%s/9' % uri)
+        yield cls.create_pulsar_store()
         cls.sync_store = cls.create_store('%s/10' % uri, loop=new_event_loop())
         cls.client = cls.store.client()
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls.app_cfg is not None:
-            yield pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
 
 
 @unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
