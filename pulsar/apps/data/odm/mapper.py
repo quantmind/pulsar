@@ -406,3 +406,38 @@ For example::
 
     def valid_model(self, model):
         return isinstance(model, ModelType)
+
+
+class LazyProxy(object):
+    '''Base class for lazy descriptors.
+
+    .. attribute:: field
+
+        The :class:`Field` which create this descriptor. Either a
+        :class:`ForeignKey` or a :class:`StructureField`.
+    '''
+    def __init__(self, field):
+        self.field = field
+
+    def __repr__(self):
+        return self.field.name
+    __str__ = __repr__
+
+    @property
+    def name(self):
+        return self.field.name
+
+    def load(self, instance, session):
+        '''Load the lazy data for this descriptor.'''
+        raise NotImplementedError
+
+    def load_from_manager(self, manager):
+        raise NotImplementedError('cannot access %s from manager' % self)
+
+    def __get__(self, instance, instance_type=None):
+        if not self.field.class_field:
+            if instance is None:
+                return self
+            return self.load(instance, instance.session)
+        else:
+            return self

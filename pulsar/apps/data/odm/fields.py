@@ -4,6 +4,10 @@ from base64 import b64encode
 from pulsar.utils.html import UnicodeMixin
 
 
+class FieldError(RuntimeError):
+    pass
+
+
 class Field(UnicodeMixin):
     '''Base class of all :mod:`.odm` Fields.
 
@@ -226,3 +230,48 @@ class PickleField(Field):
             value = self.to_store(value)
             if value is not None:
                 return b64encode(value).decode('utf-8')
+
+
+class CompositeIdField(Field):
+    '''This field can be used when an instance of a model is uniquely
+    identified by a combination of two or more :class:`Field` in the model
+    itself. It requires a number of positional arguments greater or equal 2.
+    These arguments must be fields names in the model where the
+    :class:`CompositeIdField` is defined.
+
+    .. attribute:: fields
+
+        list of :class:`Field` names which are used to uniquely identify a
+        model instance
+
+    Check the :ref:`composite id tutorial <tutorial-compositeid>` for more
+    information and tips on how to use it.
+    '''
+    type = 'composite'
+
+    def __init__(self, *fields, **kwargs):
+        super(CompositeIdField, self).__init__(**kwargs)
+        self.fields = fields
+        if len(self.fields) < 2:
+            raise FieldError('At least tow fields are required by composite '
+                             'CompositeIdField')
+
+    def get_value(self, instance, *bits):
+        if bits:
+            raise AttributeError
+        values = tuple((getattr(instance, f.attname) for f in self.fields))
+        return hash(values)
+
+    def register_with_model(self, name, model):
+        fields = []
+        for field in self.fields:
+            if field not in model._meta.dfields:
+                raise FieldError('Composite id field "%s" in in "%s" model.' %
+                                 (field, model._meta))
+            field = model._meta.dfields[field]
+            if field.internal_type not in ('text', 'numeric'):
+                raise FieldError('Composite id field "%s" not valid type.' %
+                                 field)
+            fields.append(field)
+        self.fields = tuple(fields)
+        return super(CompositeIdField, self).register_with_model(name, model)

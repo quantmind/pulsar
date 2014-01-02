@@ -22,7 +22,5 @@ class Odm(StoreMixin):
         self.assertEqual[task['id'], 'bjbhjscbhj']
 
 
-
-
-
-
+class TestPulsardsODM(Odm, unittest.TestCase):
+    pass

@@ -13,7 +13,7 @@ try:
 except ImportError:
     CModelBase = None
 
-from . import Field, AutoIdField
+from .fields import Field
 
 
 class_prepared = Event()
