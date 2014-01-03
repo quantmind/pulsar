@@ -32,7 +32,7 @@ class TransactionModel(object):
 :class:`Model` in a stdnet :class:`Session`.'''
     def __init__(self, manager):
         self.manager = manager
-        self._new = OrderedDict()
+        self._insert = []
         self._deleted = OrderedDict()
         self._delete_query = []
         self._modified = OrderedDict()
@@ -107,6 +107,10 @@ class Transaction(EventHandler):
         if store not in self._commands:
             self._commands[store] = []
         self._commands[store].append(Command(model, Command.INSERT))
+
+    def insert(self, instance):
+        sm = self.model(instance)
+        sm._new.append(instance)
 
     def update(self, instance_or_query, **kw):
         '''Update an ``instance`` or a ``query``'''

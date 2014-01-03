@@ -14,6 +14,14 @@ to be covered:
 * :meth:`Store.connect` to create a new connection
 * :meth:`Store.execute` to execute a command on the store server
 
+A new store needs to be registered vuia the :func:`register_store`
+function.
+
+All registered data stores are stored in the ``data_stores`` dictionary::
+
+    from pulsar.apps.data import data_stores
+
+
 API
 ============
 
@@ -116,11 +124,11 @@ class Compiler(object):
 class Store(Producer):
     '''Base class for an asynchronous :ref:`data stores <data-stores>`.
 
-    It is an :ref:`async object <async-object>` for accessing and retrieving
+    It is an :class:`.Producer` for accessing and retrieving
     data from remote data servers such as redis, couchdb and so forth.
 
-    A :class:`Store` should not be created directly, instead the high level
-    :func:`.create_store` function should be used.
+    A :class:`Store` should not be created directly, the high level
+    :func:`.create_store` function should be used instead.
     '''
     compiler_class = None
     default_manager = None
@@ -240,6 +248,7 @@ class Store(Producer):
     #    INTERNALS
     #######################
     def _init(self, **kw):  # pragma    nocover
+        '''Internal initialisation'''
         pass
 
     def _buildurl(self):
