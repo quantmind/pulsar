@@ -11,48 +11,62 @@ from greenlet import greenlet, getcurrent
 from pulsar import Deferred, Protocol, maybe_async
 
 
-def green_run(method):
+def _run(loop, method, *args, **kwargs):
+    green = getcurrent()
+    main = green.parent
+    assert main, 'should have parent'
+    r = maybe_async(method(*args, **kwargs), loop=loop)
+    while isinstance(r, Deferred):
+        r.add_callback(green.switch, lambda f: green.switch(f.error))
+        main.switch()
+        r = r.result()
+    return r
 
+
+def green_run(method):
+    '''Decorator for a possibly asynchronous ``method``.
+
+    If ``method`` return a coroutine or a :class:`.Deferred` not yet done,
+    the current greenlet relase control to is parent.
+    '''
     def _green_run(self, *args, **kwargs):
-        green = getcurrent()
-        main = green.parent
-        assert main, 'should have parent'
         loop = getattr(self, '_loop', None)
-        r = maybe_async(method(self, *args, **kwargs), loop=loop)
-        while isinstance(r, Deferred):
-            r.add_callback(green.switch, lambda f: green.switch(f.error))
-            main.switch()
-            r = r.result()
-        return r
+        return _run(loop, method, self, *args, **kwargs)
 
     return _green_run
 
 
-def green_loop_thread(sync_method):
-    """Decorate `sync_method` so it is run on child greenlet in the
-    event loop thread.
-    """
-    @wraps(sync_method)
-    def method(self, *args, **kwargs):
-        loop = self._loop
-        future = Deferred(loop)
-        run = green_run(sync_method)
+class green_loop_thread:
 
-        def call_method():
-            # Runs on child greenlet
-            try:
-                result = run(self, *args, **kwargs)
-                loop.call_soon(future.set_result, result)
-            except Exception:
-                loop.call_soon(future.set_exception, sys.exc_info())
+    def __init__(self, delegate=None):
+        self.delegate = delegate
 
-        # Start running the operation on a new greenlet.
-        loop.call_soon_threadsafe(lambda: greenlet(call_method).switch())
-        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
-            return loop.run_until_complete(future)
-        return future
+    def __call__(self, sync_method):
+        """Decorate `sync_method` so it is run on child greenlet in the
+        event loop thread.
+        """
+        @wraps(sync_method)
+        def method(caller, *args, **kwargs):
+            loop = caller._loop
+            future = Deferred(loop)
+            if self.delegate:
+                caller = getattr(caller, self.delegate)
 
-    return method
+            def call_method():
+                # Runs on child greenlet
+                try:
+                    result = _run(loop, sync_method, caller, *args, **kwargs)
+                    loop.call_soon(future.set_result, result)
+                except Exception:
+                    loop.call_soon(future.set_exception, sys.exc_info())
+
+            # Start running the operation on a new greenlet.
+            loop.call_soon_threadsafe(lambda: greenlet(call_method).switch())
+            if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+                return loop.run_until_complete(future)
+            return future
+
+        return method
 
 
 class GreenProtocol(Protocol):
@@ -80,11 +94,12 @@ class GreenProtocol(Protocol):
 
             if self._transport.closed:
                 raise socket.error("write error")
+    send = sendall
 
     @green_run
     def recv(self, bufsize, **kw):
         assert not self._reading, "Already reading"
-        self._reading = future = Deferred(self._transport._loop)
+        self._reading = future = Deferred(self._loop)
         self._transport._read_chunk_size = bufsize
         try:
             self._transport.resume_reading()

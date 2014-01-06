@@ -12,7 +12,7 @@ try:
             self._loop = loop or get_event_loop()
             self.address = address
 
-        @green_loop_thread
+        @green_loop_thread()
         def __call__(self, message):
             if not self.connection:
                 self.connection = self._connect()
