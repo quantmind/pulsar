@@ -23,7 +23,7 @@ from pulsar import HttpException, ProtocolError, Deferred, Failure, in_loop
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
-                                  urlparse, DEFAULT_CHARSET)
+                                  urlparse, iri_to_uri, DEFAULT_CHARSET)
 
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
@@ -37,7 +37,7 @@ __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
 MAX_CHUNK_SIZE = 65536
 
 
-def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
+def test_wsgi_environ(path='/', method=None, headers=None, extra=None,
                       secure=False):
     '''An function to create a WSGI environment dictionary for testing.
 
@@ -50,8 +50,9 @@ def test_wsgi_environ(url='/', method=None, headers=None, extra=None,
     '''
     parser = http_parser(kind=0)
     method = (method or 'GET').upper()
-    data = '%s %s HTTP/1.1\r\n\r\n' % (method, url)
-    data = data.encode('utf-8')
+    path = iri_to_uri(path)
+    data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
+    data = data.encode('latin1')
     parser.execute(data, len(data))
     request_headers = Headers(headers, kind='client')
     headers = Headers()

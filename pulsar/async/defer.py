@@ -113,7 +113,7 @@ def raise_error_and_log(error, level=None):
         raise
 
 
-def async_sleep(timeout):
+def async_sleep(timeout, loop=None):
     '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
 function within a :ref:`coroutine <coroutine>` when you need to resume
 the coroutine after ``timeout`` seconds. For example::
@@ -131,7 +131,8 @@ with the ``timeout`` value.
             return timeout
         else:
             return failure
-    return Deferred().set_timeout(timeout, mute=True).add_errback(_cancel)
+    loop = loop or get_request_loop()
+    return Deferred(loop).set_timeout(timeout, mute=True).add_errback(_cancel)
 
 
 def safe_async(callable, *args, **kwargs):

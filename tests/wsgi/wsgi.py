@@ -9,6 +9,7 @@ from pulsar.utils.pep import range, zip, pickle
 from pulsar.apps import wsgi
 from pulsar.apps import http
 from pulsar.utils.multipart import parse_form_data, MultipartError
+from pulsar.utils.httpurl import urlparse, unquote
 from pulsar.apps.wsgi.utils import cookie_date
 from pulsar.apps.test import unittest
 
@@ -42,8 +43,11 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(request.full_path(), '/')
         self.assertEqual(request.full_path('/foo'), '/foo')
 
-
-class WsgiResponseTests(unittest.TestCase):
+    def test_url_handling(self):
+        target = '/\N{SNOWMAN}'
+        request = self.request(path=target)
+        path = urlparse(request.path).path
+        self.assertEqual(path, target)
 
     def testResponse200(self):
         r = wsgi.WsgiResponse(200)
@@ -140,9 +144,6 @@ class WsgiResponseTests(unittest.TestCase):
         self.assertTrue(response.has_header('content-type'))
         self.assertEqual(response['content-type'], 'text/plain')
 
-
-class testWsgiApplication(unittest.TestCase):
-
     def testBuildWsgiApp(self):
         appserver = wsgi.WSGIServer()
         self.assertEqual(appserver.name, 'wsgi')
@@ -159,9 +160,6 @@ class testWsgiApplication(unittest.TestCase):
         from examples.httpbin.manage import server
         app = server(bind='127.0.0.1:0')
         app2 = pickle.loads(pickle.dumps(app))
-
-
-class TestWsgiMiddleware(unittest.TestCase):
 
     def test_clean_path_middleware(self):
         url = 'bla//foo'

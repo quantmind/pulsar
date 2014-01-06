@@ -1,53 +1,31 @@
+'''
+Greenlet integration allows to use pulsar with synchronous socket
+clients.
+'''
 import sys
 import socket
 from functools import wraps
-from inspect import isgenerator
 
 from greenlet import greenlet, getcurrent
 
-from pulsar import Deferred, Protocol, async
-from pulsar.async.defer import DeferredTask
+from pulsar import Deferred, Protocol, maybe_async
 
 
-class GreenLet(greenlet):
+def green_run(method):
 
-    def send(self, result):
-        return self.switch(result)
+    def _green_run(self, *args, **kwargs):
+        green = getcurrent()
+        main = green.parent
+        assert main, 'should have parent'
+        loop = getattr(self, '_loop', None)
+        r = maybe_async(method(self, *args, **kwargs), loop=loop)
+        while isinstance(r, Deferred):
+            r.add_callback(green.switch, lambda f: green.switch(f.error))
+            main.switch()
+            r = r.result()
+        return r
 
-
-class GreenTask(DeferredTask):
-    _greenlet = None
-    _main = None
-
-    def _consume(self, result):
-        step = self._step
-        switch = False
-        green = self._greenlet
-        if green:
-            # The task is in a greenlet, that means we have a result from an
-            # asynchronous yield
-            self._greenlet = None
-            result, switch = step(result, self._gen)
-        # The task is not currently in a suspended greenlet waiting for an
-        # asynchronous yield
-        while not self.done() and not switch:
-            green = greenlet(step)
-            result, switch = green.switch(result, self._gen)
-        if switch:
-            self._greenlet = green
-
-
-def green_task(method):
-
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        result = method(self, *args, **kwargs)
-        if isgenerator(result):
-            return GreenTask(result, self._loop)
-        else:
-            return result
-
-    return _
+    return _green_run
 
 
 def green_loop_thread(sync_method):
@@ -58,58 +36,23 @@ def green_loop_thread(sync_method):
     def method(self, *args, **kwargs):
         loop = self._loop
         future = Deferred(loop)
+        run = green_run(sync_method)
 
         def call_method():
             # Runs on child greenlet
             try:
-                result = sync_method(self, *args, **kwargs)
+                result = run(self, *args, **kwargs)
                 loop.call_soon(future.set_result, result)
             except Exception:
                 loop.call_soon(future.set_exception, sys.exc_info())
 
-        # Start running the operation on a greenlet.
+        # Start running the operation on a new greenlet.
         loop.call_soon_threadsafe(lambda: greenlet(call_method).switch())
+        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+            return loop.run_until_complete(future)
         return future
 
     return method
-
-
-def green_loop(method):
-    '''Decorator for running the ``method`` in the event loop
-    of an :ref:`async object <async-object>`.
-
-    This decorator is somehow the ``greenlet`` equivalent of the
-    :ref:`.in_loop` decorator.
-
-    :param method: method of an :ref:`async object <async-object>` which
-        returns a coroutine or a :class:`.Deferred`.
-    '''
-    @wraps(method)
-    def _green_async(self, *args, **kw):
-        # the loop controlling the thread
-        child_gr = getcurrent()
-        # the main greenlet is where pulsar carries out its async duties
-        main = child_gr.parent
-        assert main, "Should be on child greenlet"
-
-        def callback(result):
-            assert main == getcurrent(), "Should be on main"
-            # switch back to child with the result
-            result = child_gr.switch(result)
-            return result
-
-        def errback(failure):
-            assert main == getcurrent(), "Should be on main"
-            # switch back to child with the result
-            result = child_gr.switch(failure)
-            return result
-
-        future = async(method(self, *args, **kw), self._loop)
-        future.add_callback(callback, errback)
-        # switch to the main greenlet
-        return main.switch(future)
-
-    return _green_async
 
 
 class GreenProtocol(Protocol):
@@ -118,7 +61,6 @@ class GreenProtocol(Protocol):
     def __init__(self, *args, **kw):
         super(GreenProtocol, self).__init__(*args, **kw)
         self._reading = None
-        self._buffer = None
 
     def fileno(self):
         return self._transport._sock_fd
@@ -139,7 +81,7 @@ class GreenProtocol(Protocol):
             if self._transport.closed:
                 raise socket.error("write error")
 
-    @green_loop
+    @green_run
     def recv(self, bufsize, **kw):
         assert not self._reading, "Already reading"
         self._reading = future = Deferred(self._transport._loop)
@@ -151,20 +93,9 @@ class GreenProtocol(Protocol):
         return future
 
     def data_received(self, chunk):
-        if self._buffer:
-            chunk = self._buffer + chunk
-        size = self._transport._read_chunk_size - len(chunk)
-        if size:
-            self._buffer = chunk
-            self._transport._read_chunk_size = size
-        else:
-            self._buffer = None
-            self._reading, future = None, self._reading
-            self._transport.pause_reading()
-            future.set_result(chunk)
+        self._reading, future = None, self._reading
+        self._transport.pause_reading()
+        future.set_result(chunk)
 
     def close(self):
         self.transport.close()
-
-    def fileno(self):
-        return self.transport._sock_fd

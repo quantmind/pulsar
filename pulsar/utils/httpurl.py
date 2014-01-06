@@ -207,7 +207,7 @@ urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(force_native_str(uri).split('%')):
+    for n, part in enumerate(force_native_str(uri, 'latin1').split('%')):
         if not n:
             yield part
         else:
@@ -247,10 +247,9 @@ This is the algorithm from section 3.1 of RFC 3987.
 Returns an ASCII native string containing the encoded result.'''
     if iri is None:
         return iri
-    iri = force_native_str(iri)
     if kwargs:
-        iri = '%s?%s' % (iri, '&'.join(('%s=%s' % kv for kv in
-                                        iteritems(kwargs))))
+        iri = '%s?%s' % (force_native_str(iri, 'latin1'),
+                         '&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
     return urlquote(unquote_unreserved(iri))
 
 
