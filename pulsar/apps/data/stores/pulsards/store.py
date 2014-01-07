@@ -105,11 +105,16 @@ class PulsarStore(Store):
             yield connection.execute('SELECT', self._database)
         coroutine_return(connection)
 
-    def execute_transaction(self, commands):
+    def execute_transaction(self, transaction):
         '''Execute a :class:`.Transaction`
         '''
         pipe = self.pipeline()
-        for command in commands:
+        # loop through models
+        for tmodel in transaction.models():
+            if rmodel.dirty:
+                pass
+
+        for command in transaction.commands:
             action = command.action
             if not action:
                 pipe.execute(*command.args)
@@ -121,20 +126,6 @@ class PulsarStore(Store):
             else:
                 raise NotImplementedError
         return pipe.commit()
-
-    def __create_table(self, model):
-        meta = model._meta
-        indexes = []
-        unique = []
-        for index in meta.indexes:
-            if index.unique:
-                unique.append(index.name)
-            else:
-                indexes.append(index.name)
-        data = json.dumps({'name': self.basekey(meta),
-                           'indexes': indexes,
-                           'unique': unique})
-        return self.client()
 
     def get_model(self, model, pk):
         key = '%s%s:%s' % (self.namespace, model._meta.table_name,
@@ -161,11 +152,18 @@ class PulsarStore(Store):
         postfix = ':'.join((to_string(p) for p in args if p is not None))
         return '%s:%s' % (key, postfix) if postfix else key
 
+    def meta(self, meta):
+        '''Extract model metadata for lua script stdnet/lib/lua/odm.lua'''
+        indices = dict(((idx.attname, idx.unique) for idx in meta.indices))
+        data = meta.as_dict()
+        data['namespace'] = self.basekey(meta)
+        return data
+
+
 class CompiledQuery(object):
 
     def __init__(self, pipe, query):
         self.pipe = pipe
-
 
 
 register_store('pulsar',

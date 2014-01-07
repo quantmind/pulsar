@@ -1,5 +1,6 @@
 from pulsar import EventHandler, coroutine_return, in_loop, InvalidOperation
 from pulsar.utils.pep import iteritems
+from pulsar.utils.structures import OrderedDict
 
 from .model import Model
 
@@ -28,15 +29,39 @@ class ModelDictionary(dict):
 
 
 class TransactionModel(object):
-    '''A :class:`SessionModel` is the container of all objects for a given
-:class:`Model` in a stdnet :class:`Session`.'''
+    '''Transaction for a given model
+    '''
     def __init__(self, manager):
         self.manager = manager
-        self._insert = []
+        self._new = []
         self._deleted = OrderedDict()
         self._delete_query = []
         self._modified = OrderedDict()
         self._queries = []
+
+    @property
+    def dirty(self):
+        return bool(self._new or self._modified)
+
+
+class TransactionStore(object):
+    '''Transaction for a given store
+    '''
+    def __init__(self, store):
+        self._store = store
+        self._models = OrderedDict()
+        self.commands = []
+
+    def model(self, manager):
+        sm = self._models.get(manager)
+        if sm is None:
+            sm = TransactionModel(manager)
+            self._models[manager] = sm
+        return sm
+
+    def models(self):
+        return self._models.values()
+
 
 
 class Transaction(EventHandler):
@@ -95,6 +120,15 @@ class Transaction(EventHandler):
         if type is None:
             self.commit()
 
+    def execute(self, *args, **kw):
+        '''Queue a command in the default data store.
+
+        This method does not use the object data mapper.
+        '''
+        ts = self.tstore(kw.get('store') or self.mapper._default_store)
+        ts.commands.append(Command(args))
+        return self
+
     def add(self, model):
         '''Add a ``model`` to the transaction.
 
@@ -103,14 +137,19 @@ class Transaction(EventHandler):
         :return: the ``model``.
         '''
         manager = self.mapper[model]
-        store = manager._store
-        if store not in self._commands:
-            self._commands[store] = []
-        self._commands[store].append(Command(model, Command.INSERT))
+        ts = self.tstore(manager._store)
+        ts.commands.append(Command(model, Command.INSERT))
+        return self
 
     def insert(self, instance):
+        '''Insert a new model ``instance`` into the transaction.
+
+        The operation in the backend server is an INSERT, therefore if the
+        primary key of ``instance`` is already available an error occurs.
+        '''
         sm = self.model(instance)
         sm._new.append(instance)
+        return self
 
     def update(self, instance_or_query, **kw):
         '''Update an ``instance`` or a ``query``'''
@@ -125,23 +164,19 @@ class Transaction(EventHandler):
         self._commands[store].append(Command(instance_or_query,
                                              Command.UPDATE))
 
-    def execute(self, *args, **kw):
-        '''Queue a command in the default data store.
+    def tstore(self, store):
+        '''Returns the :class:`TransactionStore` for ``store``
         '''
-        store = kw.get('store') or self.mapper._default_store
         if store not in self._commands:
-            self._commands[store] = []
-        self._commands[store].append(Command(args))
+            self._commands[store] = TransactionStore(store)
+        return self._commands[store]
 
-    def model(self, model):
+    def model(self, model, read=False):
         '''Returns the :class:`TransactionModel` for ``model``
         '''
         manager = self.mapper[model]
-        sm = self._models.get(manager)
-        if sm is None:
-            sm = TransactionModel(manager)
-            self._models[manager] = sm
-        return sm
+        ts = self.tstore(manager._read_store if read else manager._store)
+        return ts.model(manager)
 
     def commit(self):
         if self._executed is None:

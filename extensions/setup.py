@@ -58,6 +58,11 @@ def lua_extension():
     for file in os.listdir(path):
         if file.endswith('.c') and file not in luaskip:
             src.append(os.path.join(path, file))
+    path = os.path.join(lib_path, 'lua', 'ext')
+    include_dirs.append(path)
+    for file in os.listdir(path):
+        if file.endswith('.c'):
+            src.append(os.path.join(path, file))
     src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
     return Extension('pulsar.utils.lua',

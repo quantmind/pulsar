@@ -8,7 +8,7 @@ class User(odm.Model):
     password = odm.CharField(required=False, hidden=True)
     first_name = odm.CharField()
     last_name = odm.CharField()
-    email = odm.CharField()
+    email = odm.CharField(unique=True)
     is_active = odm.BooleanField(default=True)
     can_login = odm.BooleanField(default=True)
     is_superuser = odm.BooleanField(default=False)

@@ -15,9 +15,13 @@ class Odm(StoreMixin):
             mapper.register(model)
         return mapper
 
-    def test_filter(self):
+    def test_insert(self):
         mapper = self.mapper(User)
-        user = yield mapper.user.new(username='foo')
+        user = mapper.user
+        with mapper.begin() as t:
+            t.insert(user(username='foo'))
+            t.insert(user(username='pippo'))
+        yield t.wait()
         self.assertEqual(user['username'], 'foo')
         qs = mapper.user.filter(username='foo')
         result = yield qs.all()
