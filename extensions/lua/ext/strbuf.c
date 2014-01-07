@@ -91,7 +91,7 @@ void strbuf_set_increment(strbuf_t *s, int increment)
     s->increment = increment;
 }
 
-static inline void debug_stats(strbuf_t *s)
+STIN void debug_stats(strbuf_t *s)
 {
     if (s->debug) {
         fprintf(stderr, "strbuf(%lx) reallocs: %d, length: %d, size: %d\n",

@@ -8,3 +8,5 @@ recursive-include examples *
 recursive-include pulsar/apps/test/plugins/htmlfiles *
 recursive-include docs/source *
 recursive-include extensions *.py *.pxd *.pyx *.h
+include extensions/lua/src/*.c
+include extensions/lua/ext/*.c

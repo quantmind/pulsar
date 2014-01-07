@@ -1,6 +1,8 @@
 *.pyc
 *.pyd
 *.so
+*.o
+*.def
 __pycache__
 build
 docs/build

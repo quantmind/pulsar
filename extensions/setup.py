@@ -11,6 +11,7 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
+LUASKIP = frozenset(['lua.c'])
 
 include_dirs = []
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
@@ -51,12 +52,13 @@ lib_path = os.path.dirname(__file__)
 
 
 def lua_extension():
+    '''Create Lua extension module
+    '''
     src = []
     path = os.path.join(lib_path, 'lua', 'src')
     include_dirs.append(path)
-    luaskip = ['lua.c']
     for file in os.listdir(path):
-        if file.endswith('.c') and file not in luaskip:
+        if file.endswith('.c') and file not in LUASKIP:
             src.append(os.path.join(path, file))
     path = os.path.join(lib_path, 'lua', 'ext')
     include_dirs.append(path)
@@ -65,9 +67,15 @@ def lua_extension():
             src.append(os.path.join(path, file))
     src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
+    extra_compile_args = ['-DUSE_INTERNAL_FPCONV', '-DENABLE_CJSON_GLOBAL']
+    extra_compile_args = ['-DENABLE_CJSON_GLOBAL']
+    if os.name == 'nt':
+        extra_compile_args.append('-DDISABLE_INVALID_NUMBERS')
+
     return Extension('pulsar.utils.lua',
                      src,
-                     include_dirs=include_dirs)
+                     include_dirs=include_dirs,
+                     extra_compile_args=extra_compile_args)
 
 
 def lib_extension():

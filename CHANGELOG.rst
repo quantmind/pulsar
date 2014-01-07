@@ -74,6 +74,9 @@ Ver. 0.8.0
   * :class:`.Application` does not require to create picklable objects.
   * More robust serialisation of ``TestCase`` methods when used with the
     :func:`.run_on_arbiter` decorator.
+  * :ref:`Embedded lua <embedded-lua>` is available when c extensions are compiled.
+    Mainly used by :ref:`pulsar data store <pulsar-data-store>` but can be used
+    by any other application.
 
 * **1,033 regression tests**, **91% coverage**.
 

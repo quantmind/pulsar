@@ -72,7 +72,7 @@ static void fpconv_update_locale()
  * invalid characters are counted - strtod() will find the valid
  * number if it exists.  The risk is that slightly more memory might
  * be allocated before a parse error occurs. */
-static inline int valid_number_character(char ch)
+static  int valid_number_character(char ch)
 {
     char lower_ch;
 
@@ -196,10 +196,12 @@ int fpconv_g_fmt(char *str, double num, int precision)
     return len;
 }
 
+#ifndef USE_INTERNAL_FPCONV
 void fpconv_init()
 {
     fpconv_update_locale();
 }
+#endif
 
 /* vi:ai et sw=4 ts=4:
  */

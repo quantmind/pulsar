@@ -170,7 +170,7 @@ class TcpServer(pulsar.TcpServer):
 
 
 class PulsarDS(SocketServer):
-    '''A :class:`.SocketServer` which serve a key-value store similar to redis.
+    '''A :class:`.SocketServer` serving a pulsar datastore.
     '''
     name = 'pulsards'
     cfg = pulsar.Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,

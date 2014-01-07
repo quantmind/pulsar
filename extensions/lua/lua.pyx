@@ -104,6 +104,10 @@ cdef class Lua:
         """
         return self._run_lua(to_bytes(lua_code, self.charset))
 
+    def loadlib(self, libname):
+        cdef bytes name = to_bytes(libname, self.charset)
+        return lua.load_lib(self.state, name)
+
     def register(self, str lib_name, object handler, *methods):
         '''Register a python object as a lua table.'''
         cdef bytes lname

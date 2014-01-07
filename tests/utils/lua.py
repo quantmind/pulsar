@@ -1,4 +1,5 @@
 from pulsar.apps.test import unittest
+from pulsar.utils.system import json
 
 try:
     from pulsar.utils.lua import Lua
@@ -16,6 +17,13 @@ class Handler():
 @unittest.skipUnless(Lua , 'Requires cython extensions')
 class TestLuaRuntime(unittest.TestCase):
 
+    def test_json(self):
+        lua = Lua()
+        value = json.dumps({'bla': 1, 'foo': [2,3,4]})
+        lua.set_global('test_json', value)
+        result = lua.execute('cjson')
+
+class d:
     def test_simple_bytes(self):
         lua = Lua()
         self.assertEqual(lua.execute(b'return 1+6'), 7)
@@ -39,4 +47,9 @@ class TestLuaRuntime(unittest.TestCase):
         self.assertEqual(result, b'function')
         result = lua.execute('return pytest.call(1,3)')
         self.assertEqual(result, [1, 3])
+
+    def test_json(self):
+        lua = Lua()
+        value = json.dumps({'bla': 1, 'foo': [2,3,4]})
+        result = lua.execute('cjson')
 

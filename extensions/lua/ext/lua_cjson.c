@@ -1111,7 +1111,7 @@ static void json_throw_parse_error(lua_State *l, json_parse_t *json,
                exp, found, token->index + 1);
 }
 
-static inline void json_decode_ascend(json_parse_t *json)
+STIN void json_decode_ascend(json_parse_t *json)
 {
     json->current_depth--;
 }

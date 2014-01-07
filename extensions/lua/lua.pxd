@@ -28,12 +28,13 @@ cdef extern from "lua.h" nogil:
     ctypedef struct lua_State
     ctypedef int (*lua_CFunction) (lua_State *L)
 
-
     void  lua_close (lua_State *L)
     void  lua_newtable (lua_State *L)
     void  lua_settable (lua_State *L, int index)
     const char *lua_pushstring (lua_State *L, const char *s)
     void lua_setglobal (lua_State *L, const char *name)
+    void luaL_requiref (lua_State *L, const char *modname,
+                        lua_CFunction openf, int glb)
 
     # iteration
     int   lua_next (lua_State *L, int idx)
@@ -90,3 +91,7 @@ cdef extern from "lualib.h":
     lua_State *luaL_newstate ()
     void luaL_openlibs(lua_State *L)
 
+
+cdef extern from "luaextra.h" nogil:
+
+    bint load_lib(lua_State *L, const char* name)
