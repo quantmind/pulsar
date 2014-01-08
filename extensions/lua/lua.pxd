@@ -33,8 +33,6 @@ cdef extern from "lua.h" nogil:
     void  lua_settable (lua_State *L, int index)
     const char *lua_pushstring (lua_State *L, const char *s)
     void lua_setglobal (lua_State *L, const char *name)
-    void luaL_requiref (lua_State *L, const char *modname,
-                        lua_CFunction openf, int glb)
 
     # iteration
     int   lua_next (lua_State *L, int idx)
@@ -83,7 +81,6 @@ cdef extern from "lua.h" nogil:
 cdef extern from "lauxlib.h" nogil:
 
     int luaL_loadbuffer (lua_State *L, char *buff, size_t sz, char *name)
-    int luaL_ref (lua_State *L, int t)
 
 
 cdef extern from "lualib.h":

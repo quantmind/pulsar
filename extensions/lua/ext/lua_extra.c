@@ -33,6 +33,7 @@ LUALIB_API PyObject* all_libs(lua_State *L) {
 
 
 LUALIB_API int load_lib(lua_State *L, const char* name) {
+  /*
     if (strcmp(name, LUA_BASELIB)) {
         luaL_requiref(L, "_G", luaopen_base, 1);
     } else if (strcmp(name, LUA_TABLIBNAME)) {
@@ -58,4 +59,6 @@ LUALIB_API int load_lib(lua_State *L, const char* name) {
     }
     lua_pop(L, 1);
     return 1;
+    */
+  return 0;
 }

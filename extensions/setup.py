@@ -66,8 +66,7 @@ def lua_extension():
             src.append(os.path.join(path, file))
     src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
-    extra_compile_args = ['-DUSE_INTERNAL_FPCONV', '-DENABLE_CJSON_GLOBAL']
-    extra_compile_args = ['-DENABLE_CJSON_GLOBAL']
+    extra_compile_args = []
     if os.name == 'nt':
         extra_compile_args.append('-DDISABLE_INVALID_NUMBERS')
 

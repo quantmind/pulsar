@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
 
@@ -24,10 +23,11 @@
 #endif
 
 #define CJSON_MODNAME   "cjson"
-LUAMOD_API int (luaopen_cjson) (lua_State *L);
+#define ENABLE_CJSON_GLOBAL
+//#define USE_INTERNAL_FPCONV
 
-
+int luaopen_cjson (lua_State *L);
 LUALIB_API PyObject* all_libs(lua_State *L);
-LUALIB_API int (load_lib) (lua_State *L, const char* name);
+LUALIB_API int load_lib (lua_State *L, const char* name);
 
 #endif  //  _PULSAR_LUA_EXTRA_H_
