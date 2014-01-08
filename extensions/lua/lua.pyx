@@ -88,7 +88,7 @@ cdef class Lua:
         self.lock = RLock()
         if load_libs:
             lua.luaL_openlibs(self.state)
-            lua.lua_settop(self.state, 0)
+            #lua.lua_settop(self.state, 0)
 
     def __dealloc__(self):
         if self.state is not NULL:
@@ -98,6 +98,9 @@ cdef class Lua:
     def version(self):
         '''Lua version number'''
         return native_str(lua.LUA_RELEASE)
+
+    def libs(self):
+        return lua.all_libs(self.state)
 
     def execute(self, lua_code):
         """Execute a Lua script passed in a string.
@@ -200,7 +203,7 @@ cdef int py_call_with_gil(lua_State* state) with gil:
 cdef str _lua_error_message(lua_State *state, str err_message, int n):
     cdef size_t size = 0
     cdef const_char_ptr s = lua.lua_tolstring(state, n, &size)
-    cdef string = s[:size].decode('utf-8')
+    string = native_str(s[:size])
     return err_message % string if err_message else string
 
 

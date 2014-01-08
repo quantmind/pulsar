@@ -11,8 +11,6 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
-LUASKIP = frozenset(['lua.c'])
-
 include_dirs = []
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 if sys.platform == 'win32' and sys.version_info > (2, 6):
@@ -54,6 +52,7 @@ lib_path = os.path.dirname(__file__)
 def lua_extension():
     '''Create Lua extension module
     '''
+    LUASKIP = ['lua.c', 'luac.c']
     src = []
     path = os.path.join(lib_path, 'lua', 'src')
     include_dirs.append(path)

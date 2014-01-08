@@ -4,7 +4,7 @@
  *
  * Longest double printed with %.14g is 21 characters long:
  * -1.7976931348623e+308 */
-#include "pconf.h"
+#include "lua_extra.h"
 
 # define FPCONV_G_FMT_BUFSIZE   32
 

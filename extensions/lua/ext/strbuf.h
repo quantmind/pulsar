@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "pconf.h"
+#include "lua_extra.h"
 
 /* Size: Total bytes allocated to *buf
  * Length: String length, excluding optional NULL terminator.
