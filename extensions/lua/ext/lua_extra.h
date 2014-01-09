@@ -1,16 +1,14 @@
 #ifndef _PULSAR_LUA_EXTRA_H_
 #define _PULSAR_LUA_EXTRA_H_
 
-#include <stdlib.h>
-#include <math.h>
-
 #include "lualib.h"
 #include "lauxlib.h"
-
 #include "Python.h"
 
 
 #ifdef _MSC_VER
+#include <stdlib.h>
+#include <math.h>
 #define STIN static __inline
 #define EXIN extern __inline
 #define snprintf _snprintf
@@ -26,7 +24,7 @@
 #define ENABLE_CJSON_GLOBAL
 //#define USE_INTERNAL_FPCONV
 
-int luaopen_cjson (lua_State *L);
+LUAMOD_API int luaopen_cjson (lua_State *L);
 LUALIB_API PyObject* all_libs(lua_State *L);
 LUALIB_API int load_lib (lua_State *L, const char* name);
 

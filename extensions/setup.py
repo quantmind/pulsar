@@ -67,7 +67,9 @@ def lua_extension():
     src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
     extra_compile_args = []
-    if os.name == 'nt':
+    if sys.platform == 'darwin':
+        extra_compile_args.append('-DLUA_USE_MACOSX')
+    if os.name != 'posix':
         extra_compile_args.append('-DDISABLE_INVALID_NUMBERS')
 
     return Extension('pulsar.utils.lua',

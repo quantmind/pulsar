@@ -79,19 +79,6 @@ class Platform(object):
     def is_windows(self):
         return self.getType() == 'win'
 
-    @property
-    def is_vista(self):
-        """
-        Check if current platform is Windows Vista or Windows Server 2008.
-
-        @return: C{True} if the current platform has been detected as Vista
-        @rtype: C{bool}
-        """
-        if getattr(sys, "getwindowsversion", None) is not None:
-            return sys.getwindowsversion()[0] == 6
-        else:
-            return False
-
     def supportsThreads(self):
         """Can threads be created?
         """
@@ -102,7 +89,6 @@ class Platform(object):
 
     @property
     def has_multiProcessSocket(self):
-        ''':rtype: a boolean indicating if support for multiprocess
- sockets is available.
+        '''Indicates if support for multiprocess sockets is available.
         '''
         return hasattr(socket, 'fromfd')
