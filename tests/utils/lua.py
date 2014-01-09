@@ -28,11 +28,11 @@ class TestLuaRuntime(unittest.TestCase):
     def test_load_base(self):
         lua = Lua(load_libs=False)
         self.assertRaises(LuaError, lua.execute, 'return type(pairs)')
-        lua.openlibs()
+        self.assertTrue(lua.loadlib(''))
         self.assertEqual(lua.execute('return type(pairs)'), b'function')
 
 class f:
-    def test_loda_base(self):
+    def test_load_table(self):
         lua = Lua(load_libs=False)
         self.assertRaises(LuaError, lua.execute, 'return type(pairs)')
         self.assertTrue(lua.loadlib(''))

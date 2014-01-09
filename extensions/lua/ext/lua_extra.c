@@ -1,5 +1,3 @@
-#define LUA_LIB
-
 #include "lua_extra.h"
 
 
@@ -15,7 +13,21 @@
 
 #define LUA_BASELIB ""
 
-LUALIB_API PyObject* all_libs(lua_State *L) {
+static const luaL_Reg loadedlibs[] = {
+    {"_G", luaopen_base},
+    {LUA_LOADLIBNAME, luaopen_package},
+    {LUA_COLIBNAME, luaopen_coroutine},
+    {LUA_TABLIBNAME, luaopen_table},
+    {LUA_IOLIBNAME, luaopen_io},
+    {LUA_OSLIBNAME, luaopen_os},
+    {LUA_STRLIBNAME, luaopen_string},
+    {LUA_BITLIBNAME, luaopen_bit32},
+    {LUA_MATHLIBNAME, luaopen_math},
+    {LUA_DBLIBNAME, luaopen_debug},
+    {NULL, NULL}
+};
+
+PyObject* all_libs(lua_State *L) {
     PyObject *all = PyTuple_New(9);
     if (all) {
         PyTuple_SET_ITEM(all, 0, native_str(LUA_TABLIBNAME));
@@ -32,8 +44,7 @@ LUALIB_API PyObject* all_libs(lua_State *L) {
 }
 
 
-LUALIB_API int load_lib(lua_State *L, const char* name) {
-  /*
+int load_lib(lua_State *L, const char* name) {
     if (strcmp(name, LUA_BASELIB)) {
         luaL_requiref(L, "_G", luaopen_base, 1);
     } else if (strcmp(name, LUA_TABLIBNAME)) {
@@ -59,6 +70,4 @@ LUALIB_API int load_lib(lua_State *L, const char* name) {
     }
     lua_pop(L, 1);
     return 1;
-    */
-  return 0;
 }

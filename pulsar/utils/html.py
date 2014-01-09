@@ -110,6 +110,10 @@ def mark_safe(v):
     return SafeString(v)
 
 
+def is_safe(v):
+    return getattr(v, '__html__', False)
+
+
 def escape(html, force=False):
     """Returns the given HTML with ampersands,
 quotes and angle brackets encoded."""

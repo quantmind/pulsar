@@ -35,7 +35,6 @@
  *       time (30%) managing tables when parsing JSON since it is
  *       difficult to know object/array sizes ahead of time.
  */
-
 #include <assert.h>
 #include <string.h>
 #include <math.h>
