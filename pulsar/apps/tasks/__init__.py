@@ -10,7 +10,7 @@
   :ref:`callable method <job-callable>`
 * Run your script, sit back and relax.
 
-.. _app-taskqueue-job:
+.. _app-taskqueue-config:
 
 Configuration
 ~~~~~~~~~~~~~~~~

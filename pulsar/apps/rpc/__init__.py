@@ -6,6 +6,8 @@ quickly with a working example.
 API
 ===========
 
+.. module:: pulsar.apps.rpc.handlers
+
 RpcHandler
 ~~~~~~~~~~~~~~
 
@@ -13,6 +15,13 @@ RpcHandler
    :members:
    :member-order: bysource
 
+rpc method decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: rpc_method
+
+
+.. module:: pulsar.apps.rpc.jsonrpc
 
 JSON RPC
 ~~~~~~~~~~~~~~~~
@@ -30,11 +39,7 @@ JsonProxy
    :member-order: bysource
 
 
-rpc method decorator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: rpc_method
-
+.. module:: pulsar.apps.rpc.mixins
 
 Server Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

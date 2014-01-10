@@ -196,8 +196,14 @@ class dump_environ(object):
         self.environ = environ
 
     def __str__(self):
-        env = iteritems(self.environ)
-        return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
+        def _():
+            for k, v in iteritems(self.environ):
+                try:
+                    v = str(v)
+                except Exception as e:
+                    v = str(e)
+                yield '%s=%s' % (k, v)
+        return '\n%s\n' % '\n'.join(_())
 
 
 def handle_wsgi_error(environ, failure):

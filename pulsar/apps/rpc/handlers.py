@@ -151,8 +151,8 @@ is the root handler.'''
     def putSubHandler(self, prefix, handler):
         '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
 
-:keyword prefix: a string defining the prefix of the subhandler
-:keyword handler: the sub-handler.
+        :keyword prefix: a string defining the prefix of the subhandler
+        :keyword handler: the sub-handler.
         '''
         self.subHandlers[prefix] = handler
         handler._parent = self

@@ -6,6 +6,7 @@ from copy import deepcopy, copy
 from time import time
 import logging
 from threading import Lock
+from functools import wraps
 from multiprocessing import current_process
 
 from .pep import force_native_str
@@ -183,11 +184,12 @@ class LocalMixin(object):
 def lazymethod(f):
     name = '_lazy_%s' % f.__name__
 
+    @wraps
     def _(self):
         if not hasattr(self, name):
             setattr(self, name, f(self))
         return getattr(self, name)
-    _.__doc__ = f.__doc__
+
     return _
 
 

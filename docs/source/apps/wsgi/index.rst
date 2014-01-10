@@ -18,5 +18,6 @@ development of server side asynchronous web applications.
    routing
    wrappers
    middleware
+   response
    content
    tools

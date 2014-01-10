@@ -1,10 +1,10 @@
 '''
 This section describes the asynchronous WSGI specification used by pulsar.
-It is a superset of the the `WSGI 1.0.1`_ specification for synchronous
+It is a superset of the `WSGI 1.0.1`_ specification for synchronous
 server/middleware.
 If an application handler is synchronous, this specification is exactly
-equivalent to `WSGI 1.0.1`_. The changes with respect `WSGI 1.0.1`_ only
-concerns asynchronous responses and nothing else.
+equivalent to `WSGI 1.0.1`_. Changes with respect `WSGI 1.0.1`_
+concern asynchronous responses and nothing else.
 
 Introduction
 ========================
@@ -33,9 +33,8 @@ with the standard `WSGI 1.0.1`_ specification with the following two
 exceptions:
 
 * It can return a :class:`.Deferred`.
-* If it returns a :class:`.Deferred`, the deferred, when called, i.e.
-  the deferred get its :meth:`.Deferred.callback` method invoked,
-  the result must be an :ref:`asynchronous iterable <wsgi-async-iter>`.
+* If it returns a :class:`.Deferred`, it must result in an
+  :ref:`asynchronous iterable <wsgi-async-iter>`.
 
 Pulsar is shipped with two WSGI application handlers documented below.
 

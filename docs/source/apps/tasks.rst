@@ -27,11 +27,15 @@ Getting Started
 .. automodule:: pulsar.apps.tasks
 
 
+.. _app-taskqueue-job:
+
 Jobs
 ====================
 
 .. automodule:: pulsar.apps.tasks.models
 
+
+.. _apps-taskqueue-backend:
 
 Task Backend
 ======================

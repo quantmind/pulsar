@@ -14,7 +14,7 @@ to be covered:
 * :meth:`Store.connect` to create a new connection
 * :meth:`Store.execute` to execute a command on the store server
 
-A new store needs to be registered vuia the :func:`register_store`
+A new store needs to be registered via the :func:`register_store`
 function.
 
 All registered data stores are stored in the ``data_stores`` dictionary::

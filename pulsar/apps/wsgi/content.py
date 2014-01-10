@@ -245,12 +245,12 @@ This is a shortcut for the :meth:`insert` method at index 0.
     def insert(self, index, child):
         '''Insert ``child`` into the list of :attr:`children` at ``index``.
 
-:param index: The index (positive integer) where to insert ``child``.
-:param child: String, bytes or another :class:`AsyncString`. If it is an
-    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
-    If ``child`` is ``None``, this method does nothing.
-
-'''
+        :param index: The index (positive integer) where to insert ``child``.
+        :param child: String, bytes or another :class:`AsyncString`.
+            If it is an :class:`.AsyncString`, this instance will be set as
+            its :attr:`parent`.
+            If ``child`` is ``None``, this method does nothing.
+        '''
         # make sure that child is not in child
         if child not in (None, self):
             if isinstance(child, AsyncString):
@@ -341,8 +341,8 @@ This method should not be overwritten, instead one should use the
 
     def http_response(self, request):
         '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
-This method asynchronously wait for :meth:`content` and subsequently
-starts the wsgi response.'''
+        This method asynchronously wait for :meth:`content` and subsequently
+        starts the wsgi response.'''
         response = request.response
         response.content_type = self.content_type
         body = yield self.content(request)
