@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define LUA_CORE
+
 #include "strbuf.h"
 
 static void die(const char *fmt, ...)

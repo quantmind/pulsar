@@ -33,6 +33,8 @@
 #include <assert.h>
 #include <string.h>
 
+#define LUA_CORE
+
 #include "fpconv.h"
 
 /* Lua CJSON assumes the locale is the same for all threads within a

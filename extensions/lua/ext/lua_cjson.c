@@ -42,6 +42,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#define LUA_CORE
+
 #include "strbuf.h"
 #include "fpconv.h"
 
