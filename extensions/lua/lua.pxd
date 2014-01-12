@@ -89,7 +89,7 @@ cdef extern from "lualib.h":
     void luaL_openlibs(lua_State *L)
 
 
-cdef extern from "lua_extra.h":
+cdef extern from "linit.h":
 
     bint load_lib(lua_State *L, const char* name)
     object all_libs(lua_State *L)
