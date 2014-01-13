@@ -80,7 +80,7 @@ cdef extern from "lua.h" nogil:
 
 cdef extern from "lauxlib.h" nogil:
 
-    int luaL_loadbuffer (lua_State *L, char *buff, size_t sz, char *name)
+    int luaL_loadbufferx (lua_State *L, char *buff, size_t sz, char *name)
 
 
 cdef extern from "lualib.h":

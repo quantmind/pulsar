@@ -27,7 +27,7 @@
 
 //#define USE_INTERNAL_FPCONV
 
-int luaopen_cjson (lua_State *L);
+LUAMOD_API int luaopen_cjson (lua_State *L);
 LUALIB_API PyObject* all_libs(lua_State *L);
 LUALIB_API int load_lib (lua_State *L, const char* name);
 
