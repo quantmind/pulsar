@@ -711,6 +711,8 @@ class HttpProxyServer(Global):
         if self.value:  # pragma    nocover
             os.environ['http_proxy'] = self.value
             os.environ['https_proxy'] = self.value
+            os.environ['ws_proxy'] = self.value
+            os.environ['wss_proxy'] = self.value
 
 
 class HttpParser(Global):

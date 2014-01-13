@@ -1137,6 +1137,8 @@ def get_environ_proxies():
         'https',
         'ftp',
         'socks',
+        'ws',
+        'wss',
         'no'
     ]
 
