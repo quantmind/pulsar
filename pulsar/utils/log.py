@@ -184,7 +184,7 @@ class LocalMixin(object):
 def lazymethod(f):
     name = '_lazy_%s' % f.__name__
 
-    @wraps
+    @wraps(f)
     def _(self):
         if not hasattr(self, name):
             setattr(self, name, f(self))
