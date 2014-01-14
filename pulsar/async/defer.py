@@ -1,5 +1,6 @@
 import sys
 from collections import Mapping
+from functools import wraps
 
 from pulsar.utils.pep import iteritems, default_timer
 
@@ -209,6 +210,7 @@ def in_loop(method):
 
     The instance must be an :ref:`async object <async-object>`.
     '''
+    @wraps(method)
     def _(self, *args, **kwargs):
         try:
             result = method(self, *args, **kwargs)
@@ -216,8 +218,6 @@ def in_loop(method):
             result = sys.exc_info()
         return maybe_async(result, self._loop, False)
 
-    _.__name__ = method.__name__
-    _.__doc__ = method.__doc__
     return _
 
 
@@ -232,11 +232,10 @@ def in_loop_thread(method):
 
     It uses the :func:`run_in_loop_thread` function.
     '''
+    @wraps(method)
     def _(self, *args, **kwargs):
         return run_in_loop_thread(self._loop, method, self, *args, **kwargs)
 
-    _.__name__ = method.__name__
-    _.__doc__ = method.__doc__
     return _
 
 
