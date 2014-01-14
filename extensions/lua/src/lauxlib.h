@@ -111,7 +111,7 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #define luaL_newlib(L,l)	(luaL_newlibtable(L,l), luaL_setfuncs(L,l,0))
 
 #define luaL_argcheck(L, cond,numarg,extramsg)	\
-		((void)((cond) || luaL_argerror(L, (numarg), (extramsg))))
+    ((void)((cond) || luaL_argerror(L, (numarg), (extramsg))))
 #define luaL_checkstring(L,n)	(luaL_checklstring(L, (n), NULL))
 #define luaL_optstring(L,n,d)	(luaL_optlstring(L, (n), (d), NULL))
 #define luaL_checkint(L,n)	((int)luaL_checkinteger(L, (n)))
@@ -122,10 +122,10 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #define luaL_typename(L,i)	lua_typename(L, lua_type(L,(i)))
 
 #define luaL_dofile(L, fn) \
-	(luaL_loadfile(L, fn) || lua_pcall(L, 0, LUA_MULTRET, 0))
+  (luaL_loadfile(L, fn) || lua_pcall(L, 0, LUA_MULTRET, 0))
 
 #define luaL_dostring(L, s) \
-	(luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
+  (luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
 
 #define luaL_getmetatable(L,n)	(lua_getfield(L, LUA_REGISTRYINDEX, (n)))
 

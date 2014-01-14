@@ -54,18 +54,22 @@ def lua_extension():
     '''
     LUASKIP = ['lua.c', 'luac.c']
     src = []
-    path = os.path.join(lib_path, 'lua', 'src')
-    include_dirs.append(path)
-    for file in os.listdir(path):
-        if file.endswith('.c') and file not in LUASKIP:
-            src.append(os.path.join(path, file))
+
     path = os.path.join(lib_path, 'lua', 'ext')
     include_dirs.append(path)
     for file in os.listdir(path):
         if file.endswith('.c'):
             src.append(os.path.join(path, file))
+
+    path = os.path.join(lib_path, 'lua', 'src')
+    include_dirs.append(path)
+    for file in os.listdir(path):
+        if file.endswith('.c') and file not in LUASKIP:
+            src.append(os.path.join(path, file))
+
     src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
     #
+    #extra_compile_args = ['-DLUA_ANSI']
     extra_compile_args = ['-DLUA_COMPAT_ALL']
     if sys.platform == 'darwin':
         extra_compile_args.append('-DLUA_USE_MACOSX')

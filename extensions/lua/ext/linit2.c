@@ -1,7 +1,7 @@
-#define LUA_CORE
+#define linit_c
+#define LUA_LIB
 
-#include "lua_extra.h"
-
+#include "linit.h"
 
 #if PY_MAJOR_VERSION == 2
     STIN PyObject* native_str(const char* value) {
@@ -13,10 +13,8 @@
     }
 #endif
 
-#define LUA_BASELIB ""
 
-
-PyObject* all_libs(lua_State *L) {
+LUALIB_API PyObject* all_libs(lua_State *L) {
     PyObject *all = PyTuple_New(9);
     if (all) {
         PyTuple_SET_ITEM(all, 0, native_str(LUA_TABLIBNAME));
@@ -33,7 +31,7 @@ PyObject* all_libs(lua_State *L) {
 }
 
 
-int load_lib(lua_State *L, const char* name) {
+LUALIB_API int load_lib(lua_State *L, const char* name) {
     if (strcmp(name, LUA_BASELIB)) {
         luaL_requiref(L, "_G", luaopen_base, 1);
     } else if (strcmp(name, LUA_TABLIBNAME)) {

@@ -168,10 +168,10 @@ cdef class Lua:
     cdef inline object _run_lua(self, bytes lua_code):
         cdef int result, nargs
         with self:
-            if lua.luaL_loadbuffer(self.state,
-                                   lua_code,
-                                   len(lua_code),
-                                   '<python>'):
+            if lua.luaL_loadbufferx(self.state,
+                                    lua_code,
+                                    len(lua_code),
+                                    '<python>'):
                 raise LuaSyntaxError(
                     _lua_error_message(self.state,
                                        "error loading code: %s", -1))
