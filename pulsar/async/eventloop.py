@@ -478,6 +478,15 @@ default signal handler ``signal.SIG_DFL``.'''
     def create_datagram_endpoint(self, protocol_factory, local_addr=None,
                                  remote_addr=None, family=socket.AF_UNSPEC,
                                  proto=0, flags=0):
+        '''Creates an endpoint for sending and receiving datagrams.
+
+        Datagrams are typically UDP packets, and because of the nature of
+        their traffic, there are no separate calls to set up client and
+        server side, since usually a single endpoint acts as either.
+
+        :return: a :class:`.Deferred` whose result will be a list of socket
+            objects which will later be handled by ``protocol_factory``.
+        '''
         res = create_datagram_endpoint(self, protocol_factory, local_addr,
                                        remote_addr, family, proto, flags)
         return async(res, self)

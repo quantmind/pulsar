@@ -25,6 +25,7 @@ class TestApi(unittest.TestCase):
             yield NOT_DONE
             raise ValueError
         self.assertIsInstance(c._result, Failure)
+        c._result.mute()
 
     def test_maybe_async_get_result_false(self):
         a = maybe_async(3, get_result=False)
