@@ -49,39 +49,6 @@ class tolerant_build_ext(build_ext):
 lib_path = os.path.dirname(__file__)
 
 
-def lua_extension():
-    '''Create Lua extension module
-    '''
-    LUASKIP = ['lua.c', 'luac.c']
-    src = []
-
-    path = os.path.join(lib_path, 'lua', 'ext')
-    include_dirs.append(path)
-    for file in os.listdir(path):
-        if file.endswith('.c'):
-            src.append(os.path.join(path, file))
-
-    path = os.path.join(lib_path, 'lua', 'src')
-    include_dirs.append(path)
-    for file in os.listdir(path):
-        if file.endswith('.c') and file not in LUASKIP:
-            src.append(os.path.join(path, file))
-
-    src.append(os.path.join(lib_path, 'lua', 'lua.pyx'))
-    #
-    #extra_compile_args = ['-DLUA_ANSI']
-    extra_compile_args = ['-DLUA_COMPAT_ALL']
-    if sys.platform == 'darwin':
-        extra_compile_args.append('-DLUA_USE_MACOSX')
-    if os.name != 'posix':
-        extra_compile_args.append('-DLUA_BUILD_AS_DLL')
-
-    return Extension('pulsar.utils.lua',
-                     src,
-                     include_dirs=include_dirs,
-                     extra_compile_args=extra_compile_args)
-
-
 def lib_extension():
     path = os.path.join(lib_path, 'lib')
     include_dirs.append(path)
@@ -90,7 +57,7 @@ def lib_extension():
                      include_dirs=include_dirs)
 
 
-extensions = [lib_extension(), lua_extension()]
+extensions = [lib_extension()]
 
 libparams = {
              'ext_modules': cythonize(extensions),
