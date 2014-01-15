@@ -48,7 +48,6 @@ try:
             else:
                 self.buffer += data
 
-
     class EchoClientFactory(Factory):
         protocol = EchoClient
 

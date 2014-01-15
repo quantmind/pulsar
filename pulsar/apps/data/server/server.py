@@ -1618,7 +1618,7 @@ class Storage(object):
             if N == 4:
                 if request[4].lower() == b'withscores':
                     result = []
-                    [result.extend((value, score)) for score, value in
+                    [result.extend((v, score)) for score, v in
                      value.range(start, end, scores=True)]
                 else:
                     return client.reply_error(self.SYNTAX_ERROR)
@@ -1638,7 +1638,7 @@ class Storage(object):
             try:
                 minval, include_min, maxval, include_max = self._score_values(
                     request[2], request[3])
-            except exception:
+            except Exception:
                 return client.reply_error(self.SYNTAX_ERROR)
             request = request[4:]
             withscores = False
@@ -1659,7 +1659,7 @@ class Storage(object):
                     return client.reply_error(self.SYNTAX_ERROR)
             if withscores:
                 result = []
-                [result.extend((value, score)) for score, value in
+                [result.extend((v, score)) for score, v in
                  value.range_by_score(minval, maxval, scores=True,
                                       start=offset, num=count,
                                       include_min=include_min,
@@ -1717,7 +1717,7 @@ class Storage(object):
         else:
             try:
                 start, end = self._range_values(value, request[2], request[3])
-            except exception:
+            except Exception:
                 return client.reply_error(self.SYNTAX_ERROR)
             removed = value.remove_range(start, end)
             if removed:
@@ -1740,7 +1740,7 @@ class Storage(object):
             try:
                 minval, include_min, maxval, include_max = self._score_values(
                     request[2], request[3])
-            except exception:
+            except Exception:
                 return client.reply_error(self.SYNTAX_ERROR)
             removed = value.remove_range_by_score(minval, maxval, include_min,
                                                   include_max)
@@ -1834,7 +1834,6 @@ class Storage(object):
         check_input(request, N != 2)
         channel, message = request[1:]
         ch = channel.decode('utf-8')
-        clients = self._channels.get(channel)
         msg = self._parser.multi_bulk((b'message', channel, message))
         count = self._publish_clients(msg, self._channels.get(channel, ()))
         for pattern in self._patterns.values():
@@ -1969,7 +1968,7 @@ class Storage(object):
         subcommand = request[1].upper()
         if subcommand == b'EXISTS':
             check_input(request, N < 2)
-            result = [int(sha in scripts) for sha in requests[2:]]
+            result = [int(sha in scripts) for sha in request[2:]]
             client.reply_multi_bulk(result)
         elif subcommand == b'FLUSH':
             check_input(request, N != 1)
@@ -1990,8 +1989,8 @@ class Storage(object):
     @command('Connections', script=0)
     def auth(self, client, request, N):
         check_input(request, N != 1)
-        conn.password = request[1]
-        if conn.password != conn._producer.password:
+        client.password = request[1]
+        if client.password != client._producer.password:
             client.reply_error("wrong password")
         else:
             client.reply_ok()
@@ -2118,7 +2117,7 @@ class Storage(object):
     @command('Server', script=0)
     def monitor(self, client, request, N):
         check_input(request, N)
-        client.flag |= MONITOR
+        client.flag |= self.MONITOR
         self._monitors.add(client)
         client.reply_ok()
 
@@ -2536,10 +2535,9 @@ class Storage(object):
         return _
 
     def _write_to_monitors(self, client, request):
-        now = time.time
-        addr = '%s:%s' % self._transport.get_extra_info('addr')
+        #addr = '%s:%s' % self._transport.get_extra_info('addr')
         cmds = b'" "'.join(request)
-        message = '+%s [0 %s] "'.encode(utf-8) + cmds + b'"\r\n'
+        message = '+%s [0 %s] "'.encode('utf-8') + cmds + b'"\r\n'
         remove = set()
         for m in self._monitors:
             try:
@@ -2691,7 +2689,7 @@ class Db(object):
                 value = self._data.pop(key)
                 return value
             elif key in self._expires:
-                handle, value, self._expires.pop(key)
+                handle, value = self._expires.pop(key)
                 handle.cancel()
                 return value
 
@@ -2703,7 +2701,7 @@ class Db(object):
             return 1
         elif key in self._expires:
             self.store._hit_keys += 1
-            handle, _, self._expires.pop(key)
+            handle, _ = self._expires.pop(key)
             handle.cancel()
             self.store._signal(self.store.NOTIFY_GENERIC, self, 'del', key, 1)
             return 1

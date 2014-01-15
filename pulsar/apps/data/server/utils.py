@@ -1,6 +1,5 @@
 import shutil
 
-from pulsar.utils.log import configured_logger
 from pulsar.utils.pep import pickle
 
 
@@ -40,7 +39,7 @@ def sort_command(store, client, request, value):
                 start = max(0, int(request[j+1]))
                 count = int(request[j+2])
             except Exception:
-                return client.error_reply(self.SYNTAX_ERROR)
+                return client.error_reply(store.SYNTAX_ERROR)
             end = len(value) if count <= 0 else start + count
             j += 2
         elif val == b'store' and right >= 1:
@@ -55,7 +54,7 @@ def sort_command(store, client, request, value):
             getops.append(request[j+1])
             j += 1
         else:
-            return client.error_reply(self.SYNTAX_ERROR)
+            return client.error_reply(store.SYNTAX_ERROR)
         j += 1
 
     db = client.db
@@ -92,7 +91,7 @@ def sort_command(store, client, request, value):
     else:
         vector = list(value)
         if start is not None:
-            vector = sorting_value[start:end]
+            vector = vector[start:end]
 
     if storekey is None:
         if getops:

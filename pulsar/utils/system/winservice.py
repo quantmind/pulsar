@@ -15,8 +15,6 @@ from pulsar.utils.importer import import_module
 
 import multiprocessing
 
-from .winprocess import WINEXE
-
 
 class ServiceManagerLogHandler(logging.Handler):
 

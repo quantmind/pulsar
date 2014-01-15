@@ -1,6 +1,3 @@
-import os
-import ctypes
-
 try:
     import signal
 except ImportError:

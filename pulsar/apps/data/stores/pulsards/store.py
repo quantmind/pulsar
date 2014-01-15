@@ -2,8 +2,7 @@ from functools import partial
 
 from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
                     get_actor)
-from pulsar.utils.pep import to_string, zip
-from pulsar.utils.system import json
+from pulsar.utils.pep import to_string
 
 from .base import register_store, Store, Command
 from .client import Client, Pipeline, Consumer, ResponseError
@@ -133,7 +132,6 @@ class PulsarStore(Store):
         return self.execute('hgetall', key, factory=model)
 
     def compile_query(self, query):
-        pipe = self.pipeline()
         compiled = CompiledQuery(self.pipeline())
         return compiled
 
