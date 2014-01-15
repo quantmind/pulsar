@@ -1,3 +1,9 @@
+'''
+Pulsar is shipped with a :class:`.Store` implementation for redis_
+and :ref:`pulsard-ds <pulsar-data-store>` servers.
+
+.. _redis: http://redis.io/
+'''
 from itertools import chain
 from hashlib import sha1
 
@@ -97,6 +103,16 @@ def values_to_zset(response, withscores=False, **kw):
         return response
 
 
+def sort_return_tuples(response, groups=None, **options):
+    """
+    If ``groups`` is specified, return the response as a list of
+    n-element tuples with n being the value found in options['groups']
+    """
+    if not response or not groups:
+        return response
+    return list(zip(*[response[i::groups] for i in range(groups)]))
+
+
 def pubsub_callback(response, subcommand=None):
     if subcommand == 'numsub':
         it = iter(response)
@@ -116,6 +132,7 @@ class Consumer(pulsar.ProtocolConsumer):
             'SAVE SELECT SHUTDOWN SLAVEOF SET WATCH UNWATCH',
             lambda r: r == b'OK'
         ),
+        string_keys_to_dict('SORT', sort_return_tuples),
         string_keys_to_dict('BLPOP BRPOP', lambda r: r and tuple(r) or None),
         string_keys_to_dict('SMEMBERS SDIFF SINTER SUNION', set),
         string_keys_to_dict('ZINCRBY ZSCORE',
@@ -342,6 +359,72 @@ class Client(object):
     def evalsha(self, sha, keys=None, args=None):
         return self._eval('evalsha', sha, keys, args)
 
+    def sort(self, key, start=None, num=None, by=None, get=None,
+             desc=False, alpha=False, store=None, groups=False):
+        '''Sort and return the list, set or sorted set at ``key``.
+
+        ``start`` and ``num`` allow for paging through the sorted data
+
+        ``by`` allows using an external key to weight and sort the items.
+            Use an "*" to indicate where in the key the item value is located
+
+        ``get`` allows for returning items from external keys rather than the
+            sorted data itself.  Use an "*" to indicate where int he key
+            the item value is located
+
+        ``desc`` allows for reversing the sort
+
+        ``alpha`` allows for sorting lexicographically rather than numerically
+
+        ``store`` allows for storing the result of the sort into
+            the key ``store``
+
+        ``groups`` if set to True and if ``get`` contains at least two
+            elements, sort will return a list of tuples, each containing the
+            values fetched from the arguments to ``get``.
+
+        '''
+        if ((start is not None and num is None) or
+                (num is not None and start is None)):
+            raise CommandError("``start`` and ``num`` must both be specified")
+
+        pieces = [key]
+        if by is not None:
+            pieces.append('BY')
+            pieces.append(by)
+        if start is not None and num is not None:
+            pieces.append('LIMIT')
+            pieces.append(start)
+            pieces.append(num)
+        if get is not None:
+            # If get is a string assume we want to get a single value.
+            # Otherwise assume it's an interable and we want to get multiple
+            # values. We can't just iterate blindly because strings are
+            # iterable.
+            if isinstance(get, str):
+                pieces.append('GET')
+                pieces.append(get)
+            else:
+                for g in get:
+                    pieces.append('GET')
+                    pieces.append(g)
+        if desc:
+            pieces.append('DESC')
+        if alpha:
+            pieces.append('ALPHA')
+        if store is not None:
+            pieces.append('STORE')
+            pieces.append(store)
+
+        if groups:
+            if not get or isinstance(get, str) or len(get) < 2:
+                raise CommandError('when using "groups" the "get" argument '
+                                   'must be specified and contain at least '
+                                   'two keys')
+
+        options = {'groups': len(get) if groups else None}
+        return self.execute_command('SORT', *pieces, **options)
+
     def __getattr__(self, name):
         command = INVERSE_COMMANDS_INFO.get(name)
         if command:
@@ -372,6 +455,8 @@ class Pipeline(Client):
         self.command_stack = []
 
     def commit(self, raise_on_error=True):
+        '''Send commands to redis.
+        '''
         cmds = list(chain([(('multi',), {})],
                           self.command_stack, [(('exec',), {})]))
         self.reset()

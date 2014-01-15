@@ -21,7 +21,7 @@ services:
 script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar
-  - python -m covrun -w 2 wsgi utils suite stores
+  - python -m covrun -w 2 wsgi utils suite stores http async apps
 
 notifications:
   email: false

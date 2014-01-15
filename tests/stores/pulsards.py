@@ -600,6 +600,66 @@ class RedisCommands(StoreMixin):
         yield self.async.assertRaises(ResponseError, c.lrem, key, 1)
 
     ###########################################################################
+    ###     SORT
+    def test_sort_basic(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield c.rpush(key, '3', '2', '1', '4')
+        yield self.async.assertEqual(c.sort(key), [b'1', b'2', b'3', b'4'])
+
+    def test_sort_limited(self):
+        key = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        yield c.rpush(key, '3', '2', '1', '4')
+        yield self.async.assertEqual(c.sort(key, start=1, num=2), [b'2', b'3'])
+
+    def test_sort_by(self):
+        key = self.randomkey()
+        key2 = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        pipe = c.pipeline()
+        pipe.mset('%s:1' % key, 8,
+                  '%s:2' % key, 3,
+                  '%s:3' % key, 5)
+        pipe.rpush(key2, '3', '2', '1')
+        res = yield pipe.commit()
+        self.assertEqual(len(res), 2)
+        yield eq(c.sort(key2, by='%s:*' % key), [b'2', b'3', b'1'])
+
+    def test_sort_get(self):
+        key = self.randomkey()
+        key2 = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        pipe = c.pipeline()
+        pipe.mset('%s:1' % key, 'u1',
+                  '%s:2' % key, 'u2',
+                  '%s:3' % key, 'u3')
+        pipe.rpush(key2, '3', '2', '1')
+        res = yield pipe.commit()
+        self.assertEqual(len(res), 2)
+        yield eq(c.sort(key2, get='%s:*' % key), [b'u1', b'u2', b'u3'])
+
+    def test_sort_get_multi(self):
+        key = self.randomkey()
+        key2 = self.randomkey()
+        c = self.client
+        eq = self.async.assertEqual
+        pipe = c.pipeline()
+        pipe.mset('%s:1' % key, 'u1',
+                  '%s:2' % key, 'u2',
+                  '%s:3' % key, 'u3')
+        pipe.rpush(key2, '3', '2', '1')
+        res = yield pipe.commit()
+        self.assertEqual(len(res), 2)
+        yield eq(c.sort(key2, get=('%s:*' % key, '#')),
+                 [b'u1', b'1', b'u2', b'2', b'u3', b'3'])
+        yield eq(c.sort(key2, get=('%s:*' % key, '#'), groups=True),
+                 [(b'u1', b'1'), (b'u2', b'2'), (b'u3', b'3')])
+    ###########################################################################
     ##    SETS
     ### SET COMMANDS ###
     def test_sadd_scard(self):

@@ -127,7 +127,7 @@ def lookup(store, db, pattern, repl):
     bits = key.split(b'->', 1)
     if len(bits) == 1:
         string = db.get(key)
-        return string if isinstance(string, bytearray) else None
+        return bytes(string) if isinstance(string, bytearray) else None
     else:
         key, field = bits
         hash = db.get(key)

@@ -13,3 +13,4 @@ Data Stores
    clients
    odm
    pulsar
+   redis
