@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+
+
+
+<html>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>pulsar.apps.rpc.handlers &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.8.0-beta.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
+    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="pulsar.apps" href="../../apps.html" /> 
+</head>
+ <body>
+
+
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+          <li><a href="../../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
+      </ul>
+    </div>
+<div class="deck">
+<div class="header">
+    
+        <p class="developmentversion">
+        Documentation for pulsar's DEVELOPMENT version. Get the
+        <a href="http://pythonhosted.org/pulsar/modules/pulsar/apps/rpc/handlers.html">release docs here</a>.
+        </p>
+    
+</div>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pulsar.apps.rpc.handlers</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">raise_error_and_log</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="kn">import</span> <span class="n">checkarity</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;RpcHandler&#39;</span><span class="p">,</span> <span class="s">&#39;rpc_method&#39;</span><span class="p">,</span> <span class="s">&#39;InvalidRequest&#39;</span><span class="p">,</span> <span class="s">&#39;InvalidParams&#39;</span><span class="p">,</span>
+           <span class="s">&#39;NoSuchFunction&#39;</span><span class="p">,</span> <span class="s">&#39;InternalError&#39;</span><span class="p">]</span>
+
+<span class="n">_exceptions</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">rpc_exception</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_exceptions</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">fault_code</span>
+    <span class="n">_exceptions</span><span class="p">[</span><span class="n">code</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span>
+    <span class="k">return</span> <span class="n">cls</span>
+
+
+<span class="nd">@rpc_exception</span>
+<span class="k">class</span> <span class="nc">InvalidRequest</span><span class="p">(</span><span class="n">HttpException</span><span class="p">):</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="n">fault_code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32600</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Invalid RPC request&#39;</span>
+
+
+<span class="nd">@rpc_exception</span>
+<span class="k">class</span> <span class="nc">ParseExcetion</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">):</span>
+    <span class="n">fault_code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32700</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Parse error&#39;</span>
+
+
+<span class="nd">@rpc_exception</span>
+<span class="k">class</span> <span class="nc">NoSuchFunction</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">):</span>
+    <span class="n">fault_code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32601</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;The method does not exist&#39;</span>
+
+
+<span class="nd">@rpc_exception</span>
+<span class="k">class</span> <span class="nc">InvalidParams</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">):</span>
+    <span class="n">fault_code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32602</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Invalid method parameters&#39;</span>
+
+
+<span class="nd">@rpc_exception</span>
+<span class="k">class</span> <span class="nc">InternalError</span><span class="p">(</span><span class="n">InvalidRequest</span><span class="p">):</span>
+    <span class="n">fault_code</span> <span class="o">=</span> <span class="o">-</span><span class="mi">32603</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s">&#39;Internal error&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">exception</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_exceptions</span>
+    <span class="n">cls</span> <span class="o">=</span> <span class="n">_exceptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">cls</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="rpc_method"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.rpc_method">[docs]</a><span class="k">def</span> <span class="nf">rpc_method</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="n">request_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A decorator which exposes a function ``func`` as an rpc function.</span>
+
+<span class="sd">:parameter func: The function to expose.</span>
+<span class="sd">:parameter doc: Optional doc string. If not provided the doc string of</span>
+<span class="sd">    ``func`` will be used.</span>
+<span class="sd">:parameter format: Optional output format.</span>
+<span class="sd">:parameter request_handler: function which takes ``request``, ``format`` and</span>
+<span class="sd">    ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.</span>
+<span class="sd">    It can be used to add additional parameters based on request and format.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">request_handler</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="n">request_handler</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;format&#39;</span><span class="p">,</span> <span class="n">format</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="n">InvalidParams</span><span class="p">(</span><span class="s">&#39;Invalid Parameters. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+    <span class="n">_</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">doc</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="n">__doc__</span>
+    <span class="n">_</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">__name__</span>
+    <span class="n">_</span><span class="o">.</span><span class="n">FromApi</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="n">_</span>
+
+</div>
+<span class="k">class</span> <span class="nc">MetaRpcHandler</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A metaclass for rpc handlers.</span>
+<span class="sd">Add a limited ammount of magic to RPC handlers.&#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="n">make</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MetaRpcHandler</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span>
+        <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;virtual&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">make</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="n">funcprefix</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;serve_as&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">funcprefix</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">MetaRpcHandler</span><span class="p">):</span>
+                    <span class="n">funcprefix</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">serve_as</span>
+                    <span class="k">if</span> <span class="n">funcprefix</span><span class="p">:</span>
+                        <span class="k">break</span>
+        <span class="k">if</span> <span class="n">funcprefix</span><span class="p">:</span>
+            <span class="n">rpc</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">fprefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="n">funcprefix</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fprefix</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s">&#39;__call__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">fprefix</span><span class="p">):</span>
+                    <span class="n">method_name</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">n</span><span class="p">:]</span>
+                    <span class="n">rpc</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">method_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s">&#39;rpc_methods&#39;</span><span class="p">):</span>
+                    <span class="n">rpc</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">rpc_methods</span><span class="p">)</span>
+            <span class="n">attrs</span><span class="p">[</span><span class="s">&#39;rpc_methods&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">rpc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">make</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RpcHandler"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler">[docs]</a><span class="k">class</span> <span class="nc">RpcHandler</span><span class="p">(</span><span class="n">MetaRpcHandler</span><span class="p">(</span><span class="s">&#39;_RpcHandler&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+    <span class="n">serve_as</span> <span class="o">=</span> <span class="s">&#39;rpc&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Prefix for class methods providing remote services. Default: ``rpc``.&#39;&#39;&#39;</span>
+    <span class="n">separator</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span>
+    <span class="sd">&#39;&#39;&#39;HTTP method allowed by this handler.&#39;&#39;&#39;</span>
+    <span class="n">virtual</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subhandlers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">documentation</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subHandlers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">documentation</span> <span class="o">=</span> <span class="n">documentation</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">__doc__</span>
+        <span class="k">if</span> <span class="n">subhandlers</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">subhandlers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">handler</span><span class="p">):</span>
+                    <span class="n">handler</span> <span class="o">=</span> <span class="n">handler</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">putSubHandler</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">handler</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="RpcHandler.parent"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.parent">[docs]</a>    <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The parent :class:`RpcHandler` or ``None`` if this</span>
+<span class="sd">is the root handler.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="RpcHandler.root"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.root">[docs]</a>    <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The root :class:`RpcHandler` or ``self`` if this</span>
+<span class="sd">is the root handler.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">root</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="RpcHandler.isroot"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.isroot">[docs]</a>    <span class="k">def</span> <span class="nf">isroot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;``True`` if this is the root handler.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">is</span> <span class="bp">None</span>
+</div>
+<div class="viewcode-block" id="RpcHandler.putSubHandler"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.putSubHandler">[docs]</a>    <span class="k">def</span> <span class="nf">putSubHandler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Add a sub :class:`RpcHandler` with prefix ``prefix``.</span>
+
+<span class="sd">        :keyword prefix: a string defining the prefix of the subhandler</span>
+<span class="sd">        :keyword handler: the sub-handler.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subHandlers</span><span class="p">[</span><span class="n">prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span>
+        <span class="n">handler</span><span class="o">.</span><span class="n">_parent</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="RpcHandler.getSubHandler"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.getSubHandler">[docs]</a>    <span class="k">def</span> <span class="nf">getSubHandler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get a sub :class:`RpcHandler` at ``prefix``.&#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subHandlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">get_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method not supplied&#39;</span><span class="p">)</span>
+            <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">method_name</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">subhandler</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">getSubHandler</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">subhandler</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">method_name</span> <span class="o">=</span> <span class="n">method</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">handler</span> <span class="o">=</span> <span class="n">subhandler</span>
+        <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">rpc_methods</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serve_as</span><span class="p">,</span> <span class="n">method_name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method &quot;</span><span class="si">%s</span><span class="s">&quot; not available.&#39;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+            <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">listFunctions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rpc_methods</span><span class="p">):</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serve_as</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+            <span class="n">docs</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__doc__</span> <span class="ow">or</span> <span class="s">&#39;No docs&#39;</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;doc&#39;</span><span class="p">:</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">docs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)),</span> <span class="s">&#39;section&#39;</span><span class="p">:</span> <span class="n">prefix</span><span class="p">}</span>
+            <span class="k">yield</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">doc</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">handler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subHandlers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">pfx</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">listFunctions</span><span class="p">(</span><span class="n">pfx</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">f</span><span class="p">,</span> <span class="n">doc</span>
+
+    <span class="k">def</span> <span class="nf">_docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">listFunctions</span><span class="p">():</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="s">&#39;.. _functions-{0}:&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">under</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">title</span><span class="p">))</span><span class="o">*</span><span class="s">&#39;-&#39;</span>
+            <span class="k">yield</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">link</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">under</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;doc&#39;</span><span class="p">],</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">docs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_docs</span><span class="p">())</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper"><p class="logo">
+<a href="../../../../index.html">
+  <img class="logo" width="200" src="../../../../static/pulsar.png" alt="pulsar" title="Pulsar"/>
+</a>
+</p>
+<div class="g-plusone"></div>
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-GB'};
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<br>
+<a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+<br>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+<div class="footer">
+     &copy; Copyright 2011-2013, Luca Sbardella.
+   Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
+ </div>
+
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  
+  _gaq.push(['_setAccount', 'UA-3900561-8']);
+  
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</body>
+</html>

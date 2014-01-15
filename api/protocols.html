@@ -79,13 +79,6 @@
 implementing the Protocol/Transport paradigm. <a class="reference internal" href="#pulsar.async.internet.SocketTransport" title="pulsar.async.internet.SocketTransport"><tt class="xref py py-class docutils literal"><span class="pre">SocketTransport</span></tt></a>
 and <a class="reference internal" href="#pulsar.async.protocols.Protocol" title="pulsar.async.protocols.Protocol"><tt class="xref py py-class docutils literal"><span class="pre">Protocol</span></tt></a> are designed to comply with <a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">pep-3156</a> specification
 and derived from <tt class="docutils literal"><span class="pre">asyncio.Transport</span></tt> and <tt class="docutils literal"><span class="pre">asyncio.Protocol</span></tt>.</p>
-<div class="admonition note" id="eventloop-class">
-<p class="first admonition-title">Note</p>
-<p><strong>Event Loop classes</strong></p>
-<p class="last">An event-loop class create objects with the <tt class="docutils literal"><span class="pre">_loop</span></tt>
-attribute which is the <tt class="docutils literal"><span class="pre">asincio.eventloop</span></tt> controlling the event-loop
-object.</p>
-</div>
 <div class="section" id="transports">
 <h2>Transports<a class="headerlink" href="#transports" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="#pulsar.async.internet.SocketTransport" title="pulsar.async.internet.SocketTransport"><tt class="xref py py-class docutils literal"><span class="pre">SocketTransport</span></tt></a> is used as base class for all socket transports

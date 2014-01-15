@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Tutorials &amp; Topics &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>C Extensions &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -29,8 +29,9 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
-    <link rel="next" title="Hello World!" href="hello.html" />
-    <link rel="prev" title="Pulsar Advantage" href="../advantage.html" /> 
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="API" href="../api/index.html" />
+    <link rel="prev" title="Embedded Lua" href="lua.html" /> 
 </head>
  <body>
 
@@ -46,12 +47,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="hello.html" title="Hello World!"
+          <a href="../api/index.html" title="API"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../advantage.html" title="Pulsar Advantage"
+          <a href="lua.html" title="Embedded Lua"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -59,7 +61,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/index.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/cextensions.html">release docs here</a>.
         </p>
     
 </div>
@@ -71,46 +73,15 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-examples"></span><div class="section" id="tutorials-topics">
-<span id="tutorials"></span><h1>Tutorials &amp; Topics<a class="headerlink" href="#tutorials-topics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>Tutorials<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Most of the material presented in the these tutorials is based on the
-<a class="reference internal" href="#module-examples" title="examples"><tt class="xref py py-mod docutils literal"><span class="pre">examples</span></tt></a> module in the <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar distribution</a>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="hello.html">Hello World!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="clients.html">Echo Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wsgi.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploy Web Applications</a></li>
-<li class="toctree-l1"><a class="reference internal" href="httpbin.html">Http Bin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="proxy.html">HTTP Proxy Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="webmail.html">Twisted Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="calculator.html">JSON-RPC Calculator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="chat.html">Websocket Chat Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="taskqueue.html">A Task Queue with a JSON-RPC Api</a></li>
-<li class="toctree-l1"><a class="reference internal" href="django.html">Django with Pulsar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="philosophers.html">Dining Philosophers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pulsards.html">Pulsar-ds</a></li>
+  <div class="section" id="c-extensions">
+<span id="cexpensions"></span><h1>C Extensions<a class="headerlink" href="#c-extensions" title="Permalink to this headline">¶</a></h1>
+<p>Pulsar is shipped with a set of C extensions for speeding up performance and
+provide additional functionalities.</p>
+<ul class="simple">
+<li>Redis encoder/decoder</li>
+<li>Websocket encoder/decoder</li>
+<li><a class="reference internal" href="lua.html#embedded-lua"><em>Embedded Lua</em></a></li>
 </ul>
-</div>
-</div>
-<div class="section" id="topics">
-<h2>Topics<a class="headerlink" href="#topics" title="Permalink to this headline">¶</a></h2>
-<p>These sections cover <strong>pulsar internals</strong> for the curious reader.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="coroutine.html">Asynchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="messages.html">Actor messages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signal.html">Signal Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sync.html">Synchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lua.html">Embedded Lua</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cextensions.html">C Extensions</a></li>
-</ul>
-</div>
-</div>
 </div>
 
 
@@ -136,28 +107,15 @@
 <a href="https://twitter.com/share" class="twitter-share-button" data-size="large">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 <br>
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Tutorials &amp; Topics</a><ul>
-<li><a class="reference internal" href="#id1">Tutorials</a><ul>
-</ul>
-</li>
-<li><a class="reference internal" href="#topics">Topics</a><ul>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../advantage.html"
-                        title="previous chapter">Pulsar Advantage</a></p>
+  <p class="topless"><a href="lua.html"
+                        title="previous chapter">Embedded Lua</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="hello.html"
-                        title="next chapter">Hello World!</a></p>
+  <p class="topless"><a href="../api/index.html"
+                        title="next chapter">API</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/index.txt"
+    <li><a href="../sources/tutorials/cextensions.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

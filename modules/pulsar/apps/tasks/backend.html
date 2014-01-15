@@ -97,6 +97,21 @@
 <span class="sd">* The :meth:`~TaskBackend.flush` method, invoked flushing a backend (remove</span>
 <span class="sd">  all tasks and clear the task queue).</span>
 
+<span class="sd">For example::</span>
+
+<span class="sd">    from pulsar.apps import tasks</span>
+
+<span class="sd">    class TaskBackend(tasks.TaskBackend):</span>
+<span class="sd">        ...</span>
+
+<span class="sd">Once the custom task backend is implemented it must be registered::</span>
+
+<span class="sd">    tasks.task_backends[&#39;mybackend&#39;] = TaskBackend</span>
+
+<span class="sd">And the backend will be selected via::</span>
+
+<span class="sd">    --task-backend mybackend://host:port</span>
+
 <span class="sd">.. _task-state:</span>
 
 <span class="sd">Task states</span>

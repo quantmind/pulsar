@@ -69,6 +69,7 @@
   <h1>Source code for pulsar.async.defer</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">default_timer</span>
 
@@ -182,7 +183,7 @@
         <span class="k">raise</span>
 
 
-<div class="viewcode-block" id="async_sleep"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.defer.async_sleep">[docs]</a><span class="k">def</span> <span class="nf">async_sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
+<div class="viewcode-block" id="async_sleep"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.defer.async_sleep">[docs]</a><span class="k">def</span> <span class="nf">async_sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The asynchronous equivalent of ``time.sleep(timeout)``. Use this</span>
 <span class="sd">function within a :ref:`coroutine &lt;coroutine&gt;` when you need to resume</span>
 <span class="sd">the coroutine after ``timeout`` seconds. For example::</span>
@@ -200,7 +201,8 @@
             <span class="k">return</span> <span class="n">timeout</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">failure</span>
-    <span class="k">return</span> <span class="n">Deferred</span><span class="p">()</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">mute</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">add_errback</span><span class="p">(</span><span class="n">_cancel</span><span class="p">)</span>
+    <span class="n">loop</span> <span class="o">=</span> <span class="n">loop</span> <span class="ow">or</span> <span class="n">get_request_loop</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">Deferred</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span><span class="o">.</span><span class="n">set_timeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">mute</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">add_errback</span><span class="p">(</span><span class="n">_cancel</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="safe_async"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.defer.safe_async">[docs]</a><span class="k">def</span> <span class="nf">safe_async</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -277,6 +279,7 @@
 
 <span class="sd">    The instance must be an :ref:`async object &lt;async-object&gt;`.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -284,8 +287,6 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">maybe_async</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
-    <span class="n">_</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__name__</span>
-    <span class="n">_</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__doc__</span>
     <span class="k">return</span> <span class="n">_</span>
 
 </div>
@@ -300,11 +301,10 @@
 
 <span class="sd">    It uses the :func:`run_in_loop_thread` function.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">run_in_loop_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="n">_</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__name__</span>
-    <span class="n">_</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__doc__</span>
     <span class="k">return</span> <span class="n">_</span>
 
 

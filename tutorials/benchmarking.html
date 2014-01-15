@@ -30,7 +30,7 @@
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
     <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
-    <link rel="next" title="API" href="../api/index.html" />
+    <link rel="next" title="Embedded Lua" href="lua.html" />
     <link rel="prev" title="Synchronous Components" href="sync.html" /> 
 </head>
  <body>
@@ -47,7 +47,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../api/index.html" title="API"
+          <a href="lua.html" title="Embedded Lua"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="sync.html" title="Synchronous Components"
@@ -93,6 +93,22 @@ low bandwidth yet greedy clients.</p>
 <div class="highlight-python"><pre>./slowloris.pl -dns www.example.com -port 80 -timeout 30 -num 1000</pre>
 </div>
 </div>
+<div class="section" id="pulsar-store-versus-redis">
+<h2>Pulsar store versus Redis<a class="headerlink" href="#pulsar-store-versus-redis" title="Permalink to this headline">¶</a></h2>
+<p>Benchmarking the pulsar store application versus redis is useful for
+measuring the speed of the python event loop and parsing with respect
+a superfast C implementation like redis.</p>
+<p>First lunch the pulsar ds example:</p>
+<div class="highlight-python"><pre>python manage.py</pre>
+</div>
+<p>Than use the <tt class="docutils literal"><span class="pre">redis-benchmark</span></tt> executable, for example:</p>
+<div class="highlight-python"><pre>./redis-benchmark -t set -n 1000000 -d 20 -c 100 -p 6410</pre>
+</div>
+<p>Test the set command with 100 concurrent clients with a payload of 20 bytes,
+1 million times.</p>
+<p>Unsurprisingly, running the server with pypy will deliver much faster
+(about four times) results.</p>
+</div>
 </div>
 
 
@@ -122,6 +138,7 @@ low bandwidth yet greedy clients.</p>
   <ul>
 <li><a class="reference internal" href="#">Benchmarking</a><ul>
 <li><a class="reference internal" href="#test-slow-clients">Test slow clients</a></li>
+<li><a class="reference internal" href="#pulsar-store-versus-redis">Pulsar store versus Redis</a></li>
 </ul>
 </li>
 </ul>
@@ -130,8 +147,8 @@ low bandwidth yet greedy clients.</p>
   <p class="topless"><a href="sync.html"
                         title="previous chapter">Synchronous Components</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../api/index.html"
-                        title="next chapter">API</a></p>
+  <p class="topless"><a href="lua.html"
+                        title="next chapter">Embedded Lua</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../sources/tutorials/benchmarking.txt"

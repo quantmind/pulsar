@@ -69,6 +69,9 @@
   <h1>Source code for pulsar.apps.data.odm.transaction</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">InvalidOperation</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
 
 <span class="kn">from</span> <span class="nn">..stores</span> <span class="kn">import</span> <span class="n">Command</span>
 
@@ -95,15 +98,39 @@
 
 
 <span class="k">class</span> <span class="nc">TransactionModel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`SessionModel` is the container of all objects for a given</span>
-<span class="sd">:class:`Model` in a stdnet :class:`Session`.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Transaction for a given model</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">manager</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_new</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_new</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_deleted</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_delete_query</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queries</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dirty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_new</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modified</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TransactionStore</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Transaction for a given store</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_models</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commands</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">sm</span> <span class="o">=</span> <span class="n">TransactionModel</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_models</span><span class="p">[</span><span class="n">manager</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span>
+        <span class="k">return</span> <span class="n">sm</span>
+
+    <span class="k">def</span> <span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_models</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
 
 
 <div class="viewcode-block" id="Transaction"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction">[docs]</a><span class="k">class</span> <span class="nc">Transaction</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
@@ -162,6 +189,15 @@
         <span class="k">if</span> <span class="nb">type</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
 
+<div class="viewcode-block" id="Transaction.execute"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Queue a command in the default data store.</span>
+
+<span class="sd">        This method does not use the object data mapper.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstore</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;store&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">_default_store</span><span class="p">)</span>
+        <span class="n">ts</span><span class="o">.</span><span class="n">commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Command</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
 <div class="viewcode-block" id="Transaction.add"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Add a ``model`` to the transaction.</span>
 
@@ -170,28 +206,46 @@
 <span class="sd">        :return: the ``model``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstore</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
+        <span class="n">ts</span><span class="o">.</span><span class="n">commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Command</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="Transaction.insert"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Insert a new model ``instance`` into the transaction.</span>
+
+<span class="sd">        The operation in the backend server is an INSERT, therefore if the</span>
+<span class="sd">        primary key of ``instance`` is already available an error occurs.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="n">sm</span><span class="o">.</span><span class="n">_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+</div>
+<div class="viewcode-block" id="Transaction.update"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance_or_query</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Update an ``instance`` or a ``query``&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance_or_query</span><span class="p">,</span> <span class="n">Model</span><span class="p">):</span>
+            <span class="n">pkvalue</span> <span class="o">=</span> <span class="n">instance_or_query</span><span class="o">.</span><span class="n">pkvalue</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">instance_or_query</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
         <span class="n">store</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">_store</span>
         <span class="k">if</span> <span class="n">store</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Command</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">INSERT</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Command</span><span class="p">(</span><span class="n">instance_or_query</span><span class="p">,</span>
+                                             <span class="n">Command</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="Transaction.execute"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Queue a command in the default data store.</span>
+<div class="viewcode-block" id="Transaction.tstore"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.tstore">[docs]</a>    <span class="k">def</span> <span class="nf">tstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">store</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns the :class:`TransactionStore` for ``store``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">store</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;store&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">_default_store</span>
         <span class="k">if</span> <span class="n">store</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Command</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span> <span class="o">=</span> <span class="n">TransactionStore</span><span class="p">(</span><span class="n">store</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">[</span><span class="n">store</span><span class="p">]</span>
 </div>
-<div class="viewcode-block" id="Transaction.model"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.model">[docs]</a>    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<div class="viewcode-block" id="Transaction.model"><a class="viewcode-back" href="../../../../../apps/data/odm.html#pulsar.apps.data.odm.transaction.Transaction.model">[docs]</a>    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">read</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Returns the :class:`TransactionModel` for ``model``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
-        <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">sm</span> <span class="o">=</span> <span class="n">TransactionModel</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_models</span><span class="p">[</span><span class="n">manager</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span>
-        <span class="k">return</span> <span class="n">sm</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstore</span><span class="p">(</span><span class="n">manager</span><span class="o">.</span><span class="n">_read_store</span> <span class="k">if</span> <span class="n">read</span> <span class="k">else</span> <span class="n">manager</span><span class="o">.</span><span class="n">_store</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ts</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>

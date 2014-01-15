@@ -178,6 +178,10 @@
     <span class="k">return</span> <span class="n">SafeString</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
 </div>
+<span class="k">def</span> <span class="nf">is_safe</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#39;__html__&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="escape"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.escape">[docs]</a><span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the given HTML with ampersands,</span>
 <span class="sd">quotes and angle brackets encoded.&quot;&quot;&quot;</span>

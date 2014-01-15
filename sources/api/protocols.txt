@@ -10,14 +10,6 @@ implementing the Protocol/Transport paradigm. :class:`.SocketTransport`
 and :class:`.Protocol` are designed to comply with pep-3156_ specification
 and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
 
-.. _eventloop-class:
-
-.. note:: **Event Loop classes**
-
-    An event-loop class create objects with the ``_loop``
-    attribute which is the ``asincio.eventloop`` controlling the event-loop
-    object.
-
 
 Transports
 =================

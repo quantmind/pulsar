@@ -93,7 +93,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">raise_error_trace</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
                                   <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
-                                  <span class="n">urlparse</span><span class="p">,</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
+                                  <span class="n">urlparse</span><span class="p">,</span> <span class="n">iri_to_uri</span><span class="p">,</span> <span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span><span class="p">,</span> <span class="n">is_tls</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
@@ -107,7 +107,7 @@
 <span class="n">MAX_CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">65536</span>
 
 
-<div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+<div class="viewcode-block" id="test_wsgi_environ"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.test_wsgi_environ">[docs]</a><span class="k">def</span> <span class="nf">test_wsgi_environ</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                       <span class="n">secure</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;An function to create a WSGI environment dictionary for testing.</span>
 
@@ -120,8 +120,9 @@
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">http_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="n">method</span> <span class="ow">or</span> <span class="s">&#39;GET&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> HTTP/1.1</span><span class="se">\r\n\r\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin1&#39;</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
     <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;client&#39;</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">()</span>

@@ -30,7 +30,7 @@
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
-    <link rel="next" title="Asynchronous Content" href="content.html" />
+    <link rel="next" title="Response Middleware" href="response.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
 </head>
  <body>
@@ -47,7 +47,7 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="content.html" title="Asynchronous Content"
+          <a href="response.html" title="Response Middleware"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
@@ -144,67 +144,6 @@ other middleware to be processed.</p>
 <p>Useful when using synchronous web-frameworks.</p>
 </dd></dl>
 
-<div class="section" id="response-middlewares">
-<span id="wsgi-response-middleware"></span><h3>Response Middlewares<a class="headerlink" href="#response-middlewares" title="Permalink to this headline">¶</a></h3>
-<p>Response middleware are callable objects which can be used in conjunction
-with pulsar <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a>.
-They must return a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a> which can be the
-same as the one passed to the callable or a brand new one.</p>
-</div>
-</div>
-<div class="section" id="interface">
-<h2>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">ResponseMiddleware</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for response middlewares.</p>
-<p>A response middleware is used by a <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a>,
-it is a callable used to manipulate a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a>.</p>
-<p>The focus of this class is the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute"><tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt></a> method where
-the middleware logic is implemented.</p>
-<dl class="method">
-<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware.available">
-<tt class="descname">available</tt><big>(</big><em>environ</em>, <em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware.available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.available" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check if this <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a> can be applied to
-the <tt class="docutils literal"><span class="pre">response</span></tt> object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>environ</strong> &#8211; a WSGI environ dictionary.</li>
-<li><strong>response</strong> &#8211; a <a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse" title="pulsar.apps.wsgi.wrappers.WsgiResponse"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiResponse</span></tt></a></li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.wsgi.middleware.ResponseMiddleware.execute">
-<tt class="descname">execute</tt><big>(</big><em>environ</em>, <em>response</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#ResponseMiddleware.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Manipulate <em>response</em>, called only if the <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware.available" title="pulsar.apps.wsgi.middleware.ResponseMiddleware.available"><tt class="xref py py-meth docutils literal"><span class="pre">available()</span></tt></a>
-method returns <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="gzip-middleware">
-<h2>GZip Middleware<a class="headerlink" href="#gzip-middleware" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="pulsar.apps.wsgi.middleware.GZipMiddleware">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">GZipMiddleware</tt><big>(</big><em>min_length=200</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#GZipMiddleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.GZipMiddleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.middleware.ResponseMiddleware" title="pulsar.apps.wsgi.middleware.ResponseMiddleware"><tt class="xref py py-class docutils literal"><span class="pre">ResponseMiddleware</span></tt></a> for compressing content if the request
-allows gzip compression. It sets the Vary header accordingly.</p>
-<p>The compression implementation is from
-<a class="reference external" href="http://jython.xhaus.com/http-compression-in-python-and-jython">http://jython.xhaus.com/http-compression-in-python-and-jython</a></p>
-</dd></dl>
-
 </div>
 </div>
 
@@ -237,12 +176,7 @@ allows gzip compression. It sets the Vary header accordingly.</p>
 <li><a class="reference internal" href="#clean-path">Clean path</a></li>
 <li><a class="reference internal" href="#cookie">Cookie</a></li>
 <li><a class="reference internal" href="#authorization">Authorization</a></li>
-<li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a><ul>
-<li><a class="reference internal" href="#response-middlewares">Response Middlewares</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#interface">Interface</a></li>
-<li><a class="reference internal" href="#gzip-middleware">GZip Middleware</a></li>
+<li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a></li>
 </ul>
 </li>
 </ul>
@@ -251,8 +185,8 @@ allows gzip compression. It sets the Vary header accordingly.</p>
   <p class="topless"><a href="wrappers.html"
                         title="previous chapter">WSGI Wrappers</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="content.html"
-                        title="next chapter">Asynchronous Content</a></p>
+  <p class="topless"><a href="response.html"
+                        title="next chapter">Response Middleware</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../sources/apps/wsgi/middleware.txt"

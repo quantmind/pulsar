@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Tutorials &amp; Topics &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Embedded Lua &mdash; pulsar 0.8.0-beta.3 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -29,8 +29,9 @@
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
-    <link rel="next" title="Hello World!" href="hello.html" />
-    <link rel="prev" title="Pulsar Advantage" href="../advantage.html" /> 
+    <link rel="up" title="Tutorials &amp; Topics" href="index.html" />
+    <link rel="next" title="C Extensions" href="cextensions.html" />
+    <link rel="prev" title="Benchmarking" href="benchmarking.html" /> 
 </head>
  <body>
 
@@ -46,12 +47,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="hello.html" title="Hello World!"
+          <a href="cextensions.html" title="C Extensions"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../advantage.html" title="Pulsar Advantage"
+          <a href="benchmarking.html" title="Benchmarking"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Tutorials &amp; Topics</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -59,7 +61,7 @@
     
         <p class="developmentversion">
         Documentation for pulsar's DEVELOPMENT version. Get the
-        <a href="http://pythonhosted.org/pulsar/tutorials/index.html">release docs here</a>.
+        <a href="http://pythonhosted.org/pulsar/tutorials/lua.html">release docs here</a>.
         </p>
     
 </div>
@@ -71,44 +73,40 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <span class="target" id="module-examples"></span><div class="section" id="tutorials-topics">
-<span id="tutorials"></span><h1>Tutorials &amp; Topics<a class="headerlink" href="#tutorials-topics" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="id1">
-<h2>Tutorials<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Most of the material presented in the these tutorials is based on the
-<a class="reference internal" href="#module-examples" title="examples"><tt class="xref py py-mod docutils literal"><span class="pre">examples</span></tt></a> module in the <a class="reference external" href="https://github.com/quantmind/pulsar">pulsar distribution</a>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="hello.html">Hello World!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="clients.html">Echo Server and Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wsgi.html">WSGI</a></li>
-<li class="toctree-l1"><a class="reference internal" href="deploy.html">Deploy Web Applications</a></li>
-<li class="toctree-l1"><a class="reference internal" href="httpbin.html">Http Bin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="proxy.html">HTTP Proxy Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="webmail.html">Twisted Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="calculator.html">JSON-RPC Calculator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="chat.html">Websocket Chat Server</a></li>
-<li class="toctree-l1"><a class="reference internal" href="taskqueue.html">A Task Queue with a JSON-RPC Api</a></li>
-<li class="toctree-l1"><a class="reference internal" href="django.html">Django with Pulsar</a></li>
-<li class="toctree-l1"><a class="reference internal" href="philosophers.html">Dining Philosophers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pulsards.html">Pulsar-ds</a></li>
-</ul>
+  <span class="target" id="module-pulsar.utils.lua"><span id="embedded-lua"></span></span><div class="section" id="id1">
+<h1>Embedded Lua<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://www.lua.org/about.html">Lua</a> is a lightweight embeddable scripting language. It is included in pulsar
+mainly because of <a class="reference internal" href="../apps/data/pulsar.html#pulsar-data-store"><em>pulsards</em></a>, the embedded data store
+implemented along the lines of <a class="reference external" href="http://redis.io/">redis</a>.</p>
+<div class="section" id="version">
+<h2>Version<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.lua</span> <span class="kn">import</span> <span class="n">Lua</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span> <span class="o">=</span> <span class="n">Lua</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span><span class="o">.</span><span class="n">version</span><span class="p">()</span>
+<span class="go">&#39;Lua 5.2.2&#39;</span>
+</pre></div>
 </div>
 </div>
-<div class="section" id="topics">
-<h2>Topics<a class="headerlink" href="#topics" title="Permalink to this headline">¶</a></h2>
-<p>These sections cover <strong>pulsar internals</strong> for the curious reader.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="coroutine.html">Asynchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="messages.html">Actor messages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
-<li class="toctree-l1"><a class="reference internal" href="signal.html">Signal Handling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="sync.html">Synchronous Components</a></li>
-<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lua.html">Embedded Lua</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cextensions.html">C Extensions</a></li>
-</ul>
+<div class="section" id="execute">
+<h2>Execute<a class="headerlink" href="#execute" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.utils.lua</span> <span class="kn">import</span> <span class="n">Lua</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span> <span class="o">=</span> <span class="n">Lua</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;return 1+6&#39;</span><span class="p">)</span>
+<span class="go">7</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="libraries">
+<h2>Libraries<a class="headerlink" href="#libraries" title="Permalink to this headline">¶</a></h2>
+<p>By default, when initialising lua, all standard libraries and the <tt class="docutils literal"><span class="pre">cjson</span></tt>
+extension are loaded into the lua state. Alternatively, one could prevent this
+to happen by initialising as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">l</span> <span class="o">=</span> <span class="n">Lua</span><span class="p">(</span><span class="n">load_libs</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;return os.time()&#39;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">lua.LuaError</span>: <span class="n">[string &quot;&lt;python&gt;&quot;]:1: attempt to index global &#39;os&#39; (a nil value)</span>
+</pre></div>
 </div>
 </div>
 </div>
@@ -138,26 +136,23 @@
 <br>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Tutorials &amp; Topics</a><ul>
-<li><a class="reference internal" href="#id1">Tutorials</a><ul>
-</ul>
-</li>
-<li><a class="reference internal" href="#topics">Topics</a><ul>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Embedded Lua</a><ul>
+<li><a class="reference internal" href="#version">Version</a></li>
+<li><a class="reference internal" href="#execute">Execute</a></li>
+<li><a class="reference internal" href="#libraries">Libraries</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../advantage.html"
-                        title="previous chapter">Pulsar Advantage</a></p>
+  <p class="topless"><a href="benchmarking.html"
+                        title="previous chapter">Benchmarking</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="hello.html"
-                        title="next chapter">Hello World!</a></p>
+  <p class="topless"><a href="cextensions.html"
+                        title="next chapter">C Extensions</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../sources/tutorials/index.txt"
+    <li><a href="../sources/tutorials/lua.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">

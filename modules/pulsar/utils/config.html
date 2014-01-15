@@ -779,6 +779,8 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
             <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;http_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
             <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;https_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;ws_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;wss_proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
 
 
 <span class="k">class</span> <span class="nc">HttpParser</span><span class="p">(</span><span class="n">Global</span><span class="p">):</span>
@@ -835,8 +837,8 @@
     <span class="n">desc</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s">        Log Failures as soon as they occur.</span>
 
-<span class="s">        This option is really need during development when</span>
-<span class="s">        needing to find difficult bugs</span>
+<span class="s">        This option is really needed during development when hunting</span>
+<span class="s">        for hidden bugs</span>
 <span class="s">        &quot;&quot;&quot;</span>
 
 

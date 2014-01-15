@@ -76,11 +76,11 @@
   <div class="section" id="module-pulsar.apps.wsgi.handlers">
 <span id="asynchronous-wsgi"></span><span id="wsgi-async"></span><h1>Asynchronous WSGI<a class="headerlink" href="#module-pulsar.apps.wsgi.handlers" title="Permalink to this headline">¶</a></h1>
 <p>This section describes the asynchronous WSGI specification used by pulsar.
-It is a superset of the the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification for synchronous
+It is a superset of the <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification for synchronous
 server/middleware.
 If an application handler is synchronous, this specification is exactly
-equivalent to <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>. The changes with respect <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> only
-concerns asynchronous responses and nothing else.</p>
+equivalent to <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>. Changes with respect <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a>
+concern asynchronous responses and nothing else.</p>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>The WSGI interface has two sides: the <tt class="docutils literal"><span class="pre">server</span></tt> or <tt class="docutils literal"><span class="pre">gateway</span></tt> side, and the
@@ -102,9 +102,8 @@ with the standard <a class="reference external" href="http://www.python.org/dev/
 exceptions:</p>
 <ul class="simple">
 <li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</li>
-<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, the deferred, when called, i.e.
-the deferred get its <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred.callback" title="pulsar.async.fallbacks.defer.Deferred.callback"><tt class="xref py py-meth docutils literal"><span class="pre">Deferred.callback()</span></tt></a> method invoked,
-the result must be an <a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
+<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, it must result in an
+<a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
 </ul>
 <p>Pulsar is shipped with two WSGI application handlers documented below.</p>
 </div>
@@ -128,7 +127,7 @@ For example this could be an asynchronous iterable:</p>
 which is a step above the <a class="reference internal" href="../../tutorials/hello.html#tutorials-hello-world"><em>hello callable</em></a>
 in the tutorial. It accepts two iterables, a list of
 <a class="reference internal" href="middleware.html#wsgi-middleware"><em>wsgi middleware</em></a> and an optional list of
-<a class="reference internal" href="middleware.html#wsgi-response-middleware"><em>response middleware</em></a>.</p>
+<a class="reference internal" href="response.html#wsgi-response-middleware"><em>response middleware</em></a>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.handlers.WsgiHandler">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.handlers.</tt><tt class="descname">WsgiHandler</tt><big>(</big><em>middleware=None</em>, <em>response_middleware=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/handlers.html#WsgiHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.handlers.WsgiHandler" title="Permalink to this definition">¶</a></dt>
@@ -151,7 +150,7 @@ is the non <tt class="docutils literal"><span class="pre">None</span></tt> value
 </div>
 <p>where <tt class="docutils literal"><span class="pre">response</span></tt> is a <a class="reference internal" href="wrappers.html#wsgi-response"><em>WsgiResponse</em></a>.
 Pulsar contains some
-<a class="reference internal" href="middleware.html#wsgi-response-middleware"><em>response middlewares</em></a>.</p>
+<a class="reference internal" href="response.html#wsgi-response-middleware"><em>response middlewares</em></a>.</p>
 </dd></dl>
 
 </dd></dl>

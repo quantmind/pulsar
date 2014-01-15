@@ -92,7 +92,8 @@ imported first).</li>
 <li><strong>Core library</strong><ul>
 <li>Removed support for python 3.2.</li>
 <li><a class="reference internal" href="tutorials/coroutine.html#coroutine"><em>Coroutines</em></a> can return a value via the
-<a class="reference internal" href="api/async.html#pulsar.async.defer.coroutine_return" title="pulsar.async.defer.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function. Otherwise they return <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<a class="reference internal" href="api/async.html#pulsar.async.defer.coroutine_return" title="pulsar.async.defer.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function only, otherwise they return <tt class="docutils literal"><span class="pre">None</span></tt>.
+This is what twisted does and makes applications less error prone.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.defer.run_in_loop_thread" title="pulsar.async.defer.run_in_loop_thread"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop_thread()</span></tt></a> high level function. This utility
 runs a callable in the event loop thread and returns a <a class="reference internal" href="api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
 called back once the callable has a result/exception.</li>
@@ -138,7 +139,7 @@ with a body via the <a class="reference internal" href="api/utilities.html#pulsa
 </li>
 <li><strong>Miscellaneous</strong><ul>
 <li>The <tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.pubsub</span></tt> has been removed. Publish/subscribe
-handlersd are now available via the new <a class="reference internal" href="apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></tt></a> module.</li>
+implementations are now available in the new <a class="reference internal" href="apps/data/index.html#module-pulsar.apps.data" title="pulsar.apps.data"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.data</span></tt></a> module.</li>
 <li>The <tt class="docutils literal"><span class="pre">Backend</span></tt> class has been removed.</li>
 <li>Improved <a class="reference internal" href="tutorials/django.html#tutorials-django"><em>django example</em></a> with possibility to
 choose different data stores for messages.</li>
@@ -148,6 +149,9 @@ main distribution.</li>
 <li><a class="reference internal" href="api/application.html#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> does not require to create picklable objects.</li>
 <li>More robust serialisation of <tt class="docutils literal"><span class="pre">TestCase</span></tt> methods when used with the
 <a class="reference internal" href="apps/test.html#pulsar.apps.test.utils.run_on_arbiter" title="pulsar.apps.test.utils.run_on_arbiter"><tt class="xref py py-func docutils literal"><span class="pre">run_on_arbiter()</span></tt></a> decorator.</li>
+<li><a class="reference internal" href="tutorials/lua.html#embedded-lua"><em>Embedded lua</em></a> is available when c extensions are compiled.
+Mainly used by <a class="reference internal" href="apps/data/pulsar.html#pulsar-data-store"><em>pulsar data store</em></a> but can be used
+by any other application.</li>
 </ul>
 </li>
 <li><strong>1,033 regression tests</strong>, <strong>91% coverage</strong>.</li>
@@ -262,7 +266,7 @@ for controlling the default number of workers in actor thread pools.</li>
 <dt>Applications:</dt>
 <dd><ul class="first last simple">
 <li>Added <tt class="docutils literal"><span class="pre">flush</span></tt> method to the
-<em class="xref std std-ref">task queue backend</em>.
+<a class="reference internal" href="apps/tasks.html#apps-taskqueue-backend"><em>task queue backend</em></a>.
 The metod can be used to remove all tasks and empty the task queue.</li>
 <li>Better handling of <a class="reference internal" href="apps/tasks.html#job-non-overlap"><em>non-overlapping jobs</em></a>
 in a task queue.</li>
@@ -424,7 +428,7 @@ IMAP4 protocol implementation.</li>
 <div class="section" id="ver-0-4-5-2013-jan-27">
 <h2>Ver. 0.4.5 - 2013-Jan-27<a class="headerlink" href="#ver-0-4-5-2013-jan-27" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Refactored <a class="reference internal" href="apps/rpc.html#pulsar.apps.rpc.JsonProxy" title="pulsar.apps.rpc.JsonProxy"><tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JsonProxy</span></tt></a> class.</li>
+<li>Refactored <tt class="xref py py-class docutils literal"><span class="pre">pulsar.apps.rpc.JsonProxy</span></tt> class.</li>
 <li>Websocket does not support any extensions by default.</li>
 <li><strong>374 regression tests</strong>, <strong>87% coverage</strong>.</li>
 </ul>

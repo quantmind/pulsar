@@ -31,7 +31,7 @@
     <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
-    <link rel="prev" title="Asynchronous Middleware" href="middleware.html" /> 
+    <link rel="prev" title="Response Middleware" href="response.html" /> 
 </head>
  <body>
 
@@ -50,7 +50,7 @@
           <a href="tools.html" title="Utilities"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="middleware.html" title="Asynchronous Middleware"
+          <a href="response.html" title="Response Middleware"
              accesskey="P">previous</a> |</li>
         <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
@@ -195,8 +195,9 @@ If <tt class="docutils literal"><span class="pre">child</span></tt> is <tt class
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>index</strong> &#8211; The index (positive integer) where to insert <tt class="docutils literal"><span class="pre">child</span></tt>.</li>
-<li><strong>child</strong> &#8211; String, bytes or another <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>. If it is an
-<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>, this instance will be set as its <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.parent" title="pulsar.apps.wsgi.content.AsyncString.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a>.
+<li><strong>child</strong> &#8211; String, bytes or another <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>.
+If it is an <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>, this instance will be set as
+its <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.parent" title="pulsar.apps.wsgi.content.AsyncString.parent"><tt class="xref py py-attr docutils literal"><span class="pre">parent</span></tt></a>.
 If <tt class="docutils literal"><span class="pre">child</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>, this method does nothing.</li>
 </ul>
 </td>
@@ -722,8 +723,8 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="middleware.html"
-                        title="previous chapter">Asynchronous Middleware</a></p>
+  <p class="topless"><a href="response.html"
+                        title="previous chapter">Response Middleware</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="tools.html"
                         title="next chapter">Utilities</a></p>

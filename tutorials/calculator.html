@@ -96,11 +96,11 @@ To run the server type:</p>
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <p>The calculator rpc functions are implemented by the <a class="reference internal" href="#examples.calculator.manage.Calculator" title="examples.calculator.manage.Calculator"><tt class="xref py py-class docutils literal"><span class="pre">Calculator</span></tt></a>
 handler, while the <a class="reference internal" href="#examples.calculator.manage.Root" title="examples.calculator.manage.Root"><tt class="xref py py-class docutils literal"><span class="pre">Root</span></tt></a> handler exposes utility methods from
-the <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands" title="pulsar.apps.rpc.PulsarServerCommands"><tt class="xref py py-class docutils literal"><span class="pre">PulsarServerCommands</span></tt></a> handler.</p>
+the <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands" title="pulsar.apps.rpc.mixins.PulsarServerCommands"><tt class="xref py py-class docutils literal"><span class="pre">PulsarServerCommands</span></tt></a> handler.</p>
 <dl class="class">
 <dt id="examples.calculator.manage.Calculator">
 <em class="property">class </em><tt class="descclassname">examples.calculator.manage.</tt><tt class="descname">Calculator</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/examples/calculator/manage.html#Calculator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.calculator.manage.Calculator" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.JSONRPC" title="pulsar.apps.rpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler which implements few simple
+<dd><p>A <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler which implements few simple
 remote methods.</p>
 <dl class="method">
 <dt id="examples.calculator.manage.Calculator.rpc_add">
@@ -124,7 +124,7 @@ remote methods.</p>
 <dt id="examples.calculator.manage.Calculator.rpc_divide">
 <tt class="descname">rpc_divide</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#examples.calculator.manage.Calculator.rpc_divide" title="Permalink to this definition">¶</a></dt>
 <dd><p>Divide two numbers. This method illustrate how to use the
-<a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.rpc_method" title="pulsar.apps.rpc.rpc_method"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.apps.rpc.rpc_method()</span></tt></a> decorator.</p>
+<tt class="xref py py-func docutils literal"><span class="pre">pulsar.apps.rpc.rpc_method()</span></tt> decorator.</p>
 </dd></dl>
 
 <dl class="method">
@@ -138,7 +138,7 @@ remote methods.</p>
 <dl class="class">
 <dt id="examples.calculator.manage.Root">
 <em class="property">class </em><tt class="descclassname">examples.calculator.manage.</tt><tt class="descname">Root</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/examples/calculator/manage.html#Root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.calculator.manage.Root" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add two rpc methods for testing to the <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.PulsarServerCommands" title="pulsar.apps.rpc.PulsarServerCommands"><tt class="xref py py-class docutils literal"><span class="pre">PulsarServerCommands</span></tt></a>
+<dd><p>Add two rpc methods for testing to the <a class="reference internal" href="../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands" title="pulsar.apps.rpc.mixins.PulsarServerCommands"><tt class="xref py py-class docutils literal"><span class="pre">PulsarServerCommands</span></tt></a>
 handler.</p>
 <dl class="method">
 <dt id="examples.calculator.manage.Root.rpc_dodgy_method">

@@ -315,12 +315,12 @@
 <div class="viewcode-block" id="AsyncString.insert"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Insert ``child`` into the list of :attr:`children` at ``index``.</span>
 
-<span class="sd">:param index: The index (positive integer) where to insert ``child``.</span>
-<span class="sd">:param child: String, bytes or another :class:`AsyncString`. If it is an</span>
-<span class="sd">    :class:`AsyncString`, this instance will be set as its :attr:`parent`.</span>
-<span class="sd">    If ``child`` is ``None``, this method does nothing.</span>
-
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        :param index: The index (positive integer) where to insert ``child``.</span>
+<span class="sd">        :param child: String, bytes or another :class:`AsyncString`.</span>
+<span class="sd">            If it is an :class:`.AsyncString`, this instance will be set as</span>
+<span class="sd">            its :attr:`parent`.</span>
+<span class="sd">            If ``child`` is ``None``, this method does nothing.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="c"># make sure that child is not in child</span>
         <span class="k">if</span> <span class="n">child</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">AsyncString</span><span class="p">):</span>
@@ -411,8 +411,8 @@
 </div>
 <div class="viewcode-block" id="AsyncString.http_response"><a class="viewcode-back" href="../../../../apps/wsgi/content.html#pulsar.apps.wsgi.content.AsyncString.http_response">[docs]</a>    <span class="k">def</span> <span class="nf">http_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return a, possibly, :ref:`asynchronous WSGI iterable &lt;wsgi-async&gt;`.</span>
-<span class="sd">This method asynchronously wait for :meth:`content` and subsequently</span>
-<span class="sd">starts the wsgi response.&#39;&#39;&#39;</span>
+<span class="sd">        This method asynchronously wait for :meth:`content` and subsequently</span>
+<span class="sd">        starts the wsgi response.&#39;&#39;&#39;</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
         <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span>
         <span class="n">body</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>

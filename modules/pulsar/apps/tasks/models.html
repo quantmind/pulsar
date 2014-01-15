@@ -69,9 +69,9 @@
             
   <h1>Source code for pulsar.apps.tasks.models</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">An application implements several :class:`Job`</span>
-<span class="sd">classes which specify the way each :ref:`task &lt;apps-taskqueue-task&gt;` is run.</span>
-<span class="sd">Each :class:`Job` class is a task-factory, therefore,</span>
+<span class="sd">A :ref:`task queue &lt;apps-taskqueue&gt;` application implements several</span>
+<span class="sd">:class:`Job` classes which specify the way a :class:`.Task` is run.</span>
+<span class="sd">Each :class:`Job` class is a :class:`.Task` factory, therefore,</span>
 <span class="sd">a :class:`.Task` is always associated</span>
 <span class="sd">with one :class:`Job`, which can be of two types:</span>
 
@@ -87,14 +87,14 @@
 
 <span class="sd">    class Addition(tasks.Job):</span>
 
-<span class="sd">        def __call__(self, consumer, a, b):</span>
+<span class="sd">        def __call__(self, consumer, a=0, b=0):</span>
 <span class="sd">            &quot;Add two numbers&quot;</span>
 <span class="sd">            return a+b</span>
 
 <span class="sd">The ``consumer``, instance of :class:`.TaskConsumer`,</span>
 <span class="sd">is passed by the :ref:`Task backend &lt;apps-taskqueue-backend&gt;` and should</span>
 <span class="sd">always be the first positional parameter in the callable method.</span>
-<span class="sd">The remaining (optional) positional and key-valued parameters are needed by</span>
+<span class="sd">The remaining (optional key-valued only!) parameters are needed by</span>
 <span class="sd">your job implementation.</span>
 
 <span class="sd">A :ref:`job callable &lt;job-callable&gt;` can also return a</span>
@@ -103,12 +103,12 @@
 
 <span class="sd">    class Crawler(tasks.Job):</span>
 
-<span class="sd">        def __call__(self, consumer, sample, size=10):</span>
+<span class="sd">        def __call__(self, consumer, sample=100, size=10):</span>
 <span class="sd">            response = yield http.request(...)</span>
 <span class="sd">            content = response.content</span>
 <span class="sd">            ...</span>
 
-<span class="sd">This allows for cooperative task execution on each task thread workers.</span>
+<span class="sd">This allows for cooperative task execution.</span>
 
 <span class="sd">.. _job-non-overlap:</span>
 

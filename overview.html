@@ -137,27 +137,25 @@ a combination of the two.</p>
 </div>
 <div class="section" id="applications">
 <h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
-<p>Pulsar design allows for a host of different applications to be implemented
-in an elegant and efficient way. Out of the box it is shipped with the
-the following:</p>
+<p>Pulsar design allows for a host of different asynchronous applications
+to be implemented in an elegant and efficient way.
+Out of the box it is shipped with the the following:</p>
 <ul class="simple">
-<li>Socket servers.</li>
-<li>WSGI server.</li>
-<li>JSON-RPC WSGI middleware.</li>
-<li>Web Sockets WSGI middleware.</li>
-<li>Publish/Subscribe middleware.</li>
-<li>Distributed task queue.</li>
-<li>Shell for asynchronous scripting.</li>
-<li>Asynchronous test suite.</li>
-<li>Asynchronous data stores.</li>
-<li>Application to run a <a class="reference external" href="https://www.djangoproject.com/">django</a> site with pulsar.</li>
-<li><a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> integration (python 2 only).</li>
+<li>Socket servers</li>
+<li>WSGI server</li>
+<li>JSON-RPC</li>
+<li>Web Sockets</li>
+<li>Task queue</li>
+<li>Shell</li>
+<li>Test suite</li>
+<li>Data stores</li>
+<li>Integration with <a class="reference external" href="https://www.djangoproject.com/">django</a></li>
 </ul>
 </div>
 <div class="section" id="examples">
 <span id="id1"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
 <p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications created
-using pulsar alone. It includes:</p>
+using pulsar. It includes:</p>
 <ul class="simple">
 <li>Hello world! wsgi example.</li>
 <li>An Httpbin wsgi application (similar to <a class="reference external" href="http://httpbin.org/">http://httpbin.org/</a>).</li>
@@ -196,8 +194,6 @@ of the running application.</li>
 <li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary
 returned by Actor info method.</li>
 <li><a class="reference external" href="https://pypi.python.org/pypi/ujson">ujson</a>: if installed it is used instead of the native <tt class="docutils literal"><span class="pre">json</span></tt> module.</li>
-<li><a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.tx</span></tt> application when using pulsar
-with twisted protocols.</li>
 <li><a class="reference external" href="https://www.djangoproject.com/">django</a>: required by the <tt class="docutils literal"><span class="pre">pulsar.apps.pulse</span></tt> application.</li>
 </ul>
 </div>

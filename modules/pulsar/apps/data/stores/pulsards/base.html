@@ -71,6 +71,8 @@
 <span class="sd">Tha main component for pulsar datastore clients is the :class:`.Store`</span>
 <span class="sd">class which encapsulates the essential API for communicating and executing</span>
 <span class="sd">commands on remote servers.</span>
+<span class="sd">A :class:`.Store` can also implement several methods for managing</span>
+<span class="sd">the higher level :ref:`object data mapper &lt;odm&gt;`.</span>
 
 <span class="sd">Implement a Store</span>
 <span class="sd">==================</span>
@@ -78,25 +80,33 @@
 <span class="sd">When implementing a new :class:`.Store` there are several methods which need</span>
 <span class="sd">to be covered:</span>
 
-<span class="sd"> * :meth:`Store.connect` to create a new connection</span>
-<span class="sd"> * :meth:`Store.execute` to execute a command on the store server</span>
+<span class="sd">* :meth:`Store.connect` to create a new connection</span>
+<span class="sd">* :meth:`Store.execute` to execute a command on the store server</span>
+
+<span class="sd">A new store needs to be registered via the :func:`register_store`</span>
+<span class="sd">function.</span>
+
+<span class="sd">All registered data stores are stored in the ``data_stores`` dictionary::</span>
+
+<span class="sd">    from pulsar.apps.data import data_stores</span>
+
 
 <span class="sd">API</span>
 <span class="sd">============</span>
 
-<span class="sd">create store</span>
+<span class="sd">Create store</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autofunction:: create_store</span>
 
 
-<span class="sd">start store</span>
+<span class="sd">Start store</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autofunction:: start_store</span>
 
 
-<span class="sd">register a new store</span>
+<span class="sd">Register a new store</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">.. autofunction:: register_store</span>
@@ -183,11 +193,11 @@
 <div class="viewcode-block" id="Store"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store">[docs]</a><span class="k">class</span> <span class="nc">Store</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Base class for an asynchronous :ref:`data stores &lt;data-stores&gt;`.</span>
 
-<span class="sd">    It is an :ref:`async object &lt;async-object&gt;` for accessing and retrieving</span>
+<span class="sd">    It is an :class:`.Producer` for accessing and retrieving</span>
 <span class="sd">    data from remote data servers such as redis, couchdb and so forth.</span>
 
-<span class="sd">    A :class:`Store` should not be created directly, instead the high level</span>
-<span class="sd">    :func:`.create_store` function should be used.</span>
+<span class="sd">    A :class:`Store` should not be created directly, the high level</span>
+<span class="sd">    :func:`.create_store` function should be used instead.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">compiler_class</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">default_manager</span> <span class="o">=</span> <span class="bp">None</span>
@@ -218,7 +228,8 @@
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Store.encoding"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.encoding">[docs]</a>    <span class="k">def</span> <span class="nf">encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Store encoding.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Store encoding (usually ``utf-8``)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
 </div>
     <span class="nd">@property</span>
@@ -258,24 +269,6 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-<div class="viewcode-block" id="Store.create_table"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create the table for ``model``.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">pass</span>
-</div>
-<div class="viewcode-block" id="Store.execute_transaction"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.execute_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">execute_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Execute a list of ``commands`` in a :class:`.Transaction`</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
-    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-<div class="viewcode-block" id="Store.get_model"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Fetch an instance of a ``model`` with primary key ``pk``.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-</div>
 <div class="viewcode-block" id="Store.close"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all open connections.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
@@ -283,8 +276,48 @@
 <div class="viewcode-block" id="Store.flush"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Flush the store.&#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="c">#    ODM SUPPORT</span>
+    <span class="c">#######################</span></div>
+<div class="viewcode-block" id="Store.create_table"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Create the table for ``model``.</span>
+
+<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        By default it does nothing.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span>
 </div>
+<div class="viewcode-block" id="Store.execute_transaction"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.execute_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">execute_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commands</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Execute a list of ``commands`` in a :class:`.Transaction`.</span>
+
+<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+    <span class="k">def</span> <span class="nf">compile_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="Store.get_model"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.get_model">[docs]</a>    <span class="k">def</span> <span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">pkvalue</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Fetch an instance of a ``model`` with primary key ``pkvalue``.</span>
+
+<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</div>
+<div class="viewcode-block" id="Store.has_query"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.has_query">[docs]</a>    <span class="k">def</span> <span class="nf">has_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_type</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Check if this :class:`.Store` supports ``query_type``.</span>
+
+<span class="sd">        :param query_type: a string indicating the query type to check</span>
+<span class="sd">        (``filter``, ``exclude``, ``search``).</span>
+
+<span class="sd">        This method is used by the :ref:`object data mapper &lt;odm&gt;`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="c">#    INTERNALS</span>
+    <span class="c">#######################</span></div>
     <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
+        <span class="sd">&#39;&#39;&#39;Internal initialisation&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">_buildurl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
