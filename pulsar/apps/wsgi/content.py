@@ -452,8 +452,8 @@ class Html(AsyncString):
         * ``type`` type of element, only supported for tags which accept the
           ``type`` attribute (for example the ``input`` tag).
 
-    Any other keyed-value parameter will be added as attribute, if in the set of
-    :attr:`available_attributes` or as :meth:`data`.
+    Any other keyed-value parameter will be added as attribute,
+    if in the set of:attr:`available_attributes` or as :meth:`data`.
     '''
     def __init__(self, tag, *children, **params):
         self._tag = tag

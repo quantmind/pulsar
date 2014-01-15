@@ -63,6 +63,7 @@ pulsar is already imported in this shell therefore you can
 use its API directly.
 ''' % pulsar.__version__
 
+
 class InteractiveConsole(code.InteractiveConsole):  # pragma    nocover
 
     def pulsar_banner(self):

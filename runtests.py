@@ -39,13 +39,14 @@ def run(**params):
         os.environ['pulsar_speedup'] = 'no'
     if '--coverage' in args or params.get('coverage'):
         import coverage
+        print('Start coverage')
         p = current_process()
         p._coverage = coverage.coverage(data_suffix=True)
         p._coverage.start()
     runtests(**params)
 
 
-def runtests(cov=None, **params):
+def runtests(**params):
     import pulsar
     from pulsar.utils.path import Path
     from pulsar.apps.test import TestSuite
@@ -66,7 +67,7 @@ def runtests(cov=None, **params):
                       **params).start()
     #
     if suite.cfg.coveralls:
-        from pulsar.utils.cov import coveralls
+        from pulsar.apps.test.cov import coveralls
         coveralls(strip_dirs=strip_dirs,
                   stream=suite.stream,
                   repo_token='CNw6W9flYDDXZYeStmR1FX9F4vo0MKnyX')

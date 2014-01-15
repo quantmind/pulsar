@@ -63,7 +63,6 @@ class TransactionStore(object):
         return self._models.values()
 
 
-
 class Transaction(EventHandler):
     '''Transaction class for pipelining commands to :class:`.Store`.
 

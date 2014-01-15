@@ -4,8 +4,10 @@ import sys
 from coverage.report import Reporter
 from coverage import coverage
 
-from .system import json
-from .version import gitrepo
+from pulsar import new_event_loop
+from pulsar.apps.http import HttpClient
+from pulsar.utils.system import json
+from pulsar.utils.version import gitrepo
 
 
 COVERALLS_URL = 'https://coveralls.io/api/v1/jobs'
@@ -68,21 +70,24 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
     coverage = Coverage(data_file=data_file)
     coverage.load()
     if http is None:
-        from pulsar import new_event_loop
-        from pulsar.apps.http import HttpClient
         http = HttpClient(loop=new_event_loop())
     if not service_job_id:
         service_job_id = os.environ.get('TRAVIS_JOB_ID', '')
         if service_job_id:
             service_name = 'travis-ci'
-    if not git:
-        git = gitrepo()
     data = {
         'service_job_id': service_job_id,
         'service_name': service_name or 'pulsar',
         'git': git,
         'source_files': coverage.coveralls(strip_dirs, ignore_errors),
     }
+    if not git:
+        try:
+            git = gitrepo()
+        except Exception:   # pragma    nocover
+            pass
+    if git:
+        data['git'] = git
     if repo_token:
         data['repo_token'] = repo_token
     url = url or COVERALLS_URL

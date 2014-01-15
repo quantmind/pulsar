@@ -198,6 +198,7 @@ class AutoIdField(Field):
 
 class IntegerField(Field):
     repr_type = 'numeric'
+
     def to_python(self, value, store=None):
         try:
             return int(value)
@@ -209,6 +210,7 @@ class IntegerField(Field):
 
 class BooleanField(Field):
     repr_type = 'bool'
+
     def to_python(self, value, store=None):
         try:
             return bool(int(value))
