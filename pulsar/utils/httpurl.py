@@ -601,8 +601,9 @@ class Headers(object):
 
     def __setitem__(self, key, value):
         key = header_field(key, self.all_headers, self.strict)
-        if key and value is not None:
+        if key and value:
             if not isinstance(value, list):
+                assert isinstance(value, str)
                 value = [value]
             self._headers[key] = value
 
@@ -626,20 +627,20 @@ class Headers(object):
             return default
 
     def get_all(self, key, default=None):
-        '''Get the values at header field ``key`` as a list rather than a
-string separated by comma (which is returned by the :meth:`get` method).
-For example::
+        '''Get the values at header ``key`` as a list rather than a
+        string separated by comma (which is returned by the
+        :meth:`get` method). For example::
 
-    >>> from pulsar.utils.httpurl import Headers
-    >>> h = Headers(kind='client')
-    >>> h.add_header('accept-encoding', 'gzip')
-    >>> h.add_header('accept-encoding', 'deflate')
-    >>> h.get_all('accept-encoding')
+            >>> from pulsar.utils.httpurl import Headers
+            >>> h = Headers(kind='client')
+            >>> h.add_header('accept-encoding', 'gzip')
+            >>> h.add_header('accept-encoding', 'deflate')
+            >>> h.get_all('accept-encoding')
 
-results in::
+        results in::
 
-    ['gzip', 'deflate']
-'''
+            ['gzip', 'deflate']
+        '''
         return self._headers.get(header_field(key), default)
 
     def has(self, field, value):
@@ -672,6 +673,7 @@ results in::
         '''
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
+            assert isinstance(value, str)
             values = self._headers.get(key, [])
             value = value.strip()
             if params:

@@ -1810,7 +1810,7 @@ class Storage(object):
                     request[2].decode('utf-8')))
                 channels = []
                 for channel in self._channels:
-                    if pre.match(channel.decode('utf-8', errors='ignore')):
+                    if pre.match(channel.decode('utf-8', 'ignore')):
                         channels.append(channel)
             else:
                 channels = list(self._channels)
