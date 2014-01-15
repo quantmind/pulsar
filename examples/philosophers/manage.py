@@ -132,7 +132,6 @@ class DiningPhilosophers(pulsar.Application):
         * try to :meth:`pickup_fork`, if he has less than 2 forks.
         '''
         loop = philosopher._loop
-        eaten = self.eaten
         forks = self.forks
         if forks:
             #
@@ -142,7 +141,6 @@ class DiningPhilosophers(pulsar.Application):
                 self.eaten += 1
                 philosopher.logger.info("eating... So far %s times",
                                         self.eaten)
-                pick_up_fork = False
                 eat_time = 2*self.cfg.eating_period*random.random()
                 return loop.call_later(eat_time, self.release_forks,
                                        philosopher)

@@ -1,10 +1,8 @@
 import time
-from hashlib import sha1
 
-from pulsar import get_actor, coroutine_return, HttpException
+from pulsar import HttpException
 from pulsar.apps import ws
 from pulsar.apps.data import PubSubClient, create_store
-from pulsar.utils.log import lazyproperty
 from pulsar.utils.system import json
 from pulsar.utils.security import random_string
 

@@ -44,12 +44,12 @@ try:
     import pulsar
 except ImportError:  # pragma nocover
     sys.path.append('../../')
-    import pulsar
-from pulsar import get_actor, coroutine_return
+
+from pulsar import get_actor
 from pulsar.apps.wsgi import Router, WsgiHandler, LazyWsgi, WSGIServer
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
-from pulsar.apps.data import (create_store, start_store, PubSubClient,
+from pulsar.apps.data import (create_store, PubSubClient,
                               DEFAULT_PULSAR_STORE_ADDRESS)
 from pulsar.utils.system import json
 from pulsar.utils.pep import to_string

@@ -31,18 +31,19 @@ class TestShell(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def testApp(self):
+    def test_app(self):
         cfg = self.app_cfg
         self.assertEqual(cfg.name, 'shell')
         self.assertEqual(cfg.callable, None)
         self.assertEqual(cfg.console_class, DummyConsole)
-        #self.assertEqual(cfg.workers, 1)
-        #self.assertEqual(cfg.concurrency, 'thread')
+        self.assertEqual(cfg.workers, 0)
+        self.assertEqual(cfg.thread_workers, 1)
+        self.assertEqual(cfg.concurrency, 'thread')
         self.assertEqual(decode_line('bla'), 'bla')
 
     @run_on_arbiter
-    def testTestWorker(self):
+    def test_test_worker(self):
         arbiter = get_actor()
         monitor = arbiter.get_actor('shell')
-        yield async_while(5, lambda: not monitor.managed_actors)
-        self.assertEqual(len(monitor.managed_actors), 1)
+        yield async_while(2, lambda: not monitor.managed_actors)
+        self.assertEqual(len(monitor.managed_actors), 0)

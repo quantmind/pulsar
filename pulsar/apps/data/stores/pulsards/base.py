@@ -126,7 +126,6 @@ class Store(Producer):
 
     It is an :class:`.Producer` for accessing and retrieving
     data from remote data servers such as redis, couchdb and so forth.
-
     A :class:`Store` should not be created directly, the high level
     :func:`.create_store` function should be used instead.
     '''
@@ -183,25 +182,23 @@ class Store(Producer):
         raise NotImplementedError
 
     def client(self):
-        '''Get a client for the Store
+        '''Get a client for the Store if implemented
         '''
         raise NotImplementedError
 
     def pubsub(self, **kw):
-        '''Obtain a :class:`PubSub` handler for the Store if implemented.
+        '''Obtain a :class:`PubSub` handler for the Store if implemented
         '''
         raise NotImplementedError
 
     def create_database(self, dbname, **kw):
-        '''Create a new database in this store.
-
-        This is a pure virtual method and therefore only some :class:`Store`
-        implementation expose it.
+        '''Create a new database in this store if implemented
         '''
         raise NotImplementedError
 
     def close(self):
-        '''Close all open connections.'''
+        '''Close all open connections
+        '''
         raise NotImplementedError
 
     def flush(self):

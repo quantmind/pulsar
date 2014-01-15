@@ -14,6 +14,7 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
+
 from pulsar.apps import ws, wsgi
 from pulsar.utils.pep import range
 from pulsar.utils.system import json

@@ -43,7 +43,7 @@ except ImportError:  # pragma nocover
 
 from random import normalvariate
 
-from pulsar import async, coroutine_return
+from pulsar import coroutine_return
 from pulsar.apps import rpc, wsgi
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 from pulsar.utils.pep import range

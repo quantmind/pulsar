@@ -1,6 +1,5 @@
 '''Tests the taskqueue local backend.'''
 from random import random
-from time import time
 
 from pulsar import send, multi_async
 from pulsar.apps import tasks, rpc
@@ -69,16 +68,6 @@ class TaskQueueBase(object):
 
 class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
 
-    def test_rpc_next_scheduled_tasks(self):
-        next = yield self.proxy.next_scheduled_tasks()
-        self.assertTrue(next)
-        self.assertEqual(len(next), 2)
-        next = yield self.proxy.next_scheduled_tasks(jobnames=['testperiodic'])
-        self.assertTrue(next)
-        self.assertEqual(len(next), 2)
-        self.assertEqual(next[0], 'testperiodic')
-        self.assertTrue(next[1] >= 0)
-
     def test_run_new_simple_task(self):
         r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
         r = yield self.proxy.wait_for_task(r)
@@ -112,8 +101,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         self.assertEqual(app.backend.backlog, self.concurrent_tasks)
         self.assertTrue(app.backend.registry)
         self.assertEqual(app.cfg.concurrency, self.concurrency)
-        backend = app.backend
-        #self.assertFalse(backend.entries)
         job = app.backend.registry['runpycode']
         self.assertEqual(job.type, 'regular')
         self.assertTrue(job.can_overlap)
@@ -192,12 +179,6 @@ class TestTaskQueueOnThread(TaskQueueBase, unittest.TestCase):
         r = yield self.proxy.wait_for_task(r)
         self.assertEqual(r['status'], tasks.SUCCESS)
         self.assertEqual(r['result'], 3)
-
-    def test_run_new_simple_task(self):
-        r = yield self.proxy.queue_task(jobname='addition', a=40, b=50)
-        r = yield self.proxy.wait_for_task(r)
-        self.assertEqual(r['status'], tasks.SUCCESS)
-        self.assertEqual(r['result'], 90)
 
     def test_not_overlap(self):
         sec = 2 + random()

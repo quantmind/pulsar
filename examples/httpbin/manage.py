@@ -206,9 +206,9 @@ class HttpBin(wsgi.Router):
 
         Try sending lots of requests
         '''
-        scheme = 'wss' if request.is_secure else 'ws'
-        host = request.get('HTTP_HOST')
-        address = '%s://%s/stats' % (scheme, host)
+        #scheme = 'wss' if request.is_secure else 'ws'
+        #host = request.get('HTTP_HOST')
+        #address = '%s://%s/stats' % (scheme, host)
         doc = HtmlDocument(title='Live server stats', media_path='/assets/')
         #docs.head.scripts
         return doc.http_response(request)

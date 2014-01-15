@@ -107,15 +107,6 @@ class TestWebSocketThread(unittest.TestCase):
         message = yield handler.get()
         self.assertEqual(message, 'PONG: TESTING CLIENT PING')
 
-    def test_pong(self):
-        c = HttpClient()
-        handler = Echo()
-        ws = yield c.get(self.ws_echo, websocket_handler=handler)
-        #
-        ws.ping('TESTING CLIENT PING')
-        message = yield handler.get()
-        self.assertEqual(message, 'PONG: TESTING CLIENT PING')
-
     def test_close(self):
         c = HttpClient()
         handler = Echo()

@@ -79,8 +79,8 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import (coroutine_return, Pool, in_loop_thread, get_event_loop,
-                    new_event_loop, Connection, AbstractClient)
+from pulsar import (coroutine_return, Pool, in_loop_thread, Connection,
+                    AbstractClient)
 from pulsar.apps.socket import SocketServer
 
 

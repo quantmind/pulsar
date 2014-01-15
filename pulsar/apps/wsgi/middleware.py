@@ -1,23 +1,18 @@
 '''
-A WSGI Middleware is a function or callable object similar to
+A WSGI Middleware is a function or callable object similar to a
 :ref:`WSGI application handlers <wsgi-handlers>`
-with the only difference that they can return ``None``.
+with the only difference in that it can also return ``None``.
 
 Middleware can be used in conjunction with a
 :ref:`WsgiHandler <wsgi-handler>` or any
 other handler which iterate through a list of middleware in a similar
 way (for example django wsgi handler).
 
-Here we introduce the :class:`Router` and :class:`MediaRouter` to handle
-requests on given urls. Pulsar is shipped with
-:ref:`additional wsgi middleware <wsgi-additional-middleware>` for manipulating
-the environment before a client response is returned.
-
 .. important::
 
     An asynchronous WSGI middleware is a callble accepting a WSGI
-    ``environ`` and ``start_response`` as the only input paramaters.
-    It must returns an :ref:`asynchronous iterator <wsgi-async-iter>`
+    ``environ`` and ``start_response`` as the only input paramaters and
+    it must returns an :ref:`asynchronous iterator <wsgi-async-iter>`
     or nothing.
 
 The two most important wsgi middleware in pulsar are:
@@ -25,8 +20,8 @@ The two most important wsgi middleware in pulsar are:
 * the :ref:`Router <wsgi-router>` for serving dynamic web applications
 * the :ref:`MediaRouter <wsgi-media-router>` for serving static files
 
-In addition, there are several WSGI middlewares which don't
-serve request but instead perform initialisation and sanity checks.
+In addition, pulsar provides with the following four middlewares which don't
+serve requests, instead they perform initialisation and sanity checks.
 
 
 .. _wsgi-additional-middleware:

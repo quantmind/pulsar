@@ -26,11 +26,14 @@ sub-routers for handling additional urls::
 Router
 =====================
 
-The ``middleware`` constructed can be used to serve ``get`` and ``post``
-methods at ``/bla`` url.
+The :ref:`middleware <wsgi-middleware>` constructed in the snippet above
+handles ``get`` and ``post`` methods at the ``/bla`` url.
 The :class:`Router` introduces a new element into pulsar WSGI handlers, the
 :ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
 WSGI environ.
+
+For an exaustive example on how to use the :class:`Router` middleware make sure
+you check out the :ref:`HttpBin example <tutorials-httpbin>`.
 
 .. autoclass:: Router
    :members:

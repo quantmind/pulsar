@@ -54,8 +54,8 @@ def check_twisted(coro_or_future, loop):
     '''
     if isinstance(coro_or_future, TwistedDeferred):
         d = Deferred(loop)
-        d._twisted_deferred = obj
-        obj.addCallbacks(
+        d._twisted_deferred = coro_or_future
+        coro_or_future.addCallbacks(
             d.callback, lambda e: d.callback(Failure((e.type, e.value, e.tb))))
         return d
 

@@ -17,14 +17,14 @@ The shell has already ``pulsar``, :func:`get_actor`, :func:`spawn`,
 :func:`send` and the :class:`Actor` class in the global dictionary::
 
     >>> pulsar.__version__
-    0.5.0
+    0.8.0
     >>> actor = get_actor()
     >>> actor.info_state
     'running'
     >>> a = spawn()
     >>> a.done()
     True
-    >>> proxy = a.result
+    >>> proxy = a.result()
 
 
 Implementation
@@ -55,12 +55,21 @@ else:   # pragma    nocover
         return line
 
 
+_pshell_help = '''
+
+Welcome to Pulsar shell %s! This is an interactive help utility
+
+pulsar is already imported in this shell therefore you can
+use its API directly.
+''' % pulsar.__version__
+
 class InteractiveConsole(code.InteractiveConsole):  # pragma    nocover
 
     def pulsar_banner(self):
         cprt = ('Type "help", "copyright", "credits" or "license" for '
                 'more information.')
-        return ("Python %s on %s\n%s\nPulsar %s\n" %
+        return (("Python %s on %s\n%s\nPulsar %s is loaded\n"
+                 "Type pulsar.help() for more information\n") %
                 (sys.version, sys.platform, cprt, pulsar.__version__))
 
     def setup(self, banner=None):
@@ -95,26 +104,32 @@ class InteractiveConsole(code.InteractiveConsole):  # pragma    nocover
 
 class PulsarShell(pulsar.Application):
     name = 'shell'
-    cfg = pulsar.Config(loglevel='none', process_name='Pulsar shell',
+    cfg = pulsar.Config(loglevel='none',
+                        process_name='Pulsar shell',
                         console_class=InteractiveConsole)
 
     def monitor_start(self, monitor):
-        monitor.cfg.set('workers', 1)
+        '''make sure :ref:`workers <setting-workers>` and
+        :ref:`thread_workers <setting-thread_workers>` are both set to 1 and
+        :ref:`concurrency <setting-concurrency>` is ``thread``.
+        '''
+        monitor.cfg.set('workers', 0)
+        monitor.cfg.set('thread_workers', 1)
         monitor.cfg.set('concurrency', 'thread')
 
     def worker_start(self, worker):     # pragma    nocover
-        '''When the worker starts, create the :attr:`Actor.thread_pool`
-with one thread only and send the :meth:`interact` method to it.'''
+        '''When the worker starts, create the :attr:`~.Actor.thread_pool`
+        and send the :meth:`interact` method to it.'''
         worker.create_thread_pool()
         worker.thread_pool.apply(self.start_shell, worker)
 
     def start_shell(self, worker):
+        pulsar.help = lambda: print(_pshell_help)
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
                             'spawn': pulsar.spawn,
-                            'send': pulsar.send,
-                            'Actor': pulsar.Actor}
+                            'send': pulsar.send}
         try:  # Try activating rlcompleter, because it's handy.
             import readline
         except ImportError:  # pragma    nocover
@@ -132,6 +147,7 @@ with one thread only and send the :meth:`interact` method to it.'''
         '''Handled by the :attr:`Actor.thread_pool`'''
         try:
             self.console.interact(self.cfg.timeout)
-            worker.thread_pool.apply(self.interact, worker)
         except:
-            worker.send('arbiter', 'stop')
+            worker._loop.stop()
+        else:
+            worker.thread_pool.apply(self.interact, worker)

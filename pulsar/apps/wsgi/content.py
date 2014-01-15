@@ -1,17 +1,20 @@
-'''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes
-handling asynchronous content on a WSGI server.
+'''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes for
+handling asynchronous content within a :ref:`WSGI handler <wsgi-async> or
+:ref:`middleware <wsgi-middleware>`.
 
-This module is used by pulsar instead of a template engine, its main
-purpose is to do what a web framework does, to provide a set of tools working
-together to concatenate ``strings`` to return as a response to and HTTP client.
+These classes can operate instead or in conjunction with a template engine,
+their main purpose is to do what a web framework does: to provide a set of
+tools working together to concatenate ``strings`` to return as a
+response to an :ref:`HTTP client request <app-wsgi-request>`.
 
-A string can be Html, Json, plain text, XML or any other valid HTTP
+A string can be ``html``, ``json``, ``plain text`` or any other valid HTTP
 content type.
 
 The main class of this module is the :class:`AsyncString`, which can be
 considered as the atomic component of an asynchronous web framework.
 It is a smart way for concatenating asynchronous strings::
 
+    >>> from pulsar.apps.wsgi import AsyncString
     >>> string = AsyncString('Hello')
     >>> string.render()
     'Hello'
@@ -29,7 +32,6 @@ An :class:`AsyncString` can only be rendered once, and it accepts
     MultiDeferred (pending)
     >>> value.done()
     False
-    >>>
 
 Once the deferred is done, we have the concatenated string::
 
@@ -40,15 +42,18 @@ Once the deferred is done, we have the concatenated string::
     >>> value.result()
     'Hello, World!'
 
-.. note::
+Design
+===============
 
-    The :meth:`AsyncString.do_stream` method is responsible for the streaming
-    of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
-    It can be overwritten by subclasses to customise the way an
-    :class:`AsyncString` streams its :attr:`AsyncString.children`.
+The :meth:`~AsyncString.do_stream` method is responsible for the streaming
+of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
+It can be overwritten by subclasses to customise the way an
+:class:`AsyncString` streams its :attr:`~AsyncString.children`.
 
-    The :meth:`AsyncString.to_string` method is responsible for the
-    concatenation of ``strings``. it can be customised by subclasses.
+On the other hand, the :meth:`~AsyncString.to_string` method is responsible
+for the concatenation of ``strings`` and, like :meth:`~AsyncString.do_stream`,
+it can be customised by subclasses.
+
 
 Asynchronous String
 =====================
@@ -430,26 +435,26 @@ dictionary of ``defaults`` parameters. For example::
 
 
 class Html(AsyncString):
-    '''An :class:`AsyncString` for html content.
+    '''An :class:`AsyncString` for ``html`` content.
 
-The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
+    The :attr:`~AsyncString.content_type` attribute is set to ``text/html``.
 
-:param tag: Set the :attr:`tag` attribute. Must be given and can be ``None``.
-:param children: Optional children which will be added via the
-    :meth:`AsyncString.append` method.
-:param params: Optional keyed-value parameters.
+    :param tag: Set the :attr:`tag` attribute. Must be given and can be
+        ``None``.
+    :param children: Optional children which will be added via the
+        :meth:`~AsyncString.append` method.
+    :param params: Optional keyed-value parameters
+        including:
 
-Special (optional) parameters:
+        * ``cn`` class name or list of class names.
+        * ``attr`` dictionary of attributes to add.
+        * ``data`` dictionary of data to add (rendered as HTML data attribute).
+        * ``type`` type of element, only supported for tags which accept the
+          ``type`` attribute (for example the ``input`` tag).
 
-* ``cn`` class name or list of class names.
-* ``attr`` dictionary of attributes to add.
-* ``data`` dictionary of data to add (rendered as HTML data).
-* ``type`` type of element, only supported for tags which accept the ``type``
-  attribute (for example the ``input`` tag).
-
-Any other keyed-value parameter will be added as attribute, if in the set of
-:attr:`available_attributes` or as :meth:`data`.
-'''
+    Any other keyed-value parameter will be added as attribute, if in the set of
+    :attr:`available_attributes` or as :meth:`data`.
+    '''
     def __init__(self, tag, *children, **params):
         self._tag = tag
         self._extra = {}
@@ -549,7 +554,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
 
     def attr(self, *args):
         '''Add the specific attribute to the attribute dictionary
-with key ``name`` and value ``value`` and return ``self``.'''
+        with key ``name`` and value ``value`` and return ``self``.'''
         attr = self._attr
         if not args:
             return attr or {}
@@ -973,20 +978,20 @@ request object and a dictionary for rendering children with a key.
 
 
 class HtmlDocument(Html):
-    '''HTML5 asynchronous document.
+    '''A :class:`.Html` component rendered as the HTML5 document.
 
     An instance of this class can be obtained via the
-    :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
+    :attr:`~.WsgiRequest.html_document` attribute.
 
-.. attribute:: head
+    .. attribute:: head
 
-    The :class:`Head` part of this :class:`HtmlDocument`
+        The :class:`Head` part of this :class:`HtmlDocument`
 
-.. attribute:: body
+    .. attribute:: body
 
-    The :class:`Body` part of this :class:`HtmlDocument`
+        The :class:`Body` part of this :class:`HtmlDocument`
 
-'''
+    '''
     def __init__(self, title=None, media_path='/media/', charset=None,
                  **params):
         super(HtmlDocument, self).__init__(None, **params)

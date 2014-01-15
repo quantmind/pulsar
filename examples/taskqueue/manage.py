@@ -36,7 +36,7 @@ except ImportError:  # pragma    nocover
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar.utils.path import Path
+
 from pulsar.apps import rpc, tasks, wsgi
 
 TASK_PATHS = ['sampletasks.*']

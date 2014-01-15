@@ -1,11 +1,4 @@
 '''Tests the taskqueue redis backend.'''
-try:
-    import stdnet
-except ImportError:
-    stdnet = None
-
-from pulsar.apps.test import unittest
-
 from . import test_pulsards
 
 
