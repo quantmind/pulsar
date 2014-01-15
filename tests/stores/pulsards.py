@@ -35,8 +35,8 @@ class StoreMixin(object):
                           concurrency=cls.cfg.concurrency,
                           redis_py_parser=cls.redis_py_parser)
         cls.pulsar_app_cfg = yield pulsar.send('arbiter', 'run', server)
-        uri = 'pulsar://%s:%s' % cls.pulsar_app_cfg.addresses[0]
-        cls.store = cls.create_store('%s/9' % uri)
+        cls.pulsards_uri = 'pulsar://%s:%s' % cls.pulsar_app_cfg.addresses[0]
+        cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
 
     @classmethod
     def tearDownClass(cls):
@@ -1015,7 +1015,8 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         yield cls.create_pulsar_store()
-        cls.sync_store = cls.create_store('%s/10' % uri, loop=new_event_loop())
+        cls.sync_store = cls.create_store('%s/10' % cls.pulsards_uri,
+                                          loop=new_event_loop())
         cls.client = cls.store.client()
 
 

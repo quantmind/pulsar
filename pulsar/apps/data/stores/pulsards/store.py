@@ -111,8 +111,8 @@ class PulsarStore(Store):
         pipe = self.pipeline()
         # loop through models
         for tmodel in transaction.models():
-            if rmodel.dirty:
-                pass
+            if tmodel.dirty:
+                raise NotImplementedError
 
         for command in transaction.commands:
             action = command.action
