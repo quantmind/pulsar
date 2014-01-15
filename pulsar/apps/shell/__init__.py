@@ -125,7 +125,7 @@ class PulsarShell(pulsar.Application):
         worker.thread_pool.apply(self.start_shell, worker)
 
     def start_shell(self, worker):
-        pulsar.help = lambda: print(_pshell_help)
+        pulsar.help = self._show_help
         imported_objects = {'pshell': self,
                             'pulsar': pulsar,
                             'get_actor': pulsar.get_actor,
@@ -152,3 +152,6 @@ class PulsarShell(pulsar.Application):
             worker._loop.stop()
         else:
             worker.thread_pool.apply(self.interact, worker)
+
+    def _show_help(self):
+        print(_pshell_help)

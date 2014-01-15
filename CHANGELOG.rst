@@ -77,7 +77,7 @@ Ver. 0.8.0
   * The :ref:`shell application <apps-shell>` runs on a worker thread in the
     arbiter domain.
 
-* **1,141 regression tests**, **91% coverage**.
+* **1,135 regression tests**, **91% coverage**.
 
 Ver. 0.7.3 - 2013-Dec-12
 ===========================

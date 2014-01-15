@@ -6,7 +6,7 @@ from . import base
 
 class TestHttpClient(base.TestHttpClient):
 
-    def test_connect(self):
+    def __test_connect(self):
         http = self.client()
         p = urlparse(self.uri)
         response = yield http.connect(p.netloc)

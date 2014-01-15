@@ -134,10 +134,10 @@ class TestTestWorker(unittest.TestCase):
                                send('arbiter', 'echo', 'ciao!'),
                                send('arbiter', 'run', wait, 2.1),
                                send('arbiter', 'echo', 'ciao again!')))
-        self.assertTrue(m[0] >= 1.2)
+        self.assertTrue(m[0] >= 1.1)
         self.assertEqual(m[1], 'pong')
         self.assertEqual(m[2], 'ciao!')
-        self.assertTrue(m[3] >= 2.1)
+        self.assertTrue(m[3] >= 2.0)
         self.assertEqual(m[4], 'ciao again!')
 
     def test_tasks(self):
