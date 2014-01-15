@@ -15,6 +15,18 @@ class Odm(StoreMixin):
             mapper.register(model)
         return mapper
 
+    def test_mapper(self):
+        mapper = self.mapper()
+        self.assertEqual(mapper.default_store, self.store)
+        mapper.register(Task)
+        self.assertEqual(mapper.task._store, self.store)
+        self.assertTrue(str(mapper))
+
+    def test_model(self):
+        o = odm.Model(bla=1, foo=3)
+
+class next_version:
+
     def test_insert(self):
         mapper = self.mapper(User)
         user = mapper.user
@@ -26,18 +38,7 @@ class Odm(StoreMixin):
         qs = mapper.user.filter(username='foo')
         result = yield qs.all()
 
-class d:
-    def test_mapper(self):
-        mapper = self.mapper()
-        self.assertEqual(mapper.default_store, self.store)
-        mapper.register(Task)
-        self.assertEqual(mapper.task._store, self.store)
-        self.assertTrue(str(mapper))
-
-    def test_model(self):
-        o = odm.Model(bla=1, foo=3)
-
-    def __test_new_instance(self):
+    def test_new_instance(self):
         models = self.mapper(Task)
         task = yield models.task.new(id='bjbhjscbhj', name='foo')
         self.assertEqual(task['id'], 'bjbhjscbhj')

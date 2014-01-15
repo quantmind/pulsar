@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-import sys, os
+import sys
+import os
+from datetime import date
 os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
@@ -13,6 +15,7 @@ sys.path.insert(0, ext_dir)
 import pulsar
 import runtests # so that it import stdnet if available
 
+year = date.today().year
 version = pulsar.__version__
 release = version
 
@@ -45,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pulsar'
-copyright = '2011-2013, Luca Sbardella'
+copyright = '2011-%s, %s' % (year, pulsar.__author__)
 
 html_theme = 'pulsar'
 pygments_style = 'sphinx'

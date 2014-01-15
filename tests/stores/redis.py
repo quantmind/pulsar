@@ -1,9 +1,9 @@
 from pulsar import new_event_loop, HAS_C_EXTENSIONS
 
-from .pulsards import unittest, RedisCommands, create_store
+from .pulsards import unittest, RedisCommands, Scripting, create_store
 
 
-class TestRedisStore(RedisCommands, unittest.TestCase):
+class TestRedisStore(RedisCommands, Scripting, unittest.TestCase):
     store = None
 
     @classmethod

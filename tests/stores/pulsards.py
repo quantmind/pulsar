@@ -984,9 +984,16 @@ class RedisCommands(StoreMixin):
         result = yield self.client.watch(key1)
         self.assertEqual(result, 1)
 
-
     ###########################################################################
-    ##    SCRIPTING
+    ##    SYNCHRONOUS CLIENT
+    def test_sync(self):
+        client = self.sync_store.client()
+        self.assertFalse(client.store._loop.is_running())
+        self.assertEqual(client.echo('Hello'), b'Hello')
+
+
+class Scripting(object):
+
     def test_eval(self):
         result = yield self.client.eval('return "Hello"')
         self.assertEqual(result, b'Hello')
@@ -1000,13 +1007,6 @@ class RedisCommands(StoreMixin):
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], [b'a', b'b'])
         self.assertEqual(result[1], [b'first', b'second', b'third'])
-
-    ###########################################################################
-    ##    SYNCHRONOUS CLIENT
-    def test_sync(self):
-        client = self.sync_store.client()
-        self.assertFalse(client.store._loop.is_running())
-        self.assertEqual(client.echo('Hello'), b'Hello')
 
 
 class TestPulsarStore(RedisCommands, unittest.TestCase):

@@ -1,3 +1,7 @@
+'''
+The :mod:`pulsar.apps.wsgi.utils` module include several utilities used
+by various components in the :ref:`wsgi application <apps-wsgi>`
+'''
 import time
 import re
 import textwrap
@@ -207,12 +211,12 @@ class dump_environ(object):
 
 
 def handle_wsgi_error(environ, failure):
-    '''The default handler for errors while serving an Http requests.
+    '''The default error handler while serving a WSGI request.
 
-:parameter environ: The WSGI environment.
-:parameter failure: a :class:`Failure`.
-:return: a :class:`WsgiResponse`
-'''
+    :parameter environ: The WSGI environment.
+    :parameter failure: a :class:`.Failure`.
+    :return: a :class:`.WsgiResponse`
+    '''
     request = wsgi_request(environ)
     response = request.response
     error = failure.error
