@@ -8,7 +8,7 @@ from .protocols import Producer
 from .queues import Queue, Full
 
 
-__all__ = ['Pool', 'PoolConnection', 'AbstractClient']
+__all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
 
 
 class Pool(AsyncObject):
@@ -240,3 +240,37 @@ class AbstractClient(Producer):
           has been called back).
         '''
         return multi_async([callable(*args, **kwargs) for _ in range(times)])
+
+
+class AbstractUdpClient(Producer):
+    '''A :class:`.Producer` for a client udp connections.
+    '''
+    ONE_TIME_EVENTS = ('finish',)
+
+    def __repr__(self):
+        return self.__class__.__name__
+    __str__ = __repr__
+
+    def create_endpoint(self):
+        '''Abstract method for creating a connection.
+        '''
+        raise NotImplementedError
+
+    def close(self, async=True, timeout=5):
+        '''Close all idle connections.
+        '''
+        return self.fire_event('finish')
+
+    def abort(self):
+        ''':meth:`close` all connections without waiting for active
+        connections to finish.
+        '''
+        return self.close(async=False)
+
+    def create_datagram_endpoint(self, protocol_factory=None, **kw):
+        '''Helper method for creating a connection to an ``address``.
+        '''
+        protocol_factory = protocol_factory or self.create_protocol
+        _, protocol = yield self._loop.create_datagram_endpoint(
+            protocol_factory, **kw)
+        coroutine_return(protocol)

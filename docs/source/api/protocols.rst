@@ -50,11 +50,24 @@ Protocols
 =================
 
 
+PulsarProtocol
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: PulsarProtocol
+   :members:
+   :member-order: bysource
+
 Protocol
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 .. autoclass:: Protocol
    :members:
    :member-order: bysource
+
+DatagramProtocol
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: DatagramProtocol
+   :members:
+   :member-order: bysource
+
 
 Connection
 ~~~~~~~~~~~~~~

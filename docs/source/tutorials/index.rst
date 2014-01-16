@@ -45,7 +45,6 @@ These sections cover **pulsar internals** for the curious reader.
    signal
    sync
    benchmarking
-   lua
    cextensions
 
 

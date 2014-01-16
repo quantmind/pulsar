@@ -4,16 +4,16 @@ from pulsar.utils.structures import OrderedDict
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ECONNREFUSED, BUFFER_MAX_SIZE)
 
+from .defer import coroutine_return
 from .internet import SocketTransport
 from .consts import LOG_THRESHOLD_FOR_CONNLOST_WRITES
 
 
-class SocketDatagramTransport(SocketTransport):
+class DatagramTransport(SocketTransport):
 
-    def __init__(self, loop, sock, protocol, address=None, **kwargs):
+    def __init__(self, loop, sock, protocol, address=None, **kw):
         self._address = address
-        super(SocketDatagramTransport, self).__init__(loop, sock,
-                                                      protocol, **kwargs)
+        super(DatagramTransport, self).__init__(loop, sock, protocol, **kw)
 
     def _do_handshake(self):
         self._loop.add_reader(self._sock_fd, self._ready_read)
@@ -141,11 +141,12 @@ def create_datagram_endpoint(loop, protocol_factory, local_addr,
 
         if not addr_pairs_info:
             raise ValueError('can not get address information')
+
     exceptions = []
+
     for ((family, proto),
          (local_address, remote_address)) in addr_pairs_info:
         sock = None
-        l_addr = None
         r_addr = None
         try:
             sock = socket.socket(
@@ -154,7 +155,6 @@ def create_datagram_endpoint(loop, protocol_factory, local_addr,
             sock.setblocking(False)
             if local_addr:
                 sock.bind(local_address)
-                l_addr = sock.getsockname()
             if remote_addr:
                 yield loop.sock_connect(sock, remote_address)
                 r_addr = remote_address
@@ -166,7 +166,7 @@ def create_datagram_endpoint(loop, protocol_factory, local_addr,
             break
     else:
         raise exceptions[0]
+
     protocol = protocol_factory()
-    transport = SocketDatagramTransport(loop, sock, protocol, r_addr,
-                                        extra={'addr': l_addr})
-    yield transport, protocol
+    transport = SocketDatagramTransport(loop, sock, protocol, r_addr)
+    coroutine_return((transport, protocol))

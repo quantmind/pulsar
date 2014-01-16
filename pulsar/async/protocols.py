@@ -11,9 +11,11 @@ from .access import asyncio, get_event_loop, new_event_loop
 
 __all__ = ['ProtocolConsumer',
            'Protocol',
+           'DatagramProtocol',
            'Connection',
            'Producer',
-           'TcpServer']
+           'TcpServer',
+           'UdpServer']
 
 
 BIG = 2**31
@@ -201,10 +203,10 @@ class ProtocolConsumer(EventHandler):
         return result
 
 
-class Protocol(EventHandler, asyncio.Protocol):
-    '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`.
+class PulsarProtocol(EventHandler):
+    '''Base class for both :class:`Protocol` and :class:`DatagramProtocol`.
 
-    A :class:`Protocol` is an :class:`.EventHandler` which has
+    A :class:`PulsarProtocol` is an :class:`.EventHandler` which has
     two :ref:`one time events <one-time-event>`:
 
     * ``connection_made``
@@ -213,13 +215,12 @@ class Protocol(EventHandler, asyncio.Protocol):
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
 
     _transport = None
-    _current_consumer = None
     _idle_timeout = None
     _address = None
     _type = 'server'
 
     def __init__(self, session=1, producer=None, timeout=0):
-        super(Protocol, self).__init__()
+        super(PulsarProtocol, self).__init__()
         self._session = session
         self._timeout = timeout
         self._producer = producer
@@ -350,6 +351,15 @@ class Protocol(EventHandler, asyncio.Protocol):
         if self._idle_timeout:
             self._idle_timeout.cancel()
             self._idle_timeout = None
+
+
+class Protocol(PulsarProtocol, asyncio.Protocol):
+    '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`
+    '''
+
+
+class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
+    pass
 
 
 class Connection(Protocol):
@@ -674,3 +684,41 @@ class TcpServer(Producer):
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
         return multi_async(all)
+
+
+class UdpServer(TcpServer):
+
+    @in_loop
+    def start_serving(self, **kw):
+        '''Start serving.
+
+        :param backlog: Number of maximum connections
+        :param sslcontext: optional SSLContext object.
+        :return: a :class:`.Deferred` called back when the server is
+            serving the socket.'''
+        if hasattr(self, '_params'):
+            address = self._params['address']
+            sockets = self._params['sockets']
+            del self._params
+            create_server = self._loop.create_datagram_endpoint
+            try:
+                transports = []
+                if sockets:
+                    for sock in sockets:
+                        protocol = self.create_protocol()
+                        transport = SocketDatagramTransport(self._loop, sock,
+                                                            protocol)
+                        transports.append(transport)
+                else:
+                    transport, _ = yield create_server(self.create_protocol,
+                                                       local_addr=adress)
+                    transports.append(transport)
+                self._server = transports
+                self._started = self._loop.time()
+                for sock in self._server:
+                    address = sock.getsockname()
+                    self.logger.info('%s serving on %s', self._name,
+                                     format_address(address))
+                self.fire_event('start')
+            except Exception:
+                self.fire_event('start', sys.exc_info())

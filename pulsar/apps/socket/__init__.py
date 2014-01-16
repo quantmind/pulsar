@@ -100,7 +100,7 @@ from random import lognormvariate
 from functools import partial
 
 import pulsar
-from pulsar import TcpServer, Connection
+from pulsar import TcpServer, UdpServer, Connection
 from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
                                    format_address)
 from pulsar.utils.config import pass_through
@@ -285,3 +285,11 @@ class SocketServer(pulsar.Application):
     def _stop_worker(self, worker, exc):
         worker.stop()
         return exc
+
+
+class UdpSocketServer(SocketServer):
+
+    def server_factory(self, *args, **kw):
+        '''Create a :class:`.TcpServer`.
+        '''
+        return UdpServer(*args, **kw)
