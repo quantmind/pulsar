@@ -281,15 +281,16 @@ class WsgiResponse(object):
 
 
 class EnvironMixin(object):
-    '''A wrapper around a WSGI_ environ. Instances of this class
-have the :attr:`environ` attribute as their only private data. Every
-other attribute is stored in the :attr:`environ` itself at the
-``pulsar.cache`` wsgi-extension key.
+    '''A wrapper around a WSGI_ environ.
 
-.. attribute:: environ
+    Instances of this class have the :attr:`environ` attribute as their
+    only private data. Every other attribute is stored in the :attr:`environ`
+    itself at the ``pulsar.cache`` wsgi-extension key.
 
-    WSGI_ environ dictionary
-'''
+    .. attribute:: environ
+
+        WSGI_ environ dictionary
+    '''
     slots = ('environ',)
 
     def __init__(self, environ, name=None):
@@ -306,6 +307,20 @@ other attribute is stored in the :attr:`environ` itself at the
 pulsar-specific data stored in the :attr:`environ` at the wsgi-extension
 key ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
+
+    @property
+    def connection(self):
+        '''The :class:`.Connection` handling the request
+        '''
+        return self.environ.get('pulsar.connection')
+
+    @property
+    def _loop(self):
+        '''Event loop if :attr:`connection` is available.
+        '''
+        c = self.connection
+        if c:
+            return c._loop
 
     def __getattr__(self, name):
         mixin = self.cache.mixins.get(name)

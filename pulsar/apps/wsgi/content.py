@@ -136,9 +136,10 @@ Html Factory
 '''
 from collections import Mapping
 from functools import partial
+from inspect import isgenerator
 
 from pulsar import (multi_async, maybe_async, is_failure, safe_async, Deferred,
-                    coroutine_return)
+                    async, coroutine_return)
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -680,6 +681,8 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
                     if isinstance(child, AsyncString):
                         for bit in child.stream(request):
                             yield bit
+                    elif isgenerator(child):
+                        yield async(child, getattr(request, '_loop', None))
                     else:
                         yield child
             if self._tag:

@@ -258,8 +258,11 @@ in the :attr:`response_content_types` list.'''
 
     @property
     def full_route(self):
-        '''The full :attr:`route` for this :class:`Router`. It includes the
-:attr:`parent` portion of the route if a parent router is available.'''
+        '''The full :attr:`route` for this :class:`Router`.
+
+        It includes the :attr:`parent` portion of the route if a parent
+        router is available.
+        '''
         route = self.route
         if self._parent:
             route = self._parent.route + route
@@ -312,9 +315,7 @@ in the :attr:`response_content_types` list.'''
         accepted content types and the content types accepted by the client
         and figure out the best match.
         '''
-        response_content_types = self.response_content_types
-        if response_content_types:
-            return request.content_types.best_match(response_content_types)
+        return request.content_types.best_match(self.response_content_types)
 
     def accept_content_type(self, content_type):
         '''Check if ``content_type`` is accepted by this :class:`Router`.
