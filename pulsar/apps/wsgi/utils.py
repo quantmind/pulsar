@@ -22,7 +22,6 @@ from .structures import Accept, RequestCacheControl
 from .content import Html
 
 __all__ = ['handle_wsgi_error',
-           'wsgi_error_msg',
            'render_error_debug',
            'wsgi_request',
            'set_wsgi_request_class',
@@ -185,14 +184,6 @@ error_messages = {
 }
 
 
-def wsgi_error_msg(response, msg):
-    if response.content_type == 'application/json':
-        return json.dumps({'status': response.status_code,
-                           'message': msg})
-    else:
-        return msg
-
-
 class dump_environ(object):
     __slots__ = ('environ',)
 
@@ -231,7 +222,7 @@ def handle_wsgi_error(environ, failure):
         failure.log(msg='Unhandled exception during WSGI response %s.%s' %
                     (path, dump_environ(environ)), level='critical')
     else:
-        failure.log(msg='WSGI %s status code %s' % (status, path),
+        failure.log(msg='WSGI %s @ "%s"' % (response.status, path),
                     level='warning')
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         content = None
@@ -241,8 +232,9 @@ def handle_wsgi_error(environ, failure):
         try:
             content = renderer(request, failure)
         except Exception:
-            LOGGER.critical('Error while rendering error')
-            content = None
+            LOGGER.critical('Error while rendering error', exc_info=True)
+            response.content_type = 'text/plain'
+            content = 'Critical server error'
     response.content = content
     return response
 
@@ -255,13 +247,18 @@ def render_error(request, failure):
     if not response.content_type:
         response.content_type = request.content_types.best_match(
             DEFAULT_RESPONSE_CONTENT_TYPES)
-    if response.content_type == 'text/html':
+    content_type = None
+    if response.content_type:
+        content_type = response.content_type.split(';')[0]
+
+    if content_type == 'text/html':
         request.html_document.head.title = response.status
+
     if debug:
-        msg = render_error_debug(request, failure)
+        msg = render_error_debug(request, failure, content_type)
     else:
         msg = error_messages.get(response.status_code) or ''
-        if response.content_type == 'text/html':
+        if content_type == 'text/html':
             msg = textwrap.dedent("""
                 <h1>{0[reason]}</h1>
                 {0[msg]}
@@ -269,19 +266,22 @@ def render_error(request, failure):
             """).format({"reason": response.status, "msg": msg,
                          "version": request.environ['SERVER_SOFTWARE']})
     #
-    if response.content_type == 'text/html':
+    if content_type == 'text/html':
         doc = request.html_document
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
         return doc.render(request)
+    elif content_type in JSON_CONTENT_TYPES:
+        return json.dumps({'status': response.status_code,
+                           'message': msg})
     else:
-        return wsgi_error_msg(response, msg)
+        return msg
 
 
-def render_error_debug(request, failure):
+def render_error_debug(request, failure, content_type):
     '''Render the traceback into the content type in *response*.'''
     response = request.response
-    is_html = response.content_type == 'text/html'
+    is_html = content_type == 'text/html'
     error = Html('div', cn='section traceback error') if is_html else []
     for traces in failure.exc_info[2]:
         counter = 0
@@ -295,6 +295,4 @@ def render_error_debug(request, failure):
                     if counter:
                         trace.css({'margin-left': '%spx' % (20*counter)})
                 error.append(trace)
-    if not is_html:
-        error = '\n'.join(error)
     return error
