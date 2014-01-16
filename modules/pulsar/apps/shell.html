@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.shell &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.shell &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../apps.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -86,14 +86,14 @@
 <span class="sd">:func:`send` and the :class:`Actor` class in the global dictionary::</span>
 
 <span class="sd">    &gt;&gt;&gt; pulsar.__version__</span>
-<span class="sd">    0.5.0</span>
+<span class="sd">    0.8.0</span>
 <span class="sd">    &gt;&gt;&gt; actor = get_actor()</span>
 <span class="sd">    &gt;&gt;&gt; actor.info_state</span>
 <span class="sd">    &#39;running&#39;</span>
 <span class="sd">    &gt;&gt;&gt; a = spawn()</span>
 <span class="sd">    &gt;&gt;&gt; a.done()</span>
 <span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; proxy = a.result</span>
+<span class="sd">    &gt;&gt;&gt; proxy = a.result()</span>
 
 
 <span class="sd">Implementation</span>
@@ -124,12 +124,22 @@
         <span class="k">return</span> <span class="n">line</span>
 
 
+<span class="n">_pshell_help</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
+
+<span class="s">Welcome to Pulsar shell </span><span class="si">%s</span><span class="s">! This is an interactive help utility</span>
+
+<span class="s">pulsar is already imported in this shell therefore you can</span>
+<span class="s">use its API directly.</span>
+<span class="s">&#39;&#39;&#39;</span> <span class="o">%</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span>
+
+
 <span class="k">class</span> <span class="nc">InteractiveConsole</span><span class="p">(</span><span class="n">code</span><span class="o">.</span><span class="n">InteractiveConsole</span><span class="p">):</span>  <span class="c"># pragma    nocover</span>
 
     <span class="k">def</span> <span class="nf">pulsar_banner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">cprt</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for &#39;</span>
                 <span class="s">&#39;more information.&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="s">&quot;Python </span><span class="si">%s</span><span class="s"> on </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">Pulsar </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span>
+        <span class="k">return</span> <span class="p">((</span><span class="s">&quot;Python </span><span class="si">%s</span><span class="s"> on </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">Pulsar </span><span class="si">%s</span><span class="s"> is loaded</span><span class="se">\n</span><span class="s">&quot;</span>
+                 <span class="s">&quot;Type pulsar.help() for more information</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">%</span>
                 <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="p">,</span> <span class="n">cprt</span><span class="p">,</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">__version__</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -164,26 +174,32 @@
 
 <div class="viewcode-block" id="PulsarShell"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell">[docs]</a><span class="k">class</span> <span class="nc">PulsarShell</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">Application</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;shell&#39;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">loglevel</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span> <span class="n">process_name</span><span class="o">=</span><span class="s">&#39;Pulsar shell&#39;</span><span class="p">,</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Config</span><span class="p">(</span><span class="n">loglevel</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span>
+                        <span class="n">process_name</span><span class="o">=</span><span class="s">&#39;Pulsar shell&#39;</span><span class="p">,</span>
                         <span class="n">console_class</span><span class="o">=</span><span class="n">InteractiveConsole</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
-        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<div class="viewcode-block" id="PulsarShell.monitor_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.monitor_start">[docs]</a>    <span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">monitor</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;make sure :ref:`workers &lt;setting-workers&gt;` and</span>
+<span class="sd">        :ref:`thread_workers &lt;setting-thread_workers&gt;` are both set to 1 and</span>
+<span class="sd">        :ref:`concurrency &lt;setting-concurrency&gt;` is ``thread``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;workers&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;thread_workers&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;concurrency&#39;</span><span class="p">,</span> <span class="s">&#39;thread&#39;</span><span class="p">)</span>
-
+</div>
 <div class="viewcode-block" id="PulsarShell.worker_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
-        <span class="sd">&#39;&#39;&#39;When the worker starts, create the :attr:`Actor.thread_pool`</span>
-<span class="sd">with one thread only and send the :meth:`interact` method to it.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;When the worker starts, create the :attr:`~.Actor.thread_pool`</span>
+<span class="sd">        and send the :meth:`interact` method to it.&#39;&#39;&#39;</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">create_thread_pool</span><span class="p">()</span>
         <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_shell</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">start_shell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="n">pulsar</span><span class="o">.</span><span class="n">help</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_help</span>
         <span class="n">imported_objects</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;pshell&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span>
                             <span class="s">&#39;pulsar&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="p">,</span>
                             <span class="s">&#39;get_actor&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">,</span>
                             <span class="s">&#39;spawn&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">,</span>
-                            <span class="s">&#39;send&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">send</span><span class="p">,</span>
-                            <span class="s">&#39;Actor&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Actor</span><span class="p">}</span>
+                            <span class="s">&#39;send&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">send</span><span class="p">}</span>
         <span class="k">try</span><span class="p">:</span>  <span class="c"># Try activating rlcompleter, because it&#39;s handy.</span>
             <span class="kn">import</span> <span class="nn">readline</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
@@ -201,9 +217,13 @@
         <span class="sd">&#39;&#39;&#39;Handled by the :attr:`Actor.thread_pool`&#39;&#39;&#39;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-            <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="n">worker</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">)</span></div></div>
+            <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_show_help</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">_pshell_help</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -248,7 +268,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.wsgi.wrappers &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -351,15 +351,16 @@
 
 </div>
 <div class="viewcode-block" id="EnvironMixin"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.EnvironMixin">[docs]</a><span class="k">class</span> <span class="nc">EnvironMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A wrapper around a WSGI_ environ. Instances of this class</span>
-<span class="sd">have the :attr:`environ` attribute as their only private data. Every</span>
-<span class="sd">other attribute is stored in the :attr:`environ` itself at the</span>
-<span class="sd">``pulsar.cache`` wsgi-extension key.</span>
+    <span class="sd">&#39;&#39;&#39;A wrapper around a WSGI_ environ.</span>
 
-<span class="sd">.. attribute:: environ</span>
+<span class="sd">    Instances of this class have the :attr:`environ` attribute as their</span>
+<span class="sd">    only private data. Every other attribute is stored in the :attr:`environ`</span>
+<span class="sd">    itself at the ``pulsar.cache`` wsgi-extension key.</span>
 
-<span class="sd">    WSGI_ environ dictionary</span>
-<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    .. attribute:: environ</span>
+
+<span class="sd">        WSGI_ environ dictionary</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">slots</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;environ&#39;</span><span class="p">,)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -377,6 +378,20 @@
 <span class="sd">key ``pulsar.cache``.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;pulsar.cache&#39;</span><span class="p">]</span>
 </div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="EnvironMixin.connection"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.EnvironMixin.connection">[docs]</a>    <span class="k">def</span> <span class="nf">connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The :class:`.Connection` handling the request</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Event loop if :attr:`connection` is available.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">_loop</span>
+
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">mixin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">mixins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mixin</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -659,7 +674,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchronous Content &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Asynchronous Content &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Utilities" href="tools.html" />
     <link rel="prev" title="Response Middleware" href="response.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="response.html" title="Response Middleware"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -75,17 +75,19 @@
             
   <div class="section" id="module-pulsar.apps.wsgi.content">
 <span id="asynchronous-content"></span><span id="apps-wsgi-content"></span><h1>Asynchronous Content<a class="headerlink" href="#module-pulsar.apps.wsgi.content" title="Permalink to this headline">¶</a></h1>
-<p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.content" title="pulsar.apps.wsgi.content"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.content</span></tt></a> introduces several utility classes
-handling asynchronous content on a WSGI server.</p>
-<p>This module is used by pulsar instead of a template engine, its main
-purpose is to do what a web framework does, to provide a set of tools working
-together to concatenate <tt class="docutils literal"><span class="pre">strings</span></tt> to return as a response to and HTTP client.</p>
-<p>A string can be Html, Json, plain text, XML or any other valid HTTP
+<p>The <a class="reference internal" href="#module-pulsar.apps.wsgi.content" title="pulsar.apps.wsgi.content"><tt class="xref py py-mod docutils literal"><span class="pre">pulsar.apps.wsgi.content</span></tt></a> introduces several utility classes for
+handling asynchronous content within a <em class="xref std std-ref">WSGI handler</em>.</p>
+<p>These classes can operate instead or in conjunction with a template engine,
+their main purpose is to do what a web framework does: to provide a set of
+tools working together to concatenate <tt class="docutils literal"><span class="pre">strings</span></tt> to return as a
+response to an <a class="reference internal" href="wrappers.html#app-wsgi-request"><em>HTTP client request</em></a>.</p>
+<p>A string can be <tt class="docutils literal"><span class="pre">html</span></tt>, <tt class="docutils literal"><span class="pre">json</span></tt>, <tt class="docutils literal"><span class="pre">plain</span> <span class="pre">text</span></tt> or any other valid HTTP
 content type.</p>
 <p>The main class of this module is the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>, which can be
 considered as the atomic component of an asynchronous web framework.
 It is a smart way for concatenating asynchronous strings:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">string</span> <span class="o">=</span> <span class="n">AsyncString</span><span class="p">(</span><span class="s">&#39;Hello&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">AsyncString</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">string</span> <span class="o">=</span> <span class="n">AsyncString</span><span class="p">(</span><span class="s">&#39;Hello&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
 <span class="go">&#39;Hello&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
@@ -102,7 +104,6 @@ It is a smart way for concatenating asynchronous strings:</p>
 <span class="go">MultiDeferred (pending)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">value</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
 <span class="go">False</span>
-<span class="go">&gt;&gt;&gt;</span>
 </pre></div>
 </div>
 <p>Once the deferred is done, we have the concatenated string:</p>
@@ -114,14 +115,15 @@ It is a smart way for concatenating asynchronous strings:</p>
 <span class="go">&#39;Hello, World!&#39;</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p>The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.do_stream" title="pulsar.apps.wsgi.content.AsyncString.do_stream"><tt class="xref py py-meth docutils literal"><span class="pre">AsyncString.do_stream()</span></tt></a> method is responsible for the streaming
+<div class="section" id="design">
+<h2>Design<a class="headerlink" href="#design" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.do_stream" title="pulsar.apps.wsgi.content.AsyncString.do_stream"><tt class="xref py py-meth docutils literal"><span class="pre">do_stream()</span></tt></a> method is responsible for the streaming
 of <tt class="docutils literal"><span class="pre">strings</span></tt> or <a class="reference internal" href="../../tutorials/coroutine.html#tutorials-coroutine"><em>asynchronous components</em></a>.
 It can be overwritten by subclasses to customise the way an
-<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> streams its <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.children" title="pulsar.apps.wsgi.content.AsyncString.children"><tt class="xref py py-attr docutils literal"><span class="pre">AsyncString.children</span></tt></a>.</p>
-<p class="last">The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.to_string" title="pulsar.apps.wsgi.content.AsyncString.to_string"><tt class="xref py py-meth docutils literal"><span class="pre">AsyncString.to_string()</span></tt></a> method is responsible for the
-concatenation of <tt class="docutils literal"><span class="pre">strings</span></tt>. it can be customised by subclasses.</p>
+<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> streams its <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.children" title="pulsar.apps.wsgi.content.AsyncString.children"><tt class="xref py py-attr docutils literal"><span class="pre">children</span></tt></a>.</p>
+<p>On the other hand, the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.to_string" title="pulsar.apps.wsgi.content.AsyncString.to_string"><tt class="xref py py-meth docutils literal"><span class="pre">to_string()</span></tt></a> method is responsible
+for the concatenation of <tt class="docutils literal"><span class="pre">strings</span></tt> and, like <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.do_stream" title="pulsar.apps.wsgi.content.AsyncString.do_stream"><tt class="xref py py-meth docutils literal"><span class="pre">do_stream()</span></tt></a>,
+it can be customised by subclasses.</p>
 </div>
 <div class="section" id="asynchronous-string">
 <h2>Asynchronous String<a class="headerlink" href="#asynchronous-string" title="Permalink to this headline">¶</a></h2>
@@ -325,32 +327,34 @@ Default <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.Html">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">Html</tt><big>(</big><em>tag</em>, <em>*children</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Html" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> for html content.</p>
-<p>The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content_type" title="pulsar.apps.wsgi.content.AsyncString.content_type"><tt class="xref py py-attr docutils literal"><span class="pre">AsyncString.content_type</span></tt></a> attribute is set to <tt class="docutils literal"><span class="pre">text/html</span></tt>.</p>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a> for <tt class="docutils literal"><span class="pre">html</span></tt> content.</p>
+<p>The <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.content_type" title="pulsar.apps.wsgi.content.AsyncString.content_type"><tt class="xref py py-attr docutils literal"><span class="pre">content_type</span></tt></a> attribute is set to <tt class="docutils literal"><span class="pre">text/html</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>tag</strong> &#8211; Set the <a class="reference internal" href="#pulsar.apps.wsgi.content.Html.tag" title="pulsar.apps.wsgi.content.Html.tag"><tt class="xref py py-attr docutils literal"><span class="pre">tag</span></tt></a> attribute. Must be given and can be <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><strong>tag</strong> &#8211; Set the <a class="reference internal" href="#pulsar.apps.wsgi.content.Html.tag" title="pulsar.apps.wsgi.content.Html.tag"><tt class="xref py py-attr docutils literal"><span class="pre">tag</span></tt></a> attribute. Must be given and can be
+<tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li><strong>children</strong> &#8211; Optional children which will be added via the
-<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.append" title="pulsar.apps.wsgi.content.AsyncString.append"><tt class="xref py py-meth docutils literal"><span class="pre">AsyncString.append()</span></tt></a> method.</li>
-<li><strong>params</strong> &#8211; Optional keyed-value parameters.</li>
+<a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString.append" title="pulsar.apps.wsgi.content.AsyncString.append"><tt class="xref py py-meth docutils literal"><span class="pre">append()</span></tt></a> method.</li>
+<li><strong>params</strong> &#8211; <p>Optional keyed-value parameters
+including:</p>
+<ul>
+<li><tt class="docutils literal"><span class="pre">cn</span></tt> class name or list of class names.</li>
+<li><tt class="docutils literal"><span class="pre">attr</span></tt> dictionary of attributes to add.</li>
+<li><tt class="docutils literal"><span class="pre">data</span></tt> dictionary of data to add (rendered as HTML data attribute).</li>
+<li><tt class="docutils literal"><span class="pre">type</span></tt> type of element, only supported for tags which accept the
+<tt class="docutils literal"><span class="pre">type</span></tt> attribute (for example the <tt class="docutils literal"><span class="pre">input</span></tt> tag).</li>
+</ul>
+</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<p>Special (optional) parameters:</p>
-<ul class="simple">
-<li><tt class="docutils literal"><span class="pre">cn</span></tt> class name or list of class names.</li>
-<li><tt class="docutils literal"><span class="pre">attr</span></tt> dictionary of attributes to add.</li>
-<li><tt class="docutils literal"><span class="pre">data</span></tt> dictionary of data to add (rendered as HTML data).</li>
-<li><tt class="docutils literal"><span class="pre">type</span></tt> type of element, only supported for tags which accept the <tt class="docutils literal"><span class="pre">type</span></tt>
-attribute (for example the <tt class="docutils literal"><span class="pre">input</span></tt> tag).</li>
-</ul>
-<p>Any other keyed-value parameter will be added as attribute, if in the set of
-<a class="reference internal" href="#pulsar.apps.wsgi.content.Html.available_attributes" title="pulsar.apps.wsgi.content.Html.available_attributes"><tt class="xref py py-attr docutils literal"><span class="pre">available_attributes</span></tt></a> or as <a class="reference internal" href="#pulsar.apps.wsgi.content.Html.data" title="pulsar.apps.wsgi.content.Html.data"><tt class="xref py py-meth docutils literal"><span class="pre">data()</span></tt></a>.</p>
+<p>Any other keyed-value parameter will be added as attribute,
+if in the set of:attr:<cite>available_attributes</cite> or as <a class="reference internal" href="#pulsar.apps.wsgi.content.Html.data" title="pulsar.apps.wsgi.content.Html.data"><tt class="xref py py-meth docutils literal"><span class="pre">data()</span></tt></a>.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.Html.tag">
 <tt class="descname">tag</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#Html.tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.Html.tag" title="Permalink to this definition">¶</a></dt>
@@ -446,10 +450,9 @@ whole <tt class="docutils literal"><span class="pre">css</span></tt> dictionary 
 <dl class="class">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.content.</tt><tt class="descname">HtmlDocument</tt><big>(</big><em>title=None</em>, <em>media_path='/media/'</em>, <em>charset=None</em>, <em>**params</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/content.html#HtmlDocument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument" title="Permalink to this definition">¶</a></dt>
-<dd><p>HTML5 asynchronous document.</p>
-<blockquote>
-<div>An instance of this class can be obtained via the
-<a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document"><tt class="xref py py-attr docutils literal"><span class="pre">pulsar.apps.wsgi.wrappers.WsgiRequest.html_document</span></tt></a> attribute.</div></blockquote>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.wsgi.content.Html" title="pulsar.apps.wsgi.content.Html"><tt class="xref py py-class docutils literal"><span class="pre">Html</span></tt></a> component rendered as the HTML5 document.</p>
+<p>An instance of this class can be obtained via the
+<a class="reference internal" href="wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.html_document" title="pulsar.apps.wsgi.wrappers.WsgiRequest.html_document"><tt class="xref py py-attr docutils literal"><span class="pre">html_document</span></tt></a> attribute.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.content.HtmlDocument.head">
 <tt class="descname">head</tt><a class="headerlink" href="#pulsar.apps.wsgi.content.HtmlDocument.head" title="Permalink to this definition">¶</a></dt>
@@ -705,6 +708,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
   <h3><a href="../../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous Content</a><ul>
+<li><a class="reference internal" href="#design">Design</a></li>
 <li><a class="reference internal" href="#asynchronous-string">Asynchronous String</a></li>
 <li><a class="reference internal" href="#asynchronous-json">Asynchronous Json</a></li>
 <li><a class="reference internal" href="#asynchronous-html">Asynchronous Html</a></li>
@@ -753,7 +757,7 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

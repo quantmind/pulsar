@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.structures &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.wsgi.structures &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -201,16 +201,19 @@
 <span class="sd">        :param matches: a list of matches to check for</span>
 <span class="sd">        :param default: the value that is returned if none match</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">best_quality</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">default</span>
-        <span class="k">for</span> <span class="n">server_item</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">client_item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">quality</span> <span class="o">&lt;=</span> <span class="n">best_quality</span><span class="p">:</span>
-                    <span class="k">break</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">server_item</span><span class="p">,</span> <span class="n">client_item</span><span class="p">):</span>
-                    <span class="n">best_quality</span> <span class="o">=</span> <span class="n">quality</span>
-                    <span class="n">result</span> <span class="o">=</span> <span class="n">server_item</span>
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="n">best_quality</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">default</span>
+            <span class="k">for</span> <span class="n">server_item</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">client_item</span><span class="p">,</span> <span class="n">quality</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">quality</span> <span class="o">&lt;=</span> <span class="n">best_quality</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_matches</span><span class="p">(</span><span class="n">server_item</span><span class="p">,</span> <span class="n">client_item</span><span class="p">):</span>
+                        <span class="n">best_quality</span> <span class="o">=</span> <span class="n">quality</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">server_item</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best</span>
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Accept.best"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.structures.Accept.best">[docs]</a>    <span class="k">def</span> <span class="nf">best</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -340,7 +343,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

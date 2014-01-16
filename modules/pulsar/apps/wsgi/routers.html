@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.wsgi.routers &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -96,11 +96,14 @@
 <span class="sd">Router</span>
 <span class="sd">=====================</span>
 
-<span class="sd">The ``middleware`` constructed can be used to serve ``get`` and ``post``</span>
-<span class="sd">methods at ``/bla`` url.</span>
+<span class="sd">The :ref:`middleware &lt;wsgi-middleware&gt;` constructed in the snippet above</span>
+<span class="sd">handles ``get`` and ``post`` methods at the ``/bla`` url.</span>
 <span class="sd">The :class:`Router` introduces a new element into pulsar WSGI handlers, the</span>
 <span class="sd">:ref:`wsgi request &lt;app-wsgi-request&gt;`, a light-weight wrapper of the</span>
 <span class="sd">WSGI environ.</span>
+
+<span class="sd">For an exaustive example on how to use the :class:`Router` middleware make sure</span>
+<span class="sd">you check out the :ref:`HttpBin example &lt;tutorials-httpbin&gt;`.</span>
 
 <span class="sd">.. autoclass:: Router</span>
 <span class="sd">   :members:</span>
@@ -325,8 +328,11 @@
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Router.full_route"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.full_route">[docs]</a>    <span class="k">def</span> <span class="nf">full_route</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;The full :attr:`route` for this :class:`Router`. It includes the</span>
-<span class="sd">:attr:`parent` portion of the route if a parent router is available.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;The full :attr:`route` for this :class:`Router`.</span>
+
+<span class="sd">        It includes the :attr:`parent` portion of the route if a parent</span>
+<span class="sd">        router is available.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">route</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="p">:</span>
             <span class="n">route</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">route</span> <span class="o">+</span> <span class="n">route</span>
@@ -379,9 +385,7 @@
 <span class="sd">        accepted content types and the content types accepted by the client</span>
 <span class="sd">        and figure out the best match.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">response_content_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span>
-        <span class="k">if</span> <span class="n">response_content_types</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="n">response_content_types</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">content_types</span><span class="o">.</span><span class="n">best_match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response_content_types</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="Router.accept_content_type"><a class="viewcode-back" href="../../../../apps/wsgi/routing.html#pulsar.apps.wsgi.routers.Router.accept_content_type">[docs]</a>    <span class="k">def</span> <span class="nf">accept_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if ``content_type`` is accepted by this :class:`Router`.</span>
@@ -697,7 +701,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

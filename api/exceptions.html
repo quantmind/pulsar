@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Exceptions &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Exceptions &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Release Notes" href="../changelog.html" />
     <link rel="prev" title="Tools" href="utilities.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="utilities.html" title="Tools"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -94,6 +94,12 @@ has occured.</p>
 <em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">ProtocolError</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#ProtocolError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.ProtocolError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raised when the protocol encounter unexpected data. It will close
 the socket connection.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pulsar.utils.exceptions.TooManyConsecutiveWrite">
+<em class="property">exception </em><tt class="descclassname">pulsar.utils.exceptions.</tt><tt class="descname">TooManyConsecutiveWrite</tt><a class="reference internal" href="../modules/pulsar/utils/exceptions.html#TooManyConsecutiveWrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.exceptions.TooManyConsecutiveWrite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise when too many consecutive writes are attempted.</p>
 </dd></dl>
 
 <dl class="exception">
@@ -243,7 +249,7 @@ failure and therefore the full stack trace is not logged.</p>
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

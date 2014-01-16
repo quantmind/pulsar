@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.data.stores.pulsards.base &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.data.stores.pulsards.base &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../../apps.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -195,7 +195,6 @@
 
 <span class="sd">    It is an :class:`.Producer` for accessing and retrieving</span>
 <span class="sd">    data from remote data servers such as redis, couchdb and so forth.</span>
-
 <span class="sd">    A :class:`Store` should not be created directly, the high level</span>
 <span class="sd">    :func:`.create_store` function should be used instead.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -252,25 +251,23 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.client"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.client">[docs]</a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Get a client for the Store</span>
+        <span class="sd">&#39;&#39;&#39;Get a client for the Store if implemented</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.pubsub"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.pubsub">[docs]</a>    <span class="k">def</span> <span class="nf">pubsub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Obtain a :class:`PubSub` handler for the Store if implemented.</span>
+        <span class="sd">&#39;&#39;&#39;Obtain a :class:`PubSub` handler for the Store if implemented</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.create_database"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.create_database">[docs]</a>    <span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbname</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Create a new database in this store.</span>
-
-<span class="sd">        This is a pure virtual method and therefore only some :class:`Store`</span>
-<span class="sd">        implementation expose it.</span>
+        <span class="sd">&#39;&#39;&#39;Create a new database in this store if implemented</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.close"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Close all open connections.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Close all open connections</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
 <div class="viewcode-block" id="Store.flush"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.Store.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -624,7 +621,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

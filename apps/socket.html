@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Socket Servers &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Socket Servers &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../index.html" />
     <link rel="next" title="WSGI" href="wsgi/index.html" />
     <link rel="prev" title="Pics" href="../pics.html" /> 
 </head>
@@ -51,7 +51,7 @@
         <li class="right" >
           <a href="../pics.html" title="Pics"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -89,7 +89,7 @@ This is an example of a script for an Echo server:</p>
 </pre></div>
 </div>
 <p>Check the <a class="reference internal" href="../tutorials/clients.html#tutorials-writing-clients"><em>echo server example</em></a> for detailed
-implementation of the <tt class="docutils literal"><span class="pre">EchoServerProtocol</span></tt> class.</p>
+implementation of the <tt class="docutils literal"><span class="pre">.EchoServerProtocol</span></tt> class.</p>
 <div class="section" id="socket-server-settings">
 <span id="id1"></span><h2>Socket Server Settings<a class="headerlink" href="#socket-server-settings" title="Permalink to this headline">¶</a></h2>
 <p>All standard <a class="reference internal" href="../settings.html#settings"><em>application settings</em></a> can be applied to a
@@ -214,6 +214,48 @@ number of workers to 0.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="udp-socket-server">
+<h3>UDP Socket Server<a class="headerlink" href="#udp-socket-server" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pulsar.apps.socket.UdpSocketServer">
+<em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">UdpSocketServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="pulsar.apps.socket.UdpSocketServer.protocol_factory">
+<tt class="descname">protocol_factory</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer.protocol_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.protocol_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <a class="reference internal" href="../api/protocols.html#pulsar.async.udp.DatagramProtocol" title="pulsar.async.udp.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a> factory.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.socket.UdpSocketServer.monitor_start">
+<tt class="descname">monitor_start</tt><big>(</big><em>monitor</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer.monitor_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.monitor_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the socket listening to the <tt class="docutils literal"><span class="pre">bind</span></tt> address.</p>
+<p>If the platform does not support multiprocessing sockets set the
+number of workers to 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.socket.UdpSocketServer.server_factory">
+<tt class="descname">server_factory</tt><big>(</big><em>*args</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer.server_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.server_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <tt class="xref py py-class docutils literal"><span class="pre">UdpServer</span></tt>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.socket.UdpSocketServer.create_server">
+<tt class="descname">create_server</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer.create_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.create_server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the Server which will listen for requests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <tt class="xref py py-class docutils literal"><span class="pre">UdpServer</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 </div>
 
@@ -253,6 +295,7 @@ number of workers to 0.</p>
 <li><a class="reference internal" href="#concurrency">Concurrency</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#socket-server">Socket Server</a></li>
+<li><a class="reference internal" href="#udp-socket-server">UDP Socket Server</a></li>
 </ul>
 </li>
 </ul>
@@ -290,7 +333,7 @@ number of workers to 0.</p>
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

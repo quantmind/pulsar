@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.protocols &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.async.protocols &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -270,10 +270,10 @@
         <span class="k">return</span> <span class="n">result</span>
 
 </div>
-<div class="viewcode-block" id="Protocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol">[docs]</a><span class="k">class</span> <span class="nc">Protocol</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`.</span>
+<div class="viewcode-block" id="PulsarProtocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol">[docs]</a><span class="k">class</span> <span class="nc">PulsarProtocol</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Base class for both :class:`Protocol` and :class:`.DatagramProtocol`.</span>
 
-<span class="sd">    A :class:`Protocol` is an :class:`.EventHandler` which has</span>
+<span class="sd">    A :class:`PulsarProtocol` is an :class:`.EventHandler` which has</span>
 <span class="sd">    two :ref:`one time events &lt;one-time-event&gt;`:</span>
 
 <span class="sd">    * ``connection_made``</span>
@@ -282,13 +282,12 @@
     <span class="n">ONE_TIME_EVENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">,</span> <span class="s">&#39;connection_lost&#39;</span><span class="p">)</span>
 
     <span class="n">_transport</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">_current_consumer</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_idle_timeout</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_address</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">_type</span> <span class="o">=</span> <span class="s">&#39;server&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">producer</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Protocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PulsarProtocol</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span> <span class="o">=</span> <span class="n">producer</span>
@@ -303,7 +302,7 @@
     <span class="n">__str__</span> <span class="o">=</span> <span class="n">__repr__</span>
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.session"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.session">[docs]</a>    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.session"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.session">[docs]</a>    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Connection session number.</span>
 
 <span class="sd">        Passed during initialisation by the :attr:`producer`.</span>
@@ -314,27 +313,27 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.transport"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.transport">[docs]</a>    <span class="k">def</span> <span class="nf">transport</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.transport"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.transport">[docs]</a>    <span class="k">def</span> <span class="nf">transport</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The :class:`.SocketStreamTransport` for this connection.</span>
 
 <span class="sd">        Available once the :meth:`connection_made` is called.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.sock"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.sock">[docs]</a>    <span class="k">def</span> <span class="nf">sock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.sock"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.sock">[docs]</a>    <span class="k">def</span> <span class="nf">sock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The socket of :attr:`transport`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">sock</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.address"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.address">[docs]</a>    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.address"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.address">[docs]</a>    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The address of the :attr:`transport`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_address</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.timeout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.timeout">[docs]</a>    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.timeout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.timeout">[docs]</a>    <span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Number of seconds to keep alive this connection when idle.</span>
 
 <span class="sd">        A value of ``0`` means no timeout.&#39;&#39;&#39;</span>
@@ -347,26 +346,26 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">_loop</span>
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.producer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.producer">[docs]</a>    <span class="k">def</span> <span class="nf">producer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.producer"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.producer">[docs]</a>    <span class="k">def</span> <span class="nf">producer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The producer of this :class:`Protocol`.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_producer</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Protocol.closed"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.closed">[docs]</a>    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.closed"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.closed">[docs]</a>    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;``True`` if the :attr:`transport` is closed.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">closing</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span> <span class="k">else</span> <span class="bp">True</span>
 </div>
-<div class="viewcode-block" id="Protocol.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close by closing the :attr:`transport`.&#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="n">async</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Protocol.abort"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.abort"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Abort by aborting the :attr:`transport`.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Protocol.connection_made"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.connection_made">[docs]</a>    <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.connection_made"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.connection_made">[docs]</a>    <span class="k">def</span> <span class="nf">connection_made</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Sets the transport, fire the ``connection_made`` event and adds</span>
 <span class="sd">        a :attr:`timeout` for idle connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -382,15 +381,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_made&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_idle_timeout</span><span class="p">()</span>
 </div>
-<div class="viewcode-block" id="Protocol.connection_lost"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.connection_lost">[docs]</a>    <span class="k">def</span> <span class="nf">connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.connection_lost"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.connection_lost">[docs]</a>    <span class="k">def</span> <span class="nf">connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Fires the ``connection_lost`` event.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="Protocol.eof_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.eof_received">[docs]</a>    <span class="k">def</span> <span class="nf">eof_received</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.eof_received"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.eof_received">[docs]</a>    <span class="k">def</span> <span class="nf">eof_received</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The socket was closed from the remote end&#39;&#39;&#39;</span>
 </div>
-<div class="viewcode-block" id="Protocol.set_timeout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol.set_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">set_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+<div class="viewcode-block" id="PulsarProtocol.set_timeout"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.PulsarProtocol.set_timeout">[docs]</a>    <span class="k">def</span> <span class="nf">set_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Set a new :attr:`timeout` for this connection.&#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_timeout</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
@@ -419,6 +418,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_timeout</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_idle_timeout</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_idle_timeout</span> <span class="o">=</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="Protocol"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Protocol">[docs]</a><span class="k">class</span> <span class="nc">Protocol</span><span class="p">(</span><span class="n">PulsarProtocol</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
 </div>
 <div class="viewcode-block" id="Connection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.protocols.Connection">[docs]</a><span class="k">class</span> <span class="nc">Connection</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -787,7 +791,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

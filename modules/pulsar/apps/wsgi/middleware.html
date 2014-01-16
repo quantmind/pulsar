@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.wsgi.middleware &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../index.html" />
     <link rel="up" title="pulsar.apps.wsgi" href="../wsgi.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../apps.html" >pulsar.apps</a> &raquo;</li>
           <li><a href="../wsgi.html" accesskey="U">pulsar.apps.wsgi</a> &raquo;</li> 
@@ -69,25 +69,20 @@
             
   <h1>Source code for pulsar.apps.wsgi.middleware</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">A WSGI Middleware is a function or callable object similar to</span>
+<span class="sd">A WSGI Middleware is a function or callable object similar to a</span>
 <span class="sd">:ref:`WSGI application handlers &lt;wsgi-handlers&gt;`</span>
-<span class="sd">with the only difference that they can return ``None``.</span>
+<span class="sd">with the only difference in that it can also return ``None``.</span>
 
 <span class="sd">Middleware can be used in conjunction with a</span>
 <span class="sd">:ref:`WsgiHandler &lt;wsgi-handler&gt;` or any</span>
 <span class="sd">other handler which iterate through a list of middleware in a similar</span>
 <span class="sd">way (for example django wsgi handler).</span>
 
-<span class="sd">Here we introduce the :class:`Router` and :class:`MediaRouter` to handle</span>
-<span class="sd">requests on given urls. Pulsar is shipped with</span>
-<span class="sd">:ref:`additional wsgi middleware &lt;wsgi-additional-middleware&gt;` for manipulating</span>
-<span class="sd">the environment before a client response is returned.</span>
-
 <span class="sd">.. important::</span>
 
 <span class="sd">    An asynchronous WSGI middleware is a callble accepting a WSGI</span>
-<span class="sd">    ``environ`` and ``start_response`` as the only input paramaters.</span>
-<span class="sd">    It must returns an :ref:`asynchronous iterator &lt;wsgi-async-iter&gt;`</span>
+<span class="sd">    ``environ`` and ``start_response`` as the only input paramaters and</span>
+<span class="sd">    it must returns an :ref:`asynchronous iterator &lt;wsgi-async-iter&gt;`</span>
 <span class="sd">    or nothing.</span>
 
 <span class="sd">The two most important wsgi middleware in pulsar are:</span>
@@ -95,8 +90,8 @@
 <span class="sd">* the :ref:`Router &lt;wsgi-router&gt;` for serving dynamic web applications</span>
 <span class="sd">* the :ref:`MediaRouter &lt;wsgi-media-router&gt;` for serving static files</span>
 
-<span class="sd">In addition, there are several WSGI middlewares which don&#39;t</span>
-<span class="sd">serve request but instead perform initialisation and sanity checks.</span>
+<span class="sd">In addition, pulsar provides with the following four middlewares which don&#39;t</span>
+<span class="sd">serve requests, instead they perform initialisation and sanity checks.</span>
 
 
 <span class="sd">.. _wsgi-additional-middleware:</span>
@@ -244,7 +239,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.eventloop &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.async.eventloop &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -544,13 +544,22 @@
                             <span class="n">family</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">backlog</span><span class="p">,</span> <span class="n">reuse_address</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">create_datagram_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">local_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+<div class="viewcode-block" id="EventLoop.create_datagram_endpoint"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.create_datagram_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">create_datagram_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">local_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                                  <span class="n">remote_addr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_UNSPEC</span><span class="p">,</span>
                                  <span class="n">proto</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Creates an endpoint for sending and receiving datagrams.</span>
+
+<span class="sd">        Datagrams are typically UDP packets, and because of the nature of</span>
+<span class="sd">        their traffic, there are no separate calls to set up client and</span>
+<span class="sd">        server side, since usually a single endpoint acts as either.</span>
+
+<span class="sd">        :return: a :class:`.Deferred` whose result will be a list of socket</span>
+<span class="sd">            objects which will later be handled by ``protocol_factory``.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">create_datagram_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="p">,</span> <span class="n">local_addr</span><span class="p">,</span>
                                        <span class="n">remote_addr</span><span class="p">,</span> <span class="n">family</span><span class="p">,</span> <span class="n">proto</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">async</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
+</div>
 <div class="viewcode-block" id="EventLoop.sock_connect"><a class="viewcode-back" href="../../../api/async.html#pulsar.async.eventloop.EventLoop.sock_connect">[docs]</a>    <span class="k">def</span> <span class="nf">sock_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Connect ``sock`` to the given ``address``.</span>
 
@@ -714,7 +723,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

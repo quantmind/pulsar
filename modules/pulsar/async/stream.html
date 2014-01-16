@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.stream &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.async.stream &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -74,44 +74,25 @@
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.exceptions</span> <span class="kn">import</span> <span class="n">PulsarException</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">TRY_WRITE_AGAIN</span><span class="p">,</span> <span class="n">TRY_READ_AGAIN</span><span class="p">,</span>
-                                   <span class="n">ACCEPT_ERRORS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EPERM</span><span class="p">,</span>
-                                   <span class="n">ssl_context</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span> <span class="n">BUFFER_MAX_SIZE</span><span class="p">,</span>
-                                   <span class="n">SOCKET_INTERRUPT_ERRORS</span><span class="p">,</span>
-                                   <span class="n">SOCKET_WRITE_ERRORS</span><span class="p">)</span>
+                                   <span class="n">ACCEPT_ERRORS</span><span class="p">,</span> <span class="n">EPERM</span><span class="p">,</span>
+                                   <span class="n">ssl_context</span><span class="p">,</span> <span class="n">ssl</span><span class="p">,</span> <span class="n">BUFFER_MAX_SIZE</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">merge_prefix</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.exceptions</span> <span class="kn">import</span> <span class="n">TooManyConsecutiveWrite</span>
 
-<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">NUMBER_ACCEPTS</span>
+<span class="kn">from</span> <span class="nn">.consts</span> <span class="kn">import</span> <span class="n">NUMBER_ACCEPTS</span><span class="p">,</span> <span class="n">MAX_CONSECUTIVE_WRITES</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span>
-<span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="n">Server</span><span class="p">,</span> <span class="n">SocketTransport</span><span class="p">,</span> <span class="n">AF_INET6</span>
+<span class="kn">from</span> <span class="nn">.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Server</span><span class="p">,</span> <span class="n">SocketTransport</span><span class="p">,</span> <span class="n">AF_INET6</span><span class="p">,</span> <span class="n">raise_socket_error</span><span class="p">,</span>
+                       <span class="n">raise_write_socket_error</span><span class="p">)</span>
 
 
 <span class="n">SSLV3_ALERT_CERTIFICATE_UNKNOWN</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="c"># Got this error on pypy</span>
 <span class="n">SSL3_WRITE_PENDING</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">MAX_CONSECUTIVE_WRITES</span> <span class="o">=</span> <span class="mi">500</span>
-
-
-<span class="k">class</span> <span class="nc">TooManyConsecutiveWrite</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Raise when too many consecutive writes are attempted.&#39;&#39;&#39;</span>
-
-
-<span class="k">def</span> <span class="nf">raise_socket_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-    <span class="n">eno</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;errno&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_INTERRUPT_ERRORS</span><span class="p">:</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">eno</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_INTERRUPT_ERRORS</span>
-
-
-<span class="k">def</span> <span class="nf">raise_write_socket_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-    <span class="n">eno</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;errno&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_WRITE_ERRORS</span>
 
 
 <div class="viewcode-block" id="SocketStreamTransport"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.stream.SocketStreamTransport">[docs]</a><span class="k">class</span> <span class="nc">SocketStreamTransport</span><span class="p">(</span><span class="n">SocketTransport</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A :class:`pulsar.SocketTransport` for TCP streams.</span>
+    <span class="sd">&#39;&#39;&#39;A :class:`.SocketTransport` for TCP streams.</span>
 
 <span class="sd">    The primary feature of a stream transport is sending bytes to a protocol</span>
 <span class="sd">    and receiving bytes from the underlying protocol. Writing to the transport</span>
@@ -181,14 +162,7 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_of_data</span><span class="p">))</span>
 
-    <span class="c">##    INTERNALS</span>
-</div>
-    <span class="k">def</span> <span class="nf">_write_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">TRY_WRITE_AGAIN</span>
-
-    <span class="k">def</span> <span class="nf">_read_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">EWOULDBLOCK</span>
-
+    <span class="c">##    INTERNALS</span></div>
     <span class="k">def</span> <span class="nf">_ready_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Do the actual writing</span>
         <span class="nb">buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_buffer</span>
@@ -560,7 +534,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

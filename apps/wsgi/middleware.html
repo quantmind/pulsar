@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchronous Middleware &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Asynchronous Middleware &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Response Middleware" href="response.html" />
     <link rel="prev" title="WSGI Wrappers" href="wrappers.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="wrappers.html" title="WSGI Wrappers"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -75,22 +75,18 @@
             
   <div class="section" id="module-pulsar.apps.wsgi.middleware">
 <span id="asynchronous-middleware"></span><span id="wsgi-middleware"></span><h1>Asynchronous Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
-<p>A WSGI Middleware is a function or callable object similar to
+<p>A WSGI Middleware is a function or callable object similar to a
 <a class="reference internal" href="async.html#wsgi-handlers"><em>WSGI application handlers</em></a>
-with the only difference that they can return <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+with the only difference in that it can also return <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
 <p>Middleware can be used in conjunction with a
 <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a> or any
 other handler which iterate through a list of middleware in a similar
 way (for example django wsgi handler).</p>
-<p>Here we introduce the <tt class="xref py py-class docutils literal"><span class="pre">Router</span></tt> and <tt class="xref py py-class docutils literal"><span class="pre">MediaRouter</span></tt> to handle
-requests on given urls. Pulsar is shipped with
-<a class="reference internal" href="#wsgi-additional-middleware"><em>additional wsgi middleware</em></a> for manipulating
-the environment before a client response is returned.</p>
 <div class="admonition important">
 <p class="first admonition-title">Important</p>
 <p class="last">An asynchronous WSGI middleware is a callble accepting a WSGI
-<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as the only input paramaters.
-It must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><em>asynchronous iterator</em></a>
+<tt class="docutils literal"><span class="pre">environ</span></tt> and <tt class="docutils literal"><span class="pre">start_response</span></tt> as the only input paramaters and
+it must returns an <a class="reference internal" href="async.html#wsgi-async-iter"><em>asynchronous iterator</em></a>
 or nothing.</p>
 </div>
 <p>The two most important wsgi middleware in pulsar are:</p>
@@ -98,8 +94,8 @@ or nothing.</p>
 <li>the <a class="reference internal" href="routing.html#wsgi-router"><em>Router</em></a> for serving dynamic web applications</li>
 <li>the <a class="reference internal" href="routing.html#wsgi-media-router"><em>MediaRouter</em></a> for serving static files</li>
 </ul>
-<p>In addition, there are several WSGI middlewares which don&#8217;t
-serve request but instead perform initialisation and sanity checks.</p>
+<p>In addition, pulsar provides with the following four middlewares which don&#8217;t
+serve requests, instead they perform initialisation and sanity checks.</p>
 <div class="section" id="clean-path">
 <span id="wsgi-additional-middleware"></span><h2>Clean path<a class="headerlink" href="#clean-path" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
@@ -212,7 +208,7 @@ other middleware to be processed.</p>
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

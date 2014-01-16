@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.async.internet &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.async.internet &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
     <link rel="up" title="pulsar.async" href="../async.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
       </ul>
@@ -70,7 +70,11 @@
 <span class="kn">import</span> <span class="nn">socket</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 
-<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">nice_address</span><span class="p">,</span> <span class="n">BUFFER_MAX_SIZE</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="p">(</span><span class="n">nice_address</span><span class="p">,</span> <span class="n">BUFFER_MAX_SIZE</span><span class="p">,</span>
+                                   <span class="n">TRY_WRITE_AGAIN</span><span class="p">,</span> <span class="n">TRY_READ_AGAIN</span><span class="p">,</span>
+                                   <span class="n">ACCEPT_ERRORS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EPERM</span><span class="p">,</span>
+                                   <span class="n">SOCKET_INTERRUPT_ERRORS</span><span class="p">,</span>
+                                   <span class="n">SOCKET_WRITE_ERRORS</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Deferred</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">asyncio</span><span class="p">,</span> <span class="n">AsyncObject</span>
@@ -84,6 +88,20 @@
     <span class="n">FAMILY_NAME</span><span class="p">[</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;TCP6&#39;</span>
 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="s">&#39;AF_UNIX&#39;</span><span class="p">):</span>
     <span class="n">FAMILY_NAME</span><span class="p">[</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_UNIX</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;UNIX&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">raise_socket_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+    <span class="n">eno</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;errno&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_INTERRUPT_ERRORS</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">eno</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_INTERRUPT_ERRORS</span>
+
+
+<span class="k">def</span> <span class="nf">raise_write_socket_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+    <span class="n">eno</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s">&#39;errno&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">eno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SOCKET_WRITE_ERRORS</span>
 
 
 <span class="k">class</span> <span class="nc">Server</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">AbstractServer</span><span class="p">):</span>
@@ -250,7 +268,13 @@
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_protocol</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_protocol</span><span class="o">.</span><span class="n">connection_lost</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">TRY_WRITE_AGAIN</span>
+
+    <span class="k">def</span> <span class="nf">_read_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">EWOULDBLOCK</span></div>
 </pre></div>
 
           </div>
@@ -295,7 +319,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

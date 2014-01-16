@@ -9,4 +9,3 @@ provide additional functionalities.
 
 * Redis encoder/decoder
 * Websocket encoder/decoder
-* :ref:`Embedded Lua <embedded-lua>`

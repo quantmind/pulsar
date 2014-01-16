@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -417,6 +417,24 @@ on UNIX.</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result will be a list of socket
 objects which will later be handled by <tt class="docutils literal"><span class="pre">protocol_factory</span></tt>.</p>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.eventloop.EventLoop.create_datagram_endpoint">
+<tt class="descname">create_datagram_endpoint</tt><big>(</big><em>protocol_factory</em>, <em>local_addr=None</em>, <em>remote_addr=None</em>, <em>family=0</em>, <em>proto=0</em>, <em>flags=0</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/eventloop.html#EventLoop.create_datagram_endpoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.eventloop.EventLoop.create_datagram_endpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an endpoint for sending and receiving datagrams.</p>
+<p>Datagrams are typically UDP packets, and because of the nature of
+their traffic, there are no separate calls to set up client and
+server side, since usually a single endpoint acts as either.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> whose result will be a list of socket
+objects which will later be handled by <tt class="docutils literal"><span class="pre">protocol_factory</span></tt>.</td>
 </tr>
 </tbody>
 </table>
@@ -1329,7 +1347,7 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

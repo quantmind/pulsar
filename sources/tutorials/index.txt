@@ -29,6 +29,7 @@ Most of the material presented in the these tutorials is based on the
    django
    philosophers
    pulsards
+   udp
 
 
 Topics
@@ -45,7 +46,6 @@ These sections cover **pulsar internals** for the curious reader.
    signal
    sync
    benchmarking
-   lua
    cextensions
 
 

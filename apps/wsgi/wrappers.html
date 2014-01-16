@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>WSGI Wrappers &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>WSGI Wrappers &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../index.html" />
     <link rel="up" title="WSGI" href="index.html" />
     <link rel="next" title="Asynchronous Middleware" href="middleware.html" />
     <link rel="prev" title="Routing" href="routing.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="routing.html" title="Routing"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">WSGI</a> &raquo;</li> 
       </ul>
     </div>
@@ -89,10 +89,10 @@ several utility methods for manipulating headers and asynchronous content.</p>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">EnvironMixin</tt><big>(</big><em>environ</em>, <em>name=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>A wrapper around a <a class="reference external" href="http://www.wsgi.org">WSGI</a> environ. Instances of this class
-have the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> attribute as their only private data. Every
-other attribute is stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> itself at the
-<tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> wsgi-extension key.</p>
+<dd><p>A wrapper around a <a class="reference external" href="http://www.wsgi.org">WSGI</a> environ.</p>
+<p>Instances of this class have the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> attribute as their
+only private data. Every other attribute is stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a>
+itself at the <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt> wsgi-extension key.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.environ">
 <tt class="descname">environ</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="Permalink to this definition">¶</a></dt>
@@ -105,6 +105,12 @@ other attribute is stored in the <a class="reference internal" href="#pulsar.app
 <dd><p>An <a class="reference internal" href="../../api/utilities.html#attribute-dictionary"><em>attribute dictionary</em></a> of
 pulsar-specific data stored in the <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.environ" title="pulsar.apps.wsgi.wrappers.EnvironMixin.environ"><tt class="xref py py-attr docutils literal"><span class="pre">environ</span></tt></a> at the wsgi-extension
 key <tt class="docutils literal"><span class="pre">pulsar.cache</span></tt>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.EnvironMixin.connection">
+<tt class="descname">connection</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#EnvironMixin.connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Connection" title="pulsar.async.protocols.Connection"><tt class="xref py py-class docutils literal"><span class="pre">Connection</span></tt></a> handling the request</p>
 </dd></dl>
 
 <dl class="method">
@@ -402,7 +408,7 @@ object then <tt class="docutils literal"><span class="pre">max_age</span></tt> w
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

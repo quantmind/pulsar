@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Datastore Clients &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>Datastore Clients &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Object Data Mapper" href="odm.html" />
     <link rel="prev" title="Data Stores" href="index.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="Data Stores"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -160,8 +160,8 @@ can be found at the python <tt class="docutils literal"><span class="pre">dotted
 <em class="property">class </em><tt class="descclassname">pulsar.apps.data.stores.pulsards.base.</tt><tt class="descname">Store</tt><big>(</big><em>name</em>, <em>host</em>, <em>loop</em>, <em>database=None</em>, <em>user=None</em>, <em>password=None</em>, <em>encoding=None</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#Store"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.Store" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base class for an asynchronous <a class="reference internal" href="#data-stores"><em>data stores</em></a>.</p>
 <p>It is an <a class="reference internal" href="../../api/protocols.html#pulsar.async.protocols.Producer" title="pulsar.async.protocols.Producer"><tt class="xref py py-class docutils literal"><span class="pre">Producer</span></tt></a> for accessing and retrieving
-data from remote data servers such as redis, couchdb and so forth.</p>
-<p>A <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> should not be created directly, the high level
+data from remote data servers such as redis, couchdb and so forth.
+A <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> should not be created directly, the high level
 <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.create_store" title="pulsar.apps.data.stores.pulsards.base.create_store"><tt class="xref py py-func docutils literal"><span class="pre">create_store()</span></tt></a> function should be used instead.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.data.stores.pulsards.base.Store.name">
@@ -202,27 +202,25 @@ data from remote data servers such as redis, couchdb and so forth.</p>
 <dl class="method">
 <dt id="pulsar.apps.data.stores.pulsards.base.Store.client">
 <tt class="descname">client</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#Store.client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.Store.client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a client for the Store</p>
+<dd><p>Get a client for the Store if implemented</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.pulsards.base.Store.pubsub">
 <tt class="descname">pubsub</tt><big>(</big><em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#Store.pubsub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.Store.pubsub" title="Permalink to this definition">¶</a></dt>
-<dd><p>Obtain a <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="pulsar.apps.data.stores.pulsards.base.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler for the Store if implemented.</p>
+<dd><p>Obtain a <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="pulsar.apps.data.stores.pulsards.base.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler for the Store if implemented</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.pulsards.base.Store.create_database">
 <tt class="descname">create_database</tt><big>(</big><em>dbname</em>, <em>**kw</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#Store.create_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.Store.create_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new database in this store.</p>
-<p>This is a pure virtual method and therefore only some <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
-implementation expose it.</p>
+<dd><p>Create a new database in this store if implemented</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.data.stores.pulsards.base.Store.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#Store.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.Store.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close all open connections.</p>
+<dd><p>Close all open connections</p>
 </dd></dl>
 
 <dl class="method">
@@ -457,7 +455,7 @@ from the publisher, the <tt class="xref py py-meth docutils literal"><span class
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 

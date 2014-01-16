@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>pulsar.apps.data.server.server &mdash; pulsar 0.8.0-beta.3 documentation</title>
+    <title>pulsar.apps.data.server.server &mdash; pulsar 0.8.0-beta.4 documentation</title>
     
     <link rel="stylesheet" href="../../../../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
-        VERSION:     '0.8.0-beta.3',
+        VERSION:     '0.8.0-beta.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../../../../static/underscore.js"></script>
     <script type="text/javascript" src="../../../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.3 documentation" href="../../../../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../../../index.html" />
     <link rel="up" title="pulsar.apps" href="../../../apps.html" /> 
 </head>
  <body>
@@ -44,7 +44,7 @@
         <li class="right" >
           <a href="../../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../../index.html">pulsar 0.8.0-beta.3 documentation</a> &raquo;</li>
+        <li><a href="../../../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
           <li><a href="../../../../index.html" >Module code</a> &raquo;</li>
           <li><a href="../../../apps.html" accesskey="U">pulsar.apps</a> &raquo;</li> 
       </ul>
@@ -1687,7 +1687,7 @@
             <span class="k">if</span> <span class="n">N</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">request</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;withscores&#39;</span><span class="p">:</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">value</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span>
+                    <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
                      <span class="n">value</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="bp">True</span><span class="p">)]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
@@ -1707,7 +1707,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">minval</span><span class="p">,</span> <span class="n">include_min</span><span class="p">,</span> <span class="n">maxval</span><span class="p">,</span> <span class="n">include_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_values</span><span class="p">(</span>
                     <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-            <span class="k">except</span> <span class="n">exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
             <span class="n">request</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
             <span class="n">withscores</span> <span class="o">=</span> <span class="bp">False</span>
@@ -1728,7 +1728,7 @@
                     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">withscores</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">value</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span>
+                <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span> <span class="k">for</span> <span class="n">score</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
                  <span class="n">value</span><span class="o">.</span><span class="n">range_by_score</span><span class="p">(</span><span class="n">minval</span><span class="p">,</span> <span class="n">maxval</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                                       <span class="n">start</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
                                       <span class="n">include_min</span><span class="o">=</span><span class="n">include_min</span><span class="p">,</span>
@@ -1786,7 +1786,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_range_values</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-            <span class="k">except</span> <span class="n">exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
             <span class="n">removed</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">remove_range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">removed</span><span class="p">:</span>
@@ -1809,7 +1809,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">minval</span><span class="p">,</span> <span class="n">include_min</span><span class="p">,</span> <span class="n">maxval</span><span class="p">,</span> <span class="n">include_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_values</span><span class="p">(</span>
                     <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">request</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-            <span class="k">except</span> <span class="n">exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SYNTAX_ERROR</span><span class="p">)</span>
             <span class="n">removed</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">remove_range_by_score</span><span class="p">(</span><span class="n">minval</span><span class="p">,</span> <span class="n">maxval</span><span class="p">,</span> <span class="n">include_min</span><span class="p">,</span>
                                                   <span class="n">include_max</span><span class="p">)</span>
@@ -1879,7 +1879,7 @@
                     <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)))</span>
                 <span class="n">channels</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">pre</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">pre</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">,</span> <span class="s">&#39;ignore&#39;</span><span class="p">)):</span>
                         <span class="n">channels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">channels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="p">)</span>
@@ -1903,7 +1903,6 @@
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">channel</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="n">ch</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="n">clients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">multi_bulk</span><span class="p">((</span><span class="n">b</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
         <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publish_clients</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="p">()))</span>
         <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patterns</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -2038,7 +2037,7 @@
         <span class="n">subcommand</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;EXISTS&#39;</span><span class="p">:</span>
             <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">sha</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">)</span> <span class="k">for</span> <span class="n">sha</span> <span class="ow">in</span> <span class="n">requests</span><span class="p">[</span><span class="mi">2</span><span class="p">:]]</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">sha</span> <span class="ow">in</span> <span class="n">scripts</span><span class="p">)</span> <span class="k">for</span> <span class="n">sha</span> <span class="ow">in</span> <span class="n">request</span><span class="p">[</span><span class="mi">2</span><span class="p">:]]</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_multi_bulk</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">subcommand</span> <span class="o">==</span> <span class="n">b</span><span class="s">&#39;FLUSH&#39;</span><span class="p">:</span>
             <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
@@ -2059,8 +2058,8 @@
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Connections&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">auth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">conn</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">conn</span><span class="o">.</span><span class="n">password</span> <span class="o">!=</span> <span class="n">conn</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">password</span><span class="p">:</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">request</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">password</span> <span class="o">!=</span> <span class="n">client</span><span class="o">.</span><span class="n">_producer</span><span class="o">.</span><span class="n">password</span><span class="p">:</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_error</span><span class="p">(</span><span class="s">&quot;wrong password&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
@@ -2187,7 +2186,7 @@
     <span class="nd">@command</span><span class="p">(</span><span class="s">&#39;Server&#39;</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
         <span class="n">check_input</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
-        <span class="n">client</span><span class="o">.</span><span class="n">flag</span> <span class="o">|=</span> <span class="n">MONITOR</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">flag</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MONITOR</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_monitors</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="n">client</span><span class="o">.</span><span class="n">reply_ok</span><span class="p">()</span>
 
@@ -2605,10 +2604,9 @@
         <span class="k">return</span> <span class="n">_</span>
 
     <span class="k">def</span> <span class="nf">_write_to_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span>
-        <span class="n">addr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;addr&#39;</span><span class="p">)</span>
+        <span class="c">#addr = &#39;%s:%s&#39; % self._transport.get_extra_info(&#39;addr&#39;)</span>
         <span class="n">cmds</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&quot; &quot;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;+</span><span class="si">%s</span><span class="s"> [0 </span><span class="si">%s</span><span class="s">] &quot;&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">utf</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">cmds</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;&quot;</span><span class="se">\r\n</span><span class="s">&#39;</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;+</span><span class="si">%s</span><span class="s"> [0 </span><span class="si">%s</span><span class="s">] &quot;&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">cmds</span> <span class="o">+</span> <span class="n">b</span><span class="s">&#39;&quot;</span><span class="se">\r\n</span><span class="s">&#39;</span>
         <span class="n">remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitors</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -2760,7 +2758,7 @@
                 <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">value</span>
             <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
-                <span class="n">handle</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="n">handle</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">value</span>
 
@@ -2772,7 +2770,7 @@
             <span class="k">return</span> <span class="mi">1</span>
         <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_hit_keys</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">handle</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">handle</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expires</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">NOTIFY_GENERIC</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s">&#39;del&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">return</span> <span class="mi">1</span>
@@ -2829,7 +2827,7 @@
 
 
 <div class="footer">
-     &copy; Copyright 2011-2013, Luca Sbardella.
+     &copy; Copyright 2011-2014, Luca Sbardella.
    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2b1.
  </div>
 
