@@ -5,44 +5,25 @@ from functools import partial
 
 from pulsar.utils.exceptions import PulsarException
 from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
-                                   ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
-                                   ssl_context, ssl, BUFFER_MAX_SIZE,
-                                   SOCKET_INTERRUPT_ERRORS,
-                                   SOCKET_WRITE_ERRORS)
+                                   ACCEPT_ERRORS, EPERM,
+                                   ssl_context, ssl, BUFFER_MAX_SIZE)
 from pulsar.utils.structures import merge_prefix
+from pulsar.utils.exceptions import TooManyConsecutiveWrite
 
-from .consts import NUMBER_ACCEPTS
+from .consts import NUMBER_ACCEPTS, MAX_CONSECUTIVE_WRITES
 from .access import logger
 from .defer import Failure, multi_async, Deferred, coroutine_return, in_loop
-from .internet import Server, SocketTransport, AF_INET6
+from .internet import (Server, SocketTransport, AF_INET6, raise_socket_error,
+                       raise_write_socket_error)
 
 
 SSLV3_ALERT_CERTIFICATE_UNKNOWN = 1
 # Got this error on pypy
 SSL3_WRITE_PENDING = 1
-MAX_CONSECUTIVE_WRITES = 500
-
-
-class TooManyConsecutiveWrite(PulsarException):
-    '''Raise when too many consecutive writes are attempted.'''
-
-
-def raise_socket_error(e):
-    eno = getattr(e, 'errno', None)
-    if eno not in SOCKET_INTERRUPT_ERRORS:
-        args = getattr(e, 'args', None)
-        if isinstance(args, tuple) and len(args) == 2:
-            eno = args[0]
-    return eno not in SOCKET_INTERRUPT_ERRORS
-
-
-def raise_write_socket_error(e):
-    eno = getattr(e, 'errno', None)
-    return eno not in SOCKET_WRITE_ERRORS
 
 
 class SocketStreamTransport(SocketTransport):
-    '''A :class:`pulsar.SocketTransport` for TCP streams.
+    '''A :class:`.SocketTransport` for TCP streams.
 
     The primary feature of a stream transport is sending bytes to a protocol
     and receiving bytes from the underlying protocol. Writing to the transport
@@ -113,13 +94,6 @@ class SocketStreamTransport(SocketTransport):
         self.write(b''.join(list_of_data))
 
     ##    INTERNALS
-
-    def _write_continue(self, e):
-        return e.args and e.args[0] in TRY_WRITE_AGAIN
-
-    def _read_continue(self, e):
-        return e.args and e.args[0] == EWOULDBLOCK
-
     def _ready_write(self):
         # Do the actual writing
         buffer = self._write_buffer

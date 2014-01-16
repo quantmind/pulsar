@@ -14,7 +14,7 @@ This is an example of a script for an Echo server::
         SocketServer(EchoServerProtocol).start()
 
 Check the :ref:`echo server example <tutorials-writing-clients>` for detailed
-implementation of the ``EchoServerProtocol`` class.
+implementation of the ``.EchoServerProtocol`` class.
 
 .. _socket-server-settings:
 
@@ -100,7 +100,7 @@ from random import lognormvariate
 from functools import partial
 
 import pulsar
-from pulsar import TcpServer, UdpServer, Connection
+from pulsar import TcpServer, DatagramServer, Connection
 from pulsar.utils.internet import (parse_address, SSLContext, WrapSocket,
                                    format_address)
 from pulsar.utils.config import pass_through
@@ -245,17 +245,13 @@ class SocketServer(pulsar.Application):
     def worker_info(self, worker, info):
         server = worker.servers.get(self.name)
         if server:
-            info['tcpserver'] = server.info()
+            info['%sserver' % self.name] = server.info()
         return info
 
     def server_factory(self, *args, **kw):
         '''Create a :class:`.TcpServer`.
         '''
         return TcpServer(*args, **kw)
-
-    def _stop_worker(self, worker, exc):
-        worker.stop()
-        return exc
 
     #   INTERNALS
     def create_server(self, worker):
@@ -288,8 +284,65 @@ class SocketServer(pulsar.Application):
 
 
 class UdpSocketServer(SocketServer):
+    name = 'udpsocket'
+    cfg = pulsar.Config(apps=['socket'])
+
+    def protocol_factory(self):
+        '''Return the :class:`.DatagramProtocol` factory.
+        '''
+        return self.cfg.callable
+
+    def monitor_start(self, monitor):
+        '''Create the socket listening to the ``bind`` address.
+
+        If the platform does not support multiprocessing sockets set the
+        number of workers to 0.
+        '''
+        cfg = self.cfg
+        loop = monitor._loop
+        if (not pulsar.platform.has_multiProcessSocket
+                or cfg.concurrency == 'thread'):
+            cfg.set('workers', 0)
+        if not cfg.address:
+            raise pulsar.ImproperlyConfigured('Could not open a socket. '
+                                              'No address to bind to')
+        address = parse_address(self.cfg.address)
+        # First create the sockets
+        t, _ = yield loop.create_datagram_endpoint(lambda: None, address)
+        sock = t._sock
+        addresses = [sock.getsockname()]
+        sockets = [WrapSocket(sock)]
+        assert loop.remove_reader(sock.fileno())
+        monitor.sockets = sockets
+        cfg.addresses = addresses
+
+    def actorparams(self, monitor, params):
+        params.update({'sockets': monitor.sockets})
 
     def server_factory(self, *args, **kw):
-        '''Create a :class:`.TcpServer`.
+        '''Create a :class:`.UdpServer`.
         '''
-        return UdpServer(*args, **kw)
+        return DatagramServer(*args, **kw)
+
+    #   INTERNALS
+    def create_server(self, worker):
+        '''Create the Server which will listen for requests.
+
+        :return: a :class:`.UdpServer`.
+        '''
+        sockets = [sock.sock for sock in worker.sockets]
+        cfg = self.cfg
+        max_requests = cfg.max_requests
+        if max_requests:
+            max_requests = int(lognormvariate(log(max_requests), 0.2))
+        server = self.server_factory(self.protocol_factory(),
+                                     worker._loop,
+                                     sockets=sockets,
+                                     max_requests=max_requests,
+                                     name=self.name)
+        for event in ('pre_request', 'post_request'):
+            callback = getattr(cfg, event)
+            if callback != pass_through:
+                server.bind_event(event, callback)
+        server.create_endpoint()
+        return server

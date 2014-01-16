@@ -34,6 +34,10 @@ the socket connection.'''
         self.status_code = status_code
 
 
+class TooManyConsecutiveWrite(PulsarException):
+    '''Raise when too many consecutive writes are attempted.'''
+
+
 class TooManyConnections(PulsarException):
     '''Raised when there are too many concurrent connections.'''
 

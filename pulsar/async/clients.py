@@ -252,7 +252,7 @@ class AbstractUdpClient(Producer):
     __str__ = __repr__
 
     def create_endpoint(self):
-        '''Abstract method for creating a connection.
+        '''Abstract method for creating the endpoint
         '''
         raise NotImplementedError
 
@@ -273,4 +273,5 @@ class AbstractUdpClient(Producer):
         protocol_factory = protocol_factory or self.create_protocol
         _, protocol = yield self._loop.create_datagram_endpoint(
             protocol_factory, **kw)
+        yield protocol.event('connection_made')
         coroutine_return(protocol)

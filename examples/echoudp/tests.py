@@ -2,7 +2,7 @@ from pulsar import send, multi_async, new_event_loop, get_application
 from pulsar.utils.pep import range
 from pulsar.apps.test import unittest, dont_run_with_thread, run_on_arbiter
 
-from .manage import server, Echo, EchoServerProtocol
+from .manage import server, Echo, EchoUdpServerProtocol
 
 
 class TestEchoUdpServerThread(unittest.TestCase):
@@ -50,107 +50,13 @@ class TestEchoUdpServerThread(unittest.TestCase):
         result = yield self.client(msg)
         self.assertEqual(result, msg)
 
-    def test_multi(self):
-        result = yield multi_async((self.client(b'ciao'),
-                                    self.client(b'pippo'),
-                                    self.client(b'foo')))
-        self.assertEqual(len(result), 3)
-        self.assertTrue(b'ciao' in result)
-        self.assertTrue(b'pippo' in result)
-        self.assertTrue(b'foo' in result)
-
-    # TESTS FOR PROTOCOLS AND CONNECTIONS
-    def test_client(self):
-        yield self.test_multi()
-        c = self.client
-        self.assertTrue(c.pool.available)
-
-    def test_info(self):
-        info = yield send(self.server_cfg.name, 'info')
-        self.assertIsInstance(info, dict)
-        self.assertEqual(info['actor']['name'], self.server_cfg.name)
-        self.assertEqual(info['actor']['concurrency'], self.concurrency)
-
-    def test_connection(self):
-        client = Echo(self.server_cfg.addresses[0], full_response=True)
-        response = yield client(b'test connection')
-        self.assertEqual(response.buffer, b'test connection')
-        connection = response.connection
-        self.assertTrue(str(connection))
-        self.assertEqual(str(connection.transport)[:4], 'TCP ')
-
-    def test_connection_pool(self):
-        client = Echo(self.server_cfg.addresses[0], pool_size=2)
-        self.assertEqual(client.pool.pool_size, 2)
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 0)
-        self.assertEqual(client.sessions, 0)
-        self.assertEqual(client._requests_processed, 0)
-        #
-        response = yield client(b'test connection')
-        self.assertEqual(response, b'test connection')
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 1)
-        self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 1)
-        #
-        response = yield client(b'test connection 2')
-        self.assertEqual(response, b'test connection 2')
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 1)
-        self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 2)
-        #
-        result = yield multi_async((client(b'ciao'),
-                                    client(b'pippo'),
-                                    client(b'foo')))
-        self.assertEqual(len(result), 3)
-        self.assertTrue(b'ciao' in result)
-        self.assertTrue(b'pippo' in result)
-        self.assertTrue(b'foo' in result)
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 2)
-        self.assertEqual(client.sessions, 2)
-        self.assertEqual(client._requests_processed, 5)
-        #
-        # drop a connection
-        conn1 = client.pool._queue.get_nowait()
-        conn1.close()
-        conn2 = client.pool._queue.get_nowait()
-        client.pool._queue.put_nowait(conn1)
-        client.pool._queue.put_nowait(conn2)
-        #
-        result = yield multi_async((client(b'ciao'),
-                                    client(b'pippo'),
-                                    client(b'foo')))
-        self.assertEqual(len(result), 3)
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 2)
-        self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
-        #
-        client.pool.close()
-        self.assertEqual(client.pool.in_use, 0)
-        self.assertEqual(client.pool.available, 0)
-        self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
-
     ##    TEST SYNCHRONOUS CLIENT
     def test_sync_echo(self):
         echo = self.sync_client()
         self.assertEqual(echo(b'ciao!'), b'ciao!')
         self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
 
-    def test_sync_close(self):
-        echo = self.sync_client()
-        self.assertEqual(echo(b'ciao!'), b'ciao!')
-        self.assertEqual(echo.sessions, 1)
-        self.assertEqual(echo(b'QUIT'), b'QUIT')
-        self.assertEqual(echo.sessions, 1)
-        self.assertEqual(echo(b'ciao!'), b'ciao!')
-        self.assertEqual(echo.sessions, 2)
-
 
 @dont_run_with_thread
-class TestEchoServerProcess(TestEchoServerThread):
+class TestEchoServerProcess(TestEchoUdpServerThread):
     concurrency = 'process'

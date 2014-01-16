@@ -1,9 +1,6 @@
 '''
-This example illustrates how to write a simple TCP Echo server and client pair.
-The example is simple because the client and server protocols are symmetrical
-and therefore the :class:`EchoProtocol` will also be used as based class for
-:class:`EchoServerProtocol`.
-The code for this example is located in the :mod:`examples.echo.manage`
+This example illustrates how to write a UDP Echo server and client pair.
+The code for this example is located in the :mod:`examples.echoudp.manage`
 module.
 
 Run The example
@@ -24,36 +21,29 @@ Writing the Client
 =========================
 The first step is to write a small class handling a connection
 pool with the remote server. The :class:`Echo` class does just that,
-it subclass the handy :class:`.AbstractClient` and uses
+it subclass the handy :class:`.AbstractUdpClient` and uses
 the asynchronous :class:`.Pool` of connections as backbone.
 
-The second step is the implementation of the :class:`.EchoProtocol`,
-a subclass of :class:`.ProtocolConsumer`.
-The :class:`EchoProtocol` is needed for two reasons:
+The second step is the implementation of the :class:`EchoUdpProtocol`,
+a subclass of :class:`.DatagramProtocol`.
+The :class:`EchoUdpProtocol` is needed for two reasons:
 
-* It encodes and sends the request to the remote server via the
-  :meth:`~EchoProtocol.start_request` method.
+* It encodes and sends the request to the remote server
 * It listens for incoming data from the remote server via the
-  :meth:`~EchoProtocol.data_received` method.
+  :meth:`~EchoUdpProtocol.datagram_received` method.
 
 
 
 Implementation
 ==================
 
-Echo Client Protocol
+Echo Udp Protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: EchoProtocol
+.. autoclass:: EchoUdpProtocol
    :members:
    :member-order: bysource
 
-Echo Server Protocol
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: EchoServerProtocol
-   :members:
-   :member-order: bysource
 
 Echo Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,13 +69,12 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import (coroutine_return, Pool, in_loop_thread, Connection,
-                    AbstractClient)
-from pulsar.apps.socket import SocketServer
+from pulsar import coroutine_return, Pool, Deferred, in_loop_thread
+from pulsar.apps.socket import UdpSocketServer
 
 
 class EchoUdpProtocol(pulsar.DatagramProtocol):
-    '''An echo :class:`~.ProtocolConsumer` for client and servers.
+    '''A base :class:`.DatagramProtocol` for UDP echo clients and servers.
 
     The only difference between client and server is the implementation
     of the :meth:`response` method.
@@ -95,18 +84,20 @@ class EchoUdpProtocol(pulsar.DatagramProtocol):
     buffer = None
     '''The buffer for long messages'''
 
-    def getbuffer(self, addr):
+    def popbuffer(self, addr):
         if self.buffer:
             return self.buffer.pop(addr, None)
 
     def datagram_received(self, data, addr):
+        '''Handle data from ``addr``.
+        '''
         while data:
             idx = data.find(self.separator)
             if idx >= 0:    # we have a full message
                 idx += len(self.separator)
                 chunk, data = data[:idx], data[idx:]
                 buffer = self.popbuffer(addr)
-                self.response(buffer + data if buffer else data, addr)
+                self.response(buffer + chunk if buffer else chunk, addr)
             else:
                 if self.buffer is None:
                     self.buffer = {}
@@ -115,40 +106,43 @@ class EchoUdpProtocol(pulsar.DatagramProtocol):
                 else:
                     self.buffer[addr] = data
 
-    def start_request(self):
-        '''Override :meth:`~.ProtocolConsumer.start_request` to write
-        the message ended by the :attr:`separator` into the transport.
-        '''
-        self.transport.sendto(self._request + self.separator)
+    def response(self, data, addr):
+        '''Abstract response handler'''
+        raise NotImplementedError
+
+
+class EchoUdpClientProtocol(EchoUdpProtocol):
+    _waiting = None
+
+    def send(self, message):
+        assert isinstance(message, bytes)
+        self._waiting = d = Deferred(self._loop)
+        self._transport.sendto(message+self.separator)
+        return d
 
     def response(self, data, addr):
         '''Clients return the message so that the
         :attr:`.ProtocolConsumer.on_finished` is called back with the
         message value, while servers sends the message back to the client.
         '''
-        return data[:-len(self.separator)]
+        d, self._waiting = self._waiting, None
+        d.callback(data[:-len(self.separator)])
 
 
 class EchoUdpServerProtocol(EchoUdpProtocol):
-    '''The :class:`EchoUdpProtocol` used by the echo :func:`server`.
+    '''The :class:`EchoUdpProtocol` used by the echo udp :func:`server`.
     '''
     def response(self, data, addr):
         '''Override :meth:`~EchoProtocol.response` method by writing the
         ``data`` received back to the client.
         '''
         self._transport.sendto(data, addr)
-        data = data[:-len(self.separator)]
-        # If we get a QUIT message, close the transport.
-        # Used by the test suite.
-        if data == b'QUIT':
-            self._transport.close()
 
 
-class Echo(AbstractUdpClient):
+class Echo(pulsar.AbstractUdpClient):
     '''A client for the echo server.
 
     :param address: set the :attr:`address` attribute
-    :param full_response: set the :attr:`full_response` attribute
     :param pool_size: used when initialising the connetion :attr:`pool`.
     :param loop: Optional event loop to set the :attr:`_loop` attribute.
 
@@ -161,30 +155,21 @@ class Echo(AbstractUdpClient):
 
     .. attribute:: address
 
-        remote server TCP address.
+        remote server UDP address.
 
     .. attribute:: pool
 
-        Asynchronous connection :class:`.Pool`.
-
-    .. attribute:: full_response
-
-        Flag indicating if the callable method should return the
-        :class:`EchoProtocol` handling the request (``True``) or
-        the server response message (``False``).
-
-        Default: ``False``
+        Asynchronous client protocol :class:`.Pool`.
     '''
-    protocol_factory = partial(Connection, EchoProtocol)
+    protocol_factory = EchoUdpClientProtocol
 
-    def __init__(self, address, full_response=False, pool_size=10, loop=None):
+    def __init__(self, address, pool_size=5, loop=None):
         super(Echo, self).__init__(loop)
         self.address = address
-        self.full_response = full_response
-        self.pool = Pool(self.connect, pool_size, self._loop)
+        self.pool = Pool(self.create_endpoint, pool_size, self._loop)
 
-    def connect(self):
-        return self.create_connection(self.address)
+    def create_endpoint(self):
+        return self.create_datagram_endpoint(remote_addr=self.address)
 
     @in_loop_thread
     def __call__(self, message):
@@ -192,23 +177,19 @@ class Echo(AbstractUdpClient):
 
         :return: a :class:`.Deferred`
         '''
-        connection = yield self.pool.connect()
-        with connection:
-            consumer = connection.current_consumer()
-            consumer.start(message)
-            result = yield consumer.on_finished
-            result = consumer if self.full_response else consumer.buffer
+        protocol = yield self.pool.connect()
+        with protocol:
+            result = yield protocol.send(message)
             coroutine_return(result)
 
 
 def server(name=None, description=None, **kwargs):
-    '''Create the :class:`.SocketServer` with :class:`EchoServerProtocol`
-    as protocol factory.
+    '''Create the :class:`.UdpSocketServer`.
     '''
-    name = name or 'echoserver'
-    description = description or 'Echo Server'
-    return SocketServer(EchoServerProtocol, name=name,
-                        description=description, **kwargs)
+    name = name or 'echoudpserver'
+    description = description or 'Echo Udp Server'
+    return UdpSocketServer(EchoUdpServerProtocol, name=name,
+                           description=description, **kwargs)
 
 
 if __name__ == '__main__':  # pragma nocover

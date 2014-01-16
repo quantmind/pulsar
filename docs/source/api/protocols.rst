@@ -62,13 +62,6 @@ Protocol
    :members:
    :member-order: bysource
 
-DatagramProtocol
-~~~~~~~~~~~~~~~~~~
-.. autoclass:: DatagramProtocol
-   :members:
-   :member-order: bysource
-
-
 Connection
 ~~~~~~~~~~~~~~
 .. autoclass:: Connection
@@ -96,12 +89,42 @@ Producer
    :member-order: bysource
 
 
-TcpServer
+TCP Server
 ~~~~~~~~~~~~~~~~~
 
 .. autoclass:: TcpServer
    :members:
    :member-order: bysource
+
+
+.. module:: pulsar.async.udp
+
+UDP
+=====
+
+Classes for the (user) datagram protocol. UDP uses a simple transmission
+model with a minimum of protocol mechanism.
+
+Datagram Transport
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: DatagramTransport
+   :members:
+   :member-order: bysource
+
+
+Datagram Protocol
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: DatagramProtocol
+   :members:
+   :member-order: bysource
+
+Datagram Server
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: DatagramServer
+   :members:
+   :member-order: bysource
+
 
 .. module:: pulsar.async.clients
 
@@ -122,6 +145,13 @@ Abstract Client
    :members:
    :member-order: bysource
 
+
+Abstract UDP Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AbstractUdpClient
+   :members:
+   :member-order: bysource
 
 Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

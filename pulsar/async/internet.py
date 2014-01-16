@@ -1,7 +1,11 @@
 import socket
 from collections import deque
 
-from pulsar.utils.internet import nice_address, BUFFER_MAX_SIZE
+from pulsar.utils.internet import (nice_address, BUFFER_MAX_SIZE,
+                                   TRY_WRITE_AGAIN, TRY_READ_AGAIN,
+                                   ACCEPT_ERRORS, EWOULDBLOCK, EPERM,
+                                   SOCKET_INTERRUPT_ERRORS,
+                                   SOCKET_WRITE_ERRORS)
 
 from .defer import Deferred
 from .access import asyncio, AsyncObject
@@ -15,6 +19,20 @@ if AF_INET6:
     FAMILY_NAME[socket.AF_INET6] = 'TCP6'
 if hasattr(socket, 'AF_UNIX'):
     FAMILY_NAME[socket.AF_UNIX] = 'UNIX'
+
+
+def raise_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    if eno not in SOCKET_INTERRUPT_ERRORS:
+        args = getattr(e, 'args', None)
+        if isinstance(args, tuple) and len(args) == 2:
+            eno = args[0]
+    return eno not in SOCKET_INTERRUPT_ERRORS
+
+
+def raise_write_socket_error(e):
+    eno = getattr(e, 'errno', None)
+    return eno not in SOCKET_WRITE_ERRORS
 
 
 class Server(asyncio.AbstractServer):
@@ -182,3 +200,9 @@ class SocketTransport(asyncio.Transport, AsyncObject):
                 pass
             self._sock = None
             self._protocol.connection_lost(exc)
+
+    def _write_continue(self, e):
+        return e.args and e.args[0] in TRY_WRITE_AGAIN
+
+    def _read_continue(self, e):
+        return e.args and e.args[0] == EWOULDBLOCK
