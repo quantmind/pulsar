@@ -29,7 +29,7 @@ class FutureTypeError(TypeError):
     '''raised when invoking ``async`` on a wrong type.'''
 
 
-class CoroutineReturn(BaseException):
+class CoroutineReturn(StopIteration):
 
     def __init__(self, value):
         self.value = value
@@ -42,6 +42,23 @@ _FINISHED = 'FINISHED'
 
 async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
 log_exc_info = ('error', 'critical')
+
+
+def coroutine_return(value=None):
+    '''Use this function to return ``value`` from a
+    :ref:`coroutine <coroutine>`.
+
+    For example::
+
+        def mycoroutine():
+            a = yield ...
+            yield ...
+            ...
+            coroutine_return('OK')
+
+    If a coroutine does not invoke this function, its result is ``None``.
+    '''
+    raise CoroutineReturn(value)
 
 
 def is_relevant_tb(tb):
@@ -277,7 +294,6 @@ class Deferred(object):
     _suppressAlreadyCalled = False
     _timeout = None
     _callbacks = None
-    _chained_to = None
     _state = _PENDING
 
     def __init__(self, loop=None):
@@ -475,7 +491,6 @@ class Deferred(object):
             callback chain of this :class:`Deferred`.
         :return: this :class:`Deferred`
         '''
-        deferred._chained_to = self
         return self.add_callback(deferred.callback, deferred.callback)
 
     def then(self, deferred=None):
@@ -523,6 +538,11 @@ class Deferred(object):
 
         self.add_callback(cbk, cbk)
         return deferred
+
+    def __iter__(self):
+        if not self.done():
+            yield self  # This tells Task to wait for completion.
+        coroutine_return(self.result())
 
     ##################################################    INTERNAL METHODS
     def _run_callbacks(self):
@@ -593,11 +613,8 @@ class DeferredTask(Deferred):
                 failure.mute()
             else:
                 result = gen.send(result)
-        except CoroutineReturn as e:
-            result = e.value
-            conclude = True
-        except StopIteration:
-            result = None
+        except StopIteration as e:
+            result = getattr(e, 'value', None)
             conclude = True
         except Exception:
             result = sys.exc_info()

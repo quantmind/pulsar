@@ -7,22 +7,11 @@ from pulsar.utils.pep import iteritems, default_timer
 from .access import get_event_loop, get_request_loop
 from .consts import MAX_ASYNC_WHILE
 
-if False:   # pragma nocover
-    from pulsar.utils.lib import (Deferred, DeferredTask, Failure, async,
-                                  maybe_async, maybe_failure, NOT_DONE,
-                                  add_async_binding, set_access,
-                                  CoroutineReturn, Error,
-                                  CancelledError, TimeoutError,
-                                  InvalidStateError, FutureTypeError)
-
-    set_access(get_event_loop, get_request_loop)
-else:
-    from .fallbacks.defer import (Deferred, DeferredTask, Failure, async,
-                                  maybe_async, maybe_failure, NOT_DONE,
-                                  add_async_binding,
-                                  CoroutineReturn, Error,
-                                  CancelledError, TimeoutError,
-                                  InvalidStateError, FutureTypeError)
+from .fallbacks.defer import (Deferred, DeferredTask, Failure, async,
+                              maybe_async, maybe_failure, NOT_DONE,
+                              coroutine_return, add_async_binding,
+                              Error, CancelledError, TimeoutError,
+                              InvalidStateError, FutureTypeError)
 
 __all__ = ['Deferred',
            'Error',
@@ -47,23 +36,6 @@ __all__ = ['Deferred',
            'in_loop_thread',
            'raise_error_and_log',
            'NOT_DONE']
-
-
-def coroutine_return(value=None):
-    '''Use this function to return ``value`` from a
-    :ref:`coroutine <coroutine>`.
-
-    For example::
-
-        def mycoroutine():
-            a = yield ...
-            yield ...
-            ...
-            coroutine_return('OK')
-
-    If a coroutine does not invoke this function, its result is ``None``.
-    '''
-    raise CoroutineReturn(value)
 
 
 def iterdata(stream, start=0):
