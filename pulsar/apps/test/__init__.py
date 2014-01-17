@@ -312,6 +312,7 @@ from .plugins.base import *
 from .loader import *
 from .utils import *
 from .wsgi import *
+from .pep import pep8_run
 
 section_docs['Test'] = '''
 This section covers configuration parameters used by the
