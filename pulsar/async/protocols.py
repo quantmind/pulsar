@@ -4,7 +4,7 @@ from functools import partial
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .defer import multi_async, in_loop, coroutine_return, NOT_DONE
+from .futures import multi_async, in_loop, coroutine_return, NOT_DONE
 from .events import EventHandler
 from .access import asyncio, get_event_loop, new_event_loop
 

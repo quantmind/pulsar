@@ -39,7 +39,7 @@ from contextlib import contextmanager
 import pulsar
 from pulsar import (safe_async, get_actor, send, multi_async,
                     TcpServer, coroutine_return)
-from pulsar.async.proxy import ActorProxyDeferred
+from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 
 
@@ -175,7 +175,7 @@ class AsyncAssert(object):
         class MyTest(unittest.TestCase):
 
             def test1(self):
-                yield self.async.assertEqual(3, Deferred().callback(3))
+                yield self.async.assertEqual(3, Future().callback(3))
                 ...
 
 
@@ -233,7 +233,7 @@ class ActorTestMixin(object):
         concurrency = concurrency or self.concurrency
         ad = pulsar.spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
-        self.assertTrue(isinstance(ad, ActorProxyDeferred))
+        self.assertTrue(isinstance(ad, ActorProxyFuture))
         proxy = yield ad
         self.all_spawned.append(proxy)
         self.assertEqual(proxy.aid, ad.aid)

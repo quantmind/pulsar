@@ -9,7 +9,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import new_event_loop, get_actor, set_actor, logger
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .defer import multi_async, maybe_failure, Failure, Deferred
+from .futures import multi_async, maybe_failure, Failure, Future
 from .eventloop import signal, StopEventLoop
 from .protocols import TcpServer
 from .pollers import POLLERS
@@ -138,7 +138,7 @@ system is chosen.'''
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
 This is an internal method called periodically by the :attr:`Actor._loop`
-to ping the actor monitor. If successful return a :class:`Deferred` called
+to ping the actor monitor. If successful return a :class:`.Future` called
 back with the acknowledgement from the monitor.
 '''
         actor.next_periodic_task = None
@@ -180,7 +180,7 @@ back with the acknowledgement from the monitor.
                 actor.exit_code = 0
             stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
-            if (isinstance(stopping, Deferred) and
+            if (isinstance(stopping, Future) and
                     actor._loop.is_running()):
                 actor.logger.debug('async stopping')
                 stopping.add_both(lambda r: self._stop_actor(actor))

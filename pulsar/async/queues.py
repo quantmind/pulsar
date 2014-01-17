@@ -1,7 +1,7 @@
 from collections import deque
 
 from .access import get_event_loop, AsyncObject
-from .defer import Deferred
+from .futures import Future
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']

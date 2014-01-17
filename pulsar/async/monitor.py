@@ -7,7 +7,7 @@ from pulsar.utils.security import gen_unique_id
 
 from .proxy import actor_proxy_deferred
 from .actor import Actor
-from .defer import async_while
+from .futures import async_while
 from .concurrency import concurrency
 from .consts import *
 

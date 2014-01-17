@@ -7,7 +7,7 @@ from pulsar.utils.internet import (nice_address, BUFFER_MAX_SIZE,
                                    SOCKET_INTERRUPT_ERRORS,
                                    SOCKET_WRITE_ERRORS)
 
-from .defer import Deferred
+from .futures import Future
 from .access import asyncio, AsyncObject
 
 __all__ = ['SocketTransport']
@@ -59,7 +59,7 @@ class Server(asyncio.AbstractServer):
     def wait_closed(self):
         if self.sockets is None:
             return
-        waiter = Deferred(loop=self.loop)
+        waiter = Future(loop=self.loop)
         self.waiters.append(waiter)
         return waiter
 

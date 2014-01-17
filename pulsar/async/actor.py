@@ -6,7 +6,7 @@ from pulsar import HaltServer, CommandError, system
 from pulsar.utils.log import WritelnDecorator
 
 from .eventloop import setid
-from .defer import in_loop, Failure
+from .futures import in_loop, Failure
 from .events import EventHandler
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity

@@ -3,7 +3,7 @@ from functools import partial
 from collections import namedtuple
 from copy import copy
 
-from pulsar import Deferred
+from pulsar import Future
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.async.stream import SocketStreamSslTransport
@@ -181,7 +181,7 @@ class Tunneling:
         request = response._request.request
         connection = response._connection
         loop = connection._loop
-        d = Deferred(loop)
+        d = Future(loop)
         loop.remove_reader(connection.transport.sock.fileno())
         # Wraps the socket at the next iteration loop. Important!
         loop.call_later(1, self.switch_to_ssl, connection, request, d)

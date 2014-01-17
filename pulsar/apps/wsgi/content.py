@@ -25,11 +25,11 @@ It is a smart way for concatenating asynchronous strings::
 An :class:`AsyncString` can only be rendered once, and it accepts
 :ref:`asynchronous components  <tutorials-coroutine>`::
 
-    >>> a = Deferred()
+    >>> a = Future()
     >>> string = AsyncString('Hello, ', a)
     >>> value = string.render()
     >>> value
-    MultiDeferred (pending)
+    MultiFuture (pending)
     >>> value.done()
     False
 
@@ -138,7 +138,7 @@ from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import (multi_async, maybe_async, is_failure, safe_async, Deferred,
+from pulsar import (multi_async, maybe_async, is_failure, safe_async, Future,
                     async, coroutine_return)
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
@@ -186,7 +186,7 @@ def stream_mapping(value, request=None):
         if isinstance(value, AsyncString):
             value = value.content(request)
         value = maybe_async(value)
-        async = async or isinstance(value, Deferred)
+        async = async or isinstance(value, Future)
         result[key] = value
     return multi_async(result) if async else result
 
@@ -300,7 +300,7 @@ This is a shortcut for the :meth:`insert` method at index 0.
         return self
 
     def content(self, request=None):
-        '''Return a :class:`pulsar.Deferred` called once the string is ready.
+        '''Return a :class:`.Future` called once the string is ready.
 
         This method can be called once only since it invokes the :meth:`stream`
         method.
@@ -356,7 +356,7 @@ This method should not be overwritten, instead one should use the
         coroutine_return(response)
 
     def to_string(self, stream):
-        '''Once the :class:`pulsar.Deferred`, returned by :meth:`content`
+        '''Once the :class:`.Future`, returned by :meth:`content`
         method, is ready, this method get called to transform the stream into
         the content string. This method can be overwritten by derived classes.
 

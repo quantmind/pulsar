@@ -19,7 +19,7 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Deferred, Failure, in_loop
+from pulsar import HttpException, ProtocolError, Future, Failure, in_loop
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -70,7 +70,7 @@ class StreamReader:
         self.parser = parser
         self.transport = transport
         self.buffer = b''
-        self.on_message_complete = Deferred()
+        self.on_message_complete = Future()
 
     def __repr__(self):
         return repr(self.transport)
@@ -110,7 +110,7 @@ class StreamReader:
     def read(self, maxbuf=None):
         '''Return bytes in the buffer.
 
-        If the stream is not yet ready, return a :class:`.Deferred`
+        If the stream is not yet ready, return a :class:`.Future`
         which results in the bytes read.
         '''
         if not self._waiting:
@@ -441,7 +441,7 @@ class HttpServerResponse(ProtocolConsumer):
                 self.finish_wsgi()
 
     def _async_wsgi(self, wsgi_iter):
-        if isinstance(wsgi_iter, (Deferred, Failure)):
+        if isinstance(wsgi_iter, (Future, Failure)):
             wsgi_iter = yield wsgi_iter
         try:
             for b in wsgi_iter:

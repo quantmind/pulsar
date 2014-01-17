@@ -62,7 +62,7 @@ from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .defer import Failure, Deferred, coroutine_return, in_loop
+from .futures import Failure, Future, coroutine_return, in_loop
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient

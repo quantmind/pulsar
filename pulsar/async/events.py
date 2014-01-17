@@ -2,7 +2,7 @@ from inspect import isgenerator
 
 from pulsar.utils.pep import iteritems
 
-from .defer import Deferred, async, InvalidStateError
+from .futures import Future, async, InvalidStateError
 from .access import AsyncObject
 
 
@@ -76,10 +76,10 @@ class Event(AbstractEvent, AsyncObject):
                         async(g)
 
 
-class OneTime(Deferred, AbstractEvent):
+class OneTime(Future, AbstractEvent):
     '''An :class:`AbstractEvent` which can be fired once only.
 
-    This event handler is a :class:`.Deferred`.
+    This event handler is a :class:`.Future`.
 
     Implemented mainly for the one time events of the :class:`EventHandler`.
     There shouldn't be any reason to use this class on its own.
@@ -89,11 +89,11 @@ class OneTime(Deferred, AbstractEvent):
     @property
     def events(self):
         if self._events is None:
-            self._events = Deferred(self._loop)
+            self._events = Future(self._loop)
         return self._events
 
     def bind(self, callback, errback=None):
-        self.events.add_callback(callback, errback)
+        self.events.add_done_callback(callback, errback)
 
     def fired(self):
         return int(self.events.done())
@@ -105,7 +105,7 @@ class OneTime(Deferred, AbstractEvent):
                                   "key-value parameters"))
             else:
                 result = self.events.callback(arg)
-                if isinstance(result, Deferred):
+                if isinstance(result, Future):
                     # a deferred, add a check at the end of the callback pile
                     return self.events.add_callback(self._check, self._check)
                 else:

@@ -3,7 +3,7 @@ from functools import reduce
 from pulsar.utils.internet import is_socket_closed
 
 from .access import AsyncObject
-from .defer import coroutine_return, multi_async
+from .futures import coroutine_return, multi_async
 from .protocols import Producer
 from .queues import Queue, Full
 

@@ -15,7 +15,7 @@ from pulsar.utils.pep import range
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_data, LOGGER
-from .defer import maybe_async, async, DeferredTask, Failure
+from .futures import maybe_async, async, CoroTask, Failure
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
 from .udp import create_datagram_endpoint
@@ -141,7 +141,7 @@ class EventLoop(BaseEventLoop):
     tid = None
     pid = None
     exit_signal = None
-    task_factory = DeferredTask
+    task_factory = CoroTask
 
     def __init__(self):
         self.clear()

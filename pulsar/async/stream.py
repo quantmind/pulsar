@@ -12,7 +12,7 @@ from pulsar.utils.exceptions import TooManyConsecutiveWrite
 
 from .consts import NUMBER_ACCEPTS, MAX_CONSECUTIVE_WRITES
 from .access import logger
-from .defer import Failure, multi_async, Deferred, coroutine_return, in_loop
+from .futures import Failure, multi_async, Future, coroutine_return, in_loop
 from .internet import (Server, SocketTransport, AF_INET6, raise_socket_error,
                        raise_write_socket_error)
 

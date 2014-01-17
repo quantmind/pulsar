@@ -90,7 +90,7 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 
 from pulsar import (in_loop, Failure, EventHandler, PulsarException,
-                    Deferred, coroutine_return, run_in_loop_thread,
+                    Future, coroutine_return, run_in_loop_thread,
                     get_request_loop, raise_error_and_log)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
@@ -348,7 +348,7 @@ class TaskBackend(object):
     def queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
         '''Try to queue a new :ref:`Task`.
 
-        This method returns a :class:`.Deferred` which results in the
+        This method returns a :class:`.Future` which results in the
         task ``id`` created. If ``jobname`` is not a valid
         :attr:`.Job.name`, a ``TaskNotAvailable`` exception occurs.
 
@@ -360,7 +360,7 @@ class TaskBackend(object):
             expiry of a task.
         :param kwargs: optional dictionary used for the key-valued arguments
             in the task callable.
-        :return: a :class:`.Deferred` resulting in a task id on success.
+        :return: a :class:`.Future` resulting in a task id on success.
         '''
         return run_in_loop_thread(self._loop, self._queue_task, jobname,
                                   meta_params, expiry, **kwargs)
@@ -388,7 +388,7 @@ class TaskBackend(object):
                     when_done = callbacks.get(task_id)
                     if not when_done:
                         # No deferred, create one
-                        callbacks[task_id] = when_done = Deferred()
+                        callbacks[task_id] = when_done = Future()
                     task = yield when_done
                 coroutine_return(task)
 

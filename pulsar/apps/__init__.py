@@ -71,7 +71,7 @@ from functools import partial
 
 import pulsar
 from pulsar import (get_actor, coroutine_return, Config, async,
-                    multi_async, Deferred, ImproperlyConfigured)
+                    multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
@@ -463,7 +463,7 @@ class Application(Configurator):
                 actor = pulsar.arbiter(cfg=cfg)
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start = Deferred()
+                start = Future()
                 if actor.started():
                     self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.

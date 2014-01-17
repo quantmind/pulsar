@@ -1,6 +1,6 @@
 from .consts import *
 from .access import *
-from .defer import *
+from .futures import *
 from .events import *
 from .proxy import *
 from .internet import *

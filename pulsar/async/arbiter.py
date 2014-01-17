@@ -10,7 +10,7 @@ from pulsar import HaltServer
 
 from .actor import Actor, ACTOR_STATES
 from .monitor import PoolMixin, Monitor, _spawn_actor
-from .defer import multi_async
+from .futures import multi_async
 from .access import get_actor, set_actor
 from .proxy import actor_proxy_deferred
 
