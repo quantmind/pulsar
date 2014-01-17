@@ -219,10 +219,10 @@ def handle_wsgi_error(environ, failure):
     path = '@ path "%s"' % environ.get('PATH_INFO', '/')
     status = response.status_code
     if status == 500:
-        failure.log(msg='Unhandled exception during WSGI response %s.%s' %
+        failure.log(msg='Unhandled exception during HTTP response %s.%s' %
                     (path, dump_environ(environ)), level='critical')
     else:
-        failure.log(msg='WSGI %s @ "%s"' % (response.status, path),
+        failure.log(msg='HTTP %s %s' % (response.status, path),
                     level='warning')
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         content = None

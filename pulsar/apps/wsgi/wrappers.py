@@ -291,7 +291,7 @@ class EnvironMixin(object):
 
         WSGI_ environ dictionary
     '''
-    slots = ('environ',)
+    __slots__ = ('environ',)
 
     def __init__(self, environ, name=None):
         self.environ = environ
