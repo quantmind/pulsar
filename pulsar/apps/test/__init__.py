@@ -23,7 +23,7 @@ let's call it ``runtests.py``::
     if __name__ == '__main__':
         TestSuite(description='Test suite for my library',
                   modules=('regression',
-                           ('examples','tests'))).start()
+                           ('examples', 'tests'))).start()
 
 where ``modules`` is a tuple/list which specifies where to
 :ref:`search for test cases <apps-test-loading>` to run.
@@ -82,7 +82,7 @@ An example test case::
 .. note::
 
     Test functions are asynchronous, when they return a generator or a
-    :class:`pulsar.Deferred`, synchronous, when they return anything else.
+    :class:`.Deferred`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 

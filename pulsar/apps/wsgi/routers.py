@@ -419,7 +419,7 @@ in the :attr:`response_content_types` list.'''
 
     def link(self, *args, **urlargs):
         '''Return an anchor :class:`Html` element with the `href` attribute
-set to the url of this :class:`Router`.'''
+        set to the url of this :class:`Router`.'''
         if len(args) > 1:
             raise ValueError
         url = self.route.url(**urlargs)
@@ -486,11 +486,11 @@ class MediaMixin(Router):
     def was_modified_since(self, header=None, mtime=0, size=0):
         '''Check if an item was modified since the user last downloaded it
 
-:param header: the value of the ``If-Modified-Since`` header. If this is None,
-    simply return ``True``.
-:param mtime: the modification time of the item in question.
-:param size: the size of the item.
-'''
+        :param header: the value of the ``If-Modified-Since`` header.
+            If this is ``None``, simply return ``True``
+        :param mtime: the modification time of the item in question.
+        :param size: the size of the item.
+        '''
         try:
             if header is None:
                 raise ValueError

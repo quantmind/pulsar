@@ -1,15 +1,3 @@
-'''\
-A Python implementation of JSON-RPC 2.0 Specification
-
-JSON-RPC is a lightweight remote procedure call protocol.
-It's designed to be simple.
-
-A remote method is invoked by sending a request to a remote service.
-The request is a single object serialized using JSON.
-
-The specification is at
-http://groups.google.com/group/json-rpc/web/json-rpc-2-0
-'''
 import sys
 from functools import partial
 
@@ -30,13 +18,18 @@ __all__ = ['JSONRPC', 'JsonProxy']
 
 
 class JSONRPC(RpcHandler):
-    '''An :class:`RpcHandler` for class for JSON-RPC services.
-Design to comply with the `JSON-RPC 2.0`_ Specification.
+    '''An :class:`.RpcHandler` for JSON-RPC services.
 
-.. _`JSON-RPC 2.0`: http://www.jsonrpc.org/
-'''
+    Design to comply with the `JSON-RPC 2.0`_ Specification.
+
+    JSON-RPC is a lightweight remote procedure call protocol
+    designed to be simple.
+    A remote method is invoked by sending a request to a remote service,
+    the request is a single object serialised using JSON.
+
+    .. _`JSON-RPC 2.0`: http://www.jsonrpc.org/specification
+    '''
     version = '2.0'
-    methods = ('post',)
 
     def __call__(self, request):
         return Json(self._call(request)).http_response(request)
@@ -116,10 +109,10 @@ class JsonCall:
 
 
 class JsonProxy(object):
-    '''A python Proxy class for :class:`JSONRPC` Servers.
+    '''A python Proxy class for :class:`.JSONRPC` Servers.
 
     :param url: server location
-    :param version: JSONRPC server version. Default ``2.0``
+    :param version: JSON-RPC server version. Default ``2.0``
     :param id: optional request id, generated if not provided.
         Default ``None``.
     :param data: Extra data to include in all requests. Default ``None``.

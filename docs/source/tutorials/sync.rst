@@ -13,9 +13,8 @@ Normally, the ``_loop`` is a running event loop controlled by an
 In this case, all operations which requires the loop, are carried out
 asynchronously as one would expect.
 
-However, sometimes, mainly for testing purposing, can be useful to have
+However, sometimes it can be useful to have
 :class:`.AsyncObject` which behaves in a synchronous fashion.
-
 Pulsar achieves this by using a new event loop for that object.
 For example, this statement creates a synchronous :class:`.HttpClient`::
 
