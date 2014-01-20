@@ -50,7 +50,6 @@ import time
 import mimetypes
 import platform
 import socket
-import logging
 from hashlib import sha1, md5
 from uuid import uuid4
 from email.utils import formatdate
@@ -60,6 +59,7 @@ from collections import deque
 
 from .structures import mapping_iterator, OrderedDict
 from .pep import ispy3k, iteritems, itervalues, to_bytes, native_str
+from .html import capfirst
 
 try:
     from http_parser.parser import HttpParser as CHttpParser
@@ -90,7 +90,6 @@ def http_parser(**kwargs):
 
 
 create_connection = socket.create_connection
-LOGGER = logging.getLogger('httpurl')
 
 try:    # Compiled with SSL?
     BaseSSLError = None
@@ -401,14 +400,6 @@ header_type = {0: 'client', 1: 'server', 2: 'both'}
 header_type_to_int = dict(((v, k) for k, v in header_type.items()))
 
 
-def capfirst(x):
-    x = x.strip()
-    if x:
-        return x[0].upper() + x[1:].lower()
-    else:
-        return x
-
-
 def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
@@ -494,6 +485,21 @@ def parse_dict_header(value):
             value = unquote_header_value(value[1:-1])
         result[name] = value
     return result
+
+
+def split_comma(value):
+    return [v for v in (v.strip() for v in value.split(',')) if v]
+
+
+header_parsers = {'connection': split_comma}
+
+
+def parse_header(header, value):
+    assert isinstance(value, str)
+    if header in header_parsers:
+        return header_parsers[header](value)
+    else:
+        return [value]
 
 
 class Headers(object):
@@ -603,8 +609,7 @@ class Headers(object):
         key = header_field(key, self.all_headers, self.strict)
         if key and value:
             if not isinstance(value, list):
-                assert isinstance(value, str)
-                value = [value]
+                value = parse_header(key.lower(), value)
             self._headers[key] = value
 
     def get(self, key, default=None):
