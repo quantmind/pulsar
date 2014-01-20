@@ -275,7 +275,7 @@ def render_error(request, failure):
         return json.dumps({'status': response.status_code,
                            'message': msg})
     else:
-        return msg
+        return '\n'.join(msg) if isinstance(msg, (list, tuple)) else msg
 
 
 def render_error_debug(request, failure, content_type):

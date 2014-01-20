@@ -496,8 +496,8 @@ class HttpServerResponse(ProtocolConsumer):
             headers['connection'] = 'close'
         # If client sent cookies and set-cookies header is not available
         # set the cookies
-        if 'cookie' in self._stream.headers and not 'set-cookie' in headers:
-            headers['Set-cookie'] = self._stream.headers['cookie']
+        #if 'cookie' in self._stream.headers and not 'set-cookie' in headers:
+        #    headers['Set-cookie'] = self._stream.headers['cookie']
         return headers
 
     def wsgi_environ(self):

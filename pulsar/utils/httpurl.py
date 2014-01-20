@@ -1394,7 +1394,8 @@ class CacheControl(object):
 
     def __call__(self, headers):
         if self.nostore:
-            headers['cache-control'] = 'no-store'
+            headers['cache-control'] = ('no-store, no-cache, must-revalidate,'
+                                        ' max-age=0')
         elif self.maxage:
             headers['cache-control'] = 'max-age=%s' % self.maxage
             if self.private:
