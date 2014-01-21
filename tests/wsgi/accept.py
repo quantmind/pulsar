@@ -3,15 +3,16 @@ from pulsar.apps.test import unittest
 
 
 class AcceptTests(unittest.TestCase):
-    
+
     def test_empty_mime(self):
         environ = {}
         a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertFalse(content_types)
-        
+
     def test_content_types(self):
-        environ = {'HTTP_ACCEPT': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8'}
+        environ = {'HTTP_ACCEPT': ('text/html, application/xhtml+xml, '
+                                   'application/xml;q=0.9, */*;q=0.8')}
         a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertTrue(content_types)
@@ -23,13 +24,16 @@ class AcceptTests(unittest.TestCase):
         self.assertEqual(content_types.quality('text/plain'), 0.8)
         self.assertEqual(content_types.quality('application/json'), 0.8)
         self.assertEqual(content_types.best, 'text/html')
-        
+
     def test_best(self):
-        environ = {'HTTP_ACCEPT': 'text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8'}
+        environ = {'HTTP_ACCEPT': ('text/html, application/xhtml+xml, '
+                                   'application/xml;q=0.9, */*;q=0.8')}
         a = WsgiRequest(environ)
         content_types = a.content_types
         self.assertTrue(content_types)
-        self.assertEqual(content_types.best_match(('text/html', 'application/json')),
+        self.assertEqual(content_types.best_match(('text/html',
+                                                   'application/json')),
                          'text/html')
-        self.assertEqual(content_types.best_match(('application/json', 'text/html')),
+        self.assertEqual(content_types.best_match(('application/json',
+                                                   'text/html')),
                          'text/html')

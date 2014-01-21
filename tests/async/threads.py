@@ -36,4 +36,3 @@ class TestThreadQueue(unittest.TestCase):
         pool.join()
         yield async_while(3, lambda: pool.num_threads)
         self.assertFalse(pool.num_threads)
-

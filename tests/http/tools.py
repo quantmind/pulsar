@@ -45,13 +45,13 @@ class TestAuth(unittest.TestCase):
         c = CacheControl(maxage=3600, must_revalidate=True)
         c(headers)
         self.assertEqual(headers['cache-control'],
-                            'max-age=3600, public, must-revalidate')
+                         'max-age=3600, public, must-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True)
         c(headers)
         self.assertEqual(headers['cache-control'],
-                            'max-age=3600, public, proxy-revalidate')
+                         'max-age=3600, public, proxy-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True,
-                                 nostore=True)
+                         nostore=True)
         c(headers)
         self.assertEqual(headers['cache-control'],
                          'no-store, no-cache, must-revalidate, max-age=0')
@@ -118,7 +118,7 @@ class TestTools(unittest.TestCase):
 
     def test_encode_multipart_formdata(self):
         data, ct = encode_multipart_formdata([('bla', 'foo'),
-                                                ('foo', ('pippo', 'pluto'))])
+                                              ('foo', ('pippo', 'pluto'))])
         idx = data.find(b'\r\n')
         boundary = data[2:idx].decode('utf-8')
         self.assertEqual(ct, 'multipart/form-data; boundary=%s' % boundary)

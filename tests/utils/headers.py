@@ -50,7 +50,7 @@ class TestHeaders(unittest.TestCase):
                      ('Accept-Encoding', 'deflate'),
                      ('Accept-Encoding', 'compress'),
                      ('Accept-Encoding', 'gzip')],
-                     kind='client')
+                    kind='client')
         accept = h['accept-encoding']
         self.assertEqual(accept, 'identity, deflate, compress, gzip')
 
@@ -58,7 +58,7 @@ class TestHeaders(unittest.TestCase):
         accept = accept_content_type()
         self.assertTrue('text/html' in accept)
         accept = accept_content_type(
-                        'text/*, text/html, text/html;level=1, */*')
+            'text/*, text/html, text/html;level=1, */*')
         self.assertTrue('text/html' in accept)
         self.assertTrue('text/plain' in accept)
 

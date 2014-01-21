@@ -3,6 +3,7 @@ from pulsar.apps.test import unittest
 
 DELAY = 0
 
+
 def async_func(loop, value):
     p = Deferred(loop)
     loop.call_later(DELAY, p.callback, value)

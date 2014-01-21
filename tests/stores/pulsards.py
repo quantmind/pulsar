@@ -186,9 +186,8 @@ class RedisCommands(StoreMixin):
     #    yield self.async.assertRaises(ResponseError, self.store.execute)
 
     #def test_bad_command(self):
-    #    yield self.async.assertRaises(ResponseError, self.store.execute, 'foo')
-
-
+    #    yield self.async.assertRaises(ResponseError, self.store.execute,
+    #                                  'foo')
     ###########################################################################
     ##    STRINGS
     def test_append(self):
@@ -228,7 +227,7 @@ class RedisCommands(StoreMixin):
 
     def test_bitop_not_empty_string(self):
         key = self.randomkey()
-        des =  key + 'd'
+        des = key + 'd'
         c = self.client
         eq = self.async.assertEqual
         yield eq(c.set(key, ''), True)
@@ -659,6 +658,7 @@ class RedisCommands(StoreMixin):
                  [b'u1', b'1', b'u2', b'2', b'u3', b'3'])
         yield eq(c.sort(key2, get=('%s:*' % key, '#'), groups=True),
                  [(b'u1', b'1'), (b'u2', b'2'), (b'u3', b'3')])
+
     ###########################################################################
     ##    SETS
     ### SET COMMANDS ###
@@ -1033,7 +1033,7 @@ class RedisCommands(StoreMixin):
         pubsub.bind_event('on_message', check_message)
         yield pubsub.subscribe('chat')
         result = yield pubsub.publish('chat', 'Hello')
-        self.assertTrue(result>=0)
+        self.assertTrue(result >= 0)
         self.assertTrue(self.called)
 
     ###########################################################################
@@ -1080,6 +1080,6 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         cls.client = cls.store.client()
 
 
-@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires cython extensions')
+@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestPulsarStorePyParser(TestPulsarStore):
     redis_py_parser = True

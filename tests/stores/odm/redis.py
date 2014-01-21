@@ -10,4 +10,3 @@ class TestRedisODM(Odm, unittest.TestCase):
         addr = 'redis://%s' % cls.cfg.redis_server
         cls.store = cls.create_store(addr)
         cls.sync_store = cls.create_store(addr, loop=new_event_loop())
-

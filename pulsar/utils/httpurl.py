@@ -429,11 +429,14 @@ HEADER_FIELDS_JOINER = {'Cookie': '; ',
                         'Set-Cookie': None,
                         'Set-Cookie2': None}
 
+
 def split_comma(value):
     return [v for v in (v.strip() for v in value.split(',')) if v]
 
+
 def parse_cookies(value):
     return [c.OutputString() for c in SimpleCookie(value).values()]
+
 
 header_parsers = {'Connection': split_comma,
                   'Cookie': parse_cookies}

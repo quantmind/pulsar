@@ -14,7 +14,6 @@ class TestRedisStore(RedisCommands, Scripting, unittest.TestCase):
         cls.client = cls.store.client()
 
 
-@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires cython extensions')
+@unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires cython extensions')
 class TestRedisStorePythonParser(TestRedisStore):
     pass
-

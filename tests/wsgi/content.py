@@ -7,7 +7,7 @@ from pulsar.utils.system import json
 class TestAsyncContent(unittest.TestCase):
 
     def test_string(self):
-        a = wsgi.AsyncString ('Hello')
+        a = wsgi.AsyncString('Hello')
         self.assertEqual(a.render(), 'Hello')
         self.assertRaises(RuntimeError, a.render)
 

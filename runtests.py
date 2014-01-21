@@ -8,7 +8,8 @@ def run(**params):
     args = params.get('argv', sys.argv)
     if '--pep8' in args:
         from pulsar.apps.test import pep8_run
-        msg, code = pep8_run(args, ['pulsar', 'examples'], 'setup.cfg')
+        msg, code = pep8_run(args, ['pulsar', 'examples', 'tests'],
+                             'setup.cfg')
         if msg:
             sys.stderr.write(msg)
         sys.exit(code)

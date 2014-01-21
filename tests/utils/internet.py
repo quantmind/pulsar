@@ -69,14 +69,14 @@ class TestParseConnectionString(unittest.TestCase):
 
     def test_parse_tcp_with_http_and_params(self):
         scheme, address, params = parse_connection_string(
-                                                'http://:6439?db=3&bla=foo')
+            'http://:6439?db=3&bla=foo')
         self.assertEqual(scheme, 'http')
         self.assertEqual(address, ('', 6439))
         self.assertEqual(params, {'db': '3', 'bla': 'foo'})
 
     def test_parse_tcp_with_https_and_params(self):
         scheme, address, params = parse_connection_string(
-                                        'https://127.0.0.1:6439?db=3&bla=foo')
+            'https://127.0.0.1:6439?db=3&bla=foo')
         self.assertEqual(scheme, 'https')
         self.assertEqual(address, ('127.0.0.1', 6439))
         self.assertEqual(params, {'db': '3', 'bla': 'foo'})

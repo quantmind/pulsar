@@ -15,7 +15,7 @@ from examples.echo.manage import Echo, EchoServerProtocol
 def check_actor(actor, name):
     # put something on a queue, just for coverage.
     actor.put(None)
-    assert(actor.name==name)
+    assert actor.name == name
 
 
 class create_echo_server(object):
@@ -92,7 +92,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         info = yield send(proxy, 'info')
         self.assertTrue('actor' in info)
         ainfo = info['actor']
-        self.assertEqual(ainfo['is_process'], self.concurrency=='process')
+        self.assertEqual(ainfo['is_process'], self.concurrency == 'process')
 
     @run_on_arbiter
     def testSimpleSpawn(self):
@@ -128,7 +128,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         self.assertEqual(result, b'Hello')
         yield self.stop_actors(proxy)
 
+
 @dont_run_with_thread
 class TestActorProcess(TestActorThread):
     concurrency = 'process'
-

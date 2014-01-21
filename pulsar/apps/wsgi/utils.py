@@ -30,7 +30,7 @@ __all__ = ['handle_wsgi_error',
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
 HOP_HEADERS = frozenset(('connection',
-                         'keep-alive',  #TODO: this is not an header!
+                         'keep-alive',
                          'proxy-authenticate',
                          'proxy-authorization',
                          'te',
@@ -216,7 +216,7 @@ def handle_wsgi_error(environ, failure):
     else:
         response.status_code = getattr(error, 'status', 500)
         response.headers.update(getattr(error, 'headers', None) or ())
-    path = '@ path "%s"' % environ.get('PATH_INFO', '/')
+    path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status == 500:
         failure.log(msg='Unhandled exception during HTTP response %s.%s' %

@@ -50,7 +50,7 @@ class TestQueue(unittest.TestCase):
         q = Queue()
         self.assertEqual(q.qsize(), 0)
         item = maybe_async(q.get())
-        self.assertIsInstance(item , Deferred)
+        self.assertIsInstance(item, Deferred)
         result = yield q.put('Hello')
         self.assertEqual(result, None)
         self.assertTrue(item.done())

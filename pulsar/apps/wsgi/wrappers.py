@@ -182,7 +182,7 @@ class WsgiResponse(object):
                     content = content.encode(self.encoding)
             else:   # pragma    nocover
                 if isinstance(content, unicode):
-                    if not self.encoding: # use utf-8 if not set
+                    if not self.encoding:  # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
             if isinstance(content, bytes):

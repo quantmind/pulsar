@@ -19,6 +19,7 @@ def cause_timeout(actor):
     else:
         actor.event_loop.call_soon(cause_timeout, actor)
 
+
 def cause_terminate(actor):
     if actor.next_periodic_task:
         actor.next_periodic_task.cancel()

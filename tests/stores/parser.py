@@ -5,6 +5,7 @@ from pulsar.apps.test import unittest
 from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
                               InvalidResponse)
 
+
 def lua_nested_table(nesting, s=100):
     s = b''.join((b'1234567890' for n in range(s)))
     pres = [100, s]
@@ -67,8 +68,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(str(value), 'random error')
 
     def test_binary(self):
-        test = b'$31\r\n\x80\x02]q\x00(X\x04\x00\x00\x00ciaoq\x01X\x05\x00'\
-               b'\x00\x00pippoq\x02e.\r\n'
+        test = (b'$31\r\n\x80\x02]q\x00(X\x04\x00\x00\x00ciaoq\x01X\x05\x00'
+                b'\x00\x00pippoq\x02e.\r\n')
         p = self.parser()
         p.feed(test)
         self.assertEqual(p.buffer(), test)
@@ -77,7 +78,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(p.buffer(), b'')
 
     def test_multi(self):
-        test = b'+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n$-1\r\n:1\r\n:39\r\n'
+        test = (b'+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n$-1\r\n:1'
+                b'\r\n:39\r\n')
         p = self.parser()
         p.feed(test)
         self.assertEqual(p.get(), b'OK')
@@ -151,7 +153,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(p.multi_bulk(()), b'*0\r\n')
 
 
-@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS , 'Requires C extensions')
+@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires C extensions')
 class TestPythonParser(TestParser):
 
     def parser(self):

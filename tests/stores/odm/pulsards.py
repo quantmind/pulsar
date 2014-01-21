@@ -25,6 +25,7 @@ class Odm(StoreMixin):
     def test_model(self):
         o = odm.Model(bla=1, foo=3)
 
+
 class next_version:
 
     def test_insert(self):

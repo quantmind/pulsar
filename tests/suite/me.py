@@ -101,6 +101,7 @@ class TestTestWorker(unittest.TestCase):
         d = pulsar.Deferred()
         # We are calling back the deferred in the event_loop which is on
         # a separate thread
+
         def _callback():
             d.callback(current_thread().ident)
         worker._loop.call_later(0.2, _callback)

@@ -57,7 +57,8 @@ class FrameTest(unittest.TestCase):
         frame = c.decode(chunk)
         self.assertTrue(frame.final)
         self.assertEqual(frame.opcode, 9)
-        self.assertEqual(i2b((0x89,0x05,0x48,0x65,0x6c,0x6c,0x6f)), chunk)
+        self.assertEqual(i2b((0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)),
+                         chunk)
         self.assertEqual(frame.body, b'Hello')
         self.assertRaises(ProtocolError, s.ping, self.bdata)
         #
@@ -88,11 +89,11 @@ class FrameTest(unittest.TestCase):
         self.assertEqual(len(f.body), 5)
         self.assertFalse(f.masking_key)
         #
-        self.assertEqual(i2b((0x81,0x05,0x48,0x65,0x6c,0x6c,0x6f)), data)
+        self.assertEqual(i2b((0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f)), data)
         f1 = parser.encode('Hel', final=False)
         f2 = parser.continuation('lo', final=True)
-        self.assertEqual(i2b((0x01,0x03,0x48,0x65,0x6c)), f1)
-        self.assertEqual(i2b((0x80,0x02,0x6c,0x6f)), f2)
+        self.assertEqual(i2b((0x01, 0x03, 0x48, 0x65, 0x6c)), f1)
+        self.assertEqual(i2b((0x80, 0x02, 0x6c, 0x6f)), f2)
 
     def testBinaryDataFrame(self):
         s = self.parser()

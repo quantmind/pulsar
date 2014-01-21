@@ -4,6 +4,7 @@ from pulsar.utils.httpurl import hasextensions
 from pulsar.apps.test import unittest
 from pulsar.utils import httpurl
 
+
 class TestPythonHttpParser(unittest.TestCase):
 
     @classmethod
@@ -165,6 +166,7 @@ class TestPythonHttpParser(unittest.TestCase):
         p = self.parser()
         data = b'HTTP/1.1 200 Connection established\r\n\r\n'
         self.assertEqual(p.execute(data, len(data)), len(data))
+
 
 @unittest.skipUnless(hasextensions, 'Requires C extensions')
 class TestCHttpParser(TestPythonHttpParser):
