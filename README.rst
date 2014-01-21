@@ -124,7 +124,6 @@ Add-ons
 Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities or improve performance:
 
-* http-parser_: upgrade the HTTP parser to a faster C version.
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application.
 * psutil_: if installed, a ``system`` key is available in the dictionary
@@ -187,7 +186,6 @@ This software is licensed under the New BSD_ License. See the LICENSE
 file in the top distribution directory for the full license text.
 
 .. _gunicorn: http://gunicorn.org/
-.. _http-parser: https://github.com/benoitc/http-parser
 .. _nodejs: http://nodejs.org/
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/

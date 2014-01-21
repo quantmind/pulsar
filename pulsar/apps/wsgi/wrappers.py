@@ -119,6 +119,10 @@ class WsgiResponse(object):
 
         The dictionary of WSGI environment if passed to the constructor.
 
+    .. attribute:: cookies
+
+        A python :class:`SimpleCookie` container of cookies included in the
+        request as well as cookies set during the response.
     '''
     _started = False
     DEFAULT_STATUS_CODE = 200
@@ -137,7 +141,7 @@ class WsgiResponse(object):
             self.content_type = content_type
         if environ:
             cookie = environ.get('HTTP_COOKIE')
-            if self._can_store_cookies and cookie:
+            if cookie:
                 self.cookies.load(cookie)
 
     @property
@@ -158,6 +162,11 @@ class WsgiResponse(object):
     def connection(self):
         if self.environ:
             return self.environ.get('pulsar.connection')
+
+    @property
+    def environ_cache(self):
+        if self.environ:
+            return self.environ.get('pulsar.cache')
 
     def _get_content(self):
         return self._content
@@ -258,6 +267,8 @@ class WsgiResponse(object):
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
 
     def get_headers(self):
+        '''The list of headers for this response
+        '''
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)

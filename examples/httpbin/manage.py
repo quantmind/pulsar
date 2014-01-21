@@ -114,8 +114,9 @@ class HttpBin(wsgi.Router):
 
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
-        cookies = {'cookies': request.get('http.cookie')}
-        return Json(cookies).http_response(request)
+        response = request.response
+        cookies = dict(((c.key, c.value) for c in response.cookies.values()))
+        return Json({'cookies': cookies}).http_response(request)
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',
            defaults={'name': 'package', 'value': 'pulsar'})
@@ -282,7 +283,6 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ):
         router = HttpBin('/')
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
-                                 wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
                                  wsgi.FileRouter('/favicon.ico', FAVICON),
                                  wsgi.MediaRouter('media', ASSET_DIR),

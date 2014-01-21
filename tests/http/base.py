@@ -7,7 +7,7 @@ import examples
 from pulsar import send, Failure, SERVER_SOFTWARE, new_event_loop
 from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
-from pulsar.utils import httpurl
+from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
 from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
@@ -126,15 +126,6 @@ class TestHttpClientBase:
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
-    def test_send_cookie(self):
-        http = self._client
-        cookies = {'sessionid': 't1', 'cookies_are': 'working'}
-        response = yield http.get(self.httpbin(), cookies=cookies)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.headers['set-cookie'])
-        self.assertEqual(response.cookies, cookies)
-
-class d:
     def test_HttpResponse(self):
         r = HttpResponse()
         self.assertEqual(r.request, None)
@@ -238,7 +229,7 @@ class d:
                          'application/json; charset=utf-8')
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
-                self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
+                self.httpbin(iri_to_uri('get',{'bla': 'foo'})))
         self._check_pool(http, response)
 
     def test_200_gzip(self):
@@ -445,7 +436,7 @@ class d:
         response = yield http.get(self.httpbin(), cookies=cookies)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers['set-cookie'])
-        self.assertEqual(response.cookies, cookies)
+        self.assertEqual(response.cookies, SimpleCookie(cookies))
 
     def test_cookie(self):
         http = self._client

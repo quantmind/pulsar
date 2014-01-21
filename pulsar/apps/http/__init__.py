@@ -779,6 +779,7 @@ class HttpClient(AbstractClient):
     :param encode_multipart: optional flag for setting the
         :attr:`encode_multipart` attribute
     :param pool_size: set the :attr:`pool_size` attribute.
+    :param store_cookies: set the :attr:`store_cookies` attribute
 
     .. attribute:: headers
 
@@ -789,6 +790,13 @@ class HttpClient(AbstractClient):
     .. attribute:: cookies
 
         Default cookies for this :class:`HttpClient`.
+
+    .. attribute:: store_cookies
+
+        If ``True`` it remebers response cookies and send them back to
+        serves.
+
+        Default: ``True``
 
     .. attribute:: timeout
 

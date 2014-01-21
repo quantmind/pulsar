@@ -76,6 +76,7 @@ Ver. 0.8.0
     :func:`.run_on_arbiter` decorator.
   * The :ref:`shell application <apps-shell>` runs on a worker thread in the
     arbiter domain.
+  * Better handling of cookies in :class:`.WsgiResponse`.
 
 * **1,135 regression tests**, **91% coverage**.
 

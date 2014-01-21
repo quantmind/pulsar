@@ -261,8 +261,10 @@ request, the ``get(self, request)`` method must be implemented.
 
     @property
     def default_content_type(self):
-        '''The default content type for responses. This is the first element
-in the :attr:`response_content_types` list.'''
+        '''The default content type for responses.
+
+        This is the first element in the :attr:`response_content_types` list.
+        '''
         ct = self.response_content_types
         return ct[0] if ct else None
 

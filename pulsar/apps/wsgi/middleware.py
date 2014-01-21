@@ -50,13 +50,12 @@ import re
 
 import pulsar
 from pulsar import async, coroutine_return
-from pulsar.utils.httpurl import BytesIO, parse_cookie
+from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
 
 
 __all__ = ['clean_path_middleware',
-           'cookies_middleware',
            'authorization_middleware',
            'wait_for_body_middleware']
 
@@ -72,25 +71,6 @@ def clean_path_middleware(environ, start_response=None):
         if qs:
             url = '%s?%s' % (url, qs)
         raise pulsar.HttpRedirect(url)
-
-
-def cookies_middleware(environ, start_response=None):
-    '''Parse the ``HTTP_COOKIE`` key in ``environ``.
-
-    Set the new ``http.cookie`` key in ``environ`` with a dictionary
-    of cookies obtained via the :func:`pulsar.utils.httpurl.parse_cookie`
-    function.
-    '''
-    c = environ.get('http.cookie')
-    if not isinstance(c, dict):
-        c = environ.get('HTTP_COOKIE', '')
-        if not c:
-            c = {}
-        else:
-            if not isinstance(c, str):
-                c = c.encode('utf-8')
-            c = parse_cookie(c)
-        environ['http.cookie'] = c
 
 
 def authorization_middleware(environ, start_response=None):

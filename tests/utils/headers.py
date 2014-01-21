@@ -1,5 +1,6 @@
 from pulsar.apps.test import unittest
-from pulsar.utils.httpurl import Headers, accept_content_type, DEFAULT_CHARSET
+from pulsar.utils.httpurl import (Headers, accept_content_type,
+                                  DEFAULT_CHARSET, SimpleCookie)
 
 
 class TestHeaders(unittest.TestCase):
@@ -110,3 +111,12 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(h['accept-encoding'], 'gzip2, deflate2')
         self.assertEqual(h['accept'], 'text/html, */*; q=0.8')
 
+    def test_cookies(self):
+        h = Headers()
+        cookies = SimpleCookie({'bla': 'foo', 'pippo': 'pluto'})
+        self.assertEqual(len(cookies), 2)
+        for c in cookies.values():
+            v = c.OutputString()
+            h.add_header('Set-Cookie', v)
+        self.assertEqual(
+            str(h), 'Set-Cookie: bla=foo\r\nSet-Cookie: pippo=pluto\r\n\r\n')
