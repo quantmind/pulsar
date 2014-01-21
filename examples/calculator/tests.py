@@ -99,18 +99,16 @@ class TestRpcOnThread(unittest.TestCase):
         server = response['server']
         self.assertTrue('version' in server)
         app = response['monitors'][self.app_cfg.name]
-        if 'tcpserver' in app:
-            self.assertEqual(self.concurrency, 'thread')
+        if self.concurrency == 'thread':
             self.assertFalse(app['workers'])
-            self._check_tcpserver(app['tcpserver']['server'])
+            worker = app
         else:
-            self.assertEqual(self.concurrency, 'process')
             workers = app['workers']
             self.assertEqual(len(workers), 1)
             worker = workers[0]
-            if 'tcpserver' in worker:
-                # TODO remove this if clause
-                self._check_tcpserver(worker['tcpserver']['server'])
+        name = '%sserver' % self.app_cfg.name
+        if name in worker:
+            self._check_tcpserver(worker[name]['server'])
 
     def _check_tcpserver(self, server):
         sockets = server['sockets']

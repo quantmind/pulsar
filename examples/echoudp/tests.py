@@ -58,5 +58,5 @@ class TestEchoUdpServerThread(unittest.TestCase):
 
 
 @dont_run_with_thread
-class TestEchoServerProcess(TestEchoUdpServerThread):
+class TestEchoUdpServerProcess(TestEchoUdpServerThread):
     concurrency = 'process'

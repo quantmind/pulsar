@@ -153,7 +153,7 @@ class WebChat(LazyWsgi):
     def home_page(self, request):
         data = open(os.path.join(CHAT_DIR, 'chat.html')).read()
         request.response.content_type = 'text/html'
-        request.response.content = data % request.environ
+        request.response.content = to_string(data % request.environ)
         return request.response
 
 
