@@ -380,10 +380,10 @@ class Config(object):
 
     def _get(self, name, default=None):
         if name not in self.settings:
-            if name in KNOWN_SETTINGS:
-                return default
             if name in self.params:
                 return self.params[name]
+            if name in KNOWN_SETTINGS:
+                return default
             raise KeyError("'%s'" % name)
         return self.settings[name].get()
 

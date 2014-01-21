@@ -555,6 +555,8 @@ class TestSuite(tasks.TaskQueue):
         yield server()
         store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
                              pool_size=2)
+        redis_server = 'redis://%s' % self.cfg.redis_server
+        monitor.arbiter.cfg.params['redis_server'] = redis_server
         self.get_backend(store)
         loader = self.loader
         tags = self.cfg.labels

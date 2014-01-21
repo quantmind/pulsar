@@ -21,10 +21,13 @@ HTML_CHILDREN_TAG = {}
 
 # Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).
 e = lambda *t: GLOBAL_HTML_ATTRIBUTES + t
+
+# Input atg attributes
+# http://www.w3schools.com/tags/tag_input.asp
 input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled',
                           'form', 'formnovalidate', 'list', 'max', 'maxlength',
                           'min', 'multiple', 'name', 'pattern', 'placeholder',
-                          'required', 'size', 'step', 'value', *t)
+                          'readonly', 'required', 'size', 'step', 'value', *t)
 
 ## HTML TAG ATTRIBUTES
 ############################################################################
