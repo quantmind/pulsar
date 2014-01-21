@@ -149,10 +149,11 @@ def lazy_string(f):
 
 
 def capfirst(x):
-    '''Capitalise the first letter of ``x``.'''
+    '''Capitalise the first letter of ``x``.
+    '''
     x = to_string(x).strip()
     if x:
-        return x[0].upper() + x[1:]
+        return x[0].upper() + x[1:].lower()
     else:
         return x
 

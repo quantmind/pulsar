@@ -135,6 +135,10 @@ class WsgiResponse(object):
         self._can_store_cookies = can_store_cookies
         if content_type is not None:
             self.content_type = content_type
+        if environ:
+            cookie = environ.get('HTTP_COOKIE')
+            if self._can_store_cookies and cookie:
+                self.cookies.load(cookie)
 
     @property
     def started(self):
@@ -278,7 +282,7 @@ class WsgiResponse(object):
                 headers['Content-Type'] = ct
         if self.can_set_cookies():
             for c in self.cookies.values():
-                headers['Set-Cookie'] = c.OutputString()
+                headers.add_header('Set-Cookie', c.OutputString())
         return list(headers)
 
     def has_header(self, header):

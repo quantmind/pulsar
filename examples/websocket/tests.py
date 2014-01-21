@@ -59,7 +59,7 @@ class TestWebSocketThread(unittest.TestCase):
         self.assertEqual(response.status_code, 405)
         #
         response = yield c.get(self.ws_uri,
-                               headers=[('Sec-Websocket-Key', '')])
+                               headers=[('Sec-Websocket-Key', 'x')])
         self.assertEqual(response.status_code, 400)
         #
         response = yield c.get(self.ws_uri,

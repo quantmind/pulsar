@@ -150,4 +150,3 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(nice_number(51345618),
                 'fifty one million, three hundred forty five thousand, '
                 'six hundred and eighteen')
-

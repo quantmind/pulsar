@@ -494,10 +494,6 @@ class HttpServerResponse(ProtocolConsumer):
             self.keep_alive = keep_alive_with_status(self._status, headers)
         if not self.keep_alive:
             headers['connection'] = 'close'
-        # If client sent cookies and set-cookies header is not available
-        # set the cookies
-        #if 'cookie' in self._stream.headers and not 'set-cookie' in headers:
-        #    headers['Set-cookie'] = self._stream.headers['cookie']
         return headers
 
     def wsgi_environ(self):

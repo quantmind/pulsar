@@ -30,7 +30,7 @@ __all__ = ['handle_wsgi_error',
 DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
                                   ) + JSON_CONTENT_TYPES
 HOP_HEADERS = frozenset(('connection',
-                         'keep-alive',
+                         'keep-alive',  #TODO: this is not an header!
                          'proxy-authenticate',
                          'proxy-authorization',
                          'te',

@@ -53,7 +53,8 @@ class TestAuth(unittest.TestCase):
         c = CacheControl(maxage=3600, proxy_revalidate=True,
                                  nostore=True)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'no-store')
+        self.assertEqual(headers['cache-control'],
+                         'no-store, no-cache, must-revalidate, max-age=0')
 
 
 class TestTools(unittest.TestCase):
