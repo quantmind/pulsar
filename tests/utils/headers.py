@@ -73,11 +73,6 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(h.kind, 'both')
         self.assertEqual(h.kind_number, 2)
 
-    def test_add_header_with_params(self):
-        h = Headers()
-        h.add_header('content-type', 'text/html', charset=DEFAULT_CHARSET)
-        self.assertEqual(h['content-type'], 'text/html; charset=ISO-8859-1')
-
     def test_remove_header(self):
         h = Headers([('Content-type', 'text/html')])
         self.assertEqual(len(h), 1)
@@ -118,5 +113,7 @@ class TestHeaders(unittest.TestCase):
         for c in cookies.values():
             v = c.OutputString()
             h.add_header('Set-Cookie', v)
-        self.assertEqual(
-            str(h), 'Set-Cookie: bla=foo\r\nSet-Cookie: pippo=pluto\r\n\r\n')
+        h = str(h)
+        self.assertTrue(
+            h in ('Set-Cookie: bla=foo\r\nSet-Cookie: pippo=pluto\r\n\r\n',
+                  'Set-Cookie: pippo=pluto\r\nSet-Cookie: bla=foo\r\n\r\n'))

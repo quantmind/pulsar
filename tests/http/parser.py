@@ -146,7 +146,7 @@ class TestPythonHttpParser(unittest.TestCase):
         p.execute(data, len(data))
         self.assertTrue(p.is_message_complete())
 
-    def testDoubleHeader(self):
+    def test_ouble_header(self):
         p = self.parser()
         data = b'GET /test HTTP/1.1\r\n'
         p.execute(data, len(data))
@@ -159,7 +159,7 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertTrue(p.is_message_complete())
         headers = p.get_headers()
         self.assertEqual(len(headers), 1)
-        self.assertEqual(headers.get('accept'), '*/*, jpeg')
+        self.assertEqual(headers.get('Accept'), ['*/*', 'jpeg'])
 
     def test_connect(self):
         p = self.parser()

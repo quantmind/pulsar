@@ -150,11 +150,10 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(appserver.cfg.callable, None)
 
     def testWsgiHandler(self):
-        hnd = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
-                                           wsgi.authorization_middleware))
-        self.assertEqual(len(hnd.middleware), 2)
+        hnd = wsgi.WsgiHandler(middleware=(wsgi.authorization_middleware,))
+        self.assertEqual(len(hnd.middleware), 1)
         hnd2 = pickle.loads(pickle.dumps(hnd))
-        self.assertEqual(len(hnd2.middleware), 2)
+        self.assertEqual(len(hnd2.middleware), 1)
 
     def testHttpBinServer(self):
         from examples.httpbin.manage import server
