@@ -568,7 +568,7 @@ class WsgiRequest(EnvironMixin):
                 query = self.url_data
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
-        return iri_to_uri(path, **query)
+        return iri_to_uri(path, query)
 
     def absolute_uri(self, location=None, scheme=None):
         '''Builds an absolute URI from ``location`` and variables

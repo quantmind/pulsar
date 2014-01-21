@@ -43,6 +43,13 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(request.full_path(), '/')
         self.assertEqual(request.full_path('/foo'), '/foo')
 
+    def test_full_path_query(self):
+        request = self.request(path='/bla?path=foo&id=5')
+        self.assertEqual(request.path, '/bla')
+        self.assertEqual(request.url_data, {'path': 'foo', 'id': '5'})
+        self.assertEqual(request.full_path(), '/bla?path=foo&id=5')
+        self.assertEqual(request.full_path(g=7), '/bla?g=7')
+
     def test_url_handling(self):
         target = '/\N{SNOWMAN}'
         request = self.request(path=target)

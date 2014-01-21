@@ -240,10 +240,11 @@ def requote_uri(uri):
 
 
 def iri_to_uri(iri, kwargs=None):
-    '''Convert an Internationalized Resource Identifier (IRI) portion to a URI
-portion that is suitable for inclusion in a URL.
-This is the algorithm from section 3.1 of RFC 3987.
-Returns an ASCII native string containing the encoded result.'''
+    '''Convert an Internationalised Resource Identifier (IRI) portion
+    to a URI portion that is suitable for inclusion in a URL.
+    This is the algorithm from section 3.1 of RFC 3987.
+    Returns an ASCII native string containing the encoded result.
+    '''
     if iri is None:
         return iri
     if kwargs:
