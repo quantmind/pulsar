@@ -23,7 +23,7 @@ let's call it ``runtests.py``::
     if __name__ == '__main__':
         TestSuite(description='Test suite for my library',
                   modules=('regression',
-                           ('examples','tests'))).start()
+                           ('examples', 'tests'))).start()
 
 where ``modules`` is a tuple/list which specifies where to
 :ref:`search for test cases <apps-test-loading>` to run.
@@ -82,7 +82,7 @@ An example test case::
 .. note::
 
     Test functions are asynchronous, when they return a generator or a
-    :class:`pulsar.Deferred`, synchronous, when they return anything else.
+    :class:`.Deferred`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 
@@ -555,6 +555,8 @@ class TestSuite(tasks.TaskQueue):
         yield server()
         store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
                              pool_size=2)
+        redis_server = 'redis://%s' % self.cfg.redis_server
+        monitor.arbiter.cfg.params['redis_server'] = redis_server
         self.get_backend(store)
         loader = self.loader
         tags = self.cfg.labels

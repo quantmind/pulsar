@@ -7,11 +7,6 @@ a factory of several :class:`Application` running on a single server.
 The :class:`Configurator` is a mixin used as base class for both
 :class:`Application` and :class:`MultiApp`.
 
-.. note::
-
-    An instance of an :class:`Application` is picklable and therefore can be
-    sent from actor to actor using the
-    :ref:`actor message passing api <tutorials-messages>`.
 
 Configurator
 ===============================
@@ -402,7 +397,9 @@ class Application(Configurator):
 
     :parameter callable: Initialise the :attr:`callable` attribute.
     :parameter load_config: If ``False`` the :meth:`~Configurator.load_config`
-        method is not invoked. Default ``True``.
+        method is not invoked.
+
+        Default ``True``.
     :parameter params: Passed to the :class:`Configurator` initialiser.
 
     .. attribute:: callable

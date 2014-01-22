@@ -42,7 +42,8 @@ class TestWebChat(unittest.TestCase):
     def test_home(self):
         response = yield self.http.get(self.uri)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers['content-type'], 'text/html')
+        self.assertEqual(response.headers['content-type'],
+                         'text/html; charset=utf-8')
 
     def test_handshake(self):
         ws = yield self.http.get(self.ws)

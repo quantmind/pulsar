@@ -7,7 +7,7 @@ import examples
 from pulsar import send, Failure, SERVER_SOFTWARE, new_event_loop
 from pulsar.utils.path import Path
 from pulsar.apps.test import unittest, mute_failure
-from pulsar.utils import httpurl
+from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
 from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
@@ -214,8 +214,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_http11_close(self):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
-        response = yield http.get(self.httpbin(),
-            headers=[('connection', 'close')])
+        response = yield http.get(
+            self.httpbin(), headers=[('connection', 'close')])
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
 
@@ -229,7 +229,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                          'application/json; charset=utf-8')
         self.assertEqual(result['args'], {'bla': 'foo'})
         self.assertEqual(response.url,
-                self.httpbin(httpurl.iri_to_uri('get',{'bla': 'foo'})))
+                         self.httpbin(iri_to_uri('get', {'bla': 'foo'})))
         self._check_pool(http, response)
 
     def test_200_gzip(self):
@@ -251,7 +251,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_large_response(self):
         http = self._client
@@ -311,6 +311,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 1)
         self.assertTrue(history[0].url.endswith('/redirect/1'))
         self._after('test_redirect_1', response)
+
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
@@ -324,6 +325,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(len(history), 6)
         self.assertTrue(history[0].url.endswith('/redirect/6'))
         self._after('test_redirect_6', response)
+
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
@@ -364,7 +366,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_put(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -374,7 +376,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_patch(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -385,7 +387,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_delete(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -396,7 +398,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_response_headers(self):
         http = self._client
@@ -428,7 +430,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_send_cookie(self):
         http = self._client
@@ -436,7 +438,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield http.get(self.httpbin(), cookies=cookies)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.headers['set-cookie'])
-        self.assertEqual(response.cookies, cookies)
+        self.assertEqual(response.cookies, SimpleCookie(cookies))
 
     def test_cookie(self):
         http = self._client
@@ -453,7 +455,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(r.request.unredirected_headers)
         result = r.json()
         self.assertTrue(result['cookies'])
-        self.assertEqual(result['cookies']['bla'],'foo')
+        self.assertEqual(result['cookies']['bla'], 'foo')
         # Try without saving cookies
         http = self.client(store_cookies=False)
         r = yield http.get(self.httpbin(
@@ -493,7 +495,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.assertTrue(r.has_header('host'))
             response.request.remove_header('host')
             self.assertFalse(r.has_header('host'))
-
 
         response = yield http.get(self.httpbin(),
                                   pre_request=remove_host)
@@ -539,7 +540,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertTrue(result['args'])
-        self.assertEqual(result['args']['numero'],['1','2'])
+        self.assertEqual(result['args']['numero'], ['1', '2'])
 
     def test_media_root(self):
         http = self._client
@@ -589,7 +590,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(ct.startswith('multipart/form-data; boundary='))
         data = response.json()
         self.assertEqual(data['files'], {'test': ['simple file']})
-        self.assertEqual(data['args']['numero'],['1','2'])
+        self.assertEqual(data['args']['numero'], ['1', '2'])
 
     def test_send_images(self):
         path = Path(examples.__file__).parent.parent

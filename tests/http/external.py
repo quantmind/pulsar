@@ -21,6 +21,7 @@ class ExternalBase(TestHttpClientBase):
         self.assertEqual(len(responses), N)
         for n in range(N):
             all = []
+
             def save_data(r, data=None):
                 all.append(data)
             try:
@@ -66,14 +67,14 @@ class ProxyExternal(ExternalBase):
         self.assertEqual(response.status_code, 200)
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy=='',
-                    'Requires no external proxy')
+@unittest.skipUnless(get_actor().cfg.http_proxy == '',
+                     'Requires no external proxy')
 class Test_HttpClient_NoProxy_External(ExternalBase, unittest.TestCase):
     '''Test external URI when no global proxy server is present.
     '''
 
 
-@unittest.skipUnless(get_actor().cfg.http_proxy=='',
+@unittest.skipUnless(get_actor().cfg.http_proxy == '',
                      'Requires no external proxy')
 class Test_HttpClient_Proxy_External(ProxyExternal, unittest.TestCase):
     with_proxy = True

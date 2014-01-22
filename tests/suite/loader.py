@@ -53,8 +53,8 @@ class TestTestLoader(unittest.TestCase):
     def test_load_exclude(self):
         app = get_actor().app
         loader = TestLoader(app.root_dir, app.cfg.modules, app.runner)
-        modules = dict(loader.testmodules(exclude_tags=
-                            ('taskqueue', 'apps.pubsub')))
+        modules = dict(loader.testmodules(
+            exclude_tags=('taskqueue', 'apps.pubsub')))
         self.assertTrue(modules)
         for module in modules:
             self.assertTrue('taskqueue' not in module)

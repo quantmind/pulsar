@@ -2,6 +2,7 @@
 from pulsar.utils.log import lazy_string
 from pulsar.apps.test import unittest
 
+
 class TestTextUtils(unittest.TestCase):
 
     def testLazy(self):

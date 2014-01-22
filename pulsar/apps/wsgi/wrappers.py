@@ -119,20 +119,30 @@ class WsgiResponse(object):
 
         The dictionary of WSGI environment if passed to the constructor.
 
+    .. attribute:: cookies
+
+        A python :class:`SimpleCookie` container of cookies included in the
+        request as well as cookies set during the response.
     '''
     _started = False
     DEFAULT_STATUS_CODE = 200
 
     def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None):
+                 content_type=None, encoding=None, environ=None,
+                 can_store_cookies=True):
         self.environ = environ
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
         self.headers = Headers(response_headers, kind='server')
         self.content = content
+        self._can_store_cookies = can_store_cookies
         if content_type is not None:
             self.content_type = content_type
+        if environ:
+            cookie = environ.get('HTTP_COOKIE')
+            if cookie:
+                self.cookies.load(cookie)
 
     @property
     def started(self):
@@ -153,6 +163,11 @@ class WsgiResponse(object):
         if self.environ:
             return self.environ.get('pulsar.connection')
 
+    @property
+    def environ_cache(self):
+        if self.environ:
+            return self.environ.get('pulsar.cache')
+
     def _get_content(self):
         return self._content
 
@@ -162,12 +177,12 @@ class WsgiResponse(object):
                 content = ()
             elif ispy3k:
                 if isinstance(content, str):
-                    if not self.encoding:
+                    if not self.encoding:   # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
             else:   # pragma    nocover
                 if isinstance(content, unicode):
-                    if not self.encoding:
+                    if not self.encoding:  # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
             if isinstance(content, bytes):
@@ -217,6 +232,10 @@ class WsgiResponse(object):
             return True
         return False
 
+    def can_set_cookies(self):
+        if self.status_code < 400:
+            return self._can_store_cookies
+
     def length(self):
         if not self.is_streamed:
             return reduce(lambda x, y: x+len(y), self.content, 0)
@@ -248,6 +267,8 @@ class WsgiResponse(object):
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
 
     def get_headers(self):
+        '''The list of headers for this response
+        '''
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)
@@ -262,11 +283,17 @@ class WsgiResponse(object):
                     self._content = (b'{}',)
                     cl = len(self._content[0])
                 headers['Content-Length'] = str(cl)
-            if not self.content_type and self.encoding:
-                headers['Content-Type'] = ('text/plain; charset=%s' %
-                                           self.encoding)
-        for c in self.cookies.values():
-            headers['Set-Cookie'] = c.OutputString()
+            ct = self.content_type
+            # content type encoding available
+            if self.encoding:
+                ct = ct or 'text/plain'
+                if 'charset=' not in ct:
+                    ct = '%s; charset=%s' % (ct, self.encoding)
+            if ct:
+                headers['Content-Type'] = ct
+        if self.can_set_cookies():
+            for c in self.cookies.values():
+                headers.add_header('Set-Cookie', c.OutputString())
         return list(headers)
 
     def has_header(self, header):
@@ -541,12 +568,15 @@ class WsgiRequest(EnvironMixin):
                 query = self.url_data
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
-        return iri_to_uri(path, **query)
+        return iri_to_uri(path, query)
 
     def absolute_uri(self, location=None, scheme=None):
-        '''Builds an absolute URI from the ``location`` and the variables
-available in this request. If no location is specified, the relative URI
-is built from :meth:`full_path`.'''
+        '''Builds an absolute URI from ``location`` and variables
+        available in this request.
+
+        If no ``location`` is specified, the relative URI is built from
+        :meth:`full_path`.
+        '''
         if not location or not absolute_http_url_re.match(location):
             location = self.full_path(location)
             if not scheme:

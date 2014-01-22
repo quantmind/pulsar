@@ -93,6 +93,13 @@ def get_roule_methods(attrs):
     return sorted(rule_methods, key=lambda x: x[1].order)
 
 
+def update_args(urlargs, args):
+    if urlargs:
+        urlargs.update(args)
+        return urlargs
+    return args
+
+
 class RouterParam(object):
     '''A :class:`RouterParam` is a way to flag a :class:`Router` parameter
 so that children can retrieve the value if they don't define their own.
@@ -183,6 +190,15 @@ request, the ``get(self, request)`` method must be implemented.
     The client request must accept at least one of the response content
     types, otherwise an HTTP ``415`` exception occurs.
 
+.. attribute:: allows_redirects
+
+    boolean indicating if this router can redirect requests to valid urls
+    within this router and its children. For example, if a router serves
+    the '/echo' url but not the ``/echo/`` one, a request on ``/echo/``
+    will be redirected to ``/echo``.
+
+    Default: ``False``
+
 .. attribute:: parameters
 
     A :class:`.AttributeDictionary` of parameters for
@@ -195,6 +211,7 @@ request, the ``get(self, request)`` method must be implemented.
     _name = None
 
     response_content_types = RouterParam(None)
+    allows_redirects = RouterParam(False)
 
     def __init__(self, rule, *routes, **parameters):
         Router._creation_count += 1
@@ -244,8 +261,10 @@ request, the ``get(self, request)`` method must be implemented.
 
     @property
     def default_content_type(self):
-        '''The default content type for responses. This is the first element
-in the :attr:`response_content_types` list.'''
+        '''The default content type for responses.
+
+        This is the first element in the :attr:`response_content_types` list.
+        '''
         ct = self.response_content_types
         return ct[0] if ct else None
 
@@ -270,13 +289,19 @@ in the :attr:`response_content_types` list.'''
 
     @property
     def rule(self):
-        '''The full ``rule`` string for this :class:`Router`. It includes the
-:attr:`parent` portion of rule if a parent router is available.'''
+        '''The full ``rule`` string for this :class:`Router`.
+
+        It includes the :attr:`parent` portion of rule if a parent
+        router is available.
+        '''
         return self.full_route.rule
 
     def path(self, **urlargs):
-        '''The full path of this :class:`Router`. It includes the
-:attr:`parent` portion of url if a parent router is available.'''
+        '''The full path of this :class:`Router`.
+
+        It includes the :attr:`parent` portion of url if a parent router
+        is available.
+        '''
         route = self.route
         if self._parent:
             route = self._parent.route + route
@@ -336,7 +361,7 @@ in the :attr:`response_content_types` list.'''
         if router_args:
             router, args = router_args
             return router.response(environ, args)
-        else:
+        elif self.allows_redirects:
             if self.route.is_leaf:
                 if path.endswith('/'):
                     router_args = self.resolve(path[:-1])
@@ -352,21 +377,21 @@ in the :attr:`response_content_types` list.'''
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
         ``None`` if the path could not be resolved.
         '''
-        urlargs = urlargs if urlargs is not None else {}
         match = self.route.match(path)
         if match is None:
-            return
-        if '__remaining__' in match:
-            remaining_path = match['__remaining__']
-            for handler in self.routes:
-                view_args = handler.resolve(remaining_path, urlargs)
-                if view_args is None:
-                    continue
-                #remaining_path = match.pop('__remaining__','')
-                #urlargs.update(match)
-                return view_args
+            if not self.route.is_leaf:  # no match
+                return
+        elif '__remaining__' in match:
+            path = match.pop('__remaining__')
+            urlargs = update_args(urlargs, match)
         else:
-            return self, match
+            return self, update_args(urlargs, match)
+        #
+        for handler in self.routes:
+            view_args = handler.resolve(path, urlargs)
+            if view_args is None:
+                continue
+            return view_args
 
     def response(self, environ, args):
         '''Once the :meth:`resolve` method has matched the correct
@@ -393,8 +418,14 @@ in the :attr:`response_content_types` list.'''
         '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+        # Loop over available routers to check it the router
+        # is already available
         if self.route.is_leaf:
-            self.route = Route('%s/' % self.route.rule)
+            if not router.route.path.startswith('/'):
+                route = '%s/%s' % (self.route, router.route)
+            else:
+                route = '%s%s' % (self.route, router.route)
+            router.route = Route(route)
         for r in self.routes:
             if r.route == router.route:
                 r.parameters.update(router.parameters)
@@ -419,7 +450,7 @@ in the :attr:`response_content_types` list.'''
 
     def link(self, *args, **urlargs):
         '''Return an anchor :class:`Html` element with the `href` attribute
-set to the url of this :class:`Router`.'''
+        set to the url of this :class:`Router`.'''
         if len(args) > 1:
             raise ValueError
         url = self.route.url(**urlargs)
@@ -486,11 +517,11 @@ class MediaMixin(Router):
     def was_modified_since(self, header=None, mtime=0, size=0):
         '''Check if an item was modified since the user last downloaded it
 
-:param header: the value of the ``If-Modified-Since`` header. If this is None,
-    simply return ``True``.
-:param mtime: the modification time of the item in question.
-:param size: the size of the item.
-'''
+        :param header: the value of the ``If-Modified-Since`` header.
+            If this is ``None``, simply return ``True``
+        :param mtime: the modification time of the item in question.
+        :param size: the size of the item.
+        '''
         try:
             if header is None:
                 raise ValueError

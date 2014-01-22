@@ -51,7 +51,7 @@ class TestCoroDeferred(unittest.TestCase):
         d1 = Deferred().add_callback(lambda r: a.callback(r+2))\
                        .add_errback(a.callback)
         d1.callback('bla')
-        d1.exception() # to mute it
+        d1.exception()  # to mute it
         self.assertRaises(TypeError, a.result)
 
     def test_fail_then1(self):
@@ -62,5 +62,5 @@ class TestCoroDeferred(unittest.TestCase):
         d1.callback('bla')
         self.assertRaises(TypeError, a.result)
         self.assertEqual(d1.result(), 'bla')
-        d2.exception() # to mute it
+        d2.exception()  # to mute it
         self.assertRaises(TypeError, d2.result)

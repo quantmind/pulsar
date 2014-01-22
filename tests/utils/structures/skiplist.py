@@ -64,7 +64,7 @@ class TestSkiplist(unittest.TestCase):
         self.assertEqual(sl.remove_range(0, 3), 1)
         sl = self.random(10)
         li = list(sl)
-        lir = li[:4]+ li [7:]
+        lir = li[:4] + li[7:]
         self.assertEqual(sl.remove_range(4, 7), 3)
         li2 = list(sl)
         self.assertEqual(li2, lir)

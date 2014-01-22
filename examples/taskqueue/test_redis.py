@@ -1,7 +1,12 @@
 '''Tests the taskqueue redis backend.'''
+from pulsar.apps.test import unittest, check_redis
+
 from . import test_pulsards
 
+OK = check_redis()
 
+
+@unittest.skipUnless(OK, 'Requires a running redis server')
 class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
     #schedule_periodic = False
 
@@ -10,6 +15,7 @@ class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
         return 'redis://%s' % cls.cfg.redis_server
 
 
+@unittest.skipUnless(OK, 'Requires a running redis server')
 class TestRedisTaskQueueOnProcess(test_pulsards.TestTaskQueueOnProcess):
 
     @classmethod

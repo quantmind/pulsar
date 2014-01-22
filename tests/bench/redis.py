@@ -48,6 +48,6 @@ class RedisPyParser(unittest.TestCase):
         result = self.parser.get()
 
 
-@unittest.skipUnless(HAS_C_EXTENSIONS , 'Requires C extensions')
+@unittest.skipUnless(HAS_C_EXTENSIONS, 'Requires C extensions')
 class RedisCParser(RedisPyParser):
     redis_py_parser = False

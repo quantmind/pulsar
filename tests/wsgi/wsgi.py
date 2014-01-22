@@ -43,6 +43,13 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(request.full_path(), '/')
         self.assertEqual(request.full_path('/foo'), '/foo')
 
+    def test_full_path_query(self):
+        request = self.request(path='/bla?path=foo&id=5')
+        self.assertEqual(request.path, '/bla')
+        self.assertEqual(request.url_data, {'path': 'foo', 'id': '5'})
+        self.assertEqual(request.full_path(), '/bla?path=foo&id=5')
+        self.assertEqual(request.full_path(g=7), '/bla?g=7')
+
     def test_url_handling(self):
         target = '/\N{SNOWMAN}'
         request = self.request(path=target)
@@ -53,7 +60,7 @@ class WsgiRequestTests(unittest.TestCase):
         r = wsgi.WsgiResponse(200)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.status, '200 OK')
-        self.assertEqual(r.content,())
+        self.assertEqual(r.content, ())
         self.assertFalse(r.is_streamed)
         self.assertFalse(r.started)
         self.assertEqual(list(r), [])
@@ -64,8 +71,8 @@ class WsgiRequestTests(unittest.TestCase):
     def testResponse500(self):
         r = wsgi.WsgiResponse(500, content=b'A critical error occurred')
         self.assertEqual(r.status_code, 500)
-        self.assertEqual(r.status,'500 Internal Server Error')
-        self.assertEqual(r.content,(b'A critical error occurred',))
+        self.assertEqual(r.status, '500 Internal Server Error')
+        self.assertEqual(r.content, (b'A critical error occurred',))
         self.assertFalse(r.is_streamed)
         self.assertFalse(r.started)
         self.assertEqual(list(r), [b'A critical error occurred'])
@@ -118,7 +125,8 @@ class WsgiRequestTests(unittest.TestCase):
         response = wsgi.WsgiResponse()
         response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
         datetime_cookie = response.cookies['datetime']
-        self.assertEqual(datetime_cookie['expires'], 'Sat, 01-Jan-2028 04:05:06 GMT')
+        self.assertEqual(datetime_cookie['expires'],
+                         'Sat, 01-Jan-2028 04:05:06 GMT')
 
     def test_max_age_expiration(self):
         "Cookie will expire if max_age is provided"
@@ -126,7 +134,8 @@ class WsgiRequestTests(unittest.TestCase):
         response.set_cookie('max_age', max_age=10)
         max_age_cookie = response.cookies['max_age']
         self.assertEqual(max_age_cookie['max-age'], 10)
-        self.assertEqual(max_age_cookie['expires'], cookie_date(time.time()+10))
+        self.assertEqual(max_age_cookie['expires'],
+                         cookie_date(time.time()+10))
 
     def test_httponly_cookie(self):
         response = wsgi.WsgiResponse()
@@ -150,11 +159,10 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(appserver.cfg.callable, None)
 
     def testWsgiHandler(self):
-        hnd = wsgi.WsgiHandler(middleware=(wsgi.cookies_middleware,
-                                           wsgi.authorization_middleware))
-        self.assertEqual(len(hnd.middleware), 2)
+        hnd = wsgi.WsgiHandler(middleware=(wsgi.authorization_middleware,))
+        self.assertEqual(len(hnd.middleware), 1)
         hnd2 = pickle.loads(pickle.dumps(hnd))
-        self.assertEqual(len(hnd2.middleware), 2)
+        self.assertEqual(len(hnd2.middleware), 1)
 
     def testHttpBinServer(self):
         from examples.httpbin.manage import server
@@ -171,8 +179,8 @@ class WsgiRequestTests(unittest.TestCase):
             self.assertEqual(url, '/bla/foo?page=1')
 
     def test_handle_wsgi_error(self):
-        environ = wsgi.test_wsgi_environ(extra=
-                            {'error.handler': lambda request, failure: 'bla'})
+        environ = wsgi.test_wsgi_environ(
+            extra={'error.handler': lambda request, failure: 'bla'})
         try:
             raise ValueError('just a test')
         except ValueError:

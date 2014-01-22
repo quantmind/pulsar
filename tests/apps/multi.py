@@ -11,6 +11,7 @@ def dummy(environ, start_response):
     start_response('200 OK', [])
     yield [b'dummy']
 
+
 class MultiWsgi(MultiApp):
     cfg = Config(bind=':0', rpc_bind=':0', bla='foo')
 

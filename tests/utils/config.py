@@ -11,8 +11,10 @@ from pulsar.apps.test import unittest
 def connection_made(conn):
     return conn
 
+
 def post_fork(actor):
     return actor
+
 
 class TestConfig(unittest.TestCase):
 
@@ -48,6 +50,7 @@ class TestConfig(unittest.TestCase):
         self.assertFalse(config.pass_through(None))
         cfg = Config()
         self.assertEqual(list(sorted(cfg)), list(sorted(cfg.settings)))
+
         def _():
             cfg.debug = 3
         self.assertRaises(AttributeError, _)
@@ -74,7 +77,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.proc_name, 'bla')
 
     def testValidation(self):
-        self.assertEqual(pulsar.validate_list((1,2)), [1,2])
+        self.assertEqual(pulsar.validate_list((1, 2)), [1, 2])
         self.assertRaises(TypeError, pulsar.validate_list, 'bla')
         self.assertEqual(pulsar.validate_string(b' bla  '), 'bla')
         self.assertEqual(pulsar.validate_string(None), None)

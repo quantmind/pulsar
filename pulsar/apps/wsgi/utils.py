@@ -216,7 +216,7 @@ def handle_wsgi_error(environ, failure):
     else:
         response.status_code = getattr(error, 'status', 500)
         response.headers.update(getattr(error, 'headers', None) or ())
-    path = '@ path "%s"' % environ.get('PATH_INFO', '/')
+    path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status == 500:
         failure.log(msg='Unhandled exception during HTTP response %s.%s' %
@@ -275,7 +275,7 @@ def render_error(request, failure):
         return json.dumps({'status': response.status_code,
                            'message': msg})
     else:
-        return msg
+        return '\n'.join(msg) if isinstance(msg, (list, tuple)) else msg
 
 
 def render_error_debug(request, failure, content_type):

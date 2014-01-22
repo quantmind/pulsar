@@ -27,7 +27,7 @@ class TestEventLoop(unittest.TestCase):
             assert False
 
     def test_create_server(self):
-        protocol_factory = lambda : Connection()
+        protocol_factory = lambda: Connection()
         loop = get_event_loop()
         server = yield loop.create_server(Protocol, '127.0.0.1', 0)
         sockets = server.sockets

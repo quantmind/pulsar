@@ -61,6 +61,11 @@ Ver. 0.8.0
     frames with an optional status code, and for parsing close frames
     with a body via the :func:`.parse_close` function (for websocket clients).
 
+* **WSGI**
+  * Better handling of cookies in :class:`.WsgiResponse`
+  * :class:`.Router` can have children even if it is a leaf node
+  * Dropped support for _http-parser, only HTTP python parser used
+
 * **Miscellaneous**
 
   * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
@@ -77,7 +82,7 @@ Ver. 0.8.0
   * The :ref:`shell application <apps-shell>` runs on a worker thread in the
     arbiter domain.
 
-* **1,135 regression tests**, **91% coverage**.
+* **1,166 regression tests**, **91% coverage**.
 
 Ver. 0.7.3 - 2013-Dec-12
 ===========================

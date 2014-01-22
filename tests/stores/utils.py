@@ -33,4 +33,3 @@ class TestUtils(unittest.TestCase):
         self.match(c, 'hello')
         self.match(c, 'hallo')
         self.not_match(c, 'hollo')
-

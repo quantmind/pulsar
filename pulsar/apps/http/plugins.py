@@ -8,7 +8,7 @@ from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.async.stream import SocketStreamSslTransport
 from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
-                                  requote_uri, parse_cookie)
+                                  requote_uri, SimpleCookie)
 
 from pulsar import PulsarException
 
@@ -92,15 +92,17 @@ def _do_redirect(response):
 
 
 def handle_cookies(response):
+    '''Handle response cookies.
+    '''
     headers = response.headers
     request = response.request
     client = request.client
+    response._cookies = c = SimpleCookie()
     if 'set-cookie' in headers or 'set-cookie2' in headers:
-        response._cookies = cookies = {}
         for cookie in (headers.get('set-cookie2'),
                        headers.get('set-cookie')):
             if cookie:
-                cookies.update(parse_cookie(cookie))
+                c.load(cookie)
         if client.store_cookies:
             client.cookies.extract_cookies(response, request)
     return response

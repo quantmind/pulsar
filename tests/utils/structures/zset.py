@@ -44,7 +44,7 @@ class TestZset(unittest.TestCase):
         prev = None
         for score, _ in s.items():
             if prev is not None:
-                self.assertTrue(score>=prev)
+                self.assertTrue(score >= prev)
             prev = score
         return s
 

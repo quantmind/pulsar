@@ -22,6 +22,9 @@ from pulsar.utils.system import json
 
 class Graph(ws.WS):
 
+    def on_open(self, websocket):
+        self.on_message(websocket, '')
+
     def on_message(self, websocket, msg):
         websocket.write(json.dumps([(i, random()) for i in range(100)]))
 

@@ -5,6 +5,7 @@ from pulsar.apps.test import unittest
 
 from examples.httpbin.manage import HttpBin
 
+
 class HttpBin2(HttpBin):
 
     def gzip(self):
@@ -16,11 +17,11 @@ class HttpBin2(HttpBin):
 
     @route('async', async=True)
     def test_async_route(self, request):
-        yield  'Hello'
+        yield 'Hello'
 
     @route('async', async=True, method='post')
     def test_async_route_post(self, request):
-        yield  'Hello'
+        yield 'Hello'
 
 
 class HttpBin3(HttpBin):
@@ -34,7 +35,6 @@ class HttpBin3(HttpBin):
         return self.info_data_response(request)
 
 
-
 class TestRouter(unittest.TestCase):
 
     def router(self, path='/'):
@@ -42,6 +42,7 @@ class TestRouter(unittest.TestCase):
             response_content_types = RouterParam(('text/html',
                                                   'text/plain',
                                                   'application/json'))
+
             def get(self, request):
                 return 'Hello World!'
 
@@ -111,7 +112,8 @@ class TestRouter(unittest.TestCase):
         router = self.router()
         self.assertEqual(router.accept_content_type('text/html'), 'text/html')
         self.assertEqual(router.accept_content_type('text/*'), 'text/html')
-        self.assertEqual(router.accept_content_type('text/plain'), 'text/plain')
+        self.assertEqual(router.accept_content_type('text/plain'),
+                         'text/plain')
         self.assertEqual(router.accept_content_type('*/*'), 'text/html')
         self.assertEqual(router.accept_content_type('application/*'),
                          'application/json')
