@@ -65,7 +65,7 @@ from inspect import getfile
 from functools import partial
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config, async,
+from pulsar import (get_actor, coroutine_return, Config, async, task_callback,
                     multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -106,6 +106,7 @@ def _get_app(arbiter, name, safe=True):
             coroutine_return(monitor.app)
 
 
+@task_callback
 def monitor_start(self):
     start_event = self.start_event
     app = self.app
@@ -121,14 +122,13 @@ def monitor_start(self):
         if not self.cfg.workers:
             yield app.worker_start(self)
         result = self.cfg
-    except Exception:
-        result = sys.exc_info()
-        raise
-    finally:
-        start_event.callback(result)
-    coroutine_return(self)
+    except Exception as exc:
+        start_event.set_exception(exc)
+    else:
+        start_event.set_result(result)
 
 
+@task_callback
 def monitor_stopping(self):
     if not self.cfg.workers:
         yield self.app.worker_stopping(self)
@@ -136,6 +136,7 @@ def monitor_stopping(self):
     coroutine_return(self)
 
 
+@task_callback
 def monitor_stop(self):
     if not self.cfg.workers:
         yield self.app.worker_stop(self)
@@ -464,8 +465,8 @@ class Application(Configurator):
                 if actor.started():
                     self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.
-                    actor.bind_event('start',
-                                     partial(self._add_to_arbiter, start))
+                    actor.bind_event(
+                        'start', lambda f: self._add_to_arbiter(start, actor))
                 return start
             else:
                 return
@@ -525,11 +526,12 @@ class Application(Configurator):
 
     #   INTERNALS
     def _add_to_arbiter(self, start, arbiter):
+        assert arbiter._loop
+        start._loop = arbiter._loop
         monitor = arbiter.add_monitor(
             self.name, app=self, cfg=self.cfg,
             start=monitor_start, start_event=start)
         self.cfg = monitor.cfg
-        return arbiter
 
 
 class MultiApp(Configurator):

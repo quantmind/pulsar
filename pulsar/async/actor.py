@@ -6,7 +6,7 @@ from pulsar import HaltServer, CommandError, system
 from pulsar.utils.log import WritelnDecorator
 
 from .eventloop import setid
-from .futures import in_loop, Failure
+from .futures import in_loop
 from .events import EventHandler
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
@@ -314,9 +314,11 @@ running.'''
         return self.state == ACTOR_STATES.RUN and self._loop.is_running()
 
     def started(self):
-        '''``True`` if actor has started. It does not necessarily
-mean it is running. Its state is greater or equal
-:ref:`ACTOR_STATES.RUN <actor-states>`.'''
+        '''``True`` if actor has started.
+
+        It does not necessarily mean it is running.
+        Its state is greater or equal :ref:`ACTOR_STATES.RUN <actor-states>`.
+        '''
         return self.state >= ACTOR_STATES.RUN
 
     def closed(self):
@@ -404,12 +406,6 @@ This method is invoked when you run the
                 self.logger.exception('Unhandled exception in when_ready hook')
         try:
             exc = self.__impl.run_actor(self)
-        except (Exception, HaltServer):
-            exc = Failure(sys.exc_info())
-        except:
-            exc = Failure(sys.exc_info())
-            exc.mute()
-            raise
-        finally:
-            if exc != -1:
-                self.stop(exc)
+        except (Exception, HaltServer) as exc:
+            self.stop(exc)
+        self.stop()

@@ -15,7 +15,7 @@ from pulsar.utils.pep import range
 from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
 
 from .access import asyncio, thread_data, LOGGER
-from .futures import maybe_async, async, CoroTask, Failure
+from .futures import maybe_async, async, CoroTask
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
 from .udp import create_datagram_endpoint
@@ -440,7 +440,7 @@ default signal handler ``signal.SIG_DFL``.'''
         timeout = timeout or DEFAULT_CONNECT_TIMEOUT
         res = create_connection(self, protocol_factory, host, port,
                                 ssl, family, proto, flags, sock, local_addr)
-        return async(res, self).set_timeout(timeout)
+        return async(res, self)
 
     def create_server(self, protocol_factory, host=None, port=None, ssl=None,
                       family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
@@ -569,7 +569,7 @@ the event loop to poll with a 0 timeout all the times.'''
         # Run callbacks
         callbacks, self._ready = self._ready, []
         for handle in callbacks:
-            exc_info = None
+            exc = None
             try:
                 if not handle._cancelled:
                     value = handle._callback(*handle._args)
@@ -577,12 +577,12 @@ the event loop to poll with a 0 timeout all the times.'''
                         async(value, self)
             except socket.error as e:
                 if raise_socket_error(e) and self.running:
-                    exc_info = sys.exc_info()
+                    exc = True
             except Exception:
-                exc_info = sys.exc_info()
-            if exc_info:
-                Failure(exc_info).log(
-                    msg='Unhandled exception in event loop callback.')
+                exc = True
+            if exc:
+                self.logger.exception('Unhandled exception in event '
+                                      'loop callback.')
 
     def _poll(self, timeout):
         io = self._io

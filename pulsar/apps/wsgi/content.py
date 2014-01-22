@@ -138,8 +138,7 @@ from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import (multi_async, maybe_async, is_failure, safe_async, Future,
-                    async, coroutine_return)
+from pulsar import multi_async, maybe_async, Future, async, coroutine_return
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,

@@ -62,7 +62,7 @@ from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .futures import Failure, Future, coroutine_return, in_loop
+from .futures import Future, coroutine_return, in_loop
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient
@@ -127,7 +127,7 @@ class Message(object):
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
         if command.ack:
-            future = Deferred()
+            future = Future()
             data['ack'] = gen_unique_id()[:8]
         else:
             future = None
@@ -176,8 +176,8 @@ class MailboxProtocol(Protocol):
             self._pending_responses[req.data['ack']] = req.future
             try:
                 self._write(req)
-            except Exception:
-                req.future.callback(sys.exc_info())
+            except Exception as exc:
+                req.future.set_exception(exc)
         else:
             self._write(req)
 
@@ -201,9 +201,8 @@ class MailboxProtocol(Protocol):
                 pending = self._pending_responses.pop(ack)
             except KeyError:
                 raise KeyError('Callback %s not in pending callbacks' % ack)
-            pending.callback(message.get('result'))
+            pending.set_result(message.get('result'))
         else:
-            failure = None
             try:
                 target = actor.get_actor(message['target'])
                 if target is None:
@@ -228,10 +227,9 @@ class MailboxProtocol(Protocol):
                     req = CommandRequest(target, caller, self)
                     result = yield command(req, message['args'],
                                            message['kwargs'])
-            except Exception:
-                failure = sys.exc_info()
-            if failure:
-                result = Failure(failure)
+            except Exception as exc:
+                self.logger.exception('Unhandled exception')
+                result = None
             if ack:
                 self._start(Message.callback(result, ack))
 

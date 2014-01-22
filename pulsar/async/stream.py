@@ -12,7 +12,8 @@ from pulsar.utils.exceptions import TooManyConsecutiveWrite
 
 from .consts import NUMBER_ACCEPTS, MAX_CONSECUTIVE_WRITES
 from .access import logger
-from .futures import Failure, multi_async, Future, coroutine_return, in_loop
+from .futures import (multi_async, Future, coroutine_return, in_loop,
+                      add_errback)
 from .internet import (Server, SocketTransport, AF_INET6, raise_socket_error,
                        raise_write_socket_error)
 
@@ -362,8 +363,8 @@ def sock_connect(loop, sock, address, future=None):
     fd = sock.fileno()
     connect = False
     if future is None:
-        future = Deferred(loop=loop).add_errback(
-            partial(remove_connector, loop, fd))
+        future = Future(loop=loop)
+        add_errback(future, partial(remove_connector, loop, fd))
         connect = True
     try:
         if connect:
@@ -384,9 +385,9 @@ def sock_connect(loop, sock, address, future=None):
             if err != 0:
                 # Jump to the except clause below.
                 raise socket.error(err, 'Connect call failed')
-            future.callback(None)
-    except Exception:
-        return future.callback(sys.exc_info())
+            future.set_result(None)
+    except Exception as exc:
+        return future.set_exception(exc)
 
 
 def sock_accept_connection(loop, protocol_factory, sock, ssl):

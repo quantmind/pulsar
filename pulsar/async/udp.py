@@ -8,7 +8,7 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ECONNREFUSED, BUFFER_MAX_SIZE,
                                    format_address)
 
-from .futures import coroutine_return, in_loop, Failure, NOT_DONE
+from .futures import coroutine_return, in_loop, NOT_DONE
 from .events import EventHandler
 from .internet import (SocketTransport, raise_socket_error,
                        raise_write_socket_error)

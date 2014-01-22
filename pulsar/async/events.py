@@ -3,7 +3,7 @@ from inspect import isgenerator
 from pulsar.utils.pep import iteritems
 
 from .futures import Future, async, InvalidStateError
-from .access import AsyncObject
+from .access import AsyncObject, get_request_loop
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -89,11 +89,11 @@ class OneTime(Future, AbstractEvent):
     @property
     def events(self):
         if self._events is None:
-            self._events = Future(self._loop)
+            self._events = Future(loop=self._loop)
         return self._events
 
     def bind(self, callback, errback=None):
-        self.events.add_done_callback(callback, errback)
+        self.events.add_done_callback(callback)
 
     def fired(self):
         return int(self.events.done())
@@ -104,20 +104,12 @@ class OneTime(Future, AbstractEvent):
                 raise ValueError(("One time events don't support "
                                   "key-value parameters"))
             else:
-                result = self.events.callback(arg)
-                if isinstance(result, Future):
-                    # a deferred, add a check at the end of the callback pile
-                    return self.events.add_callback(self._check, self._check)
-                else:
-                    return self.callback(result)
-
-    def _check(self, result):
-        if self.events.has_callbacks():
-            # other callbacks have been added,
-            # put another check at the end of the pile
-            return self.events.add_callback(self._check, self._check)
-        else:
-            return self.callback(result)
+                if self._loop is None:
+                    self._loop = get_request_loop()
+                    if self._events is not None:
+                        self._events._loop = self._loop
+                self.events.set_result(arg)
+                self.set_result(arg)
 
 
 class EventHandler(AsyncObject):

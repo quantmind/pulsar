@@ -1,3 +1,4 @@
+import sys
 from functools import partial
 from multiprocessing import Process, current_process
 
@@ -9,7 +10,7 @@ from .proxy import ActorProxyMonitor, get_proxy
 from .access import new_event_loop, get_actor, set_actor, logger
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
-from .futures import multi_async, maybe_failure, Failure, Future
+from .futures import multi_async, Future, add_errback
 from .eventloop import signal, StopEventLoop
 from .protocols import TcpServer
 from .pollers import POLLERS
@@ -109,11 +110,11 @@ system is chosen.'''
             actor.state = ACTOR_STATES.RUN
             r = self.periodic_task(actor)
             if r:
-                r.add_callback(partial(self.started, actor))
+                r.add_done_callback(partial(self.started, actor))
             else:
                 actor.stop()
-        except Exception as e:
-            actor.stop(e)
+        except Exception as exc:
+            actor.stop(exc)
 
     def started(self, actor, result=None):
         actor.logger.info('%s started', actor)
@@ -147,8 +148,8 @@ back with the acknowledgement from the monitor.
             if actor.cfg.debug:
                 actor.logger.debug('notify monitor')
             # if an error occurs, shut down the actor
-            ack = actor.send('monitor', 'notify', actor.info())\
-                       .add_errback(actor.stop)
+            ack = actor.send('monitor', 'notify', actor.info())
+            add_errback(ack, actor.stop)
             next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
         else:
             next = 0
@@ -158,32 +159,26 @@ back with the acknowledgement from the monitor.
 
     def stop(self, actor, exc):
         '''Gracefully stop the ``actor``.'''
-        failure = maybe_failure(exc)
         if actor.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
             actor.state = ACTOR_STATES.STOPPING
-            if isinstance(failure, Failure):
-                actor.exit_code = getattr(failure.error, 'exit_code', 1)
+            if exc:
+                actor.exit_code = getattr(exc, 'exit_code', 1)
                 if actor.exit_code == 1:
-                    failure.log(msg='Stopping %s' % actor,
-                                log=actor.logger)
+                    actor.logger.critical('Stopping', exc_info=sys.exc_info())
                 elif actor.exit_code:
-                    failure.mute()
-                    actor.stream.writeln(str(failure.error))
+                    actor.stream.writeln(str(exc))
                 else:
-                    failure.log(msg='Stopping %s' % actor,
-                                log=actor.logger,
-                                level='info')
+                    actor.logger.info('Stopping')
             else:
                 if actor.logger:
                     actor.logger.debug('stopping')
                 actor.exit_code = 0
             stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
-            if (isinstance(stopping, Future) and
-                    actor._loop.is_running()):
+            if isinstance(stopping, Future) and actor._loop.is_running():
                 actor.logger.debug('async stopping')
-                stopping.add_both(lambda r: self._stop_actor(actor))
+                stopping.add_done_callback(lambda r: self._stop_actor(actor))
             else:
                 self._stop_actor(actor)
         elif actor.stopped():
@@ -252,9 +247,16 @@ class MonitorMixin(object):
 
         Switch state to ``RUN`` and fire the ``start`` event.
         '''
+        event = getattr(actor, 'start_event', None)
+        if event:
+            event.add_done_callback(partial(self._on_start, actor))
+        else:
+            self._on_start(actor)
+        actor.fire_event('start')
+
+    def _on_start(self, actor, fut=None):
         actor.state = ACTOR_STATES.RUN
-        actor.bind_event('start', self.periodic_task, actor.stop)
-        return actor.fire_event('start')
+        actor.bind_event('start', lambda f: self.periodic_task(actor))
 
     @property
     def pid(self):
@@ -294,11 +296,13 @@ to be spawned.'''
         return actor
 
     def _stop_actor(self, actor):
-        def _cleanup(result):
+
+        def _cleanup(_):
             if not actor.terminated_actors:
                 actor.monitor._remove_actor(actor)
             actor.fire_event('stop')
-        return actor.close_actors().add_both(_cleanup)
+
+        return actor.close_actors().add_done_callback(_cleanup)
 
 
 class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
@@ -324,8 +328,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         mailbox.bind_event('stop', lambda _: loop.stop())
         mailbox.bind_event(
             'start',
-            lambda _: loop.call_soon_threadsafe(self.hand_shake, actor),
-            self._bailout)
+            lambda _: loop.call_soon_threadsafe(self.hand_shake, actor))
         mailbox.start_serving()
         return mailbox
 
@@ -367,11 +370,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             actor.logger.debug('Close monitors and actors')
             active = multi_async((actor.close_monitors(),
                                   actor.close_actors()))
-            active.add_both(partial(self._exit_arbiter, actor))
-
-    def _bailout(self, failure):
-        failure.log()
-        raise HaltServer
+            active.add_done_callback(partial(self._exit_arbiter, actor))
 
 
 def run_actor(self):

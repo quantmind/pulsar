@@ -15,7 +15,6 @@ from pulsar.utils.exceptions import StopEventLoop
 
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
                      thread_data, AsyncObject)
-from .futures import Future, safe_async
 from .pollers import Poller, READ
 
 

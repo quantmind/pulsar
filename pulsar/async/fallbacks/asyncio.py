@@ -1,5 +1,13 @@
-'''Replicate asyncio basic functionalities'''
+'''Replicate asyncio basic functionalities.
+For documentation check the python 3.4 standard library
+'''
+import logging
+import traceback
+
 from pulsar.utils.pep import default_timer
+
+from .coro import coroutine_return
+from .tracelogger import _TracebackLogger
 
 fallback = True
 
@@ -41,7 +49,6 @@ def set_event_loop_policy(policy):
 
 
 def get_event_loop():
-    """XXX"""
     return get_event_loop_policy().get_event_loop()
 
 
@@ -140,7 +147,6 @@ class BaseEventLoop(AbstractEventLoop):
 ##  ABSTRACT TRANSPORT
 
 class BaseTransport(object):
-    """Base ABC for transports."""
 
     def __init__(self, extra=None):
         if extra is None:
@@ -345,6 +351,13 @@ class Future(object):
 
     _tb_logger = None        # Used for Python 3.3 only
 
+    def __init__(self, loop=None):
+        if loop is None:
+            self._loop = get_event_loop()
+        else:
+            self._loop = loop
+        self._callbacks = []
+
     def __repr__(self):
         res = self.__class__.__name__
         if self._state == _FINISHED:
@@ -479,6 +492,22 @@ class Future(object):
         self._state = _FINISHED
         self._schedule_callbacks()
 
+    def set_exception(self, exception):
+        """Mark the future done and set an exception.
+
+        If the future is already done when this method is called, raises
+        InvalidStateError.
+        """
+        if self._state != _PENDING:
+            raise InvalidStateError('{}: {!r}'.format(self._state, self))
+        self._exception = exception
+        self._state = _FINISHED
+        self._schedule_callbacks()
+        self._tb_logger = _TracebackLogger(exception)
+        # Arrange for the logger to be activated after all callbacks
+        # have had a chance to call result() or exception().
+        self._loop.call_soon(self._tb_logger.activate)
+
     # Truly internal methods.
 
     def _copy_state(self, other):
@@ -499,3 +528,15 @@ class Future(object):
             else:
                 result = other.result()
                 self.set_result(result)
+
+    def __iter__(self):
+        if not self.done():
+            self._blocking = True
+            yield self  # This tells Task to wait for completion.
+        coroutine_return(self.result()) # May raise too.
+
+
+def sleep(delay, result=None, loop=None):
+    future = Future(loop=loop)
+    future._loop.call_later(delay, future.set_result, result)
+    return future

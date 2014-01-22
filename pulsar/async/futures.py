@@ -9,12 +9,14 @@ from pulsar.utils.pep import iteritems, default_timer
 from .consts import MAX_ASYNC_WHILE
 from .access import (get_request_loop, get_event_loop, logger, asyncio,
                      _PENDING, _CANCELLED, _FINISHED)
+from .fallbacks.coro import CoroutineReturn, coroutine_return
 
 
 NOT_DONE = object()
 CancelledError = asyncio.CancelledError
 TimeoutError = asyncio.TimeoutError
 InvalidStateError = asyncio.InvalidStateError
+Future = asyncio.Future
 
 
 __all__ = ['Future',
@@ -22,18 +24,14 @@ __all__ = ['Future',
            'TimeoutError',
            'InvalidStateError',
            'FutureTypeError',
-           'log_failure',
-           'Failure',
-           'maybe_failure',
            'coroutine_return',
-           'is_failure',
            'add_async_binding',
            'maybe_async',
            'async',
+           'add_errback',
+           'task_callback',
            'multi_async',
-           'async_sleep',
            'async_while',
-           'safe_async',
            'run_in_loop_thread',
            'in_loop',
            'in_loop_thread',
@@ -41,249 +39,28 @@ __all__ = ['Future',
            'NOT_DONE']
 
 
+def add_errback(future, errback):
+
+    def _error_back(fut):
+        if fut._exception:
+            errback(fut.exception())
+        elif fut.cancelled():
+            errback(CancelledError())
+
+    future.add_done_callback(_error_back)
+
+
+def task_callback(callback):
+
+    @wraps(callback)
+    def _task_callback(fut):
+        return async(callback(fut.result()), fut._loop)
+
+    return _task_callback
+
+
 class FutureTypeError(TypeError):
     '''raised when invoking ``async`` on a wrong type.'''
-
-
-class CoroutineReturn(StopIteration):
-
-    def __init__(self, value):
-        self.value = value
-
-
-async_exec_info = namedtuple('async_exec_info', 'error_class error trace')
-log_exc_info = ('error', 'critical')
-
-
-def coroutine_return(value=None):
-    '''Use this function to return ``value`` from a
-    :ref:`coroutine <coroutine>`.
-
-    For example::
-
-        def mycoroutine():
-            a = yield ...
-            yield ...
-            ...
-            coroutine_return('OK')
-
-    If a coroutine does not invoke this function, its result is ``None``.
-    '''
-    raise CoroutineReturn(value)
-
-
-def is_relevant_tb(tb):
-    return not ('__skip_traceback__' in tb.tb_frame.f_locals or
-                '__unittest' in tb.tb_frame.f_globals)
-
-
-def tb_length(tb):
-    length = 0
-    while tb and is_relevant_tb(tb):
-        length += 1
-        tb = tb.tb_next
-    return length
-
-
-def format_exception(exctype, value, tb):
-    trace = getattr(value, '__async_traceback__', None)
-    while tb and not is_relevant_tb(tb):
-        tb = tb.tb_next
-    length = tb_length(tb)
-    if length or not trace:
-        tb = traceback.format_exception(exctype, value, tb, length)
-    if trace:
-        if tb:
-            tb = tb[:-1]
-            tb.extend(trace[1:])
-        else:
-            tb = trace
-    value.__async_traceback__ = tb
-    value.__traceback__ = None
-    return tb
-
-
-def as_async_exec_info(exc_info):
-    if not isinstance(exc_info, async_exec_info):
-        exctype, value, tb = exc_info
-        trace = format_exception(exctype, value, tb)
-        exc_info = async_exec_info(exctype, value, trace)
-    return exc_info
-
-
-def is_exc_info(exc_info):
-    if isinstance(exc_info, async_exec_info):
-        return True
-    elif isinstance(exc_info, tuple) and len(exc_info) == 3:
-        return istraceback(exc_info[2])
-    return False
-
-
-def maybe_failure(value, noisy=False):
-    '''Convert ``value`` into a :class:`Failure` if it needs to.
-
-    The conversion happen only if ``value`` is a stack trace or an
-    exception, otherwise returns ``value``.
-
-    :param value: the value to convert to a :class:`Failure` instance
-        if it needs to.
-    :return: a :class:`Failure` or the original ``value``.
-    '''
-    __skip_traceback__ = True
-    if isinstance(value, BaseException):
-        exc_info = sys.exc_info()
-        if value is not exc_info[1]:
-            try:
-                raise value
-            except:
-                exc_info = sys.exc_info()
-        return Failure(exc_info)
-    elif is_exc_info(value):
-        value = Failure(value)
-    if isinstance(value, Failure) and noisy:
-        value.log()
-    return value
-
-
-############################################################### FAILURE
-class Failure(object):
-    '''The asynchronous equivalent of python Exception.
-
-    It has several useful methods and features which facilitates logging,
-    and throwing exceptions.
-
-    .. attribute:: exc_info
-
-        The exception as a three elements tuple
-        (``errorType``, ``errvalue``, ``traceback``) occured during
-        the execution of a :class:`Deferred`.
-
-    .. attribute:: logged
-
-        Check if the :attr:`error` was logged.
-
-    '''
-    __slots__ = ('_mute', 'exc_info')
-    _msg = 'Pulsar Asynchronous Failure'
-
-    def __init__(self, exc_info, noisy=False):
-        self._mute = False
-        self.exc_info = as_async_exec_info(exc_info)
-        if noisy:
-            self.log()
-
-    def __del__(self):
-        if not self._mute:
-            self.log()
-
-    def __repr__(self):
-        return ''.join(self.exc_info[2])
-    __str__ = __repr__
-
-    @property
-    def logged(self):
-        return getattr(self.error, '_failure_logged', False)
-
-    @property
-    def error(self):
-        '''The python :class:`Exception` instance.'''
-        return self.exc_info[1]
-
-    def isinstance(self, classes):
-        '''Check if :attr:`error` is an instance of exception ``classes``.'''
-        return isinstance(self.error, classes)
-
-    def throw(self, gen=None):
-        '''Raises the exception from the :attr:`exc_info`.
-
-        :parameter gen: Optional generator. If provided the exception is throw
-            into the generator via the ``gen.throw`` method.
-
-        Without ``gen``, this method is used when interacting with libraries
-        supporting both synchronous and asynchronous flow controls.
-        '''
-        __skip_traceback__ = True
-        if gen:
-            return gen.throw(self.exc_info[0], self.exc_info[1])
-        else:
-            # mute only this Failure, not the error
-            self._mute = True
-            raise self.exc_info[1]
-
-    def log(self, log=None, msg=None, level=None):
-        '''Log the :class:`Failure` and set :attr:`logged` to ``True``.
-
-Logging for a given failure occurs once only. To suppress logging for
-a given failure set :attr:`logged` to ``True`` of invoke the :meth:`mute`
-method.
-Returns ``self`` so that this method can easily be added as an error
-back to perform logging and propagate the failure. For example::
-
-    .add_errback(lambda failure: failure.log())
-'''
-        if not self.logged:
-            self.mute()
-            msg = msg or self._msg
-            log = log or logger()
-            level = level or 'error'
-            handler = getattr(log, level)
-            if level in log_exc_info:
-                exc_info = self.exc_info
-                if exc_info[2]:
-                    c = '\n'
-                    emsg = ''.join(exc_info[2])
-                else:
-                    c = ': '
-                    emsg = str(exc_info[1])
-                msg = '%s%s%s' % (msg, c, emsg) if msg else emsg
-            handler(msg)
-        return self
-
-    def critical(self, msg):
-        return self.log(msg=msg, level='critical')
-
-    def mute(self):
-        '''Mute logging and return ``self``.'''
-        setattr(self.exc_info[1], '_failure_logged', True)
-        return self
-
-
-############################################################### Deferred
-class Future(asyncio.Future):
-    _callbacks = None
-
-    def __init__(self, loop=None):
-        self._loop = loop or get_event_loop()
-
-    def _schedule_callbacks(self):
-        if not self._callbacks:
-            return
-
-        callbacks = self._callbacks[:]
-        self._callbacks[:] = []
-        for callback in callbacks:
-            self._loop.call_soon(callback, self)
-
-    def has_callbacks(self):
-        '''The number of callbacks.
-        '''
-        return len(self._callbacks) if self._callbacks else 0
-
-    def set_exception(self, exception):
-        if self._state == _PENDING:
-            raise InvalidStateError('{}: {!r}'.format(self._state, self))
-        self._exception = exception
-        self._state = _FINISHED
-        self._schedule_callbacks()
-        self._tb_logger = maybe_failure(exception)
-        # Arrange for the logger to be activated after all callbacks
-        # have had a chance to call result() or exception().
-        self._loop.call_soon(self._tb_logger.activate)
-
-    def __iter__(self):
-        if not self.done():
-            yield self  # This tells Task to wait for completion.
-        coroutine_return(self.result())
 
 
 class CoroTask(Future):
@@ -300,26 +77,26 @@ class CoroTask(Future):
     def __init__(self, gen, loop):
         self._gen = gen
         self._loop = loop
-        self._step(None)
+        self._callbacks = []
+        self._step(None, None)
 
-    def _step(self, result):
+    def _step(self, result, error):
         __skip_traceback__ = True
         gen = self._gen
+        self._waiting = None
         try:
-            if isinstance(result, Failure):
-                failure, result = result, None
-                result = failure.throw(gen)
-                failure.mute()
+            if error:
+                result = gen.throw(error)
             else:
                 result = gen.send(result)
             # handle possibly asynchronous results
             result = maybe_async(result, self._loop)
         except StopIteration as e:
             self.set_result(getattr(e, 'value', None))
-        except Exception:
-            self.set_exception(sys.exc_info())
-        except BaseException:
-            self.set_exception(sys.exc_info())
+        except Exception as exc:
+            self.set_exception(exc)
+        except BaseException as exc:
+            self.set_exception(exc)
             raise
         else:
             if isinstance(result, Future):
@@ -332,15 +109,16 @@ class CoroTask(Future):
                 # transfer control to the event loop
                 self._loop.call_soon(self._consume, None)
                 return
-            self._step(result, gen)
+            self._step(result, None)
 
     def _restart(self, future):
-        self._waiting = None
         try:
             value = future.result()
         except Exception as exc:
-            value = exc
-        self._loop.call_soon_threadsafe(self._step, result)
+            self._step(None, exc)
+        else:
+            self._step(value, None)
+        self = None
 
     def cancel(self, msg='', mute=False, exception_class=None):
         if self._waiting:
@@ -376,14 +154,14 @@ class AsyncBindings:
                 d = binding(coro_or_future, loop)
                 if d is not None:
                     return d
-        if isinstance(coro_or_future, Deferred):
+        if isinstance(coro_or_future, Future):
             return coro_or_future
         elif isgenerator(coro_or_future):
             loop = loop or get_request_loop()
             task_factory = getattr(loop, 'task_factory', CoroTask)
             return task_factory(coro_or_future, loop)
         else:
-            raise FutureTypeError('A Future or coroutine is required')
+            raise FutureTypeError
 
     def maybe(self, value, loop=None, get_result=True):
         '''Handle a possible asynchronous ``value``.
@@ -402,17 +180,9 @@ class AsyncBindings:
             value.
         '''
         try:
-            value = self(value, loop)
-            if get_result and value._state != _PENDING:
-                value = value._result
-            return value
+            return self(value, loop)
         except FutureTypeError:
-            if get_result:
-                return maybe_failure(value)
-            else:
-                d = Deferred()
-                d.callback(value)
-                return d
+            return value
 
 
 async = AsyncBindings()
@@ -432,32 +202,10 @@ def iterdata(stream, start=0):
 
 
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):
-    '''This is an utility function to convert an *iterable* into a
-:class:`MultiDeferred` element.'''
-    m = MultiDeferred.make(loop, iterable, **kwargs)
+    '''This is an utility function to convert an ``iterable`` into a
+    :class:`MultiFuture` element.'''
+    m = MultiFuture.make(loop, iterable, **kwargs)
     return m.lock() if lock else m
-
-
-def is_failure(obj, *classes):
-    '''Check if ``obj`` is a :class:`.Failure`.
-
-    If optional ``classes`` are given, it checks if the error is an instance
-    of those classes.
-    '''
-    if isinstance(obj, Failure):
-        return obj.isinstance(classes) if classes else True
-    return False
-
-
-def log_failure(value):
-    '''Lag a :class:`.Failure` if ``value`` is one.
-
-    Return ``value``.
-    '''
-    value = maybe_failure(value)
-    if isinstance(value, Failure):
-        value.log()
-    return value
 
 
 def raise_error_and_log(error, level=None):
@@ -466,41 +214,6 @@ def raise_error_and_log(error, level=None):
     except Exception as e:
         Failure(sys.exc_info()).log(msg=str(e), level=level)
         raise
-
-
-def async_sleep(timeout, loop=None):
-    '''The asynchronous equivalent of ``time.sleep(timeout)``. Use this
-function within a :ref:`coroutine <coroutine>` when you need to resume
-the coroutine after ``timeout`` seconds. For example::
-
-    ...
-    yield async_sleep(2)
-    ...
-
-This function returns a :class:`.Deferred` called back in ``timeout`` seconds
-with the ``timeout`` value.
-'''
-    def _cancel(failure):
-        if failure.isinstance(TimeoutError):
-            failure.mute()
-            return timeout
-        else:
-            return failure
-    loop = loop or get_request_loop()
-    return Deferred(loop).set_timeout(timeout, mute=True).add_errback(_cancel)
-
-
-def safe_async(callable, *args, **kwargs):
-    '''Safely execute a ``callable`` and always return a :class:`.Deferred`.
-
-    Never throws.
-    '''
-    loop = kwargs.pop('loop', None)
-    try:
-        result = callable(*args, **kwargs)
-    except Exception:
-        result = sys.exc_info()
-    return maybe_async(result, loop, False)
 
 
 def async_while(timeout, while_clause, *args):
@@ -541,16 +254,15 @@ def run_in_loop_thread(loop, callback, *args, **kwargs):
 
     Return a :class:`.Deferred`
     '''
-    d = Deferred(loop)
+    d = Future(loop)
 
     def _():
         try:
             result = yield callback(*args, **kwargs)
-        except Exception:
-            d.callback(sys.exc_info())
-            raise
+        except Exception as exc:
+            d.set_exception(exc)
         else:
-            d.callback(result)
+            d.set_result(result)
 
     loop.call_soon_threadsafe(_)
     if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
@@ -566,11 +278,8 @@ def in_loop(method):
     '''
     @wraps(method)
     def _(self, *args, **kwargs):
-        try:
-            result = method(self, *args, **kwargs)
-        except Exception:
-            result = sys.exc_info()
-        return maybe_async(result, self._loop, False)
+        result = method(self, *args, **kwargs)
+        return maybe_async(result, self._loop)
 
     return _
 
@@ -663,7 +372,7 @@ class MultiFuture(Future):
         return self._failures
 
     def lock(self):
-        '''Lock the :class:`MultiDeferred` so that no new items can be added.
+        '''Lock the :class:`.MultiFuture` so that no new items can be added.
 
         If it was alread :attr:`locked` a runtime exception occurs.'''
         if self._locked:
@@ -676,8 +385,10 @@ class MultiFuture(Future):
         return self
 
     def update(self, stream):
-        '''Update the :class:`MultiDeferred` with new data. It works for
-both ``list`` and ``dict`` :attr:`type`.'''
+        '''Update the :class:`MultiFuture` with new data.
+
+        It works for both ``list`` and ``dict`` :attr:`type`.
+        '''
         add = self._add
         for key, value in iterdata(stream, len(self._stream)):
             add(key, value)
@@ -699,16 +410,15 @@ both ``list`` and ``dict`` :attr:`type`.'''
         if self._locked:
             raise RuntimeError(self.__class__.__name__ +
                                ' cannot add a dependent once locked.')
-        value = maybe_async(value)
-        self._setitem(key, value)
+        value = self._get_set_item(key, maybe_async(value, self._loop))
         # add callback if an asynchronous value
-        if isinstance(value, Deferred):
+        if isinstance(value, Future):
             self._deferred[key] = value
-            value.add_both(lambda result: self._deferred_done(key, result))
+            value.add_done_callback(lambda f: self._future_done(key, f))
 
-    def _deferred_done(self, key, result):
+    def _future_done(self, key, future):
         self._deferred.pop(key, None)
-        self._setitem(key, result)
+        self._get_set_item(key, future)
         if self._locked and not self._deferred and not self.done():
             self._finish()
         return result
@@ -723,17 +433,23 @@ both ``list`` and ``dict`` :attr:`type`.'''
                                'dependents %r' % self._deferred)
         self._time_finished = default_timer()
         if self.raise_on_error and self._failures:
-            self.callback(self._failures[0])
+            self.set_exception(self._failures[0])
         else:
-            self.callback(self._stream)
+            self.set_result(self._stream)
 
-    def _setitem(self, key, value):
+    def _get_set_item(self, key, value):
+        if isinstance(value, Future):
+            if value._state != _PENDING:
+                if value._exception:
+                    self._failures.append(value.exception())
+                    value = value._exception
+                else:
+                    value = value._result
+            else:
+                return value
         stream = self._stream
         if isinstance(stream, list) and key == len(stream):
             stream.append(value)
         else:
             stream[key] = value
-        if isinstance(value, Failure):
-            if self._mute_failures:
-                value.mute()
-            self._failures.append(value)
+        return value

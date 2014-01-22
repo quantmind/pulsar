@@ -64,7 +64,7 @@ The command perform the following actions:
         # time we got notified
         if callback:
             remote_actor.callback = None
-            callback.callback(remote_actor)
+            callback.set_result(remote_actor)
     return t
 
 

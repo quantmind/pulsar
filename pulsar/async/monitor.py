@@ -74,26 +74,27 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
 
 
 class PoolMixin(Actor):
-    '''Not an actor per se, this is a mixin for :class:`Actor`
-which manages a pool (group) of actors. Given an :attr:`actor_class`
-it makes sure there are always :attr:`cfg.workers` alive.
-It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
+    '''A mixin for :class:`.Actor` which manages a pool (group) of actors.
 
-.. attribute:: managed_actors
+    Given an :attr:`actor_class` it makes sure there are always
+    :attr:`cfg.workers` alive.
+    It is used by both the :class:`Arbiter` and the :class:`Monitor` classes.
 
-    dictionary with keys given by actor's ids and values by
-    :class:`ActorProxyMonitor` instances. These are the actors managed by the
-    pool.
+    .. attribute:: managed_actors
 
-.. attribute:: terminated_actors
+        dictionary with keys given by actor's ids and values by
+        :class:`ActorProxyMonitor` instances. These are the actors
+        managed by the pool.
 
-    list of :class:`ActorProxyMonitor` which have been terminated
-    (the remote actor did not have a cleaned shutdown).
-'''
+    .. attribute:: terminated_actors
+
+        list of :class:`ActorProxyMonitor` which have been terminated
+        (the remote actor did not have a cleaned shutdown).
+    '''
     CLOSE_TIMEOUT = 30000000000000
     actor_class = Actor
     '''The class derived form :class:`Actor` which the monitor manages
-during its life time.
+    during its life time.
 
     Default: :class:`Actor`'''
 
@@ -137,10 +138,11 @@ during its life time.
 
     def manage_actors(self, stop=False):
         '''Remove :class:`Actor` which are not alive from the
-:class:`PoolMixin.managed_actors` and return the number of actors still alive.
+        :class:`PoolMixin.managed_actors` and return the number of actors
+        still alive.
 
-:parameter stop: if ``True`` stops all alive actor.
-'''
+        :parameter stop: if ``True`` stops all alive actor.
+        '''
         alive = 0
         if self.managed_actors:
             for aid, actor in list(iteritems(self.managed_actors)):

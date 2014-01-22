@@ -100,7 +100,7 @@ via the ``_loop`` attribute::
 '''
 import sys
 
-from pulsar import async, Http404, Failure, coroutine_return
+from pulsar import async, Http404, coroutine_return
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
 
@@ -151,8 +151,7 @@ class WsgiHandler(object):
             try:
                 resp = yield middleware(environ, start_response)
             except Exception:
-                resp = yield handle_wsgi_error(environ,
-                                               Failure(sys.exc_info()))
+                resp = yield handle_wsgi_error(environ)
             if resp is not None:
                 break
         if resp is None:
