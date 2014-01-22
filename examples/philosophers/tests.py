@@ -4,12 +4,14 @@ from pulsar.apps.test import unittest
 from .manage import DiningPhilosophers
 
 
-class TestShell(unittest.TestCase):
+class TestPhylosophers(unittest.TestCase):
     app_cfg = None
+    concurrency = 'thread'
 
     @classmethod
     def setUpClass(cls):
-        app = DiningPhilosophers(name='plato')
+        app = DiningPhilosophers(name='plato',
+                                 concurrency=cls.concurrency)
         cls.app_cfg = yield send('arbiter', 'run', app)
 
     def test_info(self):

@@ -5,6 +5,7 @@ from . import test_pulsards
 
 OK = check_redis()
 
+
 @unittest.skipUnless(OK, 'Requires a running redis server')
 class TestRedisTaskQueueOnThread(test_pulsards.TestTaskQueueOnThread):
     #schedule_periodic = False
