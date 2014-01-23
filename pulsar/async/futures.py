@@ -29,6 +29,7 @@ __all__ = ['Future',
            'maybe_async',
            'async',
            'add_errback',
+           'add_callback',
            'task_callback',
            'multi_async',
            'async_while',
@@ -39,15 +40,26 @@ __all__ = ['Future',
            'NOT_DONE']
 
 
-def add_errback(future, errback):
-
+def add_errback(future, callback):
+    '''Add a ``callback`` to ``future`` executed only if an exception
+    has occurred '''
     def _error_back(fut):
         if fut._exception:
-            errback(fut.exception())
+            callback(fut.exception())
         elif fut.cancelled():
-            errback(CancelledError())
+            callback(CancelledError())
 
     future.add_done_callback(_error_back)
+
+
+def add_callback(future, callback):
+    '''Add a ``callback`` to ``future`` executed only if an exception
+    has occurred '''
+    def _call_back(fut):
+        if not (fut._exception or fut.cancelled()):
+            callback(fut.result())
+
+    future.add_done_callback(_call_back)
 
 
 def task_callback(callback):
@@ -90,7 +102,13 @@ class CoroTask(Future):
             else:
                 result = gen.send(result)
             # handle possibly asynchronous results
-            result = maybe_async(result, self._loop)
+            try:
+                result = async(result, self._loop)
+            except FutureTypeError:
+                pass
+            else:
+                if result.done():
+                    result = result.result()
         except StopIteration as e:
             self.set_result(getattr(e, 'value', None))
         except Exception as exc:
@@ -104,12 +122,12 @@ class CoroTask(Future):
                 # to the event loop
                 result.add_done_callback(self._restart)
                 self._waiting = result
-                return
             elif result == NOT_DONE:
                 # transfer control to the event loop
-                self._loop.call_soon(self._consume, None)
-                return
-            self._step(result, None)
+                self._loop.call_soon(self._step, None, None)
+            else:
+                self._step(result, None)
+        self = None
 
     def _restart(self, future):
         try:
@@ -315,7 +333,7 @@ class MultiFuture(Future):
     @classmethod
     def make(cls, loop, data, type=None, raise_on_error=True,
              mute_failures=False, **kwargs):
-        self = cls(loop)
+        self = cls(loop=loop)
         self._deferred = {}
         self._failures = []
         self._mute_failures = mute_failures

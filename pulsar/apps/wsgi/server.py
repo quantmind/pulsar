@@ -441,7 +441,7 @@ class HttpServerResponse(ProtocolConsumer):
                 self.finish_wsgi()
 
     def _async_wsgi(self, wsgi_iter):
-        if isinstance(wsgi_iter, (Future, Failure)):
+        if isinstance(wsgi_iter, Future):
             wsgi_iter = yield wsgi_iter
         try:
             for b in wsgi_iter:
@@ -455,7 +455,7 @@ class HttpServerResponse(ProtocolConsumer):
                     wsgi_iter.close()
                 except Exception:
                     self.logger.exception('Error while closing wsgi iterator')
-        yield self.finish_wsgi()
+        self.finish_wsgi()
 
     def finish_wsgi(self):
         if not self.keep_alive:

@@ -40,7 +40,8 @@ HOP_HEADERS = frozenset(('connection',
                          'server',
                          'date')
                         )
-LOGGER = logging.getLogger('pulsar.wsgi')
+
+logger = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
     width: 500px;
@@ -201,29 +202,27 @@ class dump_environ(object):
         return '\n%s\n' % '\n'.join(_())
 
 
-def handle_wsgi_error(environ, failure):
+def handle_wsgi_error(environ, exc):
     '''The default error handler while serving a WSGI request.
 
-    :parameter environ: The WSGI environment.
-    :parameter failure: a :class:`.Failure`.
+    :param environ: The WSGI environment.
+    :param exc: the exception
     :return: a :class:`.WsgiResponse`
     '''
     request = wsgi_request(environ)
     response = request.response
-    error = failure.error
-    if isinstance(error, HTTPError):
-        response.status_code = error.code or 500
+    if isinstance(exc, HTTPError):
+        response.status_code = exc.code or 500
     else:
-        response.status_code = getattr(error, 'status', 500)
-        response.headers.update(getattr(error, 'headers', None) or ())
+        response.status_code = getattr(exc, 'status', 500)
+        response.headers.update(getattr(exc, 'headers', None) or ())
     path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status == 500:
-        failure.log(msg='Unhandled exception during HTTP response %s.%s' %
-                    (path, dump_environ(environ)), level='critical')
+        logger.critical('Unhandled exception during HTTP response %s.%s',
+                        path, dump_environ(environ), exc_info=True)
     else:
-        failure.log(msg='HTTP %s %s' % (response.status, path),
-                    level='warning')
+        logger.warning('HTTP %s %s', response.status, path)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
         content = None
     else:
@@ -232,7 +231,7 @@ def handle_wsgi_error(environ, failure):
         try:
             content = renderer(request, failure)
         except Exception:
-            LOGGER.critical('Error while rendering error', exc_info=True)
+            logger.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
             content = 'Critical server error'
     response.content = content

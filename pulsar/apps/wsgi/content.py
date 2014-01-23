@@ -138,7 +138,7 @@ from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import multi_async, maybe_async, Future, async, coroutine_return
+from pulsar import (multi_async, maybe_async, Future, async, coroutine_return)
 from pulsar.utils.pep import iteritems, is_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -191,9 +191,8 @@ def stream_mapping(value, request=None):
 
 
 class AsyncString(object):
-    '''Class for asynchronous strings which can be used with
-pulsar WSGI servers.
-'''
+    '''An asynchronous string which can be used with pulsar WSGI servers.
+    '''
     content_type = None
     '''Content type for this :class:`AsyncString`'''
     _streamed = False
@@ -207,15 +206,18 @@ pulsar WSGI servers.
     @property
     def parent(self):
         '''The :class:`AsyncString` element which contains this
-:class:`AsyncString`.'''
+        :class:`AsyncString`.'''
         return self._parent
 
     @property
     def children(self):
-        '''A copy of all children of this :class:`AsyncString`. Children can
-be other :class:`AsyncString` or string or bytes, depending on implementation.
-:attr:`children` are added and removed via the :meth:`append` and
-:meth:`remove` methods.'''
+        '''A copy of all children of this :class:`AsyncString`.
+
+        Children can be other :class:`AsyncString` or string or bytes,
+        depending on implementation.
+        :attr:`children` are added and removed via the :meth:`append` and
+        :meth:`remove` methods.
+        '''
         if self._children is None:
             self._children = []
         return self._children
@@ -298,28 +300,21 @@ This is a shortcut for the :meth:`insert` method at index 0.
         parent.append(self)
         return self
 
-    def content(self, request=None):
-        '''Return a :class:`.Future` called once the string is ready.
-
-        This method can be called once only since it invokes the :meth:`stream`
-        method.
-        '''
-        stream = self.stream(request)
-        return multi_async(stream).add_callback(self.to_string)
-
     def stream(self, request):
         '''An iterable over strings or asynchronous elements.
 
-This is the most important method of an :class:`AsyncString`.
-It is called by :meth:`content` or by the :attr:`parent` of this
-:class:`AsyncString`. It returns an iterable (list, tuple or a generator) over
-strings (``unicode/str`` for python 2, ``str`` only for python 3) or
-:ref:`asynchronous elements <tutorials-coroutine>` which result in
-strings. This method can be called **once only**, otherwise a
-:class:`RuntimeError` occurs.
+        This is the most important method of an :class:`AsyncString`.
+        It is called by :meth:`http_response` or by the :attr:`parent`
+        of this :class:`AsyncString`.
+        It returns an iterable (list, tuple or a generator) over
+        strings (``unicode/str`` for python 2, ``str`` only for python 3) or
+        :ref:`asynchronous elements <tutorials-coroutine>` which result in
+        strings. This method can be called **once only**, otherwise a
+        :class:`RuntimeError` occurs.
 
-This method should not be overwritten, instead one should use the
-:meth:`do_stream` to customise behaviour.'''
+        This method should not be overwritten, instead one should use the
+        :meth:`do_stream` to customise behaviour.
+        '''
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
@@ -345,13 +340,15 @@ This method should not be overwritten, instead one should use the
                     yield child
 
     def http_response(self, request):
-        '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
-        This method asynchronously wait for :meth:`content` and subsequently
-        starts the wsgi response.'''
+        '''Return a coroutine which results in a :class:`.WsgiResponse`.
+
+        This method asynchronously wait for :meth:`stream` and subsequently
+        returns a :class:`.WsgiResponse`.
+        '''
         response = request.response
         response.content_type = self.content_type
-        body = yield self.content(request)
-        response.content = body
+        body = yield multi_async(self.stream(request))
+        response.content = to_string(body)
         coroutine_return(response)
 
     def to_string(self, stream):
@@ -367,12 +364,15 @@ This method should not be overwritten, instead one should use the
 
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
-This is useful during testing. It is the synchronous equivalent of
-:meth:`content`.'''
-        value = maybe_async(self.content(request))
-        if is_failure(value):
-            value.throw()
-        return value
+        This is useful during testing. It is the synchronous equivalent of
+        :meth:`content`.
+        '''
+        value = async(self._content(request))
+        return value.result() if value.done() else value
+
+    def _content(self, request):
+        stream = yield multi_async(self.stream(request))
+        coroutine_return(self.to_string(stream))
 
 
 class Json(AsyncString):
@@ -421,7 +421,7 @@ class Json(AsyncString):
 
 def html_factory(tag, **defaults):
     '''Returns an :class:`Html` factory function for ``tag`` and a given
-dictionary of ``defaults`` parameters. For example::
+    dictionary of ``defaults`` parameters. For example::
 
     >>> input_factory = html_factory('input', type='text')
     >>> html = input_factory(value='bla')
@@ -960,21 +960,16 @@ The head element is accessed via the :attr:`HtmlDocument.head` attribute.
 class Body(Html):
     ''':class:`Html` body tag.
 
-.. attribute:: scripts
+    .. attribute:: scripts
 
-    A container of Javascript files to render at the end of the body tag.
-    The usage is the same as :attr:`Head.scripts`.
-'''
+        A container of Javascript files to render at the end of the body tag.
+        The usage is the same as :attr:`Head.scripts`.
+    '''
     def __init__(self, media_path=None):
         super(Body, self).__init__('body')
         self.scripts = Scripts(media_path)
 
     def do_stream(self, request):
-        '''Render the widget. It accept two optional parameters, a http
-request object and a dictionary for rendering children with a key.
-
-:parameter request: Optional request object.
-'''
         self.append(self.scripts)
         return super(Body, self).do_stream(request)
 
@@ -1011,12 +1006,15 @@ class HtmlDocument(Html):
         return self
 
     def do_stream(self, request):
-        body = safe_async(self.body.content, request)
-        yield '<!DOCTYPE html>\n'
-        yield '<html%s>\n' % self.flatatt()
-        yield body.add_callback(partial(self._head, request))
-        yield '\n</html>'
+        yield self._html(request)
 
-    def _head(self, request, body):
-        head = yield self.head.content(request)
-        coroutine_return('%s\n%s' % (head, body))
+    def _html(self, request):
+        body = yield multi_async(self.body.stream(request))
+        head = yield multi_async(self.head.stream(request))
+        result = ('<!DOCTYPE html>\n'
+                  '<html%s>\n'
+                  '%s\n%s',
+                  '\n</html>') % (self.flatatt(),
+                                  self.head.to_string(head),
+                                  self.body.tostring(body))
+        coroutine_return(result)

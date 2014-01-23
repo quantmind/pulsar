@@ -150,8 +150,8 @@ class WsgiHandler(object):
         for middleware in self.middleware:
             try:
                 resp = yield middleware(environ, start_response)
-            except Exception:
-                resp = yield handle_wsgi_error(environ)
+            except Exception as exc:
+                resp = yield handle_wsgi_error(environ, exc)
             if resp is not None:
                 break
         if resp is None:

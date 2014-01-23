@@ -147,12 +147,11 @@ class SocketStreamTransport(SocketTransport):
                 finally:
                     self.close()
             return
-        except self.SocketError:
-            failure = None if self._closing else sys.exc_info()
-        except Exception:
-            failure = sys.exc_info()
-        if failure:
-            self.abort(Failure(failure))
+        except self.SocketError as exc:
+            if not self._closing:
+                self.abort(exc)
+        except Exception as exc:
+            self.abort(exc)
 
 
 class SocketStreamSslTransport(SocketStreamTransport):
