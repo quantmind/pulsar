@@ -142,15 +142,13 @@ class SocketStreamTransport(SocketTransport):
             if chunk:
                 self._protocol.data_received(chunk)
             else:
-                try:
-                    self._protocol.eof_received()
-                finally:
-                    self.close()
-            return
+                self._protocol.eof_received()
+                self.close()
         except self.SocketError as exc:
             if not self._closing:
                 self.abort(exc)
         except Exception as exc:
+            self.logger.exception('Fatal error for %s', self)
             self.abort(exc)
 
 

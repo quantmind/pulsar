@@ -65,7 +65,7 @@ from inspect import getfile
 from functools import partial
 
 import pulsar
-from pulsar import (get_actor, coroutine_return, Config, async, task_callback,
+from pulsar import (get_actor, coroutine_return, Config, async,
                     multi_async, Future, ImproperlyConfigured)
 from pulsar.utils.structures import OrderedDict
 
@@ -106,7 +106,6 @@ def _get_app(arbiter, name, safe=True):
             coroutine_return(monitor.app)
 
 
-@task_callback
 def monitor_start(self):
     start_event = self.start_event
     app = self.app
@@ -128,7 +127,6 @@ def monitor_start(self):
         start_event.set_result(result)
 
 
-@task_callback
 def monitor_stopping(self):
     if not self.cfg.workers:
         yield self.app.worker_stopping(self)
@@ -136,7 +134,6 @@ def monitor_stopping(self):
     coroutine_return(self)
 
 
-@task_callback
 def monitor_stop(self):
     if not self.cfg.workers:
         yield self.app.worker_stop(self)
@@ -466,7 +463,7 @@ class Application(Configurator):
                     self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.
                     actor.bind_event(
-                        'start', lambda f: self._add_to_arbiter(start, actor))
+                        'start', lambda a: self._add_to_arbiter(start, a))
                 return start
             else:
                 return
@@ -526,7 +523,6 @@ class Application(Configurator):
 
     #   INTERNALS
     def _add_to_arbiter(self, start, arbiter):
-        assert arbiter._loop
         start._loop = arbiter._loop
         monitor = arbiter.add_monitor(
             self.name, app=self, cfg=self.cfg,

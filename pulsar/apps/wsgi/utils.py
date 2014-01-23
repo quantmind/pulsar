@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 
 
+from pulsar import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
@@ -229,7 +230,7 @@ def handle_wsgi_error(environ, exc):
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
         try:
-            content = renderer(request, failure)
+            content = renderer(request, exc)
         except Exception:
             logger.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
@@ -238,7 +239,7 @@ def handle_wsgi_error(environ, exc):
     return response
 
 
-def render_error(request, failure):
+def render_error(request, exc):
     '''Default renderer for errors.'''
     cfg = request.get('pulsar.cfg')
     debug = cfg.debug if cfg else False
@@ -254,7 +255,7 @@ def render_error(request, failure):
         request.html_document.head.title = response.status
 
     if debug:
-        msg = render_error_debug(request, failure, content_type)
+        msg = render_error_debug(request, exc, content_type)
     else:
         msg = error_messages.get(response.status_code) or ''
         if content_type == 'text/html':
@@ -277,11 +278,12 @@ def render_error(request, failure):
         return '\n'.join(msg) if isinstance(msg, (list, tuple)) else msg
 
 
-def render_error_debug(request, failure, content_type):
+def render_error_debug(request, exc, content_type):
     '''Render the traceback into the content type in *response*.'''
     response = request.response
     is_html = content_type == 'text/html'
     error = Html('div', cn='section traceback error') if is_html else []
+    trace = format_traceback()
     for traces in failure.exc_info[2]:
         counter = 0
         for trace in traces.split('\n'):

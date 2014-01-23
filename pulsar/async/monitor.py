@@ -1,7 +1,7 @@
 import sys
 from time import time
 
-import pulsar
+from pulsar import Config
 from pulsar.utils.pep import iteritems, itervalues, range
 from pulsar.utils.security import gen_unique_id
 
@@ -34,7 +34,7 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
         if monitor:
             cfg = monitor.cfg.copy()
         else:
-            cfg = pulsar.Config()
+            cfg = Config()
 
     if not monitor:  # monitor not available, this is the arbiter
         if kind != 'monitor':
@@ -131,7 +131,7 @@ class PoolMixin(Actor):
 
     def _remove_actor(self, actor, log=True):
         if log:
-            self.logger.info('Removing %s', actor)
+            self.logger.warning('Removing %s', actor)
         self.managed_actors.pop(actor.aid, None)
         if self.monitor:
             self.monitor._remove_actor(actor, False)

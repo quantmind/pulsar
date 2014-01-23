@@ -2,7 +2,7 @@ import sys
 from time import time
 import pickle
 
-from pulsar import HaltServer, CommandError, system
+from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 
 from .eventloop import setid
@@ -406,6 +406,8 @@ This method is invoked when you run the
                 self.logger.exception('Unhandled exception in when_ready hook')
         try:
             exc = self.__impl.run_actor(self)
+        except MonitorStarted:
+            return
         except (Exception, HaltServer) as exc:
-            self.stop(exc)
+            return self.stop(exc)
         self.stop()

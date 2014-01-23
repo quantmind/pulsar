@@ -22,7 +22,7 @@ def tb_length(tb):
 
 
 def format_exception(exctype, value, tb):
-    trace = getattr(value, '__async_traceback__', None)
+    trace = getattr(value, '__traceback__', None)
     while tb and not is_relevant_tb(tb):
         tb = tb.tb_next
     length = tb_length(tb)
@@ -34,12 +34,16 @@ def format_exception(exctype, value, tb):
             tb.extend(trace[1:])
         else:
             tb = trace
-    value.__async_traceback__ = tb
-    value.__traceback__ = None
+    value.__traceback__ = tb
     return tb
 
 
 if sys.version_info >= (3, 0):
+
+    def format_traceback(exc):
+        return traceback.format_exception(exc.__class__, exc,
+                                          exc.__traceback__)
+
 
     class _TracebackLogger:
         __slots__ = ['exc', 'tb']
@@ -65,6 +69,10 @@ if sys.version_info >= (3, 0):
                              ''.join(self.tb))
 
 else:
+
+    def format_traceback(exc):
+        return getattr(exc, '__traceback__', [])
+
 
     class _TracebackLogger:
         __slots__ = ['exc', 'tb']

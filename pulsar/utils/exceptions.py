@@ -7,6 +7,10 @@ class PulsarException(Exception):
     '''Base class of all Pulsar exceptions.'''
 
 
+class MonitorStarted(PulsarException):
+    pass
+
+
 class ImproperlyConfigured(PulsarException):
     '''A :class:`PulsarException` raised when an inconsistent configuration
 has occured.'''

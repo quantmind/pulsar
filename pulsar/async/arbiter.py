@@ -99,11 +99,9 @@ def stop_arbiter(self):     # pragma    nocover
     return self
 
 
-def start_arbiter(future):
-    self = future.result()
+def start_arbiter(self):
     if current_process().daemon:
-        raise pulsar.PulsarException(
-            'Cannot create the arbiter in a daemon process')
+        raise HaltServer('Cannot create the arbiter in a daemon process')
     os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE
     pidfile = self.cfg.pidfile
     if pidfile is not None:

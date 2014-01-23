@@ -1,17 +1,20 @@
-from inspect import isgenerator
+from collections import deque
+from functools import partial
 
 from pulsar.utils.pep import iteritems
 
-from .futures import Future, async, InvalidStateError
+from .futures import Future, maybe_async, InvalidStateError
 from .access import AsyncObject, get_request_loop
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
 
 
-class AbstractEvent(object):
+class AbstractEvent(AsyncObject):
     '''Abstract event handler.'''
     _silenced = False
+    _handlers = None
+    _fired = 0
 
     @property
     def silenced(self):
@@ -21,10 +24,16 @@ class AbstractEvent(object):
         '''
         return self._silenced
 
-    def bind(self, callback, errback=None):
-        '''Bind a ``callback`` and an optional ``errback`` to this event.
+    @property
+    def handlers(self):
+        if self._handlers is None:
+            self._handlers = []
+        return self._handlers
+
+    def bind(self, callback):
+        '''Bind a ``callback`` to this event.
         '''
-        raise NotImplementedError
+        self.handlers.append(callback)
 
     def fired(self):
         '''The number of times this event has fired'''
@@ -42,74 +51,67 @@ class AbstractEvent(object):
         self._silenced = True
 
 
-class Event(AbstractEvent, AsyncObject):
+class Event(AbstractEvent):
     '''The default implementation of :class:`AbstractEvent`.
     '''
     def __init__(self, loop=None):
-        self._handlers = []
-        self._fired = 0
         self._loop = loop
 
     def __repr__(self):
         return repr(self._handlers)
     __str__ = __repr__
 
-    def bind(self, callback, errback=None):
-        if errback:
-            raise ValueError('errback not supported in many-times events')
-        self._handlers.append(callback)
-
     def fired(self):
         return self._fired
 
     def fire(self, arg, **kwargs):
         if not self._silenced:
-            self._fired += 1
-            for hnd in self._handlers:
-                try:
-                    g = hnd(arg, **kwargs)
-                except Exception:
-                    self.logger.exception('Exception while firing event')
-                else:
-                    if isgenerator(g):
-                        # Add it to the event loop
-                        async(g)
+            self._fired += self._fired + 1
+            if self._handlers:
+                for hnd in self._handlers:
+                    try:
+                        hnd(arg, **kwargs)
+                    except Exception:
+                        self.logger.exception('Exception while firing event')
 
 
 class OneTime(Future, AbstractEvent):
     '''An :class:`AbstractEvent` which can be fired once only.
 
-    This event handler is a :class:`.Future`.
-
+    This event handler is a subclass of :class:`.Future`.
     Implemented mainly for the one time events of the :class:`EventHandler`.
-    There shouldn't be any reason to use this class on its own.
     '''
-    _events = None
-
     @property
-    def events(self):
-        if self._events is None:
-            self._events = Future(loop=self._loop)
-        return self._events
-
-    def bind(self, callback, errback=None):
-        self.events.add_done_callback(callback)
-
-    def fired(self):
-        return int(self.events.done())
+    def handlers(self):
+        if self._handlers is None:
+            self._handlers = deque()
+        return self._handlers
 
     def fire(self, arg, **kwargs):
+        '''The callback handlers registered via the :meth:~AbstractEvent.bind`
+        method are executed first
+        '''
         if not self._silenced:
-            if kwargs:
-                raise ValueError(("One time events don't support "
-                                  "key-value parameters"))
+            if self._fired:
+                raise InvalidStateError('already fired')
+            self._fired = 1
+            if self._loop is None:
+                self._loop = get_request_loop()
+            self._process(arg, kwargs)
+
+    def _process(self, arg, kwargs, future=None):
+        while self._handlers:
+            hnd = self._handlers.popleft()
+            try:
+                result = maybe_async(hnd(arg, **kwargs), self._loop)
+            except Exception:
+                self.logger.exception('Exception while firing event')
             else:
-                if self._loop is None:
-                    self._loop = get_request_loop()
-                    if self._events is not None:
-                        self._events._loop = self._loop
-                self.events.set_result(arg)
-                self.set_result(arg)
+                if isinstance(result, Future):
+                    result.add_done_callback(
+                        partial(self._process, arg, kwargs))
+                    return
+        self.set_result(arg)
 
 
 class EventHandler(AsyncObject):
@@ -149,7 +151,7 @@ class EventHandler(AsyncObject):
         '''
         return self._events.get(name)
 
-    def bind_event(self, name, callback, errback=None):
+    def bind_event(self, name, callback):
         '''Register a ``callback`` with ``event``.
 
         **The callback must be a callable accepting one parameter only**,
@@ -165,12 +167,7 @@ class EventHandler(AsyncObject):
         if name not in self._events:
             self._events[name] = Event()
         event = self._events[name]
-        if isinstance(callback, (list, tuple)):
-            assert errback is None, "list of callbacks with errback"
-            for cbk in callback:
-                event.bind(cbk)
-        else:
-            event.bind(callback, errback)
+        event.bind(callback)
 
     def bind_events(self, **events):
         '''Register all known events found in ``events`` key-valued parameters.
@@ -233,7 +230,7 @@ class EventHandler(AsyncObject):
         if isinstance(other, EventHandler):
             events = self._events
             for name, event in iteritems(other._events):
-                if isinstance(event, Event):
+                if isinstance(event, Event) and event._handlers:
                     ev = events.get(name)
                     # If the event is available add it
                     if ev:

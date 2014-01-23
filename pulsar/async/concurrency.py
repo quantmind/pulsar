@@ -2,7 +2,7 @@ import sys
 from functools import partial
 from multiprocessing import Process, current_process
 
-from pulsar import system, HaltServer
+from pulsar import system, HaltServer, MonitorStarted
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 
@@ -247,16 +247,9 @@ class MonitorMixin(object):
 
         Switch state to ``RUN`` and fire the ``start`` event.
         '''
-        event = getattr(actor, 'start_event', None)
-        if event:
-            event.add_done_callback(partial(self._on_start, actor))
-        else:
-            self._on_start(actor)
-        actor.fire_event('start')
-
-    def _on_start(self, actor, fut=None):
         actor.state = ACTOR_STATES.RUN
-        actor.bind_event('start', lambda f: self.periodic_task(actor))
+        actor.bind_event('start', self.periodic_task)
+        actor.fire_event('start')
 
     @property
     def pid(self):
@@ -274,7 +267,7 @@ to be spawned.'''
         actor.mailbox._loop.call_soon_threadsafe(self.hand_shake, actor)
 
     def run_actor(self, actor):
-        return -1
+        raise MonitorStarted
 
     def create_mailbox(self, actor, loop):
         pass

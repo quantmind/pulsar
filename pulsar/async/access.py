@@ -12,6 +12,8 @@ except ImportError:  # pragma    nocover
     _CANCELLED = asyncio._CANCELLED
     _FINISHED = asyncio._FINISHED
 
+from .fallbacks.tracelogger import format_traceback
+
 
 __all__ = ['get_request_loop',
            'get_event_loop',
@@ -23,7 +25,8 @@ __all__ = ['get_request_loop',
            'thread_data',
            'logger',
            'NOTHING',
-           'AsyncObject']
+           'AsyncObject',
+           'format_traceback']
 
 
 LOGGER = logging.getLogger('pulsar')

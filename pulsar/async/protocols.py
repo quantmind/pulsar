@@ -159,7 +159,7 @@ class ProtocolConsumer(EventHandler):
         if conn._producer:
             p = getattr(conn._producer, '_requests_processed', 0)
             conn._producer._requests_processed = p + 1
-        self.bind_event('post_request', self._finished, self._finished)
+        self.event('post_request').add_done_callback(self._finished)
         self._request = request
         self.fire_event('pre_request')
         if self._request is not None:
@@ -194,11 +194,10 @@ class ProtocolConsumer(EventHandler):
         self.fire_event('data_processed', data=data)
         return result
 
-    def _finished(self, result):
+    def _finished(self, fut):
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
-        return result
 
 
 class PulsarProtocol(EventHandler):
@@ -587,8 +586,8 @@ class TcpServer(Producer):
                     self.logger.info('%s serving on %s', self._name,
                                      format_address(address))
                 self.fire_event('start')
-            except Exception:
-                self.fire_event('start', sys.exc_info())
+            except Exception as exc:
+                self.fire_event('start', exc)
 
     def stop_serving(self):
         '''Stop serving the :attr:`.Server.sockets`.
@@ -636,9 +635,7 @@ class TcpServer(Producer):
                                          producer=self,
                                          timeout=self._keep_alive)
         protocol.bind_event('connection_made', self._connection_made)
-        protocol.bind_event('connection_lost',
-                            self._connection_lost,
-                            partial(self._connection_lost_exc, protocol))
+        protocol.bind_event('connection_lost', self._connection_lost)
         if (self._server and self._max_connections and
                 session >= self._max_connections):
             self.logger.info('Reached maximum number of connections %s. '
@@ -649,15 +646,9 @@ class TcpServer(Producer):
     ##    INTERNALS
     def _connection_made(self, connection):
         self._concurrent_connections.add(connection)
-        return connection
 
     def _connection_lost(self, connection):
         self._concurrent_connections.discard(connection)
-        return connection
-
-    def _connection_lost_exc(self, connection, exc):
-        self._concurrent_connections.discard(connection)
-        return exc
 
     def _close_connections(self, connection=None, async=True):
         '''Close ``connection`` if specified, otherwise close all connections.

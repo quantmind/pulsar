@@ -298,7 +298,7 @@ class HttpServerResponse(ProtocolConsumer):
         #
         done = parser.is_message_complete()
         if done and not self._stream.on_message_complete.done():
-            self._stream.on_message_complete.callback(None)
+            self._stream.on_message_complete.set_result(None)
         #
         if processed < len(data):
             if not done:

@@ -62,6 +62,13 @@ def add_callback(future, callback):
     future.add_done_callback(_call_back)
 
 
+def as_exception(fut):
+    if fut.cancelled:
+        return CancelledError()
+    elif fut._exception:
+        return fut.exception()
+
+
 def task_callback(callback):
 
     @wraps(callback)
@@ -106,9 +113,6 @@ class CoroTask(Future):
                 result = async(result, self._loop)
             except FutureTypeError:
                 pass
-            else:
-                if result.done():
-                    result = result.result()
         except StopIteration as e:
             self.set_result(getattr(e, 'value', None))
         except Exception as exc:
@@ -118,10 +122,13 @@ class CoroTask(Future):
             raise
         else:
             if isinstance(result, Future):
-                # async result add callback/errorback and transfer control
-                # to the event loop
-                result.add_done_callback(self._restart)
-                self._waiting = result
+                if result.done():
+                    self._restart(result)
+                else:
+                    # async result add callback/errorback and transfer control
+                    # to the event loop
+                    result.add_done_callback(self._restart)
+                    self._waiting = result
             elif result == NOT_DONE:
                 # transfer control to the event loop
                 self._loop.call_soon(self._step, None, None)
@@ -208,22 +215,10 @@ add_async_binding = async.add
 maybe_async = async.maybe
 
 
-def iterdata(stream, start=0):
-    '''Iterate over a stream which is either a dictionary or a list.
-
-    This iterator is over key-value pairs for a dictionary, and
-    index-value pairs for a list.'''
-    if isinstance(stream, Mapping):
-        return iteritems(stream)
-    else:
-        return enumerate(stream, start)
-
-
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):
     '''This is an utility function to convert an ``iterable`` into a
     :class:`MultiFuture` element.'''
-    m = MultiFuture.make(loop, iterable, **kwargs)
-    return m.lock() if lock else m
+    return MultiFuture(loop, iterable, **kwargs)
 
 
 def raise_error_and_log(error, level=None):
@@ -326,141 +321,54 @@ class MultiFuture(Future):
 
     The ``collection`` can be either a ``list`` or a ``dict``.
     '''
-    _locked = False
-    _time_locked = None
-    _time_finished = None
-
-    @classmethod
-    def make(cls, loop, data, type=None, raise_on_error=True,
-             mute_failures=False, **kwargs):
-        self = cls(loop=loop)
+    def __init__(self, loop, data, type=None, raise_on_error=True, **kwargs):
+        super(MultiFuture, self).__init__(loop=loop)
         self._deferred = {}
         self._failures = []
-        self._mute_failures = mute_failures
         self._raise_on_error = raise_on_error
         if not type:
             type = data.__class__ if data is not None else list
         if not issubclass(type, (list, Mapping)):
             type = list
+            data = enumerate(data)
+        else:
+            data = iteritems(data)
         self._stream = type()
-        self._time_start = default_timer()
-        if data:
-            self.update(data)
-        return self
-
-    @property
-    def raise_on_error(self):
-        '''When ``True`` and at least one value of the result collections is a
-        :class:`.Failure`, the callback will receive the failure rather than
-        the collection of results.
-
-        Default ``True``.
-        '''
-        return self._raise_on_error
-
-    @property
-    def locked(self):
-        '''When ``True``, the :meth:`update` or :meth:`append` methods can no
-        longer be used.'''
-        return self._locked
-
-    @property
-    def type(self):
-        '''The type of multi-deferred. Either a ``list`` or a ``Mapping``.'''
-        return self._stream.__class__.__name__
-
-    @property
-    def total_time(self):
-        '''Total number of seconds taken to obtain the result.'''
-        if self._time_finished:
-            return self._time_finished - self._time_start
-
-    @property
-    def locked_time(self):
-        '''Number of econds taken to obtain the result once :class:`locked`.'''
-        if self._time_finished:
-            return self._time_finished - self._time_locked
-
-    @property
-    def num_failures(self):
-        return len(self._failures)
+        for key, value in data:
+            if self._state == _PENDING:
+                value = self._get_set_item(key, maybe_async(value, self._loop))
+                if isinstance(value, Future):
+                    self._deferred[key] = value
+                    value.add_done_callback(
+                        lambda f: self._future_done(key, f))
+        self._check()
 
     @property
     def failures(self):
         return self._failures
 
-    def lock(self):
-        '''Lock the :class:`.MultiFuture` so that no new items can be added.
-
-        If it was alread :attr:`locked` a runtime exception occurs.'''
-        if self._locked:
-            raise RuntimeError(self.__class__.__name__ +
-                               ' cannot be locked twice.')
-        self._time_locked = default_timer()
-        self._locked = True
-        if not self._deferred:
-            self._finish()
-        return self
-
-    def update(self, stream):
-        '''Update the :class:`MultiFuture` with new data.
-
-        It works for both ``list`` and ``dict`` :attr:`type`.
-        '''
-        add = self._add
-        for key, value in iterdata(stream, len(self._stream)):
-            add(key, value)
-        return self
-
-    def append(self, value):
-        '''Append a new ``value`` to this asynchronous container.
-
-        Works for a list :attr:`type` only.'''
-        if self.type == 'list':
-            self._add(len(self._stream), value)
-        else:
-            raise RuntimeError('Cannot append a value to a "dict" type '
-                               'multideferred')
-
     ###    INTERNALS
-
-    def _add(self, key, value):
-        if self._locked:
-            raise RuntimeError(self.__class__.__name__ +
-                               ' cannot add a dependent once locked.')
-        value = self._get_set_item(key, maybe_async(value, self._loop))
-        # add callback if an asynchronous value
-        if isinstance(value, Future):
-            self._deferred[key] = value
-            value.add_done_callback(lambda f: self._future_done(key, f))
+    def _check(self):
+        if not self._deferred and self._state == _PENDING:
+            self.set_result(self._stream)
 
     def _future_done(self, key, future):
         self._deferred.pop(key, None)
         self._get_set_item(key, future)
-        if self._locked and not self._deferred and not self.done():
-            self._finish()
-        return result
-
-    def _finish(self):
-        if not self._locked:
-            raise RuntimeError(self.__class__.__name__ +
-                               ' cannot finish until completed.')
-        if self._deferred:
-            raise RuntimeError(self.__class__.__name__ +
-                               ' cannot finish whilst waiting for '
-                               'dependents %r' % self._deferred)
-        self._time_finished = default_timer()
-        if self.raise_on_error and self._failures:
-            self.set_exception(self._failures[0])
-        else:
-            self.set_result(self._stream)
+        self._check()
 
     def _get_set_item(self, key, value):
         if isinstance(value, Future):
             if value._state != _PENDING:
-                if value._exception:
-                    self._failures.append(value.exception())
-                    value = value._exception
+                exc = as_exception(value)
+                if exc:
+                    if self._raise_on_error:
+                        self._deferred.clear()
+                        self.set_exception(exc)
+                        return
+                    else:
+                        self._failures.append(exc)
+                        value = exc
                 else:
                     value = value._result
             else:
