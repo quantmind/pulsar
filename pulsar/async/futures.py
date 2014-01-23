@@ -2,7 +2,7 @@ import sys
 import traceback
 from collections import deque, namedtuple, Mapping
 from inspect import isgenerator, istraceback
-from functools import wraps
+from functools import wraps, partial
 
 from pulsar.utils.pep import iteritems, default_timer
 
@@ -41,8 +41,8 @@ __all__ = ['Future',
 
 
 def add_errback(future, callback):
-    '''Add a ``callback`` to ``future`` executed only if an exception
-    has occurred '''
+    '''Add a ``callback`` to a ``future`` executed only if an exception
+    or cancellation has occurred.'''
     def _error_back(fut):
         if fut._exception:
             callback(fut.exception())
@@ -63,7 +63,7 @@ def add_callback(future, callback):
 
 
 def as_exception(fut):
-    if fut.cancelled:
+    if fut._state == _CANCELLED:
         return CancelledError()
     elif fut._exception:
         return fut.exception()
@@ -251,13 +251,13 @@ def async_while(timeout, while_clause, *args):
         while result:
             interval = min(interval+di, MAX_ASYNC_WHILE)
             try:
-                yield Deferred(loop).set_timeout(interval)
+                yield sleep(interval, loop)
             except TimeoutError:
                 pass
             if timeout and loop.time() - start >= timeout:
                 break
             result = while_clause(*args)
-        yield result
+        coroutine_return(result)
 
     return async(_(), loop)
 
@@ -328,19 +328,18 @@ class MultiFuture(Future):
         self._raise_on_error = raise_on_error
         if not type:
             type = data.__class__ if data is not None else list
-        if not issubclass(type, (list, Mapping)):
+        if issubclass(type, Mapping):
+            data = iteritems(data)
+        else:
             type = list
             data = enumerate(data)
-        else:
-            data = iteritems(data)
         self._stream = type()
         for key, value in data:
             if self._state == _PENDING:
                 value = self._get_set_item(key, maybe_async(value, self._loop))
                 if isinstance(value, Future):
                     self._deferred[key] = value
-                    value.add_done_callback(
-                        lambda f: self._future_done(key, f))
+                    value.add_done_callback(partial(self._future_done, key))
         self._check()
 
     @property
@@ -371,8 +370,6 @@ class MultiFuture(Future):
                         value = exc
                 else:
                     value = value._result
-            else:
-                return value
         stream = self._stream
         if isinstance(stream, list) and key == len(stream):
             stream.append(value)

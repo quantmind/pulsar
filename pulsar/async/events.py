@@ -37,7 +37,7 @@ class AbstractEvent(AsyncObject):
 
     def fired(self):
         '''The number of times this event has fired'''
-        raise NotImplementedError
+        return self._fired
 
     def fire(self, arg, **kwargs):
         '''Fire this event.'''
@@ -61,9 +61,6 @@ class Event(AbstractEvent):
         return repr(self._handlers)
     __str__ = __repr__
 
-    def fired(self):
-        return self._fired
-
     def fire(self, arg, **kwargs):
         if not self._silenced:
             self._fired += self._fired + 1
@@ -73,6 +70,7 @@ class Event(AbstractEvent):
                         hnd(arg, **kwargs)
                     except Exception:
                         self.logger.exception('Exception while firing event')
+        return self
 
 
 class OneTime(Future, AbstractEvent):
@@ -87,9 +85,12 @@ class OneTime(Future, AbstractEvent):
             self._handlers = deque()
         return self._handlers
 
-    def fire(self, arg, **kwargs):
+    def fire(self, arg, exc=None, **kwargs):
         '''The callback handlers registered via the :meth:~AbstractEvent.bind`
-        method are executed first
+        method are executed first.
+
+        :param arg: the argument
+        :param exc: optional exception
         '''
         if not self._silenced:
             if self._fired:
@@ -97,21 +98,25 @@ class OneTime(Future, AbstractEvent):
             self._fired = 1
             if self._loop is None:
                 self._loop = get_request_loop()
-            self._process(arg, kwargs)
+            self._process(arg, exc, kwargs)
+        return self
 
-    def _process(self, arg, kwargs, future=None):
+    def _process(self, arg, exc, kwargs, future=None):
         while self._handlers:
             hnd = self._handlers.popleft()
             try:
-                result = maybe_async(hnd(arg, **kwargs), self._loop)
+                result = maybe_async(hnd(arg, exc=exc, **kwargs), self._loop)
             except Exception:
                 self.logger.exception('Exception while firing event')
             else:
                 if isinstance(result, Future):
                     result.add_done_callback(
-                        partial(self._process, arg, kwargs))
+                        partial(self._process, arg, exc, kwargs))
                     return
-        self.set_result(arg)
+        if exc:
+            self.set_exception(exc)
+        else:
+            self.set_result(arg)
 
 
 class EventHandler(AsyncObject):
@@ -154,7 +159,14 @@ class EventHandler(AsyncObject):
     def bind_event(self, name, callback):
         '''Register a ``callback`` with ``event``.
 
-        **The callback must be a callable accepting one parameter only**,
+        The callback must be a callable accepting one positional parameter
+        and at least the ``exc`` optional parameter::
+
+            def callback(arg, ext=None):
+                ...
+
+            o.bind_event('start', callback)
+
         the instance firing the event or the first positional argument
         passed to the :meth:`fire_event` method.
 
@@ -198,8 +210,7 @@ class EventHandler(AsyncObject):
         :param kwargs: optional key-valued parameters to pass to the event
             handler. Can only be used for
             :ref:`many times events <many-times-event>`.
-        :return: for one-time events, it returns whatever is returned by the
-            event handler. For many times events it returns nothing.
+        :return: the :class:`Event` fired
         """
         if arg is None:
             arg = self

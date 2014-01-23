@@ -231,13 +231,13 @@ class SocketServer(pulsar.Application):
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets, 'ssl': monitor.ssl})
 
-    def worker_start(self, worker):
+    def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.'''
         server = self.create_server(worker)
-        server.bind_event('stop', partial(self._stop_worker, worker))
+        server.bind_event('stop', lambda _, **kw: worker.stop())
         worker.servers[self.name] = server
 
-    def worker_stopping(self, worker):
+    def worker_stopping(self, worker, exc=None):
         server = worker.servers.get(self.name)
         if server:
             return server.close()
@@ -277,10 +277,6 @@ class SocketServer(pulsar.Application):
                 server.bind_event(event, callback)
         server.start_serving(cfg.backlog, sslcontext=worker.ssl)
         return server
-
-    def _stop_worker(self, worker, exc):
-        worker.stop()
-        return exc
 
 
 class UdpSocketServer(SocketServer):

@@ -6,7 +6,7 @@ from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 
 from .eventloop import setid
-from .futures import in_loop
+from .futures import in_loop, add_errback
 from .events import EventHandler
 from .threads import ThreadPool
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
@@ -301,7 +301,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             timeout = 0.5*ACTOR_ACTION_TIMEOUT
             d = self._thread_pool.close(timeout)
             self.logger.debug('Waiting for thread pool to exit')
-            d.add_errback(lambda r: self._thread_pool.terminate(timeout))
+            add_errback(d, lambda _: self._thread_pool.terminate(timeout))
             self._thread_pool.join()
             self.logger.debug('Thread pool %s' % self._thread_pool.status)
             self._thread_pool = None

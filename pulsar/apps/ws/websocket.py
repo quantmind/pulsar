@@ -207,6 +207,5 @@ class WebSocketProtocol(ProtocolConsumer):
         self.transport.write(self.parser.close(code))
         self._connection.close()
 
-    def _shut_down(self, result):
+    def _shut_down(self, result, exc=None):
         maybe_async(self.handler.on_close(self))
-        return result

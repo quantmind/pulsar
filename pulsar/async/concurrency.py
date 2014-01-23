@@ -116,7 +116,7 @@ system is chosen.'''
         except Exception as exc:
             actor.stop(exc)
 
-    def started(self, actor, result=None):
+    def started(self, actor, fut=None):
         actor.logger.info('%s started', actor)
         return actor.fire_event('start')
 
@@ -132,10 +132,10 @@ system is chosen.'''
         set_actor(actor)
         client = MailboxClient(actor.monitor.address, actor, loop)
         loop.call_soon_threadsafe(self.hand_shake, actor)
-        client.bind_event('finish', lambda result: loop.stop())
+        client.bind_event('finish', lambda _, **kw: loop.stop())
         return client
 
-    def periodic_task(self, actor):
+    def periodic_task(self, actor, **kw):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
 This is an internal method called periodically by the :attr:`Actor._loop`
@@ -176,9 +176,9 @@ back with the acknowledgement from the monitor.
                 actor.exit_code = 0
             stopping = actor.fire_event('stopping')
             actor.close_thread_pool()
-            if isinstance(stopping, Future) and actor._loop.is_running():
+            if not stopping.done() and actor._loop.is_running():
                 actor.logger.debug('async stopping')
-                stopping.add_done_callback(lambda r: self._stop_actor(actor))
+                stopping.add_done_callback(lambda _: self._stop_actor(actor))
             else:
                 self._stop_actor(actor)
         elif actor.stopped():
@@ -272,7 +272,7 @@ to be spawned.'''
     def create_mailbox(self, actor, loop):
         pass
 
-    def periodic_task(self, actor):
+    def periodic_task(self, actor, **kw):
         '''Override the :meth:`Concurrency.periodic_task` to implement
         the :class:`Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
@@ -318,14 +318,14 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         mailbox = TcpServer(MailboxProtocol, loop, ('127.0.0.1', 0),
                             name='mailbox')
         # when the mailbox stop, close the event loop too
-        mailbox.bind_event('stop', lambda _: loop.stop())
+        mailbox.bind_event('stop', lambda _, **kw: loop.stop())
         mailbox.bind_event(
             'start',
-            lambda _: loop.call_soon_threadsafe(self.hand_shake, actor))
+            lambda _, **kw: loop.call_soon_threadsafe(self.hand_shake, actor))
         mailbox.start_serving()
         return mailbox
 
-    def periodic_task(self, actor):
+    def periodic_task(self, actor, **kw):
         '''Override the :meth:`Concurrency.periodic_task` to implement
         the :class:`Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
@@ -342,7 +342,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
                     m.start()
         actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
-        return actor
 
     def _stop_actor(self, actor):
         '''Stop the pools the message queue and remaining actors.'''
@@ -354,8 +353,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             actor._loop.call_soon_threadsafe(self._exit_arbiter, actor)
             actor._run(False)
 
-    def _exit_arbiter(self, actor, res=None):
-        if res:
+    def _exit_arbiter(self, actor, fut=None):
+        if fut:
             actor.logger.debug('Closing mailbox server')
             actor.state = ACTOR_STATES.CLOSE
             actor.mailbox.close()

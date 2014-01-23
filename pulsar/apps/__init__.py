@@ -106,7 +106,10 @@ def _get_app(arbiter, name, safe=True):
             coroutine_return(monitor.app)
 
 
-def monitor_start(self):
+def monitor_start(self, exc=None):
+    if exc:
+        start_event.set_exception(exc)
+        return
     start_event = self.start_event
     app = self.app
     try:
@@ -127,14 +130,14 @@ def monitor_start(self):
         start_event.set_result(result)
 
 
-def monitor_stopping(self):
+def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
         yield self.app.worker_stopping(self)
     yield self.app.monitor_stopping(self)
     coroutine_return(self)
 
 
-def monitor_stop(self):
+def monitor_stop(self, exc=None):
     if not self.cfg.workers:
         yield self.app.worker_stop(self)
     yield self.app.monitor_stop(self)
@@ -156,7 +159,7 @@ def monitor_params(self, params=None):
     app.actorparams(self, params)
 
 
-def worker_start(self):
+def worker_start(self, exc=None):
     app = getattr(self, 'app', None)
     if app is None:
         cfg = self.cfg
@@ -164,7 +167,7 @@ def worker_start(self):
     self.bind_event('on_info', app.worker_info)
     self.bind_event('stopping', app.worker_stopping)
     self.bind_event('stop', app.worker_stop)
-    return app.worker_start(self)
+    return app.worker_start(self, exc=exc)
 
 
 class Configurator(object):
@@ -463,14 +466,16 @@ class Application(Configurator):
                     self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.
                     actor.bind_event(
-                        'start', lambda a: self._add_to_arbiter(start, a))
+                        'start',
+                        lambda a, exc=None: self._add_to_arbiter(start, a,
+                                                                 exc))
                 return start
             else:
                 return
         raise ImproperlyConfigured('Already started or not in arbiter domain')
 
     # WORKERS CALLBACKS
-    def worker_start(self, worker):
+    def worker_start(self, worker, exc=None):
         '''Added to the ``start`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
@@ -479,11 +484,11 @@ class Application(Configurator):
         '''
         pass
 
-    def worker_stopping(self, worker):
+    def worker_stopping(self, worker, exc=None):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_stop(self, worker):
+    def worker_stop(self, worker, exc=None):
         '''Added to the ``stop`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
@@ -522,12 +527,13 @@ class Application(Configurator):
                      if s.is_global))
 
     #   INTERNALS
-    def _add_to_arbiter(self, start, arbiter):
-        start._loop = arbiter._loop
-        monitor = arbiter.add_monitor(
-            self.name, app=self, cfg=self.cfg,
-            start=monitor_start, start_event=start)
-        self.cfg = monitor.cfg
+    def _add_to_arbiter(self, start, arbiter, exc=None):
+        if not exc:
+            start._loop = arbiter._loop
+            monitor = arbiter.add_monitor(
+                self.name, app=self, cfg=self.cfg,
+                start=monitor_start, start_event=start)
+            self.cfg = monitor.cfg
 
 
 class MultiApp(Configurator):

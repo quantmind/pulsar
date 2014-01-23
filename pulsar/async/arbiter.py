@@ -79,7 +79,7 @@ def spawn(**kwargs):
         return actor.spawn(**kwargs)
 
 
-def stop_arbiter(self):     # pragma    nocover
+def stop_arbiter(self, exc=None):     # pragma    nocover
     p = self.pidfile
     if p is not None:
         self.logger.debug('Removing %s' % p.fname)
@@ -99,7 +99,7 @@ def stop_arbiter(self):     # pragma    nocover
     return self
 
 
-def start_arbiter(self):
+def start_arbiter(self, exc=None):
     if current_process().daemon:
         raise HaltServer('Cannot create the arbiter in a daemon process')
     os.environ["SERVER_SOFTWARE"] = pulsar.SERVER_SOFTWARE

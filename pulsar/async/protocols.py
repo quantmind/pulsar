@@ -159,7 +159,7 @@ class ProtocolConsumer(EventHandler):
         if conn._producer:
             p = getattr(conn._producer, '_requests_processed', 0)
             conn._producer._requests_processed = p + 1
-        self.event('post_request').add_done_callback(self._finished)
+        self.bind_event('post_request', self._finished)
         self._request = request
         self.fire_event('pre_request')
         if self._request is not None:
@@ -179,7 +179,7 @@ class ProtocolConsumer(EventHandler):
         '''Fire the ``post_request`` event if it wasn't already fired.
         '''
         if not self.event('post_request').fired():
-            return self.fire_event('post_request', exc)
+            return self.fire_event('post_request', exc=exc)
         return exc
 
     def _data_received(self, data):
@@ -194,7 +194,7 @@ class ProtocolConsumer(EventHandler):
         self.fire_event('data_processed', data=data)
         return result
 
-    def _finished(self, fut):
+    def _finished(self, _, exc=None):
         c = self._connection
         if c and c._current_consumer is self:
             c._current_consumer = None
@@ -314,7 +314,7 @@ class PulsarProtocol(EventHandler):
     def connection_lost(self, exc=None):
         '''Fires the ``connection_lost`` event.
         '''
-        self.fire_event('connection_lost', exc)
+        self.fire_event('connection_lost', exc=exc)
 
     def eof_received(self):
         '''The socket was closed from the remote end'''
@@ -386,7 +386,7 @@ class Connection(Protocol):
         method.
         '''
         if self._current_consumer is None:
-            self._build_consumer()
+            self._build_consumer(None)
         return self._current_consumer
 
     def set_consumer(self, consumer):
@@ -407,7 +407,7 @@ class Connection(Protocol):
             data = consumer._data_received(data)
         self._add_idle_timeout()
 
-    def connection_lost(self, exc):
+    def connection_lost(self, exc=None):
         '''It performs these actions in the following order:
 
         * Fires the ``connection_lost`` :ref:`one time event <one-time-event>`
@@ -416,7 +416,9 @@ class Connection(Protocol):
         * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
           :meth:`current_consumer`.
           '''
-        if self.fire_event('connection_lost', exc):
+        event = self.event('connection_lost')
+        if not event.fired():
+            event.fire(self, exc=exc)
             self._cancel_timeout()
             if self._current_consumer:
                 self._current_consumer.connection_lost(exc)
@@ -441,7 +443,7 @@ class Connection(Protocol):
         if consumer:
             consumer.bind_event('post_request', self._build_consumer)
         else:
-            self._build_consumer()
+            self._build_consumer(None)
 
     def info(self):
         info = super(Connection, self).info()
@@ -449,10 +451,10 @@ class Connection(Protocol):
         connection.update({'request_processed': self._processed})
         return info
 
-    def _build_consumer(self, *args):
-        consumer = self._producer.build_consumer(self._consumer_factory)
-        self.set_consumer(consumer)
-        return consumer
+    def _build_consumer(self, _, exc=None):
+        if not exc:
+            consumer = self._producer.build_consumer(self._consumer_factory)
+            self.set_consumer(consumer)
 
 
 class Producer(EventHandler):
@@ -587,7 +589,7 @@ class TcpServer(Producer):
                                      format_address(address))
                 self.fire_event('start')
             except Exception as exc:
-                self.fire_event('start', exc)
+                self.fire_event('start', exc=exc)
 
     def stop_serving(self):
         '''Stop serving the :attr:`.Server.sockets`.
@@ -644,10 +646,11 @@ class TcpServer(Producer):
         return protocol
 
     ##    INTERNALS
-    def _connection_made(self, connection):
-        self._concurrent_connections.add(connection)
+    def _connection_made(self, connection, exc=None):
+        if not exc:
+            self._concurrent_connections.add(connection)
 
-    def _connection_lost(self, connection):
+    def _connection_lost(self, connection, exc=None):
         self._concurrent_connections.discard(connection)
 
     def _close_connections(self, connection=None, async=True):
@@ -668,4 +671,4 @@ class TcpServer(Producer):
                 connection.transport.close(async)
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
-        return multi_async(all)
+            return multi_async(all)

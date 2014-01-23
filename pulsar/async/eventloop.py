@@ -577,10 +577,9 @@ the event loop to poll with a 0 timeout all the times.'''
                         async(value, self)
             except socket.error as e:
                 if raise_socket_error(e) and self.running:
-                    exc = True
-            except Exception:
-                exc = True
-            if exc:
+                    self.logger.exception('Unhandled socket exception in '
+                                          'event loop callback.')
+            except Exception as e:
                 self.logger.exception('Unhandled exception in event '
                                       'loop callback.')
 

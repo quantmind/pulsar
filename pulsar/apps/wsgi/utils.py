@@ -211,6 +211,7 @@ def handle_wsgi_error(environ, exc):
     :return: a :class:`.WsgiResponse`
     '''
     request = wsgi_request(environ)
+    request.cache.handle_wsgi_error = True
     response = request.response
     if isinstance(exc, HTTPError):
         response.status_code = exc.code or 500

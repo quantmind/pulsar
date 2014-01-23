@@ -150,7 +150,7 @@ class MailboxProtocol(Protocol):
         self._parser = frame_parser(kind=2, pyparser=True)
         actor = get_actor()
         if actor.is_arbiter():
-            self.bind_event('connection_lost', None, self._connection_lost)
+            self.bind_event('connection_lost', self._connection_lost)
 
     def request(self, command, sender, target, args, kwargs):
         '''Used by the server to send messages to the client.'''
@@ -181,13 +181,11 @@ class MailboxProtocol(Protocol):
         else:
             self._write(req)
 
-    def _connection_lost(self, failure):
-        actor = get_actor()
-        if actor.is_running():
-            failure.log(msg='Connection lost with actor.', level='warning')
-        else:
-            failure.mute()
-        return failure
+    def _connection_lost(self, _, exc=None):
+        if exc:
+            actor = get_actor()
+            if actor.is_running():
+                actor.logger.warning('Connection lost with actor.')
 
     @in_loop
     def _on_message(self, message):
@@ -275,8 +273,7 @@ class MailboxClient(AbstractClient):
         # the request method
         if self._connection is None:
             self._connection = yield self.connect()
-            self._connection.bind_event('connection_lost',
-                                        self._lost, self._lost)
+            self._connection.bind_event('connection_lost', self._lost)
         req = Message.command(command, sender, target, args, kwargs)
         self._connection._start(req)
         response = yield req.future
@@ -286,6 +283,5 @@ class MailboxClient(AbstractClient):
         if self._connection:
             self._connection.close(async=async)
 
-    def _lost(self, exc=None):
+    def _lost(self, _, exc=None):
         self._loop.stop()
-        return exc

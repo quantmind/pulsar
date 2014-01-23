@@ -139,7 +139,7 @@ from functools import partial
 from inspect import isgenerator
 
 from pulsar import (multi_async, maybe_async, Future, async, coroutine_return)
-from pulsar.utils.pep import iteritems, is_string, ispy3k
+from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
                                csslink, dump_data_value, child_tag)
@@ -348,7 +348,7 @@ This is a shortcut for the :meth:`insert` method at index 0.
         response = request.response
         response.content_type = self.content_type
         body = yield multi_async(self.stream(request))
-        response.content = to_string(body)
+        response.content = self.to_string(body)
         coroutine_return(response)
 
     def to_string(self, stream):
@@ -360,7 +360,7 @@ This is a shortcut for the :meth:`insert` method at index 0.
             build the final ``string/bytes``.
         :return: a string or bytes
         '''
-        return ''.join(stream_to_string(stream))
+        return to_string(''.join(stream_to_string(stream)))
 
     def render(self, request=None):
         '''A shortcut function for synchronously rendering a Content.
@@ -989,6 +989,11 @@ class HtmlDocument(Html):
         The :class:`Body` part of this :class:`HtmlDocument`
 
     '''
+    _template = ('<!DOCTYPE html>\n'
+                 '<html%s>\n'
+                 '%s\n%s'
+                 '\n</html>')
+
     def __init__(self, title=None, media_path='/media/', charset=None,
                  **params):
         super(HtmlDocument, self).__init__(None, **params)
@@ -1011,10 +1016,7 @@ class HtmlDocument(Html):
     def _html(self, request):
         body = yield multi_async(self.body.stream(request))
         head = yield multi_async(self.head.stream(request))
-        result = ('<!DOCTYPE html>\n'
-                  '<html%s>\n'
-                  '%s\n%s',
-                  '\n</html>') % (self.flatatt(),
-                                  self.head.to_string(head),
-                                  self.body.tostring(body))
+        result = self._template % (self.flatatt(),
+                                   self.head.to_string(head),
+                                   self.body.to_string(body))
         coroutine_return(result)

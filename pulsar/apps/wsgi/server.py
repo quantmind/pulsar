@@ -28,7 +28,7 @@ from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
 from pulsar.utils.internet import format_address, is_tls
 from pulsar.async.protocols import ProtocolConsumer
 
-from .utils import handle_wsgi_error, HOP_HEADERS
+from .utils import handle_wsgi_error, wsgi_request, HOP_HEADERS
 
 
 __all__ = ['HttpServerResponse', 'MAX_CHUNK_SIZE', 'test_wsgi_environ']
@@ -418,7 +418,6 @@ class HttpServerResponse(ProtocolConsumer):
     ##    INTERNALS
     @in_loop
     def _response(self, environ):
-        exc_info = None
         try:
             if 'SERVER_NAME' not in environ:
                 raise HttpException(status=400)
@@ -426,23 +425,25 @@ class HttpServerResponse(ProtocolConsumer):
             yield self._async_wsgi(wsgi_iter)
         except IOError:     # client disconnected, end this connection
             self.finished()
-        except Exception:
-            exc_info = sys.exc_info()
-        if exc_info:
-            failure = Failure(exc_info)
-            try:
-                wsgi_iter = handle_wsgi_error(environ, failure)
-                self.start_response(wsgi_iter.status, wsgi_iter.get_headers(),
-                                    exc_info)
-                yield self._async_wsgi(wsgi_iter)
-            except Exception:
-                # Error handling did not work, Just shut down
+        except Exception as exc:
+            if wsgi_request(environ).cache.handle_wsgi_error:
                 self.keep_alive = False
                 self.finish_wsgi()
+            else:
+                try:
+                    wsgi_iter = handle_wsgi_error(environ, exc)
+                    yield self._async_wsgi(wsgi_iter, sys.exc_info())
+                except Exception:
+                    # Error handling did not work, Just shut down
+                    self.keep_alive = False
+                    self.finish_wsgi()
 
-    def _async_wsgi(self, wsgi_iter):
+    def _async_wsgi(self, wsgi_iter, exc_info=None):
         if isinstance(wsgi_iter, Future):
             wsgi_iter = yield wsgi_iter
+        if exc_info:
+            self.start_response(wsgi_iter.status, wsgi_iter.get_headers(),
+                                exc_info)
         try:
             for b in wsgi_iter:
                 chunk = yield b     # handle asynchronous components
