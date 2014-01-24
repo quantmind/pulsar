@@ -2,7 +2,7 @@
 import sys
 from functools import reduce
 
-from pulsar import (InvalidStateError, Deferred, NOT_DONE,
+from pulsar import (InvalidStateError, Deferred,
                     is_failure, maybe_async, CancelledError,
                     async_sleep, Failure, safe_async, InvalidStateError,
                     coroutine_return, async, TimeoutError)
@@ -216,7 +216,7 @@ class TestDeferred(unittest.TestCase):
         def gen(r):
             # A never ending coroutine.
             while True:
-                yield NOT_DONE
+                yield None
         d = Deferred().set_timeout(1).add_callback(gen)
         res = d.callback(True)
         self.assertIsInstance(res, Deferred)

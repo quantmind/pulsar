@@ -32,7 +32,7 @@ try:    # pragma    nocover
     import twisted
     from twisted.internet.main import installReactor
     from twisted.internet.posixbase import PosixReactorBase
-    from twisted.internet.defer import Deferred as TwistedDeferred
+    from twisted.internet.defer import Deferred
 except ImportError:     # pragma    nocover
     # This is for when we build documentation with sphinx in python 3
     import os
@@ -43,21 +43,23 @@ except ImportError:     # pragma    nocover
         raise
 
 import pulsar
-from pulsar import get_event_loop, Deferred, Failure, add_async_binding
+from pulsar import get_event_loop, Future, add_async_binding
 
 
-def check_twisted(coro_or_future, loop):
+def check_twisted(deferred, loop):
     '''Binding for twisted.
 
     Added to pulsar asynchronous engine via the :func:`.add_async_binding`
     function.
     '''
-    if isinstance(coro_or_future, TwistedDeferred):
-        d = Deferred(loop)
-        d._twisted_deferred = coro_or_future
-        coro_or_future.addCallbacks(
-            d.callback, lambda e: d.callback(Failure((e.type, e.value, e.tb))))
-        return d
+    if isinstance(deferred, Deferred):
+        future = Future(loop=loop)
+
+        deferred.addCallbacks(
+            future.set_result,
+            lambda failure: future.set_exception(failure.value))
+
+        return future
 
 
 add_async_binding(check_twisted)

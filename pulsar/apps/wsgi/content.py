@@ -138,7 +138,8 @@ from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import (multi_async, maybe_async, Future, async, coroutine_return)
+from pulsar import (multi_async, maybe_async, Future, async, coroutine_return,
+                    chain_future)
 from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -151,6 +152,7 @@ from .html import html_visitor
 __all__ = ['AsyncString', 'Html',
            'Json', 'HtmlDocument',
            'html_factory', 'Media', 'Scripts', 'Css']
+
 
 
 if ispy3k:
@@ -367,12 +369,11 @@ This is a shortcut for the :meth:`insert` method at index 0.
         This is useful during testing. It is the synchronous equivalent of
         :meth:`content`.
         '''
-        value = async(self._content(request))
-        return value.result() if value.done() else value
-
-    def _content(self, request):
-        stream = yield multi_async(self.stream(request))
-        coroutine_return(self.to_string(stream))
+        stream = multi_async(self.stream(request))
+        if stream.done():
+            return self.to_string(stream.result())
+        else:
+            return chain_future(stream, callback=self.to_string)
 
 
 class Json(AsyncString):
@@ -1011,11 +1012,18 @@ class HtmlDocument(Html):
         return self
 
     def do_stream(self, request):
-        yield self._html(request)
+        body = multi_async(self.body.stream(request))
+        head = multi_async(self.head.stream(request))
+        if not body.done() or not head.done():
+            yield self._html(body, head, request)
+        else:
+            yield self._template % (self.flatatt(),
+                                    self.head.to_string(head.result()),
+                                    self.body.to_string(body.result()))
 
     def _html(self, request):
-        body = yield multi_async(self.body.stream(request))
-        head = yield multi_async(self.head.stream(request))
+        body = yield body
+        head = yield head
         result = self._template % (self.flatatt(),
                                    self.head.to_string(head),
                                    self.body.to_string(body))

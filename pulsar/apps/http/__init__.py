@@ -999,7 +999,7 @@ class HttpClient(AbstractClient):
         '''Close all connections.
 
         Fire the ``finish`` :ref:`one time event <one-time-event>` once done.
-        Return the :class:`Deferred` fired by the ``finish`` event.
+        Return the :class:`.Future` fired by the ``finish`` event.
         '''
         for p in self.connection_pools.values():
             p.close()

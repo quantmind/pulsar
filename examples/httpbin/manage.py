@@ -140,7 +140,7 @@ class HttpBin(wsgi.Router):
         class Gen:
             headers = None
 
-            def __call__(self, server):
+            def __call__(self, server, **kw):
                 self.headers = server.headers
 
             def generate(self):

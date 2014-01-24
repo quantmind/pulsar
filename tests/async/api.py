@@ -1,7 +1,7 @@
 '''API design'''
 import sys
 from pulsar.apps.test import unittest, mute_failure
-from pulsar import NOT_DONE, Failure, maybe_async, Deferred
+from pulsar import maybe_async, Deferred
 
 
 class Context(object):
@@ -21,8 +21,8 @@ class TestApi(unittest.TestCase):
 
     def test_with_statement(self):
         with Context() as c:
-            yield NOT_DONE
-            yield NOT_DONE
+            yield None
+            yield None
             raise ValueError
         self.assertIsInstance(c._result, Failure)
         c._result.mute()

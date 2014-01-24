@@ -418,50 +418,55 @@ class HttpServerResponse(ProtocolConsumer):
     ##    INTERNALS
     @in_loop
     def _response(self, environ):
-        try:
-            if 'SERVER_NAME' not in environ:
-                raise HttpException(status=400)
-            wsgi_iter = self.wsgi_callable(environ, self.start_response)
-            yield self._async_wsgi(wsgi_iter)
-        except IOError:     # client disconnected, end this connection
-            self.finished()
-        except Exception as exc:
-            if wsgi_request(environ).cache.handle_wsgi_error:
-                self.keep_alive = False
-                self.finish_wsgi()
-            else:
-                try:
-                    wsgi_iter = handle_wsgi_error(environ, exc)
-                    yield self._async_wsgi(wsgi_iter, sys.exc_info())
-                except Exception:
-                    # Error handling did not work, Just shut down
+        exc_info = None
+        response = None
+        done = False
+        while not done:
+            done = True
+            try:
+                if exc_info is None:
+                    if 'SERVER_NAME' not in environ:
+                        raise HttpException(status=400)
+                    response = self.wsgi_callable(environ, self.start_response)
+                else:
+                    response = handle_wsgi_error(environ, exc_info[1])
+                #
+                if isinstance(response, Future):
+                    response = yield response
+                #
+                if exc_info:
+                    self.start_response(response.status,
+                                        response.get_headers(), exc_info)
+                #
+                for chunk in response:
+                    if isinstance(chunk, Future):
+                        chunk = yield chunk
+                    self.write(chunk)
+                #
+                # make sure we write headers
+                self.write(b'', True)
+
+            except IOError:     # client disconnected, end this connection
+                self.finished()
+            except Exception as exc:
+                if wsgi_request(environ).cache.handle_wsgi_error:
                     self.keep_alive = False
-                    self.finish_wsgi()
-
-    def _async_wsgi(self, wsgi_iter, exc_info=None):
-        if isinstance(wsgi_iter, Future):
-            wsgi_iter = yield wsgi_iter
-        if exc_info:
-            self.start_response(wsgi_iter.status, wsgi_iter.get_headers(),
-                                exc_info)
-        try:
-            for b in wsgi_iter:
-                chunk = yield b     # handle asynchronous components
-                self.write(chunk)
-            # make sure we write headers
-            self.write(b'', True)
-        finally:
-            if hasattr(wsgi_iter, 'close'):
-                try:
-                    wsgi_iter.close()
-                except Exception:
-                    self.logger.exception('Error while closing wsgi iterator')
-        self.finish_wsgi()
-
-    def finish_wsgi(self):
-        if not self.keep_alive:
-            self.connection.close()
-        return self.finished()
+                    self.connection.close()
+                    self.finished()
+                else:
+                    done = False
+                    exc_info = sys.exc_info()
+            else:
+                if not self.keep_alive:
+                    self.connection.close()
+                self.finished()
+            finally:
+                if response and hasattr(response, 'close'):
+                    try:
+                        response.close()
+                    except Exception:
+                        self.logger.exception(
+                            'Error while closing wsgi iterator')
 
     def is_chunked(self):
         '''Check if the response uses chunked transfer encoding.

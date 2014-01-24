@@ -69,7 +69,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import coroutine_return, Pool, Deferred, in_loop_thread
+from pulsar import coroutine_return, Pool, Future, in_loop_thread
 from pulsar.apps.socket import UdpSocketServer
 
 
@@ -116,7 +116,7 @@ class EchoUdpClientProtocol(EchoUdpProtocol):
 
     def send(self, message):
         assert isinstance(message, bytes)
-        self._waiting = d = Deferred(self._loop)
+        self._waiting = d = Future(self._loop)
         self._transport.sendto(message+self.separator)
         return d
 
@@ -126,7 +126,7 @@ class EchoUdpClientProtocol(EchoUdpProtocol):
         message value, while servers sends the message back to the client.
         '''
         d, self._waiting = self._waiting, None
-        d.callback(data[:-len(self.separator)])
+        d.set_result(data[:-len(self.separator)])
 
 
 class EchoUdpServerProtocol(EchoUdpProtocol):
@@ -175,7 +175,7 @@ class Echo(pulsar.AbstractUdpClient):
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 
-        :return: a :class:`.Deferred`
+        :return: a :class:`.Future`
         '''
         protocol = yield self.pool.connect()
         with protocol:

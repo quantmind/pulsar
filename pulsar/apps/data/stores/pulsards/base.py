@@ -314,9 +314,9 @@ class PubSub(EventHandler):
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
 
-        This method return a pulsar Deferred which results in the number of
-        subscribers that will receive the message (the same behaviour as
-        redis publish command).
+        This method return a pulsar :class:`.Future` which results in the
+        number of subscribers that will receive the message (the same
+        behaviour as redis publish command).
         '''
         raise NotImplementedError
 

@@ -44,7 +44,7 @@ def send(target, action, *args, **params):
         :ref:`remote command <api-remote_commands>` ``action``.
     :parameter params: dictionary of parameters to pass to
         :ref:`remote command <api-remote_commands>` ``action``.
-    :return: a :class:`Deferred` if the action acknowledge the caller or
+    :return: a :class:`.Future` if the action acknowledge the caller or
         `None`.
 
     Typical example::
@@ -251,7 +251,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.
-        Always return a :class:`.Deferred`.'''
+        Always return a :class:`.Future`.'''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):

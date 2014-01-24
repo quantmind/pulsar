@@ -188,7 +188,7 @@ implemented by subclasses.'''
         :parameter jobname: The name of the :class:`Job` to run.
         :parameter kwargs: key-valued parameters for the
             :ref:`job callable <job-callable>`.
-        :return: a :class:`.Deferred` called back with the task id.
+        :return: a :class:`.Future` called back with the task id.
 
         This method invokes the :meth:`.TaskBackend.queue_task`
         method with the additional ``from_task`` argument equal to the

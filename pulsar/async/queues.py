@@ -53,7 +53,7 @@ class Queue(AsyncObject):
         :param timeout: optional timeout in seconds.
         :param wait: optional flag for inserting the item only if one
             slot is immediately available.
-        :return: a :class:`Deferred` resulting in ``None`` if ``wait`` is
+        :return: a :class:`.Future` resulting in ``None`` if ``wait`` is
             ``True``, otherwise ``None``.
         '''
         getter, waiter = None, None
@@ -106,7 +106,7 @@ class Queue(AsyncObject):
         :param timeout: optional timeout in seconds.
         :param wait: optional flag for returning the ``item`` if one is
             immediately available.
-        :return: a :class:`.Deferred` resulting in the item removed form the
+        :return: a :class:`.Future` resulting in the item removed form the
             queue if ``wait`` is ``True``, otherwise the ``item`` removed from
             the queue.
         '''

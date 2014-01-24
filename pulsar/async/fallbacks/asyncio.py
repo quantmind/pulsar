@@ -3,6 +3,8 @@ For documentation check the python 3.4 standard library
 '''
 import logging
 import traceback
+import weakref
+from inspect import isgenerator
 
 from pulsar.utils.pep import default_timer
 
@@ -547,3 +549,115 @@ def sleep(delay, result=None, loop=None):
     future = Future(loop=loop)
     future._loop.call_later(delay, future.set_result, result)
     return future
+
+
+iscoroutine = isgenerator
+
+
+class Task(Future):
+    _all_tasks = weakref.WeakSet()
+    _current_tasks = {}
+
+    @classmethod
+    def current_task(cls, loop=None):
+        if loop is None:
+            loop = get_event_loop()
+        return cls._current_tasks.get(loop)
+
+    @classmethod
+    def all_tasks(cls, loop=None):
+        if loop is None:
+            loop = get_event_loop()
+        return {t for t in cls._all_tasks if t._loop is loop}
+
+    def __init__(self, coro, loop=None):
+        assert iscoroutine(coro), repr(coro)  # Not a coroutine function!
+        super(Task, self).__init__(loop=loop)
+        self._coro = iter(coro)  # Use the iterator just in case.
+        self._fut_waiter = None
+        self._must_cancel = False
+        self._loop.call_soon(self._step)
+        self.__class__._all_tasks.add(self)
+
+    def __repr__(self):
+        res = super().__repr__()
+        if (self._must_cancel and
+            self._state == _PENDING and
+            '<PENDING' in res):
+            res = res.replace('<PENDING', '<CANCELLING', 1)
+        i = res.find('<')
+        if i < 0:
+            i = len(res)
+        res = res[:i] + '(<{}>)'.format(self._coro.__name__) + res[i:]
+        return res
+
+    def get_stack(self, limit=None):
+        frames = []
+        f = self._coro.gi_frame
+        if f is not None:
+            while f is not None:
+                if limit is not None:
+                    if limit <= 0:
+                        break
+                    limit -= 1
+                frames.append(f)
+                f = f.f_back
+            frames.reverse()
+        elif self._exception is not None:
+            tb = self._exception.__traceback__
+            while tb is not None:
+                if limit is not None:
+                    if limit <= 0:
+                        break
+                    limit -= 1
+                frames.append(tb.tb_frame)
+                tb = tb.tb_next
+        return frames
+
+    def print_stack(self, limit=None, file=None):
+        extracted_list = []
+        checked = set()
+        for f in self.get_stack(limit=limit):
+            lineno = f.f_lineno
+            co = f.f_code
+            filename = co.co_filename
+            name = co.co_name
+            if filename not in checked:
+                checked.add(filename)
+                linecache.checkcache(filename)
+            line = linecache.getline(filename, lineno, f.f_globals)
+            extracted_list.append((filename, lineno, name, line))
+        exc = self._exception
+        if not extracted_list:
+            print('No stack for %r' % self)
+        elif exc is not None:
+            print('Traceback for %r (most recent call last):' % self)
+        else:
+            print('Stack for %r (most recent call last):' % self)
+        traceback.print_list(extracted_list, file=file)
+        if exc is not None:
+            for line in traceback.format_exception_only(exc.__class__, exc):
+                print(line)
+
+    def cancel(self):
+        if self.done():
+            return False
+        if self._fut_waiter is not None:
+            if self._fut_waiter.cancel():
+                # Leave self._fut_waiter; it may be a Task that
+                # catches and ignores the cancellation so we may have
+                # to cancel it again later.
+                return True
+        # It must be the case that self._step is already scheduled.
+        self._must_cancel = True
+        return True
+
+    def _wakeup(self, future):
+        try:
+            value = future.result()
+        except Exception as exc:
+            # This may also be a cancellation.
+            self._step(None, exc)
+        else:
+            self._step(value, None)
+        self = None  # Needed to break cycles when an exception occurs.

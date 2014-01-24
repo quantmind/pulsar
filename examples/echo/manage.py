@@ -187,7 +187,7 @@ class Echo(AbstractClient):
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 
-        :return: a :class:`.Deferred`
+        :return: a :class:`.Future`
         '''
         connection = yield self.pool.connect()
         with connection:

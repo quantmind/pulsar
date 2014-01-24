@@ -211,7 +211,7 @@ class ThreadPool(AsyncObject):
 
         This method create a new task for function ``func`` and adds it to
         the queue.
-        Return a :class:`.Deferred` called back once the task has finished.
+        Return a :class:`.Future` called back once the task has finished.
         '''
         assert self._state == RUN, 'Pool not running'
         d = Future(self._loop)

@@ -65,7 +65,7 @@ class Pool(AsyncObject):
         The connection is either a new one or retrieved from the
         :attr:`available` connections in the pool.
 
-        :return: a :class:`.Deferred` resulting in the connection.
+        :return: a :class:`.Future` resulting in the connection.
         '''
         assert not self._closed
         return PoolConnection.checkout(self)
@@ -234,8 +234,8 @@ class AbstractClient(Producer):
         Where ``client.request`` is the callable method to invoke (this must
         be specified by the client implementation).
 
-        :return: a :class:`.MultiDeferred` which results in the list of results
-          for the individual requests. Its :attr:`MultiDeferred.total_time`
+        :return: a :class:`.MultiFuture` which results in the list of results
+          for the individual requests. Its :attr:`MultiFuture.total_time`
           attribute indicates the number of seconds taken (once the deferred
           has been called back).
         '''

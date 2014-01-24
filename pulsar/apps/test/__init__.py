@@ -82,7 +82,7 @@ An example test case::
 .. note::
 
     Test functions are asynchronous, when they return a generator or a
-    :class:`.Deferred`, synchronous, when they return anything else.
+    :class:`.Future`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 
@@ -575,7 +575,7 @@ class TestSuite(tasks.TaskQueue):
                     tests.append((tag, testcls))
             self._time_start = None
             if tests:
-                self.logger.info('loaded %s test classes', len(tests))
+                self.logger.info('loading %s test classes', len(tests))
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
                 queued = []
@@ -587,6 +587,7 @@ class TestSuite(tasks.TaskQueue):
                                                 tag=tag)
                     queued.append(r)
                 queued = yield multi_async(queued)
+                self.logger.debug('loaded %s test classes', len(tests))
                 self._tests_queued = set(queued)
                 yield self._test_done()
             else:   # pragma    nocover

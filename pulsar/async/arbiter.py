@@ -33,7 +33,7 @@ def arbiter(**params):
 
 
 def spawn(**kwargs):
-    '''Spawn a new :class:`Actor` and return an :class:`.ActorProxyDeferred`.
+    '''Spawn a new :class:`Actor` and return an :class:`.ActorProxyFuture`.
 
     This method can be used from any :class:`.Actor`.
     If not in the :class:`.Arbiter` domain, the method sends a request
@@ -51,7 +51,7 @@ def spawn(**kwargs):
       and ``stop``
     * ``actor_class`` a custom :class:`Actor` subclass (never used)
 
-    :return: an :class:`.ActorProxyDeferred`.
+    :return: an :class:`.ActorProxyFuture`.
 
     A typical usage::
 

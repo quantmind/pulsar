@@ -1,5 +1,6 @@
 import sys
 import traceback
+import types
 from collections import deque, namedtuple, Mapping
 from inspect import isgenerator, istraceback
 from functools import wraps, partial
@@ -12,12 +13,11 @@ from .access import (get_request_loop, get_event_loop, logger, asyncio,
 from .fallbacks.coro import CoroutineReturn, coroutine_return
 
 
-NOT_DONE = object()
 CancelledError = asyncio.CancelledError
 TimeoutError = asyncio.TimeoutError
 InvalidStateError = asyncio.InvalidStateError
 Future = asyncio.Future
-
+ASYNC_OBJECTS = (Future, types.GeneratorType)
 
 __all__ = ['Future',
            'CancelledError',
@@ -38,7 +38,8 @@ __all__ = ['Future',
            'in_loop',
            'in_loop_thread',
            'raise_error_and_log',
-           'NOT_DONE']
+           'chain_future',
+           'ASYNC_OBJECTS']
 
 
 def add_errback(future, callback):
@@ -61,6 +62,27 @@ def add_callback(future, callback):
             callback(fut.result())
 
     future.add_done_callback(_call_back)
+
+
+def chain_future(future, callback=None, next=None):
+    if next is None:
+        next = Future(loop=future._loop)
+
+    def _callback(fut):
+        try:
+            result = fut.result()
+            if callback:
+                result = callback(result)
+        except Exception as exc:
+            next.set_exception(exc)
+        else:
+            if isinstance(result, Future):
+                chain(result, next=next)
+            else:
+                next.set_result(result)
+
+    future.add_done_callback(_callback)
+    return next
 
 
 def future_timeout(future, timeout, exc_class=None):
@@ -94,32 +116,31 @@ class FutureTypeError(TypeError):
     '''raised when invoking ``async`` on a wrong type.'''
 
 
-class CoroTask(Future):
-    '''A :class:`Deferred` which consumes a :ref:`coroutine <coroutine>`.
+class Task(asyncio.Task):
+    '''A :class:`.Future` which consumes a :ref:`coroutine <coroutine>`.
 
     The callback will occur once the coroutine has finished
     (when it raises StopIteration), or an unhandled exception occurs.
-    Instances of :class:`CoroTask` are never
-    initialised directly, they are created by the :func:`.async` or
-    :func:`.maybe_async` functions when a generator is passed as argument.
     '''
-    _waiting = None
-
-    def __init__(self, gen, loop):
-        self._gen = gen
-        self._loop = loop
-        self._callbacks = []
-        self._step(None, None)
-
-    def _step(self, result, error):
+    def _step(self, value=None, error=None):
         __skip_traceback__ = True
-        gen = self._gen
-        self._waiting = None
+        assert not self.done(), \
+            '_step(): already done: {!r}, {!r}, {!r}'.format(self, value, exc)
+        if self._must_cancel:
+            if not isinstance(exc, CancelledError):
+                exc = CancelledError()
+            self._must_cancel = False
+        coro = self._coro
+        self._fut_waiter = None
+        self.__class__._current_tasks[self._loop] = self
+        #
         try:
             if error:
-                result = gen.throw(error)
+                result = coro.throw(error)
+            elif value is not None:
+                result = coro.send(value)
             else:
-                result = gen.send(result)
+                result = next(coro)
             # handle possibly asynchronous results
             try:
                 result = async(result, self._loop)
@@ -134,34 +155,24 @@ class CoroTask(Future):
             raise
         else:
             if isinstance(result, Future):
-                if result.done():
-                    self._restart(result)
-                else:
-                    # async result add callback/errorback and transfer control
-                    # to the event loop
-                    result.add_done_callback(self._restart)
-                    self._waiting = result
-            elif result == NOT_DONE:
+                result._blocking = False
+                result.add_done_callback(self._wakeup)
+                self._fut_waiter = result
+                if self._must_cancel:
+                    if self._fut_waiter.cancel():
+                        self._must_cancel = False
+            elif result == None:
                 # transfer control to the event loop
-                self._loop.call_soon(self._step, None, None)
+                self._loop.call_soon(self._step)
             else:
-                self._step(result, None)
+                # Yielding something else is an error.
+                self._loop.call_soon(
+                    self._step, None,
+                    RuntimeError(
+                        'Task got bad yield: {!r}'.format(result)))
+        finally:
+            self.__class__._current_tasks.pop(self._loop)
         self = None
-
-    def _restart(self, future):
-        try:
-            value = future.result()
-        except Exception as exc:
-            self._step(None, exc)
-        else:
-            self._step(value, None)
-        self = None
-
-    def cancel(self, msg='', mute=False, exception_class=None):
-        if self._waiting:
-            self._waiting.cancel(msg, mute, exception_class)
-        else:
-            super(DeferredTask, self).cancel(msg, mute, exception_class)
 
 
 ######################################################### Async Bindings
@@ -177,14 +188,14 @@ class AsyncBindings:
         '''Handle an asynchronous ``coro_or_future``.
 
         Equivalent to the ``asyncio.async`` function but returns a
-        :class:`.Deferred`. Raises :class:`.FutureTypeError` if ``value``
+        :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``
         is not a generator nor a :class:`.Future`.
 
         This function can be overwritten by the :func:`set_async` function.
 
-        :parameter value: the value to convert to a :class:`.Deferred`.
+        :parameter value: the value to convert to a :class:`.Future`.
         :parameter loop: optional :class:`.EventLoop`.
-        :return: a :class:`Deferred`.
+        :return: a :class:`.Future`.
         '''
         if self._bindings:
             for binding in self._bindings:
@@ -195,7 +206,7 @@ class AsyncBindings:
             return coro_or_future
         elif isgenerator(coro_or_future):
             loop = loop or get_request_loop()
-            task_factory = getattr(loop, 'task_factory', CoroTask)
+            task_factory = getattr(loop, 'task_factory', Task)
             return task_factory(coro_or_future, loop)
         else:
             raise FutureTypeError
@@ -204,16 +215,16 @@ class AsyncBindings:
         '''Handle a possible asynchronous ``value``.
 
         Return an :ref:`asynchronous instance <tutorials-coroutine>`
-        only if ``value`` is a generator, a :class:`.Deferred` or
+        only if ``value`` is a generator, a :class:`.Future` or
         ``get_result`` is set to ``False``.
 
         :parameter value: the value to convert to an asynchronous instance
             if it needs to.
         :parameter loop: optional :class:`.EventLoop`.
         :parameter get_result: optional flag indicating if to get the result
-            in case the return value is a :class:`.Deferred` already done.
+            in case the return value is a :class:`.Future` already done.
             Default: ``True``.
-        :return: a :class:`.Deferred` or  a :class:`.Failure` or a synchronous
+        :return: a :class:`.Future` or  a :class:`.Failure` or a synchronous
             value.
         '''
         try:
@@ -251,7 +262,7 @@ def async_while(timeout, while_clause, *args):
     :parameter while_clause: while clause callable.
     :parameter args: optional arguments to pass to the ``while_clause``
         callable.
-    :return: A :class:`.Deferred`.
+    :return: A :class:`.Future`.
     '''
     loop = get_event_loop()
 
@@ -277,7 +288,7 @@ def async_while(timeout, while_clause, *args):
 def run_in_loop_thread(loop, callback, *args, **kwargs):
     '''Run ``callable`` in the event ``loop`` thread.
 
-    Return a :class:`.Deferred`
+    Return a :class:`.Future`
     '''
     d = Future(loop)
 
@@ -329,7 +340,7 @@ def in_loop_thread(method):
 
 ############################################################### MultiFuture
 class MultiFuture(Future):
-    '''A :class:1Deferred` for a ``collection`` of asynchronous objects.
+    '''A :class:`.Future` for a ``collection`` of asynchronous objects.
 
     The ``collection`` can be either a ``list`` or a ``dict``.
     '''

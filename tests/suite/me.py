@@ -85,9 +85,9 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         count = loop.num_loops
-        yield pulsar.NOT_DONE
+        yield None
         self.assertEqual(loop.num_loops, count+1)
-        yield pulsar.NOT_DONE
+        yield None
         self.assertEqual(loop.num_loops, count+2)
 
     def test_yield(self):
@@ -96,7 +96,7 @@ class TestTestWorker(unittest.TestCase):
         loop = pulsar.get_request_loop()
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop.tid, current_thread().ident)
-        yield pulsar.NOT_DONE
+        yield None
         self.assertEqual(loop.tid, current_thread().ident)
         d = pulsar.Deferred()
         # We are calling back the deferred in the event_loop which is on

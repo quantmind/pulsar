@@ -32,8 +32,8 @@ An asynchronous :ref:`application handler <wsgi-handlers>` must conform
 with the standard `WSGI 1.0.1`_ specification with the following two
 exceptions:
 
-* It can return a :class:`.Deferred`.
-* If it returns a :class:`.Deferred`, it must result in an
+* It can return a :class:`.Future`.
+* If it returns a :class:`.Future`, it must result in an
   :ref:`asynchronous iterable <wsgi-async-iter>`.
 
 Pulsar is shipped with two WSGI application handlers documented below.
@@ -44,12 +44,12 @@ Asynchronous Iterable
 ========================
 
 An asynchronous iterable is an iterable over a combination of ``bytes`` or
-:class:`.Deferred` which result in ``bytes``.
+:class:`.Future` which result in ``bytes``.
 For example this could be an asynchronous iterable::
 
     def simple_async():
         yield b'hello'
-        c = pulsar.Deferred()
+        c = pulsar.Future()
         c.callback(b' ')
         yield c
         yield b'World!'
@@ -99,8 +99,9 @@ via the ``_loop`` attribute::
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
 '''
 import sys
+import types
 
-from pulsar import async, Http404, coroutine_return
+from pulsar import async, Http404, coroutine_return, ASYNC_OBJECTS
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
 
@@ -149,9 +150,13 @@ class WsgiHandler(object):
         resp = None
         for middleware in self.middleware:
             try:
-                resp = yield middleware(environ, start_response)
+                resp = middleware(environ, start_response)
+                if isinstance(resp, ASYNC_OBJECTS):
+                    resp = yield resp
             except Exception as exc:
-                resp = yield handle_wsgi_error(environ, exc)
+                resp = handle_wsgi_error(environ, exc)
+                if isinstance(resp, ASYNC_OBJECTS):
+                    resp = yield resp
             if resp is not None:
                 break
         if resp is None:

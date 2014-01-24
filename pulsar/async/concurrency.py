@@ -138,10 +138,11 @@ system is chosen.'''
     def periodic_task(self, actor, **kw):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
-This is an internal method called periodically by the :attr:`Actor._loop`
-to ping the actor monitor. If successful return a :class:`.Future` called
-back with the acknowledgement from the monitor.
-'''
+        This is an internal method called periodically by the
+        :attr:`Actor._loop` to ping the actor monitor.
+        If successful return a :class:`.Future` called
+        back with the acknowledgement from the monitor.
+        '''
         actor.next_periodic_task = None
         ack = None
         if actor.is_running():

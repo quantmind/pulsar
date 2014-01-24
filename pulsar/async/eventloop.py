@@ -15,7 +15,7 @@ from pulsar.utils.pep import range
 from pulsar.utils.exceptions import ImproperlyConfigured
 
 from .access import asyncio, thread_data, LOGGER, _StopError
-from .futures import Future, maybe_async, async, CoroTask
+from .futures import Future, maybe_async, async, Task
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
 from .udp import create_datagram_endpoint
@@ -150,7 +150,7 @@ class EventLoop(BaseEventLoop):
     tid = None
     pid = None
     exit_signal = None
-    task_factory = CoroTask
+    task_factory = Task
 
     def __init__(self):
         self.clear()
@@ -249,7 +249,7 @@ loop of the thread where it is run.'''
     def run_in_executor(self, executor, callback, *args):
         '''Arrange to call ``callback(*args)`` in an ``executor``.
 
-        Return a :class:`.Deferred` called once the callback has finished.'''
+        Return a :class:`.Future` called once the callback has finished.'''
         executor = executor or self._default_executor
         if executor is None:
             raise ImproperlyConfigured('No executor available')
@@ -267,10 +267,16 @@ loop of the thread where it is run.'''
 
     #################################################    INTERNET NAME LOOKUPS
     def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
-        return socket.getaddrinfo(host, port, family, type, proto, flags)
+        a = socket.getaddrinfo(host, port, family, type, proto, flags)
+        f = Future()
+        f.set_result(a)
+        return f
 
     def getnameinfo(self, sockaddr, flags=0):
-        return socket.getnameinfo(sockaddr, flags)
+        a = socket.getnameinfo(sockaddr, flags)
+        f = Future()
+        f.set_result(a)
+        return f
 
     #################################################    I/O CALLBACKS
     def add_reader(self, fd, callback, *args):
@@ -399,7 +405,7 @@ default signal handler ``signal.SIG_DFL``.'''
         :param local_addr: if supplied, it must be a 2-tuple
             ``(host, port)`` for the socket to bind to as its source address
             before connecting.
-        :return: a :class:`.Deferred` and its result on success is the
+        :return: a :class:`.Future` and its result on success is the
             ``(transport, protocol)`` pair.
 
         If a failure prevents the creation of a successful connection, an
@@ -436,7 +442,7 @@ default signal handler ``signal.SIG_DFL``.'''
             ``TIME_WAIT`` state, without waiting for its natural timeout to
             expire. If not specified will automatically be set to ``True``
             on UNIX.
-        :return: a :class:`.Deferred` whose result will be a list of socket
+        :return: a :class:`.Future` whose result will be a list of socket
             objects which will later be handled by ``protocol_factory``.
         """
         res = start_serving(self, protocol_factory, host, port, ssl,
@@ -452,7 +458,7 @@ default signal handler ``signal.SIG_DFL``.'''
         their traffic, there are no separate calls to set up client and
         server side, since usually a single endpoint acts as either.
 
-        :return: a :class:`.Deferred` whose result will be a list of socket
+        :return: a :class:`.Future` whose result will be a list of socket
             objects which will later be handled by ``protocol_factory``.
         '''
         res = create_datagram_endpoint(self, protocol_factory, local_addr,
@@ -462,7 +468,7 @@ default signal handler ``signal.SIG_DFL``.'''
     def sock_connect(self, sock, address):
         '''Connect ``sock`` to the given ``address``.
 
-        Returns a :class:`.Deferred` whose result on success will be ``None``.
+        Returns a :class:`.Future` whose result on success will be ``None``.
         '''
         return sock_connect(self, sock, address)
 
@@ -476,16 +482,13 @@ default signal handler ``signal.SIG_DFL``.'''
             self._waker.wake()
 
     def call_repeatedly(self, interval, callback, *args):
-        """Call a ``callback`` every ``interval`` seconds. It handles
-asynchronous results. If an error occur in the ``callback``, the chain is
-broken and the ``callback`` won't be called anymore."""
-        return LoopingCall(self, callback, args, interval)
+        """Call a ``callback`` every ``interval`` seconds.
 
-    def call_every(self, callback, *args):
-        '''Same as :meth:`call_repeatedly` with the only difference that
-the ``callback`` is scheduled at every loop. Installing this callback cause
-the event loop to poll with a 0 timeout all the times.'''
-        return LoopingCall(self, callback, args)
+        It handles asynchronous results.
+        If an error occur in the ``callback``, the chain is
+        broken and the ``callback`` won't be called anymore.
+        """
+        return LoopingCall(self, callback, args, interval)
 
     #################################################    INTERNALS
     def _before_run(self):
@@ -536,9 +539,7 @@ the event loop to poll with a 0 timeout all the times.'''
             exc = None
             try:
                 if not handle._cancelled:
-                    value = handle._callback(*handle._args)
-                    if isinstance(value, GeneratorType):
-                        async(value, self)
+                    handle._callback(*handle._args)
             except socket.error as e:
                 if raise_socket_error(e) and self.running:
                     self.logger.exception('Unhandled socket exception in '

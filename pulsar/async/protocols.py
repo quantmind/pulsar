@@ -4,7 +4,7 @@ from functools import partial
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, coroutine_return, NOT_DONE
+from .futures import multi_async, in_loop, coroutine_return
 from .events import EventHandler
 from .access import asyncio, get_event_loop, new_event_loop
 
@@ -41,7 +41,7 @@ class ProtocolConsumer(EventHandler):
       This occurs just before the :meth:`start_request` method.
     * ``post_request`` fired when the request is done. The
       :attr:`on_finished` attribute is the
-      :class:`Deferred` called back once this event occurs.
+      :class:`.Future` called back once this event occurs.
 
     In addition, it has two :ref:`many times events <many-times-event>`:
 
@@ -558,7 +558,7 @@ class TcpServer(Producer):
 
         :param backlog: Number of maximum connections
         :param sslcontext: optional SSLContext object.
-        :return: a :class:`.Deferred` called back when the server is
+        :return: a :class:`.Future` called back when the server is
             serving the socket.'''
         if hasattr(self, '_params'):
             address = self._params['address']
@@ -605,7 +605,7 @@ class TcpServer(Producer):
         if self._server:
             server, self._server = self._server, None
             server.close()
-            yield NOT_DONE
+            yield None
             yield self._close_connections()
             self.fire_event('stop')
         coroutine_return(self)
@@ -655,7 +655,7 @@ class TcpServer(Producer):
     def _close_connections(self, connection=None, async=True):
         '''Close ``connection`` if specified, otherwise close all connections.
 
-        Return a list of :class:`Deferred` called back once the connection/s
+        Return a list of :class:`.Future` called back once the connection/s
         are closed.
         '''
         all = []

@@ -89,8 +89,8 @@ import time
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (in_loop, EventHandler, PulsarException,
-                    Future, coroutine_return, run_in_loop_thread,
+from pulsar import (in_loop, async, EventHandler, PulsarException,
+                    Future, coroutine_return,
                     get_request_loop, raise_error_and_log)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
@@ -345,6 +345,7 @@ class TaskBackend(object):
     def channel(self, name):
         return '%s_%s' % (self.name, name)
 
+    @in_loop
     def queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
         '''Try to queue a new :ref:`Task`.
 
@@ -362,8 +363,7 @@ class TaskBackend(object):
             in the task callable.
         :return: a :class:`.Future` resulting in a task id on success.
         '''
-        return run_in_loop_thread(self._loop, self._queue_task, jobname,
-                                  meta_params, expiry, **kwargs)
+        return self._queue_task(jobname, meta_params, expiry, **kwargs)
 
     def bind_event(self, name, handler):
         self.events.bind_event(self.channel(name), handler)
@@ -375,7 +375,7 @@ class TaskBackend(object):
         # make sure pubsub is implemented
         self.pubsub()
 
-        def _(task_id):
+        def _():
             task = yield self.get_task(task_id)
             if task:
                 task_id = task['id']
@@ -392,7 +392,10 @@ class TaskBackend(object):
                     task = yield when_done
                 coroutine_return(task)
 
-        return run_in_loop_thread(self._loop, _, task_id).set_timeout(timeout)
+        fut = async(_(), self._loop)
+        if timeout:
+            future_timeout(fut, timeout)
+        return fut
 
     def get_tasks(self, ids):
         return self.models.task.filter(id=ids).all()

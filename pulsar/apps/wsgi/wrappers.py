@@ -490,7 +490,7 @@ class WsgiRequest(EnvironMixin):
         :class:`~.MultiValueDict` containing data from
         the request body, and data from uploaded files.
 
-        If the body data is not ready, return a :class:`.Deferred`
+        If the body data is not ready, return a :class:`.Future`
         which results in the tuple.
 
         The result is cached.

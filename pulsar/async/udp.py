@@ -8,7 +8,7 @@ from pulsar.utils.internet import (TRY_WRITE_AGAIN, TRY_READ_AGAIN,
                                    ECONNREFUSED, BUFFER_MAX_SIZE,
                                    format_address)
 
-from .futures import coroutine_return, in_loop, NOT_DONE
+from .futures import coroutine_return, in_loop
 from .events import EventHandler
 from .internet import (SocketTransport, raise_socket_error,
                        raise_write_socket_error)
@@ -165,7 +165,7 @@ class DatagramServer(EventHandler):
     def create_endpoint(self, **kw):
         '''create the server endpoint.
 
-        :return: a :class:`.Deferred` called back when the server is
+        :return: a :class:`.Future` called back when the server is
             serving the socket.'''
         if hasattr(self, '_params'):
             address = self._params['address']

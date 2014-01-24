@@ -190,7 +190,7 @@ class Transaction(EventHandler):
         :param callback: optional function called back once the transaction
             has finished. The function receives one parameter only, the
             transaction.
-        :return: a :class:`.Deferred`
+        :return: a :class:`.Future`
         '''
         if self._executed is None:
             self.commit()
