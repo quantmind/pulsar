@@ -112,7 +112,7 @@ class DiningPhilosophers(pulsar.Application):
     def monitor_start(self, monitor):
         self.not_available_forks = set()
 
-    def worker_start(self, philosopher):
+    def worker_start(self, philosopher, exc=None):
         self.eaten = 0
         self.thinking = 0
         self.started_waiting = 0

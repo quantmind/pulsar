@@ -89,7 +89,7 @@ import time
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (in_loop, Failure, EventHandler, PulsarException,
+from pulsar import (in_loop, EventHandler, PulsarException,
                     Future, coroutine_return, run_in_loop_thread,
                     get_request_loop, raise_error_and_log)
 from pulsar.utils.pep import itervalues, to_string
@@ -645,10 +645,9 @@ class TaskBackend(object):
             self.logger.info('%s timed-out', task_info)
             result = None
             status = states.REVOKED
-        except Exception:
-            failure = Failure(sys.exc_info())
-            failure.log(msg='failure in %s' % task_info, log=self.logger)
-            result = str(failure)
+        except Exception as exc:
+            self.logger.exception('failure in %s', task_info)
+            result = str(exc)
             status = states.FAILURE
         #
         task.clear_update(id=task_id, time_ended=time.time(),
@@ -677,7 +676,7 @@ class TaskBackend(object):
         return entries
 
     @in_loop
-    def task_done_callback(self, task_id):
+    def task_done_callback(self, task_id, exc=None):
         # Got a task_id from the ``<name>_task_done`` channel.
         # Check if a ``callback`` is available in the :attr:`callbacks`
         # dictionary. If so fire the callback with the ``task`` instance

@@ -12,10 +12,10 @@ except ImportError:     # pragma    nocover
 
 from pulsar.utils.system import close_on_exec
 from pulsar.utils.pep import range
-from pulsar.utils.exceptions import StopEventLoop, ImproperlyConfigured
+from pulsar.utils.exceptions import ImproperlyConfigured
 
-from .access import asyncio, thread_data, LOGGER
-from .futures import maybe_async, async, CoroTask
+from .access import asyncio, thread_data, LOGGER, _StopError
+from .futures import Future, maybe_async, async, CoroTask
 from .stream import (create_connection, start_serving, sock_connect,
                      raise_socket_error)
 from .udp import create_datagram_endpoint
@@ -90,23 +90,23 @@ class LoopingCall(object):
     def cancelled(self):
         return self._cancelled
 
-    def cancel(self, result=None):
+    def cancel(self):
         '''Attempt to cancel the callback.'''
         self._cancelled = True
 
     def __call__(self):
         try:
-            result = maybe_async(self.callback(*self.args), self._loop,
-                                 get_result=False)
+            result = maybe_async(self.callback(*self.args), self._loop)
         except Exception:
+            self._loop.logger.exception('Exception in looping callback')
             self.cancel()
-            exc_info = sys.exc_info()
-        else:
-            result.add_callback(self._continue, self.cancel)
             return
-        Failure(exc_info).log(msg='Exception in looping callback')
+        if isinstance(result, Future):
+            result.add_done_callback(self._might_continue)
+        else:
+            self._continue()
 
-    def _continue(self, result):
+    def _continue(self):
         if not self._cancelled:
             handler = self.handler
             loop = self._loop
@@ -116,6 +116,15 @@ class LoopingCall(object):
                 loop._add_callback(handler)
             else:
                 loop._ready.append(self.handler)
+
+    def _might_continue(self, fut):
+        try:
+            fut.result()
+        except Exception:
+            self._loop.logger.exception('Exception in looping callback')
+            self.cancel()
+        else:
+            self._continue()
 
 
 class EventLoop(BaseEventLoop):
@@ -215,7 +224,7 @@ loop of the thread where it is run.'''
                 while self.active:
                     try:
                         self._run_once()
-                    except StopEventLoop:
+                    except _StopError:
                         break
             finally:
                 self._after_run()
@@ -228,33 +237,10 @@ loop of the thread where it is run.'''
                 while True:
                     try:
                         self._run_once()
-                    except StopEventLoop:
+                    except _StopError:
                         break
             finally:
                 self._after_run()
-
-    def run_until_complete(self, future):
-        """Run until the Future is done.
-
-        If the argument is a coroutine, it is wrapped in a Task.
-
-        XXX TBD: It would be disastrous to call run_until_complete()
-        with the same coroutine twice -- it would wrap it in two
-        different Tasks and that can't be good.
-
-        Return the Future's result, or raise its exception.
-        """
-        future = async(future, self)
-        future.add_done_callback(self.stop)
-        self.run_forever()
-        future.remove_done_callback(self.stop)
-        if not future.done():
-            raise RuntimeError('Event loop stopped before Future completed.')
-        return future.result()
-
-    def stop(self, *args):
-        '''Stop the loop after the current event loop iteration is complete'''
-        self.call_soon_threadsafe(self._raise_stop_event_loop)
 
     def is_running(self):
         '''``True`` if the loop is running.'''
@@ -268,24 +254,6 @@ loop of the thread where it is run.'''
         if executor is None:
             raise ImproperlyConfigured('No executor available')
         return executor.apply(callback, *args)
-
-    def call_later(self, delay, callback, *args):
-        """Arrange for a callback to be called at a given time.
-
-        Return a Handle: an opaque object with a cancel() method that
-        can be used to cancel the call.
-
-        The delay can be an int or float, expressed in seconds.  It is
-        always a relative time.
-
-        Each callback will be called exactly once.  If two callbacks
-        are scheduled for exactly the same time, it undefined which
-        will be called first.
-
-        Any positional arguments after the callback will be passed to
-        the callback when it is called.
-        """
-        return self.call_at(self.time() + delay, callback, *args)
 
     def call_at(self, when, callback, *args):
         '''Like call_later(), but uses an absolute time.
@@ -530,10 +498,6 @@ the event loop to poll with a 0 timeout all the times.'''
         self._name = None
         self.tid = None
 
-    def _raise_stop_event_loop(self, exc=None):
-        if self.is_running():
-            raise StopEventLoop
-
     def _check_signal(self, sig):
         """Internal helper to validate a signal.
 
@@ -590,8 +554,6 @@ the event loop to poll with a 0 timeout all the times.'''
         except Exception as e:
             if raise_socket_error(e) and self.running:
                 raise
-        except KeyboardInterrupt:
-            raise StopEventLoop
         else:
             for fd, events in event_pairs:
                 try:

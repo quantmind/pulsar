@@ -191,8 +191,9 @@ class TaskQueue(pulsar.Application):
             if self.backend.next_run <= time.time():
                 self.backend.tick()
 
-    def worker_start(self, worker):
-        self.get_backend().start(worker)
+    def worker_start(self, worker, exc=None):
+        if not exc:
+            self.get_backend().start(worker)
 
     def worker_stopping(self, worker):
         if self.backend:

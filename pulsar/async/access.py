@@ -6,11 +6,13 @@ from multiprocessing import current_process
 try:
     import asyncio
     from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
+    from asyncio.base_events import _StopError
 except ImportError:  # pragma    nocover
     from .fallbacks import asyncio
     _PENDING = asyncio._PENDING
     _CANCELLED = asyncio._CANCELLED
     _FINISHED = asyncio._FINISHED
+    _StopError = asyncio._StopError
 
 from .fallbacks.tracelogger import format_traceback
 

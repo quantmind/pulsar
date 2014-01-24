@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-from pulsar import Failure
 from pulsar.utils.structures import AttributeDictionary
 
 from .case import unittest, LOGGER

@@ -7,11 +7,11 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import new_event_loop, get_actor, set_actor, logger
+from .access import new_event_loop, get_actor, set_actor, logger, _StopError
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .futures import multi_async, Future, add_errback
-from .eventloop import signal, StopEventLoop
+from .eventloop import signal
 from .protocols import TcpServer
 from .pollers import POLLERS
 from .consts import *
@@ -228,7 +228,7 @@ class ProcessMixin(object):
     def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
         actor._loop.exit_signal = sig
-        raise StopEventLoop
+        raise _StopError
 
 
 class MonitorMixin(object):

@@ -2521,7 +2521,8 @@ class Storage(object):
             for client in db._blocking_keys.pop(key):
                 client.blocked.unblock(client, key, value)
 
-    def _remove_connection(self, client, _):
+    def _remove_connection(self, client, _, **kw):
+        # Remove a client from the server
         self._monitors.discard(client)
         self._watching.discard(client)
         for channel, clients in list(self._channels.items()):
@@ -2532,7 +2533,6 @@ class Storage(object):
             p.clients.discard(client)
             if not p.clients:
                 self._patterns.pop(pattern)
-        return _
 
     def _write_to_monitors(self, client, request):
         #addr = '%s:%s' % self._transport.get_extra_info('addr')

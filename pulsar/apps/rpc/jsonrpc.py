@@ -1,8 +1,8 @@
 import sys
 from functools import partial
+import logging
 
-from pulsar import (Failure, multi_async, maybe_failure, in_loop_thread,
-                    coroutine_return)
+from pulsar import multi_async, in_loop_thread, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -14,7 +14,11 @@ from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 
 from .handlers import RpcHandler, InvalidRequest, exception
 
+
 __all__ = ['JSONRPC', 'JsonProxy']
+
+
+logger = logging.getLogger('pulsar.jsonrpc')
 
 
 class JSONRPC(RpcHandler):
@@ -37,6 +41,7 @@ class JSONRPC(RpcHandler):
     def _call(self, request):
         response = request.response
         data = {}
+        exc_info = None
         try:
             try:
                 data = yield request.body_data()
@@ -55,27 +60,25 @@ class JSONRPC(RpcHandler):
             #
             callable = self.get_handler(data.get('method'))
             result = yield callable(request, *args, **kwargs)
-        except Exception:
-            result = sys.exc_info()
+        except Exception as exc:
+            result = exc
+            exc_info = sys.exc_info()
         #
-        result = maybe_failure(result)
         res = {'id': data.get('id'), "jsonrpc": self.version}
-        if isinstance(result, Failure):
-            msg = None
-            error = result.error
-            code = getattr(error, 'fault_code', -32603)
-            if isinstance(error, TypeError):
+        if isinstance(result, Exception):
+            code = getattr(result, 'fault_code', -32603)
+            if isinstance(result, TypeError):
                 msg = checkarity(callable, args, kwargs, discount=1)
-            msg = msg or str(error) or 'JSON RPC exception'
+            msg = msg or str(result) or 'JSON RPC exception'
             if code == -32603:
-                result.log(msg=msg, level='error')
+                logger.error(msg=msg, exc_info=exc_info)
             else:
-                result.log(msg=msg, level='warning')
-            result = {'code': code,
-                      'message': msg,
-                      'data': getattr(error, 'data', '')}
-            request.response.status_code = getattr(error, 'status', 500)
-            res['error'] = result
+                logger.warning(msg=msg)
+            error = {'code': code,
+                     'message': msg,
+                     'data': getattr(result, 'data', '')}
+            request.response.status_code = getattr(result, 'status', 500)
+            res['error'] = error
         else:
             res['result'] = result
         coroutine_return(res)

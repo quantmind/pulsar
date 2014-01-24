@@ -54,11 +54,6 @@ class InvalidOperation(PulsarException):
     pass
 
 
-class StopEventLoop(BaseException):
-    ''':class:`BaseException` raised to cleanly stop a
-    :class:`pulsar.EventLoop`.'''
-
-
 class HaltServer(BaseException):
     ''':class:`BaseException` raised to stop a running server.
 

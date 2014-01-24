@@ -11,10 +11,9 @@ ThreadQueue = queue.Queue
 Empty = queue.Empty
 Full = queue.Full
 
-from pulsar.utils.exceptions import StopEventLoop
-
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
-                     thread_data, AsyncObject)
+                     thread_data, AsyncObject, _StopError)
+from .futures import Future, future_timeout
 from .pollers import Poller, READ
 
 
@@ -89,20 +88,20 @@ class IOqueue(Poller):
 
     def poll(self, timeout=0.5):
         if not self._actor.is_running():
-            raise StopEventLoop
+            raise _StopError
         if self._maxtasks and self.received >= self._maxtasks:
             if self.completed < self.received:
                 return ()
             else:
-                raise StopEventLoop
+                raise _StopError
         try:
             task = self.get(timeout=timeout)
         except (Empty, TypeError):
             return ()
         except (EOFError, IOError):
-            raise StopEventLoop
+            raise _StopError
         if task is None:    # got the sentinel, exit!
-            raise StopEventLoop
+            raise _StopError
         return ((self.fileno(), task),)
 
     def install_waker(self, loop):
@@ -121,9 +120,14 @@ class IOqueue(Poller):
                            'descriptor %s' % fd)
         self.received += 1
         future, func, args, kwargs = task
-        result = safe_async(func, *args, **kwargs)
-        result.add_both(partial(self._handle_result, future))
-        return future
+        try:
+            result = maybe_async(fun(*args, **kwargs), self._loop)
+        except Exception as exc:
+            self._set_result(future, None, exc)
+        if isinstance(result, Future):
+            result.add_done_callback(partial(self._handle_result, future))
+        else:
+            self._set_result(future, result, None)
 
     def get(self, timeout=0.5):
         '''Wait for events. timeout in seconds (float)'''
@@ -141,8 +145,19 @@ class IOqueue(Poller):
             raise IOError('Only read events on %s allowed' % self.fileno())
 
     def _handle_result(self, future, result):
+        try:
+            result = result.result()
+        except Exception as exc:
+            self._set_result(future, None, exc)
+        else:
+            self._set_result(future, result)
+
+    def _set_result(self, future, result, exc):
         self.completed += 1
-        future.callback(result)
+        if exc:
+            future.set_exception(exc)
+        else:
+            future.set_result(result)
 
 
 RUN = 0
@@ -164,7 +179,7 @@ class ThreadPool(AsyncObject):
         self._threads = max(threads or 1, 1)
         self._pool = []
         self._state = RUN
-        self._closed = Deferred(loop=self._loop)
+        self._closed = Future(loop=self._loop)
         self._maxtasks = maxtasks
         self._inqueue = ThreadQueue()
         self._check = self._loop.call_soon(self._maintain)
@@ -199,13 +214,13 @@ class ThreadPool(AsyncObject):
         Return a :class:`.Deferred` called back once the task has finished.
         '''
         assert self._state == RUN, 'Pool not running'
-        d = Deferred()
+        d = Future(self._loop)
         self._inqueue.put((d, func, args, kwargs))
 
     def close(self, timeout=None):
         '''Close the thread pool.
 
-        Return a :class:`.Deferred` fired when all threads have exited.
+        Return a :class:`.Future` fired when all threads have exited.
         '''
         if self._state == RUN:
             self._state = CLOSE

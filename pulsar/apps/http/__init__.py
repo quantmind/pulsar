@@ -196,7 +196,7 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (is_failure, AbstractClient, Pool, coroutine_return,
+from pulsar import (AbstractClient, Pool, coroutine_return,
                     Connection, run_in_loop_thread, get_event_loop,
                     ProtocolConsumer, new_event_loop)
 from pulsar.utils.system import json

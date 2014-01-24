@@ -30,6 +30,7 @@ __all__ = ['Future',
            'async',
            'add_errback',
            'add_callback',
+           'future_timeout',
            'task_callback',
            'multi_async',
            'async_while',
@@ -54,12 +55,23 @@ def add_errback(future, callback):
 
 def add_callback(future, callback):
     '''Add a ``callback`` to ``future`` executed only if an exception
-    has occurred '''
+    has not occurred.'''
     def _call_back(fut):
         if not (fut._exception or fut.cancelled()):
             callback(fut.result())
 
     future.add_done_callback(_call_back)
+
+
+def future_timeout(future, timeout, exc_class=None):
+
+    exc_class = exc_class or TimeoutError
+
+    def _check_timeout():
+        if not future.done():
+            future.set_exception(exc_class())
+
+    future._loop.call_later(timeout, _check_timeout)
 
 
 def as_exception(fut):

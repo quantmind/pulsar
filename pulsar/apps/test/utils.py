@@ -43,7 +43,7 @@ from functools import partial
 from contextlib import contextmanager
 
 import pulsar
-from pulsar import (safe_async, get_actor, send, multi_async,
+from pulsar import (get_actor, send, multi_async,
                     TcpServer, coroutine_return, new_event_loop)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute

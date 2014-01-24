@@ -232,10 +232,12 @@ class SocketServer(pulsar.Application):
         params.update({'sockets': monitor.sockets, 'ssl': monitor.ssl})
 
     def worker_start(self, worker, exc=None):
-        '''Start the worker by invoking the :meth:`create_server` method.'''
-        server = self.create_server(worker)
-        server.bind_event('stop', lambda _, **kw: worker.stop())
-        worker.servers[self.name] = server
+        '''Start the worker by invoking the :meth:`create_server` method.
+        '''
+        if not exc:
+            server = self.create_server(worker)
+            server.bind_event('stop', lambda _, **kw: worker.stop())
+            worker.servers[self.name] = server
 
     def worker_stopping(self, worker, exc=None):
         server = worker.servers.get(self.name)

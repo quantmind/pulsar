@@ -175,12 +175,11 @@ class ProtocolConsumer(EventHandler):
         to handle the potential exception ``exc``.'''
         return self.finished(exc)
 
-    def finished(self, exc=None):
+    def finished(self, *arg, **kw):
         '''Fire the ``post_request`` event if it wasn't already fired.
         '''
         if not self.event('post_request').fired():
-            return self.fire_event('post_request', exc=exc)
-        return exc
+            return self.fire_event('post_request', *arg, **kw)
 
     def _data_received(self, data):
         # Called by Connection, it updates the counters and invoke

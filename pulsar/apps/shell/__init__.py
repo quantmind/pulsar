@@ -118,11 +118,12 @@ class PulsarShell(pulsar.Application):
         monitor.cfg.set('thread_workers', 1)
         monitor.cfg.set('concurrency', 'thread')
 
-    def worker_start(self, worker):     # pragma    nocover
+    def worker_start(self, worker, exc=None):     # pragma    nocover
         '''When the worker starts, create the :attr:`~.Actor.thread_pool`
         and send the :meth:`interact` method to it.'''
-        worker.create_thread_pool()
-        worker.thread_pool.apply(self.start_shell, worker)
+        if not exc:
+            worker.create_thread_pool()
+            worker.thread_pool.apply(self.start_shell, worker)
 
     def start_shell(self, worker):
         pulsar.help = self._show_help

@@ -1,7 +1,7 @@
 from collections import deque
 
 from .access import get_event_loop, AsyncObject
-from .futures import Future
+from .futures import Future, future_timeout
 from .threads import Empty, Full, Lock
 
 __all__ = ['Queue']
@@ -70,8 +70,9 @@ class Queue(AsyncObject):
                 # add it to the putters queue if we can wait
                 if self._maxsize and self._maxsize <= self.qsize():
                     if wait:
-                        waiter = Deferred(loop=self._loop)
-                        waiter.set_timeout(timeout, exception_class=Full)
+                        waiter = Future(loop=self._loop)
+                        if timeout:
+                            future_timeout(waiter, timeout, exc_class=Full)
                         self._putters.append((item, waiter))
                     else:
                         raise Full
@@ -81,10 +82,10 @@ class Queue(AsyncObject):
             else:
                 assert not self._queue, 'queue non-empty with waiting getters'
         if getter:
-            getter.callback(item)
+            getter.set_result(item)
         elif wait and not waiter:
-            waiter = Deferred()
-            waiter.callback(None)
+            waiter = Future(loop=self._loop)
+            waiter.set_result(None)
         return waiter
 
     def put_nowait(self, item):
@@ -116,21 +117,22 @@ class Queue(AsyncObject):
                     assert self.full(), 'queue non-full with putters'
                     self._queue.append(new_item)
                     if wait:
-                        self._loop.call_soon(putter.callback, None)
+                        self._loop.call_soon(putter.set_result, None)
                     else:
-                        putter.callback(None)
+                        putter.set_result(None)
                     break
             if self.qsize():
                 item = self._queue.popleft()
                 if wait:
-                    d = Deferred()
-                    d.callback(item)
+                    d = Future(loop=self._loop)
+                    d.set_result(item)
                     return d
                 else:
                     return item
             elif wait:
-                item = Deferred(self._loop)
-                item.set_timeout(timeout, exception_class=Empty)
+                item = Future(loop=self._loop)
+                if timeout:
+                    future_timeout(item, timeout, exc_class=Empty)
                 self._waiting.append(item)
                 return item
             else:

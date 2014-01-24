@@ -298,7 +298,7 @@ Utilities
 import sys
 
 import pulsar
-from pulsar import maybe_failure, multi_async, Failure
+from pulsar import multi_async
 from pulsar.apps import tasks
 from pulsar.apps.data import PulsarDS, create_store
 from pulsar.utils.log import lazyproperty
@@ -595,8 +595,7 @@ class TestSuite(tasks.TaskQueue):
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:   # pragma    nocover
-            Failure(sys.exc_info()).critical(
-                'Error occurred while starting tests')
+            monitor.logger.critical('Error occurred while starting tests')
             monitor.arbiter.stop()
 
     @classmethod

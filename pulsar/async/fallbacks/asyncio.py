@@ -12,6 +12,14 @@ from .tracelogger import _TracebackLogger
 fallback = True
 
 
+class _StopError(BaseException):
+    """Raised to stop the event loop."""
+
+
+def _raise_stop_error(*args):
+    raise _StopError
+
+
 class AbstractEventLoopPolicy(object):
     """Abstract policy for accessing the event loop."""
 
@@ -122,8 +130,23 @@ class TimerHandle(Handle):
 class BaseEventLoop(AbstractEventLoop):
     _default_executor = None
 
+    def run_until_complete(self, future):
+        future = tasks.async(future, loop=self)
+        future.add_done_callback(_raise_stop_error)
+        self.run_forever()
+        future.remove_done_callback(_raise_stop_error)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+        return future.result()
+
+    def stop(self):
+        self.call_soon(_raise_stop_error)
+
     def time(self):
         return default_timer()
+
+    def call_later(self, delay, callback, *args):
+        return self.call_at(self.time() + delay, callback, *args)
 
     def call_soon(self, callback, *args):
         handle = TimerHandle(None, callback, args)

@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from pulsar import multi_async, Failure, coroutine_return
+from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy26, ispy33
 from pulsar.apps import tasks
 
@@ -164,5 +164,5 @@ class Test(tasks.Job):
             else:
                 runner.addError(test, exc_info)
         else:
-            Failure(exc_info).log()
+            runner.logger.error('exception', exc_info=exc_info)
         return (error, exc_info)
