@@ -196,9 +196,8 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (AbstractClient, Pool, coroutine_return,
-                    Connection, run_in_loop_thread, get_event_loop,
-                    ProtocolConsumer, new_event_loop)
+from pulsar import (AbstractClient, Pool, coroutine_return, async, Connection,
+                    get_event_loop, ProtocolConsumer, new_event_loop)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
 from pulsar.utils.structures import mapping_iterator
@@ -992,8 +991,7 @@ class HttpClient(AbstractClient):
 
         :rtype: a :class:`HttpResponse` object.
         '''
-        return run_in_loop_thread(
-            self._loop, self._request, method, url, **params)
+        return async(self._request(method, url, **params), loop=self._loop)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.

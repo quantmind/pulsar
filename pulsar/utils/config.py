@@ -342,21 +342,31 @@ class Config(object):
     def configured_logger(self, name=None):
         '''Configured logger.
         '''
-        logger = configured_logger(logger='pulsar',
-                                   config=self.logconfig,
-                                   level=self.loglevel,
-                                   handlers=self.loghandlers)
-        if name:
-            return configured_logger(logger='pulsar.%s' % name,
-                                     config=self.logconfig,
-                                     level=self.loglevel,
-                                     handlers=self.loghandlers)
-        if self.name:
-            return configured_logger(logger='pulsar.%s' % self.name,
-                                     config=self.logconfig,
-                                     level=self.loglevel,
-                                     handlers=self.loghandlers)
-        return logger
+        loggers = {}
+        loghandlers = self.loghandlers
+        name = 'pulsar.%s' % (name or self.name)
+        for loglevel in self.loglevel or ():
+            bits = loglevel.split('.')
+            loglevel = bits[-1]
+            if len(bits) > 1:
+                namespace = '.'.join(bits[:-1])
+            else:
+                namespace = name
+            if namespace in loggers:
+                continue
+            loggers[namespace] = configured_logger(namespace,
+                                                   config=self.logconfig,
+                                                   level=loglevel,
+                                                   handlers=loghandlers)
+        for namespace, loglevel in (('pulsar', 'info'),
+                                 (name, 'info'),
+                                 ('asyncio', 'warning')):
+            if namespace not in loggers:
+                loggers[namespace] = configured_logger(namespace,
+                                                       config=self.logconfig,
+                                                       level=loglevel,
+                                                       handlers=loghandlers)
+        return loggers[name]
 
     def __copy__(self):
         return self.copy()
@@ -828,8 +838,7 @@ class Group(Global):
 class Loglevel(Global):
     name = "loglevel"
     flags = ["--log-level"]
-    choices = ('debug', 'info', 'warning', 'error', 'critical', 'none')
-    default = 'info'
+    nargs = '+'
     desc = '''
         The granularity of log outputs.
 

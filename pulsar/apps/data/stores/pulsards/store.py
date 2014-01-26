@@ -1,7 +1,6 @@
 from functools import partial
 
-from pulsar import (coroutine_return, in_loop_thread, Connection, Pool,
-                    get_actor)
+from pulsar import coroutine_return, task, Connection, Pool, get_actor
 from pulsar.utils.pep import to_string
 
 from .base import register_store, Store, Command
@@ -71,7 +70,7 @@ class PulsarStore(Store):
     def pubsub(self, protocol=None):
         return PubSub(self, protocol=protocol)
 
-    @in_loop_thread
+    @task
     def execute(self, *args, **options):
         connection = yield self._pool.connect()
         with connection:
@@ -80,7 +79,7 @@ class PulsarStore(Store):
                 raise result.exception
             coroutine_return(result)
 
-    @in_loop_thread
+    @task
     def execute_pipeline(self, commands, raise_on_error=True):
         conn = yield self._pool.connect()
         with conn:

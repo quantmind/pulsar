@@ -504,11 +504,12 @@ class HttpServerResponse(ProtocolConsumer):
 
     def wsgi_environ(self):
         #return a the WSGI environ dictionary
-        https = True if is_tls(self.transport.sock) else False
+        transport = self.transport
+        https = True if is_tls(transport.get_extra_info('socket')) else False
         multiprocess = (self.cfg.concurrency == 'process')
-        environ = wsgi_environ(self._stream, self.transport.address,
-                               self.address,
-                               self.headers,
+        environ = wsgi_environ(self._stream,
+                               transport.get_extra_info('sockname'),
+                               self.address, self.headers,
                                self.SERVER_SOFTWARE,
                                https=https,
                                extra={'pulsar.connection': self.connection,

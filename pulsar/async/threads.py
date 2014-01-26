@@ -2,6 +2,7 @@ import logging
 from multiprocessing import dummy, current_process
 from threading import Lock
 from functools import partial
+from asyncio import selectors
 
 try:
     import queue
@@ -13,8 +14,8 @@ Full = queue.Full
 
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
                      thread_data, AsyncObject, _StopError)
-from .futures import Future, future_timeout
-from .pollers import Poller, READ
+from .futures import Future, future_timeout, maybe_async, chain_future
+from .eventloop import QueueEventLoop
 
 
 __all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
@@ -66,7 +67,7 @@ class PoolThread(Thread):
         return thread_data('_request_loop', ct=self)
 
 
-class IOqueue(Poller):
+class IOqueue(selectors.BaseSelector):
 
     def __init__(self, actor, queue, maxtasks):
         super(IOqueue, self).__init__()
@@ -121,7 +122,7 @@ class IOqueue(Poller):
         self.received += 1
         future, func, args, kwargs = task
         try:
-            result = maybe_async(fun(*args, **kwargs), self._loop)
+            result = maybe_async(func(*args, **kwargs), loop)
         except Exception as exc:
             self._set_result(future, None, exc)
         if isinstance(result, Future):
@@ -139,7 +140,7 @@ class IOqueue(Poller):
         return self._queue.get(block=block, timeout=timeout)
 
     def _register(self, fd, events, old_events=None):
-        if events != READ:
+        if events != selectors.EVENT_READ:
             raise IOError('Only read events can be attached to IOqueue')
         if fd != self.fileno():
             raise IOError('Only read events on %s allowed' % self.fileno())
@@ -152,7 +153,7 @@ class IOqueue(Poller):
         else:
             self._set_result(future, result)
 
-    def _set_result(self, future, result, exc):
+    def _set_result(self, future, result, exc=None):
         self.completed += 1
         if exc:
             future.set_exception(exc)
@@ -214,8 +215,8 @@ class ThreadPool(AsyncObject):
         Return a :class:`.Future` called back once the task has finished.
         '''
         assert self._state == RUN, 'Pool not running'
-        d = Future(self._loop)
-        self._inqueue.put((d, func, args, kwargs))
+        future = Future(loop=self._loop)
+        self._inqueue.put((future, func, args, kwargs))
 
     def close(self, timeout=None):
         '''Close the thread pool.
@@ -228,7 +229,7 @@ class ThreadPool(AsyncObject):
                 self._loop.call_soon_threadsafe(self._close)
             else:
                 self._close()
-        return self._closed.then().set_timeout(timeout)
+        return chain_future(self._closed, timeout=timeout)
 
     def terminate(self, timeout=None):
         '''Shut down the event loop of threads'''
@@ -239,7 +240,7 @@ class ThreadPool(AsyncObject):
                     self._loop.call_soon_threadsafe(self._terminate)
                 else:
                     self._terminate()
-        return self._closed.then().set_timeout(timeout)
+        return chain_future(self._closed, timeout=timeout)
 
     def join(self):
         assert self._state in (CLOSE, TERMINATE)
@@ -247,6 +248,7 @@ class ThreadPool(AsyncObject):
             worker.join()
 
     def _maintain(self):
+        # periodic method to maintain the thread pool
         populate = self._join_exited_workers() if self._pool else True
         if self._state == RUN and populate:
             self._repopulate_pool()
@@ -256,7 +258,8 @@ class ThreadPool(AsyncObject):
             self._maintain_call = self._actor._loop.call_later(
                 self._check_every, self._maintain)
         elif not self._closed.done():
-            self._closed.callback(self._state)
+            # set the _closed event
+            self._closed.set_result(self._state)
 
     def _close(self):
         self._check.cancel()
@@ -305,7 +308,6 @@ class ThreadPool(AsyncObject):
         # Create the event loop which get tasks from the task queue
         logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
                                                      self.worker_name))
-        loop = new_event_loop(io=poller, poll_timeout=1, logger=logger,
-                              iothreadloop=True)
+        loop = QueueEventLoop(poller, logger=logger, iothreadloop=True)
         loop.add_reader(poller.fileno(), poller.handle_events)
         loop.run_forever()

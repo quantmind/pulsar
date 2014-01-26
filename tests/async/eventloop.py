@@ -3,7 +3,7 @@ import sys
 from threading import current_thread
 
 import pulsar
-from pulsar import (Failure, run_in_loop_thread, Deferred, TimeoutError,
+from pulsar import (Failure, run_in_loop, Deferred, TimeoutError,
                     asyncio, get_event_loop, new_event_loop)
 from pulsar.apps.test import unittest, mute_failure
 
@@ -186,11 +186,11 @@ class TestEventLoop(unittest.TestCase):
         def simple(a, b):
             return a + b
 
-        d = run_in_loop_thread(event_loop, simple, 1, 2)
+        d = run_in_loop(event_loop, simple, 1, 2)
         self.assertIsInstance(d, Deferred)
         result = yield d
         self.assertEqual(result, 3)
-        d = run_in_loop_thread(event_loop, simple, 1, 'a')
+        d = run_in_loop(event_loop, simple, 1, 'a')
         self.assertIsInstance(d, Deferred)
         try:
             result = yield d

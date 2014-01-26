@@ -1,7 +1,6 @@
 from functools import partial
 
-from pulsar import (in_loop_thread, Protocol, EventHandler,
-                    coroutine_return)
+from pulsar import task, Protocol, EventHandler, coroutine_return
 
 from . import base
 
@@ -56,27 +55,22 @@ class PubSub(base.PubSub):
         else:
             return self.store.execute('PUBSUB', 'CHANNELS')
 
-    @in_loop_thread
     def psubscribe(self, pattern, *patterns):
         return self._subscribe('PSUBSCRIBE', pattern, *patterns)
 
-    @in_loop_thread
     def punsubscribe(self, *channels):
         if self._connection:
             self._connection.execute('PUNSUBSCRIBE', *patterns)
 
-    @in_loop_thread
     def subscribe(self, channel, *channels):
         return self._subscribe('SUBSCRIBE', channel, *channels)
 
-    @in_loop_thread
     def unsubscribe(self, *channels):
         '''Un-subscribe from a list of ``channels``.
         '''
         if self._connection:
             self._connection.execute('UNSUBSCRIBE', *channels)
 
-    @in_loop_thread
     def close(self):
         '''Stop listening for messages.
         '''
@@ -85,6 +79,7 @@ class PubSub(base.PubSub):
             self._connection.execute('UNSUBSCRIBE')
 
     ##    INTERNALS
+    @task
     def _subscribe(self, *args):
         if not self._connection:
             protocol_factory = partial(PubsubProtocol, self,

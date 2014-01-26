@@ -69,7 +69,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import coroutine_return, Pool, Future, in_loop_thread
+from pulsar import coroutine_return, Pool, Future, task
 from pulsar.apps.socket import UdpSocketServer
 
 
@@ -151,7 +151,7 @@ class Echo(pulsar.AbstractUdpClient):
         The event loop used by the client IO requests.
 
         The event loop is stored at this attribute so that asynchronous
-        method decorators such as :func:`.in_loop_thread` can be used.
+        method decorators such as :func:`.task` can be used.
 
     .. attribute:: address
 
@@ -171,7 +171,7 @@ class Echo(pulsar.AbstractUdpClient):
     def create_endpoint(self):
         return self.create_datagram_endpoint(remote_addr=self.address)
 
-    @in_loop_thread
+    @task
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 

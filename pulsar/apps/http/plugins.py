@@ -6,7 +6,7 @@ from copy import copy
 from pulsar import Future
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
-from pulsar.async.stream import SocketStreamSslTransport
+from pulsar.utils.internet import is_tls
 from pulsar.utils.httpurl import (REDIRECT_CODES, urlparse, urljoin,
                                   requote_uri, SimpleCookie)
 
@@ -159,8 +159,7 @@ class Tunneling:
             if tunnel:
                 if getattr(request, '_apply_tunnel', False):
                     # if transport is not SSL already
-                    if not isinstance(response.transport,
-                                      SocketStreamSslTransport):
+                    if not is_tls(response.transport.get_extra_info('socket')):
                         response._request = tunnel
                         response.bind_event('on_headers', self.on_headers)
                 else:

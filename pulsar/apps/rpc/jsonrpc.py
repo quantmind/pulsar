@@ -2,7 +2,7 @@ import sys
 from functools import partial
 import logging
 
-from pulsar import multi_async, in_loop_thread, coroutine_return
+from pulsar import multi_async, task, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -192,7 +192,7 @@ class JsonProxy(object):
         func = getattr(self, func)
         return multi_async((func(*args, **kwargs) for t in range(times)))
 
-    @in_loop_thread
+    @task
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')

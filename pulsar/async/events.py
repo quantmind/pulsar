@@ -4,7 +4,7 @@ from functools import partial
 from pulsar.utils.pep import iteritems
 
 from .futures import Future, maybe_async, InvalidStateError
-from .access import AsyncObject, get_request_loop
+from .access import AsyncObject
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']
@@ -96,8 +96,6 @@ class OneTime(Future, AbstractEvent):
             if self._fired:
                 raise InvalidStateError('already fired')
             self._fired = 1
-            if self._loop is None:
-                self._loop = get_request_loop()
             self._process(arg, exc, kwargs)
         return self
 
@@ -154,7 +152,10 @@ class EventHandler(AsyncObject):
 
         If no event is registered for ``name`` returns nothing.
         '''
-        return self._events.get(name)
+        event = self._events.get(name)
+        if event:
+            event._loop = self._loop
+        return event
 
     def bind_event(self, name, callback):
         '''Register a ``callback`` with ``event``.

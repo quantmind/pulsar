@@ -1,29 +1,31 @@
 import sys
 import traceback
 import types
+import asyncio
 from collections import deque, namedtuple, Mapping
-from inspect import isgenerator, istraceback
+from inspect import isgeneratorfunction
 from functools import wraps, partial
 
 from pulsar.utils.pep import iteritems, default_timer
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (get_request_loop, get_event_loop, logger, asyncio,
+from .access import (get_request_loop, get_event_loop, logger,
                      _PENDING, _CANCELLED, _FINISHED)
-from .fallbacks.coro import CoroutineReturn, coroutine_return
 
 
 CancelledError = asyncio.CancelledError
 TimeoutError = asyncio.TimeoutError
 InvalidStateError = asyncio.InvalidStateError
 Future = asyncio.Future
-ASYNC_OBJECTS = (Future, types.GeneratorType)
+GeneratorType = types.GeneratorType
+ASYNC_OBJECTS = (Future, GeneratorType)
 
 __all__ = ['Future',
            'CancelledError',
            'TimeoutError',
            'InvalidStateError',
            'FutureTypeError',
+           'Return',
            'coroutine_return',
            'add_async_binding',
            'maybe_async',
@@ -34,12 +36,37 @@ __all__ = ['Future',
            'task_callback',
            'multi_async',
            'async_while',
-           'run_in_loop_thread',
            'in_loop',
-           'in_loop_thread',
+           'task',
            'raise_error_and_log',
            'chain_future',
            'ASYNC_OBJECTS']
+
+
+if hasattr(asyncio, 'Return'):
+    Return = asyncio.Return
+
+else:
+
+    class Return(StopIteration):
+
+        def __init__(self, *value):
+            StopIteration.__init__(self)
+            if not value:
+                self.value = None
+            elif len(value) == 1:
+                self.value = value[0]
+            else:
+                self.value = value
+            self.raised = False
+
+        def __del__(self):
+            if not self.raised:
+                logger().error('Return(%r) used without raise', self.value)
+
+
+def coroutine_return(*value):
+    raise Return(*value)
 
 
 def add_errback(future, callback):
@@ -64,9 +91,24 @@ def add_callback(future, callback):
     future.add_done_callback(_call_back)
 
 
-def chain_future(future, callback=None, next=None):
+def future_timeout(future, timeout, exc_class=None):
+
+    exc_class = exc_class or TimeoutError
+
+    def _check_timeout():
+        if not future.done():
+            future.set_exception(exc_class())
+
+    future._loop.call_later(timeout, _check_timeout)
+
+
+def chain_future(future, callback=None, next=None, timeout=None):
     if next is None:
         next = Future(loop=future._loop)
+        if timeout and timeout > 0:
+            future_timeout(next, timeout)
+    else:
+        assert timeout is None
 
     def _callback(fut):
         try:
@@ -83,17 +125,6 @@ def chain_future(future, callback=None, next=None):
 
     future.add_done_callback(_callback)
     return next
-
-
-def future_timeout(future, timeout, exc_class=None):
-
-    exc_class = exc_class or TimeoutError
-
-    def _check_timeout():
-        if not future.done():
-            future.set_exception(exc_class())
-
-    future._loop.call_later(timeout, _check_timeout)
 
 
 def as_exception(fut):
@@ -122,6 +153,8 @@ class Task(asyncio.Task):
     The callback will occur once the coroutine has finished
     (when it raises StopIteration), or an unhandled exception occurs.
     '''
+    _current_tasks = {}
+
     def _step(self, value=None, error=None):
         __skip_traceback__ = True
         assert not self.done(), \
@@ -146,6 +179,9 @@ class Task(asyncio.Task):
                 result = async(result, self._loop)
             except FutureTypeError:
                 pass
+        except Return as exc:
+            exc.raised = True
+            self.set_result(exc.value)
         except StopIteration as e:
             self.set_result(getattr(e, 'value', None))
         except Exception as exc:
@@ -204,10 +240,10 @@ class AsyncBindings:
                     return d
         if isinstance(coro_or_future, Future):
             return coro_or_future
-        elif isgenerator(coro_or_future):
+        elif isinstance(coro_or_future, GeneratorType):
             loop = loop or get_request_loop()
             task_factory = getattr(loop, 'task_factory', Task)
-            return task_factory(coro_or_future, loop)
+            return task_factory(coro_or_future, loop=loop)
         else:
             raise FutureTypeError
 
@@ -285,25 +321,44 @@ def async_while(timeout, while_clause, *args):
     return async(_(), loop)
 
 
-def run_in_loop_thread(loop, callback, *args, **kwargs):
+def task(method):
+    '''Decorator to run a ``method`` returning a coroutine in the event loop
+    of the instance of the bound ``method``.
+
+    The instance must be an :ref:`async object <async-object>`.
+    '''
+    assert isgeneratorfunction(method)
+
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        loop = self._loop
+        task_factory = getattr(loop, 'task_factory', Task)
+        future = task_factory(method(self, *args, **kwargs), loop=loop)
+        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+            return loop.run_until_complete(future)
+        else:
+            return future
+
+    return _
+
+
+def run_in_loop(loop, callback, *args, **kwargs):
     '''Run ``callable`` in the event ``loop`` thread.
 
     Return a :class:`.Future`
     '''
-    d = Future(loop)
-
     def _():
+        result = callback(*args, **kwargs)
         try:
-            result = yield callback(*args, **kwargs)
-        except Exception as exc:
-            d.set_exception(exc)
+            future = async(result, loop=loop)
+        except FutureTypeError:
+            coroutine_return(result)
         else:
-            d.set_result(result)
+            result = yield future
+            coroutine_return(result)
 
-    loop.call_soon_threadsafe(_)
-    if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
-        return loop.run_until_complete(d)
-    return d
+    return getattr(loop, 'task_factory', Task)(_(), loop=loop)
+
 
 
 def in_loop(method):
@@ -314,26 +369,7 @@ def in_loop(method):
     '''
     @wraps(method)
     def _(self, *args, **kwargs):
-        result = method(self, *args, **kwargs)
-        return maybe_async(result, self._loop)
-
-    return _
-
-
-def in_loop_thread(method):
-    '''Decorator to run a method in the thread of the event loop
-    of the instance of the bound ``method``.
-
-    This decorator turns ``method`` into a thread-safe asynchronous
-    executor.
-
-    The instance must be an :ref:`async object <async-object>`.
-
-    It uses the :func:`run_in_loop_thread` function.
-    '''
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        return run_in_loop_thread(self._loop, method, self, *args, **kwargs)
+        return run_in_loop(self._loop, method, self, *args, **kwargs)
 
     return _
 

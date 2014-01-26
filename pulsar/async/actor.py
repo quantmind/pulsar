@@ -49,8 +49,7 @@ def send(target, action, *args, **params):
 
     Typical example::
 
-        >>> a = spawn()
-        >>> r = a.add_callback(lambda p: send(p,'ping'))
+        >>> r = send(p,'ping')
         >>> r.result()
         'pong'
     '''
@@ -388,7 +387,7 @@ This method is invoked when you run the
                  'is_process': isp,
                  'age': self.impl.age}
         events = {'callbacks': len(self._loop._ready),
-                  'io_loops': self._loop.num_loops}
+                  'scheduled': len(self._loop._scheduled)}
         data = {'actor': actor,
                 'events': events,
                 'extra': self.extra}

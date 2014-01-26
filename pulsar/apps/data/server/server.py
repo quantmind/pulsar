@@ -294,7 +294,7 @@ class Storage(object):
             self.lua = None
             self.version = '2.4.10'
         self._loaddb()
-        self._loop.call_repeatedly(1, self._cron)
+        pulsar.call_repeatedly(self._loop, 1, self._cron)
 
     ###########################################################################
     ##    KEYS COMMANDS

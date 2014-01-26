@@ -230,6 +230,7 @@ def configured_logger(logger, config=None, level=None, handlers=None):
             logconfig['disable_existing_loggers'] = False
             logconfig.pop('loggers', None)
             logconfig.pop('root', None)
+
         if level is None:
             level = logging.NOTSET
         else:

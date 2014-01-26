@@ -79,8 +79,7 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import (coroutine_return, Pool, in_loop_thread, Connection,
-                    AbstractClient)
+from pulsar import coroutine_return, Pool, task, Connection, AbstractClient
 from pulsar.apps.socket import SocketServer
 
 
@@ -154,7 +153,7 @@ class Echo(AbstractClient):
         The event loop used by the client IO requests.
 
         The event loop is stored at this attribute so that asynchronous
-        method decorators such as :func:`.in_loop_thread` can be used.
+        method decorators such as :func:`.task` can be used.
 
     .. attribute:: address
 
@@ -183,7 +182,7 @@ class Echo(AbstractClient):
     def connect(self):
         return self.create_connection(self.address)
 
-    @in_loop_thread
+    @task
     def __call__(self, message):
         '''Send a ``message`` to the server and wait for a response.
 

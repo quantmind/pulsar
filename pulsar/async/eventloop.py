@@ -5,24 +5,16 @@ import errno
 from types import GeneratorType
 from heapq import heappop, heappush
 from threading import current_thread, Lock
-try:
-    import signal
-except ImportError:     # pragma    nocover
-    signal = None
 
 from pulsar.utils.system import close_on_exec
 from pulsar.utils.pep import range
 from pulsar.utils.exceptions import ImproperlyConfigured
 
-from .access import asyncio, thread_data, LOGGER, _StopError
+from .access import asyncio, BaseEventLoop, thread_data, LOGGER
 from .futures import Future, maybe_async, async, Task
-from .stream import (create_connection, start_serving, sock_connect,
-                     raise_socket_error)
-from .udp import create_datagram_endpoint
-from .consts import DEFAULT_CONNECT_TIMEOUT
-from .pollers import DefaultIO
 
-__all__ = ['EventLoop']
+
+__all__ = ['EventLoop', 'call_repeatedly']
 
 
 def file_descriptor(fd):
@@ -37,6 +29,11 @@ def setid(self):
     self.tid = ct.ident
     self.pid = os.getpid()
     return ct
+
+
+def set_as_loop(loop):
+    if loop._iothreadloop:
+        asyncio.set_event_loop(loop)
 
 
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
@@ -54,7 +51,7 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
         """Set the event loop."""
         assert event_loop is None or isinstance(event_loop,
                                                 asyncio.AbstractEventLoop)
-        if getattr(event_loop, 'cpubound', False):
+        if isinstance(event_loop, QueueEventLoop):
             thread_data('_request_loop', event_loop)
         else:
             thread_data('_event_loop', event_loop)
@@ -62,10 +59,6 @@ class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
 
 asyncio.set_event_loop_policy(EventLoopPolicy())
 
-if not getattr(asyncio, 'fallback', False):
-    from asyncio.base_events import BaseEventLoop
-else:   # pragma    nocover
-    BaseEventLoop = asyncio.BaseEventLoop
 
 Handle = asyncio.Handle
 TimerHandle = asyncio.TimerHandle
@@ -127,7 +120,27 @@ class LoopingCall(object):
             self._continue()
 
 
-class EventLoop(BaseEventLoop):
+class QueueTask(Task):
+
+    def _wakeup(self, fut, inthread=False):
+        if inthread or fut._loop is self._loop:
+            self._wakeup(fut)
+        else:
+            self._loop.call_soon(self._wakeup, fut, True)
+
+
+class QueueEventLoop(BaseEventLoop):
+    task_factory = QueueTask
+
+    def __init__(self, ioqueue, iothreadloop=False, logger=None):
+        super(QueueEventLoop, self).__init__()
+        self._iothreadloop = iothreadloop
+        self._ioqueue = ioqueue
+        self.logger = logger or LOGGER
+        self.call_soon(set_as_loop, self)
+
+
+class EventLoop(asyncio.SelectorEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API.
 
     The event loop is the place where most asynchronous operations
@@ -146,30 +159,13 @@ class EventLoop(BaseEventLoop):
         event loop is not running this attribute is ``None``.
 
     """
-    poll_timeout = 0.5
-    tid = None
-    pid = None
-    exit_signal = None
     task_factory = Task
 
-    def __init__(self):
-        self.clear()
-
-    def setup_loop(self, io=None, logger=None, poll_timeout=None,
-                   iothreadloop=False, noisy=False, debug=False):
-        self._io = io or DefaultIO()
-        self._signal_handlers = {}
-        self.poll_timeout = poll_timeout if poll_timeout else self.poll_timeout
-        self.noisy = noisy
-        self.debug = debug
-        self.logger = logger or LOGGER
-        close_on_exec(self._io.fileno())
+    def __init__(self, selector=None, iothreadloop=False, logger=None):
+        super(EventLoop, self).__init__(selector)
         self._iothreadloop = iothreadloop
-        self._name = None
-        self._num_loops = 0
-        self._default_executor = None
-        self._waker = self._io.install_waker(self)
-        self._lock = Lock()
+        self.logger = logger or LOGGER
+        self.call_soon(set_as_loop, self)
 
     def __repr__(self):
         return self.name
@@ -177,398 +173,16 @@ class EventLoop(BaseEventLoop):
 
     @property
     def name(self):
-        name = self._name if self._name else '<not running>'
-        cpu = 'CPU bound ' if self.cpubound else ''
-        return '%s%s %s' % (cpu, name, self.logger.name)
-
-    @property
-    def io(self):
-        '''The :class:`Poller` for this event loop. If not supplied,
-        the best possible implementation available will be used. On posix
-        system this is ``epoll`` or ``kqueue`` (Mac OS)
-        or else ``select``.'''
-        return self._io
-
-    @property
-    def iothreadloop(self):
-        '''``True`` if this :class:`EventLoop` install itself as the event
-loop of the thread where it is run.'''
-        return self._iothreadloop
-
-    @property
-    def cpubound(self):
-        '''If ``True`` this is a CPU bound event loop, otherwise it is an I/O
-        event loop. CPU bound loops can block the loop for considerable amount
-        of time.'''
-        return getattr(self._io, 'cpubound', False)
-
-    @property
-    def running(self):
-        return bool(self._name)
-
-    @property
-    def active(self):
-        return bool(self._ready or self._scheduled)
-
-    @property
-    def num_loops(self):
-        '''Total number of loops.'''
-        return self._num_loops
-
-    #################################################    STARTING & STOPPING
-    def run(self):
-        '''Run the event loop until nothing left to do or stop() called.'''
-        if not self.running:
-            self._before_run()
-            try:
-                while self.active:
-                    try:
-                        self._run_once()
-                    except _StopError:
-                        break
-            finally:
-                self._after_run()
-
-    def run_forever(self):
-        '''Run the event loop forever.'''
-        if not self.running:
-            self._before_run()
-            try:
-                while True:
-                    try:
-                        self._run_once()
-                    except _StopError:
-                        break
-            finally:
-                self._after_run()
-
-    def is_running(self):
-        '''``True`` if the loop is running.'''
-        return bool(self._name)
-
-    def run_in_executor(self, executor, callback, *args):
-        '''Arrange to call ``callback(*args)`` in an ``executor``.
-
-        Return a :class:`.Future` called once the callback has finished.'''
-        executor = executor or self._default_executor
-        if executor is None:
-            raise ImproperlyConfigured('No executor available')
-        return executor.apply(callback, *args)
-
-    def call_at(self, when, callback, *args):
-        '''Like call_later(), but uses an absolute time.
-
-        This method is thread safe.
-        '''
-        timer = TimerHandle(when, callback, args)
-        with self._lock:
-            heappush(self._scheduled, timer)
-        return timer
-
-    #################################################    INTERNET NAME LOOKUPS
-    def getaddrinfo(self, host, port, family=0, type=0, proto=0, flags=0):
-        a = socket.getaddrinfo(host, port, family, type, proto, flags)
-        f = Future()
-        f.set_result(a)
-        return f
-
-    def getnameinfo(self, sockaddr, flags=0):
-        a = socket.getnameinfo(sockaddr, flags)
-        f = Future()
-        f.set_result(a)
-        return f
-
-    #################################################    I/O CALLBACKS
-    def add_reader(self, fd, callback, *args):
-        """Add a reader callback.  Return a Handler instance."""
-        handler = Handle(callback, args)
-        self._io.add_reader(file_descriptor(fd), handler)
-        return handler
-
-    def add_writer(self, fd, callback, *args):
-        """Add a reader callback.  Return a Handler instance."""
-        handler = Handle(callback, args)
-        self._io.add_writer(file_descriptor(fd), handler)
-        return handler
-
-    def add_connector(self, fd, callback, *args):
-        '''Add a connector callback. Return a Handler instance.'''
-        handler = Handle(callback, args)
-        fd = file_descriptor(fd)
-        self._io.add_writer(fd, handler)
-        self._io.add_error(fd, handler)
-        return handler
-
-    def remove_reader(self, fd):
-        '''Cancels the current read handler for file descriptor ``fd``.
-
-        A no-op if no callback is currently set for the file descriptor.'''
-        return self._io.remove_reader(file_descriptor(fd))
-
-    def remove_writer(self, fd):
-        '''Cancels the current write callback for file descriptor ``fd``.
-
-        A no-op if no callback is currently set for the file descriptor.
-        '''
-        return self._io.remove_writer(file_descriptor(fd))
-
-    def remove_connector(self, fd):
-        fd = file_descriptor(fd)
-        w = self._io.remove_writer(fd)
-        e = self._io.remove_error(fd)
-        return w or e
-
-    #################################################    SIGNAL CALLBACKS
-    def add_signal_handler(self, sig, callback, *args):
-        '''Add a signal handler.
-
-        Whenever signal ``sig`` is received, arrange for `callback(*args)` to
-        be called. Returns an ``asyncio Handle`` which can be used to
-        cancel the signal callback.
-        '''
-        self._check_signal(sig)
-        handle = Handle(callback, args)
-        self._signal_handlers[sig] = handle
-        try:
-            signal.signal(sig, self._handle_signal)
-        except OSError as exc:
-            del self._signal_handlers[sig]
-            if not self._signal_handlers:
-                try:
-                    signal.set_wakeup_fd(-1)
-                except ValueError as nexc:
-                    self.logger.info('set_wakeup_fd(-1) failed: %s', nexc)
-            if exc.errno == errno.EINVAL:
-                raise RuntimeError('sig {} cannot be caught'.format(sig))
-            else:
-                raise
-
-    def remove_signal_handler(self, sig):
-        '''Remove the signal ``sig`` if it was installed and reinstal the
-default signal handler ``signal.SIG_DFL``.'''
-        self._check_signal(sig)
-        try:
-            del self._signal_handlers[sig]
-        except KeyError:
-            return False
-
-        if sig == signal.SIGINT:
-            handler = signal.default_int_handler
+        if self.is_running():
+            return self.__class__.__name__
         else:
-            handler = signal.SIG_DFL
+            return '%s <not running>' % self.__class__.__name__
 
-        try:
-            signal.signal(sig, handler)
-        except OSError as exc:
-            if exc.errno == errno.EINVAL:
-                raise RuntimeError('sig {} cannot be caught'.format(sig))
-            else:
-                raise
 
-        if not self._signal_handlers:
-            try:
-                signal.set_wakeup_fd(-1)
-            except ValueError as exc:
-                self.logger.info('set_wakeup_fd(-1) failed: %s', exc)
-
-        return True
-
-    def _handle_signal(self, sig, frame):
-        """Internal helper that is the actual signal handler."""
-        handle = self._signal_handlers.get(sig)
-        if handle is None:
-            return  # Assume it's some race condition.
-        if handle._cancelled:
-            self.remove_signal_handler(sig)  # Remove it properly.
-        else:
-            handle._callback(*handle._args)
-
-    #################################################    SOCKET METHODS
-    def create_connection(self, protocol_factory, host=None, port=None,
-                          ssl=None, family=0, proto=0, flags=0, sock=None,
-                          local_addr=None, timeout=None):
-        '''Creates a stream connection to a given internet host and port.
-
-        It is the asynchronous equivalent of ``socket.create_connection``.
-
-        :param protocol_factory: The callable to create the
-            :class:`Protocol` which handle the connection.
-        :param host: If host is an empty string or None all interfaces are
-            assumed and a list of multiple sockets will be returned (most
-            likely one for IPv4 and another one for IPv6)
-        :param port:
-        :param ssl:
-        :param family:
-        :param proto:
-        :param flags:
-        :param sock:
-        :param local_addr: if supplied, it must be a 2-tuple
-            ``(host, port)`` for the socket to bind to as its source address
-            before connecting.
-        :return: a :class:`.Future` and its result on success is the
-            ``(transport, protocol)`` pair.
-
-        If a failure prevents the creation of a successful connection, an
-        appropriate exception will be raised.
-        '''
-        timeout = timeout or DEFAULT_CONNECT_TIMEOUT
-        res = create_connection(self, protocol_factory, host, port,
-                                ssl, family, proto, flags, sock, local_addr)
-        return async(res, self)
-
-    def create_server(self, protocol_factory, host=None, port=None, ssl=None,
-                      family=socket.AF_UNSPEC, flags=socket.AI_PASSIVE,
-                      sock=None, backlog=100, reuse_address=None):
-        """Creates a TCP server bound to ``host`` and ``port``.
-
-        :param protocol_factory: The :class:`Protocol` which handle server
-            requests.
-        :param host: If host is an empty string or None all interfaces are
-            assumed and a list of multiple sockets will be returned (most
-            likely one for IPv4 and another one for IPv6).
-        :param port: integer indicating the port number.
-        :param ssl: can be set to an SSLContext to enable SSL over
-            the accepted connections.
-        :param family: socket family can be set to either ``AF_INET`` or
-            ``AF_INET6`` to force the socket to use IPv4 or IPv6.
-            If not set it will be determined from host (defaults to
-            ``AF_UNSPEC``).
-        :param flags: is a bitmask for :meth:`getaddrinfo`.
-        :param sock: can optionally be specified in order to use a
-            pre-existing socket object.
-        :param backlog: is the maximum number of queued connections
-            passed to listen() (defaults to 100).
-        :param reuse_address: tells the kernel to reuse a local socket in
-            ``TIME_WAIT`` state, without waiting for its natural timeout to
-            expire. If not specified will automatically be set to ``True``
-            on UNIX.
-        :return: a :class:`.Future` whose result will be a list of socket
-            objects which will later be handled by ``protocol_factory``.
-        """
-        res = start_serving(self, protocol_factory, host, port, ssl,
-                            family, flags, sock, backlog, reuse_address)
-        return async(res, self)
-
-    def create_datagram_endpoint(self, protocol_factory, local_addr=None,
-                                 remote_addr=None, family=socket.AF_UNSPEC,
-                                 proto=0, flags=0):
-        '''Creates an endpoint for sending and receiving datagrams.
-
-        Datagrams are typically UDP packets, and because of the nature of
-        their traffic, there are no separate calls to set up client and
-        server side, since usually a single endpoint acts as either.
-
-        :return: a :class:`.Future` whose result will be a list of socket
-            objects which will later be handled by ``protocol_factory``.
-        '''
-        res = create_datagram_endpoint(self, protocol_factory, local_addr,
-                                       remote_addr, family, proto, flags)
-        return async(res, self)
-
-    def sock_connect(self, sock, address):
-        '''Connect ``sock`` to the given ``address``.
-
-        Returns a :class:`.Future` whose result on success will be ``None``.
-        '''
-        return sock_connect(self, sock, address)
-
-    #################################################    NON PEP METHODS
-    def clear(self):
-        self._ready = []
-        self._scheduled = []
-
-    def _write_to_self(self):
-        if self.running and self._waker:
-            self._waker.wake()
-
-    def call_repeatedly(self, interval, callback, *args):
-        """Call a ``callback`` every ``interval`` seconds.
-
-        It handles asynchronous results.
-        If an error occur in the ``callback``, the chain is
-        broken and the ``callback`` won't be called anymore.
-        """
-        return LoopingCall(self, callback, args, interval)
-
-    #################################################    INTERNALS
-    def _before_run(self):
-        ct = setid(self)
-        self._name = ct.name
-        if self._iothreadloop:
-            asyncio.set_event_loop(self)
-
-    def _after_run(self):
-        self._name = None
-        self.tid = None
-
-    def _check_signal(self, sig):
-        """Internal helper to validate a signal.
-
-        Raise ValueError if the signal number is invalid or uncatchable.
-        Raise RuntimeError if there is a problem setting up the handler.
-        """
-        if signal is None:  # pragma    nocover
-            raise RuntimeError('Signals are not supported')
-        if not isinstance(sig, int):
-            raise TypeError('sig must be an int, not {!r}'.format(sig))
-        if not (1 <= sig < signal.NSIG):
-            raise ValueError('sig {} out of range(1, {})'.format(sig,
-                                                                 signal.NSIG))
-
-    def _run_once(self, timeout=None):
-        timeout = timeout or self.poll_timeout
-        self._num_loops += 1
-        #
-        # Compute the desired timeout
-        if self._ready:
-            timeout = 0
-        elif self._scheduled:
-            timeout = min(max(0, self._scheduled[0]._when - self.time()),
-                          timeout)
-        # poll events
-        self._poll(timeout)
-        #
-        # append scheduled callback
-        now = self.time()
-        while self._scheduled and self._scheduled[0]._when <= now:
-            self._ready.append(heappop(self._scheduled))
-        #
-        # Run callbacks
-        callbacks, self._ready = self._ready, []
-        for handle in callbacks:
-            exc = None
-            try:
-                if not handle._cancelled:
-                    handle._callback(*handle._args)
-            except socket.error as e:
-                if raise_socket_error(e) and self.running:
-                    self.logger.exception('Unhandled socket exception in '
-                                          'event loop callback.')
-            except Exception as e:
-                self.logger.exception('Unhandled exception in event '
-                                      'loop callback.')
-
-    def _poll(self, timeout):
-        io = self._io
-        try:
-            event_pairs = io.poll(timeout)
-        except Exception as e:
-            if raise_socket_error(e) and self.running:
-                raise
-        else:
-            for fd, events in event_pairs:
-                try:
-                    io.handle_events(self, fd, events)
-                except KeyError:
-                    pass
-
-    def _add_callback(self, handle):
-        """Add a Handle to ready or scheduled."""
-        assert isinstance(handle, Handle), 'A Handle is required here'
-        if handle._cancelled:
-            return
-        if isinstance(handle, TimerHandle):
-            with self._lock:
-                heappush(self._scheduled, handle)
-        else:
-            self._ready.append(handle)
+def call_repeatedly(loop, interval, callback, *args):
+    """Call a ``callback`` every ``interval`` seconds.
+    
+    It handles asynchronous results. If an error occur in the ``callback``,
+    the chain is broken and the ``callback`` won't be called anymore.
+    """
+    return LoopingCall(loop, callback, args, interval)

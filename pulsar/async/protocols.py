@@ -4,7 +4,7 @@ from functools import partial
 import pulsar
 from pulsar.utils.internet import nice_address, format_address
 
-from .futures import multi_async, in_loop, coroutine_return
+from .futures import multi_async, in_loop, task, coroutine_return
 from .events import EventHandler
 from .access import asyncio, get_event_loop, new_event_loop
 
@@ -13,7 +13,8 @@ __all__ = ['ProtocolConsumer',
            'Protocol',
            'Connection',
            'Producer',
-           'TcpServer']
+           'TcpServer',
+           'DatagramServer']
 
 
 BIG = 2**31
@@ -283,16 +284,17 @@ class PulsarProtocol(EventHandler):
     @property
     def closed(self):
         '''``True`` if the :attr:`transport` is closed.'''
-        return self._transport.closing if self._transport else True
+        return self._transport._closing if self._transport else True
 
-    def close(self, async=True, exc=None):
+    def close(self):
         '''Close by closing the :attr:`transport`.'''
         if self._transport:
-            self._transport.close(async=async, exc=exc)
+            self._transport.close()
 
-    def abort(self, exc=None):
+    def abort(self):
         '''Abort by aborting the :attr:`transport`.'''
-        self.close(False, exc)
+        if self._transport:
+            self._transport.abort()
 
     def connection_made(self, transport):
         '''Sets the transport, fire the ``connection_made`` event and adds
@@ -301,10 +303,10 @@ class PulsarProtocol(EventHandler):
         if self._transport is not None:
             self._cancel_timeout()
         self._transport = transport
-        addr = self._transport.get_extra_info('addr')
+        addr = self._transport.get_extra_info('peername')
         if not addr:
             self._type = 'client'
-            addr = self._transport.address
+            addr = self._transport.get_extra_info('sockname')
         self._address = addr
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
@@ -552,7 +554,7 @@ class TcpServer(Producer):
         if self._server is not None:
             return self._server.sockets[0].getsockname()
 
-    @in_loop
+    @task
     def start_serving(self, backlog=100, sslcontext=None):
         '''Start serving.
 
@@ -567,10 +569,16 @@ class TcpServer(Producer):
             create_server = self._loop.create_server
             try:
                 if sockets:
-                    server = yield create_server(self.create_protocol,
-                                                 sock=sockets,
-                                                 backlog=backlog,
-                                                 ssl=sslcontext)
+                    server = None
+                    for sock in sockets:
+                        srv = yield create_server(self.create_protocol,
+                                                  sock=sock,
+                                                  backlog=backlog,
+                                                  ssl=sslcontext)
+                        if server:
+                            server.sockets.extend(srv.sockets)
+                        else:
+                            server = srv
                 else:
                     if isinstance(address, tuple):
                         server = yield create_server(self.create_protocol,
@@ -597,7 +605,7 @@ class TcpServer(Producer):
             server, self._server = self._server, None
             server.close()
 
-    @in_loop
+    @task
     def close(self):
         '''Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
@@ -671,3 +679,93 @@ class TcpServer(Producer):
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return multi_async(all)
+
+
+class DatagramServer(EventHandler):
+    '''An :class:`.EventHandler` for serving UDP sockets.
+
+    .. attribute:: _transports
+
+        A list of :class:`.DatagramTransport`.
+
+        Available once the :meth:`create_endpoint` method has returned.
+    '''
+    _transports = None
+    _started = None
+
+    ONE_TIME_EVENTS = ('start', 'stop')
+    MANY_TIMES_EVENTS = ('pre_request', 'post_request')
+
+    def __init__(self, protocol_factory, loop, address=None,
+                 name=None, sockets=None, max_requests=None):
+        self._loop = loop or get_event_loop() or new_event_loop()
+        super(DatagramServer, self).__init__(self._loop)
+        self.protocol_factory = protocol_factory
+        self._max_requests = max_requests
+        self._requests_processed = 0
+        self._name = name or self.__class__.__name__
+        self._params = {'address': address, 'sockets': sockets}
+
+    @task
+    def create_endpoint(self, **kw):
+        '''create the server endpoint.
+
+        :return: a :class:`.Deferred` called back when the server is
+            serving the socket.'''
+        if hasattr(self, '_params'):
+            address = self._params['address']
+            sockets = self._params['sockets']
+            del self._params
+            try:
+                transports = []
+                if sockets:
+                    for sock in sockets:
+                        proto = self.create_protocol()
+                        transport = DatagramTransport(self._loop, sock, proto)
+                        transports.append(transport)
+                else:
+                    transport, _ = yield self._loop.create_datagram_endpoint(
+                        self.protocol_factory, local_addr=adress)
+                    transports.append(transport)
+                self._transports = transports
+                self._started = self._loop.time()
+                for transport in self._transports:
+                    address = transport._sock.getsockname()
+                    self.logger.info('%s serving on %s', self._name,
+                                     format_address(address))
+                self.fire_event('start')
+            except Exception:
+                self.fire_event('start', sys.exc_info())
+
+    @in_loop
+    def close(self):
+        '''Stop serving the :attr:`.Server.sockets` and close all
+        concurrent connections.
+        '''
+        if self._transports:
+            transports, self._transports = self._transports, None
+            for transport in transports:
+                transport.close()
+            self.fire_event('stop')
+        coroutine_return(self)
+
+    def info(self):
+        sockets = []
+        server = {'pulsar_version': pulsar.__version__,
+                  'python_version': sys.version,
+                  'uptime_in_seconds': int(self._loop.time() - self._started),
+                  'sockets': sockets,
+                  'max_requests': self._max_requests}
+        clients = {'requests_processed': self._requests_processed}
+        if self._transports:
+            for transport in self._transports:
+                sockets.append({
+                    'address': format_address(transport._sock.getsockname())})
+        return {'server': server,
+                'clients': clients}
+
+    def create_protocol(self):
+        '''Override :meth:`Producer.create_protocol`.
+        '''
+        protocol = self.protocol_factory(producer=self)
+        return protocol

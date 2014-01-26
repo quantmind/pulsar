@@ -1,4 +1,4 @@
-from pulsar import EventHandler, coroutine_return, in_loop, InvalidOperation
+from pulsar import EventHandler, coroutine_return, task, InvalidOperation
 from pulsar.utils.pep import iteritems
 from pulsar.utils.structures import OrderedDict
 
@@ -199,7 +199,7 @@ class Transaction(EventHandler):
         else:
             return self._executed
 
-    @in_loop
+    @task
     def _commit(self):
         results = []
         for store, commands in iteritems(self._commands):

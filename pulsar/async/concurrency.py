@@ -7,14 +7,19 @@ from pulsar.utils.security import gen_unique_id
 from pulsar.utils.pep import itervalues
 
 from .proxy import ActorProxyMonitor, get_proxy
-from .access import new_event_loop, get_actor, set_actor, logger, _StopError
+from .access import get_actor, set_actor, logger, _StopError, SELECTORS
 from .threads import Thread
 from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox
 from .futures import multi_async, Future, add_errback
-from .eventloop import signal
+from .eventloop import EventLoop
 from .protocols import TcpServer
-from .pollers import POLLERS
 from .consts import *
+
+
+if sys.platform == 'win32':     # pragma    nocover
+    signal = None
+else:
+    import signal
 
 
 __all__ = ['Concurrency', 'concurrency']
@@ -89,7 +94,7 @@ class Concurrency(object):
         '''Return a IO poller instance which sets the :class:`EventLoop.io`
 handler. By default it return nothing so that the best handler for the
 system is chosen.'''
-        return POLLERS[self.cfg.poller]()
+        return SELECTORS[self.cfg.selector]()
 
     def run_actor(self, actor):
         '''Start running the ``actor``.'''
@@ -208,10 +213,8 @@ class ProcessMixin(object):
         actor.start_coverage()
 
     def setup_event_loop(self, actor):
-        loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
-                              poll_timeout=actor.poll_timeout,
-                              iothreadloop=True, noisy=actor.cfg.noisy,
-                              debug=actor.cfg.debug)
+        loop = EventLoop(self.io_poller(), logger=actor.logger,
+                         iothreadloop=True)
         actor.mailbox = self.create_mailbox(actor, loop)
         proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
         if system.set_proctitle(proc_name):
@@ -350,8 +353,10 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             self._exit_arbiter(actor)
         else:
             actor.logger.debug('Restarts event loop to stop actors')
-            actor._loop.clear()
-            actor._loop.call_soon_threadsafe(self._exit_arbiter, actor)
+            loop = actor._loop
+            loop._ready.clear()
+            loop._scheduled[:] = []
+            actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)
 
     def _exit_arbiter(self, actor, fut=None):
@@ -411,10 +416,8 @@ class ActorThread(Concurrency, Thread):
 
     def setup_event_loop(self, actor):
         '''Create the event loop but don't install signals.'''
-        loop = new_event_loop(io=self.io_poller(), logger=actor.logger,
-                              poll_timeout=actor.poll_timeout,
-                              iothreadloop=True, noisy=actor.cfg.noisy,
-                              debug=actor.cfg.debug)
+        loop = EventLoop(self.io_poller(), logger=actor.logger,
+                         iothreadloop=True)
         actor.mailbox = self.create_mailbox(actor, loop)
 
 

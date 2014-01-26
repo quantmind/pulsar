@@ -1,20 +1,17 @@
+import os
 import threading
 import logging
+from collections import OrderedDict
 from threading import current_thread
 from multiprocessing import current_process
 
-try:
-    import asyncio
-    from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
-    from asyncio.base_events import _StopError
-except ImportError:  # pragma    nocover
-    from .fallbacks import asyncio
-    _PENDING = asyncio._PENDING
-    _CANCELLED = asyncio._CANCELLED
-    _FINISHED = asyncio._FINISHED
-    _StopError = asyncio._StopError
+import asyncio
+from asyncio.futures import _PENDING, _CANCELLED, _FINISHED
+from asyncio.base_events import BaseEventLoop, _StopError
 
-from .fallbacks.tracelogger import format_traceback
+from pulsar.utils.config import Global
+
+from .tracelogger import format_traceback
 
 
 __all__ = ['get_request_loop',
@@ -27,13 +24,39 @@ __all__ = ['get_request_loop',
            'thread_data',
            'logger',
            'NOTHING',
+           'SELECTORS',
            'AsyncObject',
            'format_traceback']
 
 
 LOGGER = logging.getLogger('pulsar')
 NOTHING = object()
+SELECTORS = OrderedDict()
 
+for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
+    name = '%sSelector' % selector
+    selector_class = getattr(asyncio.selectors, name, None)
+    if selector_class:
+        SELECTORS[selector.lower()] = selector_class
+
+
+if os.environ.get('BUILDING-PULSAR-DOCS') == 'yes':     # pragma nocover
+    default_selector = 'epoll on linux, kqueue on mac, select on windows'
+else:
+    default_selector = tuple(SELECTORS)[0]
+
+
+class PollerSetting(Global):
+    name = "selector"
+    flags = ["--io"]
+    choices = tuple(SELECTORS)
+    default = default_selector
+    desc = """\
+        Specify the default selector used for I/O event polling.
+
+        The default value is the best possible for the system running the
+        application.
+        """
 
 get_event_loop = asyncio.get_event_loop
 

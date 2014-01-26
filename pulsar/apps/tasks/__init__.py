@@ -195,7 +195,7 @@ class TaskQueue(pulsar.Application):
         if not exc:
             self.get_backend().start(worker)
 
-    def worker_stopping(self, worker):
+    def worker_stopping(self, worker, exc=None):
         if self.backend:
             self.backend.close(worker)
 

@@ -223,7 +223,7 @@ class SocketServer(pulsar.Application):
         for sock in server.sockets:
             addresses.append(sock.getsockname())
             sockets.append(WrapSocket(sock))
-        server.close()
+            server.loop.remove_reader(sock.fileno())
         monitor.sockets = sockets
         monitor.ssl = ssl
         cfg.addresses = addresses

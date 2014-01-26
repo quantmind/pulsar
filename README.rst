@@ -56,6 +56,8 @@ a combination of the two.
 Installing
 ============
 
+For python 2.7 it requires trollius_.
+
 Pulsar is a stand alone python library and it can be installed via `pip`::
 
     pip install pulsar
@@ -208,3 +210,4 @@ file in the top distribution directory for the full license text.
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
 .. _pep8: http://www.python.org/dev/peps/pep-0008/
 .. _ujson: https://pypi.python.org/pypi/ujson
+.. _trollius: https://pypi.python.org/pypi/trollius

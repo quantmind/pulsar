@@ -89,8 +89,8 @@ import time
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (in_loop, async, EventHandler, PulsarException,
-                    Future, coroutine_return,
+from pulsar import (task, async, EventHandler, PulsarException,
+                    Future, coroutine_return, ASYNC_OBJECTS,
                     get_request_loop, raise_error_and_log)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
@@ -109,6 +109,7 @@ task_backends = {}
 
 if hasattr(timedelta, "total_seconds"):
     timedelta_seconds = lambda delta: max(delta.total_seconds(), 0)
+
 else:   # pragma    nocover
     def timedelta_seconds(delta):
         if delta.days < 0:
@@ -345,7 +346,7 @@ class TaskBackend(object):
     def channel(self, name):
         return '%s_%s' % (self.name, name)
 
-    @in_loop
+    @task
     def queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
         '''Try to queue a new :ref:`Task`.
 
@@ -363,7 +364,34 @@ class TaskBackend(object):
             in the task callable.
         :return: a :class:`.Future` resulting in a task id on success.
         '''
-        return self._queue_task(jobname, meta_params, expiry, **kwargs)
+        pubsub = self.pubsub()
+        if jobname in self.registry:
+            job = self.registry[jobname]
+            task_id, lock_id = self.generate_task_ids(job, kwargs)
+            queued = time.time()
+            if expiry is not None:
+                expiry = get_time(expiry, queued)
+            elif job.timeout:
+                expiry = get_time(job.timeout, queued)
+            meta_params = meta_params or {}
+            task = self.models.task(id=task_id, lock_id=lock_id, name=job.name,
+                                    time_queued=queued, expiry=expiry,
+                                    kwargs=kwargs, status=states.QUEUED)
+            if meta_params:
+                task.update(meta_params)
+            task = yield self.maybe_queue_task(task)
+            if task:
+                pubsub.publish(self.channel('task_queued'), task['id'])
+                scheduled = self.entries.get(job.name)
+                if scheduled:
+                    scheduled.next()
+                self.logger.debug('queued %s', task.lazy_info())
+                coroutine_return(task['id'])
+            else:
+                self.logger.debug('%s cannot queue new task. Locked', jobname)
+                coroutine_return()
+        else:
+            raise_error_and_log(TaskNotAvailable(jobname), level='warning')
 
     def bind_event(self, name, handler):
         self.events.bind_event(self.channel(name), handler)
@@ -488,36 +516,6 @@ class TaskBackend(object):
     ########################################################################
     ##    PRIVATE METHODS
     ########################################################################
-    def _queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
-        pubsub = self.pubsub()
-        if jobname in self.registry:
-            job = self.registry[jobname]
-            task_id, lock_id = self.generate_task_ids(job, kwargs)
-            queued = time.time()
-            if expiry is not None:
-                expiry = get_time(expiry, queued)
-            elif job.timeout:
-                expiry = get_time(job.timeout, queued)
-            meta_params = meta_params or {}
-            task = self.models.task(id=task_id, lock_id=lock_id, name=job.name,
-                                    time_queued=queued, expiry=expiry,
-                                    kwargs=kwargs, status=states.QUEUED)
-            if meta_params:
-                task.update(meta_params)
-            task = yield self.maybe_queue_task(task)
-            if task:
-                pubsub.publish(self.channel('task_queued'), task['id'])
-                scheduled = self.entries.get(job.name)
-                if scheduled:
-                    scheduled.next()
-                self.logger.debug('queued %s', task.lazy_info())
-                coroutine_return(task['id'])
-            else:
-                self.logger.debug('%s cannot queue new task. Locked', jobname)
-                coroutine_return()
-        else:
-            raise_error_and_log(TaskNotAvailable(jobname), level='warning')
-
     def tick(self, now=None):
         #Run a tick, that is one iteration of the scheduler.
         if not self.schedule_periodic:
@@ -584,6 +582,7 @@ class TaskBackend(object):
         else:
             return (jobnames, None)
 
+    @task
     def may_pool_task(self, worker):
         #Called in the ``worker`` event loop.
         #
@@ -638,7 +637,11 @@ class TaskBackend(object):
                                       worker=worker.aid)
                     yield self.models.task.update(task)
                     pubsub.publish(self.channel('task_started'), task_id)
-                    result = yield job(consumer, **kwargs)
+                    # This may block for a while
+                    result = job(consumer, **kwargs)
+                    # or not
+                    if isinstance(result, ASYNC_OBJECTS):
+                        result = yield result
                     status = states.SUCCESS
             else:
                 self.logger.error('invalid status for %s', task_info)
@@ -678,7 +681,6 @@ class TaskBackend(object):
             entries[name] = SchedulerEntry(name, every, task.anchor)
         return entries
 
-    @in_loop
     def task_done_callback(self, task_id, exc=None):
         # Got a task_id from the ``<name>_task_done`` channel.
         # Check if a ``callback`` is available in the :attr:`callbacks`

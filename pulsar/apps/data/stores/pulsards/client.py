@@ -175,14 +175,13 @@ class Consumer(pulsar.ProtocolConsumer):
         request = self._request
         if len(request) == 2:
             if response is not False:
+                event = self.event('post_request')
                 if not isinstance(response, Exception):
                     cmnd = request[0][0]
                     response = self.parse_response(response, cmnd, request[1])
-                    if response is None:
-                        self.bind_event('post_request', lambda r: None)
                 else:
                     response = ResponseError(response)
-                self.finished(response)
+                event.fire(response)
         else:   # pipeline
             commands, raise_on_error, responses = request
             error = None
