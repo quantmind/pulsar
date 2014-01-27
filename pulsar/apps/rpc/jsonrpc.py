@@ -2,7 +2,7 @@ import sys
 from functools import partial
 import logging
 
-from pulsar import multi_async, task, coroutine_return
+from pulsar import multi_async, task, maybe_async, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -42,9 +42,10 @@ class JSONRPC(RpcHandler):
         response = request.response
         data = {}
         exc_info = None
+        callable = None
         try:
             try:
-                data = yield request.body_data()
+                data = yield maybe_async(request.body_data(), async=True)
             except ValueError:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')
@@ -59,7 +60,8 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             callable = self.get_handler(data.get('method'))
-            result = yield callable(request, *args, **kwargs)
+            result = yield maybe_async(callable(request, *args, **kwargs),
+                                       async=True)
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -67,7 +69,8 @@ class JSONRPC(RpcHandler):
         res = {'id': data.get('id'), "jsonrpc": self.version}
         if isinstance(result, Exception):
             code = getattr(result, 'fault_code', -32603)
-            if isinstance(result, TypeError):
+            msg = None
+            if isinstance(result, TypeError) and callable:
                 msg = checkarity(callable, args, kwargs, discount=1)
             msg = msg or str(result) or 'JSON RPC exception'
             if code == -32603:

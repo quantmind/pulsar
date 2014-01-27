@@ -979,7 +979,8 @@ class HttpClient(AbstractClient):
     def request(self, method, url, **params):
         '''Constructs and sends a request to a remote server.
 
-        It returns an :class:`HttpResponse` object.
+        It returns a :class:`.Future` which results in a
+        :class:`HttpResponse` object.
 
         :param method: request method for the :class:`HttpRequest`.
         :param url: URL for the :class:`HttpRequest`.
@@ -989,7 +990,7 @@ class HttpClient(AbstractClient):
         :param params: optional parameters for the :class:`HttpRequest`
             initialisation.
 
-        :rtype: a :class:`HttpResponse` object.
+        :rtype: a :class:`.Future`
         '''
         return async(self._request(method, url, **params), loop=self._loop)
 
@@ -1086,6 +1087,6 @@ class HttpClient(AbstractClient):
 
     def _connect(self, host, port, ssl):
         _, connection = yield self._loop.create_connection(
-            self.create_protocol, host, port, ssl)
+            self.create_protocol, host, port, ssl=ssl)
         yield connection.event('connection_made')
         coroutine_return(connection)

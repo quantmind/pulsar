@@ -49,7 +49,7 @@ Wait for request body
 import re
 
 import pulsar
-from pulsar import async, coroutine_return
+from pulsar import Future, async, coroutine_return
 from pulsar.utils.httpurl import BytesIO
 
 from .auth import parse_authorization_header
@@ -102,6 +102,8 @@ def wait_for_body_middleware(environ, start_response=None):
 
 def _wait_for_body_middleware(environ, start_response):
     stream = environ['wsgi.input']
-    chunk = yield stream.read()
+    chunk = stream.read()
+    if isinstance(chunk, Future):
+        chunk = yield chunk
     environ['wsgi.input'] = BytesIO(chunk)
     coroutine_return(None)

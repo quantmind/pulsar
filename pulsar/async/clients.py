@@ -197,16 +197,11 @@ class AbstractClient(Producer):
         '''
         raise NotImplementedError
 
-    def close(self, async=True, timeout=5):
+    def close(self):
         '''Close all idle connections.
         '''
         return self.fire_event('finish')
-
-    def abort(self):
-        ''':meth:`close` all connections without waiting for active
-        connections to finish.
-        '''
-        return self.close(async=False)
+    abort = close
 
     def create_connection(self, address, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
@@ -256,16 +251,11 @@ class AbstractUdpClient(Producer):
         '''
         raise NotImplementedError
 
-    def close(self, async=True, timeout=5):
+    def close(self):
         '''Close all idle connections.
         '''
         return self.fire_event('finish')
-
-    def abort(self):
-        ''':meth:`close` all connections without waiting for active
-        connections to finish.
-        '''
-        return self.close(async=False)
+    abort = close
 
     def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.

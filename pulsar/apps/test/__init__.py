@@ -447,7 +447,7 @@ class RedisServer(TestOption):
     flags = ['--redis-server']
     meta = "CONNECTION_STRING"
     default = '127.0.0.1:6379/9'
-    desc = 'Connection string for the redis server used in testing'
+    desc = 'Connection string for the redis server used in during testing'
 
 
 pyver = '%s.%s' % (sys.version_info[:2])
@@ -520,6 +520,8 @@ class TestSuite(tasks.TaskQueue):
         loader = self.loader
         stream = arbiter.stream
         stream.writeln(sys.version)
+        redis_server = 'redis://%s' % self.cfg.redis_server
+        arbiter.cfg.params['redis_server'] = redis_server
         if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
             if tags:
@@ -550,8 +552,6 @@ class TestSuite(tasks.TaskQueue):
         yield server()
         store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
                              pool_size=2)
-        redis_server = 'redis://%s' % self.cfg.redis_server
-        monitor.arbiter.cfg.params['redis_server'] = redis_server
         self.get_backend(store)
         loader = self.loader
         tags = self.cfg.labels

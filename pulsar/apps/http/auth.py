@@ -19,7 +19,7 @@ class Auth(object):
     '''
     type = None
 
-    def __call__(self, response):
+    def __call__(self, response, exc=None):
         raise NotImplementedError
 
     def __str__(self):
@@ -37,7 +37,7 @@ class HTTPBasicAuth(Auth):
     def type(self):
         return 'basic'
 
-    def __call__(self, response):
+    def __call__(self, response, exc=None):
         # pre_request event. Must return response instance!
         response.request.headers['Authorization'] = self.header()
         return response
@@ -64,7 +64,7 @@ class HTTPDigestAuth(Auth):
     def type(self):
         return 'digest'
 
-    def __call__(self, response):
+    def __call__(self, response, exc=None):
         # pre_request event. Must return response instance!
         # If we have a saved nonce, skip the 401
         if self.last_nonce:

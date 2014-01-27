@@ -221,7 +221,7 @@ class AsyncBindings:
     def add(self, callable):
         self._bindings.append(callable)
 
-    def __call__(self, coro_or_future, loop=None):
+    def __call__(self, coro_or_future, loop=None, task=True):
         '''Handle an asynchronous ``coro_or_future``.
 
         Equivalent to the ``asyncio.async`` function but returns a
@@ -242,13 +242,16 @@ class AsyncBindings:
         if isinstance(coro_or_future, Future):
             return coro_or_future
         elif isinstance(coro_or_future, GeneratorType):
-            loop = loop or get_request_loop()
-            task_factory = getattr(loop, 'task_factory', Task)
-            return task_factory(coro_or_future, loop=loop)
+            if task:
+                loop = loop or get_request_loop()
+                task_factory = getattr(loop, 'task_factory', Task)
+                return task_factory(coro_or_future, loop=loop)
+            else:
+                return coro_or_future
         else:
             raise FutureTypeError
 
-    def maybe(self, value, loop=None, get_result=True):
+    def maybe(self, value, loop=None, async=False, task=True):
         '''Handle a possible asynchronous ``value``.
 
         Return an :ref:`asynchronous instance <tutorials-coroutine>`
@@ -265,9 +268,14 @@ class AsyncBindings:
             value.
         '''
         try:
-            return self(value, loop)
+            return self(value, loop, task=task)
         except FutureTypeError:
-            return value
+            if async:
+                future = Future(loop=loop)
+                future.set_result(value)
+                return future
+            else:
+                return value
 
 
 async = AsyncBindings()

@@ -1,5 +1,4 @@
-'''Tests the "helloworld" example.
-'''
+'''Tests the "helloworld" example.'''
 import unittest
 
 from pulsar import send, SERVER_SOFTWARE, get_application, get_actor

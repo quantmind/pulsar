@@ -386,8 +386,10 @@ def run_actor(self):
 
 
 class ActorProcess(ProcessMixin, Concurrency, Process):
-    '''Actor on a Operative system process. Created using the
-python multiprocessing module.'''
+    '''Actor on a Operative system process.
+
+    Created using the python multiprocessing module.
+    '''
     def run(self):  # pragma    nocover
         # The coverage for this process has not yet started
         run_actor(self)

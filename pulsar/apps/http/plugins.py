@@ -49,16 +49,15 @@ class WebSocketClient(WebSocketProtocol):
                                  (self.__class__.__name__, name))
 
 
-def handle_redirect(response):
-    if (response.status_code in REDIRECT_CODES and
-            'location' in response.headers and
-            response._request.allow_redirects):
+def handle_redirect(response, exc=None):
+    if not exc and (response.status_code in REDIRECT_CODES and
+                    'location' in response.headers and
+                    response._request.allow_redirects):
         # put at the end of the pile
         response.bind_event('post_request', _do_redirect)
-    return response
 
 
-def _do_redirect(response):
+def _do_redirect(response, exc=None):
     request = response.request
     client = request.client
     # done with current response
@@ -91,7 +90,7 @@ def _do_redirect(response):
     return request_again(method, url, params)
 
 
-def handle_cookies(response):
+def handle_cookies(response, exc=None):
     '''Handle response cookies.
     '''
     headers = response.headers
@@ -108,31 +107,31 @@ def handle_cookies(response):
     return response
 
 
-def handle_100(response):
+def handle_100(response, exc=None):
     '''Handle Except: 100-continue.
 
     This is a pre_request hook which checks if the request headers
     have the ``Expect: 100-continue`` value. If so add a ``on_headers``
     callback to handle the response from the server.
     '''
-    request = response.request
-    if (request.headers.has('expect', '100-continue') and
-            response.status_code == 100):
+    if not exc:
+        request = response.request
+        if (request.headers.has('expect', '100-continue') and
+                response.status_code == 100):
             response.bind_event('on_headers', _write_body)
-    return response
 
 
-def _write_body(response):
+def _write_body(response, exc=None):
     if response.status_code == 100:
         response.request.new_parser()
         if response.request.body:
             response.transport.write(response.request.body)
-    return response
 
 
-def handle_101(response):
+def handle_101(response, exc=None):
     '''Websocket upgrade as ``on_headers`` event.'''
-    if response.status_code == 101:
+
+    if not exc and response.status_code == 101:
         connection = response.connection
         request = response._request
         handler = request.websocket_handler
@@ -141,7 +140,6 @@ def handle_101(response):
             handler = WS()
         connection.upgrade(partial(WebSocketClient, response, handler, parser))
         response.finished()
-    return response
 
 
 class Tunneling:
@@ -151,7 +149,7 @@ class Tunneling:
     the writing of the actual request until headers from the proxy server
     are received.
     '''
-    def __call__(self, response):
+    def __call__(self, response, exc=None):
         # the pre_request handler
         request = response._request
         if request:
@@ -166,19 +164,15 @@ class Tunneling:
                     # Append self again as pre_request
                     request._apply_tunnel = True
                     response.bind_event('pre_request', self)
-        # make sure to return the response
-        return response
 
-    def on_headers(self, response):
+    def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
         if response.status_code == 200:
             connection = response._connection
             response.bind_event('post_request', self._tunnel_consumer)
             return response.finished()
-        # make sure to return the response
-        return response
 
-    def _tunnel_consumer(self, response):
+    def _tunnel_consumer(self, response, exc=None):
         request = response._request.request
         connection = response._connection
         loop = connection._loop

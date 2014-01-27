@@ -409,4 +409,6 @@ This method is invoked when you run the
             return
         except (Exception, HaltServer) as exc:
             return self.stop(exc)
+        except BaseException:
+            pass
         self.stop()

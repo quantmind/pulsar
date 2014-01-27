@@ -164,7 +164,9 @@ class WsgiHandler(object):
         if isinstance(resp, WsgiResponse):
             # The response is a WSGIResponse
             for middleware in self.response_middleware:
-                resp = yield middleware(environ, resp)
+                resp = middleware(environ, resp)
+                if isinstance(resp, ASYNC_OBJECTS):
+                    resp = yield resp
             start_response(resp.status, resp.get_headers())
         coroutine_return(resp)
 
