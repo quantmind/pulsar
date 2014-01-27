@@ -1,4 +1,6 @@
 '''Tests actor and actor proxies.'''
+import unittest
+
 from multiprocessing.queues import Queue
 from functools import partial
 
@@ -6,7 +8,7 @@ import pulsar
 from pulsar import (send, get_actor, CommandNotFound, async_while, TcpServer,
                     coroutine_return, Connection)
 from pulsar.utils.pep import pickle, default_timer
-from pulsar.apps.test import (unittest, ActorTestMixin, run_on_arbiter,
+from pulsar.apps.test import (ActorTestMixin, run_on_arbiter,
                               dont_run_with_thread, mute_failure)
 
 from examples.echo.manage import Echo, EchoServerProtocol

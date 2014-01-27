@@ -1,7 +1,8 @@
 '''Tests the tools and utilities in pulsar.utils.'''
+import unittest
+
 from pulsar.utils.structures import (MultiValueDict, merge_prefix, deque,
                                      AttributeDictionary)
-from pulsar.apps.test import unittest
 
 
 class TestMultiValueDict(unittest.TestCase):

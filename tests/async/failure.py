@@ -1,10 +1,11 @@
 '''Failure tools.'''
 import sys
 import gc
+import unittest
 from functools import partial
 
 from pulsar.utils.pep import pickle
-from pulsar.apps.test import unittest, mute_failure, mock
+from pulsar.apps.test import mute_failure, mock
 
 
 def raise_some_error():

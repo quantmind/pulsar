@@ -1,9 +1,10 @@
 '''Tests the taskqueue local backend.'''
+import unittest
 from random import random
 
 from pulsar import send, multi_async
 from pulsar.apps import tasks, rpc
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server
 

@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar.apps.wsgi import Route
-from pulsar.apps.test import unittest
 
 
 class Routes(unittest.TestCase):

@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar.apps.wsgi import WsgiRequest
-from pulsar.apps.test import unittest
 
 
 class AcceptTests(unittest.TestCase):

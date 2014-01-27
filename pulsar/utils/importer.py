@@ -1,11 +1,7 @@
 import os
 import sys
 import glob
-
-try:
-    from importlib import *
-except ImportError:
-    from pulsar.utils.fallbacks._importlib import *
+from importlib import *
 
 
 def expand_star(mod_name):

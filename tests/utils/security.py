@@ -1,5 +1,6 @@
+import unittest
+
 import pulsar
-from pulsar.apps.test import unittest
 from pulsar.utils import security
 
 

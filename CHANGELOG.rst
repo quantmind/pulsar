@@ -15,7 +15,7 @@ Ver. 0.8.0
 
 * **Core library**
 
-  * Removed support for python 3.2.
+  * Removed support for python 2.6 and python 3.2.
   * :ref:`Coroutines <coroutine>` can return a value via the
     :func:`.coroutine_return` function only, otherwise they return ``None``.
     This is what twisted does and makes applications less error prone.

@@ -1,6 +1,6 @@
 import re
+import unittest
 
-from pulsar.apps.test import unittest
 from pulsar.apps.data.server.client import redis_to_py_pattern
 
 

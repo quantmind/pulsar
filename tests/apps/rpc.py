@@ -1,6 +1,8 @@
 '''Tests the rpc middleware and utilities. It uses the calculator example.'''
+import unittest
+
 from pulsar.apps import rpc
-from pulsar.apps.test import unittest, HttpTestClient
+from pulsar.apps.test import HttpTestClient
 
 
 class rpcTest(unittest.TestCase):

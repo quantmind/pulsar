@@ -1,4 +1,4 @@
-from pulsar.apps.test import unittest
+import unittest
 
 
 class TestMixins(unittest.TestCase):

@@ -2,10 +2,11 @@
 import os
 import sys
 import time
+import unittest
 from threading import current_thread
 
 from pulsar import get_actor, get_application
-from pulsar.apps.test import unittest, TestLoader, run_on_arbiter
+from pulsar.apps.test import TestLoader, run_on_arbiter
 
 
 class TestTestLoader(unittest.TestCase):

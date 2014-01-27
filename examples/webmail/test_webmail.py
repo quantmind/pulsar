@@ -1,5 +1,5 @@
 '''Test twisted integration'''
-from pulsar.apps.test import unittest
+import unittest
 
 from .manage import twisted, mail_client
 

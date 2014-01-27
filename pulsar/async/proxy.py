@@ -1,7 +1,7 @@
 from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
-from .futures import Future
+from .futures import Future, chain_future
 from .consts import *
 
 __all__ = ['ActorProxy',
@@ -65,15 +65,15 @@ class ActorIdentity(object):
         return self.aid
 
 
-def actor_proxy_deferred(aid, msg=None):
+def actor_proxy_deferred(aid, future=None):
     self = ActorProxyFuture()
     if isinstance(aid, ActorProxyMonitor):
+        assert future is None
         aid.callback = self
         self.aid = aid.aid
     else:
         self.aid = aid
-        # Listen for the callbacks and errorbacks
-        msg.add_callback(self.callback, self.callback)
+        chain_future(future, next=self)
     return self
 
 

@@ -280,9 +280,9 @@ class MailboxClient(AbstractClient):
         response = yield req.future
         coroutine_return(response)
 
-    def close(self, async=False, timeout=None):
+    def close(self):
         if self._connection:
-            self._connection.close(async=async)
+            self._connection.close()
 
     def _lost(self, _, exc=None):
         self._loop.stop()

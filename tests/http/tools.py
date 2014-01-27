@@ -1,7 +1,7 @@
 '''tests the httpurl stand-alone script.'''
 import time
+import unittest
 
-from pulsar.apps.test import unittest
 from pulsar.utils.httpurl import (Headers, CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
                                   remove_double_slash, appendslash, capfirst,

@@ -1,6 +1,7 @@
 '''API design'''
 import sys
-from pulsar.apps.test import unittest
+import unittest
+
 from pulsar import maybe_async
 
 

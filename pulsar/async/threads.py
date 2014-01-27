@@ -1,6 +1,5 @@
 import logging
 from multiprocessing import dummy, current_process
-from threading import Lock
 from functools import partial
 from asyncio import selectors
 
@@ -74,18 +73,8 @@ class IOqueue(selectors.BaseSelector):
         self._actor = actor
         self._queue = queue
         self._maxtasks = maxtasks
-        self._wakeup = 0
         self.received = 0
         self.completed = 0
-        self._actor_loop = 0
-        self._actor_check = 0
-        self.lock = Lock()
-
-    @property
-    def cpubound(self):
-        '''Required by the :class:`EventLoop` so that the event loop
-        install itself as a request loop rather than the IO event loop.'''
-        return True
 
     def select(self, timeout=None):
         if not self._actor.is_running():
@@ -95,28 +84,22 @@ class IOqueue(selectors.BaseSelector):
                 return ()
             else:
                 raise _StopError
-        timeout = timeout or 0.5
+        block = True
+        if timeout is 0:
+            block = False
+        elif not timeout:
+            timeout = 0.5
         try:
-            task = self.get(timeout=timeout)
+            task = self._queue.get(block=block, timeout=timeout)
         except (Empty, TypeError):
             return ()
         except (EOFError, IOError):
             raise _StopError
         if task is None:    # got the sentinel, exit!
             raise _StopError
-        return ((self.fileno(), task),)
+        return [task]
 
-    def wake(self):
-        '''Waker implementation. This IOqueue is its own waker.'''
-        with self.lock:
-            self._wakeup += 1
-
-    def handle_events(self, loop, fd, task):
-        try:
-            self._handlers[fd]
-        except KeyError:
-            raise KeyError('Received an event on unregistered file '
-                           'descriptor %s' % fd)
+    def process_task(self, loop, task):
         self.received += 1
         future, func, args, kwargs = task
         try:
@@ -124,26 +107,11 @@ class IOqueue(selectors.BaseSelector):
         except Exception as exc:
             self._set_result(future, None, exc)
         if isinstance(result, Future):
-            result.add_done_callback(partial(self._handle_result, future))
+            result.add_done_callback(partial(self._async_result, future))
         else:
-            self._set_result(future, result, None)
+            self._set_result(future, result)
 
-    def get(self, timeout=0.5):
-        '''Wait for events. timeout in seconds (float)'''
-        block = True
-        with self.lock:
-            if self._wakeup:
-                block = False
-                self._wakeup -= 1
-        return self._queue.get(block=block, timeout=timeout)
-
-    def _register(self, fd, events, old_events=None):
-        if events != selectors.EVENT_READ:
-            raise IOError('Only read events can be attached to IOqueue')
-        if fd != self.fileno():
-            raise IOError('Only read events on %s allowed' % self.fileno())
-
-    def _handle_result(self, future, result):
+    def _async_result(self, future, result):
         try:
             result = result.result()
         except Exception as exc:
@@ -307,5 +275,4 @@ class ThreadPool(AsyncObject):
         logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
                                                      self.worker_name))
         loop = QueueEventLoop(poller, logger=logger, iothreadloop=True)
-        loop.add_reader(poller.fileno(), poller.handle_events)
         loop.run_forever()

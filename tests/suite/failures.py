@@ -1,10 +1,11 @@
 '''Tests the test suite loader.'''
 import os
 import time
+import unittest
 from threading import current_thread
 
 import pulsar
-from pulsar.apps.test import unittest, TestLoader
+from pulsar.apps.test import TestLoader
 
 
 class TestFailures(unittest.TestCase):

@@ -1,8 +1,9 @@
 from random import randint
+import unittest
 
 from pulsar.utils.pep import zip
 from pulsar.utils.structures import Skiplist
-from pulsar.apps.test import unittest, populate
+from pulsar.apps.test import populate
 
 
 class TestSkiplist(unittest.TestCase):

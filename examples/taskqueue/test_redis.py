@@ -1,5 +1,7 @@
 '''Tests the taskqueue redis backend.'''
-from pulsar.apps.test import unittest, check_redis
+import unittest
+
+from pulsar.apps.test import check_redis
 
 from . import test_pulsards
 

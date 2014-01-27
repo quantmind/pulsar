@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar import ThreadPool, async_while, get_request_loop, get_event_loop
-from pulsar.apps.test import unittest
 
 
 class TestThreadQueue(unittest.TestCase):

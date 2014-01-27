@@ -1,7 +1,7 @@
 import sys
+import unittest
 from datetime import timedelta
 
-from pulsar.apps.test import unittest
 from pulsar.utils.pep import raise_error_trace
 
 

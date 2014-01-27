@@ -109,7 +109,7 @@ def chain_future(future, callback=None, next=None, timeout=None):
         if timeout and timeout > 0:
             future_timeout(next, timeout)
     else:
-        assert timeout is None
+        assert timeout is None, 'cannot set timeout'
 
     def _callback(fut):
         try:

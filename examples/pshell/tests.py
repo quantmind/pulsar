@@ -1,7 +1,8 @@
+import unittest
 import time
 
 from pulsar import async_while, send, get_actor
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import run_on_arbiter
 from pulsar.apps.shell import InteractiveConsole, decode_line, PulsarShell
 
 

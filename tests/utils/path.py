@@ -1,4 +1,5 @@
-from pulsar.apps.test import unittest
+import unittest
+
 from pulsar.utils.path import Path
 
 

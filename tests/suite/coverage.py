@@ -3,9 +3,9 @@ import os
 import tempfile
 import uuid
 import shutil
+import unittest
 
 import pulsar
-from pulsar.apps.test import unittest, mock
 
 
 class PulsarCoverage(unittest.TestCase):

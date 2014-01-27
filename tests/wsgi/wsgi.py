@@ -1,6 +1,7 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
 import time
 import sys
+import unittest
 from datetime import datetime, timedelta
 
 import pulsar
@@ -11,7 +12,6 @@ from pulsar.apps import http
 from pulsar.utils.multipart import parse_form_data, MultipartError
 from pulsar.utils.httpurl import urlparse, unquote
 from pulsar.apps.wsgi.utils import cookie_date
-from pulsar.apps.test import unittest
 
 
 class WsgiRequestTests(unittest.TestCase):

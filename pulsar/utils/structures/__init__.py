@@ -48,11 +48,6 @@ Zset
 '''
 from collections import *
 
-from ..pep import ispy26
-
-if ispy26:    # pragma    nocover
-    from ..fallbacks._collections import *
-
 from .skiplist import Skiplist
 from .zset import Zset
 from .misc import (MultiValueDict, AttributeDictionary, FrozenDict,

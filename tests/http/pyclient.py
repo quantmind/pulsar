@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar.utils.httpurl import hasextensions, HttpParser
-from pulsar.apps.test import unittest
 
 from . import client
 

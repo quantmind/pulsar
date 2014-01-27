@@ -41,9 +41,10 @@ import gc
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
+from asyncio import Future
 
 import pulsar
-from pulsar import (get_actor, send, multi_async,
+from pulsar import (get_actor, send, multi_async, maybe_async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
@@ -86,13 +87,29 @@ class TestCallable(object):
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
-        return safe_async(test_function).add_both(
-            partial(self._end, actor)).set_timeout(self.timeout)
+        try:
+            result = maybe_async(test_function())
+        except Exception as exc:
+            self._end(actor, exc)
+        else:
+            if isinstance(result, Future):
+                result.add_done_callback(partial(self._end_async, actor))
+                future_timeout(result, self.timeout)
+                return result
+            else:
+                self._end(actor, None)
 
     def _end(self, actor, result):
         if self.istest:
             actor.app.runner.after_test_function_run(self.test, result)
-        return result
+
+    def _end_async(self, actor, fut):
+        try:
+            result = fut.result()
+        except Exception as exc:
+            result = exc
+        self._end(actor, result)
+
 
 
 class SafeTest(object):
@@ -207,7 +224,7 @@ class AsyncAssert(object):
         try:
             yield callable(*args, **kwargs)
         except error:
-            coroutine_return(None)
+            coroutine_return()
         except Exception:
             raise self.test.failureException('%s not raised by %s'
                                              % (error, callable))

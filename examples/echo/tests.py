@@ -1,6 +1,8 @@
+import unittest
+
 from pulsar import send, multi_async, new_event_loop, get_application
 from pulsar.utils.pep import range
-from pulsar.apps.test import unittest, dont_run_with_thread, run_on_arbiter
+from pulsar.apps.test import dont_run_with_thread, run_on_arbiter
 
 from .manage import server, Echo, EchoServerProtocol
 

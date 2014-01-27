@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar import send
-from pulsar.apps.test import unittest
 
 from .manage import DiningPhilosophers
 

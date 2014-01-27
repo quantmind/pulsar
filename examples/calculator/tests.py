@@ -1,7 +1,9 @@
 '''Tests the RPC "calculator" example.'''
+import unittest
+
 from pulsar import send, new_event_loop
 from pulsar.apps import rpc
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Root, Calculator
 

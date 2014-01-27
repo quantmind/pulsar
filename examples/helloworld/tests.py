@@ -1,8 +1,10 @@
 '''Tests the "helloworld" example.
 '''
+import unittest
+
 from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
+from pulsar.apps.test import run_on_arbiter, dont_run_with_thread
 
 from .manage import server
 

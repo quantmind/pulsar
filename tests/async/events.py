@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar import EventHandler
-from pulsar.apps.test import unittest
 
 
 class TestFailure(unittest.TestCase):

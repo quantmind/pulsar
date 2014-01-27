@@ -1,26 +1,14 @@
 import sys
+import unittest
 import logging
+from unittest.case import _ExpectedFailure as ExpectedFailure
 
 from pulsar import multi_async, coroutine_return
-from pulsar.utils.pep import ispy26, ispy33
+from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
 
-LOGGER = logging.getLogger('pulsar.apps.test')
-
-
-if ispy26:  # pragma nocover
-    try:
-        import unittest2 as unittest
-        from unittest2.case import _ExpectedFailure as ExpectedFailure
-    except ImportError:
-        unittest = None
-        ExpectedFailure = None
-else:
-    import unittest
-    from unittest.case import _ExpectedFailure as ExpectedFailure
-
-if ispy33:
+if ispy3k:
     from unittest import mock
 else:  # pragma nocover
     try:
@@ -29,7 +17,7 @@ else:  # pragma nocover
         mock = None
 
 
-__all__ = ['unittest', 'mock']
+LOGGER = logging.getLogger('pulsar.test')
 
 
 class Test(tasks.Job):
@@ -138,10 +126,9 @@ class Test(tasks.Job):
         if method:
             try:
                 yield runner.run_test_function(test, method, timeout)
-            except Exception as error:
+            except Exception as exc:
                 add_err = False if previous else add_err
-                previous = self.add_failure(test, runner, error,
-                                            add_err=add_err)
+                previous = self.add_failure(test, runner, exc, add_err=add_err)
         coroutine_return(previous)
 
     def add_failure(self, test, runner, error, exc_info=None, add_err=True):
@@ -164,5 +151,5 @@ class Test(tasks.Job):
             else:
                 runner.addError(test, exc_info)
         else:
-            runner.logger.error('exception', exc_info=exc_info)
+            LOGGER.error('exception', exc_info=exc_info)
         return (error, exc_info)

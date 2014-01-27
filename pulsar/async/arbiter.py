@@ -73,8 +73,8 @@ def spawn(**kwargs):
     # We send a message to the Arbiter to spawn a new Actor
     if not isinstance(actor, Arbiter):
         # send the request to the arbiter
-        msg = actor.send('arbiter', 'spawn', **kwargs)
-        return actor_proxy_deferred(aid, msg)
+        future = actor.send('arbiter', 'spawn', **kwargs)
+        return actor_proxy_deferred(aid, future)
     else:
         return actor.spawn(**kwargs)
 

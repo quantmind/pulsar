@@ -1,7 +1,9 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
+import unittest
+
 from pulsar import send, Queue
 from pulsar.apps import rpc, http, ws
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.httpurl import HTTPError
 from pulsar.utils.system import json
 

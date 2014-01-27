@@ -199,7 +199,7 @@ import pulsar
 from pulsar import (AbstractClient, Pool, coroutine_return, async, Connection,
                     get_event_loop, ProtocolConsumer, new_event_loop)
 from pulsar.utils.system import json
-from pulsar.utils.pep import native_str, is_string, to_bytes, ispy33
+from pulsar.utils.pep import native_str, is_string, to_bytes, ispy3k
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.websocket import SUPPORTED_VERSIONS
 from pulsar.utils.internet import CERT_NONE, SSLContext
@@ -261,7 +261,7 @@ class RequestBase(object):
         return self.full_url
 
 
-if not ispy33:  # pragma     nocover
+if not ispy3k:  # pragma     nocover
     _RequestBase = RequestBase
 
     class RequestBase(_RequestBase):

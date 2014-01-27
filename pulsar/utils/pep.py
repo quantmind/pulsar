@@ -5,10 +5,8 @@ import threading
 from inspect import istraceback
 
 ispy3k = sys.version_info >= (3, 0)
-ispy26 = sys.version_info < (2, 7)
-ispy33 = sys.version_info >= (3, 3)
 
-if ispy33:
+if ispy3k:
     default_timer = time.monotonic
 else:   # pragma    nocover
     default_timer = time.time
@@ -71,7 +69,6 @@ if ispy3k:  # Python 3
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map
     import cPickle as pickle
-    from .fallbacks.py2 import *
     string_type = unicode
     ascii_letters = string.letters
     range = xrange

@@ -1,8 +1,10 @@
 '''Tests django chat application.'''
+import unittest
+
 from pulsar import send, get_application, Queue, coroutine_return
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.security import gen_unique_id
 from pulsar.utils.system import json
 

@@ -1,6 +1,7 @@
 import time
+import unittest
+
 from pulsar.apps import tasks
-from pulsar.apps.test import unittest
 
 from .test_pulsards import TaskQueueBase
 

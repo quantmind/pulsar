@@ -9,8 +9,7 @@ __all__ = ['Plugin',
            'TestStream',
            'TestRunner',
            'TestResult',
-           'Plugin',
-           'LOGGER']
+           'Plugin']
 
 
 STDOUT_LINE = '\nStdout:\n%s'
@@ -338,11 +337,9 @@ class TestResult(Plugin):
         """Called when a test was expected to fail, but succeed."""
         self.unexpectedSuccesses.append(self.getDescription(test))
 
-    def _add_error(self, test, exc_info, container):
-        failure = Failure(exc_info)
-        failure.mute()
+    def _add_error(self, test, exc, container):
         test = self.getDescription(test)
-        container.append((test, repr(failure)))
+        container.append((test, '\n'.join(format_traceback(exc))))
 
     def add(self, result):
         self._count += 1

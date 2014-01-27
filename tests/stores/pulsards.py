@@ -1,11 +1,11 @@
 import binascii
 import time
+import unittest
 
 import pulsar
 from pulsar import new_event_loop
 from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
-from pulsar.apps.test import unittest
 from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
                               ResponseError)
 

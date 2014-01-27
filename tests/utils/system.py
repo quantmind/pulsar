@@ -1,6 +1,7 @@
 '''Tests the tools and utilities in pulsar.utils.'''
+import unittest
+
 from pulsar import system, platform
-from pulsar.apps.test import unittest
 
 
 class TestSystem(unittest.TestCase):

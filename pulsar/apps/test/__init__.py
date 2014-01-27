@@ -4,11 +4,6 @@ on multiple threads or processes.
 It is used for testing pulsar but it can be used
 as a test suite for any other library.
 
-Requirements
-====================
-* unittest2_ for python 2.6
-* mock_ for python < 3.3
-
 .. _apps-test-intro:
 
 Introduction
@@ -292,10 +287,9 @@ Utilities
 
 .. automodule:: pulsar.apps.test.utils
 
-.. _unittest2: http://pypi.python.org/pypi/unittest2
-.. _mock: http://pypi.python.org/pypi/mock
 '''
 import sys
+import unittest
 
 import pulsar
 from pulsar import multi_async
@@ -305,7 +299,7 @@ from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs
 from pulsar.utils.pep import default_timer, to_string
 
-from .case import *
+from .case import mock
 from .populate import populate
 from .result import *
 from .plugins.base import *
@@ -313,6 +307,7 @@ from .loader import *
 from .utils import *
 from .wsgi import *
 from .pep import pep8_run
+
 
 section_docs['Test'] = '''
 This section covers configuration parameters used by the

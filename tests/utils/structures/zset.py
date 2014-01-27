@@ -1,7 +1,8 @@
+import unittest
 from random import randint
 
 from pulsar.utils.structures import Zset
-from pulsar.apps.test import unittest, populate
+from pulsar.apps.test import populate
 
 
 class TestZset(unittest.TestCase):

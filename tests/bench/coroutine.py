@@ -1,5 +1,7 @@
+import unittest
+
 from pulsar import new_event_loop, coroutine_return
-from pulsar.apps.test import unittest
+
 
 DELAY = 0
 

@@ -1,6 +1,7 @@
 '''Tests git info.'''
+import unittest
+
 from pulsar.utils.version import gitrepo
-from pulsar.apps.test import unittest
 
 
 class TestGit(unittest.TestCase):

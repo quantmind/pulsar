@@ -1,7 +1,8 @@
+import unittest
+
 from pulsar import (Queue, Empty, maybe_async, Future, Full,
                     get_request_loop, get_event_loop)
 from pulsar.utils.pep import default_timer
-from pulsar.apps.test import unittest
 
 
 class TestQueue(unittest.TestCase):

@@ -1,10 +1,12 @@
 '''Tests the rpc middleware and utilities. It uses the calculator example.'''
+import unittest
+
 import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
 from pulsar.apps.tasks import TaskQueue
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import run_on_arbiter
 
 
 def dummy(environ, start_response):

@@ -1,8 +1,8 @@
 from random import randint, choice
 import string
+import unittest
 
 from pulsar import HAS_C_EXTENSIONS
-from pulsar.apps.test import unittest
 from pulsar.apps.data import redis_parser
 from pulsar.utils.pep import ispy3k
 

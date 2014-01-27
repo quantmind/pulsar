@@ -1,4 +1,5 @@
-from pulsar.apps.test import unittest
+import unittest
+
 from pulsar.apps.tasks import Task
 from pulsar.apps.data import odm
 

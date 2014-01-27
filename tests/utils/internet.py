@@ -3,6 +3,7 @@ import io
 import socket
 import tempfile
 import time
+import unittest
 
 import pulsar
 from pulsar import platform
@@ -10,7 +11,7 @@ from pulsar.utils.internet import (parse_address, parse_connection_string,
                                    socketpair, close_socket, is_socket_closed,
                                    format_address)
 from pulsar.utils.pep import pickle
-from pulsar.apps.test import unittest, mock
+from pulsar.apps.test import mock
 
 
 class TestParseAddress(unittest.TestCase):

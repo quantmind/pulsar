@@ -2,10 +2,10 @@
 import os
 import pickle
 import tempfile
+import unittest
 
 import pulsar
 from pulsar import get_actor, Config, validate_callable
-from pulsar.apps.test import unittest
 
 
 def connection_made(conn):

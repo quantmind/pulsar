@@ -1,12 +1,12 @@
 import time
 import sys
 import asyncio
+import unittest
 from threading import current_thread
 
 import pulsar
 from pulsar import (run_in_loop, Future, TimeoutError,
                     get_event_loop, new_event_loop)
-from pulsar.apps.test import unittest
 
 
 def has_callback(loop, handler):

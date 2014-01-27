@@ -1,7 +1,7 @@
 from random import randint
+import unittest
 
 import pulsar
-from pulsar.apps.test import unittest
 from pulsar.apps.data import (redis_parser, ResponseError, NoScriptError,
                               InvalidResponse)
 

@@ -1,7 +1,8 @@
 '''Tests the wsgi middleware in pulsar.apps.wsgi'''
+import unittest
+
 import pulsar
 from pulsar.apps.wsgi import Router, RouterParam, route
-from pulsar.apps.test import unittest
 
 from examples.httpbin.manage import HttpBin
 

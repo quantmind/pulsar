@@ -7,10 +7,12 @@
 import os
 import re
 import sys
+import unittest
 
 from pulsar.utils.importer import import_module
 
-from .case import unittest, LOGGER
+from .case import LOGGER
+
 
 __all__ = ['TestLoader']
 

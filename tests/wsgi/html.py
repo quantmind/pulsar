@@ -1,5 +1,6 @@
+import unittest
+
 from pulsar.apps import wsgi
-from pulsar.apps.test import unittest
 
 
 class TestHtmlFactory(unittest.TestCase):

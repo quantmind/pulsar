@@ -135,9 +135,16 @@ class QueueEventLoop(BaseEventLoop):
     def __init__(self, ioqueue, iothreadloop=False, logger=None):
         super(QueueEventLoop, self).__init__()
         self._iothreadloop = iothreadloop
-        self._ioqueue = ioqueue
+        self._selector = ioqueue
         self.logger = logger or LOGGER
         self.call_soon(set_as_loop, self)
+
+    def _write_to_self(self):
+        pass
+
+    def _process_events(self, event_list):
+        for task in event_list:
+            self._selector.process_task(self, task)
 
 
 class EventLoop(asyncio.SelectorEventLoop):
@@ -165,6 +172,7 @@ class EventLoop(asyncio.SelectorEventLoop):
         super(EventLoop, self).__init__(selector)
         self._iothreadloop = iothreadloop
         self.logger = logger or LOGGER
+        self._lock = Lock()
         self.call_soon(set_as_loop, self)
 
     def __repr__(self):
@@ -177,6 +185,14 @@ class EventLoop(asyncio.SelectorEventLoop):
             return self.__class__.__name__
         else:
             return '%s <not running>' % self.__class__.__name__
+
+    def call_at(self, when, callback, *args):
+        '''Like call_later(), but uses an absolute time.
+
+        This method is thread safe.
+        '''
+        with self._lock:
+            return super(EventLoop, self).call_at(when, callback, *args)
 
 
 def call_repeatedly(loop, interval, callback, *args):

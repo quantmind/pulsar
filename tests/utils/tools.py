@@ -1,9 +1,10 @@
 '''Tests the tools and utilities in pulsar.utils.'''
 import os
+import unittest
 
 from pulsar import system, get_actor, spawn, send
 from pulsar.utils.tools import checkarity, Pidfile, nice_number
-from pulsar.apps.test import unittest, ActorTestMixin
+from pulsar.apps.test import ActorTestMixin
 
 
 def f0(a, b):

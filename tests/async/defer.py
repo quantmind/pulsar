@@ -1,11 +1,11 @@
 '''Deferred and asynchronous tools.'''
 import sys
+import unittest
 from functools import reduce
 
 from pulsar import (maybe_async, CancelledError, InvalidStateError, Future,
                     coroutine_return, async, TimeoutError)
 from pulsar.utils.pep import pickle, default_timer
-from pulsar.apps.test import unittest, mute_failure
 
 
 class Cbk(Future):

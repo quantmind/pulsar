@@ -1,7 +1,7 @@
 '''MultiFuture coverage'''
 import sys
+import unittest
 
-from pulsar.apps.test import unittest
 from pulsar import (get_event_loop, multi_async, InvalidStateError, Future,
                     maybe_async)
 
