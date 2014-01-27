@@ -87,7 +87,7 @@ class IOqueue(selectors.BaseSelector):
         install itself as a request loop rather than the IO event loop.'''
         return True
 
-    def poll(self, timeout=0.5):
+    def select(self, timeout=None):
         if not self._actor.is_running():
             raise _StopError
         if self._maxtasks and self.received >= self._maxtasks:
@@ -95,6 +95,7 @@ class IOqueue(selectors.BaseSelector):
                 return ()
             else:
                 raise _StopError
+        timeout = timeout or 0.5
         try:
             task = self.get(timeout=timeout)
         except (Empty, TypeError):
@@ -104,9 +105,6 @@ class IOqueue(selectors.BaseSelector):
         if task is None:    # got the sentinel, exit!
             raise _StopError
         return ((self.fileno(), task),)
-
-    def install_waker(self, loop):
-        return self
 
     def wake(self):
         '''Waker implementation. This IOqueue is its own waker.'''

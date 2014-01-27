@@ -1,11 +1,12 @@
 import time
 import sys
+import asyncio
 from threading import current_thread
 
 import pulsar
-from pulsar import (Failure, run_in_loop, Deferred, TimeoutError,
-                    asyncio, get_event_loop, new_event_loop)
-from pulsar.apps.test import unittest, mute_failure
+from pulsar import (run_in_loop, Future, TimeoutError,
+                    get_event_loop, new_event_loop)
+from pulsar.apps.test import unittest
 
 
 def has_callback(loop, handler):
@@ -29,7 +30,7 @@ class TestEventLoop(unittest.TestCase):
 
     def test_call_soon(self):
         ioloop = get_event_loop()
-        d = pulsar.Deferred()
+        d = Future()
         callback = lambda: d.callback(current_thread().ident)
         cbk = ioloop.call_soon(callback)
         self.assertEqual(cbk._callback, callback)
@@ -40,7 +41,7 @@ class TestEventLoop(unittest.TestCase):
 
     def test_call_later(self):
         ioloop = get_event_loop()
-        d = pulsar.Deferred()
+        d = Future()
         timeout1 = ioloop.call_later(
             20, lambda: d.callback(current_thread().ident))
         timeout2 = ioloop.call_later(
@@ -66,8 +67,8 @@ class TestEventLoop(unittest.TestCase):
             d.callback(time.time())
             time.sleep(sleep)
 
-        d1 = pulsar.Deferred()
-        d2 = pulsar.Deferred()
+        d1 = Future()
+        d2 = Future()
         ioloop.call_later(0, dummy, d1, 0.1)
         ioloop.call_later(-5, dummy, d2, 0.1)
         yield d2
@@ -75,8 +76,8 @@ class TestEventLoop(unittest.TestCase):
 
     def test_call_at(self):
         ioloop = get_event_loop()
-        d1 = pulsar.Deferred()
-        d2 = pulsar.Deferred()
+        d1 = Future()
+        d2 = Future()
         c1 = ioloop.call_at(ioloop.time()+1,
                             lambda: d1.callback(ioloop.time()))
         c2 = ioloop.call_later(1, lambda: d2.callback(ioloop.time()))
@@ -86,7 +87,7 @@ class TestEventLoop(unittest.TestCase):
     def test_periodic(self):
         test = self
         ioloop = get_event_loop()
-        d = pulsar.Deferred()
+        d = Future()
 
         class p:
             def __init__(self, loops):
@@ -121,7 +122,7 @@ class TestEventLoop(unittest.TestCase):
         test = self
         ioloop = get_event_loop()
         thread = current_thread()
-        d = pulsar.Deferred()
+        d = Future()
         test = self
 
         class p:
@@ -162,7 +163,7 @@ class TestEventLoop(unittest.TestCase):
         self.assertFalse(event_loop.running)
         self.assertFalse(event_loop.iothreadloop)
         self.assertEqual(str(event_loop), '<not running> pulsar')
-        d = pulsar.Deferred()
+        d = Future()
         event_loop.call_later(2, d.callback, 'OK')
         event_loop.run_until_complete(d)
         self.assertTrue(d.done())
@@ -173,7 +174,7 @@ class TestEventLoop(unittest.TestCase):
         event_loop = new_event_loop()
         self.assertFalse(event_loop.is_running())
         self.assertFalse(event_loop.iothreadloop)
-        d = Deferred().set_timeout(2)
+        d = Future().set_timeout(2)
         event_loop.call_later(10, d.callback, 'OK')
         self.assertRaises(TimeoutError, event_loop.run_until_complete, d)
         self.assertTrue(d.done())
@@ -187,11 +188,11 @@ class TestEventLoop(unittest.TestCase):
             return a + b
 
         d = run_in_loop(event_loop, simple, 1, 2)
-        self.assertIsInstance(d, Deferred)
+        self.assertIsInstance(d, Future)
         result = yield d
         self.assertEqual(result, 3)
         d = run_in_loop(event_loop, simple, 1, 'a')
-        self.assertIsInstance(d, Deferred)
+        self.assertIsInstance(d, Future)
         try:
             result = yield d
         except TypeError:

@@ -2,15 +2,13 @@
 import sys
 from functools import reduce
 
-from pulsar import (InvalidStateError, Deferred,
-                    is_failure, maybe_async, CancelledError,
-                    async_sleep, Failure, safe_async, InvalidStateError,
+from pulsar import (maybe_async, CancelledError, InvalidStateError, Future,
                     coroutine_return, async, TimeoutError)
 from pulsar.utils.pep import pickle, default_timer
 from pulsar.apps.test import unittest, mute_failure
 
 
-class Cbk(Deferred):
+class Cbk(Future):
     '''A deferred object'''
     def __init__(self, r=None):
         super(Cbk, self).__init__()
@@ -25,7 +23,7 @@ class Cbk(Deferred):
 
     def set_result(self, result):
         self.add(result)
-        self.callback(self.r)
+        super(Future, self).set_result(self.r)
 
 
 def simple_error():

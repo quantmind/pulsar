@@ -1,6 +1,6 @@
 '''Test twisted integration'''
 import pulsar
-from pulsar import is_failure, multi_async
+from pulsar import multi_async
 from pulsar.utils.pep import to_bytes, to_string
 from pulsar.utils.security import gen_unique_id
 from pulsar.apps.test import unittest

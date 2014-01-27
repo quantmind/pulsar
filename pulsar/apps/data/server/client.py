@@ -199,7 +199,7 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
     def _write(self, response):
         if self.transaction is not None:
             self.transaction.append(response)
-        elif not self._transport.closing:
+        elif not self._transport._closing:
             self._transport.write(response)
 
 

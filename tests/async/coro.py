@@ -1,6 +1,6 @@
 '''Deferred and asynchronous tools.'''
-from pulsar import Deferred, maybe_async, coroutine_return
-from pulsar.apps.test import unittest, mute_failure
+from pulsar import Future, maybe_async, coroutine_return
+from pulsar.apps.test import unittest
 
 
 def c_summation(value):

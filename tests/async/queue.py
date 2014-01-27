@@ -1,5 +1,5 @@
-from pulsar import (Queue, Empty, maybe_async, Deferred, Full,
-                    get_request_loop, get_event_loop, maybe_failure)
+from pulsar import (Queue, Empty, maybe_async, Future, Full,
+                    get_request_loop, get_event_loop)
 from pulsar.utils.pep import default_timer
 from pulsar.apps.test import unittest
 
@@ -50,7 +50,7 @@ class TestQueue(unittest.TestCase):
         q = Queue()
         self.assertEqual(q.qsize(), 0)
         item = maybe_async(q.get())
-        self.assertIsInstance(item, Deferred)
+        self.assertIsInstance(item, Future)
         result = yield q.put('Hello')
         self.assertEqual(result, None)
         self.assertTrue(item.done())
@@ -108,7 +108,7 @@ class TestQueue(unittest.TestCase):
         self.assertRaises(Empty, q.get_nowait)
         self.assertRaises(Empty, q.get, wait=False)
         r = q.put('ciao')
-        self.assertIsInstance(r, Deferred)
+        self.assertIsInstance(r, Future)
         self.assertTrue(r.done())
         self.assertEqual(r.result(), None)
         self.assertEqual(q.get_nowait(), 'ciao')

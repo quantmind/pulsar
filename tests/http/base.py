@@ -4,9 +4,9 @@ import sys
 from base64 import b64decode
 
 import examples
-from pulsar import send, Failure, SERVER_SOFTWARE, new_event_loop
+from pulsar import send, SERVER_SOFTWARE, new_event_loop
 from pulsar.utils.path import Path
-from pulsar.apps.test import unittest, mute_failure
+from pulsar.apps.test import unittest
 from pulsar.utils.httpurl import iri_to_uri, SimpleCookie
 from pulsar.utils.pep import pypy
 from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,

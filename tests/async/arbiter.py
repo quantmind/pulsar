@@ -3,7 +3,7 @@ import os
 
 import pulsar
 from pulsar import (send, spawn, system, platform, ACTOR_ACTION_TIMEOUT,
-                    MONITOR_TASK_PERIOD, multi_async, Deferred)
+                    MONITOR_TASK_PERIOD, multi_async)
 from pulsar.utils.pep import default_timer
 from pulsar.apps.test import (unittest, run_on_arbiter, ActorTestMixin,
                               dont_run_with_thread)

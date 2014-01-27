@@ -1,4 +1,4 @@
-from pulsar import EventHandler, Failure, maybe_failure
+from pulsar import EventHandler
 from pulsar.apps.test import unittest
 
 

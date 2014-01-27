@@ -61,6 +61,7 @@ Echo Server
 
 '''
 from functools import partial
+import asyncio
 
 try:
     import pulsar
@@ -73,7 +74,7 @@ from pulsar import coroutine_return, Pool, Future, task
 from pulsar.apps.socket import UdpSocketServer
 
 
-class EchoUdpProtocol(pulsar.DatagramProtocol):
+class EchoUdpProtocol(asyncio.DatagramProtocol):
     '''A base :class:`.DatagramProtocol` for UDP echo clients and servers.
 
     The only difference between client and server is the implementation

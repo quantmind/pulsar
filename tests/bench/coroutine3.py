@@ -1,11 +1,11 @@
 import sys
-from pulsar import Deferred, new_event_loop, coroutine_return
+from pulsar import Future, new_event_loop, coroutine_return
 from pulsar.apps.test import unittest
 
 DELAY = 0
 
 def async_func(loop, value):
-    p = Deferred(loop)
+    p = Future(loop)
     loop.call_later(DELAY, p.callback, value)
     return p
 
@@ -43,7 +43,7 @@ class TestCoroutine33(unittest.TestCase):
         self.loop = new_event_loop()
 
     def test_coroutine(self):
-        deferred = Deferred(self.loop)
+        deferred = Future(self.loop)
         self.loop.call_soon(main, deferred, self.loop, 1)
         self.loop.run_until_complete(deferred)
         self.assertEqual(deferred.result(), 9)

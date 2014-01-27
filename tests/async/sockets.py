@@ -1,13 +1,13 @@
 '''Test Internet connections and wrapped socket methods in event loop.'''
 import socket
 from functools import partial
+from asyncio import selectors
 
 from pulsar import (Connection, Protocol, TcpServer, async_while,
                     get_event_loop)
 from pulsar.utils.pep import ispy3k
 from pulsar.utils.internet import is_socket_closed, format_address
 from pulsar.apps.test import unittest, run_test_server
-from pulsar.async.pollers import READ
 
 from examples.echo.manage import Echo, EchoServerProtocol
 
@@ -35,7 +35,7 @@ class TestEventLoop(unittest.TestCase):
         sock = sockets[0]
         fn = sock.fileno()
         events, read, write, error = loop.io.handlers(fn)
-        self.assertEqual(events, READ)
+        self.assertEqual(events, selectors.EVENT_READ)
         self.assertTrue(read)
         self.assertFalse(write)
         self.assertFalse(error)
@@ -97,7 +97,7 @@ class TestEventLoop(unittest.TestCase):
         fn = sock.fileno()
         self.assertFalse(is_socket_closed(sock))
         events, read, write, error = loop.io.handlers(fn)
-        self.assertEqual(events, READ)
+        self.assertEqual(events, selectors.EVENT_READ)
         self.assertTrue(read)
         self.assertFalse(write)
         self.assertFalse(error)

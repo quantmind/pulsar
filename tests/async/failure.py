@@ -3,7 +3,6 @@ import sys
 import gc
 from functools import partial
 
-from pulsar import Deferred, Failure, maybe_failure
 from pulsar.utils.pep import pickle
 from pulsar.apps.test import unittest, mute_failure, mock
 

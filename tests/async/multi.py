@@ -1,8 +1,8 @@
-'''MultiDeferred coverage'''
+'''MultiFuture coverage'''
 import sys
 
 from pulsar.apps.test import unittest
-from pulsar import (get_event_loop, multi_async, InvalidStateError, Deferred,
+from pulsar import (get_event_loop, multi_async, InvalidStateError, Future,
                     maybe_async)
 
 
@@ -33,8 +33,8 @@ class TestApi(unittest.TestCase):
 
     def test_multi(self):
         d = multi_async(lock=False)
-        d1 = Deferred()
-        d2 = Deferred()
+        d1 = Future()
+        d2 = Future()
         d.append(d1)
         d.append(d2)
         d.append('bla')
@@ -51,8 +51,8 @@ class TestApi(unittest.TestCase):
         self.assertEqual(d.result(), ['second', 'first', 'bla'])
 
     def test_multi_update(self):
-        d1 = Deferred()
-        d2 = Deferred()
+        d1 = Future()
+        d2 = Future()
         d = multi_async(lock=False)
         d.update((d1, d2)).lock()
         d1.callback('first')
@@ -61,10 +61,7 @@ class TestApi(unittest.TestCase):
         self.assertEqual(d.result(), ['first', 'second'])
 
     def test_multi_nested(self):
-        d = multi_async(lock=False)
-        # add a generator
-        d.append([a for a in range(1, 11)])
-        r = maybe_async(d.lock())
-        self.assertTrue(d.locked)
-        self.assertNotIsInstance(r, Deferred)
+        d = multi_async([a for a in range(1, 11)])
+        r = maybe_async(d)
+        self.assertNotIsInstance(r, Future)
         self.assertEqual(r, [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]])

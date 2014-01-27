@@ -254,7 +254,7 @@ class PulsarProtocol(EventHandler):
         '''The socket of :attr:`transport`.
         '''
         if self._transport:
-            return self._transport.sock
+            return self._transport.get_extra_info('socket')
 
     @property
     def address(self):
@@ -660,7 +660,7 @@ class TcpServer(Producer):
     def _connection_lost(self, connection, exc=None):
         self._concurrent_connections.discard(connection)
 
-    def _close_connections(self, connection=None, async=True):
+    def _close_connections(self, connection=None):
         '''Close ``connection`` if specified, otherwise close all connections.
 
         Return a list of :class:`.Future` called back once the connection/s
@@ -669,13 +669,13 @@ class TcpServer(Producer):
         all = []
         if connection:
             all.append(connection.event('connection_lost'))
-            connection.transport.close(async)
+            connection.transport.close()
         else:
             connections = list(self._concurrent_connections)
             self._concurrent_connections = set()
             for connection in connections:
                 all.append(connection.event('connection_lost'))
-                connection.transport.close(async)
+                connection.transport.close()
         if all:
             self.logger.info('%s closing %d connections', self, len(all))
             return multi_async(all)

@@ -124,7 +124,7 @@ class QueueTask(Task):
 
     def _wakeup(self, fut, inthread=False):
         if inthread or fut._loop is self._loop:
-            self._wakeup(fut)
+            super(QueueTask, self)._wakeup(fut)
         else:
             self._loop.call_soon(self._wakeup, fut, True)
 
@@ -181,7 +181,7 @@ class EventLoop(asyncio.SelectorEventLoop):
 
 def call_repeatedly(loop, interval, callback, *args):
     """Call a ``callback`` every ``interval`` seconds.
-    
+
     It handles asynchronous results. If an error occur in the ``callback``,
     the chain is broken and the ``callback`` won't be called anymore.
     """

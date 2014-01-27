@@ -1,4 +1,4 @@
-from pulsar import Deferred
+from pulsar import Future
 from pulsar.apps import wsgi
 from pulsar.apps.test import unittest
 from pulsar.utils.system import json
@@ -36,12 +36,12 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(response.render(), json.dumps({'bla': 'ciao'}))
 
     def test_json_with_async_string2(self):
-        d = Deferred()
+        d = Future()
         astr = wsgi.AsyncString(d)
         response = wsgi.Json({'bla': astr})
         self.assertEqual(len(response.children), 1)
         result = response.render()
-        self.assertIsInstance(result, Deferred)
+        self.assertIsInstance(result, Future)
         d.callback('ciao')
         result = yield result
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))
