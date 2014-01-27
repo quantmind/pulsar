@@ -1,7 +1,6 @@
 import sys
 from datetime import timedelta
 
-from pulsar import Failure
 from pulsar.apps.tasks import PeriodicJob,  anchorDate
 
 
@@ -21,11 +20,7 @@ class TestPeriodicError(TestPeriodicJob):
     run_every = timedelta(seconds=60)
 
     def __call__(self, consumer):
-        try:
-            raise Exception('kaputt')
-        except Exception:
-            Failure(sys.exc_info()).mute()
-            raise
+        raise Exception('kaputt')
 
 
 class AnchoredEveryHour(TestPeriodicJob):

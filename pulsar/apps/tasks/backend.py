@@ -91,7 +91,7 @@ from hashlib import sha1
 
 from pulsar import (task, async, EventHandler, PulsarException,
                     Future, coroutine_return, ASYNC_OBJECTS,
-                    get_request_loop, raise_error_and_log)
+                    get_request_loop)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import (LocalMixin, lazyproperty, lazymethod,
@@ -391,7 +391,7 @@ class TaskBackend(object):
                 self.logger.debug('%s cannot queue new task. Locked', jobname)
                 coroutine_return()
         else:
-            raise_error_and_log(TaskNotAvailable(jobname), level='warning')
+            raise TaskNotAvailable(jobname)
 
     def bind_event(self, name, handler):
         self.events.bind_event(self.channel(name), handler)

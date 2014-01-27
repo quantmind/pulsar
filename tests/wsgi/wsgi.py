@@ -183,10 +183,8 @@ class WsgiRequestTests(unittest.TestCase):
             extra={'error.handler': lambda request, failure: 'bla'})
         try:
             raise ValueError('just a test')
-        except ValueError:
-            failure = pulsar.Failure(sys.exc_info())
-            failure.mute()
-            response = wsgi.handle_wsgi_error(environ, failure)
+        except ValueError as exc:
+            response = wsgi.handle_wsgi_error(environ, exc)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.content, (b'bla',))
 
@@ -196,11 +194,8 @@ class WsgiRequestTests(unittest.TestCase):
         environ = wsgi.test_wsgi_environ(extra={'pulsar.cfg': cfg})
         try:
             raise ValueError('just a test for debug wsgi error handler')
-        except ValueError:
-            exc_info = sys.exc_info()
-        failure = pulsar.Failure(exc_info)
-        failure.mute()
-        response = wsgi.handle_wsgi_error(environ, failure)
+        except ValueError as exc:
+            response = wsgi.handle_wsgi_error(environ, exc)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.content_type, None)
         self.assertEqual(len(response.content), 1)
@@ -213,11 +208,8 @@ class WsgiRequestTests(unittest.TestCase):
                                          headers=headers)
         try:
             raise ValueError('just a test for debug wsgi error handler')
-        except ValueError:
-            exc_info = sys.exc_info()
-        failure = pulsar.Failure(exc_info)
-        failure.mute()
-        response = wsgi.handle_wsgi_error(environ, failure)
+        except ValueError as exc:
+            response = wsgi.handle_wsgi_error(environ, exc)
         self.assertEqual(response.status_code, 500)
         html = response.content[0]
         self.assertEqual(response.content_type, 'text/html')

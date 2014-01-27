@@ -39,7 +39,6 @@ __all__ = ['Future',
            'async_while',
            'in_loop',
            'task',
-           'raise_error_and_log',
            'chain_future',
            'ASYNC_OBJECTS']
 
@@ -289,14 +288,6 @@ def multi_async(iterable=None, loop=None, lock=True, **kwargs):
     return MultiFuture(loop, iterable, **kwargs)
 
 
-def raise_error_and_log(error, level=None):
-    try:
-        raise error
-    except Exception as e:
-        Failure(sys.exc_info()).log(msg=str(e), level=level)
-        raise
-
-
 def async_while(timeout, while_clause, *args):
     '''The asynchronous equivalent of ``while while_clause(*args):``
 
@@ -319,7 +310,7 @@ def async_while(timeout, while_clause, *args):
         while result:
             interval = min(interval+di, MAX_ASYNC_WHILE)
             try:
-                yield sleep(interval, loop)
+                yield asyncio.sleep(interval, loop)
             except TimeoutError:
                 pass
             if timeout and loop.time() - start >= timeout:

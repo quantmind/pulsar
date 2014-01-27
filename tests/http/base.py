@@ -300,8 +300,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         client = self._client
         response = yield client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
-        failure = response.event('on_headers').exception()
-        self.assertIsInstance(failure, Failure)
+        exc = response.event('on_headers').exception()
+        self.assertTruee(exc)
 
     def test_redirect_1(self):
         http = self.client()
