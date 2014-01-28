@@ -92,7 +92,10 @@ def add_callback(future, callback):
 
 
 def future_timeout(future, timeout, exc_class=None):
+    '''Add a ``timeout`` to ``future``.
 
+    :return: the future
+    '''
     exc_class = exc_class or TimeoutError
 
     def _check_timeout():
@@ -100,6 +103,8 @@ def future_timeout(future, timeout, exc_class=None):
             future.set_exception(exc_class())
 
     future._loop.call_later(timeout, _check_timeout)
+
+    return future
 
 
 def chain_future(future, callback=None, next=None, timeout=None):
@@ -263,8 +268,7 @@ class AsyncBindings:
         :parameter get_result: optional flag indicating if to get the result
             in case the return value is a :class:`.Future` already done.
             Default: ``True``.
-        :return: a :class:`.Future` or  a :class:`.Failure` or a synchronous
-            value.
+        :return: a :class:`.Future` or a synchronous ``value``.
         '''
         try:
             return self(value, loop, task=task)

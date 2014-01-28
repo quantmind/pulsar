@@ -608,7 +608,7 @@ class TestSuite(tasks.TaskQueue):
         params['concurrency'] = self.cfg.concurrency
         return params
 
-    def _test_done(self, task_id=None):
+    def _test_done(self, task_id=None, exc=None):
         runner = self.runner
         if task_id:
             self._tests_done.add(to_string(task_id))

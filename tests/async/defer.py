@@ -4,7 +4,7 @@ import unittest
 from functools import reduce
 
 from pulsar import (maybe_async, CancelledError, InvalidStateError, Future,
-                    coroutine_return, async, TimeoutError)
+                    coroutine_return, async, TimeoutError, future_timeout)
 from pulsar.utils.pep import pickle, default_timer
 
 
@@ -36,13 +36,12 @@ def async_pair():
     return d, c
 
 
-class TestDeferred(unittest.TestCase):
+class TestFuture(unittest.TestCase):
 
     def testSimple(self):
-        d = Deferred()
+        d = Future()
         self.assertFalse(d.done())
-        self.assertEqual(str(d), 'Deferred (pending)')
-        d.callback('ciao')
+        d.set_result('ciao')
         self.assertTrue(d.done())
         self.assertTrue(' (done)' in str(d))
         self.assertEqual(d.result(), 'ciao')
@@ -203,7 +202,7 @@ class TestDeferred(unittest.TestCase):
     def test_last_yield(self):
         def gen():
             try:
-                yield Deferred().set_timeout(1)
+                yield future_timeout(Future(), 1)
             except TimeoutError:
                 coroutine_return('OK')
         result = yield gen()
@@ -254,7 +253,7 @@ class TestDeferred(unittest.TestCase):
 
     def test_coroutine_return(self):
         def f(count=0):
-            yield -1
+            yield None
             coroutine_return('a')
             for i in range(count):
                 yield i
@@ -274,12 +273,6 @@ class TestDeferred(unittest.TestCase):
         result = yield async_sleep(2.1)
         self.assertEqual(result, 2.1)
         self.assertTrue(default_timer() - start > 2.1)
-
-    def test_async_sleep_callback(self):
-        start = default_timer()
-        result = yield async_sleep(1.1).add_callback(async_sleep)
-        self.assertTrue(default_timer() - start >= 2.2)
-        self.assertEqual(result, 1.1)
 
     def test_safe_async(self):
         def f():

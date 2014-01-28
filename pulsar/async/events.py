@@ -154,6 +154,7 @@ class EventHandler(AsyncObject):
         '''
         event = self._events.get(name)
         if event:
+            assert self._loop, "No event loop for %s" % self
             event._loop = self._loop
         return event
 
@@ -215,9 +216,10 @@ class EventHandler(AsyncObject):
         """
         if arg is None:
             arg = self
-        if name in self._events:
+        event = self.event(name)
+        if event:
             try:
-                return self._events[name].fire(arg, **kwargs)
+                return event.fire(arg, **kwargs)
             except InvalidStateError:
                 self.logger.error('Event %s already fired' % name)
         else:
