@@ -138,8 +138,7 @@ from collections import Mapping
 from functools import partial
 from inspect import isgenerator
 
-from pulsar import (multi_async, maybe_async, Future, async, coroutine_return,
-                    chain_future)
+from pulsar import multi_async, Future, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
@@ -185,11 +184,9 @@ def stream_mapping(value, request=None):
     async = False
     for key, value in iteritems(value):
         if isinstance(value, AsyncString):
-            value = value.content(request)
-        value = maybe_async(value)
-        async = async or isinstance(value, Future)
+            value = value.render(request)
         result[key] = value
-    return multi_async(result) if async else result
+    return multi_async(result)
 
 
 class AsyncString(object):
@@ -365,9 +362,10 @@ This is a shortcut for the :meth:`insert` method at index 0.
         return to_string(''.join(stream_to_string(stream)))
 
     def render(self, request=None):
-        '''A shortcut function for synchronously rendering a Content.
-        This is useful during testing. It is the synchronous equivalent of
-        :meth:`content`.
+        '''Render this string.
+
+        This method returns a string or a :class:`.Future` which results
+        in a string.
         '''
         stream = multi_async(self.stream(request))
         if stream.done():
@@ -864,38 +862,43 @@ class EmbeddedCss(Html):
 class Head(Html):
     ''':class:`HtmlDocument` ``head`` tag element.
 
-Contains :class:`Html` attributes for the various part of an HTML Head element.
-The head element is accessed via the :attr:`HtmlDocument.head` attribute.
+    Contains :class:`Html` attributes for the various part of an HTML
+    Head element. The head element is accessed via the
+    :attr:`HtmlDocument.head` attribute.
 
-.. attribute:: title
+    .. attribute:: title
 
-    Text in the ``title`` tag.
+        Text in the ``title`` tag.
 
-.. attribute:: meta
+    .. attribute:: meta
 
-    A container of :class:`Html` ``meta`` tags. To add new meta tags use the
-    :meth:`add_meta` method rather than accessing the :attr:`meta`
-    attribute directly.
+        A container of :class:`Html` ``meta`` tags. To add new meta tags use the
+        :meth:`add_meta` method rather than accessing the :attr:`meta`
+        attribute directly.
 
-.. attribute:: links
+    .. attribute:: links
 
-    A container of ``css`` links. Rendered just after the :attr:`meta`
-    container.
+        A container of ``css`` links. Rendered just after the :attr:`meta`
+        container.
 
-.. attribute:: scripts
+    .. attribute:: embedded_css
 
-    A container of Javascript files to render at the end of the body tag.
-    To add new javascript files simply use the append method on
-    this attribute. You can add relative paths::
+        Css embedded in the html page
 
-        html.head.scripts.append('/media/js/scripts.js')
+    .. attribute:: scripts
 
-    as well as absolute paths::
+        A container of Javascript files to render at the end of the body tag.
+        To add new javascript files simply use the append method on
+        this attribute. You can add relative paths::
 
-        html.head.scripts.append(
-            'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+            html.head.scripts.append('/media/js/scripts.js')
 
-'''
+        as well as absolute paths::
+
+            html.head.scripts.append(
+                'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+
+    '''
     def __init__(self, media_path=None, title=None, meta=None, **params):
         super(Head, self).__init__('head', **params)
         self.title = title
@@ -935,21 +938,10 @@ The head element is accessed via the :attr:`HtmlDocument.head` attribute.
             self._children.insert(0, '<title>%s</title>' % self.title)
         return super(Head, self).do_stream(request)
 
-    def body(self, request):
-        return self.js_body.content(request)
-
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
         meta = Html('meta', **kwargs)
         self.meta.append(meta)
-
-    def add(self, other):
-        if isinstance(other, Head):
-            self.style.append(other.style)
-            self.meta.append(other.meta)
-            self.js_head.append(other.js_head)
-            self.js_body.append(other.js_body)
-        return self
 
     def __add__(self, other):
         if isinstance(other, Media):
@@ -1012,17 +1004,27 @@ class HtmlDocument(Html):
         return self
 
     def do_stream(self, request):
+        # stream the body
         body = multi_async(self.body.stream(request))
-        head = multi_async(self.head.stream(request))
-        if not body.done() or not head.done():
-            yield self._html(body, head, request)
+        # the body has asynchronous components
+        # delay the header untl later
+        if not body.done():
+            yield self._html(request, body)
         else:
-            yield self._template % (self.flatatt(),
-                                    self.head.to_string(head.result()),
-                                    self.body.to_string(body.result()))
+            head = multi_async(self.head.stream(request))
+            #
+            # header not ready (this should never occur really)
+            if not head.done():
+                yield self._html(request, body, head)
+            else:
+                yield self._template % (self.flatatt(),
+                                        self.head.to_string(head.result()),
+                                        self.body.to_string(body.result()))
 
-    def _html(self, request):
-        body = yield body
+    def _html(self, request, body, head=None):
+        if head is None:
+            body = yield body
+            head = multi_async(self.head.stream(request))
         head = yield head
         result = self._template % (self.flatatt(),
                                    self.head.to_string(head),

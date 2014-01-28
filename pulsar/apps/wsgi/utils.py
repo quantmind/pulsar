@@ -284,17 +284,17 @@ def render_error_debug(request, exc, content_type):
     response = request.response
     is_html = content_type == 'text/html'
     error = Html('div', cn='section traceback error') if is_html else []
-    trace = format_traceback()
-    for traces in failure.exc_info[2]:
+    trace = format_traceback(exc)
+    for trace in format_traceback(exc):
         counter = 0
-        for trace in traces.split('\n'):
-            if trace.startswith('  '):
+        for line in trace.split('\n'):
+            if line.startswith('  '):
                 counter += 1
-                trace = trace[2:]
-            if trace:
+                line = line[2:]
+            if line:
                 if is_html:
-                    trace = Html('p', escape(trace))
+                    line = Html('p', escape(line))
                     if counter:
-                        trace.css({'margin-left': '%spx' % (20*counter)})
-                error.append(trace)
+                        line.css({'margin-left': '%spx' % (20*counter)})
+                error.append(line)
     return error

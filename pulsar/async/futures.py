@@ -148,6 +148,125 @@ def task_callback(callback):
     return _task_callback
 
 
+def _coroutine(coro):
+    '''wrap a coroutine so that not asynchronous value are
+    not yield
+    '''
+    value = None
+    while True:
+        if value is None:
+            result = next(coro)
+        else:
+            result = coro.send(value)
+        try:
+            value = async(result, task=False)
+        except FutureTypeError:
+            value = result
+        else:
+            value = yield result
+
+
+def async(coro_or_future, loop=None, task=True):
+    '''Handle an asynchronous ``coro_or_future``.
+
+    Equivalent to the ``asyncio.async`` function but returns a
+    :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``
+    is not a generator nor a :class:`.Future`.
+
+    This function can be overwritten by the :func:`set_async` function.
+
+    :parameter coro_or_future: the value to convert to a :class:`.Future`.
+    :parameter loop: optional :class:`.EventLoop`.
+    :return: a :class:`.Future`.
+    '''
+    if _bindings:
+        for binding in _bindings:
+            d = binding(coro_or_future, loop)
+            if d is not None:
+                return d
+    if isinstance(coro_or_future, Future):
+        return coro_or_future
+    elif isinstance(coro_or_future, GeneratorType):
+        if task:
+            loop = loop or get_request_loop()
+            task_factory = getattr(loop, 'task_factory', Task)
+            return task_factory(_coroutine(coro_or_future), loop=loop)
+        else:
+            return coro_or_future
+    else:
+        raise FutureTypeError
+
+
+def maybe_async(value, loop=None):
+    '''Handle a possible asynchronous ``value``.
+
+    Return an :ref:`asynchronous instance <tutorials-coroutine>`
+    only if ``value`` is a generator, a :class:`.Future`.
+
+    :parameter value: the value to convert to an asynchronous instance
+        if it needs to.
+    :parameter loop: optional :class:`.EventLoop`.
+    :return: a :class:`.Future` or a synchronous ``value``.
+    '''
+    try:
+        return async(value, loop)
+    except FutureTypeError:
+        return value
+
+
+def task(method):
+    '''Decorator to run a ``method`` returning a coroutine in the event loop
+    of the instance of the bound ``method``.
+
+    The instance must be an :ref:`async object <async-object>`.
+    '''
+    assert isgeneratorfunction(method)
+
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        loop = self._loop
+        task_factory = getattr(loop, 'task_factory', Task)
+        coro = _coroutine(method(self, *args, **kwargs))
+        future = task_factory(coro, loop=loop)
+        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
+            return loop.run_until_complete(future)
+        else:
+            return future
+
+    return _
+
+
+def run_in_loop(loop, callback, *args, **kwargs):
+    '''Run ``callable`` in the event ``loop`` thread.
+
+    Return a :class:`.Future`
+    '''
+    def _():
+        result = callback(*args, **kwargs)
+        try:
+            future = async(result, loop=loop)
+        except FutureTypeError:
+            coroutine_return(result)
+        else:
+            result = yield future
+            coroutine_return(result)
+
+    return getattr(loop, 'task_factory', Task)(_(), loop=loop)
+
+
+def in_loop(method):
+    '''Decorator to run a method in the event loop of the instance of
+    the bound ``method``.
+
+    The instance must be an :ref:`async object <async-object>`.
+    '''
+    @wraps(method)
+    def _(self, *args, **kwargs):
+        return run_in_loop(self._loop, method, self, *args, **kwargs)
+
+    return _
+
+
 class FutureTypeError(TypeError):
     '''raised when invoking ``async`` on a wrong type.'''
 
@@ -216,76 +335,6 @@ class Task(asyncio.Task):
         self = None
 
 
-######################################################### Async Bindings
-class AsyncBindings:
-
-    def __init__(self):
-        self._bindings = []
-
-    def add(self, callable):
-        self._bindings.append(callable)
-
-    def __call__(self, coro_or_future, loop=None, task=True):
-        '''Handle an asynchronous ``coro_or_future``.
-
-        Equivalent to the ``asyncio.async`` function but returns a
-        :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``
-        is not a generator nor a :class:`.Future`.
-
-        This function can be overwritten by the :func:`set_async` function.
-
-        :parameter value: the value to convert to a :class:`.Future`.
-        :parameter loop: optional :class:`.EventLoop`.
-        :return: a :class:`.Future`.
-        '''
-        if self._bindings:
-            for binding in self._bindings:
-                d = binding(coro_or_future, loop)
-                if d is not None:
-                    return d
-        if isinstance(coro_or_future, Future):
-            return coro_or_future
-        elif isinstance(coro_or_future, GeneratorType):
-            if task:
-                loop = loop or get_request_loop()
-                task_factory = getattr(loop, 'task_factory', Task)
-                return task_factory(coro_or_future, loop=loop)
-            else:
-                return coro_or_future
-        else:
-            raise FutureTypeError
-
-    def maybe(self, value, loop=None, async=False, task=True):
-        '''Handle a possible asynchronous ``value``.
-
-        Return an :ref:`asynchronous instance <tutorials-coroutine>`
-        only if ``value`` is a generator, a :class:`.Future` or
-        ``get_result`` is set to ``False``.
-
-        :parameter value: the value to convert to an asynchronous instance
-            if it needs to.
-        :parameter loop: optional :class:`.EventLoop`.
-        :parameter get_result: optional flag indicating if to get the result
-            in case the return value is a :class:`.Future` already done.
-            Default: ``True``.
-        :return: a :class:`.Future` or a synchronous ``value``.
-        '''
-        try:
-            return self(value, loop, task=task)
-        except FutureTypeError:
-            if async:
-                future = Future(loop=loop)
-                future.set_result(value)
-                return future
-            else:
-                return value
-
-
-async = AsyncBindings()
-add_async_binding = async.add
-maybe_async = async.maybe
-
-
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):
     '''This is an utility function to convert an ``iterable`` into a
     :class:`MultiFuture` element.'''
@@ -323,59 +372,6 @@ def async_while(timeout, while_clause, *args):
         coroutine_return(result)
 
     return async(_(), loop)
-
-
-def task(method):
-    '''Decorator to run a ``method`` returning a coroutine in the event loop
-    of the instance of the bound ``method``.
-
-    The instance must be an :ref:`async object <async-object>`.
-    '''
-    assert isgeneratorfunction(method)
-
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        loop = self._loop
-        task_factory = getattr(loop, 'task_factory', Task)
-        future = task_factory(method(self, *args, **kwargs), loop=loop)
-        if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
-            return loop.run_until_complete(future)
-        else:
-            return future
-
-    return _
-
-
-def run_in_loop(loop, callback, *args, **kwargs):
-    '''Run ``callable`` in the event ``loop`` thread.
-
-    Return a :class:`.Future`
-    '''
-    def _():
-        result = callback(*args, **kwargs)
-        try:
-            future = async(result, loop=loop)
-        except FutureTypeError:
-            coroutine_return(result)
-        else:
-            result = yield future
-            coroutine_return(result)
-
-    return getattr(loop, 'task_factory', Task)(_(), loop=loop)
-
-
-
-def in_loop(method):
-    '''Decorator to run a method in the event loop of the instance of
-    the bound ``method``.
-
-    The instance must be an :ref:`async object <async-object>`.
-    '''
-    @wraps(method)
-    def _(self, *args, **kwargs):
-        return run_in_loop(self._loop, method, self, *args, **kwargs)
-
-    return _
 
 
 ############################################################### MultiFuture
@@ -439,3 +435,11 @@ class MultiFuture(Future):
         else:
             stream[key] = value
         return value
+
+
+def add_async_binding(callable):
+    global _bindings
+    _bindings.append(callable)
+
+
+_bindings = []

@@ -90,8 +90,7 @@ from datetime import datetime, timedelta
 from hashlib import sha1
 
 from pulsar import (task, async, EventHandler, PulsarException,
-                    Future, coroutine_return, maybe_async,
-                    get_request_loop)
+                    Future, coroutine_return, get_request_loop)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
 from pulsar.utils.log import (LocalMixin, lazyproperty, lazymethod,
@@ -648,8 +647,7 @@ class TaskBackend(EventHandler):
                     yield self.models.task.update(task)
                     pubsub.publish(self.channel('task_started'), task_id)
                     # This may block for a while
-                    result = yield maybe_async(job(consumer, **kwargs),
-                                               async=True)
+                    result = yield job(consumer, **kwargs)
                     status = states.SUCCESS
             else:
                 self.logger.error('invalid status for %s', task_info)

@@ -11,9 +11,6 @@ from asyncio.base_events import BaseEventLoop, _StopError
 
 from pulsar.utils.config import Global
 
-from .tracelogger import format_traceback
-
-
 __all__ = ['get_request_loop',
            'get_event_loop',
            'new_event_loop',
@@ -25,8 +22,7 @@ __all__ = ['get_request_loop',
            'logger',
            'NOTHING',
            'SELECTORS',
-           'AsyncObject',
-           'format_traceback']
+           'AsyncObject']
 
 
 LOGGER = logging.getLogger('pulsar')

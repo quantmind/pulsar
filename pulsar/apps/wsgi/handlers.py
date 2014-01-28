@@ -101,7 +101,7 @@ via the ``_loop`` attribute::
 import sys
 import types
 
-from pulsar import async, Http404, coroutine_return, ASYNC_OBJECTS
+from pulsar import async, Http404, coroutine_return
 from pulsar.utils.structures import OrderedDict
 from pulsar.utils.log import LocalMixin, local_method
 
@@ -150,13 +150,9 @@ class WsgiHandler(object):
         resp = None
         for middleware in self.middleware:
             try:
-                resp = middleware(environ, start_response)
-                if isinstance(resp, ASYNC_OBJECTS):
-                    resp = yield resp
+                resp = yield middleware(environ, start_response)
             except Exception as exc:
-                resp = handle_wsgi_error(environ, exc)
-                if isinstance(resp, ASYNC_OBJECTS):
-                    resp = yield resp
+                resp = yield handle_wsgi_error(environ, exc)
             if resp is not None:
                 break
         if resp is None:
@@ -164,9 +160,7 @@ class WsgiHandler(object):
         if isinstance(resp, WsgiResponse):
             # The response is a WSGIResponse
             for middleware in self.response_middleware:
-                resp = middleware(environ, resp)
-                if isinstance(resp, ASYNC_OBJECTS):
-                    resp = yield resp
+                resp = yield middleware(environ, resp)
             start_response(resp.status, resp.get_headers())
         coroutine_return(resp)
 
