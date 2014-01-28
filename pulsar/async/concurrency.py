@@ -90,28 +90,35 @@ class Concurrency(object):
     def is_arbiter(self):
         return False
 
-    def io_poller(self):
-        '''Return a IO poller instance which sets the :class:`EventLoop.io`
-handler. By default it return nothing so that the best handler for the
-system is chosen.'''
+    def selector(self):
+        '''Return a selector instance.
+
+        By default it return nothing so that the best handler for the
+        system is chosen.
+        '''
         return SELECTORS[self.cfg.selector]()
 
     def run_actor(self, actor):
-        '''Start running the ``actor``.'''
+        '''Start running the ``actor``.
+        '''
+        set_actor(actor)
+        actor.mailbox.start_serving()
         actor._loop.run_forever()
 
     def setup_event_loop(self, actor):
         '''Set up the event loop for ``actor``.
-
-        Must be implemented by subclasses.
         '''
-        raise NotImplementedError
+        actor._logger = self.cfg.configured_logger(actor.name)
+        loop = EventLoop(self.selector(), logger=actor._logger,
+                         iothreadloop=True)
+        actor.mailbox = self.create_mailbox(actor, loop)
 
     def hand_shake(self, actor):
         try:
             a = get_actor()
             if a is not actor:
                 set_actor(actor)
+            assert actor.state == ACTOR_STATES.STARTING
             actor.state = ACTOR_STATES.RUN
             r = self.periodic_task(actor)
             if r:
@@ -134,11 +141,24 @@ system is chosen.'''
 
     def create_mailbox(self, actor, loop):
         '''Create the mailbox for ``actor``.'''
-        set_actor(actor)
         client = MailboxClient(actor.monitor.address, actor, loop)
         loop.call_soon_threadsafe(self.hand_shake, actor)
         client.bind_event('finish', lambda _, **kw: loop.stop())
         return client
+
+    def _install_signals(self, actor):
+        proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
+        if system.set_proctitle(proc_name):
+            actor.logger.debug('Set process title to %s', proc_name)
+        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
+        if signal:
+            actor.logger.debug('Installing signals')
+            for sig in system.EXIT_SIGNALS:
+                try:
+                    actor._loop.add_signal_handler(
+                        sig, self.handle_exit_signal, actor, sig)
+                except ValueError:
+                    pass
 
     def periodic_task(self, actor, **kw):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
@@ -211,23 +231,7 @@ class ProcessMixin(object):
 
     def before_start(self, actor):  # pragma    nocover
         actor.start_coverage()
-
-    def setup_event_loop(self, actor):
-        loop = EventLoop(self.io_poller(), logger=actor.logger,
-                         iothreadloop=True)
-        actor.mailbox = self.create_mailbox(actor, loop)
-        proc_name = "%s-%s" % (actor.cfg.proc_name, actor)
-        if system.set_proctitle(proc_name):
-            actor.logger.debug('Set process title to %s', proc_name)
-        system.set_owner_process(actor.cfg.uid, actor.cfg.gid)
-        if signal:
-            actor.logger.debug('Installing signals')
-            for sig in system.EXIT_SIGNALS:
-                try:
-                    actor._loop.add_signal_handler(
-                        sig, self.handle_exit_signal, actor, sig)
-                except ValueError:
-                    pass
+        self._install_signals(actor)
 
     def handle_exit_signal(self, actor, sig):
         actor.logger.warning("Got %s. Stopping.", system.SIG_NAMES.get(sig))
@@ -251,6 +255,7 @@ class MonitorMixin(object):
 
         Switch state to ``RUN`` and fire the ``start`` event.
         '''
+        assert actor.state == ACTOR_STATES.STARTING
         actor.state = ACTOR_STATES.RUN
         actor.bind_event('start', self.periodic_task)
         actor.fire_event('start')
@@ -263,18 +268,22 @@ class MonitorMixin(object):
 ############################################################################
 ##    CONCURRENCY IMPLEMENTATIONS
 class MonitorConcurrency(MonitorMixin, Concurrency):
-    ''':class:`Concurrency` class for :class:`Monitor`. Monitors live in
-the **mainthread** of the master process and therefore do not require
-to be spawned.'''
+    ''':class:`Concurrency` class for a :class:`Monitor`.
+
+    Monitors live in the **mainthread** of the master process and
+    therefore do not require to be spawned.
+    '''
     def setup_event_loop(self, actor):
+        actor._logger = self.cfg.configured_logger(actor.name)
         actor.mailbox = ProxyMailbox(actor)
-        actor.mailbox._loop.call_soon_threadsafe(self.hand_shake, actor)
+        actor.mailbox._loop.call_soon(actor.start)
 
     def run_actor(self, actor):
+        actor._loop.call_soon(self.hand_shake, actor)
         raise MonitorStarted
 
     def create_mailbox(self, actor, loop):
-        pass
+        raise NotImplementedError
 
     def periodic_task(self, actor, **kw):
         '''Override the :meth:`Concurrency.periodic_task` to implement
@@ -289,8 +298,6 @@ to be spawned.'''
             actor.monitor_task()
         actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
-        # Return actor!
-        return actor
 
     def _stop_actor(self, actor):
 
@@ -314,6 +321,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         if actor.cfg.daemon:
             system.daemonize()
         actor.start_coverage()
+        self._install_signals(actor)
 
     def create_mailbox(self, actor, loop):
         '''Override :meth:`Concurrency.create_mailbox` to create the
@@ -325,8 +333,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         mailbox.bind_event('stop', lambda _, **kw: loop.stop())
         mailbox.bind_event(
             'start',
-            lambda _, **kw: loop.call_soon_threadsafe(self.hand_shake, actor))
-        mailbox.start_serving()
+            lambda _, **kw: loop.call_soon(self.hand_shake, actor))
         return mailbox
 
     def periodic_task(self, actor, **kw):
@@ -339,11 +346,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
             interval = MONITOR_TASK_PERIOD
             actor.manage_actors()
             for m in list(itervalues(actor.monitors)):
-                if m.started():
-                    if not m.is_running():
-                        actor._remove_actor(m)
-                else:
-                    m.start()
+                if m.started() and not m.is_running():
+                    actor._remove_actor(m)
         actor.next_periodic_task = actor._loop.call_later(
             interval, self.periodic_task, actor)
 
@@ -354,8 +358,6 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         else:
             actor.logger.debug('Restarts event loop to stop actors')
             loop = actor._loop
-            loop._ready.clear()
-            loop._scheduled[:] = []
             actor._loop.call_soon(self._exit_arbiter, actor)
             actor._run(False)
 
@@ -415,12 +417,6 @@ class ActorThread(Concurrency, Thread):
     def loop(self):
         if self._actor:
             return self._actor._loop
-
-    def setup_event_loop(self, actor):
-        '''Create the event loop but don't install signals.'''
-        loop = EventLoop(self.io_poller(), logger=actor.logger,
-                         iothreadloop=True)
-        actor.mailbox = self.create_mailbox(actor, loop)
 
 
 concurrency_models = {'arbiter': ArbiterConcurrency,

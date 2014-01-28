@@ -221,6 +221,7 @@ class PulsarProtocol(EventHandler):
         self._session = session
         self._timeout = timeout
         self._producer = producer
+        self.bind_event('connection_lost', self._cancel_timeout)
 
     def __repr__(self):
         address = self._address
@@ -345,7 +346,7 @@ class PulsarProtocol(EventHandler):
             self._idle_timeout = self._loop.call_later(self._timeout,
                                                        self._timed_out)
 
-    def _cancel_timeout(self):
+    def _cancel_timeout(self, *args, **kw):
         if self._idle_timeout:
             self._idle_timeout.cancel()
             self._idle_timeout = None
@@ -378,6 +379,7 @@ class Connection(Protocol):
         super(Connection, self).__init__(**kw)
         self._processed = 0
         self._consumer_factory = consumer_factory
+        self.bind_event('connection_lost', self._connection_lost)
 
     def current_consumer(self):
         '''The :class:`ProtocolConsumer` currently handling incoming data.
@@ -407,22 +409,6 @@ class Connection(Protocol):
             consumer = self.current_consumer()
             data = consumer._data_received(data)
         self._add_idle_timeout()
-
-    def connection_lost(self, exc=None):
-        '''It performs these actions in the following order:
-
-        * Fires the ``connection_lost`` :ref:`one time event <one-time-event>`
-          if not fired before, with ``exc`` as event data.
-        * Cancel the idle timeout if set.
-        * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
-          :meth:`current_consumer`.
-          '''
-        event = self.event('connection_lost')
-        if not event.fired():
-            event.fire(self, exc=exc)
-            self._cancel_timeout()
-            if self._current_consumer:
-                self._current_consumer.connection_lost(exc)
 
     def upgrade(self, consumer_factory):
         '''Upgrade the :func:`_consumer_factory` callable.
@@ -456,6 +442,18 @@ class Connection(Protocol):
         if not exc:
             consumer = self._producer.build_consumer(self._consumer_factory)
             self.set_consumer(consumer)
+
+    def _connection_lost(self, conn, exc=None):
+        '''It performs these actions in the following order:
+
+        * Fires the ``connection_lost`` :ref:`one time event <one-time-event>`
+          if not fired before, with ``exc`` as event data.
+        * Cancel the idle timeout if set.
+        * Invokes the :meth:`ProtocolConsumer.connection_lost` method in the
+          :meth:`current_consumer`.
+          '''
+        if conn._current_consumer:
+            conn._current_consumer.connection_lost(exc)
 
 
 class Producer(EventHandler):

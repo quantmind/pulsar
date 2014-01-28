@@ -345,12 +345,17 @@ class Config(object):
         loggers = {}
         loghandlers = self.loghandlers
         name = 'pulsar.%s' % (name or self.name)
+        default_loglevel = None
         for loglevel in self.loglevel or ():
             bits = loglevel.split('.')
             loglevel = bits[-1]
             if len(bits) > 1:
                 namespace = '.'.join(bits[:-1])
+                if namespace == 'pulsar':
+                    default_loglevel = loglevel
             else:
+                if not default_loglevel:
+                    default_loglevel = loglevel
                 namespace = name
             if namespace in loggers:
                 continue
@@ -358,9 +363,10 @@ class Config(object):
                                                    config=self.logconfig,
                                                    level=loglevel,
                                                    handlers=loghandlers)
-        for namespace, loglevel in (('pulsar', 'info'),
-                                 (name, 'info'),
-                                 ('asyncio', 'warning')):
+        default_loglevel = default_loglevel or 'info'
+        for namespace, loglevel in (('pulsar', default_loglevel),
+                                    (name, default_loglevel),
+                                    ('asyncio', 'warning')):
             if namespace not in loggers:
                 loggers[namespace] = configured_logger(namespace,
                                                        config=self.logconfig,

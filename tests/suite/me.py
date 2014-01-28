@@ -6,6 +6,7 @@ from asyncio import sleep
 
 import pulsar
 from pulsar import send, multi_async, get_event_loop, coroutine_return
+from pulsar.async.eventloop import QueueEventLoop
 from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
 from pulsar.utils.version import get_version
@@ -40,8 +41,8 @@ class TestTestWorker(unittest.TestCase):
     def testCPUbound(self):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
-        self.assertTrue(loop.cpubound)
-        self.assertFalse(worker._loop.cpubound)
+        self.assertIsInstance(loop, QueueEventLoop)
+        self.assertNotIsInstance(worker._loop, QueueEventLoop)
 
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()

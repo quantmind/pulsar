@@ -47,13 +47,15 @@ def stop(request):
 @command()
 def notify(request, info):
     '''The actor notify itself with a dictionary of information.
-The command perform the following actions:
 
-* Update the mailbox to the current consumer of the actor connection
-* Update the info dictionary
-* Returns the time of the update
-'''
+    The command perform the following actions:
+
+    * Update the mailbox to the current consumer of the actor connection
+    * Update the info dictionary
+    * Returns the time of the update
+    '''
     t = time()
+    actor = request.actor
     remote_actor = request.caller
     if isinstance(remote_actor, ActorProxyMonitor):
         remote_actor.mailbox = request.connection
@@ -65,6 +67,13 @@ The command perform the following actions:
         if callback:
             remote_actor.callback = None
             callback.set_result(remote_actor)
+            if actor.cfg.debug:
+                actor.logger.debug('Got first notification from %s',
+                                   remote_actor)
+        elif actor.cfg.debug:
+            actor.logger.debug('Got notification from %s', remote_actor)
+    else:
+        actor._logger.warning('notify got a bad actor')
     return t
 
 

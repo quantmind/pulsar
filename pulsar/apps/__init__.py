@@ -461,7 +461,7 @@ class Application(Configurator):
                 actor = pulsar.arbiter(cfg=cfg)
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start = Future()
+                start = Future(loop=actor._loop)
                 if actor.started():
                     self._add_to_arbiter(start, actor)
                 else:   # the arbiter has not yet started.

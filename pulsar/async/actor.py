@@ -178,6 +178,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
             self.cfg.post_fork(self)
         except Exception:
             pass
+        impl.setup_event_loop(self)
 
     def __repr__(self):
         return self.impl.unique_name
@@ -241,8 +242,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
             self._started = time()
-            self._logger = self.cfg.configured_logger(self.name)
-            self.__impl.setup_event_loop(self)
             self.state = ACTOR_STATES.STARTING
             self._run()
 

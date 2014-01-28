@@ -290,6 +290,7 @@ Utilities
 '''
 import sys
 import unittest
+from functools import partial
 
 import pulsar
 from pulsar import multi_async
@@ -576,7 +577,10 @@ class TestSuite(tasks.TaskQueue):
                 queued = []
                 self._tests_done = set()
                 self._tests_queued = None
-                self.backend.bind_event('task_done', self._test_done)
+                #
+                # Bind to the task_done event
+                self.backend.bind_event('task_done',
+                                        partial(self._test_done, monitor))
                 for tag, testcls in tests:
                     r = self.backend.queue_task('test', testcls=testcls,
                                                 tag=tag)
@@ -584,15 +588,16 @@ class TestSuite(tasks.TaskQueue):
                 queued = yield multi_async(queued)
                 self.logger.debug('loaded %s test classes', len(tests))
                 self._tests_queued = set(queued)
-                yield self._test_done()
+                yield self._test_done(monitor)
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:   # pragma    nocover
-            monitor.logger.critical('Error occurred while starting tests')
-            monitor.arbiter.stop()
+            monitor.logger.critical('Error occurred while starting tests',
+                                    exc_info=True)
+            monitor._loop.call_soon(self._exit, 3)
 
     @classmethod
     def create_config(cls, *args, **kwargs):
@@ -608,7 +613,7 @@ class TestSuite(tasks.TaskQueue):
         params['concurrency'] = self.cfg.concurrency
         return params
 
-    def _test_done(self, task_id=None, exc=None):
+    def _test_done(self, monitor, task_id=None, exc=None):
         runner = self.runner
         if task_id:
             self._tests_done.add(to_string(task_id))
@@ -627,4 +632,7 @@ class TestSuite(tasks.TaskQueue):
                     exit_code = 2
                 else:
                     exit_code = 0
-                raise pulsar.HaltServer(exit_code=exit_code)
+                monitor._loop.call_soon(self._exit, exit_code)
+
+    def _exit(self, exit_code):
+        raise pulsar.HaltServer(exit_code=exit_code)

@@ -167,7 +167,7 @@ class Tunneling:
 
     def on_headers(self, response, exc=None):
         '''Called back once the headers have arrived.'''
-        if response.status_code == 200:
+        if not exc and response.status_code == 200:
             connection = response._connection
             response.bind_event('post_request', self._tunnel_consumer)
             return response.finished()

@@ -160,7 +160,7 @@ class Task(asyncio.Task):
     '''
     _current_tasks = {}
 
-    def _step(self, value=None, error=None):
+    def _step(self, value=None, exc=None):
         __skip_traceback__ = True
         assert not self.done(), \
             '_step(): already done: {!r}, {!r}, {!r}'.format(self, value, exc)
@@ -173,8 +173,8 @@ class Task(asyncio.Task):
         self.__class__._current_tasks[self._loop] = self
         #
         try:
-            if error:
-                result = coro.throw(error)
+            if exc:
+                result = coro.throw(exc)
             elif value is not None:
                 result = coro.send(value)
             else:

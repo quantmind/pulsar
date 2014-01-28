@@ -233,10 +233,11 @@ class TaskClient(PubSubClient):
         self._be = be
 
     def __call__(self, channel, message):
-        self._be.events.fire_event(channel, message)
+        name = self._be.event_name(channel)
+        self._be.fire_event(name, message)
 
 
-class TaskBackend(object):
+class TaskBackend(EventHandler):
     '''A backend class for running :class:`.Task`.
     A :class:`TaskBackend` is responsible for creating tasks and put them
     into the distributed queue.
@@ -295,7 +296,7 @@ class TaskBackend(object):
                  schedule_periodic=False, backlog=1, max_tasks=0, name=None,
                  poll_timeout=None):
         self.store = store
-        self.logger = logger
+        self._logger = logger
         self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
@@ -308,10 +309,10 @@ class TaskBackend(object):
         self.callbacks = {}
         self.models = odm.Mapper(self.store)
         self.models.register(Task)
-        c = self.channel
-        self.events = EventHandler(many_times_events=(c('task_queued'),
-                                                      c('task_started'),
-                                                      c('task_done')))
+        super(TaskBackend, self).__init__(self._loop,
+                                          many_times_events=('task_queued',
+                                                             'task_started',
+                                                             'task_done'))
 
     def __repr__(self):
         if self.schedule_periodic:
@@ -319,6 +320,10 @@ class TaskBackend(object):
         else:
             return 'task consumer %s' % self.store.dns
     __str__ = __repr__
+
+    @property
+    def logger(self):
+        return self._logger
 
     @property
     def _loop(self):
@@ -344,7 +349,15 @@ class TaskBackend(object):
         return JobRegistry.load(self.task_paths)
 
     def channel(self, name):
+        '''Given an event ``name`` returns the corresponding channel name.
+
+        The event ``name`` is one of ``task_queued``, ``task_started``
+        or ``task_done``
+        '''
         return '%s_%s' % (self.name, name)
+
+    def event_name(self, channel):
+        return channel[len(self.name)+1:]
 
     @task
     def queue_task(self, jobname, meta_params=None, expiry=None, **kwargs):
@@ -392,9 +405,6 @@ class TaskBackend(object):
                 coroutine_return()
         else:
             raise TaskNotAvailable(jobname)
-
-    def bind_event(self, name, handler):
-        self.events.bind_event(self.channel(name), handler)
 
     def wait_for_task(self, task_id, timeout=None):
         '''Asynchronously wait for a task with ``task_id`` to have finished
@@ -663,6 +673,7 @@ class TaskBackend(object):
             yield self.finish_task(task_id, lock_id)
         #
         self.logger.info('finished %s', task_info)
+        # publish into the task_done channel
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)
 
@@ -784,7 +795,9 @@ class PulsarTaskBackend(TaskBackend):
     def pubsub(self):
         pubsub = self.store.pubsub()
         pubsub.add_client(TaskClient(self))
-        pubsub.subscribe(*tuple(self.events.events))
+        # pubsub channels names from event names
+        channels = tuple((self.channel(name) for name in self.events))
+        pubsub.subscribe(*channels)
         self.bind_event('task_done', self.task_done_callback)
         return pubsub
 
@@ -821,7 +834,8 @@ class PulsarTaskBackend(TaskBackend):
         pipe = store.pipeline()
         if lock_id:
             pipe.hdel(self.channel('locks'), lock_id)
-        pipe.lrem(task_id)
+        # Remove the task_id from the inqueue list
+        pipe.lrem(self.channel('inqueue'), 0, task_id)
         return pipe.commit()
 
     def get_tasks(self, ids):

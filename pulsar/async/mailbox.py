@@ -62,7 +62,7 @@ from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .futures import Future, coroutine_return, in_loop, ASYNC_OBJECTS
+from .futures import Future, coroutine_return, in_loop, maybe_async
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient
@@ -223,9 +223,9 @@ class MailboxProtocol(Protocol):
                     actor = target
                     command = get_command(command)
                     req = CommandRequest(target, caller, self)
-                    result = command(req, message['args'], message['kwargs'])
-                    if isinstance(result, ASYNC_OBJECTS):
-                        result = yield result
+                    result = yield maybe_async(
+                        command(req, message['args'], message['kwargs']),
+                        self._loop, async=True)
             except Exception as exc:
                 self.logger.exception('Unhandled exception')
                 result = None
@@ -279,6 +279,9 @@ class MailboxClient(AbstractClient):
         self._connection._start(req)
         response = yield req.future
         coroutine_return(response)
+
+    def start_serving(self):
+        pass
 
     def close(self):
         if self._connection:

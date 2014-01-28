@@ -67,7 +67,7 @@ class Event(AbstractEvent):
             if self._handlers:
                 for hnd in self._handlers:
                     try:
-                        hnd(arg, **kwargs)
+                        maybe_async(hnd(arg, **kwargs), self._loop)
                     except Exception:
                         self.logger.exception('Exception while firing event')
         return self
