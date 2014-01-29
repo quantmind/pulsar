@@ -98,6 +98,7 @@ import os
 from math import log
 from random import lognormvariate
 from functools import partial
+from asyncio import DatagramProtocol
 
 import pulsar
 from pulsar import TcpServer, DatagramServer, Connection
@@ -306,8 +307,8 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = yield loop.create_datagram_endpoint(lambda: None, address)
-        sock = t._sock
+        t, _ = yield loop.create_datagram_endpoint(DatagramProtocol, address)
+        sock = t.get_extra_info('socket')
         addresses = [sock.getsockname()]
         sockets = [WrapSocket(sock)]
         assert loop.remove_reader(sock.fileno())

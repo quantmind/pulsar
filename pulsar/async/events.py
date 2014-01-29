@@ -99,6 +99,15 @@ class OneTime(Future, AbstractEvent):
             self._process(arg, exc, kwargs)
         return self
 
+    def bind(self, callback):
+        if self.done():
+            exc = as_exception(self)
+            result = None if exc else self.result()
+            self._loop.call_soon(
+                lambda: maybe_async(callback(arg, exc=exc), self._loop))
+        else:
+            self.handlers.append(callback)
+
     def _process(self, arg, exc, kwargs, future=None):
         while self._handlers:
             hnd = self._handlers.popleft()

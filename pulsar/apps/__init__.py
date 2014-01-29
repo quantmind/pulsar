@@ -462,13 +462,7 @@ class Application(Configurator):
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = Future(loop=actor._loop)
-                if actor.started():
-                    self._add_to_arbiter(start, actor)
-                else:   # the arbiter has not yet started.
-                    actor.bind_event(
-                        'start',
-                        lambda a, exc=None: self._add_to_arbiter(start, a,
-                                                                 exc))
+                actor.bind_event('start', partial(self._add_monitor, start))
                 return start
             else:
                 return
@@ -527,9 +521,8 @@ class Application(Configurator):
                      if s.is_global))
 
     #   INTERNALS
-    def _add_to_arbiter(self, start, arbiter, exc=None):
+    def _add_monitor(self, start, arbiter, exc=None):
         if not exc:
-            start._loop = arbiter._loop
             monitor = arbiter.add_monitor(
                 self.name, app=self, cfg=self.cfg,
                 start=monitor_start, start_event=start)
