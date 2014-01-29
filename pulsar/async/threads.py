@@ -1,7 +1,9 @@
 import logging
+import threading
+import weakref
 from multiprocessing import dummy, current_process
 from functools import partial
-from asyncio import selectors
+from asyncio import selectors, events, get_event_loop, set_event_loop
 
 try:
     import queue
@@ -12,12 +14,43 @@ Empty = queue.Empty
 Full = queue.Full
 
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
-                     thread_data, AsyncObject, _StopError)
-from .futures import Future, future_timeout, maybe_async, chain_future
-from .eventloop import QueueEventLoop
+                     thread_data, AsyncObject, _StopError, BaseEventLoop)
+from .futures import Future, Task, async
+from .consts import ACTOR_STATES
 
 
 __all__ = ['Thread', 'IOqueue', 'ThreadPool', 'ThreadQueue', 'Empty', 'Full']
+
+_MAX_WORKERS = 5
+_threads_queues = weakref.WeakKeyDictionary()
+passthrough = lambda: None
+
+
+def set_as_loop(loop):
+    if loop._iothreadloop:
+        set_event_loop(loop)
+
+
+def get_executor(loop):
+    executor = loop._default_executor
+    if executor is None:
+        executor = ThreadPool(loop=loop)
+        loop._default_executor = executor
+    return executor
+
+
+def run_in_executor(loop, executor, callback, *args):
+    if isinstance(callback, events.Handle):
+        assert not args
+        assert not isinstance(callback, events.TimerHandle)
+        if callback._cancelled:
+            f = Future(loop=loop)
+            f.set_result(None)
+            return f
+        callback, args = callback._callback, callback._args
+    if executor is None:
+        executor = get_executor(loop)
+    return executor.submit(callback, *args)
 
 
 class Thread(dummy.DummyProcess):
@@ -75,19 +108,19 @@ class IOqueue(selectors.BaseSelector):
     '''
     max_timeout = 0.5
 
-    def __init__(self, actor, queue, maxtasks):
+    def __init__(self, executor):
         super(IOqueue, self).__init__()
-        self._actor = actor
-        self._queue = queue
-        self._maxtasks = maxtasks
-        self.received = 0
-        self.completed = 0
+        self._actor = executor._actor
+        self._work_queue = executor._work_queue
+        self._maxtasks = executor._maxtasks
+        self._received = 0
+        self._completed = 0
 
     def select(self, timeout=None):
-        if not self._actor.is_running():
+        if self._actor and self._actor.state > ACTOR_STATES.RUN:
             raise _StopError
-        if self._maxtasks and self.received >= self._maxtasks:
-            if self.completed < self.received:
+        if self._maxtasks and self._received >= self._maxtasks:
+            if self._completed < self._received:
                 return ()
             else:
                 raise _StopError
@@ -100,46 +133,54 @@ class IOqueue(selectors.BaseSelector):
         else:
             timeout = min(self.max_timeout, timeout)
         try:
-            task = self._queue.get(block=block, timeout=timeout)
+            task = self._work_queue.get(block=block, timeout=timeout)
         except (Empty, TypeError):
             return ()
         except (EOFError, IOError):
             raise _StopError
         if task is None:    # got the sentinel, exit!
+            self._work_queue.put(None)
             raise _StopError
-        return [task]
+        return task
 
-    def process_task(self, loop, task):
-        self.received += 1
+    def process_task(self, task):
+        self._received += 1
         future, func, args, kwargs = task
         try:
-            result = maybe_async(func(*args, **kwargs), loop)
+            result = yield func(*args, **kwargs)
         except Exception as exc:
-            self._set_result(future, None, exc)
-        if isinstance(result, Future):
-            result.add_done_callback(partial(self._async_result, future))
-        else:
-            self._set_result(future, result)
-
-    def _async_result(self, future, result):
-        try:
-            result = result.result()
-        except Exception as exc:
-            self._set_result(future, None, exc)
-        else:
-            self._set_result(future, result)
-
-    def _set_result(self, future, result, exc=None):
-        self.completed += 1
-        if exc:
+            self._completed += 1
             future.set_exception(exc)
         else:
-            future.set_result(result)
+            self._completed += 1
+            try:
+                future.set_result(result)
+            finally:
+                # IMPORTANT: make sure to wake up the loop of the
+                # waiting future
+                future._loop.call_soon_threadsafe(passthrough)
 
 
-RUN = 0
-CLOSE = 1
-TERMINATE = 2
+class QueueEventLoop(BaseEventLoop):
+    task_factory = Task
+
+    def __init__(self, executor, iothreadloop=False, logger=None):
+        super(QueueEventLoop, self).__init__()
+        self._default_executor = executor
+        self._iothreadloop = iothreadloop
+        self._selector = IOqueue(executor)
+        self.logger = logger or LOGGER
+        self.call_soon(set_as_loop, self)
+
+    def _write_to_self(self):
+        pass
+
+    def _process_events(self, task):
+        if task:
+            async(self._selector.process_task(task), self)
+
+    def run_in_executor(self, executor, callback, *args):
+        return run_in_executor(self, executor, callback, *args)
 
 
 class ThreadPool(AsyncObject):
@@ -150,139 +191,58 @@ class ThreadPool(AsyncObject):
     '''
     worker_name = 'exec'
 
-    def __init__(self, actor=None, threads=None, check_every=5, maxtasks=None):
+    def __init__(self, max_workers=None, actor=None, loop=None,
+                 maxtasks=None):
         self._actor = actor or get_actor()
-        self._check_every = check_every
-        self._threads = max(threads or 1, 1)
-        self._pool = []
-        self._state = RUN
-        self._closed = Future(loop=self._loop)
+        if self._actor:
+            loop = loop or self._actor._loop
+            if not max_workers:
+                max_workers = self._actor.cfg.thread_workers
+        self._loop = loop or get_event_loop()
+        self._max_workers = min(max_workers or _MAX_WORKERS, _MAX_WORKERS)
+        self._threads = set()
         self._maxtasks = maxtasks
-        self._inqueue = ThreadQueue()
-        self._check = self._loop.call_soon(self._maintain)
+        self._work_queue = ThreadQueue()
+        self._shutdown = False
+        self._shutdown_lock = threading.Lock()
 
-    @property
-    def status(self):
-        '''String status of this pool.'''
-        if self._state == RUN:
-            return 'running'
-        elif self._state == CLOSE:
-            return 'closed'
-        elif self._state == TERMINATE:
-            return 'terminated'
-        else:
-            return 'unknown'
-
-    @property
-    def _loop(self):
-        '''The event loop running this :class:`ThreadPool`.'''
-        return self._actor._loop
-
-    @property
-    def num_threads(self):
-        '''Number of threads in the pool.'''
-        return len(self._pool)
-
-    def apply(self, func, *args, **kwargs):
+    def submit(self, func, *args, **kwargs):
         '''Equivalent to ``func(*args, **kwargs)``.
 
         This method create a new task for function ``func`` and adds it to
         the queue.
         Return a :class:`.Future` called back once the task has finished.
         '''
-        assert self._state == RUN, 'Pool not running'
-        future = Future(loop=self._loop)
-        self._inqueue.put((future, func, args, kwargs))
+        with self._shutdown_lock:
+            if self._shutdown:
+                raise RuntimeError(
+                    'cannot schedule new futures after shutdown')
+            future = Future(loop=self._loop)
+            self._work_queue.put((future, func, args, kwargs))
+            self._adjust_thread_count()
+            return future
 
-    def close(self, timeout=None):
-        '''Close the thread pool.
+    def shutdown(self, wait=True):
+        with self._shutdown_lock:
+            self._shutdown = True
+            self._work_queue.put(None)
+        if wait:
+            for t in self._threads:
+                t.join()
 
-        Return a :class:`.Future` fired when all threads have exited.
-        '''
-        if self._state == RUN:
-            self._state = CLOSE
-            if self._loop.is_running():
-                self._loop.call_soon_threadsafe(self._close)
-            else:
-                self._close()
-        return chain_future(self._closed, timeout=timeout)
-
-    def terminate(self, timeout=None):
-        '''Shut down the event loop of threads'''
-        if self._state < TERMINATE:
-            if not self._closed.done():
-                self._state = TERMINATE
-                if self._loop.is_running():
-                    self._loop.call_soon_threadsafe(self._terminate)
-                else:
-                    self._terminate()
-        return chain_future(self._closed, timeout=timeout)
-
-    def join(self):
-        assert self._state in (CLOSE, TERMINATE)
-        for worker in self._pool:
-            worker.join()
-
-    def _maintain(self):
-        # periodic method to maintain the thread pool
-        populate = self._join_exited_workers() if self._pool else True
-        if self._state == RUN and populate:
-            self._repopulate_pool()
-        elif self._state == CLOSE:
-            self._close_pool()
-        if self._pool:
-            self._maintain_call = self._actor._loop.call_later(
-                self._check_every, self._maintain)
-        elif not self._closed.done():
-            # set the _closed event
-            self._closed.set_result(self._state)
-
-    def _close(self):
-        self._check.cancel()
-        self._check = None
-        self._check_every = 0
-        self._maintain()
-
-    def _terminate(self):
-        for worker in self._pool:
-            worker.terminate()
-        self._maintain()
-
-    def _join_exited_workers(self):
-        #Cleanup after any worker processes which have exited due to reaching
-        #their specified lifetime. Returns True if any workers were cleaned up.
-        #
-        cleaned = []
-        for worker in self._pool:
-            if worker.exitcode is not None:
-                # worker exited
-                self._actor.logger.debug('Joining %s', worker)
-                worker.join()
-                cleaned.append(worker)
-        if cleaned:
-            for c in cleaned:
-                self._pool.remove(c)
-        return bool(cleaned)
-
-    def _repopulate_pool(self):
-        while len(self._pool) < self._threads:
-            worker = PoolThread(self._actor,
-                                name=self.worker_name,
-                                target=self._run)
-            self._pool.append(worker)
-            worker.daemon = True
-            worker.start()
-            self._actor.logger.debug('Added %s', worker)
-
-    def _close_pool(self):
-        for i in range(len(self._pool)):
-            self._inqueue.put(None)
+    def _adjust_thread_count(self):
+        if len(self._threads) < self._max_workers:
+            t = PoolThread(self._actor,
+                           name=self.worker_name,
+                           target=self._run)
+            t.daemon = True
+            t.start()
+            self._threads.add(t)
+            _threads_queues[t] = self._work_queue
 
     def _run(self):
         # The run method for the threads in this therad pool
-        poller = IOqueue(self._actor, self._inqueue, self._maxtasks)
-        # Create the event loop which get tasks from the task queue
         logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
                                                      self.worker_name))
-        loop = QueueEventLoop(poller, logger=logger, iothreadloop=True)
+        loop = QueueEventLoop(self, logger=logger, iothreadloop=True)
         loop.run_forever()

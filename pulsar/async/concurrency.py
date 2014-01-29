@@ -114,23 +114,32 @@ class Concurrency(object):
         actor.mailbox = self.create_mailbox(actor, loop)
 
     def hand_shake(self, actor):
+        '''Perform the hand shake for ``actor``
+
+        The hand shake occurs when the ``actor`` is in starting state.
+
+        It performs the following actions
+
+        * Set the ``actor`` as the actor of the current thread
+        * Bind two additional callbacks to the ``start` event
+        * Fire the ``start`` event
+
+        If the hand shake is succesful, the actor will eventually
+        results in a running state.
+        '''
         try:
-            a = get_actor()
-            if a is not actor:
-                set_actor(actor)
             assert actor.state == ACTOR_STATES.STARTING
-            actor.state = ACTOR_STATES.RUN
-            r = self.periodic_task(actor)
-            if r:
-                r.add_done_callback(partial(self.started, actor))
-            else:
-                actor.stop()
+            if actor.cfg.debug:
+                actor.logger.debug('starting handshake')
+            a = get_actor()
+            if a is not actor and a is not actor.monitor:
+                set_actor(actor)
+            actor.bind_event('start', self._switch_to_run)
+            actor.bind_event('start', self.periodic_task)
+            actor.bind_event('start', self._acknowledge_start)
+            actor.fire_event('start')
         except Exception as exc:
             actor.stop(exc)
-
-    def started(self, actor, fut=None):
-        actor.logger.info('%s started', actor)
-        return actor.fire_event('start')
 
     def get_actor(self):
         self.daemon = False
@@ -201,7 +210,7 @@ class Concurrency(object):
                     actor.logger.debug('stopping')
                 actor.exit_code = 0
             stopping = actor.fire_event('stopping')
-            actor.close_thread_pool()
+            actor.close_executor()
             if not stopping.done() and actor._loop.is_running():
                 actor.logger.debug('async stopping')
                 stopping.add_done_callback(lambda _: self._stop_actor(actor))
@@ -222,6 +231,18 @@ class Concurrency(object):
             actor.exit_code = 1
             actor.mailbox.abort()
             self.stop(actor, 0)
+
+    def _switch_to_run(self, actor, exc=None):
+        if exc is None:
+            actor.state = ACTOR_STATES.RUN
+        else:
+            actor.stop(exc)
+
+    def _acknowledge_start(self, actor, exc=None):
+        if exc is None:
+            actor.logger.info('started')
+        else:
+            actor.stop(exc)
 
 
 class ProcessMixin(object):
@@ -245,20 +266,11 @@ class MonitorMixin(object):
         return self.actor_class(self)
 
     def start(self):
+        '''does nothing'''
         pass
 
     def is_active(self):
         return self.actor.is_alive()
-
-    def hand_shake(self, actor):
-        ''':class:`MonitorMixin` doesn't do hand shakes.
-
-        Switch state to ``RUN`` and fire the ``start`` event.
-        '''
-        assert actor.state == ACTOR_STATES.STARTING
-        actor.state = ACTOR_STATES.RUN
-        actor.bind_event('start', self.periodic_task)
-        actor.fire_event('start')
 
     @property
     def pid(self):

@@ -470,11 +470,10 @@ class TaskBackend(EventHandler):
     def start(self, worker):
         '''invoked by the task queue ``worker`` when it starts.
 
-        Here, the ``worker`` creates its thread pool via
-        :meth:`.Actor.create_thread_pool` and register the
-        :meth:`may_pool_task` callback in its event loop.'''
+        The ``worker`` registers the
+        :meth:`may_pool_task` callback in its event loop.
+        '''
         assert self.task_poller is None
-        worker.create_thread_pool()
         self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
         self.logger.debug('started polling tasks')
         store = self.store
@@ -595,10 +594,8 @@ class TaskBackend(EventHandler):
         # tasks consumed by the ``worker`` CPU-bound thread.'''
         next_time = 0
         if worker.is_running():
-            thread_pool = worker.thread_pool
-            if not thread_pool:
-                self.logger.warning('No thread pool, cannot poll tasks.')
-            elif self.num_concurrent_tasks < self.backlog:
+            executor = worker.executor()
+            if self.num_concurrent_tasks < self.backlog:
                 if self.max_tasks and self.processed >= self.max_tasks:
                     if not self.num_concurrent_tasks:
                         self.logger.warning('Processed %s tasks. Restarting.',
@@ -610,7 +607,7 @@ class TaskBackend(EventHandler):
                     if task:    # Got a new task
                         self.processed += 1
                         self.concurrent_tasks.add(task['id'])
-                        thread_pool.apply(self._execute_task, worker, task)
+                        executor.submit(self._execute_task, worker, task)
             else:
                 self.logger.debug('%s concurrent requests. Cannot poll.',
                                   self.num_concurrent_tasks)

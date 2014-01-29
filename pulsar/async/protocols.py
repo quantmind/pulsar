@@ -622,9 +622,10 @@ class TcpServer(Producer):
 
     def info(self):
         sockets = []
+        up = int(self._loop.time() - self._started) if self._started else 0
         server = {'pulsar_version': pulsar.__version__,
                   'python_version': sys.version,
-                  'uptime_in_seconds': int(self._loop.time() - self._started),
+                  'uptime_in_seconds': up,
                   'sockets': sockets,
                   'max_connections': self._max_connections,
                   'keep_alive': self._keep_alive}
@@ -754,9 +755,10 @@ class DatagramServer(EventHandler):
 
     def info(self):
         sockets = []
+        up = int(self._loop.time() - self._started) if self._started else 0
         server = {'pulsar_version': pulsar.__version__,
                   'python_version': sys.version,
-                  'uptime_in_seconds': int(self._loop.time() - self._started),
+                  'uptime_in_seconds': up,
                   'sockets': sockets,
                   'max_requests': self._max_requests}
         clients = {'requests_processed': self._requests_processed}

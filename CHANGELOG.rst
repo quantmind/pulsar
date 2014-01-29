@@ -1,24 +1,24 @@
 Ver. 0.8.0
 ===========================
+* **Backward incopatible version**
+
 * **Asyncio Integration**
 
   * asyncio_ integration with several changes in internals. The integration
-    works with all supported python versions.
-  * This version brings some backward incompatible changes for internals
-    classes since we needed to bring in line the :class:`.Deferred` class
-    with asyncio_.
+    works with all supported python versions, 2.7, 3.3 and 3.4
   * Asyncio event loop functions :func:`.get_event_loop`, :func:`.new_event_loop`,
-    are available from pulsar top level module as well as asyncio
-    (if available). In other words ``from pulsar import get_event_loop`` and
+    are available from pulsar top level module as well as asyncio.
+    In other words ``from pulsar import get_event_loop`` and
     ``from asyncio import get_event_loop`` are equivalent (provided pulsar is
     imported first).
+  * Replaced the ``Deferred`` class with asyncio ``~.Future``.
 
 * **Core library**
 
   * Removed support for python 2.6 and python 3.2.
   * :ref:`Coroutines <coroutine>` can return a value via the
     :func:`.coroutine_return` function only, otherwise they return ``None``.
-    This is what twisted does and makes applications less error prone.
+    This is what asyncio does and makes applications less error prone.
   * Added :func:`.run_in_loop_thread` high level function. This utility
     runs a callable in the event loop thread and returns a :class:`.Deferred`
     called back once the callable has a result/exception.
@@ -40,6 +40,7 @@ Ver. 0.8.0
     the default data store of a running application.
   * Added the :ref:`exc-id <setting-exc_id>` setting which uniquely specify
     the identity of a running application. This is useful during testing.
+  * Unified the handshake across all actors
 
 * **New data store module**
 

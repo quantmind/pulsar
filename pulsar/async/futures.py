@@ -352,7 +352,7 @@ class Task(asyncio.Task):
         if inthread or fut._loop is self._loop:
             super(Task, self)._wakeup(fut)
         else:
-            self._loop.call_soon(self._wakeup, fut, True)
+            self._loop.call_soon_threadsafe(self._wakeup, fut, True)
 
 
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):

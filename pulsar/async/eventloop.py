@@ -1,27 +1,13 @@
 import os
-import sys
-import socket
-import errno
-from types import GeneratorType
-from heapq import heappop, heappush
+import asyncio
 from threading import current_thread, Lock
 
-from pulsar.utils.system import close_on_exec
-from pulsar.utils.pep import range
-from pulsar.utils.exceptions import ImproperlyConfigured
-
-from .access import asyncio, BaseEventLoop, thread_data, LOGGER
+from .access import thread_data, LOGGER
 from .futures import Future, maybe_async, async, Task
+from .threads import run_in_executor, QueueEventLoop, set_as_loop
 
 
 __all__ = ['EventLoop', 'call_repeatedly']
-
-
-def file_descriptor(fd):
-    if hasattr(fd, 'fileno'):
-        return fd.fileno()
-    else:
-        return fd
 
 
 def setid(self):
@@ -29,11 +15,6 @@ def setid(self):
     self.tid = ct.ident
     self.pid = os.getpid()
     return ct
-
-
-def set_as_loop(loop):
-    if loop._iothreadloop:
-        asyncio.set_event_loop(loop)
 
 
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
@@ -120,24 +101,6 @@ class LoopingCall(object):
             self._continue()
 
 
-class QueueEventLoop(BaseEventLoop):
-    task_factory = Task
-
-    def __init__(self, ioqueue, iothreadloop=False, logger=None):
-        super(QueueEventLoop, self).__init__()
-        self._iothreadloop = iothreadloop
-        self._selector = ioqueue
-        self.logger = logger or LOGGER
-        self.call_soon(set_as_loop, self)
-
-    def _write_to_self(self):
-        self._selector.wake()
-
-    def _process_events(self, event_list):
-        for task in event_list:
-            self._selector.process_task(self, task)
-
-
 class EventLoop(asyncio.SelectorEventLoop):
     """A pluggable event loop which conforms with the pep-3156_ API.
 
@@ -184,6 +147,9 @@ class EventLoop(asyncio.SelectorEventLoop):
         '''
         with self._lock:
             return super(EventLoop, self).call_at(when, callback, *args)
+
+    def run_in_executor(self, executor, callback, *args):
+        return run_in_executor(self, executor, callback, *args)
 
 
 def call_repeatedly(loop, interval, callback, *args):

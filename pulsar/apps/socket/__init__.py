@@ -99,7 +99,7 @@ import socket
 from math import log
 from random import lognormvariate
 from functools import partial
-from asyncio import DatagramProtocol
+from asyncio import DatagramProtocol, Protocol
 
 import pulsar
 from pulsar import TcpServer, DatagramServer, Connection
@@ -241,7 +241,7 @@ class SocketServer(pulsar.Application):
             ssl = SSLContext(keyfile=cfg.key_file, certfile=cfg.cert_file)
         address = parse_address(self.cfg.address)
         # First create the sockets
-        server = yield loop.create_server(lambda: None, *address)
+        server = yield loop.create_server(Protocol, *address)
         addresses = []
         sockets = []
         for sock in server.sockets:

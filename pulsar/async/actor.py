@@ -8,7 +8,7 @@ from pulsar.utils.log import WritelnDecorator
 from .eventloop import setid
 from .futures import in_loop, add_errback
 from .events import EventHandler
-from .threads import ThreadPool
+from .threads import get_executor
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
 from .access import get_actor
@@ -120,12 +120,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
 
         The actor :ref:`numeric state <actor-states>`.
 
-    .. attribute:: thread_pool
-
-        A :class:`ThreadPool` associated with this :class:`Actor`.
-        This attribute is ``None`` unless one is created via the
-        :meth:`create_thread_pool` method.
-
     .. attribute:: extra
 
         A dictionary which can be populated with extra parameters useful
@@ -159,7 +153,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def __init__(self, impl):
         EventHandler.__init__(self)
         self.state = ACTOR_STATES.INITIAL
-        self._thread_pool = None
         self.__impl = impl
         for name in self.events:
             hook = impl.params.pop(name, None)
@@ -214,12 +207,13 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         return self.mailbox._loop
 
     @property
-    def thread_pool(self):
-        return self._thread_pool
-
-    @property
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
+
+    def executor(self):
+        '''An executor for this actor
+        '''
+        return get_executor(self._loop)
 
     #######################################################################
     ##    HIGH LEVEL API METHODS
@@ -271,30 +265,13 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         attribute.'''
         return self.__impl.stop(self, exc)
 
-    def create_thread_pool(self, workers=None):
-        '''Create a :class:`ThreadPool` for this :class:`Actor`
-        if not already present.
-
-        :param workers: number of threads to use in the :class:`ThreadPool`.
-            If not supplied, the value in the :ref:`setting-thread_workers`
-            setting is used.
-        :return: a :class:`ThreadPool`.
-        '''
-        if self._thread_pool is None:
-            workers = workers or self.cfg.thread_workers
-            self._thread_pool = ThreadPool(self, threads=workers)
-        return self._thread_pool
-
-    def close_thread_pool(self):
+    def close_executor(self):
         '''Close the :attr:`thread_pool`.'''
-        if self._thread_pool:
-            timeout = 0.5*ACTOR_ACTION_TIMEOUT
-            d = self._thread_pool.close(timeout)
+        executor = self._loop._default_executor
+        if executor:
             self.logger.debug('Waiting for thread pool to exit')
-            add_errback(d, lambda _: self._thread_pool.terminate(timeout))
-            self._thread_pool.join()
-            self.logger.debug('Thread pool %s' % self._thread_pool.status)
-            self._thread_pool = None
+            executor.shutdown()
+            self._loop._default_executor = None
 
     ###############################################################  STATES
     def is_running(self):
@@ -354,18 +331,18 @@ running.'''
 
     def info(self):
         '''Return a nested dictionary of information related to the actor
-status and performance. The dictionary contains the following entries:
+        status and performance. The dictionary contains the following entries:
 
-* ``actor`` a dictionary containing information regarding the type of actor
-  and its status.
-* ``events`` a dictionary of information about the event loop running the
-  actor.
-* ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
-* ``system`` system info.
+        * ``actor`` a dictionary containing information regarding the type of
+          actor and its status.
+        * ``events`` a dictionary of information about the event loop running
+          the actor.
+        * ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
+        * ``system`` system info.
 
-This method is invoked when you run the
-:ref:`info command <actor_info_command>` from another actor.
-'''
+        This method is invoked when you run the
+        :ref:`info command <actor_info_command>` from another actor.
+        '''
         if not self.started():
             return
         isp = self.is_process()
