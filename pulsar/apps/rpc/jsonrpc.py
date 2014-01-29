@@ -2,7 +2,7 @@ import sys
 from functools import partial
 import logging
 
-from pulsar import multi_async, task, maybe_async, coroutine_return
+from pulsar import AsyncObject, multi_async, task, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.structures import AttributeDictionary
 from pulsar.utils.security import gen_unique_id
@@ -45,7 +45,7 @@ class JSONRPC(RpcHandler):
         callable = None
         try:
             try:
-                data = yield maybe_async(request.body_data(), async=True)
+                data = yield request.body_data()
             except ValueError:
                 raise InvalidRequest(
                     status=415, msg='Content-Type must be application/json')
@@ -60,8 +60,7 @@ class JSONRPC(RpcHandler):
                 args, kwargs = tuple(params or ()), {}
             #
             callable = self.get_handler(data.get('method'))
-            result = yield maybe_async(callable(request, *args, **kwargs),
-                                       async=True)
+            result = yield callable(request, *args, **kwargs)
         except Exception as exc:
             result = exc
             exc_info = sys.exc_info()
@@ -114,7 +113,7 @@ class JsonCall:
         return self._client._call(self._name, *args, **kwargs)
 
 
-class JsonProxy(object):
+class JsonProxy(AsyncObject):
     '''A python Proxy class for :class:`.JSONRPC` Servers.
 
     :param url: server location
@@ -181,19 +180,6 @@ class JsonProxy(object):
 
     def __getattr__(self, name):
         return JsonCall(self, name)
-
-    def timeit(self, func, times, *args, **kwargs):
-        '''Useful utility for timing responses from a server.
-
-        The usage is simple::
-
-            >>> from pulsar.apps import rpc
-            >>> p = rpc.JsonProxy('http://127.0.0.1:8060')
-            >>> p.timeit('ping', 10)
-            0.56...
-        '''
-        func = getattr(self, func)
-        return multi_async((func(*args, **kwargs) for t in range(times)))
 
     @task
     def _call(self, name, *args, **kwargs):

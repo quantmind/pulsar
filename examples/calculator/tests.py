@@ -29,6 +29,13 @@ class TestRpcOnThread(unittest.TestCase):
         if cls.app_cfg:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
+    def test_time_it(self):
+        '''Ping server 5 times'''
+        bench = yield self.p.timeit('ping', 5)
+        self.assertTrue(len(bench.result), 5)
+        self.assertTrue(bench.taken)
+
+class d:
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
         self.assertTrue(str(self.p))

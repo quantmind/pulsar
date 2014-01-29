@@ -2,8 +2,7 @@ from functools import reduce
 
 from pulsar.utils.internet import is_socket_closed
 
-from .access import AsyncObject
-from .futures import coroutine_return, multi_async
+from .futures import coroutine_return, AsyncObject
 from .protocols import Producer
 from .queues import Queue, Full
 
@@ -215,26 +214,6 @@ class AbstractClient(Producer):
             raise NotImplementedError('Could not connect to %s' %
                                       str(address))
         coroutine_return(protocol)
-
-    def timeit(self, times, callable, *args, **kwargs):
-        '''Send ``times`` requests asynchronously and evaluate the time
-        taken to obtain all responses.
-        Usage::
-
-            client = Client(...)
-            multi = client.timeit(100, client.request, ...)
-            response = yield multi
-            multi.total_time
-
-        Where ``client.request`` is the callable method to invoke (this must
-        be specified by the client implementation).
-
-        :return: a :class:`.MultiFuture` which results in the list of results
-          for the individual requests. Its :attr:`MultiFuture.total_time`
-          attribute indicates the number of seconds taken (once the deferred
-          has been called back).
-        '''
-        return multi_async([callable(*args, **kwargs) for _ in range(times)])
 
 
 class AbstractUdpClient(Producer):

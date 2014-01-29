@@ -3,8 +3,8 @@ from functools import partial
 
 from pulsar.utils.pep import iteritems
 
-from .futures import Future, maybe_async, InvalidStateError, future_result_exc
-from .access import AsyncObject
+from .futures import (Future, maybe_async, InvalidStateError,
+                      future_result_exc, AsyncObject)
 
 
 __all__ = ['EventHandler', 'Event', 'OneTime']

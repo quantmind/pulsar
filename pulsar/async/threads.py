@@ -14,8 +14,8 @@ Empty = queue.Empty
 Full = queue.Full
 
 from .access import (asyncio, new_event_loop, get_actor, set_actor,
-                     thread_data, AsyncObject, _StopError, BaseEventLoop)
-from .futures import Future, Task, async
+                     thread_data, _StopError, BaseEventLoop)
+from .futures import Future, Task, async, AsyncObject
 from .consts import ACTOR_STATES
 
 

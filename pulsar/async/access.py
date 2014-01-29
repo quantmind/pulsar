@@ -22,8 +22,7 @@ __all__ = ['get_request_loop',
            'logger',
            'get_logger',
            'NOTHING',
-           'SELECTORS',
-           'AsyncObject']
+           'SELECTORS']
 
 
 LOGGER = logging.getLogger('pulsar')
@@ -121,20 +120,3 @@ def thread_data(name, value=NOTHING, ct=None):
 
 get_actor = lambda: thread_data('actor')
 set_actor = lambda actor: thread_data('actor', actor)
-
-
-class AsyncObject(object):
-    '''Interface for :ref:`async objects <async-object>`
-
-    .. attribute:: _loop
-
-        The event loop associated with this object
-    '''
-    _logger = None
-    _loop = None
-
-    @property
-    def logger(self):
-        '''The logger for this object
-        '''
-        return self._logger or getattr(self._loop, 'logger', LOGGER)

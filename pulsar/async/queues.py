@@ -1,8 +1,8 @@
 from collections import deque
 from threading import Lock
 
-from .access import get_event_loop, AsyncObject
-from .futures import Future, future_timeout
+from .access import get_event_loop
+from .futures import Future, AsyncObject, future_timeout
 from .threads import Empty, Full
 
 __all__ = ['Queue']

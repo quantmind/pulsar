@@ -6,10 +6,10 @@ from collections import deque, namedtuple, Mapping
 from inspect import isgeneratorfunction
 from functools import wraps, partial
 
-from pulsar.utils.pep import iteritems, default_timer
+from pulsar.utils.pep import iteritems, default_timer, range
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (get_request_loop, get_event_loop, logger,
+from .access import (get_request_loop, get_event_loop, logger, LOGGER,
                      _PENDING, _CANCELLED, _FINISHED)
 
 
@@ -41,7 +41,8 @@ __all__ = ['Future',
            'task',
            'chain_future',
            'ASYNC_OBJECTS',
-           'future_result_exc']
+           'future_result_exc',
+           'AsyncObject']
 
 
 if hasattr(asyncio, 'Return'):
@@ -392,6 +393,62 @@ def async_while(timeout, while_clause, *args):
         coroutine_return(result)
 
     return async(_(), loop)
+
+
+class Bench:
+    start = None
+    finish = None
+    result = ()
+
+    def __init__(self, times, loop=None):
+        self._loop = loop or get_event_loop()
+        self.times = times
+
+    @property
+    def taken(self):
+        if self.finish:
+            return self.finish - self.start
+
+    def __call__(self, func, *args, **kwargs):
+        self.start = self._loop.time()
+        self.result = MultiFuture(
+            self._loop, (func(*args, **kwargs) for t in range(self.times)))
+        return chain_future(self.result, callback=self._done)
+
+    def _done(self, result):
+        self.finish = self._loop.time()
+        self.result = result
+        return self
+
+
+class AsyncObject(object):
+    '''Interface for :ref:`async objects <async-object>`
+
+    .. attribute:: _loop
+
+        The event loop associated with this object
+    '''
+    _logger = None
+    _loop = None
+
+    @property
+    def logger(self):
+        '''The logger for this object
+        '''
+        return self._logger or getattr(self._loop, 'logger', LOGGER)
+
+    def timeit(self, method, times, *args, **kwargs):
+        '''Useful utility for timing and asynchronous ``method``.
+
+        The usage is simple::
+
+            >>> self.timeit('asyncmethod', 100)
+
+        Returns a :class:`.Future` which results in a :class:`Bench`
+        object is successful
+        '''
+        bench = Bench(times, loop=self._loop)
+        return bench(getattr(self, method), *args, **kwargs)
 
 
 ############################################################### MultiFuture
