@@ -89,7 +89,7 @@ import time
 from datetime import datetime, timedelta
 from hashlib import sha1
 
-from pulsar import (task, async, EventHandler, PulsarException,
+from pulsar import (task, async, EventHandler, PulsarException, get_logger,
                     Future, coroutine_return, get_request_loop)
 from pulsar.utils.pep import itervalues, to_string
 from pulsar.apps.data import create_store, PubSubClient, odm
@@ -291,7 +291,7 @@ class TaskBackend(EventHandler):
     '''
     task_poller = None
 
-    def __init__(self, store, logger, task_paths=None,
+    def __init__(self, store, logger=None, task_paths=None,
                  schedule_periodic=False, backlog=1, max_tasks=0, name=None,
                  poll_timeout=None):
         self.store = store
@@ -319,10 +319,6 @@ class TaskBackend(EventHandler):
         else:
             return 'task consumer %s' % self.store.dns
     __str__ = __repr__
-
-    @property
-    def logger(self):
-        return self._logger
 
     @property
     def _loop(self):
@@ -624,6 +620,7 @@ class TaskBackend(EventHandler):
     def _execute_task(self, worker, task):
         # Asynchronous execution of a Task. This method is called
         # on a separate thread of execution from the worker event loop thread.
+        logger = get_logger(worker.logger)
         pubsub = self.pubsub()
         task_id = task['id']
         lock_id = task.get('lock_id')
@@ -639,7 +636,7 @@ class TaskBackend(EventHandler):
                 if expiry and time_ended > expiry:
                     raise TaskTimeout
                 else:
-                    self.logger.info('starting %s', task_info)
+                    logger.info('starting %s', task_info)
                     kwargs = task.get('kwargs') or {}
                     task.clear_update(id=task_id, status=states.STARTED,
                                       time_started=time_ended,
@@ -650,15 +647,15 @@ class TaskBackend(EventHandler):
                     result = yield job(consumer, **kwargs)
                     status = states.SUCCESS
             else:
-                self.logger.error('invalid status for %s', task_info)
+                logger.error('invalid status for %s', task_info)
                 self.concurrent_tasks.discard(task_id)
                 coroutine_return(task_id)
         except TaskTimeout:
-            self.logger.info('%s timed-out', task_info)
+            logger.info('%s timed-out', task_info)
             result = None
             status = states.REVOKED
         except Exception as exc:
-            self.logger.exception('failure in %s', task_info)
+            logger.exception('failure in %s', task_info)
             result = str(exc)
             status = states.FAILURE
         #
@@ -670,7 +667,7 @@ class TaskBackend(EventHandler):
             self.concurrent_tasks.discard(task_id)
             yield self.finish_task(task_id, lock_id)
         #
-        self.logger.info('finished %s', task_info)
+        logger.info('finished %s', task_info)
         # publish into the task_done channel
         pubsub.publish(self.channel('task_done'), task_id)
         coroutine_return(task_id)

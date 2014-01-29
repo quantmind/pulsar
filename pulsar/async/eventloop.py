@@ -120,17 +120,8 @@ class LoopingCall(object):
             self._continue()
 
 
-class QueueTask(Task):
-
-    def _wakeup(self, fut, inthread=False):
-        if inthread or fut._loop is self._loop:
-            super(QueueTask, self)._wakeup(fut)
-        else:
-            self._loop.call_soon(self._wakeup, fut, True)
-
-
 class QueueEventLoop(BaseEventLoop):
-    task_factory = QueueTask
+    task_factory = Task
 
     def __init__(self, ioqueue, iothreadloop=False, logger=None):
         super(QueueEventLoop, self).__init__()
@@ -140,7 +131,7 @@ class QueueEventLoop(BaseEventLoop):
         self.call_soon(set_as_loop, self)
 
     def _write_to_self(self):
-        pass
+        self._selector.wake()
 
     def _process_events(self, event_list):
         for task in event_list:

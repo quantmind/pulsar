@@ -19,6 +19,7 @@ Open a new shell, in this directory, launch python and type::
 
 Writing the Client
 =========================
+
 The first step is to write a small class handling a connection
 pool with the remote server. The :class:`Echo` class does just that,
 it subclass the handy :class:`.AbstractUdpClient` and uses
@@ -60,9 +61,6 @@ Echo Server
 .. autofunction:: server
 
 '''
-from functools import partial
-import asyncio
-
 try:
     import pulsar
 except ImportError:     # pragma nocover
@@ -70,11 +68,12 @@ except ImportError:     # pragma nocover
     sys.path.append('../../')
     import pulsar
 
-from pulsar import coroutine_return, Pool, Future, task
+from pulsar import coroutine_return, Pool, Future, DatagramProtocol, task
+from pulsar.utils.pep import to_bytes
 from pulsar.apps.socket import UdpSocketServer
 
 
-class EchoUdpProtocol(asyncio.DatagramProtocol):
+class EchoUdpProtocol(DatagramProtocol):
     '''A base :class:`.DatagramProtocol` for UDP echo clients and servers.
 
     The only difference between client and server is the implementation
@@ -116,18 +115,16 @@ class EchoUdpClientProtocol(EchoUdpProtocol):
     _waiting = None
 
     def send(self, message):
-        assert isinstance(message, bytes)
-        self._waiting = d = Future(self._loop)
-        self._transport.sendto(message+self.separator)
+        assert self._waiting is None
+        self._waiting = d = Future(loop=self._loop)
+        self._transport.sendto(to_bytes(message)+self.separator)
         return d
 
     def response(self, data, addr):
-        '''Clients return the message so that the
-        :attr:`.ProtocolConsumer.on_finished` is called back with the
-        message value, while servers sends the message back to the client.
-        '''
+        '''Got a full response'''
         d, self._waiting = self._waiting, None
-        d.set_result(data[:-len(self.separator)])
+        if d:
+            d.set_result(data[:-len(self.separator)])
 
 
 class EchoUdpServerProtocol(EchoUdpProtocol):

@@ -95,9 +95,11 @@ for:
 Check the :meth:`SocketServer.monitor_start` method for implementation details.
 '''
 import os
+import socket
 from math import log
 from random import lognormvariate
 from functools import partial
+from asyncio import DatagramProtocol
 
 import pulsar
 from pulsar import TcpServer, DatagramServer, Connection
@@ -171,6 +173,28 @@ class CertFile(SocketSetting):
     desc = """\
     SSL certificate file
     """
+
+
+class WrapTransport:
+
+    def __init__(self, transport):
+        self.extra = transport._extra
+        self.sock = self.extra.pop('socket')
+        self.transport = transport.__class__
+
+    def __getstate__(self):
+        s = self.sock
+        d = self.__dict__.copy()
+        d['sock'] = (s.fileno(), s.family, s.type, s.proto)
+        return d
+
+    def __setstate__(self, state):
+        values = state.pop('sock')
+        self.__dict__ = state
+        self.sock = socket.fromfd(*values)
+
+    def __call__(self, loop, protocol):
+        return self.transport(loop, self.sock, protocol, extra=self.extra)
 
 
 class SocketServer(pulsar.Application):
@@ -282,6 +306,15 @@ class SocketServer(pulsar.Application):
 
 
 class UdpSocketServer(SocketServer):
+    '''A :class:`.SocketServer` which serve application on a UDP sockets.
+
+    It bind a socket to a given address and listen for requests. The request
+    handler is constructed from the callable passed during initialisation.
+
+    .. attribute:: address
+
+        The socket address, available once the application has started.
+    '''
     name = 'udpsocket'
     cfg = pulsar.Config(apps=['socket'])
 
@@ -306,13 +339,11 @@ class UdpSocketServer(SocketServer):
                                               'No address to bind to')
         address = parse_address(self.cfg.address)
         # First create the sockets
-        t, _ = yield loop.create_datagram_endpoint(lambda: None, address)
-        sock = t._sock
-        addresses = [sock.getsockname()]
-        sockets = [WrapSocket(sock)]
+        t, _ = yield loop.create_datagram_endpoint(DatagramProtocol, address)
+        sock = t.get_extra_info('socket')
         assert loop.remove_reader(sock.fileno())
-        monitor.sockets = sockets
-        cfg.addresses = addresses
+        monitor.sockets = [WrapTransport(t)]
+        cfg.addresses = [sock.getsockname()]
 
     def actorparams(self, monitor, params):
         params.update({'sockets': monitor.sockets})
@@ -328,16 +359,16 @@ class UdpSocketServer(SocketServer):
 
         :return: a :class:`.UdpServer`.
         '''
-        sockets = [sock.sock for sock in worker.sockets]
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:
             max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(self.protocol_factory(),
                                      worker._loop,
-                                     sockets=sockets,
+                                     sockets=worker.sockets,
                                      max_requests=max_requests,
                                      name=self.name)
+        server.bind_event('stop', lambda _, **kw: worker.stop())
         for event in ('pre_request', 'post_request'):
             callback = getattr(cfg, event)
             if callback != pass_through:

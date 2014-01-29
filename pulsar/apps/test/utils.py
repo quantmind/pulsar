@@ -44,7 +44,7 @@ from contextlib import contextmanager
 from asyncio import Future
 
 import pulsar
-from pulsar import (get_actor, send, multi_async, maybe_async, future_timeout,
+from pulsar import (get_actor, send, multi_async, async, future_timeout,
                     TcpServer, coroutine_return, new_event_loop)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
@@ -82,34 +82,24 @@ class TestCallable(object):
     __str__ = __repr__
 
     def __call__(self, actor):
+        result = async(self._call(actor))
+        if self.timeout:
+            return future_timeout(result, self.timeout)
+        else:
+            return result
+
+    def _call(self, actor):
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
         try:
-            result = maybe_async(test_function())
-        except Exception as exc:
-            self._end(actor, exc)
-        else:
-            if isinstance(result, Future):
-                result.add_done_callback(partial(self._end_async, actor))
-                future_timeout(result, self.timeout)
-                return result
-            else:
-                self._end(actor, None)
-
-    def _end(self, actor, result):
-        if self.istest:
-            actor.app.runner.after_test_function_run(self.test, result)
-
-    def _end_async(self, actor, fut):
-        try:
-            result = fut.result()
+            result = yield test_function()
         except Exception as exc:
             result = exc
-        self._end(actor, result)
-
+        if self.istest:
+            actor.app.runner.after_test_function_run(self.test, result)
 
 
 class SafeTest(object):

@@ -217,6 +217,10 @@ class Arbiter(PoolMixin):
     # INTERNALS
     ########################################################################
     def _remove_actor(self, actor, log=True):
-        super(Arbiter, self)._remove_actor(actor, log)
-        self.registered.pop(actor.name, None)
-        self.monitors.pop(actor.aid, None)
+        a = super(Arbiter, self)._remove_actor(actor, False)
+        b = self.registered.pop(actor.name, None)
+        c = self.monitors.pop(actor.aid, None)
+        removed = a or b or c
+        if removed and log:
+            self.logger.warning('Removing %s', actor)
+        return removed

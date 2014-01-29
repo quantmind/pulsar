@@ -222,7 +222,8 @@ class TaskQueue(pulsar.Application):
                 raise pulsar.ImproperlyConfigured(
                     'Task backend for %s not available' % store.name)
             self.backend = task_backend(
-                store, self.logger,
+                store,
+                logger=self.logger,
                 name=self.name,
                 task_paths=self.cfg.task_paths,
                 schedule_periodic=self.cfg.schedule_periodic,

@@ -40,7 +40,8 @@ __all__ = ['Future',
            'in_loop',
            'task',
            'chain_future',
-           'ASYNC_OBJECTS']
+           'ASYNC_OBJECTS',
+           'future_result_exc']
 
 
 if hasattr(asyncio, 'Return'):
@@ -137,6 +138,19 @@ def as_exception(fut):
         return CancelledError()
     elif fut._exception:
         return fut.exception()
+
+
+def future_result_exc(future):
+    '''Return a two elements tuple containing the future result and exception.
+
+    The :class:`.Future` must be ``done``
+    '''
+    if future._state == _CANCELLED:
+        return None, CancelledError()
+    elif future._exception:
+        return None, fut.exception()
+    else:
+        return future.result(), None
 
 
 def task_callback(callback):
@@ -333,6 +347,12 @@ class Task(asyncio.Task):
         finally:
             self.__class__._current_tasks.pop(self._loop)
         self = None
+
+    def _wakeup(self, fut, inthread=False):
+        if inthread or fut._loop is self._loop:
+            super(Task, self)._wakeup(fut)
+        else:
+            self._loop.call_soon(self._wakeup, fut, True)
 
 
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):

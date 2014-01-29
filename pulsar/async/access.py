@@ -20,6 +20,7 @@ __all__ = ['get_request_loop',
            'process_data',
            'thread_data',
            'logger',
+           'get_logger',
            'NOTHING',
            'SELECTORS',
            'AsyncObject']
@@ -80,6 +81,10 @@ def logger(loop=None):
     return getattr(loop or get_request_loop(), 'logger', LOGGER)
 
 
+def get_logger(default=None):
+    return getattr(get_request_loop(), 'logger', default or LOGGER)
+
+
 def process_data(name=None):
     '''Fetch the current process local data dictionary. If *name* is not
 ``None`` it returns the value at *name*, otherwise it return the process data
@@ -125,10 +130,11 @@ class AsyncObject(object):
 
         The event loop associated with this object
     '''
+    _logger = None
     _loop = None
 
     @property
     def logger(self):
         '''The logger for this object
         '''
-        return getattr(self._loop, 'logger', LOGGER)
+        return self._logger or getattr(self._loop, 'logger', LOGGER)

@@ -191,7 +191,7 @@ class Concurrency(object):
             if exc:
                 actor.exit_code = getattr(exc, 'exit_code', 1)
                 if actor.exit_code == 1:
-                    actor.logger.critical('Stopping', exc_info=sys.exc_info())
+                    actor.logger.critical('Stopping', exc_info=True)
                 elif actor.exit_code:
                     actor.stream.writeln(str(exc))
                 else:

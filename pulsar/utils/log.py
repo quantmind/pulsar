@@ -42,6 +42,11 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
+            'format': ('%(asctime)s [p=%(process)s,t=%(thread)s,'
+                       '%(levelname)s,%(name)s] %(message)s'),
+            'datefmt': '%H:%M:%S'
+        },
+        'very_verbose': {
             'format': '%(asctime)s [p=%(process)s,t=%(thread)s]'
                       ' [%(levelname)s] [%(name)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'

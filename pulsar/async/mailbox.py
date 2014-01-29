@@ -235,7 +235,7 @@ class MailboxProtocol(Protocol):
         obj = pickle.dumps(req.data, protocol=2)
         data = self._parser.encode(obj, opcode=2)
         try:
-            self.transport.write(data)
+            self._transport.write(data)
         except socket.error:
             actor = get_actor()
             if actor.is_running():

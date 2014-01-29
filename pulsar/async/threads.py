@@ -67,6 +67,13 @@ class PoolThread(Thread):
 
 
 class IOqueue(selectors.BaseSelector):
+    '''A selector based on a distributed queue
+
+    Since there is no way to my knowledge to wake up the queue while
+    getting an itiem from the task queue, the timeout cannot be larger than
+    a small number which by default is ``0.5`` seconds.
+    '''
+    max_timeout = 0.5
 
     def __init__(self, actor, queue, maxtasks):
         super(IOqueue, self).__init__()
@@ -85,10 +92,13 @@ class IOqueue(selectors.BaseSelector):
             else:
                 raise _StopError
         block = True
-        if timeout is 0:
+        if timeout is None:
+            timeout = self.max_timeout
+        elif timeout <= 0:
+            timeout = 0
             block = False
-        elif not timeout:
-            timeout = 0.5
+        else:
+            timeout = min(self.max_timeout, timeout)
         try:
             task = self._queue.get(block=block, timeout=timeout)
         except (Empty, TypeError):
@@ -138,7 +148,7 @@ class ThreadPool(AsyncObject):
     This pool maintains a group of threads to perform asynchronous tasks via
     the :meth:`apply` method.
     '''
-    worker_name = 'pool-worker'
+    worker_name = 'exec'
 
     def __init__(self, actor=None, threads=None, check_every=5, maxtasks=None):
         self._actor = actor or get_actor()

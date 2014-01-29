@@ -130,11 +130,13 @@ class PoolMixin(Actor):
         return data
 
     def _remove_actor(self, actor, log=True):
-        if log:
+        removed = self.managed_actors.pop(actor.aid, None)
+        if log and removed:
+            log = False
             self.logger.warning('Removing %s', actor)
-        self.managed_actors.pop(actor.aid, None)
         if self.monitor:
-            self.monitor._remove_actor(actor, False)
+            self.monitor._remove_actor(actor, log)
+        return removed
 
     def manage_actors(self, stop=False):
         '''Remove :class:`Actor` which are not alive from the

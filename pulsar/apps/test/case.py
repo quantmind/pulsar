@@ -120,7 +120,8 @@ class Test(tasks.Job):
             if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, timeout, previous=None, add_err=True):
+    def _run(self, runner, test, method, timeout, previous=None,
+             add_err=True):
         __skip_traceback__ = True
         method = getattr(test, method, None)
         if method:

@@ -3,7 +3,7 @@ from functools import partial
 
 from pulsar.utils.pep import iteritems
 
-from .futures import Future, maybe_async, InvalidStateError
+from .futures import Future, maybe_async, InvalidStateError, future_result_exc
 from .access import AsyncObject
 
 
@@ -84,6 +84,16 @@ class OneTime(Future, AbstractEvent):
         if self._handlers is None:
             self._handlers = deque()
         return self._handlers
+
+    def bind(self, callback):
+        '''Bind a ``callback`` to this event.
+        '''
+        if not self.done():
+            self.handlers.append(callback)
+        else:
+            result, exc = future_result_exc(self)
+            self._loop.call_soon(
+                lambda: maybe_async(callback(result, exc=exc), self._loop))
 
     def fire(self, arg, exc=None, **kwargs):
         '''The callback handlers registered via the :meth:~AbstractEvent.bind`

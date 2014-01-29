@@ -11,6 +11,7 @@ from .access import asyncio, get_event_loop, new_event_loop
 
 __all__ = ['ProtocolConsumer',
            'Protocol',
+           'DatagramProtocol',
            'Connection',
            'Producer',
            'TcpServer',
@@ -353,8 +354,11 @@ class PulsarProtocol(EventHandler):
 
 
 class Protocol(PulsarProtocol, asyncio.Protocol):
-    '''An ``asyncio.Protocol`` for a :class:`.SocketStreamTransport`
-    '''
+    '''An ``asyncio.Protocol`` with events'''
+
+
+class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
+    '''An ``asyncio.DatagramProtocol`` with events`'''
 
 
 class Connection(Protocol):
@@ -694,9 +698,9 @@ class DatagramServer(EventHandler):
     ONE_TIME_EVENTS = ('start', 'stop')
     MANY_TIMES_EVENTS = ('pre_request', 'post_request')
 
-    def __init__(self, protocol_factory, loop, address=None,
+    def __init__(self, protocol_factory, loop=None, address=None,
                  name=None, sockets=None, max_requests=None):
-        self._loop = loop or get_event_loop() or new_event_loop()
+        self._loop = loop or get_event_loop()
         super(DatagramServer, self).__init__(self._loop)
         self.protocol_factory = protocol_factory
         self._max_requests = max_requests
@@ -717,10 +721,9 @@ class DatagramServer(EventHandler):
             try:
                 transports = []
                 if sockets:
-                    for sock in sockets:
+                    for transport in sockets:
                         proto = self.create_protocol()
-                        transport = DatagramTransport(self._loop, sock, proto)
-                        transports.append(transport)
+                        transports.append(transport(self._loop, proto))
                 else:
                     transport, _ = yield self._loop.create_datagram_endpoint(
                         self.protocol_factory, local_addr=adress)
@@ -728,12 +731,14 @@ class DatagramServer(EventHandler):
                 self._transports = transports
                 self._started = self._loop.time()
                 for transport in self._transports:
-                    address = transport._sock.getsockname()
+                    address = transport.get_extra_info('sockname')
                     self.logger.info('%s serving on %s', self._name,
                                      format_address(address))
                 self.fire_event('start')
-            except Exception:
-                self.fire_event('start', sys.exc_info())
+            except Exception as exc:
+                self.logger.exception('Error while starting UDP server')
+                self.fire_event('start', exc=exc)
+                self.fire_event('stop')
 
     @in_loop
     def close(self):
@@ -765,5 +770,4 @@ class DatagramServer(EventHandler):
     def create_protocol(self):
         '''Override :meth:`Producer.create_protocol`.
         '''
-        protocol = self.protocol_factory(producer=self)
-        return protocol
+        return self.protocol_factory(producer=self)

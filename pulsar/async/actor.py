@@ -155,8 +155,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     mailbox = None
     monitor = None
     next_periodic_task = None
-    poll_timeout = None
-    _logger = None
 
     def __init__(self, impl):
         EventHandler.__init__(self)
@@ -222,12 +220,6 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     @property
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
-
-    @property
-    def logger(self):
-        '''The logger for this object
-        '''
-        return self._logger
 
     #######################################################################
     ##    HIGH LEVEL API METHODS

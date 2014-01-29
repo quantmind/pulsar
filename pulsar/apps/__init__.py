@@ -107,10 +107,10 @@ def _get_app(arbiter, name, safe=True):
 
 
 def monitor_start(self, exc=None):
+    start_event = self.start_event
     if exc:
         start_event.set_exception(exc)
         return
-    start_event = self.start_event
     app = self.app
     try:
         self.bind_event('on_params', monitor_params)
@@ -163,7 +163,7 @@ def worker_start(self, exc=None):
     app = getattr(self, 'app', None)
     if app is None:
         cfg = self.cfg
-        self.app = app = cfg.application.from_config(cfg)
+        self.app = app = cfg.application.from_config(cfg, logger=self.logger)
     self.bind_event('on_info', app.worker_info)
     self.bind_event('stopping', app.worker_stopping)
     self.bind_event('stop', app.worker_stop)
@@ -418,11 +418,11 @@ class Application(Configurator):
             self.load_config()
 
     @classmethod
-    def from_config(cls, cfg):
+    def from_config(cls, cfg, logger=None):
         c = cls.__new__(cls)
         c.name = cfg.name
         c.cfg = cfg
-        c.logger = cfg.configured_logger()
+        c.logger = logger or cfg.configured_logger()
         return c
 
     @property
@@ -462,13 +462,7 @@ class Application(Configurator):
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
                 start = Future(loop=actor._loop)
-                if actor.started():
-                    self._add_to_arbiter(start, actor)
-                else:   # the arbiter has not yet started.
-                    actor.bind_event(
-                        'start',
-                        lambda a, exc=None: self._add_to_arbiter(start, a,
-                                                                 exc))
+                actor.bind_event('start', partial(self._add_monitor, start))
                 return start
             else:
                 return
@@ -527,9 +521,8 @@ class Application(Configurator):
                      if s.is_global))
 
     #   INTERNALS
-    def _add_to_arbiter(self, start, arbiter, exc=None):
+    def _add_monitor(self, start, arbiter, exc=None):
         if not exc:
-            start._loop = arbiter._loop
             monitor = arbiter.add_monitor(
                 self.name, app=self, cfg=self.cfg,
                 start=monitor_start, start_event=start)
