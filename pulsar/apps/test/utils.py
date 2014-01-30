@@ -89,6 +89,7 @@ class TestCallable(object):
             return result
 
     def _call(self, actor):
+        # Coroutine to run an asynchronous test function
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)

@@ -163,24 +163,6 @@ def task_callback(callback):
     return _task_callback
 
 
-def _coroutine(coro):
-    '''wrap a coroutine so that not asynchronous value are
-    not yield
-    '''
-    value = None
-    while True:
-        if value is None:
-            result = next(coro)
-        else:
-            result = coro.send(value)
-        try:
-            value = async(result, task=False)
-        except FutureTypeError:
-            value = result
-        else:
-            value = yield result
-
-
 def async(coro_or_future, loop=None, task=True):
     '''Handle an asynchronous ``coro_or_future``.
 
@@ -205,7 +187,7 @@ def async(coro_or_future, loop=None, task=True):
         if task:
             loop = loop or get_request_loop()
             task_factory = getattr(loop, 'task_factory', Task)
-            return task_factory(_coroutine(coro_or_future), loop=loop)
+            return task_factory(coro_or_future, loop=loop)
         else:
             return coro_or_future
     else:
@@ -241,7 +223,7 @@ def task(method):
     def _(self, *args, **kwargs):
         loop = self._loop
         task_factory = getattr(loop, 'task_factory', Task)
-        coro = _coroutine(method(self, *args, **kwargs))
+        coro = method(self, *args, **kwargs)
         future = task_factory(coro, loop=loop)
         if not getattr(loop, '_iothreadloop', True) and not loop.is_running():
             return loop.run_until_complete(future)
@@ -287,10 +269,12 @@ class FutureTypeError(TypeError):
 
 
 class Task(asyncio.Task):
-    '''A :class:`.Future` which consumes a :ref:`coroutine <coroutine>`.
+    '''A modified ``asyncio`` :class:`.Task`.
 
-    The callback will occur once the coroutine has finished
-    (when it raises StopIteration), or an unhandled exception occurs.
+    It has the following features:
+
+    * handles both ``yield`` and ``yield from``
+    * tolerant of synchronous values
     '''
     _current_tasks = {}
 
@@ -304,47 +288,53 @@ class Task(asyncio.Task):
             self._must_cancel = False
         coro = self._coro
         self._fut_waiter = None
+        sync = True
         self.__class__._current_tasks[self._loop] = self
         #
         try:
-            if exc:
-                result = coro.throw(exc)
-            elif value is not None:
-                result = coro.send(value)
-            else:
-                result = next(coro)
-            # handle possibly asynchronous results
-            try:
-                result = async(result, self._loop)
-            except FutureTypeError:
-                pass
-        except Return as exc:
-            exc.raised = True
-            self.set_result(exc.value)
-        except StopIteration as e:
-            self.set_result(getattr(e, 'value', None))
-        except Exception as exc:
-            self.set_exception(exc)
-        except BaseException as exc:
-            self.set_exception(exc)
-            raise
-        else:
-            if isinstance(result, Future):
-                result._blocking = False
-                result.add_done_callback(self._wakeup)
-                self._fut_waiter = result
-                if self._must_cancel:
-                    if self._fut_waiter.cancel():
-                        self._must_cancel = False
-            elif result == None:
-                # transfer control to the event loop
-                self._loop.call_soon(self._step)
-            else:
-                # Yielding something else is an error.
-                self._loop.call_soon(
-                    self._step, None,
-                    RuntimeError(
-                        'Task got bad yield: {!r}'.format(result)))
+            while sync:
+                sync = False
+                try:
+                    if exc:
+                        result = coro.throw(exc)
+                    elif value is not None:
+                        result = coro.send(value)
+                    else:
+                        result = next(coro)
+                    # handle possibly asynchronous results
+                    try:
+                        result = async(result, self._loop)
+                    except FutureTypeError:
+                        pass
+                except Return as exc:
+                    exc.raised = True
+                    self.set_result(exc.value)
+                except StopIteration as e:
+                    self.set_result(getattr(e, 'value', None))
+                except Exception as exc:
+                    self.set_exception(exc)
+                except BaseException as exc:
+                    self.set_exception(exc)
+                    raise
+                else:
+                    if isinstance(result, Future):
+                        result._blocking = False
+                        result.add_done_callback(self._wakeup)
+                        self._fut_waiter = result
+                        if self._must_cancel:
+                            if self._fut_waiter.cancel():
+                                self._must_cancel = False
+                    elif result == None:
+                        # transfer control to the event loop
+                        self._loop.call_soon(self._step)
+                    else:
+                        value = result
+                        sync = True
+                        # Yielding something else is an error.
+                        #self._loop.call_soon(
+                        #    self._step, None,
+                        #    RuntimeError(
+                        #        'Task got bad yield: {!r}'.format(result)))
         finally:
             self.__class__._current_tasks.pop(self._loop)
         self = None

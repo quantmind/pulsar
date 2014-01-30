@@ -29,13 +29,6 @@ class TestRpcOnThread(unittest.TestCase):
         if cls.app_cfg:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def test_time_it(self):
-        '''Ping server 5 times'''
-        bench = yield self.p.timeit('ping', 5)
-        self.assertTrue(len(bench.result), 5)
-        self.assertTrue(bench.taken)
-
-class d:
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
         self.assertTrue(str(self.p))
@@ -75,30 +68,28 @@ class d:
 
     def test_time_it(self):
         '''Ping server 5 times'''
-        response = self.p.timeit('ping', 5)
-        yield response
-        self.assertTrue(response.locked_time > 0)
-        self.assertTrue(response.total_time >= response.locked_time)
-        self.assertEqual(response.num_failures, 0)
+        bench = yield self.p.timeit('ping', 5)
+        self.assertTrue(len(bench.result), 5)
+        self.assertTrue(bench.taken)
 
     # Test Object method
     def test_check_request(self):
         result = yield self.p.check_request('check_request')
         self.assertTrue(result)
 
-    def testAdd(self):
+    def test_add(self):
         response = yield self.p.calc.add(3, 7)
         self.assertEqual(response, 10)
 
-    def testSubtract(self):
+    def test_subtract(self):
         response = yield self.p.calc.subtract(546, 46)
         self.assertEqual(response, 500)
 
-    def testMultiply(self):
+    def test_multiply(self):
         response = yield self.p.calc.multiply(3, 9)
         self.assertEqual(response, 27)
 
-    def testDivide(self):
+    def test_divide(self):
         response = yield self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
@@ -125,10 +116,10 @@ class d:
         sock = sockets[0]
         self.assertEqual(sock['address'], '%s:%s' % self.app_cfg.addresses[0])
 
-    def testInvalidParams(self):
+    def test_invalid_params(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)
 
-    def testInvalidParamsFromApi(self):
+    def test_invalid_params_fromApi(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
                                 50, 25, 67)
 

@@ -6,42 +6,8 @@ Protocols/Transports API
 ================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm. :class:`.SocketTransport`
-and :class:`.Protocol` are designed to comply with pep-3156_ specification
-and derived from ``asyncio.Transport`` and ``asyncio.Protocol``.
-
-
-Transports
-=================
-
-The :class:`.SocketTransport` is used as base class for all socket transports
-and it is the only class in this section which is also used outside
-TCP sockets.
-
-SocketTransport
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.internet.SocketTransport
-   :members:
-   :member-order: bysource
-
-
-.. module:: pulsar.async.stream
-
-SocketStreamTransport
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: SocketStreamTransport
-   :members:
-   :member-order: bysource
-
-
-SocketStreamSslTransport
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: SocketStreamSslTransport
-   :members:
-   :member-order: bysource
+implementing the Protocol/Transport paradigm. They are based on
+``asyncio.Protocol`` and ``asyncio.DatagramProtocol``
 
 
 .. module:: pulsar.async.protocols
@@ -97,20 +63,11 @@ TCP Server
    :member-order: bysource
 
 
-.. module:: pulsar.async.udp
-
 UDP
 =====
 
 Classes for the (user) datagram protocol. UDP uses a simple transmission
 model with a minimum of protocol mechanism.
-
-Datagram Transport
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: DatagramTransport
-   :members:
-   :member-order: bysource
 
 
 Datagram Protocol

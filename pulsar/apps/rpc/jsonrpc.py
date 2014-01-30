@@ -66,20 +66,20 @@ class JSONRPC(RpcHandler):
             exc_info = sys.exc_info()
         #
         res = {'id': data.get('id'), "jsonrpc": self.version}
-        if isinstance(result, Exception):
+        if exc_info:
             code = getattr(result, 'fault_code', -32603)
             msg = None
             if isinstance(result, TypeError) and callable:
                 msg = checkarity(callable, args, kwargs, discount=1)
             msg = msg or str(result) or 'JSON RPC exception'
             if code == -32603:
-                logger.error(msg=msg, exc_info=exc_info)
+                logger.error(msg, exc_info=exc_info)
             else:
-                logger.warning(msg=msg)
+                logger.warning(msg)
             error = {'code': code,
                      'message': msg,
                      'data': getattr(result, 'data', '')}
-            request.response.status_code = getattr(result, 'status', 500)
+            response.status_code = getattr(result, 'status', 500)
             res['error'] = error
         else:
             res['result'] = result

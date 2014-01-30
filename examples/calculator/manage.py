@@ -50,13 +50,15 @@ from pulsar.utils.pep import range
 
 
 def divide(request, a, b):
-    '''Divide two numbers. This method illustrate how to use the
-:func:`pulsar.apps.rpc.rpc_method` decorator.'''
+    '''Divide two numbers.
+
+    This method illustrate how to use the :func:`.rpc_method` decorator.'''
     return float(a)/float(b)
 
 
 def request_handler(request, format, kwargs):
-    '''Dummy request handler'''
+    '''Dummy request handler for test coverage
+    '''
     return kwargs
 
 

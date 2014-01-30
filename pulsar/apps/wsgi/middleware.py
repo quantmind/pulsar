@@ -30,9 +30,6 @@ Clean path
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: clean_path_middleware
 
-Cookie
-~~~~~~~~~~~~~~~~~~
-.. autofunction:: cookies_middleware
 
 Authorization
 ~~~~~~~~~~~~~~~~~~
