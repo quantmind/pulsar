@@ -64,7 +64,8 @@ else:
 
         def __del__(self):
             if not self.raised:
-                logger().error('Return(%r) used without raise', self.value)
+                asyncio.log.logger.error(
+                    'Return(%r) used without raise', self.value)
 
 
 def coroutine_return(*value):
@@ -109,7 +110,22 @@ def future_timeout(future, timeout, exc_class=None):
     return future
 
 
-def chain_future(future, callback=None, next=None, timeout=None):
+def chain_future(future, callback=None, errback=None, next=None, timeout=None):
+    '''Chain a :class:`.Future` to an existing ``future``.
+
+    This function `chain` a ``next`` future to an existing ``future``.
+    When the input ``future`` receive a result the optional
+    ``callback`` is executed and its result set as the results of ``next``.
+    If an exception occurs the optional ``errback`` is executed.
+
+    :param future: the original :class:`.Future`
+    :param callback: optional callback to execute on the result of ``future``
+    :param errback: optional callback to execute on the exception of ``future``
+    :param next: optional :class:`.Future` to chain. If not provided a new
+        future is created
+    :param timeout: optional timeout to set on ``next``
+    :return: the future ``next``
+    '''
     if next is None:
         next = Future(loop=future._loop)
         if timeout and timeout > 0:
@@ -119,9 +135,16 @@ def chain_future(future, callback=None, next=None, timeout=None):
 
     def _callback(fut):
         try:
-            result = fut.result()
-            if callback:
-                result = callback(result)
+            try:
+                result = fut.result()
+            except Exception as exc:
+                if errback:
+                    result = errback(result)
+                else:
+                    raise
+            else:
+                if callback:
+                    result = callback(result)
         except Exception as exc:
             next.set_exception(exc)
         else:
@@ -163,7 +186,7 @@ def task_callback(callback):
     return _task_callback
 
 
-def async(coro_or_future, loop=None, task=True):
+def async(coro_or_future, loop=None):
     '''Handle an asynchronous ``coro_or_future``.
 
     Equivalent to the ``asyncio.async`` function but returns a
@@ -184,12 +207,9 @@ def async(coro_or_future, loop=None, task=True):
     if isinstance(coro_or_future, Future):
         return coro_or_future
     elif isinstance(coro_or_future, GeneratorType):
-        if task:
-            loop = loop or get_request_loop()
-            task_factory = getattr(loop, 'task_factory', Task)
-            return task_factory(coro_or_future, loop=loop)
-        else:
-            return coro_or_future
+        loop = loop or get_request_loop()
+        task_factory = getattr(loop, 'task_factory', Task)
+        return task_factory(coro_or_future, loop=loop)
     else:
         raise FutureTypeError
 
@@ -328,13 +348,8 @@ class Task(asyncio.Task):
                         # transfer control to the event loop
                         self._loop.call_soon(self._step)
                     else:
-                        value = result
-                        sync = True
-                        # Yielding something else is an error.
-                        #self._loop.call_soon(
-                        #    self._step, None,
-                        #    RuntimeError(
-                        #        'Task got bad yield: {!r}'.format(result)))
+                        # Go again
+                        value, exc, sync = result, None, True
         finally:
             self.__class__._current_tasks.pop(self._loop)
         self = None

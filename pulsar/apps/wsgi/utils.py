@@ -226,7 +226,8 @@ def handle_wsgi_error(environ, exc):
     else:
         logger.warning('HTTP %s %s', response.status, path)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
-        content = None
+        response.content_type = None
+        response.content = None
     else:
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
@@ -236,7 +237,7 @@ def handle_wsgi_error(environ, exc):
             logger.critical('Error while rendering error', exc_info=True)
             response.content_type = 'text/plain'
             content = 'Critical server error'
-    response.content = content
+        response.content = content
     return response
 
 

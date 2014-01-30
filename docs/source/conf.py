@@ -7,8 +7,8 @@ os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
 ext_dir = os.path.join(source_dir,'_ext')
-docs_dir   = p(source_dir)
-base_dir   = p(docs_dir)
+docs_dir = p(source_dir)
+base_dir = p(docs_dir)
 #sys.path.append(os.path.join(source_dir, "_ext"))
 sys.path.insert(0, base_dir)
 sys.path.insert(0, ext_dir)
@@ -27,8 +27,9 @@ release = version
 # -- General configuration -----------------------------------------------------
 
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.todo',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.coverage',
+              'sphinx.ext.extlinks',
+              'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
               'pulsarext',
               'redisext']
@@ -143,39 +144,10 @@ htmlhelp_basename = 'pulsardoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pulsar.tex', 'pulsar Documentation',
+  ('index', 'pulsar.tex', 'Pulsar Documentation',
    'Luca Sbardella', 'manual'),
 ]
 
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-#latex_logo = None
-
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# If true, show page references after internal links.
-#latex_show_pagerefs = False
-
-# If true, show URL addresses after external links.
-#latex_show_urls = False
-
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
-
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
-
-# If false, no module index is generated.
-#latex_domain_indices = True
-
-
-# -- Options for manual page output --------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'pulsar', 'pulsar Documentation',
-     ['Luca Sbardella'], 1)
-]
+intersphinx_mapping = {
+    'python': ('http://python.readthedocs.org/en/latest/', None),
+}

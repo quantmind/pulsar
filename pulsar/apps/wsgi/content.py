@@ -668,7 +668,17 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
             css.pop('display', None)
         return self
 
+    def add_media(self, request):
+        '''Invoked just before streaming this content.
+
+        It can be used to add media entries to the document.
+
+        TODO: more docs
+        '''
+        pass
+
     def do_stream(self, request):
+        self.add_media(request)
         if self._tag and self._tag in INLINE_TAGS:
             yield '<%s%s>' % (self._tag, self.flatatt())
         else:

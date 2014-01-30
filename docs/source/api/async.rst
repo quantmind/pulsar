@@ -1,62 +1,28 @@
-.. module:: pulsar.async
-
 .. _async-api:
+
+.. module:: pulsar.async.futures
 
 ==================
 Asynchonous API
 ==================
 
-Event loop
-=================
-
-get event loop
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. function:: get_event_loop()
-
-    Returns the event loop in the current context. If a loop is not available
-    it returns nothing.
-
-
-new event loop
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. function:: new_event_loop(**kw)
-
-    Build a new event loop.
-
-
-Poller
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.pollers.Poller
-   :members:
-   :member-order: bysource
-
-
-EventLoop
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: pulsar.async.eventloop.EventLoop
-   :members:
-   :member-order: bysource
+The ``pulsar.Future`` class is an alias for :class:`.asyncio.Future`
 
 
 Async object interface
 =================================
 
-This amall class is the default interface for
+This small class is the default interface for
 :ref:`asynchronous objects <async-object>`. It is provided mainly for
 documentation purposes.
 
-.. autoclass:: pulsar.async.access.AsyncObject
+.. autoclass:: AsyncObject
    :members:
    :member-order: bysource
 
 
 .. _async-discovery:
 
-.. module:: pulsar.async.defer
 
 Async Utilities
 =================================
@@ -67,24 +33,13 @@ interaction with :ref:`asynchronous components <tutorials-coroutine>`.
 Async
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: pulsar.async.fallbacks.defer.async
+.. autofunction:: async
 
 
 Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: pulsar.async.fallbacks.defer.maybe_async
-
-
-Safe Async
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: safe_async
-
-
-Maybe Failure
-~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: maybe_failure
+.. autofunction:: maybe_async
 
 
 Coroutine return
@@ -103,28 +58,19 @@ Add async binding
     ``None`` or a :class:`.Deferred`.
 
 
-Is failure
-~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: is_failure
-
-
 Multi Async
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: multi_async
-
-
-Async Sleep
-~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: async_sleep
 
 
 Async While
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_while
 
-Run in loop thread
+
+Run in loop
 ~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: run_in_loop_thread
+.. autofunction:: run_in_loop
 
 
 Async Decorators
@@ -134,52 +80,16 @@ Both the :func:`in_loop` and :func:`in_loop_thread` can be applied to
 member functions of classes for wich instances expose the ``_loop``
 attribute (an instance of an event loop).
 
+
+task
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: task
+
+
 In loop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: in_loop
 
-
-In loop thread
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: in_loop_thread
-
-
-.. module:: pulsar.async.fallbacks.defer
-
-Deferred
-==========================
-
-While :class:`.Actor` represents the concurrent side of pulsar,
-the :class:`Deferred` adds the asynchronous flavour to it by using callbacks
-functions similar to twisted_.
-
-Deferred
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Deferred
-   :members:
-   :member-order: bysource
-
-DeferredTask
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: DeferredTask
-   :members:
-   :member-order: bysource
-
-Multi Deferred
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass::  pulsar.async.defer.MultiDeferred
-   :members:
-   :member-order: bysource
-
-Failure
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Failure
-   :members:
-   :member-order: bysource
 
 
 .. module:: pulsar.async.queues
