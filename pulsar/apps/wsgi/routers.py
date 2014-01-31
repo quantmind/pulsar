@@ -413,8 +413,6 @@ request, the ``get(self, request)`` method must be implemented.
 
     def add_child(self, router):
         '''Add a new :class:`Router` to the :attr:`routes` list.
-
-        If this :class:`Router` is a leaf route, add a slash to the url.
         '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
