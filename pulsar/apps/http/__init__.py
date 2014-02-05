@@ -196,7 +196,7 @@ from base64 import b64encode
 from io import StringIO, BytesIO
 
 import pulsar
-from pulsar import (AbstractClient, Pool, coroutine_return, async, Connection,
+from pulsar import (AbstractClient, Pool, coroutine_return, task, Connection,
                     get_event_loop, ProtocolConsumer, new_event_loop)
 from pulsar.utils.system import json
 from pulsar.utils.pep import native_str, is_string, to_bytes, ispy3k
@@ -976,7 +976,8 @@ class HttpClient(AbstractClient):
         '''
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, **params):
+    @task
+    def request(self, method, url, wait=None, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
@@ -992,7 +993,35 @@ class HttpClient(AbstractClient):
 
         :rtype: a :class:`.Future`
         '''
-        return async(self._request(method, url, **params), loop=self._loop)
+        nparams = params.copy()
+        nparams.update(((name, getattr(self, name)) for name in
+                        self.request_parameters if name not in params))
+        request = HttpRequest(self, url, method, params, **nparams)
+        pool = self.connection_pools.get(request.key)
+        if pool is None:
+            host, port = request.address
+            pool = self.connection_pool(
+                partial(self._connect, host, port, request.ssl),
+                pool_size=self.pool_size, loop=self._loop)
+            self.connection_pools[request.key] = pool
+        conn = yield pool.connect()
+        with conn:
+            consumer = conn.current_consumer()
+            # bind request-specific events
+            consumer.bind_events(**request.inp_params)
+            consumer.start(request)
+            response = yield consumer.event(wait or 'post_request')
+            if isinstance(response, ProtocolConsumer):
+                consumer = response
+            headers = consumer.headers
+            if (not headers or
+                    not headers.has('connection', 'keep-alive') or
+                    consumer.status_code == 101):
+                conn.detach()
+        if isinstance(response, request_again):
+            method, url, params = response
+            response = yield self.request(method, url, **params)
+        coroutine_return(response)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.
@@ -1053,37 +1082,6 @@ class HttpClient(AbstractClient):
                 if not p.scheme:
                     raise ValueError('Could not understand proxy %s' % url)
                 request.set_proxy(p.scheme, p.netloc)
-
-    def _request(self,  method, url, wait=None, **params):
-        nparams = params.copy()
-        nparams.update(((name, getattr(self, name)) for name in
-                        self.request_parameters if name not in params))
-        request = HttpRequest(self, url, method, params, **nparams)
-        pool = self.connection_pools.get(request.key)
-        if pool is None:
-            host, port = request.address
-            pool = self.connection_pool(
-                partial(self._connect, host, port, request.ssl),
-                pool_size=self.pool_size, loop=self._loop)
-            self.connection_pools[request.key] = pool
-        conn = yield pool.connect()
-        with conn:
-            consumer = conn.current_consumer()
-            # bind request-specific events
-            consumer.bind_events(**request.inp_params)
-            consumer.start(request)
-            response = yield consumer.event(wait or 'post_request')
-            if isinstance(response, ProtocolConsumer):
-                consumer = response
-            headers = consumer.headers
-            if (not headers or
-                    not headers.has('connection', 'keep-alive') or
-                    consumer.status_code == 101):
-                conn.detach()
-        if isinstance(response, request_again):
-            method, url, params = response
-            response = yield self._request(method, url, **params)
-        coroutine_return(response)
 
     def _connect(self, host, port, ssl):
         _, connection = yield self._loop.create_connection(

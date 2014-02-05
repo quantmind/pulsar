@@ -70,14 +70,11 @@ class Thread(dummy.DummyProcess):
 
 
 class PoolThread(Thread):
-    '''This class should be used when creating CPU threads in pulsar.
-
-    It makes sure the class:`Actor` controlling the thread is available.
+    '''A thread for the :class;`.ThreadPool`.
     '''
-    def __init__(self, actor, *args, **kwargs):
-        self._actor = actor
-        super(PoolThread, self).__init__(*args, **kwargs)
-        self.name = '%s-%s' % (self._actor, self.name)
+    def __init__(self, pool):
+        self.pool = pool
+        super(PoolThread, self).__init__(name=pool.worker_name)
 
     def __repr__(self):
         if self.ident:
@@ -89,11 +86,13 @@ class PoolThread(Thread):
     def run(self):
         '''Modified run method which set the actor and the event_loop.
         '''
-        actor = self._actor
-        del self._actor
-        set_actor(actor)
-        asyncio.set_event_loop(actor._loop)
-        super(Thread, self).run()
+        if self.pool._actor:
+            set_actor(self.pool._actor)
+        asyncio.set_event_loop(self.pool._loop)
+        # The run method for the threads in this thread pool
+        logger = logging.getLogger('pulsar.%s' % self.name)
+        loop = QueueEventLoop(self.pool, logger=logger, iothreadloop=True)
+        loop.run_forever()
 
     def loop(self):
         return thread_data('_request_loop', ct=self)
@@ -198,6 +197,7 @@ class ThreadPool(AsyncObject):
             loop = loop or self._actor._loop
             if not max_workers:
                 max_workers = self._actor.cfg.thread_workers
+            self.worker_name = '%s.%s' % (self._actor.name, self.worker_name)
         self._loop = loop or get_event_loop()
         self._max_workers = min(max_workers or _MAX_WORKERS, _MAX_WORKERS)
         self._threads = set()
@@ -232,17 +232,8 @@ class ThreadPool(AsyncObject):
 
     def _adjust_thread_count(self):
         if len(self._threads) < self._max_workers:
-            t = PoolThread(self._actor,
-                           name=self.worker_name,
-                           target=self._run)
+            t = PoolThread(self)
             t.daemon = True
             t.start()
             self._threads.add(t)
             _threads_queues[t] = self._work_queue
-
-    def _run(self):
-        # The run method for the threads in this therad pool
-        logger = logging.getLogger('pulsar.%s.%s' % (self._actor.name,
-                                                     self.worker_name))
-        loop = QueueEventLoop(self, logger=logger, iothreadloop=True)
-        loop.run_forever()

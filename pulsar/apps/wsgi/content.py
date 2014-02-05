@@ -785,21 +785,21 @@ or scripts.
         '''
         if path in self.known_libraries:
             path = self.known_libraries[path]
+        if self.minified:
+            for media in self.mediatype:
+                media = '.%s' % media
+                if path.endswith(media):
+                    path = self._minify(path, media)
+                    break
         if self.is_relative(path):
-            if self.minified:
-                for media in self.mediatype:
-                    media = '.%s' % media
-                    if path.endswith(media):
-                        path = self._minify(path, media)
-                        break
             return remove_double_slash('/%s/%s' % (self.media_path, path))
         else:
             return path
 
     def _minify(self, path, postfix):
-        new_postfix = '.min%s' % postfix
+        new_postfix = 'min%s' % postfix
         if not path.endswith(new_postfix):
-            path = '%s%s' % (path[:-len(postfix)], new_postfix)
+            path = '%s.%s' % (path[:-len(postfix)], new_postfix)
         return path
 
 
