@@ -122,8 +122,7 @@ class PulsarShell(pulsar.Application):
         '''When the worker starts, create the :attr:`~.Actor.thread_pool`
         and send the :meth:`interact` method to it.'''
         if not exc:
-            worker.create_thread_pool()
-            worker.thread_pool.apply(self.start_shell, worker)
+            worker.executor().submit(self.start_shell, worker)
 
     def start_shell(self, worker):
         pulsar.help = self._show_help
@@ -143,7 +142,7 @@ class PulsarShell(pulsar.Application):
             readline.parse_and_bind("tab:complete")
         self.console = self.cfg.console_class(imported_objects)
         self.console.setup()
-        worker.thread_pool.apply(self.interact, worker)
+        worker.executor().submit(self.interact, worker)
 
     def interact(self, worker):
         '''Handled by the :attr:`Actor.thread_pool`'''
@@ -152,7 +151,7 @@ class PulsarShell(pulsar.Application):
         except:
             worker._loop.stop()
         else:
-            worker.thread_pool.apply(self.interact, worker)
+            worker.executor().submit(self.interact, worker)
 
     def _show_help(self):
         print(_pshell_help)

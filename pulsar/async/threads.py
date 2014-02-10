@@ -186,7 +186,7 @@ class ThreadPool(AsyncObject):
     '''A thread pool for an actor.
 
     This pool maintains a group of threads to perform asynchronous tasks via
-    the :meth:`apply` method.
+    the :meth:`submit` method.
     '''
     worker_name = 'exec'
 

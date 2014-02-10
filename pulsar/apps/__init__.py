@@ -108,6 +108,7 @@ def _get_app(arbiter, name, safe=True):
 
 def monitor_start(self, exc=None):
     start_event = self.start_event
+    del self.start_event
     if exc:
         start_event.set_exception(exc)
         return
