@@ -131,6 +131,7 @@ class PulsarShell(pulsar.Application):
                             'get_actor': pulsar.get_actor,
                             'spawn': pulsar.spawn,
                             'send': pulsar.send}
+        imported_objects.update(worker.cfg.params.get('imported_objects', {}))
         try:  # Try activating rlcompleter, because it's handy.
             import readline
         except ImportError:  # pragma    nocover
