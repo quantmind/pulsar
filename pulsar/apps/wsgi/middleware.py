@@ -1,7 +1,7 @@
 '''
 A WSGI Middleware is a function or callable object similar to a
 :ref:`WSGI application handlers <wsgi-handlers>`
-with the only difference in that it can also return ``None``.
+with the only difference that it can return nothing (``None``).
 
 Middleware can be used in conjunction with a
 :ref:`WsgiHandler <wsgi-handler>` or any

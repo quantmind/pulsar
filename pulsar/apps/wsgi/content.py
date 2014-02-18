@@ -740,7 +740,7 @@ or scripts.
 
     Default: ``None``
 '''
-    mediatype = ('js', 'css')
+    mediatype = None
 
     def __init__(self, media_path, minified=False, known_libraries=None):
         super(Media, self).__init__()
@@ -770,7 +770,7 @@ or scripts.
         else:
             return True
 
-    def absolute_path(self, path):
+    def absolute_path(self, path, with_media_ending=True):
         '''Return a suitable absolute url for ``path``.
 
         The url is calculated in the following way:
@@ -783,14 +783,21 @@ or scripts.
 
         :return: A url path to insert in a HTML ``link`` or ``script``.
         '''
+        urlparams = ''
+        ending = '.%s' % self.mediatype
         if path in self.known_libraries:
-            path = self.known_libraries[path]
+            lib = self.known_libraries[path]
+            if isinstance(lib, dict):
+                urlparams = lib.get('urlparams', '')
+                lib = lib['url']
+            path = '%s%s' % (lib, ending)
         if self.minified:
-            for media in self.mediatype:
-                media = '.%s' % media
-                if path.endswith(media):
-                    path = self._minify(path, media)
-                    break
+            if path.endswith(ending):
+                path = self._minify(path, media)
+        if not with_media_ending:
+            path = path[:-len(ending)]
+        if urlparams:
+            path = '%s?%s' % (path, urlparams)
         if self.is_relative(path):
             return remove_double_slash('/%s/%s' % (self.media_path, path))
         else:
@@ -804,6 +811,7 @@ or scripts.
 
 
 class Css(Media):
+    mediatype = 'css'
 
     def append(self, value):
         if value:
@@ -837,6 +845,8 @@ class Css(Media):
 class Scripts(Media):
     '''A :class:`Media` container for javascript links.
     '''
+    mediatype = 'js'
+
     def append(self, child):
         '''add a new link to the javascript links.
 
