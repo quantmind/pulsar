@@ -811,9 +811,20 @@ or scripts.
 
 
 class Css(Media):
+    '''A :class:`Media` container for style sheet links.
+    '''
     mediatype = 'css'
 
     def append(self, value):
+        '''Append a style sheet to this media container.
+
+        ``value`` can be a string or a dictionary with keys given by
+        of the media and values, lists of style sheet paths.
+        For example::
+
+            {'all': [path1, ...],
+             'print': [path2, ...]}
+        '''
         if value:
             if isinstance(value, str):
                 value = {'all': [value]}
@@ -988,10 +999,10 @@ class Body(Html):
 
 
 class HtmlDocument(Html):
-    '''A :class:`.Html` component rendered as the HTML5 document.
+    '''An :class:`.Html` component rendered as an HTML5_ document.
 
     An instance of this class can be obtained via the
-    :attr:`~.WsgiRequest.html_document` attribute.
+    :attr:`.WsgiRequest.html_document` attribute.
 
     .. attribute:: head
 
@@ -1001,6 +1012,7 @@ class HtmlDocument(Html):
 
         The :class:`Body` part of this :class:`HtmlDocument`
 
+    .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
     '''
     _template = ('<!DOCTYPE html>\n'
                  '<html%s>\n'
