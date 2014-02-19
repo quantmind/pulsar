@@ -157,55 +157,58 @@ class RouterType(type):
 
 class Router(RouterType('RouterBase', (object,), {})):
     '''A :ref:`WSGI middleware <wsgi-middleware>` to handle client requests
-on multiple :ref:`routes <apps-wsgi-route>`.
+    on multiple :ref:`routes <apps-wsgi-route>`.
 
-The user must implement the HTTP methods
-required by the application. For example if the route needs to serve a ``GET``
-request, the ``get(self, request)`` method must be implemented.
+    The user must implement the HTTP methods
+    required by the application. For example if the route needs to
+    serve a ``GET`` request, the ``get(self, request)`` method must
+    be implemented.
 
-:param rule: String used for creating the :attr:`route` of this
-    :class:`Router`.
-:param routes: Optional :class:`Router` instances which are added to the
-    children :attr:`routes` of this router.
-:param parameters: Optional parameters for this router. They are stored in the
-    :attr:`parameters` attribute. If a ``response_content_types`` value is
-    passed, it overrides the :attr:`response_content_types` attribute.
+    :param rule: String used for creating the :attr:`route` of this
+        :class:`Router`.
+    :param routes: Optional :class:`Router` instances which are added to the
+        children :attr:`routes` of this router.
+    :param parameters: Optional parameters for this router.
+        They are stored in the :attr:`parameters` attribute.
+        If a ``response_content_types`` value is
+        passed, it overrides the :attr:`response_content_types` attribute.
 
-.. attribute:: route
+    .. attribute:: route
 
-    The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
+        The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
 
-.. attribute:: routes
+    .. attribute:: routes
 
-    List of children :class:`Router` of this :class:`Router`.
+        List of children :class:`Router` of this :class:`Router`.
 
-.. attribute:: parent
+    .. attribute:: parent
 
-    The parent :class:`Router` of this :class:`Router`.
+        The parent :class:`Router` of this :class:`Router`.
 
-.. attribute:: response_content_types
+    .. attribute:: response_content_types
 
-    a list/tuple of possible content types of a response to a client request.
+        a list/tuple of possible content types of a response to a
+        client request.
 
-    The client request must accept at least one of the response content
-    types, otherwise an HTTP ``415`` exception occurs.
+        The client request must accept at least one of the response content
+        types, otherwise an HTTP ``415`` exception occurs.
 
-.. attribute:: allows_redirects
+    .. attribute:: allows_redirects
 
-    boolean indicating if this router can redirect requests to valid urls
-    within this router and its children. For example, if a router serves
-    the '/echo' url but not the ``/echo/`` one, a request on ``/echo/``
-    will be redirected to ``/echo``.
+        boolean indicating if this router can redirect requests to valid urls
+        within this router and its children. For example, if a router serves
+        the '/echo' url but not the ``/echo/`` one, a request on ``/echo/``
+        will be redirected to ``/echo``.
 
-    Default: ``False``
+        Default: ``False``
 
-.. attribute:: parameters
+    .. attribute:: parameters
 
-    A :class:`.AttributeDictionary` of parameters for
-    this :class:`Router`. Parameters are created at initialisation from
-    the ``parameters`` class attribute and the key-valued parameters
-    passed to the ``__init__`` method for which the value is not callable.
-'''
+        A :class:`.AttributeDictionary` of parameters for
+        this :class:`Router`. Parameters are created at initialisation from
+        the ``parameters`` class attribute and the key-valued parameters
+        passed to the ``__init__`` method for which the value is not callable.
+    '''
     _creation_count = 0
     _parent = None
     _name = None
@@ -221,6 +224,7 @@ request, the ``get(self, request)`` method must be implemented.
         self.route = rule
         self._name = parameters.pop('name', rule.rule)
         self.routes = []
+        # add routes specified via the initialiser
         for router in routes:
             self.add_child(router)
         # copy parameters
@@ -283,8 +287,14 @@ request, the ``get(self, request)`` method must be implemented.
         router is available.
         '''
         route = self.route
-        if self._parent:
-            route = self._parent.route + route
+        parent = self._parent
+        while parent:
+            if parent.route.is_leaf:
+                parent = parent._parent
+            else:
+                break
+        if parent:
+            route = parent.route + route
         return route
 
     @property
@@ -419,6 +429,8 @@ request, the ``get(self, request)`` method must be implemented.
         # Loop over available routers to check it the router
         # is already available
         if self.route.is_leaf:
+            # if this router is a leaf router, prepend this router path
+            # to the child
             if not router.route.path.startswith('/'):
                 route = '%s/%s' % (self.route, router.route)
             else:
