@@ -175,7 +175,7 @@ the one is returned that comes first.</p>
 <dl class="method">
 <dt id="pulsar.apps.wsgi.structures.Accept.index">
 <tt class="descname">index</tt><big>(</big><em>key</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/structures.html#Accept.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.structures.Accept.index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the position of an entry or raise <tt class="xref py py-exc docutils literal"><span class="pre">ValueError</span></tt>.</p>
+<dd><p>Get the position of an entry or raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#ValueError" title="(in Python v3.4)"><tt class="xref py py-exc docutils literal"><span class="pre">ValueError</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -185,7 +185,7 @@ the one is returned that comes first.</p>
 </tbody>
 </table>
 <div class="versionchanged">
-<p><span>Changed in version 0.5: </span>This used to raise <tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt>, which was inconsistent
+<p><span>Changed in version 0.5: </span>This used to raise <a class="reference external" href="http://python.readthedocs.org/en/latest/library/exceptions.html#IndexError" title="(in Python v3.4)"><tt class="xref py py-exc docutils literal"><span class="pre">IndexError</span></tt></a>, which was inconsistent
 with the list API.</p>
 </div>
 </dd></dl>
@@ -264,7 +264,7 @@ content types.</p>
 by various components in the <a class="reference internal" href="index.html#apps-wsgi"><em>wsgi application</em></a></p>
 <dl class="function">
 <dt id="pulsar.apps.wsgi.utils.handle_wsgi_error">
-<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">handle_wsgi_error</tt><big>(</big><em>environ</em>, <em>failure</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#handle_wsgi_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.handle_wsgi_error" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">handle_wsgi_error</tt><big>(</big><em>environ</em>, <em>exc</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#handle_wsgi_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.handle_wsgi_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>The default error handler while serving a WSGI request.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -272,7 +272,7 @@ by various components in the <a class="reference internal" href="index.html#apps
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>environ</strong> &#8211; The WSGI environment.</li>
-<li><strong>failure</strong> &#8211; a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Failure" title="pulsar.async.fallbacks.defer.Failure"><tt class="xref py py-class docutils literal"><span class="pre">Failure</span></tt></a>.</li>
+<li><strong>exc</strong> &#8211; the exception</li>
 </ul>
 </td>
 </tr>
@@ -285,7 +285,7 @@ by various components in the <a class="reference internal" href="index.html#apps
 
 <dl class="function">
 <dt id="pulsar.apps.wsgi.utils.render_error_debug">
-<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">render_error_debug</tt><big>(</big><em>request</em>, <em>failure</em>, <em>content_type</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error_debug" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.apps.wsgi.utils.</tt><tt class="descname">render_error_debug</tt><big>(</big><em>request</em>, <em>exc</em>, <em>content_type</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/utils.html#render_error_debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.utils.render_error_debug" title="Permalink to this definition">¶</a></dt>
 <dd><p>Render the traceback into the content type in <em>response</em>.</p>
 </dd></dl>
 

@@ -363,7 +363,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">lua</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.4.10&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loaddb</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cron</span><span class="p">)</span>
+        <span class="n">pulsar</span><span class="o">.</span><span class="n">call_repeatedly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cron</span><span class="p">)</span>
 
     <span class="c">###########################################################################</span>
     <span class="c">##    KEYS COMMANDS</span>
@@ -2590,7 +2590,8 @@
             <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">_blocking_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
                 <span class="n">client</span><span class="o">.</span><span class="n">blocked</span><span class="o">.</span><span class="n">unblock</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_remove_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_remove_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="c"># Remove a client from the server</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_monitors</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_watching</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">channel</span><span class="p">,</span> <span class="n">clients</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
@@ -2601,7 +2602,6 @@
             <span class="n">p</span><span class="o">.</span><span class="n">clients</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">clients</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_patterns</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_</span>
 
     <span class="k">def</span> <span class="nf">_write_to_monitors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="c">#addr = &#39;%s:%s&#39; % self._transport.get_extra_info(&#39;addr&#39;)</span>

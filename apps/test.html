@@ -78,13 +78,6 @@ asynchronous applications and for running tests in parallel
 on multiple threads or processes.
 It is used for testing pulsar but it can be used
 as a test suite for any other library.</p>
-<div class="section" id="requirements">
-<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><a class="reference external" href="http://pypi.python.org/pypi/unittest2">unittest2</a> for python 2.6</li>
-<li><a class="reference external" href="http://pypi.python.org/pypi/mock">mock</a> for python &lt; 3.3</li>
-</ul>
-</div>
 <div class="section" id="introduction">
 <span id="apps-test-intro"></span><h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>To get started with pulsar asynchronous test suite is easy. The first thing to
@@ -95,7 +88,7 @@ let&#8217;s call it <tt class="docutils literal"><span class="pre">runtests.py</
 <span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">TestSuite</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s">&#39;Test suite for my library&#39;</span><span class="p">,</span>
               <span class="n">modules</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;regression&#39;</span><span class="p">,</span>
-                       <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                       <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span> <span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>where <tt class="docutils literal"><span class="pre">modules</span></tt> is a tuple/list which specifies where to
@@ -149,7 +142,7 @@ just after all tests functions are run.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Test functions are asynchronous, when they return a generator or a
-<tt class="xref py py-class docutils literal"><span class="pre">pulsar.Deferred</span></tt>, synchronous, when they return anything else.</p>
+<tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>, synchronous, when they return anything else.</p>
 </div>
 </div>
 <div class="section" id="loading-tests">
@@ -232,7 +225,7 @@ In addition, the following options are
 <a class="reference internal" href="../settings.html#setting-section-test"><em>test-suite specific</em></a>:</p>
 <div class="section" id="sequential">
 <span id="apps-test-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
-<p>By default, test functions within a <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt>
+<p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a>
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
 By specifying the <a class="reference internal" href="../settings.html#setting-sequential"><em>&#8211;sequential</em></a> command line option,
@@ -330,7 +323,7 @@ By default it returns the same time interval.</li>
 <span id="profile"></span><span id="profile-plugin"></span><h3>Profile<a class="headerlink" href="#module-pulsar.apps.test.plugins.profile" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference internal" href="#pulsar.apps.test.plugins.profile.Profile" title="pulsar.apps.test.plugins.profile.Profile"><tt class="xref py py-class docutils literal"><span class="pre">Profile</span></tt></a> is a <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a> for profiling
 test cases and generating Html reports.
-It uses the <tt class="xref py py-mod docutils literal"><span class="pre">cProfile</span></tt> module from the standard library.</p>
+It uses the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/profile.html#module-cProfile" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">cProfile</span></tt></a> module from the standard library.</p>
 <p>To use the plugin follow these two steps:</p>
 <ul>
 <li><p class="first">Included it in the test Suite:</p>
@@ -791,7 +784,7 @@ context domain.</p>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.sequential">
 <tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">sequential</tt><big>(</big><em>cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#sequential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.sequential" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decorator for a <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt> which cause
+<dd><p>Decorator for a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> which cause
 its test functions to run sequentially rather than in an
 asynchronous fashion.</p>
 </dd></dl>
@@ -802,7 +795,7 @@ asynchronous fashion.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.utils.ActorTestMixin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">ActorTestMixin</tt><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>A mixin for <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt>.</p>
+<dd><p>A mixin for <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a>.</p>
 <p>Useful for classes testing spawning of actors.
 Make sure this is the first class you derive from, before the
 unittest.TestCase, so that the tearDown method is overwritten.</p>
@@ -828,15 +821,15 @@ method.</p>
 <dt id="pulsar.apps.test.utils.AsyncAssert">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">AsyncAssert</tt><big>(</big><em>test=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> added by the <em class="xref std std-ref">test-suite</em> to all python
-<tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt> loaded.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> loaded.</p>
 <p>It can be used to invoke the same <tt class="docutils literal"><span class="pre">assertXXX</span></tt> methods available in
-the <tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt> in an asynchronous fashion.</p>
+the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> in an asynchronous fashion.</p>
 <p>The descriptor is available via the <tt class="docutils literal"><span class="pre">async</span></tt> attribute.
 For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">test1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">async</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">()</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">async</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">Future</span><span class="p">()</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
         <span class="o">...</span>
 </pre></div>
 </div>
@@ -855,6 +848,24 @@ For example:</p>
 </div>
 <p>It creates a <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer" title="pulsar.async.protocols.TcpServer"><tt class="xref py py-class docutils literal"><span class="pre">TcpServer</span></tt></a> and invoke
 <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.TcpServer.stop_serving" title="pulsar.async.protocols.TcpServer.stop_serving"><tt class="xref py py-meth docutils literal"><span class="pre">stop_serving()</span></tt></a> on exit.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="check-redis">
+<h3>check redis<a class="headerlink" href="#check-redis" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.apps.test.utils.check_redis">
+<tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">check_redis</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#check_redis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.check_redis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if redis server is available at the address specified
+by the <a class="reference internal" href="../settings.html#setting-redis-server"><em>redis server</em></a> config value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">boolean</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -887,7 +898,6 @@ For example:</p>
   <h3><a href="../index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Testing</a><ul>
-<li><a class="reference internal" href="#requirements">Requirements</a></li>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#writing-a-test-case">Writing a Test Case</a></li>
 <li><a class="reference internal" href="#loading-tests">Loading Tests</a></li>
@@ -917,6 +927,7 @@ For example:</p>
 <li><a class="reference internal" href="#actortestmixin">ActorTestMixin</a></li>
 <li><a class="reference internal" href="#asyncassert">AsyncAssert</a></li>
 <li><a class="reference internal" href="#run-test-server">run test server</a></li>
+<li><a class="reference internal" href="#check-redis">check redis</a></li>
 </ul>
 </li>
 </ul>

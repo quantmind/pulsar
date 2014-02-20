@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar.async" href="../async.html" /> 
+    <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
 
@@ -45,8 +45,7 @@
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -71,8 +70,7 @@
 
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">is_socket_closed</span>
 
-<span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">AsyncObject</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">AsyncObject</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Producer</span>
 <span class="kn">from</span> <span class="nn">.queues</span> <span class="kn">import</span> <span class="n">Queue</span><span class="p">,</span> <span class="n">Full</span>
 
@@ -134,7 +132,7 @@
 <span class="sd">        The connection is either a new one or retrieved from the</span>
 <span class="sd">        :attr:`available` connections in the pool.</span>
 
-<span class="sd">        :return: a :class:`.Deferred` resulting in the connection.</span>
+<span class="sd">        :return: a :class:`.Future` resulting in the connection.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span>
         <span class="k">return</span> <span class="n">PoolConnection</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -266,17 +264,12 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-<div class="viewcode-block" id="AbstractClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<div class="viewcode-block" id="AbstractClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all idle connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;finish&#39;</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="AbstractClient.abort"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;:meth:`close` all connections without waiting for active</span>
-<span class="sd">        connections to finish.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;finish&#39;</span><span class="p">)</span></div>
+    <span class="n">abort</span> <span class="o">=</span> <span class="n">close</span>
+
 <div class="viewcode-block" id="AbstractClient.create_connection"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.create_connection">[docs]</a>    <span class="k">def</span> <span class="nf">create_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Helper method for creating a connection to an ``address``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -289,26 +282,6 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Could not connect to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
                                       <span class="nb">str</span><span class="p">(</span><span class="n">address</span><span class="p">))</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="AbstractClient.timeit"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractClient.timeit">[docs]</a>    <span class="k">def</span> <span class="nf">timeit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="nb">callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Send ``times`` requests asynchronously and evaluate the time</span>
-<span class="sd">        taken to obtain all responses.</span>
-<span class="sd">        Usage::</span>
-
-<span class="sd">            client = Client(...)</span>
-<span class="sd">            multi = client.timeit(100, client.request, ...)</span>
-<span class="sd">            response = yield multi</span>
-<span class="sd">            multi.total_time</span>
-
-<span class="sd">        Where ``client.request`` is the callable method to invoke (this must</span>
-<span class="sd">        be specified by the client implementation).</span>
-
-<span class="sd">        :return: a :class:`.MultiDeferred` which results in the list of results</span>
-<span class="sd">          for the individual requests. Its :attr:`MultiDeferred.total_time`</span>
-<span class="sd">          attribute indicates the number of seconds taken (once the deferred</span>
-<span class="sd">          has been called back).</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="n">multi_async</span><span class="p">([</span><span class="nb">callable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">times</span><span class="p">)])</span>
 
 </div></div>
 <div class="viewcode-block" id="AbstractUdpClient"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient">[docs]</a><span class="k">class</span> <span class="nc">AbstractUdpClient</span><span class="p">(</span><span class="n">Producer</span><span class="p">):</span>
@@ -325,17 +298,12 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>
-<div class="viewcode-block" id="AbstractUdpClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<div class="viewcode-block" id="AbstractUdpClient.close"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Close all idle connections.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;finish&#39;</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="AbstractUdpClient.abort"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.abort">[docs]</a>    <span class="k">def</span> <span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;:meth:`close` all connections without waiting for active</span>
-<span class="sd">        connections to finish.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fire_event</span><span class="p">(</span><span class="s">&#39;finish&#39;</span><span class="p">)</span></div>
+    <span class="n">abort</span> <span class="o">=</span> <span class="n">close</span>
+
 <div class="viewcode-block" id="AbstractUdpClient.create_datagram_endpoint"><a class="viewcode-back" href="../../../api/protocols.html#pulsar.async.clients.AbstractUdpClient.create_datagram_endpoint">[docs]</a>    <span class="k">def</span> <span class="nf">create_datagram_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_factory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Helper method for creating a connection to an ``address``.</span>
 <span class="sd">        &#39;&#39;&#39;</span>

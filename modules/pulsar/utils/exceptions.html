@@ -75,6 +75,10 @@
     <span class="sd">&#39;&#39;&#39;Base class of all Pulsar exceptions.&#39;&#39;&#39;</span>
 
 </div>
+<span class="k">class</span> <span class="nc">MonitorStarted</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
 <div class="viewcode-block" id="ImproperlyConfigured"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.ImproperlyConfigured">[docs]</a><span class="k">class</span> <span class="nc">ImproperlyConfigured</span><span class="p">(</span><span class="n">PulsarException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A :class:`PulsarException` raised when an inconsistent configuration</span>
 <span class="sd">has occured.&#39;&#39;&#39;</span>
@@ -118,11 +122,6 @@
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="StopEventLoop"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.StopEventLoop">[docs]</a><span class="k">class</span> <span class="nc">StopEventLoop</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;:class:`BaseException` raised to cleanly stop a</span>
-<span class="sd">    :class:`pulsar.EventLoop`.&#39;&#39;&#39;</span>
-
-</div>
 <div class="viewcode-block" id="HaltServer"><a class="viewcode-back" href="../../../api/exceptions.html#pulsar.utils.exceptions.HaltServer">[docs]</a><span class="k">class</span> <span class="nc">HaltServer</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;:class:`BaseException` raised to stop a running server.</span>
 

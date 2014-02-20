@@ -221,7 +221,7 @@
     <span class="k">def</span> <span class="nf">home_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CHAT_DIR</span><span class="p">,</span> <span class="s">&#39;chat.html&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/html&#39;</span>
-        <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">data</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span>
+        <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">data</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
 
 </div>

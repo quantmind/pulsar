@@ -187,7 +187,7 @@ number of workers to 0.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.socket.SocketServer.worker_start">
-<tt class="descname">worker_start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.worker_start" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">worker_start</tt><big>(</big><em>worker</em>, <em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#SocketServer.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.SocketServer.worker_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start the worker by invoking the <a class="reference internal" href="#pulsar.apps.socket.SocketServer.create_server" title="pulsar.apps.socket.SocketServer.create_server"><tt class="xref py py-meth docutils literal"><span class="pre">create_server()</span></tt></a> method.</p>
 </dd></dl>
 
@@ -219,10 +219,19 @@ number of workers to 0.</p>
 <dl class="class">
 <dt id="pulsar.apps.socket.UdpSocketServer">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.socket.</tt><tt class="descname">UdpSocketServer</tt><big>(</big><em>callable=None</em>, <em>load_config=True</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>A <a class="reference internal" href="#pulsar.apps.socket.SocketServer" title="pulsar.apps.socket.SocketServer"><tt class="xref py py-class docutils literal"><span class="pre">SocketServer</span></tt></a> which serve application on a UDP sockets.</p>
+<p>It bind a socket to a given address and listen for requests. The request
+handler is constructed from the callable passed during initialisation.</p>
+<dl class="attribute">
+<dt id="pulsar.apps.socket.UdpSocketServer.address">
+<tt class="descname">address</tt><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.address" title="Permalink to this definition">¶</a></dt>
+<dd><p>The socket address, available once the application has started.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pulsar.apps.socket.UdpSocketServer.protocol_factory">
 <tt class="descname">protocol_factory</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/apps/socket.html#UdpSocketServer.protocol_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.socket.UdpSocketServer.protocol_factory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the <a class="reference internal" href="../api/protocols.html#pulsar.async.udp.DatagramProtocol" title="pulsar.async.udp.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a> factory.</p>
+<dd><p>Return the <a class="reference internal" href="../api/protocols.html#pulsar.async.protocols.DatagramProtocol" title="pulsar.async.protocols.DatagramProtocol"><tt class="xref py py-class docutils literal"><span class="pre">DatagramProtocol</span></tt></a> factory.</p>
 </dd></dl>
 
 <dl class="method">

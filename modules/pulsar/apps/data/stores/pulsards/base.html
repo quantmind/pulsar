@@ -383,9 +383,9 @@
 <div class="viewcode-block" id="PubSub.publish"><a class="viewcode-back" href="../../../../../../apps/data/clients.html#pulsar.apps.data.stores.pulsards.base.PubSub.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Publish a new ``message`` to a ``channel``.</span>
 
-<span class="sd">        This method return a pulsar Deferred which results in the number of</span>
-<span class="sd">        subscribers that will receive the message (the same behaviour as</span>
-<span class="sd">        redis publish command).</span>
+<span class="sd">        This method return a pulsar :class:`.Future` which results in the</span>
+<span class="sd">        number of subscribers that will receive the message (the same</span>
+<span class="sd">        behaviour as redis publish command).</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </div>

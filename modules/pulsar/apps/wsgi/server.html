@@ -89,7 +89,7 @@
 <span class="kn">from</span> <span class="nn">wsgiref.handlers</span> <span class="kn">import</span> <span class="n">format_date_time</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">in_loop</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">ProtocolError</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">in_loop</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">native_str</span><span class="p">,</span> <span class="n">raise_error_trace</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Headers</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">has_empty_content</span><span class="p">,</span>
                                   <span class="n">host_and_port_default</span><span class="p">,</span> <span class="n">http_parser</span><span class="p">,</span>
@@ -98,7 +98,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.internet</span> <span class="kn">import</span> <span class="n">format_address</span><span class="p">,</span> <span class="n">is_tls</span>
 <span class="kn">from</span> <span class="nn">pulsar.async.protocols</span> <span class="kn">import</span> <span class="n">ProtocolConsumer</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">handle_wsgi_error</span><span class="p">,</span> <span class="n">wsgi_request</span><span class="p">,</span> <span class="n">HOP_HEADERS</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;HttpServerResponse&#39;</span><span class="p">,</span> <span class="s">&#39;MAX_CHUNK_SIZE&#39;</span><span class="p">,</span> <span class="s">&#39;test_wsgi_environ&#39;</span><span class="p">]</span>
@@ -140,7 +140,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">parser</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transport</span> <span class="o">=</span> <span class="n">transport</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_message_complete</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">)</span>
@@ -180,7 +180,7 @@
     <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxbuf</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Return bytes in the buffer.</span>
 
-<span class="sd">        If the stream is not yet ready, return a :class:`.Deferred`</span>
+<span class="sd">        If the stream is not yet ready, return a :class:`.Future`</span>
 <span class="sd">        which results in the bytes read.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="p">:</span>
@@ -368,7 +368,7 @@
         <span class="c">#</span>
         <span class="n">done</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">is_message_complete</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">done</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">on_message_complete</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
         <span class="c">#</span>
         <span class="k">if</span> <span class="n">processed</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
@@ -489,48 +489,54 @@
     <span class="nd">@in_loop</span>
     <span class="k">def</span> <span class="nf">_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="s">&#39;SERVER_NAME&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
-            <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c"># client disconnected, end this connection</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
-            <span class="n">failure</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">exc_info</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span>
-                                    <span class="n">exc_info</span><span class="p">)</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_wsgi</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="c"># Error handling did not work, Just shut down</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">finish_wsgi</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">exc_info</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s">&#39;SERVER_NAME&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environ</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">HttpException</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wsgi_callable</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="n">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc_info</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="c">#</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">response</span>
+                <span class="c">#</span>
+                <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">start_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                                        <span class="n">response</span><span class="o">.</span><span class="n">get_headers</span><span class="p">(),</span> <span class="n">exc_info</span><span class="p">)</span>
+                <span class="c">#</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                        <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">chunk</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="c">#</span>
+                <span class="c"># make sure we write headers</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_async_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wsgi_iter</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="p">(</span><span class="n">Deferred</span><span class="p">,</span> <span class="n">Failure</span><span class="p">)):</span>
-            <span class="n">wsgi_iter</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">wsgi_iter</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">wsgi_iter</span><span class="p">:</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">b</span>     <span class="c"># handle asynchronous components</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-            <span class="c"># make sure we write headers</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">b</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">wsgi_iter</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">wsgi_iter</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Error while closing wsgi iterator&#39;</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish_wsgi</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">finish_wsgi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>     <span class="c"># client disconnected, end this connection</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">()</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">response</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s">&#39;close&#39;</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">response</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                            <span class="s">&#39;Error while closing wsgi iterator&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HttpServerResponse.is_chunked"><a class="viewcode-back" href="../../../../apps/wsgi/intro.html#pulsar.apps.wsgi.server.HttpServerResponse.is_chunked">[docs]</a>    <span class="k">def</span> <span class="nf">is_chunked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Check if the response uses chunked transfer encoding.</span>
@@ -564,19 +570,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span> <span class="o">=</span> <span class="n">keep_alive_with_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="p">,</span> <span class="n">headers</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_alive</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="s">&#39;connection&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;close&#39;</span>
-        <span class="c"># If client sent cookies and set-cookies header is not available</span>
-        <span class="c"># set the cookies</span>
-        <span class="k">if</span> <span class="s">&#39;cookie&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">headers</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s">&#39;set-cookie&#39;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Set-cookie&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;cookie&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">headers</span>
 </div>
     <span class="k">def</span> <span class="nf">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#return a the WSGI environ dictionary</span>
-        <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">sock</span><span class="p">)</span> <span class="k">else</span> <span class="bp">False</span>
+        <span class="n">transport</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span>
+        <span class="n">https</span> <span class="o">=</span> <span class="bp">True</span> <span class="k">if</span> <span class="n">is_tls</span><span class="p">(</span><span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;socket&#39;</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
         <span class="n">multiprocess</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">concurrency</span> <span class="o">==</span> <span class="s">&#39;process&#39;</span><span class="p">)</span>
-        <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
-                               <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span>
-                               <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
+        <span class="n">environ</span> <span class="o">=</span> <span class="n">wsgi_environ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stream</span><span class="p">,</span>
+                               <span class="n">transport</span><span class="o">.</span><span class="n">get_extra_info</span><span class="p">(</span><span class="s">&#39;sockname&#39;</span><span class="p">),</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span><span class="p">,</span>
                                <span class="n">https</span><span class="o">=</span><span class="n">https</span><span class="p">,</span>
                                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span>

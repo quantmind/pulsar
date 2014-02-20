@@ -99,10 +99,6 @@
 <span class="sd">   :members:</span>
 <span class="sd">   :member-order: bysource</span>
 
-<span class="sd">parse cookie</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~~~~</span>
-
-<span class="sd">.. autofunction:: parse_cookie</span>
 
 <span class="sd">.. _http-parser: https://github.com/benoitc/http-parser</span>
 <span class="sd">.. _urllib3: https://github.com/shazow/urllib3</span>
@@ -118,7 +114,6 @@
 <span class="kn">import</span> <span class="nn">mimetypes</span>
 <span class="kn">import</span> <span class="nn">platform</span>
 <span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span><span class="p">,</span> <span class="n">md5</span>
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
 <span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
@@ -128,14 +123,19 @@
 
 <span class="kn">from</span> <span class="nn">.structures</span> <span class="kn">import</span> <span class="n">mapping_iterator</span><span class="p">,</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">.pep</span> <span class="kn">import</span> <span class="n">ispy3k</span><span class="p">,</span> <span class="n">iteritems</span><span class="p">,</span> <span class="n">itervalues</span><span class="p">,</span> <span class="n">to_bytes</span><span class="p">,</span> <span class="n">native_str</span>
+<span class="kn">from</span> <span class="nn">.html</span> <span class="kn">import</span> <span class="n">capfirst</span>
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">http_parser.parser</span> <span class="kn">import</span> <span class="n">HttpParser</span> <span class="k">as</span> <span class="n">CHttpParser</span>
-    <span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">_Http_Parser</span> <span class="o">=</span> <span class="n">CHttpParser</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
-    <span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">_Http_Parser</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="c">#try:</span>
+<span class="c">#    from http_parser.parser import HttpParser as CHttpParser</span>
+<span class="c">#    hasextensions = True</span>
+<span class="c">#    _Http_Parser = CHttpParser</span>
+<span class="c">#except ImportError:  # pragma    nocover</span>
+<span class="c">#    hasextensions = False</span>
+<span class="c">#    _Http_Parser = None</span>
+<span class="c">#</span>
+<span class="c">#The http_parser has several bus, therefore it is switched off</span>
+<span class="n">hasextensions</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">_Http_Parser</span> <span class="o">=</span> <span class="bp">None</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">select</span> <span class="kn">import</span> <span class="n">poll</span><span class="p">,</span> <span class="n">POLLIN</span>
@@ -158,7 +158,6 @@
 
 
 <span class="n">create_connection</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">create_connection</span>
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;httpurl&#39;</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>    <span class="c"># Compiled with SSL?</span>
     <span class="n">BaseSSLError</span> <span class="o">=</span> <span class="bp">None</span>
@@ -176,7 +175,7 @@
                               <span class="n">urljoin</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">http.client</span> <span class="kn">import</span> <span class="n">responses</span>
     <span class="kn">from</span> <span class="nn">http.cookiejar</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
-    <span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span><span class="p">,</span> <span class="n">BaseCookie</span><span class="p">,</span> <span class="n">CookieError</span>
+    <span class="kn">from</span> <span class="nn">http.cookies</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
     <span class="n">string_type</span> <span class="o">=</span> <span class="nb">str</span>
     <span class="n">getproxies_environment</span> <span class="o">=</span> <span class="n">urllibr</span><span class="o">.</span><span class="n">getproxies_environment</span>
@@ -201,7 +200,7 @@
                           <span class="n">parse_qsl</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">httplib</span> <span class="kn">import</span> <span class="n">responses</span>
     <span class="kn">from</span> <span class="nn">cookielib</span> <span class="kn">import</span> <span class="n">CookieJar</span><span class="p">,</span> <span class="n">Cookie</span>
-    <span class="kn">from</span> <span class="nn">Cookie</span> <span class="kn">import</span> <span class="n">SimpleCookie</span><span class="p">,</span> <span class="n">BaseCookie</span><span class="p">,</span> <span class="n">CookieError</span>
+    <span class="kn">from</span> <span class="nn">Cookie</span> <span class="kn">import</span> <span class="n">SimpleCookie</span>
 
     <span class="n">string_type</span> <span class="o">=</span> <span class="nb">unicode</span>
     <span class="n">ascii_letters</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">letters</span>
@@ -309,10 +308,11 @@
 
 
 <span class="k">def</span> <span class="nf">iri_to_uri</span><span class="p">(</span><span class="n">iri</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Convert an Internationalized Resource Identifier (IRI) portion to a URI</span>
-<span class="sd">portion that is suitable for inclusion in a URL.</span>
-<span class="sd">This is the algorithm from section 3.1 of RFC 3987.</span>
-<span class="sd">Returns an ASCII native string containing the encoded result.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Convert an Internationalised Resource Identifier (IRI) portion</span>
+<span class="sd">    to a URI portion that is suitable for inclusion in a URL.</span>
+<span class="sd">    This is the algorithm from section 3.1 of RFC 3987.</span>
+<span class="sd">    Returns an ASCII native string containing the encoded result.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">iri</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">iri</span>
     <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -458,9 +458,6 @@
 <span class="n">ALL_HEADER_FIELDS_DICT</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ALL_HEADER_FIELDS</span><span class="p">))</span>
 <span class="n">CRLF</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s">&#39;</span>
 <span class="n">LWS</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\r\n</span><span class="s"> &#39;</span>
-<span class="n">HEADER_FIELDS_JOINER</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Set-Cookie&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
-                        <span class="s">&#39;Set-Cookie2&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
-
 <span class="n">TYPE_HEADER_FIELDS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;client&#39;</span><span class="p">:</span> <span class="n">CLIENT_HEADER_FIELDS</span><span class="p">,</span>
                       <span class="s">&#39;server&#39;</span><span class="p">:</span> <span class="n">SERVER_HEADER_FIELDS</span><span class="p">,</span>
                       <span class="s">&#39;both&#39;</span><span class="p">:</span> <span class="n">ALL_HEADER_FIELDS</span><span class="p">}</span>
@@ -469,19 +466,20 @@
 <span class="n">header_type_to_int</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">header_type</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
 
 
-<span class="k">def</span> <span class="nf">capfirst</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">x</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span>
-
-
 <span class="k">def</span> <span class="nf">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="k">return</span> <span class="s">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">capfirst</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">b</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">header_field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">HEADERS_SET</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Return a header `name` in Camel case.</span>
+
+<span class="sd">    For example::</span>
+
+<span class="sd">        header_field(&#39;connection&#39;) == &#39;Connection&#39;</span>
+<span class="sd">        header_field(&#39;accept-charset&#39;) == &#39;Accept-Charset&#39;</span>
+
+<span class="sd">    If ``header_set`` is given, only return headers included in the set.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;x-&#39;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -495,13 +493,40 @@
             <span class="k">return</span> <span class="n">capheader</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 
+<span class="c">####    HEADERS UTILITIES</span>
+<span class="n">HEADER_FIELDS_JOINER</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Cookie&#39;</span><span class="p">:</span> <span class="s">&#39;; &#39;</span><span class="p">,</span>
+                        <span class="s">&#39;Set-Cookie&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+                        <span class="s">&#39;Set-Cookie2&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">split_comma</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">v</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">parse_cookies</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">OutputString</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">SimpleCookie</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+
+<span class="n">header_parsers</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Connection&#39;</span><span class="p">:</span> <span class="n">split_comma</span><span class="p">,</span>
+                  <span class="s">&#39;Cookie&#39;</span><span class="p">:</span> <span class="n">parse_cookies</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">header_values</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">header</span> <span class="ow">in</span> <span class="n">header_parsers</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">header_parsers</span><span class="p">[</span><span class="n">header</span><span class="p">](</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+
+
 <span class="k">def</span> <span class="nf">quote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">extra_chars</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">allow_token</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Quote a header value if necessary.</span>
 
-<span class="sd">:param value: the value to quote.</span>
-<span class="sd">:param extra_chars: a list of extra characters to skip quoting.</span>
-<span class="sd">:param allow_token: if this is enabled token values are returned</span>
-<span class="sd">                    unchanged.&quot;&quot;&quot;</span>
+<span class="sd">    :param value: the value to quote.</span>
+<span class="sd">    :param extra_chars: a list of extra characters to skip quoting.</span>
+<span class="sd">    :param allow_token: if this is enabled token values are returned</span>
+<span class="sd">        unchanged.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">force_native_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">allow_token</span><span class="p">:</span>
         <span class="n">token_chars</span> <span class="o">=</span> <span class="n">HEADER_TOKEN_CHARS</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">extra_chars</span><span class="p">)</span>
@@ -511,10 +536,13 @@
 
 
 <span class="k">def</span> <span class="nf">unquote_header_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">is_filename</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Unquotes a header value. Reversal of :func:`quote_header_value`.</span>
-<span class="sd">This does not use the real unquoting but what browsers are actually</span>
-<span class="sd">using for quoting.</span>
-<span class="sd">:param value: the header value to unquote.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;Unquotes a header value.</span>
+
+<span class="sd">    Reversal of :func:`quote_header_value`. This does not use the real</span>
+<span class="sd">    un-quoting but what browsers are actually using for quoting.</span>
+
+<span class="sd">    :param value: the header value to unquote.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;&quot;&#39;</span><span class="p">:</span>
         <span class="c"># this is not the real unquoting, but fixing this so that the</span>
         <span class="c"># RFC is met will result in bugs with internet explorer and</span>
@@ -622,10 +650,6 @@
     <span class="k">def</span> <span class="nf">__bytes__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">)</span>
 
@@ -634,7 +658,7 @@
         <span class="k">return</span> <span class="n">header_type_to_int</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Headers.update"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Extend the headers.</span>
+        <span class="sd">&quot;&quot;&quot;Extend the headers with an ``iterable``.</span>
 
 <span class="sd">        :param iterable: a dictionary or an iterable over keys, vaues tuples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -662,7 +686,12 @@
         <span class="k">return</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)])</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">joiner</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s">&#39;, &#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">joiner</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">joiner</span> <span class="o">=</span> <span class="s">&#39;; &#39;</span>
+        <span class="k">return</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">__delitem__</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
@@ -671,8 +700,7 @@
         <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">header_values</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="Headers.get"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -734,22 +762,22 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="p">[])</span>
 </div>
-<div class="viewcode-block" id="Headers.add_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.add_header">[docs]</a>    <span class="k">def</span> <span class="nf">add_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Add ``value`` to ``key`` header.</span>
+<div class="viewcode-block" id="Headers.add_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.add_header">[docs]</a>    <span class="k">def</span> <span class="nf">add_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Add ``values`` to ``key`` header.</span>
 
 <span class="sd">        If the header is already available, append the value to the list.</span>
+<span class="sd">        :param values: a string value or a list/tuple of strings values</span>
+<span class="sd">            for header ``key``</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strict</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">value</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">; </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&#39;; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kv</span> <span class="k">for</span> <span class="n">kv</span>
-                                                      <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">and</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="n">header_values</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">current</span><span class="p">:</span>
+                    <span class="n">current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current</span>
 </div>
 <div class="viewcode-block" id="Headers.remove_header"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.Headers.remove_header">[docs]</a>    <span class="k">def</span> <span class="nf">remove_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Remove the header at ``key``.</span>
@@ -776,6 +804,16 @@
         <span class="n">vs</span> <span class="o">=</span> <span class="n">version</span> <span class="o">+</span> <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="s">&#39;HTTP/</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="se">\r\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">vs</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">DEFAULT_CHARSET</span><span class="p">)</span>
 </div>
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dj</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">):</span>
+            <span class="n">joiner</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dj</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">joiner</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">joiner</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">value</span>
+
     <span class="k">def</span> <span class="nf">_ordered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">hf</span> <span class="o">=</span> <span class="n">HEADER_FIELDS</span>
         <span class="n">hj</span> <span class="o">=</span> <span class="n">HEADER_FIELDS_JOINER</span>
@@ -831,30 +869,10 @@
 <div class="viewcode-block" id="HttpParser"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.HttpParser">[docs]</a><span class="k">class</span> <span class="nc">HttpParser</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A python HTTP parser.</span>
 
-<span class="sd">Original code from https://github.com/benoitc/http-parser</span>
+<span class="sd">    Original code from https://github.com/benoitc/http-parser</span>
 
-<span class="sd">2011 (c) Benoit Chesneau &lt;benoitc@e-engura.org&gt;</span>
-
-<span class="sd">Permission is hereby granted, free of charge, to any person</span>
-<span class="sd">obtaining a copy of this software and associated documentation</span>
-<span class="sd">files (the &quot;Software&quot;), to deal in the Software without</span>
-<span class="sd">restriction, including without limitation the rights to use,</span>
-<span class="sd">copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
-<span class="sd">copies of the Software, and to permit persons to whom the</span>
-<span class="sd">Software is furnished to do so, subject to the following</span>
-<span class="sd">conditions:</span>
-
-<span class="sd">The above copyright notice and this permission notice shall be</span>
-<span class="sd">included in all copies or substantial portions of the Software.</span>
-
-<span class="sd">THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,</span>
-<span class="sd">EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES</span>
-<span class="sd">OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND</span>
-<span class="sd">NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT</span>
-<span class="sd">HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,</span>
-<span class="sd">WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</span>
-<span class="sd">FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR</span>
-<span class="sd">OTHER DEALINGS IN THE SOFTWARE.&#39;&#39;&#39;</span>
+<span class="sd">    2011 (c) Benoit Chesneau &lt;benoitc@e-engura.org&gt;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">decompress</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">decompress</span> <span class="o">=</span> <span class="n">decompress</span>
         <span class="c"># errors vars</span>
@@ -1079,20 +1097,22 @@
             <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&quot; </span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">HEADER_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">InvalidHeader</span><span class="p">(</span><span class="s">&quot;invalid header name </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
-            <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()]</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">header_field</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()]</span>
             <span class="c"># Consume value continuation lines</span>
             <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="ow">and</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s">&quot; &quot;</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\t</span><span class="s">&quot;</span><span class="p">)):</span>
                 <span class="n">value</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
             <span class="n">value</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
-            <span class="c"># multiple headers</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
-            <span class="c"># store new header value</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
         <span class="c"># detect now if body is sent by chunks.</span>
-        <span class="n">clen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;content-length&#39;</span><span class="p">)</span>
-        <span class="n">te</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;transfer-encoding&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="p">(</span><span class="n">te</span> <span class="o">==</span> <span class="s">&#39;chunked&#39;</span><span class="p">)</span>
+        <span class="n">clen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;Transfer-Encoding&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
+            <span class="n">te</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s">&#39;Transfer-Encoding&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="p">(</span><span class="n">te</span> <span class="o">==</span> <span class="s">&#39;chunked&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_chunked</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="c">#</span>
         <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_status_code</span>
         <span class="k">if</span> <span class="n">status</span> <span class="ow">and</span> <span class="p">(</span><span class="n">status</span> <span class="o">==</span> <span class="n">httpclient</span><span class="o">.</span><span class="n">NO_CONTENT</span> <span class="ow">or</span>
@@ -1102,7 +1122,7 @@
             <span class="n">clen</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">elif</span> <span class="n">clen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">clen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clen</span><span class="p">)</span>
+                <span class="n">clen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clen</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                 <span class="n">clen</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1115,8 +1135,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_clen_rest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clen</span> <span class="o">=</span> <span class="n">clen</span>
         <span class="c">#</span>
         <span class="c"># detect encoding and set decompress object</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompress</span><span class="p">:</span>
-            <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;content-encoding&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompress</span> <span class="ow">and</span> <span class="s">&#39;Content-Encoding&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">:</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">[</span><span class="s">&#39;Content-Encoding&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s">&quot;gzip&quot;</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">__decompress_obj</span> <span class="o">=</span> <span class="n">zlib</span><span class="o">.</span><span class="n">decompressobj</span><span class="p">(</span><span class="mi">16</span><span class="o">+</span><span class="n">zlib</span><span class="o">.</span><span class="n">MAX_WBITS</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">encoding</span> <span class="o">==</span> <span class="s">&quot;deflate&quot;</span><span class="p">:</span>
@@ -1344,28 +1364,6 @@
         <span class="k">return</span> <span class="n">cookie_dict</span>
 
 
-<div class="viewcode-block" id="parse_cookie"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.httpurl.parse_cookie">[docs]</a><span class="k">def</span> <span class="nf">parse_cookie</span><span class="p">(</span><span class="n">cookie</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Parse an `HTTP cookie`_ string.</span>
-
-<span class="sd">    Return a dictionary of cookie name/values.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">cookie</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cookie</span><span class="p">,</span> <span class="n">BaseCookie</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">SimpleCookie</span><span class="p">()</span>
-            <span class="n">c</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cookie</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">CookieError</span><span class="p">:</span>     <span class="c"># pragma    nocover</span>
-            <span class="c"># Invalid cookie</span>
-            <span class="k">return</span> <span class="p">{}</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">cookie</span>
-    <span class="n">cookiedict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">cookiedict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
-    <span class="k">return</span> <span class="n">cookiedict</span>
-
-</div>
 <span class="n">cc_delim_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\s*,\s*&#39;</span><span class="p">)</span>
 
 
@@ -1462,7 +1460,8 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nostore</span><span class="p">:</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;cache-control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;no-store&#39;</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;cache-control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;no-store, no-cache, must-revalidate,&#39;</span>
+                                        <span class="s">&#39; max-age=0&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxage</span><span class="p">:</span>
             <span class="n">headers</span><span class="p">[</span><span class="s">&#39;cache-control&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;max-age=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxage</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">private</span><span class="p">:</span>

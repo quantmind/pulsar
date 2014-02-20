@@ -101,8 +101,8 @@ the application object must return an iterable yielding zero or more bytes.</p>
 with the standard <a class="reference external" href="http://www.python.org/dev/peps/pep-3333/">WSGI 1.0.1</a> specification with the following two
 exceptions:</p>
 <ul class="simple">
-<li>It can return a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</li>
-<li>If it returns a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>, it must result in an
+<li>It can return a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.</li>
+<li>If it returns a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>, it must result in an
 <a class="reference internal" href="#wsgi-async-iter"><em>asynchronous iterable</em></a>.</li>
 </ul>
 <p>Pulsar is shipped with two WSGI application handlers documented below.</p>
@@ -110,11 +110,11 @@ exceptions:</p>
 <div class="section" id="asynchronous-iterable">
 <span id="wsgi-async-iter"></span><h2>Asynchronous Iterable<a class="headerlink" href="#asynchronous-iterable" title="Permalink to this headline">¶</a></h2>
 <p>An asynchronous iterable is an iterable over a combination of <tt class="docutils literal"><span class="pre">bytes</span></tt> or
-<a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
+<tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which result in <tt class="docutils literal"><span class="pre">bytes</span></tt>.
 For example this could be an asynchronous iterable:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">simple_async</span><span class="p">():</span>
     <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;hello&#39;</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Deferred</span><span class="p">()</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">Future</span><span class="p">()</span>
     <span class="n">c</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">b</span><span class="s">&#39; &#39;</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">c</span>
     <span class="k">yield</span> <span class="n">b</span><span class="s">&#39;World!&#39;</span>

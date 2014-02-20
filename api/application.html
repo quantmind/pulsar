@@ -82,12 +82,6 @@ implement servers with very little effort. The main classes here are:
 a factory of several <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> running on a single server.
 The <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><tt class="xref py py-class docutils literal"><span class="pre">Configurator</span></tt></a> is a mixin used as base class for both
 <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> and <a class="reference internal" href="#pulsar.apps.MultiApp" title="pulsar.apps.MultiApp"><tt class="xref py py-class docutils literal"><span class="pre">MultiApp</span></tt></a>.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">An instance of an <a class="reference internal" href="#pulsar.apps.Application" title="pulsar.apps.Application"><tt class="xref py py-class docutils literal"><span class="pre">Application</span></tt></a> is picklable and therefore can be
-sent from actor to actor using the
-<a class="reference internal" href="../tutorials/messages.html#tutorials-messages"><em>actor message passing api</em></a>.</p>
-</div>
 <div class="section" id="configurator">
 <h2>Configurator<a class="headerlink" href="#configurator" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -254,8 +248,10 @@ a new <a class="reference internal" href="actor.html#pulsar.async.monitor.Monito
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>callable</strong> &#8211; Initialise the <a class="reference internal" href="#pulsar.apps.Application.callable" title="pulsar.apps.Application.callable"><tt class="xref py py-attr docutils literal"><span class="pre">callable</span></tt></a> attribute.</li>
-<li><strong>load_config</strong> &#8211; If <tt class="docutils literal"><span class="pre">False</span></tt> the <a class="reference internal" href="#pulsar.apps.Configurator.load_config" title="pulsar.apps.Configurator.load_config"><tt class="xref py py-meth docutils literal"><span class="pre">load_config()</span></tt></a>
-method is not invoked. Default <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
+<li><strong>load_config</strong> &#8211; <p>If <tt class="docutils literal"><span class="pre">False</span></tt> the <a class="reference internal" href="#pulsar.apps.Configurator.load_config" title="pulsar.apps.Configurator.load_config"><tt class="xref py py-meth docutils literal"><span class="pre">load_config()</span></tt></a>
+method is not invoked.</p>
+<p>Default <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+</li>
 <li><strong>params</strong> &#8211; Passed to the <a class="reference internal" href="#pulsar.apps.Configurator" title="pulsar.apps.Configurator"><tt class="xref py py-class docutils literal"><span class="pre">Configurator</span></tt></a> initialiser.</li>
 </ul>
 </td>
@@ -301,7 +297,7 @@ has fired it.</td>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.worker_start">
-<tt class="descname">worker_start</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_start" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">worker_start</tt><big>(</big><em>worker</em>, <em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Added to the <tt class="docutils literal"><span class="pre">start</span></tt> <a class="reference internal" href="../design.html#actor-hooks"><em>worker hook</em></a>.</p>
 </dd></dl>
 
@@ -313,13 +309,13 @@ has fired it.</td>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.worker_stopping">
-<tt class="descname">worker_stopping</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stopping" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">worker_stopping</tt><big>(</big><em>worker</em>, <em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stopping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stopping" title="Permalink to this definition">¶</a></dt>
 <dd><p>Added to the <tt class="docutils literal"><span class="pre">stopping</span></tt> <a class="reference internal" href="../design.html#actor-hooks"><em>worker hook</em></a>.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.Application.worker_stop">
-<tt class="descname">worker_stop</tt><big>(</big><em>worker</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stop" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">worker_stop</tt><big>(</big><em>worker</em>, <em>exc=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps.html#Application.worker_stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.Application.worker_stop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Added to the <tt class="docutils literal"><span class="pre">stop</span></tt> <a class="reference internal" href="../design.html#actor-hooks"><em>worker hook</em></a>.</p>
 </dd></dl>
 

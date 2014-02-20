@@ -84,7 +84,8 @@ quickly with a working example.</p>
 <dl class="class">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.handlers.</tt><tt class="descname">RpcHandler</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/handlers.html#RpcHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
+<dd><p>Base class for classes to handle remote procedure calls.</p>
+<dl class="attribute">
 <dt id="pulsar.apps.rpc.handlers.RpcHandler.serve_as">
 <tt class="descname">serve_as</tt><em class="property"> = 'rpc'</em><a class="headerlink" href="#pulsar.apps.rpc.handlers.RpcHandler.serve_as" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prefix for class methods providing remote services. Default: <tt class="docutils literal"><span class="pre">rpc</span></tt>.</p>
@@ -158,9 +159,10 @@ is the root handler.</p>
 <li><strong>doc</strong> &#8211; Optional doc string. If not provided the doc string of
 <tt class="docutils literal"><span class="pre">func</span></tt> will be used.</li>
 <li><strong>format</strong> &#8211; Optional output format.</li>
-<li><strong>request_handler</strong> &#8211; function which takes <tt class="docutils literal"><span class="pre">request</span></tt>, <tt class="docutils literal"><span class="pre">format</span></tt> and
-<tt class="docutils literal"><span class="pre">kwargs</span></tt> and return a new <tt class="docutils literal"><span class="pre">kwargs</span></tt> to be passed to <tt class="docutils literal"><span class="pre">func</span></tt>.
-It can be used to add additional parameters based on request and format.</li>
+<li><strong>request_handler</strong> &#8211; function which takes <tt class="docutils literal"><span class="pre">request</span></tt>, <tt class="docutils literal"><span class="pre">format</span></tt>
+and <tt class="docutils literal"><span class="pre">kwargs</span></tt> and return a new <tt class="docutils literal"><span class="pre">kwargs</span></tt> to be passed to <tt class="docutils literal"><span class="pre">func</span></tt>.
+It can be used to add additional parameters based on request and
+format.</li>
 </ul>
 </td>
 </tr>
@@ -174,8 +176,12 @@ It can be used to add additional parameters based on request and format.</li>
 <dl class="class">
 <dt id="pulsar.apps.rpc.jsonrpc.JSONRPC">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.jsonrpc.</tt><tt class="descname">JSONRPC</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JSONRPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt> for class for JSON-RPC services.
-Design to comply with the <a class="reference external" href="http://www.jsonrpc.org/">JSON-RPC 2.0</a> Specification.</p>
+<dd><p>An <a class="reference internal" href="#pulsar.apps.rpc.handlers.RpcHandler" title="pulsar.apps.rpc.handlers.RpcHandler"><tt class="xref py py-class docutils literal"><span class="pre">RpcHandler</span></tt></a> for JSON-RPC services.</p>
+<p>Design to comply with the <a class="reference external" href="http://www.jsonrpc.org/specification">JSON-RPC 2.0</a> Specification.</p>
+<p>JSON-RPC is a lightweight remote procedure call protocol
+designed to be simple.
+A remote method is invoked by sending a request to a remote service,
+the request is a single object serialised using JSON.</p>
 </dd></dl>
 
 </div>
@@ -191,7 +197,7 @@ Design to comply with the <a class="reference external" href="http://www.jsonrpc
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>url</strong> &#8211; server location</li>
-<li><strong>version</strong> &#8211; JSONRPC server version. Default <tt class="docutils literal"><span class="pre">2.0</span></tt></li>
+<li><strong>version</strong> &#8211; JSON-RPC server version. Default <tt class="docutils literal"><span class="pre">2.0</span></tt></li>
 <li><strong>id</strong> &#8211; optional request id, generated if not provided.
 Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
 <li><strong>data</strong> &#8211; Extra data to include in all requests. Default <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
@@ -224,19 +230,6 @@ method available which must be of the form:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pulsar.apps.rpc.jsonrpc.JsonProxy.timeit">
-<tt class="descname">timeit</tt><big>(</big><em>func</em>, <em>times</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.timeit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Useful utility for timing responses from a server.</p>
-<p>The usage is simple:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">rpc</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">rpc</span><span class="o">.</span><span class="n">JsonProxy</span><span class="p">(</span><span class="s">&#39;http://127.0.0.1:8060&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&#39;ping&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-<span class="go">0.56...</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
 <dt id="pulsar.apps.rpc.jsonrpc.JsonProxy.get_params">
 <tt class="descname">get_params</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/jsonrpc.html#JsonProxy.get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.jsonrpc.JsonProxy.get_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an array or positional or named parameters
@@ -252,7 +245,7 @@ call is not possible.</p>
 <dl class="class">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.rpc.mixins.</tt><tt class="descname">PulsarServerCommands</tt><big>(</big><em>subhandlers=None</em>, <em>title=None</em>, <em>documentation=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands" title="Permalink to this definition">¶</a></dt>
-<dd><p>Useful commands to add to your <tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt> handler.</p>
+<dd><p>Useful commands to add to your <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler.</p>
 <p>It exposes the following functions:</p>
 <dl class="method">
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_ping">
@@ -278,7 +271,7 @@ information.</p>
 <dt id="pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list">
 <tt class="descname">rpc_functions_list</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/rpc/mixins.html#PulsarServerCommands.rpc_functions_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of (method name, method document) pair of all method exposed
-by this <tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt> handler.</p>
+by this <a class="reference internal" href="#pulsar.apps.rpc.jsonrpc.JSONRPC" title="pulsar.apps.rpc.jsonrpc.JSONRPC"><tt class="xref py py-class docutils literal"><span class="pre">JSONRPC</span></tt></a> handler.</p>
 </dd></dl>
 
 <dl class="method">

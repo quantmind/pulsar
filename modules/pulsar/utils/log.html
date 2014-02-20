@@ -110,6 +110,11 @@
     <span class="s">&#39;disable_existing_loggers&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
     <span class="s">&#39;formatters&#39;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s">&#39;verbose&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&#39;format&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> [p=</span><span class="si">%(process)s</span><span class="s">, t=</span><span class="si">%(thread)s</span><span class="s">,&#39;</span>
+                       <span class="s">&#39; </span><span class="si">%(levelname)s</span><span class="s">, </span><span class="si">%(name)s</span><span class="s">] </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">),</span>
+            <span class="s">&#39;datefmt&#39;</span><span class="p">:</span> <span class="s">&#39;%H:%M:%S&#39;</span>
+        <span class="p">},</span>
+        <span class="s">&#39;very_verbose&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s">&#39;format&#39;</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> [p=</span><span class="si">%(process)s</span><span class="s">,t=</span><span class="si">%(thread)s</span><span class="s">]&#39;</span>
                       <span class="s">&#39; [</span><span class="si">%(levelname)s</span><span class="s">] [</span><span class="si">%(name)s</span><span class="s">] </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">,</span>
             <span class="s">&#39;datefmt&#39;</span><span class="p">:</span> <span class="s">&#39;%Y-%m-</span><span class="si">%d</span><span class="s"> %H:%M:%S&#39;</span>
@@ -298,6 +303,7 @@
             <span class="n">logconfig</span><span class="p">[</span><span class="s">&#39;disable_existing_loggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
             <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;loggers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
             <span class="n">logconfig</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;root&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">level</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">NOTSET</span>
         <span class="k">else</span><span class="p">:</span>

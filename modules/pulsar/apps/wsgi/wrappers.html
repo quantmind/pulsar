@@ -114,7 +114,7 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.multipart</span> <span class="kn">import</span> <span class="n">parse_form_data</span><span class="p">,</span> <span class="n">parse_options_header</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
@@ -189,20 +189,30 @@
 
 <span class="sd">        The dictionary of WSGI environment if passed to the constructor.</span>
 
+<span class="sd">    .. attribute:: cookies</span>
+
+<span class="sd">        A python :class:`SimpleCookie` container of cookies included in the</span>
+<span class="sd">        request as well as cookies set during the response.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">_started</span> <span class="o">=</span> <span class="bp">False</span>
     <span class="n">DEFAULT_STATUS_CODE</span> <span class="o">=</span> <span class="mi">200</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">response_headers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                 <span class="n">content_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">environ</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">can_store_cookies</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environ</span> <span class="o">=</span> <span class="n">environ</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_STATUS_CODE</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="n">encoding</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span> <span class="o">=</span> <span class="n">SimpleCookie</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">response_headers</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s">&#39;server&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_can_store_cookies</span> <span class="o">=</span> <span class="n">can_store_cookies</span>
         <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="n">content_type</span>
+        <span class="k">if</span> <span class="n">environ</span><span class="p">:</span>
+            <span class="n">cookie</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_COOKIE&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cookie</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cookie</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">started</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -223,6 +233,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.connection&#39;</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">environ_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.cache&#39;</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_get_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span>
 
@@ -232,12 +247,12 @@
                 <span class="n">content</span> <span class="o">=</span> <span class="p">()</span>
             <span class="k">elif</span> <span class="n">ispy3k</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>   <span class="c"># use utf-8 if not set</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s">&#39;utf-8&#39;</span>
                     <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>  <span class="c"># use utf-8 if not set</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="o">=</span> <span class="s">&#39;utf-8&#39;</span>
                     <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
@@ -287,6 +302,10 @@
             <span class="k">return</span> <span class="bp">True</span>
         <span class="k">return</span> <span class="bp">False</span>
 </div>
+    <span class="k">def</span> <span class="nf">can_set_cookies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">400</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_store_cookies</span>
+
     <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_streamed</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -317,7 +336,9 @@
         <span class="n">set_cookie</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
                    <span class="n">expires</span><span class="o">=</span><span class="s">&#39;Thu, 01-Jan-1970 00:00:00 GMT&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiResponse.get_headers"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers">[docs]</a>    <span class="k">def</span> <span class="nf">get_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;The list of headers for this response</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">headers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
         <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">):</span>
             <span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;content-type&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
@@ -332,13 +353,19 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="s">&#39;{}&#39;</span><span class="p">,)</span>
                     <span class="n">cl</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                 <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cl</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
-                <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;text/plain; charset=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
-                                           <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Set-Cookie&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">OutputString</span><span class="p">()</span>
+            <span class="n">ct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span>
+            <span class="c"># content type encoding available</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
+                <span class="n">ct</span> <span class="o">=</span> <span class="n">ct</span> <span class="ow">or</span> <span class="s">&#39;text/plain&#39;</span>
+                <span class="k">if</span> <span class="s">&#39;charset=&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ct</span><span class="p">:</span>
+                    <span class="n">ct</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">; charset=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ct</span><span class="p">:</span>
+                <span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ct</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_set_cookies</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">headers</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&#39;Set-Cookie&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">OutputString</span><span class="p">())</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-
+</div>
     <span class="k">def</span> <span class="nf">has_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">header</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">headers</span>
     <span class="n">__contains__</span> <span class="o">=</span> <span class="n">has_header</span>
@@ -361,7 +388,7 @@
 
 <span class="sd">        WSGI_ environ dictionary</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">slots</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;environ&#39;</span><span class="p">,)</span>
+    <span class="n">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;environ&#39;</span><span class="p">,)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">environ</span> <span class="o">=</span> <span class="n">environ</span>
@@ -526,36 +553,44 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{}</span>
 
-<div class="viewcode-block" id="WsgiRequest.data_and_files"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">[docs]</a>    <span class="k">def</span> <span class="nf">data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WsgiRequest.data_and_files"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">[docs]</a>    <span class="k">def</span> <span class="nf">data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Retrieve body data.</span>
 
 <span class="sd">        Returns a two-elements tuple of a</span>
 <span class="sd">        :class:`~.MultiValueDict` containing data from</span>
 <span class="sd">        the request body, and data from uploaded files.</span>
 
-<span class="sd">        If the body data is not ready, return a :class:`.Deferred`</span>
+<span class="sd">        If the body data is not ready, return a :class:`.Future`</span>
 <span class="sd">        which results in the tuple.</span>
 
 <span class="sd">        The result is cached.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_cached_data_and_files&#39;</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">()</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_data_and_files</span>
+            <span class="k">return</span> <span class="bp">None</span>
 </div>
 <div class="viewcode-block" id="WsgiRequest.body_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.body_data">[docs]</a>    <span class="k">def</span> <span class="nf">body_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;A :class:`~.MultiValueDict` containing data from the request body.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">()</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_data_and_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">{},</span> <span class="bp">None</span>
         <span class="n">stream</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">)</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ENCODE_URL_METHODS</span> <span class="ow">and</span> <span class="n">stream</span><span class="p">:</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+                    <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">chunk</span>
                 <span class="n">content_type</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type_options</span>
                 <span class="n">charset</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;charset&#39;</span><span class="p">,</span> <span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">content_type</span> <span class="ow">in</span> <span class="n">JSON_CONTENT_TYPES</span><span class="p">:</span>
@@ -564,10 +599,10 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="n">parse_form_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">,</span> <span class="n">charset</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_data_and_files</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">data_and_files</span> <span class="o">=</span> <span class="n">result</span>
             <span class="k">if</span> <span class="n">chunk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-        <span class="n">coroutine_return</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_and_files</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">files</span><span class="p">))</span>
 
     <span class="nd">@cached_property</span>
 <div class="viewcode-block" id="WsgiRequest.url_data"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.url_data">[docs]</a>    <span class="k">def</span> <span class="nf">url_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -611,12 +646,15 @@
                 <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_data</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">remove_double_slash</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">iri_to_uri</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="WsgiRequest.absolute_uri"><a class="viewcode-back" href="../../../../apps/wsgi/wrappers.html#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">[docs]</a>    <span class="k">def</span> <span class="nf">absolute_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Builds an absolute URI from the ``location`` and the variables</span>
-<span class="sd">available in this request. If no location is specified, the relative URI</span>
-<span class="sd">is built from :meth:`full_path`.&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Builds an absolute URI from ``location`` and variables</span>
+<span class="sd">        available in this request.</span>
+
+<span class="sd">        If no ``location`` is specified, the relative URI is built from</span>
+<span class="sd">        :meth:`full_path`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">location</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">absolute_http_url_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">location</span><span class="p">):</span>
             <span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">scheme</span><span class="p">:</span>

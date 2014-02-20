@@ -95,8 +95,8 @@ or can occur several times. Check the
 
 <dl class="method">
 <dt id="pulsar.async.events.AbstractEvent.bind">
-<tt class="descname">bind</tt><big>(</big><em>callback</em>, <em>errback=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.bind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bind a <tt class="docutils literal"><span class="pre">callback</span></tt> and an optional <tt class="docutils literal"><span class="pre">errback</span></tt> to this event.</p>
+<tt class="descname">bind</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#AbstractEvent.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.AbstractEvent.bind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bind a <tt class="docutils literal"><span class="pre">callback</span></tt> to this event.</p>
 </dd></dl>
 
 <dl class="method">
@@ -134,11 +134,35 @@ or can occur several times. Check the
 <h2>One time<a class="headerlink" href="#one-time" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.async.events.OneTime">
-<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">OneTime</tt><big>(</big><em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.async.events.</tt><tt class="descname">OneTime</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <a class="reference internal" href="#pulsar.async.events.AbstractEvent" title="pulsar.async.events.AbstractEvent"><tt class="xref py py-class docutils literal"><span class="pre">AbstractEvent</span></tt></a> which can be fired once only.</p>
-<p>This event handler is a <a class="reference internal" href="async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>.</p>
-<p>Implemented mainly for the one time events of the <a class="reference internal" href="#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a>.
-There shouldn&#8217;t be any reason to use this class on its own.</p>
+<p>This event handler is a subclass of <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.
+Implemented mainly for the one time events of the <a class="reference internal" href="#pulsar.async.events.EventHandler" title="pulsar.async.events.EventHandler"><tt class="xref py py-class docutils literal"><span class="pre">EventHandler</span></tt></a>.</p>
+<dl class="method">
+<dt id="pulsar.async.events.OneTime.bind">
+<tt class="descname">bind</tt><big>(</big><em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime.bind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime.bind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bind a <tt class="docutils literal"><span class="pre">callback</span></tt> to this event.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.async.events.OneTime.fire">
+<tt class="descname">fire</tt><big>(</big><em>arg</em>, <em>exc=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#OneTime.fire"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.OneTime.fire" title="Permalink to this definition">¶</a></dt>
+<dd><p>The callback handlers registered via the :meth:~AbstractEvent.bind`
+method are executed first.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>arg</strong> &#8211; the argument</li>
+<li><strong>exc</strong> &#8211; optional exception</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -177,10 +201,17 @@ several times.</p>
 
 <dl class="method">
 <dt id="pulsar.async.events.EventHandler.bind_event">
-<tt class="descname">bind_event</tt><big>(</big><em>name</em>, <em>callback</em>, <em>errback=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.bind_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.bind_event" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bind_event</tt><big>(</big><em>name</em>, <em>callback</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/events.html#EventHandler.bind_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.events.EventHandler.bind_event" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register a <tt class="docutils literal"><span class="pre">callback</span></tt> with <tt class="docutils literal"><span class="pre">event</span></tt>.</p>
-<p><strong>The callback must be a callable accepting one parameter only</strong>,
-the instance firing the event or the first positional argument
+<p>The callback must be a callable accepting one positional parameter
+and at least the <tt class="docutils literal"><span class="pre">exc</span></tt> optional parameter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">o</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>the instance firing the event or the first positional argument
 passed to the <a class="reference internal" href="#pulsar.async.events.EventHandler.fire_event" title="pulsar.async.events.EventHandler.fire_event"><tt class="xref py py-meth docutils literal"><span class="pre">fire_event()</span></tt></a> method.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -230,8 +261,7 @@ handler. Can only be used for
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">for one-time events, it returns whatever is returned by the
-event handler. For many times events it returns nothing.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the <a class="reference internal" href="#pulsar.async.events.Event" title="pulsar.async.events.Event"><tt class="xref py py-class docutils literal"><span class="pre">Event</span></tt></a> fired</p>
 </td>
 </tr>
 </tbody>

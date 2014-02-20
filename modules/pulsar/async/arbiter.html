@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar.async" href="../async.html" /> 
+    <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
 
@@ -45,8 +45,7 @@
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -79,7 +78,7 @@
 
 <span class="kn">from</span> <span class="nn">.actor</span> <span class="kn">import</span> <span class="n">Actor</span><span class="p">,</span> <span class="n">ACTOR_STATES</span>
 <span class="kn">from</span> <span class="nn">.monitor</span> <span class="kn">import</span> <span class="n">PoolMixin</span><span class="p">,</span> <span class="n">Monitor</span><span class="p">,</span> <span class="n">_spawn_actor</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">multi_async</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">multi_async</span>
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span><span class="p">,</span> <span class="n">set_actor</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actor_proxy_deferred</span>
 
@@ -102,7 +101,7 @@
 
 </div>
 <div class="viewcode-block" id="spawn"><a class="viewcode-back" href="../../../api/actor.html#pulsar.async.arbiter.spawn">[docs]</a><span class="k">def</span> <span class="nf">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`Actor` and return an :class:`.ActorProxyDeferred`.</span>
+    <span class="sd">&#39;&#39;&#39;Spawn a new :class:`Actor` and return an :class:`.ActorProxyFuture`.</span>
 
 <span class="sd">    This method can be used from any :class:`.Actor`.</span>
 <span class="sd">    If not in the :class:`.Arbiter` domain, the method sends a request</span>
@@ -120,7 +119,7 @@
 <span class="sd">      and ``stop``</span>
 <span class="sd">    * ``actor_class`` a custom :class:`Actor` subclass (never used)</span>
 
-<span class="sd">    :return: an :class:`.ActorProxyDeferred`.</span>
+<span class="sd">    :return: an :class:`.ActorProxyFuture`.</span>
 
 <span class="sd">    A typical usage::</span>
 
@@ -142,13 +141,13 @@
     <span class="c"># We send a message to the Arbiter to spawn a new Actor</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">Arbiter</span><span class="p">):</span>
         <span class="c"># send the request to the arbiter</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;spawn&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">actor_proxy_deferred</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;arbiter&#39;</span><span class="p">,</span> <span class="s">&#39;spawn&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">actor_proxy_deferred</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="n">future</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">actor</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 </div>
-<span class="k">def</span> <span class="nf">stop_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
+<span class="k">def</span> <span class="nf">stop_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
     <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pidfile</span>
     <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Removing </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">p</span><span class="o">.</span><span class="n">fname</span><span class="p">)</span>
@@ -168,10 +167,9 @@
     <span class="k">return</span> <span class="bp">self</span>
 
 
-<span class="k">def</span> <span class="nf">start_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">start_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">current_process</span><span class="p">()</span><span class="o">.</span><span class="n">daemon</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">PulsarException</span><span class="p">(</span>
-            <span class="s">&#39;Cannot create the arbiter in a daemon process&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HaltServer</span><span class="p">(</span><span class="s">&#39;Cannot create the arbiter in a daemon process&#39;</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&quot;SERVER_SOFTWARE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">SERVER_SOFTWARE</span>
     <span class="n">pidfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">pidfile</span>
     <span class="k">if</span> <span class="n">pidfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -181,7 +179,6 @@
         <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HaltServer</span><span class="p">(</span><span class="s">&#39;ERROR. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">exit_code</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pidfile</span> <span class="o">=</span> <span class="n">p</span>
-    <span class="k">return</span> <span class="bp">self</span>
 
 
 <span class="k">def</span> <span class="nf">info_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -288,9 +285,13 @@
     <span class="c"># INTERNALS</span>
     <span class="c">########################################################################</span>
     <span class="k">def</span> <span class="nf">_remove_actor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Arbiter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">log</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">registered</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Arbiter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_remove_actor</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registered</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">monitors</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">actor</span><span class="o">.</span><span class="n">aid</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">removed</span> <span class="o">=</span> <span class="n">a</span> <span class="ow">or</span> <span class="n">b</span> <span class="ow">or</span> <span class="n">c</span>
+        <span class="k">if</span> <span class="n">removed</span> <span class="ow">and</span> <span class="n">log</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Removing </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">removed</span></div>
 </pre></div>
 
           </div>

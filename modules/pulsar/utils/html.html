@@ -89,10 +89,13 @@
 
 <span class="c"># Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).</span>
 <span class="n">e</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">t</span><span class="p">:</span> <span class="n">GLOBAL_HTML_ATTRIBUTES</span> <span class="o">+</span> <span class="n">t</span>
+
+<span class="c"># Input atg attributes</span>
+<span class="c"># http://www.w3schools.com/tags/tag_input.asp</span>
 <span class="n">input_attr</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">t</span><span class="p">:</span> <span class="n">e</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;autocomplete&#39;</span><span class="p">,</span> <span class="s">&#39;autofocus&#39;</span><span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">,</span>
                           <span class="s">&#39;form&#39;</span><span class="p">,</span> <span class="s">&#39;formnovalidate&#39;</span><span class="p">,</span> <span class="s">&#39;list&#39;</span><span class="p">,</span> <span class="s">&#39;max&#39;</span><span class="p">,</span> <span class="s">&#39;maxlength&#39;</span><span class="p">,</span>
                           <span class="s">&#39;min&#39;</span><span class="p">,</span> <span class="s">&#39;multiple&#39;</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;pattern&#39;</span><span class="p">,</span> <span class="s">&#39;placeholder&#39;</span><span class="p">,</span>
-                          <span class="s">&#39;required&#39;</span><span class="p">,</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="s">&#39;step&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
+                          <span class="s">&#39;readonly&#39;</span><span class="p">,</span> <span class="s">&#39;required&#39;</span><span class="p">,</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="s">&#39;step&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
 
 <span class="c">## HTML TAG ATTRIBUTES</span>
 <span class="c">############################################################################</span>
@@ -217,10 +220,11 @@
 
 
 <div class="viewcode-block" id="capfirst"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.html.capfirst">[docs]</a><span class="k">def</span> <span class="nf">capfirst</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Capitalise the first letter of ``x``.&#39;&#39;&#39;</span>
+    <span class="sd">&#39;&#39;&#39;Capitalise the first letter of ``x``.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">x</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span>
 

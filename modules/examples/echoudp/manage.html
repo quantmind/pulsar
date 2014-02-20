@@ -87,6 +87,7 @@
 
 <span class="sd">Writing the Client</span>
 <span class="sd">=========================</span>
+
 <span class="sd">The first step is to write a small class handling a connection</span>
 <span class="sd">pool with the remote server. The :class:`Echo` class does just that,</span>
 <span class="sd">it subclass the handy :class:`.AbstractUdpClient` and uses</span>
@@ -128,8 +129,6 @@
 <span class="sd">.. autofunction:: server</span>
 
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>     <span class="c"># pragma nocover</span>
@@ -137,11 +136,12 @@
     <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;../../&#39;</span><span class="p">)</span>
     <span class="kn">import</span> <span class="nn">pulsar</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">in_loop_thread</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">DatagramProtocol</span><span class="p">,</span> <span class="n">task</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">to_bytes</span>
 <span class="kn">from</span> <span class="nn">pulsar.apps.socket</span> <span class="kn">import</span> <span class="n">UdpSocketServer</span>
 
 
-<div class="viewcode-block" id="EchoUdpProtocol"><a class="viewcode-back" href="../../../tutorials/udp.html#examples.echoudp.manage.EchoUdpProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoUdpProtocol</span><span class="p">(</span><span class="n">pulsar</span><span class="o">.</span><span class="n">DatagramProtocol</span><span class="p">):</span>
+<div class="viewcode-block" id="EchoUdpProtocol"><a class="viewcode-back" href="../../../tutorials/udp.html#examples.echoudp.manage.EchoUdpProtocol">[docs]</a><span class="k">class</span> <span class="nc">EchoUdpProtocol</span><span class="p">(</span><span class="n">DatagramProtocol</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A base :class:`.DatagramProtocol` for UDP echo clients and servers.</span>
 
 <span class="sd">    The only difference between client and server is the implementation</span>
@@ -183,18 +183,16 @@
     <span class="n">_waiting</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">message</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="ow">is</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="n">d</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="n">to_bytes</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">d</span>
 
     <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Clients return the message so that the</span>
-<span class="sd">        :attr:`.ProtocolConsumer.on_finished` is called back with the</span>
-<span class="sd">        message value, while servers sends the message back to the client.</span>
-<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;Got a full response&#39;&#39;&#39;</span>
         <span class="n">d</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_waiting</span><span class="p">,</span> <span class="bp">None</span>
-        <span class="n">d</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">)])</span>
 
 
 <span class="k">class</span> <span class="nc">EchoUdpServerProtocol</span><span class="p">(</span><span class="n">EchoUdpProtocol</span><span class="p">):</span>
@@ -219,7 +217,7 @@
 <span class="sd">        The event loop used by the client IO requests.</span>
 
 <span class="sd">        The event loop is stored at this attribute so that asynchronous</span>
-<span class="sd">        method decorators such as :func:`.in_loop_thread` can be used.</span>
+<span class="sd">        method decorators such as :func:`.task` can be used.</span>
 
 <span class="sd">    .. attribute:: address</span>
 
@@ -239,11 +237,11 @@
     <span class="k">def</span> <span class="nf">create_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_datagram_endpoint</span><span class="p">(</span><span class="n">remote_addr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">)</span>
 
-    <span class="nd">@in_loop_thread</span>
+    <span class="nd">@task</span>
 <div class="viewcode-block" id="Echo.__call__"><a class="viewcode-back" href="../../../tutorials/udp.html#examples.echoudp.manage.Echo.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Send a ``message`` to the server and wait for a response.</span>
 
-<span class="sd">        :return: a :class:`.Deferred`</span>
+<span class="sd">        :return: a :class:`.Future`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">protocol</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">pool</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">protocol</span><span class="p">:</span>

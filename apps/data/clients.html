@@ -116,9 +116,9 @@ couchdb://user:password@127.0.0.1:6500/testdb</pre>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>loop</strong> &#8211; optional event loop, if not provided it is obtained
 via the <tt class="docutils literal"><span class="pre">get_event_loop</span></tt> method. If not loop is installed a bright
-new event loop is created via the <a class="reference internal" href="../../api/async.html#pulsar.async.new_event_loop" title="pulsar.async.new_event_loop"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>.
+new event loop is created via the <tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt>.
 In the latter case the event loop is employed only for synchronous type
-requests via the <a class="reference internal" href="../../api/async.html#pulsar.async.eventloop.EventLoop.run_until_complete" title="pulsar.async.eventloop.EventLoop.run_until_complete"><tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt></a> method.</li>
+requests via the <tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt> method.</li>
 <li><strong>kw</strong> &#8211; additional key-valued parameters to pass to the <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a>
 initialisation method.</li>
 </ul>
@@ -310,9 +310,9 @@ containing the <tt class="docutils literal"><span class="pre">channel</span></tt
 <dt id="pulsar.apps.data.stores.pulsards.base.PubSub.publish">
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.PubSub.publish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish a new <tt class="docutils literal"><span class="pre">message</span></tt> to a <tt class="docutils literal"><span class="pre">channel</span></tt>.</p>
-<p>This method return a pulsar Deferred which results in the number of
-subscribers that will receive the message (the same behaviour as
-redis publish command).</p>
+<p>This method return a pulsar <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in the
+number of subscribers that will receive the message (the same
+behaviour as redis publish command).</p>
 </dd></dl>
 
 <dl class="method">

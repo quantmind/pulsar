@@ -75,11 +75,6 @@
 <span class="sd">The :class:`Configurator` is a mixin used as base class for both</span>
 <span class="sd">:class:`Application` and :class:`MultiApp`.</span>
 
-<span class="sd">.. note::</span>
-
-<span class="sd">    An instance of an :class:`Application` is picklable and therefore can be</span>
-<span class="sd">    sent from actor to actor using the</span>
-<span class="sd">    :ref:`actor message passing api &lt;tutorials-messages&gt;`.</span>
 
 <span class="sd">Configurator</span>
 <span class="sd">===============================</span>
@@ -139,7 +134,7 @@
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
 <span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_actor</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span>
-                    <span class="n">multi_async</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
+                    <span class="n">multi_async</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">ImproperlyConfigured</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Application&#39;</span><span class="p">,</span> <span class="s">&#39;MultiApp&#39;</span><span class="p">,</span> <span class="s">&#39;get_application&#39;</span><span class="p">,</span> <span class="s">&#39;when_monitor_start&#39;</span><span class="p">]</span>
@@ -179,8 +174,12 @@
             <span class="n">coroutine_return</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">app</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">monitor_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">start_event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_event</span>
+    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_event</span>
+    <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">start_event</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="k">return</span>
     <span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_params&#39;</span><span class="p">,</span> <span class="n">monitor_params</span><span class="p">)</span>
@@ -194,22 +193,20 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
-        <span class="k">raise</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">start_event</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-    <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">start_event</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_event</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">workers</span><span class="p">:</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">monitor_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -231,15 +228,15 @@
     <span class="n">app</span><span class="o">.</span><span class="n">actorparams</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="n">app</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;app&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;on_info&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_info</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stopping&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stopping</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;stop&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_stop</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="n">exc</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Configurator"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Configurator">[docs]</a><span class="k">class</span> <span class="nc">Configurator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -470,7 +467,9 @@
 
 <span class="sd">    :parameter callable: Initialise the :attr:`callable` attribute.</span>
 <span class="sd">    :parameter load_config: If ``False`` the :meth:`~Configurator.load_config`</span>
-<span class="sd">        method is not invoked. Default ``True``.</span>
+<span class="sd">        method is not invoked.</span>
+
+<span class="sd">        Default ``True``.</span>
 <span class="sd">    :parameter params: Passed to the :class:`Configurator` initialiser.</span>
 
 <span class="sd">    .. attribute:: callable</span>
@@ -488,11 +487,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">)</span>
         <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">name</span>
         <span class="n">c</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span>
-        <span class="n">c</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">configured_logger</span><span class="p">()</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">configured_logger</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">c</span>
 
     <span class="nd">@property</span>
@@ -531,19 +530,15 @@
                 <span class="n">actor</span> <span class="o">=</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">arbiter</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;exc_id&#39;</span><span class="p">,</span> <span class="n">actor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">exc_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_config</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">False</span><span class="p">:</span>
-                <span class="n">start</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">started</span><span class="p">():</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_add_to_arbiter</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">actor</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>   <span class="c"># the arbiter has not yet started.</span>
-                    <span class="n">actor</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span>
-                                     <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_to_arbiter</span><span class="p">,</span> <span class="n">start</span><span class="p">))</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">Future</span><span class="p">(</span><span class="n">loop</span><span class="o">=</span><span class="n">actor</span><span class="o">.</span><span class="n">_loop</span><span class="p">)</span>
+                <span class="n">actor</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_monitor</span><span class="p">,</span> <span class="n">start</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">start</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span>
         <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;Already started or not in arbiter domain&#39;</span><span class="p">)</span>
 
     <span class="c"># WORKERS CALLBACKS</span></div>
-<div class="viewcode-block" id="Application.worker_start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+<div class="viewcode-block" id="Application.worker_start"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``start`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
@@ -552,11 +547,11 @@
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
-<div class="viewcode-block" id="Application.worker_stopping"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stopping">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+<div class="viewcode-block" id="Application.worker_stopping"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stopping">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stopping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``stopping`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 </div>
-<div class="viewcode-block" id="Application.worker_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stop">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+<div class="viewcode-block" id="Application.worker_stop"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.Application.worker_stop">[docs]</a>    <span class="k">def</span> <span class="nf">worker_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Added to the ``stop`` :ref:`worker hook &lt;actor-hooks&gt;`.&#39;&#39;&#39;</span>
         <span class="k">pass</span>
 
@@ -595,12 +590,12 @@
                      <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_global</span><span class="p">))</span>
 
     <span class="c">#   INTERNALS</span>
-    <span class="k">def</span> <span class="nf">_add_to_arbiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">):</span>
-        <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">add_monitor</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
-            <span class="n">start</span><span class="o">=</span><span class="n">monitor_start</span><span class="p">,</span> <span class="n">start_event</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span>
-        <span class="k">return</span> <span class="n">arbiter</span>
+    <span class="k">def</span> <span class="nf">_add_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">arbiter</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">monitor</span> <span class="o">=</span> <span class="n">arbiter</span><span class="o">.</span><span class="n">add_monitor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">monitor_start</span><span class="p">,</span> <span class="n">start_event</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span>
 
 </div>
 <div class="viewcode-block" id="MultiApp"><a class="viewcode-back" href="../../api/application.html#pulsar.apps.MultiApp">[docs]</a><span class="k">class</span> <span class="nc">MultiApp</span><span class="p">(</span><span class="n">Configurator</span><span class="p">):</span>

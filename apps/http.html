@@ -251,6 +251,7 @@ handling <em>100 Continue</em>, <em>websocket upgrade</em> and <em>cookies</em>,
 <li><strong>encode_multipart</strong> &#8211; optional flag for setting the
 <a class="reference internal" href="#pulsar.apps.http.HttpClient.encode_multipart" title="pulsar.apps.http.HttpClient.encode_multipart"><tt class="xref py py-attr docutils literal"><span class="pre">encode_multipart</span></tt></a> attribute</li>
 <li><strong>pool_size</strong> &#8211; set the <a class="reference internal" href="#pulsar.apps.http.HttpClient.pool_size" title="pulsar.apps.http.HttpClient.pool_size"><tt class="xref py py-attr docutils literal"><span class="pre">pool_size</span></tt></a> attribute.</li>
+<li><strong>store_cookies</strong> &#8211; set the <a class="reference internal" href="#pulsar.apps.http.HttpClient.store_cookies" title="pulsar.apps.http.HttpClient.store_cookies"><tt class="xref py py-attr docutils literal"><span class="pre">store_cookies</span></tt></a> attribute</li>
 </ul>
 </td>
 </tr>
@@ -267,6 +268,14 @@ handling <em>100 Continue</em>, <em>websocket upgrade</em> and <em>cookies</em>,
 <dt id="pulsar.apps.http.HttpClient.cookies">
 <tt class="descname">cookies</tt><a class="headerlink" href="#pulsar.apps.http.HttpClient.cookies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default cookies for this <a class="reference internal" href="#pulsar.apps.http.HttpClient" title="pulsar.apps.http.HttpClient"><tt class="xref py py-class docutils literal"><span class="pre">HttpClient</span></tt></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pulsar.apps.http.HttpClient.store_cookies">
+<tt class="descname">store_cookies</tt><a class="headerlink" href="#pulsar.apps.http.HttpClient.store_cookies" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <tt class="docutils literal"><span class="pre">True</span></tt> it remebers response cookies and send them back to
+serves.</p>
+<p>Default: <tt class="docutils literal"><span class="pre">True</span></tt></p>
 </dd></dl>
 
 <dl class="attribute">
@@ -450,9 +459,10 @@ It can be overwritten during a <a class="reference internal" href="#pulsar.apps.
 
 <dl class="method">
 <dt id="pulsar.apps.http.HttpClient.request">
-<tt class="descname">request</tt><big>(</big><em>method</em>, <em>url</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.request" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">request</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs and sends a request to a remote server.</p>
-<p>It returns an <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><tt class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></tt></a> object.</p>
+<p>It returns a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in a
+<a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><tt class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></tt></a> object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -468,7 +478,7 @@ initialisation.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a <a class="reference internal" href="#pulsar.apps.http.HttpResponse" title="pulsar.apps.http.HttpResponse"><tt class="xref py py-class docutils literal"><span class="pre">HttpResponse</span></tt></a> object.</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></p>
 </td>
 </tr>
 </tbody>
@@ -480,7 +490,7 @@ initialisation.</li>
 <tt class="descname">close</tt><big>(</big><em>async=True</em>, <em>timeout=5</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/http.html#HttpClient.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.http.HttpClient.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close all connections.</p>
 <p>Fire the <tt class="docutils literal"><span class="pre">finish</span></tt> <a class="reference internal" href="../tutorials/events.html#one-time-event"><em>one time event</em></a> once done.
-Return the <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> fired by the <tt class="docutils literal"><span class="pre">finish</span></tt> event.</p>
+Return the <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> fired by the <tt class="docutils literal"><span class="pre">finish</span></tt> event.</p>
 </dd></dl>
 
 <dl class="method">

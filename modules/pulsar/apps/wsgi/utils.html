@@ -80,6 +80,7 @@
 <span class="kn">from</span> <span class="nn">email.utils</span> <span class="kn">import</span> <span class="n">formatdate</span>
 
 
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">format_traceback</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">MultiValueDict</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.html</span> <span class="kn">import</span> <span class="n">escape</span>
@@ -110,7 +111,8 @@
                          <span class="s">&#39;server&#39;</span><span class="p">,</span>
                          <span class="s">&#39;date&#39;</span><span class="p">)</span>
                         <span class="p">)</span>
-<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.wsgi&#39;</span><span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.wsgi&#39;</span><span class="p">)</span>
 <span class="n">error_css</span> <span class="o">=</span> <span class="s">&#39;&#39;&#39;</span>
 <span class="s">.pulsar-error {</span>
 <span class="s">    width: 500px;</span>
@@ -271,45 +273,45 @@
         <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_</span><span class="p">())</span>
 
 
-<div class="viewcode-block" id="handle_wsgi_error"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.handle_wsgi_error">[docs]</a><span class="k">def</span> <span class="nf">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
+<div class="viewcode-block" id="handle_wsgi_error"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.handle_wsgi_error">[docs]</a><span class="k">def</span> <span class="nf">handle_wsgi_error</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;The default error handler while serving a WSGI request.</span>
 
-<span class="sd">    :parameter environ: The WSGI environment.</span>
-<span class="sd">    :parameter failure: a :class:`.Failure`.</span>
+<span class="sd">    :param environ: The WSGI environment.</span>
+<span class="sd">    :param exc: the exception</span>
 <span class="sd">    :return: a :class:`.WsgiResponse`</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">request</span> <span class="o">=</span> <span class="n">wsgi_request</span><span class="p">(</span><span class="n">environ</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">handle_wsgi_error</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
-    <span class="n">error</span> <span class="o">=</span> <span class="n">failure</span><span class="o">.</span><span class="n">error</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">):</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">code</span> <span class="ow">or</span> <span class="mi">500</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">):</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">code</span> <span class="ow">or</span> <span class="mi">500</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
-        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;@ path &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;PATH_INFO&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s">&#39;headers&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">())</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s">&#39;@ </span><span class="si">%s</span><span class="s"> &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
     <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">500</span><span class="p">:</span>
-        <span class="n">failure</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&#39;Unhandled exception during WSGI response </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
-                    <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dump_environ</span><span class="p">(</span><span class="n">environ</span><span class="p">)),</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;critical&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Unhandled exception during HTTP response </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span>
+                        <span class="n">path</span><span class="p">,</span> <span class="n">dump_environ</span><span class="p">(</span><span class="n">environ</span><span class="p">),</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">failure</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&#39;WSGI </span><span class="si">%s</span><span class="s"> @ &quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">path</span><span class="p">),</span>
-                    <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;HTTP </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">has_empty_content</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="p">)</span> <span class="ow">or</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">REDIRECT_CODES</span><span class="p">:</span>
-        <span class="n">content</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">request</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;html_document&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">renderer</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;error.handler&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">render_error</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">content</span> <span class="o">=</span> <span class="n">renderer</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">failure</span><span class="p">)</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">renderer</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">LOGGER</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Error while rendering error&#39;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;Error while rendering error&#39;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
             <span class="n">response</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s">&#39;text/plain&#39;</span>
             <span class="n">content</span> <span class="o">=</span> <span class="s">&#39;Critical server error&#39;</span>
-    <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
     <span class="k">return</span> <span class="n">response</span>
 
 </div>
-<span class="k">def</span> <span class="nf">render_error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">render_error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Default renderer for errors.&#39;&#39;&#39;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;pulsar.cfg&#39;</span><span class="p">)</span>
     <span class="n">debug</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">debug</span> <span class="k">if</span> <span class="n">cfg</span> <span class="k">else</span> <span class="bp">False</span>
@@ -325,7 +327,7 @@
         <span class="n">request</span><span class="o">.</span><span class="n">html_document</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span>
 
     <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">render_error_debug</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">failure</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">render_error_debug</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="n">error_messages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;&#39;</span>
         <span class="k">if</span> <span class="n">content_type</span> <span class="o">==</span> <span class="s">&#39;text/html&#39;</span><span class="p">:</span>
@@ -345,26 +347,27 @@
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;status&#39;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
                            <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">})</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">msg</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="n">msg</span>
 
 
-<div class="viewcode-block" id="render_error_debug"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.render_error_debug">[docs]</a><span class="k">def</span> <span class="nf">render_error_debug</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">failure</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
+<div class="viewcode-block" id="render_error_debug"><a class="viewcode-back" href="../../../../apps/wsgi/tools.html#pulsar.apps.wsgi.utils.render_error_debug">[docs]</a><span class="k">def</span> <span class="nf">render_error_debug</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Render the traceback into the content type in *response*.&#39;&#39;&#39;</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
     <span class="n">is_html</span> <span class="o">=</span> <span class="n">content_type</span> <span class="o">==</span> <span class="s">&#39;text/html&#39;</span>
     <span class="n">error</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;div&#39;</span><span class="p">,</span> <span class="n">cn</span><span class="o">=</span><span class="s">&#39;section traceback error&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_html</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">traces</span> <span class="ow">in</span> <span class="n">failure</span><span class="o">.</span><span class="n">exc_info</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+    <span class="n">trace</span> <span class="o">=</span> <span class="n">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">format_traceback</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
         <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">traces</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">trace</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;  &#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">trace</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;  &#39;</span><span class="p">):</span>
                 <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
-            <span class="k">if</span> <span class="n">trace</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">is_html</span><span class="p">:</span>
-                    <span class="n">trace</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;p&#39;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="n">trace</span><span class="p">))</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="n">Html</span><span class="p">(</span><span class="s">&#39;p&#39;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">counter</span><span class="p">:</span>
-                        <span class="n">trace</span><span class="o">.</span><span class="n">css</span><span class="p">({</span><span class="s">&#39;margin-left&#39;</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">px&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">counter</span><span class="p">)})</span>
-                <span class="n">error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span>
+                        <span class="n">line</span><span class="o">.</span><span class="n">css</span><span class="p">({</span><span class="s">&#39;margin-left&#39;</span><span class="p">:</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">px&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">counter</span><span class="p">)})</span>
+                <span class="n">error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">error</span></div>
 </pre></div>
 

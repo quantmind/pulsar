@@ -77,7 +77,7 @@
 <span id="asynchronous-middleware"></span><span id="wsgi-middleware"></span><h1>Asynchronous Middleware<a class="headerlink" href="#module-pulsar.apps.wsgi.middleware" title="Permalink to this headline">¶</a></h1>
 <p>A WSGI Middleware is a function or callable object similar to a
 <a class="reference internal" href="async.html#wsgi-handlers"><em>WSGI application handlers</em></a>
-with the only difference in that it can also return <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+with the only difference that it can return nothing (<tt class="docutils literal"><span class="pre">None</span></tt>).</p>
 <p>Middleware can be used in conjunction with a
 <a class="reference internal" href="async.html#wsgi-handler"><em>WsgiHandler</em></a> or any
 other handler which iterate through a list of middleware in a similar
@@ -102,18 +102,6 @@ serve requests, instead they perform initialisation and sanity checks.</p>
 <dt id="pulsar.apps.wsgi.middleware.clean_path_middleware">
 <tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">clean_path_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#clean_path_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.clean_path_middleware" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clean url from double slashes and redirect if needed.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="cookie">
-<h2>Cookie<a class="headerlink" href="#cookie" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="pulsar.apps.wsgi.middleware.cookies_middleware">
-<tt class="descclassname">pulsar.apps.wsgi.middleware.</tt><tt class="descname">cookies_middleware</tt><big>(</big><em>environ</em>, <em>start_response=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/middleware.html#cookies_middleware"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.middleware.cookies_middleware" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse the <tt class="docutils literal"><span class="pre">HTTP_COOKIE</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt>.</p>
-<p>Set the new <tt class="docutils literal"><span class="pre">http.cookie</span></tt> key in <tt class="docutils literal"><span class="pre">environ</span></tt> with a dictionary
-of cookies obtained via the <a class="reference internal" href="../../api/utilities.html#pulsar.utils.httpurl.parse_cookie" title="pulsar.utils.httpurl.parse_cookie"><tt class="xref py py-func docutils literal"><span class="pre">pulsar.utils.httpurl.parse_cookie()</span></tt></a>
-function.</p>
 </dd></dl>
 
 </div>
@@ -170,7 +158,6 @@ other middleware to be processed.</p>
   <ul>
 <li><a class="reference internal" href="#">Asynchronous Middleware</a><ul>
 <li><a class="reference internal" href="#clean-path">Clean path</a></li>
-<li><a class="reference internal" href="#cookie">Cookie</a></li>
 <li><a class="reference internal" href="#authorization">Authorization</a></li>
 <li><a class="reference internal" href="#wait-for-request-body">Wait for request body</a></li>
 </ul>

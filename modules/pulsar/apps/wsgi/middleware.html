@@ -71,7 +71,7 @@
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">A WSGI Middleware is a function or callable object similar to a</span>
 <span class="sd">:ref:`WSGI application handlers &lt;wsgi-handlers&gt;`</span>
-<span class="sd">with the only difference in that it can also return ``None``.</span>
+<span class="sd">with the only difference that it can return nothing (``None``).</span>
 
 <span class="sd">Middleware can be used in conjunction with a</span>
 <span class="sd">:ref:`WsgiHandler &lt;wsgi-handler&gt;` or any</span>
@@ -100,9 +100,6 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~</span>
 <span class="sd">.. autofunction:: clean_path_middleware</span>
 
-<span class="sd">Cookie</span>
-<span class="sd">~~~~~~~~~~~~~~~~~~</span>
-<span class="sd">.. autofunction:: cookies_middleware</span>
 
 <span class="sd">Authorization</span>
 <span class="sd">~~~~~~~~~~~~~~~~~~</span>
@@ -119,14 +116,13 @@
 <span class="kn">import</span> <span class="nn">re</span>
 
 <span class="kn">import</span> <span class="nn">pulsar</span>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
-<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span><span class="p">,</span> <span class="n">parse_cookie</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">async</span><span class="p">,</span> <span class="n">coroutine_return</span>
+<span class="kn">from</span> <span class="nn">pulsar.utils.httpurl</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 
 <span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">parse_authorization_header</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;clean_path_middleware&#39;</span><span class="p">,</span>
-           <span class="s">&#39;cookies_middleware&#39;</span><span class="p">,</span>
            <span class="s">&#39;authorization_middleware&#39;</span><span class="p">,</span>
            <span class="s">&#39;wait_for_body_middleware&#39;</span><span class="p">]</span>
 
@@ -142,25 +138,6 @@
         <span class="k">if</span> <span class="n">qs</span><span class="p">:</span>
             <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">?</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">qs</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">HttpRedirect</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-
-</div>
-<div class="viewcode-block" id="cookies_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.cookies_middleware">[docs]</a><span class="k">def</span> <span class="nf">cookies_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Parse the ``HTTP_COOKIE`` key in ``environ``.</span>
-
-<span class="sd">    Set the new ``http.cookie`` key in ``environ`` with a dictionary</span>
-<span class="sd">    of cookies obtained via the :func:`pulsar.utils.httpurl.parse_cookie`</span>
-<span class="sd">    function.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;http.cookie&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_COOKIE&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">parse_cookie</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-        <span class="n">environ</span><span class="p">[</span><span class="s">&#39;http.cookie&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
 
 </div>
 <div class="viewcode-block" id="authorization_middleware"><a class="viewcode-back" href="../../../../apps/wsgi/middleware.html#pulsar.apps.wsgi.middleware.authorization_middleware">[docs]</a><span class="k">def</span> <span class="nf">authorization_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -192,7 +169,9 @@
 </div>
 <span class="k">def</span> <span class="nf">_wait_for_body_middleware</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
     <span class="n">stream</span> <span class="o">=</span> <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span>
-    <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">chunk</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">Future</span><span class="p">):</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">chunk</span>
     <span class="n">environ</span><span class="p">[</span><span class="s">&#39;wsgi.input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
     <span class="n">coroutine_return</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
 </pre></div>

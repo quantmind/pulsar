@@ -137,7 +137,7 @@ non-standard header fields.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.update">
 <tt class="descname">update</tt><big>(</big><em>iterable</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extend the headers.</p>
+<dd><p>Extend the headers with an <tt class="docutils literal"><span class="pre">iterable</span></tt>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -208,7 +208,7 @@ string separated by comma (which is returned by the
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.clear">
 <tt class="descname">clear</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.clear" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <tt class="xref py py-meth docutils literal"><span class="pre">dict.clear()</span></tt>, it removes all headers.</p>
+<dd><p>Same as <a class="reference external" href="http://python.readthedocs.org/en/latest/library/stdtypes.html#dict.clear" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">dict.clear()</span></tt></a>, it removes all headers.</p>
 </dd></dl>
 
 <dl class="method">
@@ -220,9 +220,12 @@ string separated by comma (which is returned by the
 
 <dl class="method">
 <dt id="pulsar.utils.httpurl.Headers.add_header">
-<tt class="descname">add_header</tt><big>(</big><em>key</em>, <em>value</em>, <em>**params</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.add_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.add_header" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add <tt class="docutils literal"><span class="pre">value</span></tt> to <tt class="docutils literal"><span class="pre">key</span></tt> header.</p>
-<p>If the header is already available, append the value to the list.</p>
+<tt class="descname">add_header</tt><big>(</big><em>key</em>, <em>values</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#Headers.add_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.Headers.add_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add <tt class="docutils literal"><span class="pre">values</span></tt> to <tt class="docutils literal"><span class="pre">key</span></tt> header.</p>
+<p>If the header is already available, append the value to the list.
+:param values: a string value or a list/tuple of strings values</p>
+<blockquote>
+<div>for header <tt class="docutils literal"><span class="pre">key</span></tt></div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -249,24 +252,6 @@ string separated by comma (which is returned by the
 <dd><p>A python HTTP parser.</p>
 <p>Original code from <a class="reference external" href="https://github.com/benoitc/http-parser">https://github.com/benoitc/http-parser</a></p>
 <p>2011 (c) Benoit Chesneau &lt;<a class="reference external" href="mailto:benoitc&#37;&#52;&#48;e-engura&#46;org">benoitc<span>&#64;</span>e-engura<span>&#46;</span>org</a>&gt;</p>
-<p>Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the &#8220;Software&#8221;), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:</p>
-<p>The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.</p>
-<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.</p>
 <dl class="method">
 <dt id="pulsar.utils.httpurl.HttpParser.recv_body">
 <tt class="descname">recv_body</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#HttpParser.recv_body"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.HttpParser.recv_body" title="Permalink to this definition">¶</a></dt>
@@ -303,16 +288,6 @@ OTHER DEALINGS IN THE SOFTWARE.</p>
 <dd><p>return True if Transfer-Encoding header value is chunked</p>
 </dd></dl>
 
-</dd></dl>
-
-</div>
-<div class="section" id="parse-cookie">
-<h3>parse cookie<a class="headerlink" href="#parse-cookie" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="pulsar.utils.httpurl.parse_cookie">
-<tt class="descclassname">pulsar.utils.httpurl.</tt><tt class="descname">parse_cookie</tt><big>(</big><em>cookie</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/httpurl.html#parse_cookie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.httpurl.parse_cookie" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse an <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie">HTTP cookie</a> string.</p>
-<p>Return a dictionary of cookie name/values.</p>
 </dd></dl>
 
 </div>
@@ -455,11 +430,11 @@ attribute by exposing the <a class="reference internal" href="#pulsar.utils.conf
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>description</strong> &#8211; description used when parsing the command line,
-same usage as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
+same usage as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt></a> class.</li>
 <li><strong>epilog</strong> &#8211; epilog used when parsing the command line, same usage
-as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
+as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt></a> class.</li>
 <li><strong>version</strong> &#8211; version used when parsing the command line, same usage
-as in the <tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt> class.</li>
+as in the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">argparse.ArgumentParser</span></tt></a> class.</li>
 <li><strong>apps</strong> &#8211; list of application namespaces to include in the
 <a class="reference internal" href="#pulsar.utils.config.Config.settings" title="pulsar.utils.config.Config.settings"><tt class="xref py py-attr docutils literal"><span class="pre">settings</span></tt></a> dictionary. For example if <tt class="docutils literal"><span class="pre">apps</span></tt> is set to
 <tt class="docutils literal"><span class="pre">['socket',</span> <span class="pre">'tasks']</span></tt>, the
@@ -672,7 +647,7 @@ at the command line</p>
 <dl class="attribute">
 <dt id="pulsar.utils.config.Setting.meta">
 <tt class="descname">meta</tt><em class="property"> = None</em><a class="headerlink" href="#pulsar.utils.config.Setting.meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same usage as <tt class="docutils literal"><span class="pre">metavar</span></tt> in the python <tt class="xref py py-mod docutils literal"><span class="pre">argparse</span></tt> module. It is
+<dd><p>Same usage as <tt class="docutils literal"><span class="pre">metavar</span></tt> in the python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/argparse.html#module-argparse" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">argparse</span></tt></a> module. It is
 the name for the argument in usage message.</p>
 </dd></dl>
 
@@ -1267,7 +1242,6 @@ front of <tt class="docutils literal"><span class="pre">sys.path</span></tt> usi
 <li><a class="reference internal" href="#module-pulsar.utils.httpurl">HTTP</a><ul>
 <li><a class="reference internal" href="#http-headers">HTTP Headers</a></li>
 <li><a class="reference internal" href="#http-parser">HTTP Parser</a></li>
-<li><a class="reference internal" href="#parse-cookie">parse cookie</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pulsar.utils.websocket">Websocket</a><ul>

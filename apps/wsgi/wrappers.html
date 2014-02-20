@@ -219,12 +219,12 @@ For charsets have a look at <a class="reference internal" href="#pulsar.apps.wsg
 
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files">
-<tt class="descname">data_and_files</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">data_and_files</tt><big>(</big><em>data=True</em>, <em>files=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.data_and_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.data_and_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve body data.</p>
 <p>Returns a two-elements tuple of a
 <a class="reference internal" href="../../api/utilities.html#pulsar.utils.structures.misc.MultiValueDict" title="pulsar.utils.structures.misc.MultiValueDict"><tt class="xref py py-class docutils literal"><span class="pre">MultiValueDict</span></tt></a> containing data from
 the request body, and data from uploaded files.</p>
-<p>If the body data is not ready, return a <a class="reference internal" href="../../api/async.html#pulsar.async.fallbacks.defer.Deferred" title="pulsar.async.fallbacks.defer.Deferred"><tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt></a>
+<p>If the body data is not ready, return a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>
 which results in the tuple.</p>
 <p>The result is cached.</p>
 </dd></dl>
@@ -263,9 +263,10 @@ in <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.EnvironMixin.e
 <dl class="method">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri">
 <tt class="descname">absolute_uri</tt><big>(</big><em>location=None</em>, <em>scheme=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiRequest.absolute_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.absolute_uri" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds an absolute URI from the <tt class="docutils literal"><span class="pre">location</span></tt> and the variables
-available in this request. If no location is specified, the relative URI
-is built from <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path"><tt class="xref py py-meth docutils literal"><span class="pre">full_path()</span></tt></a>.</p>
+<dd><p>Builds an absolute URI from <tt class="docutils literal"><span class="pre">location</span></tt> and variables
+available in this request.</p>
+<p>If no <tt class="docutils literal"><span class="pre">location</span></tt> is specified, the relative URI is built from
+<a class="reference internal" href="#pulsar.apps.wsgi.wrappers.WsgiRequest.full_path" title="pulsar.apps.wsgi.wrappers.WsgiRequest.full_path"><tt class="xref py py-meth docutils literal"><span class="pre">full_path()</span></tt></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -275,7 +276,7 @@ is built from <a class="reference internal" href="#pulsar.apps.wsgi.wrappers.Wsg
 <span id="id1"></span><h2>Wsgi Response<a class="headerlink" href="#wsgi-response" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse">
-<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pulsar.apps.wsgi.wrappers.</tt><tt class="descname">WsgiResponse</tt><big>(</big><em>status=None</em>, <em>content=None</em>, <em>response_headers=None</em>, <em>content_type=None</em>, <em>encoding=None</em>, <em>environ=None</em>, <em>can_store_cookies=True</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse" title="Permalink to this definition">¶</a></dt>
 <dd><p>A WSGI response.</p>
 <p>Instances are callable using the standard WSGI call and, importantly,
 iterable:</p>
@@ -321,6 +322,13 @@ requesting client.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.cookies">
+<tt class="descname">cookies</tt><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.cookies" title="Permalink to this definition">¶</a></dt>
+<dd><p>A python <tt class="xref py py-class docutils literal"><span class="pre">SimpleCookie</span></tt> container of cookies included in the
+request as well as cookies set during the response.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.is_streamed">
 <tt class="descname">is_streamed</tt><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.is_streamed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.is_streamed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if the response is streamed.</p>
@@ -337,6 +345,12 @@ the number of iterations.</p>
 <p><tt class="docutils literal"><span class="pre">expires</span></tt> can be a string in the correct format or a
 <tt class="docutils literal"><span class="pre">datetime.datetime</span></tt> object in UTC. If <tt class="docutils literal"><span class="pre">expires</span></tt> is a datetime
 object then <tt class="docutils literal"><span class="pre">max_age</span></tt> will be calculated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers">
+<tt class="descname">get_headers</tt><big>(</big><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/wsgi/wrappers.html#WsgiResponse.get_headers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.wsgi.wrappers.WsgiResponse.get_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of headers for this response</p>
 </dd></dl>
 
 </dd></dl>

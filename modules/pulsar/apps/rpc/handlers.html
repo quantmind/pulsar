@@ -69,7 +69,7 @@
   <h1>Source code for pulsar.apps.rpc.handlers</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">inspect</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span><span class="p">,</span> <span class="n">raise_error_and_log</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">HttpException</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.tools</span> <span class="kn">import</span> <span class="n">checkarity</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;RpcHandler&#39;</span><span class="p">,</span> <span class="s">&#39;rpc_method&#39;</span><span class="p">,</span> <span class="s">&#39;InvalidRequest&#39;</span><span class="p">,</span> <span class="s">&#39;InvalidParams&#39;</span><span class="p">,</span>
@@ -125,13 +125,14 @@
 <div class="viewcode-block" id="rpc_method"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.rpc_method">[docs]</a><span class="k">def</span> <span class="nf">rpc_method</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="n">request_handler</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A decorator which exposes a function ``func`` as an rpc function.</span>
 
-<span class="sd">:parameter func: The function to expose.</span>
-<span class="sd">:parameter doc: Optional doc string. If not provided the doc string of</span>
-<span class="sd">    ``func`` will be used.</span>
-<span class="sd">:parameter format: Optional output format.</span>
-<span class="sd">:parameter request_handler: function which takes ``request``, ``format`` and</span>
-<span class="sd">    ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.</span>
-<span class="sd">    It can be used to add additional parameters based on request and format.</span>
+<span class="sd">    :param func: The function to expose.</span>
+<span class="sd">    :param doc: Optional doc string. If not provided the doc string of</span>
+<span class="sd">        ``func`` will be used.</span>
+<span class="sd">    :param format: Optional output format.</span>
+<span class="sd">    :param request_handler: function which takes ``request``, ``format``</span>
+<span class="sd">        and ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.</span>
+<span class="sd">        It can be used to add additional parameters based on request and</span>
+<span class="sd">        format.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -143,8 +144,7 @@
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
-                <span class="n">error</span> <span class="o">=</span> <span class="n">InvalidParams</span><span class="p">(</span><span class="s">&#39;Invalid Parameters. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
-                <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">InvalidParams</span><span class="p">(</span><span class="s">&#39;Invalid Parameters. </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span>
 
@@ -156,7 +156,9 @@
 </div>
 <span class="k">class</span> <span class="nc">MetaRpcHandler</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;A metaclass for rpc handlers.</span>
-<span class="sd">Add a limited ammount of magic to RPC handlers.&#39;&#39;&#39;</span>
+
+<span class="sd">    Add a limited ammount of magic to RPC handlers.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="n">make</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MetaRpcHandler</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span>
         <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;virtual&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
@@ -184,6 +186,8 @@
 
 
 <div class="viewcode-block" id="RpcHandler"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler">[docs]</a><span class="k">class</span> <span class="nc">RpcHandler</span><span class="p">(</span><span class="n">MetaRpcHandler</span><span class="p">(</span><span class="s">&#39;_RpcHandler&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nb">object</span><span class="p">,),</span> <span class="p">{</span><span class="s">&#39;virtual&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">})):</span>
+    <span class="sd">&#39;&#39;&#39;Base class for classes to handle remote procedure calls.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">serve_as</span> <span class="o">=</span> <span class="s">&#39;rpc&#39;</span>
     <span class="sd">&#39;&#39;&#39;Prefix for class methods providing remote services. Default: ``rpc``.&#39;&#39;&#39;</span>
     <span class="n">separator</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span>
@@ -204,13 +208,13 @@
     <span class="nd">@property</span>
 <div class="viewcode-block" id="RpcHandler.parent"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.parent">[docs]</a>    <span class="k">def</span> <span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The parent :class:`RpcHandler` or ``None`` if this</span>
-<span class="sd">is the root handler.&#39;&#39;&#39;</span>
+<span class="sd">        is the root handler.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
 </div>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="RpcHandler.root"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.root">[docs]</a>    <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;The root :class:`RpcHandler` or ``self`` if this</span>
-<span class="sd">is the root handler.&#39;&#39;&#39;</span>
+<span class="sd">        is the root handler.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">root</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span>
 </div>
 <div class="viewcode-block" id="RpcHandler.isroot"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.handlers.RpcHandler.isroot">[docs]</a>    <span class="k">def</span> <span class="nf">isroot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -233,8 +237,7 @@
 </div>
     <span class="k">def</span> <span class="nf">get_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
-            <span class="n">error</span> <span class="o">=</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method not supplied&#39;</span><span class="p">)</span>
-            <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method not supplied&#39;</span><span class="p">)</span>
         <span class="n">bits</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">separator</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="n">method_name</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -248,8 +251,7 @@
         <span class="k">if</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">handler</span><span class="o">.</span><span class="n">rpc_methods</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">handler</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serve_as</span><span class="p">,</span> <span class="n">method_name</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">error</span> <span class="o">=</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method &quot;</span><span class="si">%s</span><span class="s">&quot; not available.&#39;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
-            <span class="n">raise_error_and_log</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NoSuchFunction</span><span class="p">(</span><span class="s">&#39;RPC method &quot;</span><span class="si">%s</span><span class="s">&quot; not available.&#39;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">listFunctions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rpc_methods</span><span class="p">):</span>

@@ -182,8 +182,9 @@
 
     <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;cookies&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;Returns cookie data&#39;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">cookies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-        <span class="n">cookies</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;cookies&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;http.cookie&#39;</span><span class="p">)}</span>
-        <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="n">cookies</span><span class="p">)</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
+        <span class="n">cookies</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(((</span><span class="n">c</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">Json</span><span class="p">({</span><span class="s">&#39;cookies&#39;</span><span class="p">:</span> <span class="n">cookies</span><span class="p">})</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
     <span class="nd">@route</span><span class="p">(</span><span class="s">&#39;cookies/set/&lt;name&gt;/&lt;value&gt;&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sets a simple cookie&#39;</span><span class="p">,</span>
            <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;package&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="s">&#39;pulsar&#39;</span><span class="p">})</span>
@@ -207,7 +208,7 @@
         <span class="k">class</span> <span class="nc">Gen</span><span class="p">:</span>
             <span class="n">headers</span> <span class="o">=</span> <span class="bp">None</span>
 
-            <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">headers</span>
 
             <span class="k">def</span> <span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -350,7 +351,6 @@
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environ</span><span class="p">):</span>
         <span class="n">router</span> <span class="o">=</span> <span class="n">HttpBin</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">wsgi</span><span class="o">.</span><span class="n">WsgiHandler</span><span class="p">([</span><span class="n">wsgi</span><span class="o">.</span><span class="n">clean_path_middleware</span><span class="p">,</span>
-                                 <span class="n">wsgi</span><span class="o">.</span><span class="n">cookies_middleware</span><span class="p">,</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">authorization_middleware</span><span class="p">,</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">FileRouter</span><span class="p">(</span><span class="s">&#39;/favicon.ico&#39;</span><span class="p">,</span> <span class="n">FAVICON</span><span class="p">),</span>
                                  <span class="n">wsgi</span><span class="o">.</span><span class="n">MediaRouter</span><span class="p">(</span><span class="s">&#39;media&#39;</span><span class="p">,</span> <span class="n">ASSET_DIR</span><span class="p">),</span>

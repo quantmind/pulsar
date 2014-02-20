@@ -76,7 +76,7 @@
 
 
 <div class="viewcode-block" id="PulsarServerCommands"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands">[docs]</a><span class="k">class</span> <span class="nc">PulsarServerCommands</span><span class="p">(</span><span class="n">JSONRPC</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Useful commands to add to your :class:`JSONRPC` handler.</span>
+    <span class="sd">&#39;&#39;&#39;Useful commands to add to your :class:`.JSONRPC` handler.</span>
 
 <span class="sd">    It exposes the following functions:&#39;&#39;&#39;</span>
 <div class="viewcode-block" id="PulsarServerCommands.rpc_ping"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_ping">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
@@ -99,7 +99,7 @@
 </div>
 <div class="viewcode-block" id="PulsarServerCommands.rpc_functions_list"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_functions_list">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_functions_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;List of (method name, method document) pair of all method exposed</span>
-<span class="sd">        by this :class:`JSONRPC` handler.&#39;&#39;&#39;</span>
+<span class="sd">        by this :class:`.JSONRPC` handler.&#39;&#39;&#39;</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">listFunctions</span><span class="p">())</span>
 </div>
 <div class="viewcode-block" id="PulsarServerCommands.rpc_documentation"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.mixins.PulsarServerCommands.rpc_documentation">[docs]</a>    <span class="k">def</span> <span class="nf">rpc_documentation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>

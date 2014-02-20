@@ -83,19 +83,19 @@ for several protocols which can be used in pulsar by importing the
 </pre></div>
 </div>
 <p>The implementation replaces the twisted reactor with a proxy for
-<a class="reference internal" href="../api/async.html#pulsar.async.eventloop.EventLoop" title="pulsar.async.eventloop.EventLoop"><tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt></a>.
+<tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt>.
 Twisted Deferred and Failures are made compatible with pulsar
 by installing twisted asynchronous binding via the
-<a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</p>
+<a class="reference internal" href="../api/async.html#pulsar.async.futures.add_async_binding" title="pulsar.async.futures.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a> function.</p>
 <p>Threads, signal handling, scheduling and so forth is handled by pulsar itself,
 twisted implementation is switched off.</p>
 <div class="section" id="implementation">
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="examples.webmail.tx.check_twisted">
-<tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>coro_or_future</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">examples.webmail.tx.</tt><tt class="descname">check_twisted</tt><big>(</big><em>deferred</em>, <em>loop</em><big>)</big><a class="reference internal" href="../modules/examples/webmail/tx.html#check_twisted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#examples.webmail.tx.check_twisted" title="Permalink to this definition">¶</a></dt>
 <dd><p>Binding for twisted.</p>
-<p>Added to pulsar asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.defer.add_async_binding" title="pulsar.async.defer.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a>
+<p>Added to pulsar asynchronous engine via the <a class="reference internal" href="../api/async.html#pulsar.async.futures.add_async_binding" title="pulsar.async.futures.add_async_binding"><tt class="xref py py-func docutils literal"><span class="pre">add_async_binding()</span></tt></a>
 function.</p>
 </dd></dl>
 

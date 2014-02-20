@@ -174,7 +174,7 @@ the worker processes group.</p>
 <span id="setting-loglevel"></span><h3>loglevel<a class="headerlink" href="#loglevel" title="Permalink to this headline">¶</a></h3>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">loglevel</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--log-level</span></tt></p>
-<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'info'</span></tt></p>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
 <p>The granularity of log outputs.</p>
 <p>This setting controls loggers with <tt class="docutils literal"><span class="pre">pulsar</span></tt> namespace
 and the the root logger (if not already set).
@@ -246,9 +246,9 @@ By default no datastore is used.</p>
 <p>Use this setting to specify an execution ID.
 If not provided, a value will be assigned by pulsar.</p>
 </div>
-<div class="section" id="poller">
-<span id="setting-poller"></span><h3>poller<a class="headerlink" href="#poller" title="Permalink to this headline">¶</a></h3>
-<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">poller</span></tt></p>
+<div class="section" id="selector">
+<span id="setting-selector"></span><h3>selector<a class="headerlink" href="#selector" title="Permalink to this headline">¶</a></h3>
+<p><em>Config name</em>: <tt class="docutils literal"><span class="pre">selector</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--io</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">'epoll</span> <span class="pre">on</span> <span class="pre">linux,</span> <span class="pre">kqueue</span> <span class="pre">on</span> <span class="pre">mac,</span> <span class="pre">select</span> <span class="pre">on</span> <span class="pre">windows'</span></tt></p>
 <p>Specify the default selector used for I/O event polling.</p>
@@ -626,7 +626,7 @@ flag disable it.</p>
 <p><em>Config name</em>: <tt class="docutils literal"><span class="pre">redis_server</span></tt></p>
 <p><em>Command line</em>: <tt class="docutils literal"><span class="pre">--redis-server</span></tt></p>
 <p><em>Default</em>: <tt class="docutils literal"><span class="pre">'127.0.0.1:6379/9'</span></tt></p>
-<p>Connection string for the redis server used in testing</p>
+<p>Connection string for the redis server used in during testing</p>
 </div>
 </div>
 <div class="section" id="utilities">
@@ -687,7 +687,7 @@ flag disable it.</p>
 <li><a class="reference internal" href="#coverage">coverage</a></li>
 <li><a class="reference internal" href="#data-store">data_store</a></li>
 <li><a class="reference internal" href="#exc-id">exc_id</a></li>
-<li><a class="reference internal" href="#poller">poller</a></li>
+<li><a class="reference internal" href="#selector">selector</a></li>
 <li><a class="reference internal" href="#redis-py-parser">redis_py_parser</a></li>
 </ul>
 </li>

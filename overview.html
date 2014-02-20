@@ -94,24 +94,22 @@ activities in different threads and/or processes.</p>
 </tr>
 <tr class="field-odd field"><th class="field-name">Platforms:</th><td class="field-body">Linux, OSX, Windows. Python 2.6, 2.7, 3.3, <a class="reference external" href="http://pypy.org/">pypy</a></td>
 </tr>
-<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">server, asynchronous, concurrency, actor, thread, process, socket,
-task queue, wsgi, websocket, redis, json-rpc</td>
+<tr class="field-even field"><th class="field-name">Keywords:</th><td class="field-body">client, server, asynchronous, concurrency, actor, thread, process,
+socket, task queue, wsgi, websocket, redis, json-rpc</td>
 </tr>
 </tbody>
 </table>
-<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar</span></tt> application
-framework which responds with &#8220;Hello World!&#8221; for every request:</p>
+<p>An example of a web server written with <tt class="docutils literal"><span class="pre">pulsar</span></tt> which responds with
+&#8220;Hello World!&#8221; for every request:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps</span> <span class="kn">import</span> <span class="n">wsgi</span>
 
 <span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">environ</span><span class="p">,</span> <span class="n">start_response</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Pulsar HTTP &quot;Hello World!&quot; application&#39;&#39;&#39;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">b</span><span class="s">&#39;Hello World!</span><span class="se">\n</span><span class="s">&#39;</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="s">&#39;200 OK&#39;</span>
     <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="s">&#39;Content-type&#39;</span><span class="p">,</span><span class="s">&#39;text/plain&#39;</span><span class="p">),</span>
         <span class="p">(</span><span class="s">&#39;Content-Length&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
     <span class="p">]</span>
-    <span class="n">start_response</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
+    <span class="n">start_response</span><span class="p">(</span><span class="s">&#39;200 OK&#39;</span><span class="p">,</span> <span class="n">response_headers</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
 
 
@@ -120,7 +118,7 @@ framework which responds with &#8220;Hello World!&#8221; for every request:</p>
 </pre></div>
 </div>
 <p>Pulsar&#8217;s goal is to provide an easy way to build scalable network programs.
-In the &#8220;Hello world!&#8221; web server example above, many client
+In the <tt class="docutils literal"><span class="pre">Hello</span> <span class="pre">world!</span></tt> web server example above, many client
 connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.</p>
@@ -129,6 +127,7 @@ it can be configured to run in multi-processing mode, multi-threading mode or
 a combination of the two.</p>
 <div class="section" id="installing">
 <h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
+<p>For python 2.7 it requires <a class="reference external" href="https://pypi.python.org/pypi/trollius">trollius</a>.</p>
 <p>Pulsar is a stand alone python library and it can be installed via <cite>pip</cite>:</p>
 <div class="highlight-python"><pre>pip install pulsar</pre>
 </div>
@@ -149,22 +148,22 @@ Out of the box it is shipped with the the following:</p>
 <li>Shell</li>
 <li>Test suite</li>
 <li>Data stores</li>
-<li>Integration with <a class="reference external" href="https://www.djangoproject.com/">django</a></li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a> integration</li>
 </ul>
 </div>
 <div class="section" id="examples">
 <span id="id1"></span><h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications created
-using pulsar. It includes:</p>
+<p>Check out the <tt class="docutils literal"><span class="pre">examples</span></tt> directory for various working applications.
+It includes:</p>
 <ul class="simple">
-<li>Hello world! wsgi example.</li>
-<li>An Httpbin wsgi application (similar to <a class="reference external" href="http://httpbin.org/">http://httpbin.org/</a>).</li>
-<li>An HTTP Proxy server with headers middleware.</li>
-<li>A simple JSON-RPC Calculator server.</li>
-<li>A taskqueue application with a JSON-RPC interface.</li>
-<li>Websocket graph.</li>
-<li>Websocket Web Chat.</li>
-<li><a class="reference external" href="https://www.djangoproject.com/">django</a> web site with a websocket middleware to handle a web chat.</li>
+<li>Hello world! wsgi example</li>
+<li>An Httpbin wsgi application</li>
+<li>An HTTP Proxy server</li>
+<li>A JSON-RPC Calculator server</li>
+<li>A taskqueue application with a JSON-RPC interface</li>
+<li>Websocket random graph.</li>
+<li>Websocket chat room.</li>
+<li><a class="reference external" href="https://www.djangoproject.com/">django</a> web site with a websocket based chat room.</li>
 <li>A web mail application which uses <a class="reference external" href="http://twistedmatrix.com/trac/">twisted</a> IMAP4 API.</li>
 <li>The <a class="reference external" href="http://en.wikipedia.org/wiki/Dining_philosophers_problem">dining philosophers problem</a>.</li>
 <li>Asynchronous shell.</li>
@@ -188,7 +187,6 @@ of them as a pool of actors.</p>
 <p>Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities or improve performance:</p>
 <ul class="simple">
-<li><a class="reference external" href="https://github.com/benoitc/http-parser">http-parser</a>: upgrade the HTTP parser to a faster C version.</li>
 <li><a class="reference external" href="http://code.google.com/p/py-setproctitle/">setproctitle</a>: if installed, pulsar can use it to change the processes names
 of the running application.</li>
 <li><a class="reference external" href="http://code.google.com/p/psutil/">psutil</a>: if installed, a <tt class="docutils literal"><span class="pre">system</span></tt> key is available in the dictionary

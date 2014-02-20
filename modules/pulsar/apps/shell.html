@@ -187,11 +187,11 @@
         <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;thread_workers&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">monitor</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;concurrency&#39;</span><span class="p">,</span> <span class="s">&#39;thread&#39;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="PulsarShell.worker_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
+<div class="viewcode-block" id="PulsarShell.worker_start"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.worker_start">[docs]</a>    <span class="k">def</span> <span class="nf">worker_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>     <span class="c"># pragma    nocover</span>
         <span class="sd">&#39;&#39;&#39;When the worker starts, create the :attr:`~.Actor.thread_pool`</span>
 <span class="sd">        and send the :meth:`interact` method to it.&#39;&#39;&#39;</span>
-        <span class="n">worker</span><span class="o">.</span><span class="n">create_thread_pool</span><span class="p">()</span>
-        <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_shell</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_shell</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">start_shell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="n">pulsar</span><span class="o">.</span><span class="n">help</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_show_help</span>
@@ -200,6 +200,7 @@
                             <span class="s">&#39;get_actor&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">get_actor</span><span class="p">,</span>
                             <span class="s">&#39;spawn&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">spawn</span><span class="p">,</span>
                             <span class="s">&#39;send&#39;</span><span class="p">:</span> <span class="n">pulsar</span><span class="o">.</span><span class="n">send</span><span class="p">}</span>
+        <span class="n">imported_objects</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;imported_objects&#39;</span><span class="p">,</span> <span class="p">{}))</span>
         <span class="k">try</span><span class="p">:</span>  <span class="c"># Try activating rlcompleter, because it&#39;s handy.</span>
             <span class="kn">import</span> <span class="nn">readline</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c"># pragma    nocover</span>
@@ -211,7 +212,7 @@
             <span class="n">readline</span><span class="o">.</span><span class="n">parse_and_bind</span><span class="p">(</span><span class="s">&quot;tab:complete&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">console</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">console_class</span><span class="p">(</span><span class="n">imported_objects</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
-        <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+        <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PulsarShell.interact"><a class="viewcode-back" href="../../../apps/shell.html#pulsar.apps.shell.PulsarShell.interact">[docs]</a>    <span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Handled by the :attr:`Actor.thread_pool`&#39;&#39;&#39;</span>
@@ -220,7 +221,7 @@
         <span class="k">except</span><span class="p">:</span>
             <span class="n">worker</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">worker</span><span class="o">.</span><span class="n">thread_pool</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">executor</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interact</span><span class="p">,</span> <span class="n">worker</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">_show_help</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">print</span><span class="p">(</span><span class="n">_pshell_help</span><span class="p">)</span></div>

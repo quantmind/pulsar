@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../../static/favicon.ico"/>
     <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../../index.html" />
-    <link rel="up" title="pulsar.async" href="../async.html" /> 
+    <link rel="up" title="Module code" href="../../index.html" /> 
 </head>
  <body>
 
@@ -45,8 +45,7 @@
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li><a href="../../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../async.html" accesskey="U">pulsar.async</a> &raquo;</li> 
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -131,7 +130,7 @@
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
 
 <span class="kn">from</span> <span class="nn">.access</span> <span class="kn">import</span> <span class="n">get_actor</span>
-<span class="kn">from</span> <span class="nn">.defer</span> <span class="kn">import</span> <span class="n">Failure</span><span class="p">,</span> <span class="n">Deferred</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span>
+<span class="kn">from</span> <span class="nn">.futures</span> <span class="kn">import</span> <span class="n">Future</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span>
 <span class="kn">from</span> <span class="nn">.proxy</span> <span class="kn">import</span> <span class="n">actorid</span><span class="p">,</span> <span class="n">get_proxy</span><span class="p">,</span> <span class="n">get_command</span><span class="p">,</span> <span class="n">ActorProxy</span>
 <span class="kn">from</span> <span class="nn">.protocols</span> <span class="kn">import</span> <span class="n">Protocol</span>
 <span class="kn">from</span> <span class="nn">.clients</span> <span class="kn">import</span> <span class="n">AbstractClient</span>
@@ -196,7 +195,7 @@
                 <span class="s">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span> <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(),</span>
                 <span class="s">&#39;kwargs&#39;</span><span class="p">:</span> <span class="n">kwargs</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}}</span>
         <span class="k">if</span> <span class="n">command</span><span class="o">.</span><span class="n">ack</span><span class="p">:</span>
-            <span class="n">future</span> <span class="o">=</span> <span class="n">Deferred</span><span class="p">()</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
             <span class="n">data</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_unique_id</span><span class="p">()[:</span><span class="mi">8</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">future</span> <span class="o">=</span> <span class="bp">None</span>
@@ -219,7 +218,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span> <span class="o">=</span> <span class="n">frame_parser</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pyparser</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_arbiter</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection_lost</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MailboxProtocol.request"><a class="viewcode-back" href="../../../tutorials/messages.html#pulsar.async.mailbox.MailboxProtocol.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;Used by the server to send messages to the client.&#39;&#39;&#39;</span>
@@ -245,18 +244,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="p">[</span><span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s">&#39;ack&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">req</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">req</span><span class="o">.</span><span class="n">future</span><span class="o">.</span><span class="n">set_exception</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">failure</span><span class="p">):</span>
-        <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
-            <span class="n">failure</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s">&#39;Connection lost with actor.&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">failure</span><span class="o">.</span><span class="n">mute</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">failure</span>
+    <span class="k">def</span> <span class="nf">_connection_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+                <span class="n">actor</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Connection lost with actor.&#39;</span><span class="p">)</span>
 
     <span class="nd">@in_loop</span>
     <span class="k">def</span> <span class="nf">_on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
@@ -270,9 +267,8 @@
                 <span class="n">pending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_responses</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ack</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;Callback </span><span class="si">%s</span><span class="s"> not in pending callbacks&#39;</span> <span class="o">%</span> <span class="n">ack</span><span class="p">)</span>
-            <span class="n">pending</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
+            <span class="n">pending</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;result&#39;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">failure</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">target</span> <span class="o">=</span> <span class="n">actor</span><span class="o">.</span><span class="n">get_actor</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s">&#39;target&#39;</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -297,10 +293,9 @@
                     <span class="n">req</span> <span class="o">=</span> <span class="n">CommandRequest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">caller</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">command</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">message</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">],</span>
                                            <span class="n">message</span><span class="p">[</span><span class="s">&#39;kwargs&#39;</span><span class="p">])</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">failure</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">failure</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">Failure</span><span class="p">(</span><span class="n">failure</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s">&#39;Unhandled exception&#39;</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">ack</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">Message</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">ack</span><span class="p">))</span>
 
@@ -308,7 +303,7 @@
         <span class="n">obj</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">opcode</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
             <span class="n">actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">actor</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
@@ -346,20 +341,21 @@
         <span class="c"># the request method</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span>
-                                        <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">bind_event</span><span class="p">(</span><span class="s">&#39;connection_lost&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lost</span><span class="p">)</span>
         <span class="n">req</span> <span class="o">=</span> <span class="n">Message</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">sender</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">req</span><span class="o">.</span><span class="n">future</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">async</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">async</span><span class="o">=</span><span class="n">async</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">start_serving</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="nf">_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">exc</span></div>
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_lost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
 </pre></div>
 
           </div>

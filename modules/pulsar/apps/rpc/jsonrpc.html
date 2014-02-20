@@ -67,23 +67,11 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.rpc.jsonrpc</h1><div class="highlight"><pre>
-<span class="sd">&#39;&#39;&#39;\</span>
-<span class="sd">A Python implementation of JSON-RPC 2.0 Specification</span>
-
-<span class="sd">JSON-RPC is a lightweight remote procedure call protocol.</span>
-<span class="sd">It&#39;s designed to be simple.</span>
-
-<span class="sd">A remote method is invoked by sending a request to a remote service.</span>
-<span class="sd">The request is a single object serialized using JSON.</span>
-
-<span class="sd">The specification is at</span>
-<span class="sd">http://groups.google.com/group/json-rpc/web/json-rpc-2-0</span>
-<span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Failure</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">maybe_failure</span><span class="p">,</span> <span class="n">in_loop_thread</span><span class="p">,</span>
-                    <span class="n">coroutine_return</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">AsyncObject</span><span class="p">,</span> <span class="n">multi_async</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">coroutine_return</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.system</span> <span class="kn">import</span> <span class="n">json</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">AttributeDictionary</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.security</span> <span class="kn">import</span> <span class="n">gen_unique_id</span>
@@ -95,17 +83,26 @@
 
 <span class="kn">from</span> <span class="nn">.handlers</span> <span class="kn">import</span> <span class="n">RpcHandler</span><span class="p">,</span> <span class="n">InvalidRequest</span><span class="p">,</span> <span class="n">exception</span>
 
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;JSONRPC&#39;</span><span class="p">,</span> <span class="s">&#39;JsonProxy&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="JSONRPC"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JSONRPC">[docs]</a><span class="k">class</span> <span class="nc">JSONRPC</span><span class="p">(</span><span class="n">RpcHandler</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;An :class:`RpcHandler` for class for JSON-RPC services.</span>
-<span class="sd">Design to comply with the `JSON-RPC 2.0`_ Specification.</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;pulsar.jsonrpc&#39;</span><span class="p">)</span>
 
-<span class="sd">.. _`JSON-RPC 2.0`: http://www.jsonrpc.org/</span>
-<span class="sd">&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="JSONRPC"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JSONRPC">[docs]</a><span class="k">class</span> <span class="nc">JSONRPC</span><span class="p">(</span><span class="n">RpcHandler</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;An :class:`.RpcHandler` for JSON-RPC services.</span>
+
+<span class="sd">    Design to comply with the `JSON-RPC 2.0`_ Specification.</span>
+
+<span class="sd">    JSON-RPC is a lightweight remote procedure call protocol</span>
+<span class="sd">    designed to be simple.</span>
+<span class="sd">    A remote method is invoked by sending a request to a remote service,</span>
+<span class="sd">    the request is a single object serialised using JSON.</span>
+
+<span class="sd">    .. _`JSON-RPC 2.0`: http://www.jsonrpc.org/specification</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">version</span> <span class="o">=</span> <span class="s">&#39;2.0&#39;</span>
-    <span class="n">methods</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;post&#39;</span><span class="p">,)</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">request</span><span class="p">))</span><span class="o">.</span><span class="n">http_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
@@ -113,6 +110,8 @@
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">response</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">exc_info</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="nb">callable</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">request</span><span class="o">.</span><span class="n">body_data</span><span class="p">()</span>
@@ -131,27 +130,26 @@
             <span class="c">#</span>
             <span class="nb">callable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_handler</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;method&#39;</span><span class="p">))</span>
             <span class="n">result</span> <span class="o">=</span> <span class="k">yield</span> <span class="nb">callable</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">exc</span>
+            <span class="n">exc_info</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
         <span class="c">#</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">maybe_failure</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">),</span> <span class="s">&quot;jsonrpc&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Failure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">exc_info</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;fault_code&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">32603</span><span class="p">)</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="bp">None</span>
-            <span class="n">error</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">error</span>
-            <span class="n">code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="s">&#39;fault_code&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">32603</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="n">checkarity</span><span class="p">(</span><span class="nb">callable</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="n">discount</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;JSON RPC exception&#39;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="ow">or</span> <span class="s">&#39;JSON RPC exception&#39;</span>
             <span class="k">if</span> <span class="n">code</span> <span class="o">==</span> <span class="o">-</span><span class="mi">32603</span><span class="p">:</span>
-                <span class="n">result</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;error&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="n">exc_info</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">result</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s">&#39;warning&#39;</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;code&#39;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
-                      <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span>
-                      <span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)}</span>
-            <span class="n">request</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
-            <span class="n">res</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;code&#39;</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
+                     <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="n">msg</span><span class="p">,</span>
+                     <span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)}</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">[</span><span class="s">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">res</span><span class="p">[</span><span class="s">&#39;result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
         <span class="n">coroutine_return</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
@@ -184,11 +182,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="JsonProxy"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JsonProxy">[docs]</a><span class="k">class</span> <span class="nc">JsonProxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A python Proxy class for :class:`JSONRPC` Servers.</span>
+<div class="viewcode-block" id="JsonProxy"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JsonProxy">[docs]</a><span class="k">class</span> <span class="nc">JsonProxy</span><span class="p">(</span><span class="n">AsyncObject</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;A python Proxy class for :class:`.JSONRPC` Servers.</span>
 
 <span class="sd">    :param url: server location</span>
-<span class="sd">    :param version: JSONRPC server version. Default ``2.0``</span>
+<span class="sd">    :param version: JSON-RPC server version. Default ``2.0``</span>
 <span class="sd">    :param id: optional request id, generated if not provided.</span>
 <span class="sd">        Default ``None``.</span>
 <span class="sd">    :param data: Extra data to include in all requests. Default ``None``.</span>
@@ -252,20 +250,7 @@
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">JsonCall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
-<div class="viewcode-block" id="JsonProxy.timeit"><a class="viewcode-back" href="../../../../apps/rpc.html#pulsar.apps.rpc.jsonrpc.JsonProxy.timeit">[docs]</a>    <span class="k">def</span> <span class="nf">timeit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;Useful utility for timing responses from a server.</span>
-
-<span class="sd">        The usage is simple::</span>
-
-<span class="sd">            &gt;&gt;&gt; from pulsar.apps import rpc</span>
-<span class="sd">            &gt;&gt;&gt; p = rpc.JsonProxy(&#39;http://127.0.0.1:8060&#39;)</span>
-<span class="sd">            &gt;&gt;&gt; p.timeit(&#39;ping&#39;, 10)</span>
-<span class="sd">            0.56...</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">multi_async</span><span class="p">((</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">times</span><span class="p">)))</span>
-</div>
-    <span class="nd">@in_loop_thread</span>
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_data</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>

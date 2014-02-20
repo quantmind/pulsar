@@ -67,7 +67,7 @@
           <div class="body">
             
   <h1>Source code for pulsar.apps.data.odm.transaction</h1><div class="highlight"><pre>
-<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">in_loop</span><span class="p">,</span> <span class="n">InvalidOperation</span>
+<span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">EventHandler</span><span class="p">,</span> <span class="n">coroutine_return</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">InvalidOperation</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.pep</span> <span class="kn">import</span> <span class="n">iteritems</span>
 <span class="kn">from</span> <span class="nn">pulsar.utils.structures</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
@@ -259,7 +259,7 @@
 <span class="sd">        :param callback: optional function called back once the transaction</span>
 <span class="sd">            has finished. The function receives one parameter only, the</span>
 <span class="sd">            transaction.</span>
-<span class="sd">        :return: a :class:`.Deferred`</span>
+<span class="sd">        :return: a :class:`.Future`</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
@@ -268,7 +268,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span>
 </div>
-    <span class="nd">@in_loop</span>
+    <span class="nd">@task</span>
     <span class="k">def</span> <span class="nf">_commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">store</span><span class="p">,</span> <span class="n">commands</span> <span class="ow">in</span> <span class="n">iteritems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">):</span>
