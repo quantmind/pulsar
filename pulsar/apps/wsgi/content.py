@@ -192,15 +192,26 @@ def stream_mapping(value, request=None):
 class AsyncString(object):
     '''An asynchronous string which can be used with pulsar WSGI servers.
     '''
-    content_type = None
+    _default_content_type = 'text/plain'
+    _content_type = None
     '''Content type for this :class:`AsyncString`'''
     _streamed = False
     _children = None
     _parent = None
+    charset = None
 
-    def __init__(self, *children):
+    def __init__(self, *children, **params):
         for child in children:
             self.append(child)
+        self._setup(**params)
+
+    def _setup(self, content_type=None, charset=None):
+        self._content_type = content_type or self._default_content_type
+        self.charset = charset or 'utf-8'
+
+    @property
+    def content_type(self):
+        return '%s; charset=%s' % (self._content_type, self.charset)
 
     @property
     def parent(self):
@@ -220,6 +231,12 @@ class AsyncString(object):
         if self._children is None:
             self._children = []
         return self._children
+
+    @property
+    def is_html(self):
+        '''``True`` if this is an :class:`Html` element.
+        '''
+        return False
 
     def __repr__(self):
         return self.__class__.__name__
@@ -389,16 +406,11 @@ class Json(AsyncString):
 
         Additional dictionary of parameters passed during initialisation.
     '''
-    def __init__(self, *children, **params):
-        self.as_list = params.pop('as_list', False)
-        self.parameters = AttributeDictionary(params)
-        for child in children:
-            self.append(child)
+    _default_content_type = 'application/json'
 
-    @property
-    def content_type(self):
-        charset = self.parameters.charset or 'utf-8'
-        return 'application/json; charset=%s' % charset
+    def _setup(self, as_list=False, **params):
+        self.as_list = as_list
+        super(Json, self)._setup(**params)
 
     def do_stream(self, request):
         if self._children:
@@ -462,8 +474,8 @@ class Html(AsyncString):
             self.append(child)
 
     @property
-    def content_type(self):
-        return 'text/html; charset=%s' % self.charset
+    def is_html(self):
+        return True
 
     @property
     def tag(self):
@@ -534,8 +546,9 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         super(Html, self).append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
-               **params):
+               content_type=None, **params):
         self.charset = params.get('charset') or 'utf-8'
+        self._content_type = content_type or 'text/html'
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
@@ -715,31 +728,31 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
 
 
 class Media(AsyncString):
-    '''A useful :class:`AsyncString` which is a container of media links
-or scripts.
+    '''A useful container of media links or scripts.
 
-.. attribute:: media_path
+    .. attribute:: media_path
 
-    The base url path to the local media files, for example ``/media/``. Must
-    include both slashes.
+        The base url path to the local media files, for example
+        ``/media/``. Must include both slashes.
 
-.. attribute:: minified
+    .. attribute:: minified
 
-    Optional flag indicating if relative media files should be modified to
-    end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
-    rispectively.
+        Optional flag indicating if relative media files should be modified to
+        end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
+        rispectively.
 
-    Default: ``False``
+        Default: ``False``
 
-.. attribute:: known_libraries
+    .. attribute:: known_libraries
 
-    Optional dictionary of known media libraries, mapping a name to a
-    valid absolute or local url. For example::
+        Optional dictionary of known media libraries, mapping a name to a
+        valid absolute or local url. For example::
 
-        known_libraries = {'jquery': '//code.jquery.com/jquery-1.9.1.min.js'}
+            known_libraries = {'jquery':
+                               '//code.jquery.com/jquery-1.9.1.min.js'}
 
-    Default: ``None``
-'''
+        Default: ``None``
+    '''
     mediatype = None
 
     def __init__(self, media_path, minified=False, known_libraries=None):
@@ -764,11 +777,8 @@ or scripts.
         A path is local relative when it does not start with a slash
         ``/`` nor ``http://`` nor ``https://``.
         '''
-        if path.startswith('http://') or path.startswith('https://')\
-                or path.startswith('/'):
-            return False
-        else:
-            return True
+        return not (path.startswith('http://') or path.startswith('https://')
+                    or path.startswith('/'))
 
     def absolute_path(self, path, with_media_ending=True):
         '''Return a suitable absolute url for ``path``.
@@ -855,8 +865,30 @@ class Css(Media):
 
 class Scripts(Media):
     '''A :class:`Media` container for javascript links.
+
+    Supports javascript Asynchronous Module Definition
     '''
     mediatype = 'js'
+
+    def __init__(self, *args, **kwargs):
+        self.dependencies = kwargs.pop('dependencies', {})
+        self.required = []
+        super(Scripts, self).__init__(*args, **kwargs)
+
+    def require(self, *scripts):
+        '''Add a ``script`` to the list of :attr:`required` scripts.
+
+        The ``script`` can be a name in the :attr:`~Media.known_libraries`,
+        an absolute uri or a relative url.
+
+        The script will be loaded using the ``require`` javascript package.
+        '''
+        for script in scripts:
+            if script not in self.known_libraries:
+                script = self.absolute_path(script)
+            required = self.required
+            if script not in required:
+                required.append(script)
 
     def append(self, child):
         '''add a new link to the javascript links.
@@ -874,6 +906,15 @@ class Scripts(Media):
                 return script
             elif isinstance(child, Html) and child.tag == 'script':
                 self.children[child] = child
+
+    def require_script(self, wait=200):
+        '''Can be used for requirejs'''
+        libs = dict(((key, self.absolute_path(key, False))
+                     for key in self.known_libraries))
+        return {'paths': libs,
+                'deps': self.required,
+                'shim': self.dependencies,
+                'waitSeconds': wait}
 
     def do_stream(self, request):
         for child in self.children.values():
@@ -930,13 +971,17 @@ class Head(Html):
                 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
 
     '''
-    def __init__(self, media_path=None, title=None, meta=None, **params):
+    def __init__(self, media_path=None, title=None, meta=None, minified=False,
+                 known_libraries=None, scripts_dependencies=None, **params):
         super(Head, self).__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
-        self.append(Css(media_path))
+        self.append(Css(media_path, minified=minified,
+                        known_libraries=known_libraries))
         self.append(EmbeddedCss(None))
-        self.append(Scripts(media_path))
+        self.append(Scripts(media_path, minified=minified,
+                            known_libraries=known_libraries,
+                            dependencies=scripts_dependencies))
         self.add_meta(charset=self.charset)
 
     @property
@@ -981,23 +1026,6 @@ class Head(Html):
             return self
 
 
-class Body(Html):
-    ''':class:`Html` body tag.
-
-    .. attribute:: scripts
-
-        A container of Javascript files to render at the end of the body tag.
-        The usage is the same as :attr:`Head.scripts`.
-    '''
-    def __init__(self, media_path=None):
-        super(Body, self).__init__('body')
-        self.scripts = Scripts(media_path)
-
-    def do_stream(self, request):
-        self.append(self.scripts)
-        return super(Body, self).do_stream(request)
-
-
 class HtmlDocument(Html):
     '''An :class:`.Html` component rendered as an HTML5_ document.
 
@@ -1020,10 +1048,14 @@ class HtmlDocument(Html):
                  '\n</html>')
 
     def __init__(self, title=None, media_path='/media/', charset=None,
-                 **params):
+                 minified=False, known_libraries=None,
+                 scripts_dependencies=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
-        self.head = Head(title=title, media_path=media_path, charset=charset)
-        self.body = Body(media_path=media_path)
+        self.head = Head(title=title, media_path=media_path, minified=minified,
+                         known_libraries=known_libraries,
+                         scripts_dependencies=scripts_dependencies,
+                         charset=charset)
+        self.body = Html('body')
 
     def __call__(self, title=None, body=None, media_path=None):
         if title:
