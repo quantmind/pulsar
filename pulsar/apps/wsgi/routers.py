@@ -501,7 +501,9 @@ class Router(RouterType('RouterBase', (object,), {})):
 
 class MediaMixin(Router):
     response_content_types = RouterParam(('application/octet-stream',
-                                          'text/css'))
+                                          'text/css',
+                                          'application/javascript',
+                                          'text/html'))
     cache_control = CacheControl(maxage=86400)
     _file_path = ''
 
@@ -563,31 +565,32 @@ class MediaMixin(Router):
         return 'Index of %s' % request.path
 
     def static_index(self, request, links):
-        title = Html('h2', self.html_title(request))
+        doc = request.html_document
+        doc.title = 'Index of %s' % request.path
+        title = Html('h2', doc.title)
         list = Html('ul', *[Html('li', a) for a in links])
-        body = Html('div', title, list)
-        doc = request.html_document(title=title, body=body)
+        doc.body.append(Html('div', title, list))
         return doc.http_response(request)
 
 
 class MediaRouter(MediaMixin):
     '''A :class:`Router` for serving static media files from a given
-directory.
+    directory.
 
-:param rute: The top-level url for this router. For example ``/media``
-    will serve the ``/media/<path:path>`` :class:`Route`.
-:param path: Check the :attr:`path` attribute.
-:param show_indexes: Check the :attr:`show_indexes` attribute.
+    :param rute: The top-level url for this router. For example ``/media``
+        will serve the ``/media/<path:path>`` :class:`Route`.
+    :param path: Check the :attr:`path` attribute.
+    :param show_indexes: Check the :attr:`show_indexes` attribute.
 
-.. attribute::    path
+    .. attribute::    path
 
-    The file-system path of the media files to serve.
+        The file-system path of the media files to serve.
 
-.. attribute::    show_indexes
+    .. attribute::    show_indexes
 
-    If ``True`` (default), the router will serve media file directories as
-    well as media files.
-'''
+        If ``True`` (default), the router will serve media file directories as
+        well as media files.
+    '''
     def __init__(self, rute, path, show_indexes=True):
         super(MediaRouter, self).__init__('%s/<path:path>' % rute)
         self._show_indexes = show_indexes

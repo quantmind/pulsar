@@ -205,7 +205,7 @@ class AsyncString(object):
             self.append(child)
         self._setup(**params)
 
-    def _setup(self, content_type=None, charset=None):
+    def _setup(self, content_type=None, charset=None, **kw):
         self._content_type = content_type or self._default_content_type
         self.charset = charset or 'utf-8'
 
@@ -233,10 +233,10 @@ class AsyncString(object):
         return self._children
 
     @property
-    def is_html(self):
-        '''``True`` if this is an :class:`Html` element.
+    def has_default_content_type(self):
+        '''``True`` if this is as the default content type.
         '''
-        return False
+        return self._content_type == self._default_content_type
 
     def __repr__(self):
         return self.__class__.__name__
@@ -466,16 +466,14 @@ class Html(AsyncString):
     Any other keyed-value parameter will be added as attribute,
     if in the set of:attr:`available_attributes` or as :meth:`data`.
     '''
+    _default_content_type = 'text/html'
+
     def __init__(self, tag, *children, **params):
         self._tag = tag
         self._extra = {}
         self._setup(**params)
         for child in children:
             self.append(child)
-
-    @property
-    def is_html(self):
-        return True
 
     @property
     def tag(self):
@@ -518,7 +516,10 @@ class Html(AsyncString):
 
     def get_form_value(self):
         '''Return the value of this :class:`Html` element when it is contained
-in a Html form element. For most element it gets the ``value`` attribute.'''
+        in a Html form element.
+
+        For most element it gets the ``value`` attribute.
+        '''
         return self._visitor.get_form_value(self)
 
     def set_form_value(self, value):
@@ -548,7 +549,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
                content_type=None, **params):
         self.charset = params.get('charset') or 'utf-8'
-        self._content_type = content_type or 'text/html'
+        self._content_type = content_type or self._default_content_type
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
@@ -872,6 +873,8 @@ class Scripts(Media):
 
     def __init__(self, *args, **kwargs):
         self.dependencies = kwargs.pop('dependencies', {})
+        self.require_callback = kwargs.pop('require_callback', None)
+        self.wait = kwargs.pop('wait', 200)
         self.required = []
         super(Scripts, self).__init__(*args, **kwargs)
 
@@ -907,16 +910,27 @@ class Scripts(Media):
             elif isinstance(child, Html) and child.tag == 'script':
                 self.children[child] = child
 
-    def require_script(self, wait=200):
+    def require_script(self):
         '''Can be used for requirejs'''
         libs = dict(((key, self.absolute_path(key, False))
                      for key in self.known_libraries))
         return {'paths': libs,
                 'deps': self.required,
                 'shim': self.dependencies,
-                'waitSeconds': wait}
+                'waitSeconds': self.wait}
 
     def do_stream(self, request):
+        if self.required:
+            require = self.require_script()
+            callback = self.require_callback or ''
+            if callback:
+                callback = ('\nrequire.callback = function () {%s();}'
+                            % callback)
+            yield '''\
+<script type="text/javascript">
+var require = %s,
+    media_path = "%s";%s
+</script>\n''' % (json.dumps(require), self.media_path, callback)
         for child in self.children.values():
             for bit in child.stream(request):
                 yield bit
@@ -972,7 +986,8 @@ class Head(Html):
 
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
-                 known_libraries=None, scripts_dependencies=None, **params):
+                 known_libraries=None, scripts_dependencies=None,
+                 require_callback=None, **params):
         super(Head, self).__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
@@ -981,7 +996,8 @@ class Head(Html):
         self.append(EmbeddedCss(None))
         self.append(Scripts(media_path, minified=minified,
                             known_libraries=known_libraries,
-                            dependencies=scripts_dependencies))
+                            dependencies=scripts_dependencies,
+                            require_callback=require_callback))
         self.add_meta(charset=self.charset)
 
     @property
@@ -1048,11 +1064,12 @@ class HtmlDocument(Html):
                  '\n</html>')
 
     def __init__(self, title=None, media_path='/media/', charset=None,
-                 minified=False, known_libraries=None,
+                 minified=False, known_libraries=None, require_callback=None,
                  scripts_dependencies=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
         self.head = Head(title=title, media_path=media_path, minified=minified,
                          known_libraries=known_libraries,
+                         require_callback=require_callback,
                          scripts_dependencies=scripts_dependencies,
                          charset=charset)
         self.body = Html('body')
