@@ -120,8 +120,7 @@ class Test(tasks.Job):
             if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, timeout, previous=None,
-             add_err=True):
+    def _run(self, runner, test, method, timeout, previous=None, add_err=True):
         __skip_traceback__ = True
         method = getattr(test, method, None)
         if method:
@@ -129,28 +128,25 @@ class Test(tasks.Job):
                 yield runner.run_test_function(test, method, timeout)
             except Exception as exc:
                 add_err = False if previous else add_err
-                previous = self.add_failure(test, runner, exc, add_err=add_err)
+                previous = self.add_failure(test, runner, exc, add_err)
         coroutine_return(previous)
 
-    def add_failure(self, test, runner, error, exc_info=None, add_err=True):
+    def add_failure(self, test, runner, error, add_err=True):
         '''Add ``error`` to the list of errors.
 
         :param test: the test function object where the error occurs
         :param runner: the test runner
         :param error: the python exception for the error
-        :param exc_info: optional system exc info
         :param add_err: if ``True`` the error is added to the list of errors
         :return: a tuple containing the ``error`` and the ``exc_info``
         '''
-        if not exc_info:
-            exc_info = sys.exc_info()
         if add_err:
             if isinstance(error, test.failureException):
-                runner.addFailure(test, exc_info)
+                runner.addFailure(test, error)
             elif isinstance(error, ExpectedFailure):
-                runner.addExpectedFailure(test, exc_info)
+                runner.addExpectedFailure(test, error)
             else:
-                runner.addError(test, exc_info)
+                runner.addError(test, error)
         else:
-            LOGGER.error('exception', exc_info=exc_info)
-        return (error, exc_info)
+            LOGGER.exception('exception')
+        return error

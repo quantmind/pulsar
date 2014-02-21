@@ -45,6 +45,10 @@ __all__ = ['Future',
            'AsyncObject']
 
 
+class FutureTypeError(TypeError):
+    '''raised when invoking ``async`` on a wrong type.'''
+
+
 if hasattr(asyncio, 'Return'):
     Return = asyncio.Return
 
@@ -193,8 +197,6 @@ def async(coro_or_future, loop=None):
     :class:`.Future`. Raises :class:`.FutureTypeError` if ``value``
     is not a generator nor a :class:`.Future`.
 
-    This function can be overwritten by the :func:`set_async` function.
-
     :parameter coro_or_future: the value to convert to a :class:`.Future`.
     :parameter loop: optional :class:`.EventLoop`.
     :return: a :class:`.Future`.
@@ -282,10 +284,6 @@ def in_loop(method):
         return run_in_loop(self._loop, method, self, *args, **kwargs)
 
     return _
-
-
-class FutureTypeError(TypeError):
-    '''raised when invoking ``async`` on a wrong type.'''
 
 
 class Task(asyncio.Task):

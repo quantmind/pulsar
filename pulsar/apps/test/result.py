@@ -109,9 +109,9 @@ class Plugin(object):
 behaviour in the process domain where the test run.'''
         return test
 
-    def after_test_function_run(self, test, local, result):
+    def after_test_function_run(self, test, local):
         '''Executed in the ``test`` process domain, after the ``test`` has
-finished.'''
+        finished.'''
         pass
 
     def addSuccess(self, test):
@@ -435,13 +435,12 @@ class TestRunner(Plugin):
             test = p.before_test_function_run(test, local) or test
         return test
 
-    def after_test_function_run(self, test, result):
+    def after_test_function_run(self, test):
         '''Called before the test starts.'''
         for p in self.plugins:
             local = test.plugins.get(p.name)
             if local is not None:
-                p.after_test_function_run(test, local, result)
-        return result
+                p.after_test_function_run(test, local)
 
     def run_test_function(self, test, func, timeout=None):
         '''Run function ``func`` which belong to ``test``.

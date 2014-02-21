@@ -83,10 +83,7 @@ class TestCallable(object):
 
     def __call__(self, actor):
         result = async(self._call(actor))
-        if self.timeout:
-            return future_timeout(result, self.timeout)
-        else:
-            return result
+        return future_timeout(result, self.timeout) if self.timeout else result
 
     def _call(self, actor):
         # Coroutine to run an asynchronous test function
@@ -96,11 +93,10 @@ class TestCallable(object):
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
         try:
-            result = yield test_function()
-        except Exception as exc:
-            result = exc
-        if self.istest:
-            actor.app.runner.after_test_function_run(self.test, result)
+            yield test_function()
+        finally:
+            if self.istest:
+                actor.app.runner.after_test_function_run(self.test)
 
 
 class SafeTest(object):
