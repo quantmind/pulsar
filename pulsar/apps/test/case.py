@@ -7,6 +7,7 @@ from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
+from .utils import TestFunction
 
 if ispy3k:
     from unittest import mock
@@ -124,9 +125,16 @@ class Test(tasks.Job):
         __skip_traceback__ = True
         method = getattr(test, method, None)
         if method:
+            # Check if a testfunction object is already available
+            # Check the run_on_arbiter decorator for information
+            tfunc = getattr(method, 'testfunction', None)
+            if tfunc is None:
+                tfunc = TestFunction(method.__name__)
             try:
-                yield runner.run_test_function(test, method, timeout)
-            except Exception as exc:
+                exc = yield tfunc(test, timeout)
+            except Exception as e:
+                exc = e
+            if exc:
                 add_err = False if previous else add_err
                 previous = self.add_failure(test, runner, exc, add_err)
         coroutine_return(previous)

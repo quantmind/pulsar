@@ -804,7 +804,7 @@ class Media(AsyncString):
             path = '%s%s' % (lib, ending)
         if self.minified:
             if path.endswith(ending):
-                path = self._minify(path, media)
+                path = self._minify(path, ending)
         if not with_media_ending:
             path = path[:-len(ending)]
         if urlparams:
@@ -1080,7 +1080,6 @@ class HtmlDocument(Html):
         if media_path:
             self.head.scripts.media_path = media_path
             self.head.links.media_path = media_path
-            self.body.scripts.media_path = media_path
         self.body.append(body)
         return self
 

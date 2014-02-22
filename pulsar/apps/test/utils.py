@@ -87,6 +87,7 @@ class TestCallable(object):
 
     def _call(self, actor):
         # Coroutine to run an asynchronous test function
+        __skip_traceback__ = True
         test = self.test
         if self.istest:
             test = actor.app.runner.before_test_function_run(test)
@@ -94,6 +95,8 @@ class TestCallable(object):
         test_function = getattr(test, self.method_name)
         try:
             yield test_function()
+        except Exception as exc:
+            coroutine_return(exc)
         finally:
             if self.istest:
                 actor.app.runner.after_test_function_run(self.test)

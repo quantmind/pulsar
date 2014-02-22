@@ -4,7 +4,6 @@ from pulsar import format_traceback
 from pulsar.utils.structures import AttributeDictionary
 
 from .case import unittest, LOGGER
-from .utils import TestFunction
 
 __all__ = ['Plugin',
            'TestStream',
@@ -427,7 +426,8 @@ class TestRunner(Plugin):
         return mod
 
     def before_test_function_run(self, test):
-        '''Called before the test run, in the test process domain.'''
+        '''Called just before the test is run,
+        in the test process domain.'''
         test.plugins = plugins = {}
         for p in self.plugins:
             local = AttributeDictionary()
@@ -436,23 +436,9 @@ class TestRunner(Plugin):
         return test
 
     def after_test_function_run(self, test):
-        '''Called before the test starts.'''
+        '''Called just after the test has finished,
+        in the test process domain.'''
         for p in self.plugins:
             local = test.plugins.get(p.name)
             if local is not None:
                 p.after_test_function_run(test, local)
-
-    def run_test_function(self, test, func, timeout=None):
-        '''Run function ``func`` which belong to ``test``.
-
-        :parameter test: test instance or class
-        :parameter func: test function belonging to *test*
-        :parameter timeout: An optional timeout for asynchronous tests.
-        :return: an asynchronous result
-        '''
-        if func is None:
-            return func
-        tfunc = getattr(func, 'testfunction', None)
-        if tfunc is None:
-            tfunc = TestFunction(func.__name__)
-        return tfunc(test, timeout)

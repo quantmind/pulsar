@@ -43,7 +43,7 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(response.children), 1)
         result = response.render()
         self.assertIsInstance(result, Future)
-        d.callback('ciao')
+        d.set_result('ciao')
         result = yield result
         self.assertEqual(result, json.dumps({'bla': 'ciao'}))
 
@@ -151,9 +151,7 @@ class TestAsyncContent(unittest.TestCase):
         doc = wsgi.HtmlDocument(media_path='/foo/')
         self.assertEqual(doc.head.scripts.media_path, '/foo/')
         self.assertEqual(doc.head.links.media_path, '/foo/')
-        self.assertEqual(doc.body.scripts.media_path, '/foo/')
         doc = doc(title='ciao', media_path='/assets/')
         self.assertEqual(doc.head.title, 'ciao')
         self.assertEqual(doc.head.scripts.media_path, '/assets/')
         self.assertEqual(doc.head.links.media_path, '/assets/')
-        self.assertEqual(doc.body.scripts.media_path, '/assets/')
