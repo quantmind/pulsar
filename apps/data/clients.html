@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Datastore Clients &mdash; pulsar 0.8.0-beta.4 documentation</title>
+    <title>Datastore Clients &mdash; pulsar 0.8.0-beta.5 documentation</title>
     
     <link rel="stylesheet" href="../../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.8.0-beta.4',
+        VERSION:     '0.8.0-beta.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../../static/underscore.js"></script>
     <script type="text/javascript" src="../../static/doctools.js"></script>
     <link rel="shortcut icon" href="../../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.5 documentation" href="../../index.html" />
     <link rel="up" title="Data Stores" href="index.html" />
     <link rel="next" title="Object Data Mapper" href="odm.html" />
     <link rel="prev" title="Data Stores" href="index.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="Data Stores"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">pulsar 0.8.0-beta.5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">Data Stores</a> &raquo;</li> 
       </ul>
     </div>
@@ -306,13 +306,16 @@ is used.</p>
 <p>You can bind as many handlers to the <tt class="docutils literal"><span class="pre">on_message</span></tt> event as you like.
 The handlers receive one parameter only, a two-elements tuple
 containing the <tt class="docutils literal"><span class="pre">channel</span></tt> and the <tt class="docutils literal"><span class="pre">message</span></tt>.</p>
+<p>A <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="pulsar.apps.data.stores.pulsards.base.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler can be used to publish messages too:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pubsub</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="s">&#39;mychannel&#39;</span><span class="p">,</span> <span class="s">&#39;Hello&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An additional <tt class="docutils literal"><span class="pre">protocol</span></tt> object can be supplied. The protocol must
+implement the <tt class="docutils literal"><span class="pre">encode</span></tt> and <tt class="docutils literal"><span class="pre">decode</span></tt> methods.</p>
 <dl class="method">
 <dt id="pulsar.apps.data.stores.pulsards.base.PubSub.publish">
 <tt class="descname">publish</tt><big>(</big><em>channel</em>, <em>message</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#PubSub.publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.PubSub.publish" title="Permalink to this definition">¶</a></dt>
 <dd><p>Publish a new <tt class="docutils literal"><span class="pre">message</span></tt> to a <tt class="docutils literal"><span class="pre">channel</span></tt>.</p>
-<p>This method return a pulsar <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in the
-number of subscribers that will receive the message (the same
-behaviour as redis publish command).</p>
 </dd></dl>
 
 <dl class="method">
@@ -367,7 +370,8 @@ specified glob-style pattern are listed.</p>
 <dt id="pulsar.apps.data.stores.pulsards.base.PubSub.add_client">
 <tt class="descname">add_client</tt><big>(</big><em>client</em><big>)</big><a class="reference internal" href="../../modules/pulsar/apps/data/stores/pulsards/base.html#PubSub.add_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.data.stores.pulsards.base.PubSub.add_client" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a new <tt class="docutils literal"><span class="pre">client</span></tt> to the set of all <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt>.</p>
-<p>Clients must be callable. When a new message is received
+<p>Clients must be callable accepting two parameters, the channel and
+the message. When a new message is received
 from the publisher, the <tt class="xref py py-meth docutils literal"><span class="pre">broadcast()</span></tt> method will notify all
 <tt class="xref py py-attr docutils literal"><span class="pre">clients</span></tt> via the <tt class="docutils literal"><span class="pre">callable</span></tt> method.</p>
 </dd></dl>

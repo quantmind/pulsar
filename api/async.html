@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.4 documentation</title>
+    <title>Asynchonous API &mdash; pulsar 0.8.0-beta.5 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.4',
+        VERSION:     '0.8.0-beta.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.5 documentation" href="../index.html" />
     <link rel="up" title="API" href="index.html" />
     <link rel="next" title="Actors API" href="actor.html" />
     <link rel="prev" title="API" href="index.html" /> 
@@ -52,7 +52,7 @@
         <li class="right" >
           <a href="index.html" title="API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">pulsar 0.8.0-beta.5 documentation</a> &raquo;</li>
           <li><a href="index.html" accesskey="U">API</a> &raquo;</li> 
       </ul>
     </div>
@@ -105,11 +105,16 @@ documentation purposes.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&#39;asyncmethod&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Returns a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in a <tt class="xref py py-class docutils literal"><span class="pre">Bench</span></tt>
+<p>Returns a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> which results in a <a class="reference internal" href="#pulsar.async.futures.Bench" title="pulsar.async.futures.Bench"><tt class="xref py py-class docutils literal"><span class="pre">Bench</span></tt></a>
 object is successful</p>
 </dd></dl>
 
 </dd></dl>
+
+<dl class="class">
+<dt id="pulsar.async.futures.Bench">
+<em class="property">class </em><tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">Bench</tt><big>(</big><em>times</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#Bench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.Bench" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="async-utilities">
@@ -125,7 +130,6 @@ interaction with <a class="reference internal" href="../tutorials/coroutine.html
 <p>Equivalent to the <tt class="docutils literal"><span class="pre">asyncio.async</span></tt> function but returns a
 <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>. Raises <tt class="xref py py-class docutils literal"><span class="pre">FutureTypeError</span></tt> if <tt class="docutils literal"><span class="pre">value</span></tt>
 is not a generator nor a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>.</p>
-<p>This function can be overwritten by the <tt class="xref py py-func docutils literal"><span class="pre">set_async()</span></tt> function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -164,6 +168,38 @@ if it needs to.</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> or a synchronous <tt class="docutils literal"><span class="pre">value</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="chain-future">
+<h3>Chain Future<a class="headerlink" href="#chain-future" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="pulsar.async.futures.chain_future">
+<tt class="descclassname">pulsar.async.futures.</tt><tt class="descname">chain_future</tt><big>(</big><em>future</em>, <em>callback=None</em>, <em>errback=None</em>, <em>next=None</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/futures.html#chain_future"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.futures.chain_future" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chain a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a> to an existing <tt class="docutils literal"><span class="pre">future</span></tt>.</p>
+<p>This function <cite>chain</cite> the <tt class="docutils literal"><span class="pre">next</span></tt> future to an existing <tt class="docutils literal"><span class="pre">future</span></tt>.
+When the input <tt class="docutils literal"><span class="pre">future</span></tt> receive a result the optional
+<tt class="docutils literal"><span class="pre">callback</span></tt> is executed and its result set as the results of <tt class="docutils literal"><span class="pre">next</span></tt>.
+If an exception occurs the optional <tt class="docutils literal"><span class="pre">errback</span></tt> is executed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>future</strong> &#8211; the original <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a></li>
+<li><strong>callback</strong> &#8211; optional callback to execute on the result of <tt class="docutils literal"><span class="pre">future</span></tt></li>
+<li><strong>errback</strong> &#8211; optional callback to execute on the exception of <tt class="docutils literal"><span class="pre">future</span></tt></li>
+<li><strong>next</strong> &#8211; optional <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a> to chain.
+If not provided a new future is created</li>
+<li><strong>timeout</strong> &#8211; optional timeout to set on <tt class="docutils literal"><span class="pre">next</span></tt></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the future <tt class="docutils literal"><span class="pre">next</span></tt></p>
 </td>
 </tr>
 </tbody>
@@ -271,104 +307,6 @@ the bound <tt class="docutils literal"><span class="pre">method</span></tt>.</p>
 <h2>Queues<a class="headerlink" href="#queues" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="queue">
 <h3>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="pulsar.async.queues.Queue">
-<em class="property">class </em><tt class="descclassname">pulsar.async.queues.</tt><tt class="descname">Queue</tt><big>(</big><em>maxsize=0</em>, <em>loop=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>An <a class="reference internal" href="#pulsar.async.futures.AsyncObject" title="pulsar.async.futures.AsyncObject"><tt class="xref py py-class docutils literal"><span class="pre">AsyncObject</span></tt></a> which is a <a class="reference external" href="http://en.wikipedia.org/wiki/FIFO">FIFO queue</a> with same
-interface as Queue class in the standard python library.</p>
-<dl class="attribute">
-<dt id="pulsar.async.queues.Queue.maxsize">
-<tt class="descname">maxsize</tt><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.maxsize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.maxsize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Integer representing the upper bound limit on the number
-of items that can be placed in the queue.</p>
-<p>If <a class="reference internal" href="#pulsar.async.queues.Queue.maxsize" title="pulsar.async.queues.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> is less than or equal to zero, there is no
-upper bound.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.qsize">
-<tt class="descname">qsize</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.qsize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.qsize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Size of the queue.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.full">
-<tt class="descname">full</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.full"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.full" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return True if there are <a class="reference internal" href="#pulsar.async.queues.Queue.maxsize" title="pulsar.async.queues.Queue.maxsize"><tt class="xref py py-attr docutils literal"><span class="pre">maxsize</span></tt></a> items in the queue.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.put">
-<tt class="descname">put</tt><big>(</big><em>item</em>, <em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.put" title="Permalink to this definition">¶</a></dt>
-<dd><p>Put an <tt class="docutils literal"><span class="pre">item</span></tt> in the queue.</p>
-<p>If you yield from <a class="reference internal" href="#pulsar.async.queues.Queue.put" title="pulsar.async.queues.Queue.put"><tt class="xref py py-meth docutils literal"><span class="pre">put()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
-(the default), wait until a item is added to the queue. Otherwise
-raise <tt class="docutils literal"><span class="pre">Full</span></tt> if no slots is available before <tt class="docutils literal"><span class="pre">timeout</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>item</strong> &#8211; item to put into the queue.</li>
-<li><strong>timeout</strong> &#8211; optional timeout in seconds.</li>
-<li><strong>wait</strong> &#8211; optional flag for inserting the item only if one
-slot is immediately available.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> resulting in <tt class="docutils literal"><span class="pre">None</span></tt> if <tt class="docutils literal"><span class="pre">wait</span></tt> is
-<tt class="docutils literal"><span class="pre">True</span></tt>, otherwise <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.put_nowait">
-<tt class="descname">put_nowait</tt><big>(</big><em>item</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.put_nowait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.put_nowait" title="Permalink to this definition">¶</a></dt>
-<dd><p>Put an item into the queue..</p>
-<p>Put an item if a slot is immediately available, otherwise raise Full.
-Equivalent to <tt class="docutils literal"><span class="pre">self.put(item,</span> <span class="pre">wait=False)</span></tt>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.get">
-<tt class="descname">get</tt><big>(</big><em>timeout=None</em>, <em>wait=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove and return an item from the queue.</p>
-<p>If you yield from <a class="reference internal" href="#pulsar.async.queues.Queue.get" title="pulsar.async.queues.Queue.get"><tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt></a> and <tt class="docutils literal"><span class="pre">timeout</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>
-(the default), wait until a item is available. Otherwise raise
-<tt class="docutils literal"><span class="pre">Empty</span></tt> if no item is available before <tt class="docutils literal"><span class="pre">timeout</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>timeout</strong> &#8211; optional timeout in seconds.</li>
-<li><strong>wait</strong> &#8211; optional flag for returning the <tt class="docutils literal"><span class="pre">item</span></tt> if one is
-immediately available.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> resulting in the item removed form the
-queue if <tt class="docutils literal"><span class="pre">wait</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, otherwise the <tt class="docutils literal"><span class="pre">item</span></tt> removed from
-the queue.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.async.queues.Queue.get_nowait">
-<tt class="descname">get_nowait</tt><big>(</big><big>)</big><a class="reference internal" href="../modules/pulsar/async/queues.html#Queue.get_nowait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.queues.Queue.get_nowait" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove and return an item from the queue.</p>
-<p>Return an item if one is immediately available otherwise raise Empty.
-Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False)</span></tt>.</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 </div>
 </div>
@@ -403,6 +341,7 @@ Equivalent to <tt class="docutils literal"><span class="pre">self.get(wait=False
 <li><a class="reference internal" href="#async-utilities">Async Utilities</a><ul>
 <li><a class="reference internal" href="#async">Async</a></li>
 <li><a class="reference internal" href="#maybe-async">Maybe Async</a></li>
+<li><a class="reference internal" href="#chain-future">Chain Future</a></li>
 <li><a class="reference internal" href="#coroutine-return">Coroutine return</a></li>
 <li><a class="reference internal" href="#add-async-binding">Add async binding</a></li>
 <li><a class="reference internal" href="#multi-async">Multi Async</a></li>

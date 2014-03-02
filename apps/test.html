@@ -9,7 +9,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <title>Testing &mdash; pulsar 0.8.0-beta.4 documentation</title>
+    <title>Testing &mdash; pulsar 0.8.0-beta.5 documentation</title>
     
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
@@ -18,7 +18,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.8.0-beta.4',
+        VERSION:     '0.8.0-beta.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="../static/underscore.js"></script>
     <script type="text/javascript" src="../static/doctools.js"></script>
     <link rel="shortcut icon" href="../static/favicon.ico"/>
-    <link rel="top" title="pulsar 0.8.0-beta.4 documentation" href="../index.html" />
+    <link rel="top" title="pulsar 0.8.0-beta.5 documentation" href="../index.html" />
     <link rel="next" title="Data Stores" href="data/index.html" />
     <link rel="prev" title="Distributed Task Queue" href="tasks.html" /> 
 </head>
@@ -51,7 +51,7 @@
         <li class="right" >
           <a href="tasks.html" title="Distributed Task Queue"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">pulsar 0.8.0-beta.4 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">pulsar 0.8.0-beta.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="deck">
@@ -578,7 +578,7 @@ behaviour in the process domain where the test run.</p>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.after_test_function_run">
-<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em>, <em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>local</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.after_test_function_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executed in the <tt class="docutils literal"><span class="pre">test</span></tt> process domain, after the <tt class="docutils literal"><span class="pre">test</span></tt> has
 finished.</p>
 </dd></dl>
@@ -619,35 +619,15 @@ finished.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.before_test_function_run">
 <tt class="descname">before_test_function_run</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.before_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.before_test_function_run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called before the test run, in the test process domain.</p>
+<dd><p>Called just before the test is run,
+in the test process domain.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.after_test_function_run">
-<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em>, <em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.after_test_function_run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called before the test starts.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pulsar.apps.test.result.TestRunner.run_test_function">
-<tt class="descname">run_test_function</tt><big>(</big><em>test</em>, <em>func</em>, <em>timeout=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.run_test_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.run_test_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run function <tt class="docutils literal"><span class="pre">func</span></tt> which belong to <tt class="docutils literal"><span class="pre">test</span></tt>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>test</strong> &#8211; test instance or class</li>
-<li><strong>func</strong> &#8211; test function belonging to <em>test</em></li>
-<li><strong>timeout</strong> &#8211; An optional timeout for asynchronous tests.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an asynchronous result</p>
-</td>
-</tr>
-</tbody>
-</table>
+<tt class="descname">after_test_function_run</tt><big>(</big><em>test</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.after_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.after_test_function_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called just after the test has finished,
+in the test process domain.</p>
 </dd></dl>
 
 </dd></dl>
