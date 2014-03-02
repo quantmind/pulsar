@@ -25,5 +25,4 @@ class TestApi(unittest.TestCase):
             yield None
             yield None
             raise ValueError
-        self.assertIsInstance(c._result, Failure)
-        c._result.mute()
+        self.assertIsInstance(c._result, ValueError)

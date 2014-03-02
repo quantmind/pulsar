@@ -20,37 +20,6 @@ are:
 * The last layer, built on top of the first two, is based on the higher level
   :class:`.Application` class.
 
-.. _async-layer:
-
-Asynchronous Components
-===============================
-
-Pulsar can be used as a stand-alone asynchronous library, without using
-:ref:`actors <design-actor>` to provide parallel execution and more information
-can be found in the :ref:`asynchronous components <tutorials-coroutine>`
-tutorial.
-
-.. _eventloop:
-
-Event Loop
-~~~~~~~~~~~~~~~
-The pulsating heart of the asynchronous framework.
-Pulsar :class:`.EventLoop` is implemented following pep-3156_ specification
-and can be interchanged with the ``asyncio`` event loop available in python 3.4.
-
-Deferred
-~~~~~~~~~~~~
-Designed along the lines of `twisted deferred`_, this is an
-:ref:`async object <async-object>` representing a callback which
-will be put off until later. Pulsar has three types of deferred:
-
-* A vanilla :class:`.Deferred`, similar to twisted deferred.
-* A :class:`.DeferredTask`, a specialised deferred which consume a :ref:`coroutine <coroutine>`.
-* A :class:`.MultiDeferred` for managing collections of independent asynchronous
-  components.
-
-.. _twisted deferred: http://twistedmatrix.com/documents/current/core/howto/defer.html
-
 .. _async-object:
 
 Async Objects
@@ -194,7 +163,7 @@ connections can be served simultaneously.
 
 CPU-bound
 ~~~~~~~~~~~~~~~
-Another way for an actor to function is to use its :attr:`.Actor.thread_pool`
+Another way for an actor to function is to use its :attr:`~.Actor.executor`
 to perform CPU intensive operations, such as calculations, data manipulation
 or whatever you need them to do.
 CPU-bound :class:`.Actor` have the following properties:
@@ -202,10 +171,10 @@ CPU-bound :class:`.Actor` have the following properties:
 .. _request-loop:
 
 * Their :attr:`.Actor._loop` listen for requests on file descriptors
-  as usual and it is running (and installed) in the :ref:`actor io thread <actor-io-thread>`
-  as usual.
-* The threads in the :attr:`.Actor.thread_pool` install an additional :class:`EventLoop`
-  which listen for events on a message queue.
+  as usual and it is running (and installed) in the
+  :ref:`actor io thread <actor-io-thread>` as usual.
+* The threads in the :meth:`~.Actor.executor` install an additional
+  :class:`EventLoop` which listen for events on a message queue.
   Pulsar refers to this specialised event loop as the **request loop**.
 
 .. note::
@@ -272,8 +241,8 @@ the workflow of the :func:`.spawn` function is as follow:
 Handshake
 ~~~~~~~~~~~~~~~
 
-The actor **hand-shake** is the mechanism with which an :class:`.Actor` register
-its :ref:`mailbox address <tutorials-messages>` with its manager.
+The actor **hand-shake** is the mechanism with which an :class:`.Actor`
+register its :ref:`mailbox address <tutorials-messages>` with its manager.
 The actor manager is either a :class:`.Monitor` or the :class:`.Arbiter`
 depending on which spawned the actor.
 

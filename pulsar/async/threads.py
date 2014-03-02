@@ -159,6 +159,15 @@ class IOqueue(selectors.BaseSelector):
                 # waiting future
                 future._loop.call_soon_threadsafe(passthrough)
 
+    def get_map(self):
+        return {}
+
+    def register(self, fileobj, events, data=None):
+        pass
+
+    def unregister(self, fileobj):
+        pass
+
 
 class QueueEventLoop(BaseEventLoop):
     task_factory = Task

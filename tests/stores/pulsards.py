@@ -1,6 +1,7 @@
 import binascii
 import time
 import unittest
+from asyncio import Queue
 
 import pulsar
 from pulsar import new_event_loop
@@ -8,6 +9,27 @@ from pulsar.utils.security import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.data import (PulsarDS, create_store, redis_parser,
                               ResponseError)
+
+
+class Listener:
+
+    def __init__(self):
+        self._messages = Queue()
+
+    def __call__(self, channel, message):
+        self._messages.put_nowait((channel, message))
+
+    def get(self):
+        return self._messages.get()
+
+
+class StringProtocol:
+
+    def encode(self, message):
+        return message
+
+    def decode(self, message):
+        return message.decode('utf-8')
 
 
 class StoreMixin(object):
@@ -1035,6 +1057,19 @@ class RedisCommands(StoreMixin):
         result = yield pubsub.publish('chat', 'Hello')
         self.assertTrue(result >= 0)
         self.assertTrue(self.called)
+
+    def test_pattern_subscribe(self):
+        eq = self.async.assertEqual
+        pubsub = self.client.pubsub(protocol=StringProtocol())
+        listener = Listener()
+        pubsub.add_client(listener)
+        yield eq(pubsub.psubscribe('f*'), None)
+        yield eq(pubsub.publish('foo', 'hello foo'), 1)
+        channel, message = yield listener.get()
+        self.assertEqual(channel, 'foo')
+        self.assertEqual(message, 'hello foo')
+        self.assertEqual(pubsub.punsubscribe(), None)
+        #yield listener.get()
 
     ###########################################################################
     ##    TRANSACTION

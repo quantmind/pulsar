@@ -191,13 +191,17 @@ class TaskQueue(pulsar.Application):
             if self.backend.next_run <= time.time():
                 self.backend.tick()
 
+    def monitor_stopping(self, monitor, exc=None):
+        if self.backend:
+            self.backend.close()
+
     def worker_start(self, worker, exc=None):
         if not exc:
             self.get_backend().start(worker)
 
     def worker_stopping(self, worker, exc=None):
         if self.backend:
-            self.backend.close(worker)
+            self.backend.close()
 
     def actorparams(self, monitor, params):
         # makes sure workers are only consuming tasks, not scheduling.

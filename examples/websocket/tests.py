@@ -1,7 +1,8 @@
 '''Tests the websocket middleware in pulsar.apps.ws.'''
 import unittest
+from asyncio import Queue
 
-from pulsar import send, Queue, new_event_loop
+from pulsar import send, new_event_loop
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 from pulsar.apps.test import dont_run_with_thread

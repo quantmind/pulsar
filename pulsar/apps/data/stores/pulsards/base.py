@@ -299,6 +299,13 @@ class PubSub(EventHandler):
     You can bind as many handlers to the ``on_message`` event as you like.
     The handlers receive one parameter only, a two-elements tuple
     containing the ``channel`` and the ``message``.
+
+    A :class:`PubSub` handler can be used to publish messages too::
+
+        pubsub.publish('mychannel', 'Hello')
+
+    An additional ``protocol`` object can be supplied. The protocol must
+    implement the ``encode`` and ``decode`` methods.
     '''
     MANY_TIMES_EVENTS = ('on_message',)
 
@@ -313,10 +320,6 @@ class PubSub(EventHandler):
 
     def publish(self, channel, message):
         '''Publish a new ``message`` to a ``channel``.
-
-        This method return a pulsar :class:`.Future` which results in the
-        number of subscribers that will receive the message (the same
-        behaviour as redis publish command).
         '''
         raise NotImplementedError
 
@@ -365,7 +368,8 @@ class PubSub(EventHandler):
     def add_client(self, client):
         '''Add a new ``client`` to the set of all :attr:`clients`.
 
-        Clients must be callable. When a new message is received
+        Clients must be callable accepting two parameters, the channel and
+        the message. When a new message is received
         from the publisher, the :meth:`broadcast` method will notify all
         :attr:`clients` via the ``callable`` method.'''
         self._clients.add(client)

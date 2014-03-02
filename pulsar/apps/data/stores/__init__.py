@@ -1,3 +1,2 @@
-from pulsar.utils.importer import import_module
+from . import redis
 from .pulsards import *
-import_module('pulsar.apps.data.stores.redis')

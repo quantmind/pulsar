@@ -1,7 +1,8 @@
 '''Tests django chat application.'''
 import unittest
+from asyncio import Queue
 
-from pulsar import send, get_application, Queue, coroutine_return
+from pulsar import send, get_application, coroutine_return
 from pulsar.utils.path import Path
 from pulsar.apps import http, ws
 from pulsar.apps.test import dont_run_with_thread
@@ -29,7 +30,7 @@ class MessageHandler(ws.WS):
         return self.queue.get()
 
     def on_message(self, websocket, message):
-        self.queue.put(message)
+        return self.queue.put(message)
 
 
 @unittest.skipUnless(manage, 'Requires django')

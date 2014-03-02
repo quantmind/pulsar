@@ -214,8 +214,8 @@ class Client(object):
         return '%s(%s)' % (self.__class__.__name__, self.store)
     __str__ = __repr__
 
-    def pubsub(self):
-        return PubSub(self.store)
+    def pubsub(self, **kw):
+        return PubSub(self.store, **kw)
 
     def pipeline(self):
         return Pipeline(self.store)

@@ -229,9 +229,10 @@ class EventHandler(AsyncObject):
         event = self.event(name)
         if event:
             try:
-                return event.fire(arg, **kwargs)
+                event.fire(arg, **kwargs)
             except InvalidStateError:
                 self.logger.error('Event %s already fired' % name)
+            return event
         else:
             self.logger.warning('Unknown event "%s" for %s', name, self)
 

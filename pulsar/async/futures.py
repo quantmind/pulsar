@@ -115,18 +115,18 @@ def future_timeout(future, timeout, exc_class=None):
 
 
 def chain_future(future, callback=None, errback=None, next=None, timeout=None):
-    '''Chain a :class:`.Future` to an existing ``future``.
+    '''Chain a :class:`asyncio.Future` to an existing ``future``.
 
     This function `chain` a ``next`` future to an existing ``future``.
     When the input ``future`` receive a result the optional
     ``callback`` is executed and its result set as the results of ``next``.
     If an exception occurs the optional ``errback`` is executed.
 
-    :param future: the original :class:`.Future`
+    :param future: the original :class:`asyncio.Future`
     :param callback: optional callback to execute on the result of ``future``
     :param errback: optional callback to execute on the exception of ``future``
-    :param next: optional :class:`.Future` to chain. If not provided a new
-        future is created
+    :param next: optional :class:`asyncio.Future` to chain.
+        If not provided a new future is created
     :param timeout: optional timeout to set on ``next``
     :return: the future ``next``
     '''

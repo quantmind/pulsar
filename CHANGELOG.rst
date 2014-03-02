@@ -1,6 +1,6 @@
 Ver. 0.8.0
 ===========================
-* **Backward incopatible version**
+* **Backward incompatible version**
 
 * **Asyncio Integration**
 
@@ -11,18 +11,18 @@ Ver. 0.8.0
     In other words ``from pulsar import get_event_loop`` and
     ``from asyncio import get_event_loop`` are equivalent (provided pulsar is
     imported first).
-  * Replaced the ``Deferred`` class with asyncio ``~.Future``.
+  * Replaced the ``Deferred`` class with :class:`asyncio.Future`.
 
 * **Core library**
 
   * Removed support for python 2.6 and python 3.2.
   * :ref:`Coroutines <coroutine>` can return a value via the
-    :func:`.coroutine_return` function only, otherwise they return ``None``.
-    This is what asyncio does and makes applications less error prone.
-  * Added :func:`.run_in_loop_thread` high level function. This utility
-    runs a callable in the event loop thread and returns a :class:`.Deferred`
-    called back once the callable has a result/exception.
-  * Added :func:`.in_loop` and :func:`.in_loop_thread` decorators for
+    :func:`.coroutine_return` function.
+  * Added :func:`.run_in_loop` high level function. This utility
+    runs a callable in the event loop thread and returns a
+    :class:`asyncio.Future` called back once the callable has
+    a result/exception.
+  * Added :func:`.in_loop` and :func:`.task` decorators for
     member functions of :ref:`async objects <async-object>`.
   * :func:`.async` is now a function, not a decorator.
   * Added the new :class:`.Pool` class for managing a pool of asynchronous
@@ -63,9 +63,10 @@ Ver. 0.8.0
     with a body via the :func:`.parse_close` function (for websocket clients).
 
 * **WSGI**
+
   * Better handling of cookies in :class:`.WsgiResponse`
   * :class:`.Router` can have children even if it is a leaf node
-  * Dropped support for _http-parser, only HTTP python parser used
+  * Dropped support for http-parser_, only HTTP python parser used
 
 * **Miscellaneous**
 

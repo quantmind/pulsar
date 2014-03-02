@@ -129,22 +129,21 @@ class TestAsyncContent(unittest.TestCase):
         self.assertEqual(len(root.children), 0)
 
     def test_media_path(self):
-        media = wsgi.Media('/media/',
-                           known_libraries={'jquery':
-                                            'http://bla.foo/jquery.js'})
+        media = wsgi.Scripts('/media/',
+                             known_libraries={'jquery':
+                                              'http://bla.foo/jquery'})
         self.assertTrue(media.is_relative('bla/test.js'))
-        path = media.absolute_path('bla/foo.css')
-        self.assertEqual(path, '/media/bla/foo.css')
-        self.assertEqual(media.absolute_path('/bla/foo.css'), '/bla/foo.css')
+        path = media.absolute_path('bla/foo.js')
+        self.assertEqual(path, '/media/bla/foo.js')
+        self.assertEqual(media.absolute_path('/bla/foo.js'), '/bla/foo.js')
         self.assertEqual(media.absolute_path('jquery'),
                          'http://bla.foo/jquery.js')
 
     def test_media_minified(self):
-        media = wsgi.Media('/media/',
-                           minified=True,
-                           known_libraries={'jquery':
-                                            'http://bla.foo/jquery.js'})
+        media = wsgi.Css('/media/', minified=True)
         self.assertEqual(media.absolute_path('bla/foo.css'),
+                         '/media/bla/foo.min.css')
+        self.assertEqual(media.absolute_path('bla/foo.min.css'),
                          '/media/bla/foo.min.css')
 
     def test_html_doc_media(self):

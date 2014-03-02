@@ -134,13 +134,14 @@ Html Factory
 
 
 '''
-from collections import Mapping
+import json as pyjson
+
+from collections import Mapping, OrderedDict
 from functools import partial
 from inspect import isgenerator
 
 from pulsar import multi_async, Future, async, coroutine_return, chain_future
 from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
-from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
                                csslink, dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
@@ -914,10 +915,10 @@ class Scripts(Media):
         '''Can be used for requirejs'''
         libs = dict(((key, self.absolute_path(key, False))
                      for key in self.known_libraries))
-        return {'paths': libs,
-                'deps': self.required,
-                'shim': self.dependencies,
-                'waitSeconds': self.wait}
+        return OrderedDict((('deps', self.required),
+                            ('paths', libs),
+                            ('shim', self.dependencies),
+                            ('waitSeconds', self.wait)))
 
     def do_stream(self, request):
         if self.required:
@@ -930,7 +931,7 @@ class Scripts(Media):
 <script type="text/javascript">
 var require = %s,
     media_path = "%s";%s
-</script>\n''' % (json.dumps(require), self.media_path, callback)
+</script>\n''' % (pyjson.dumps(require), self.media_path, callback)
         for child in self.children.values():
             for bit in child.stream(request):
                 yield bit

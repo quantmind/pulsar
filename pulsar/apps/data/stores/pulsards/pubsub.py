@@ -58,7 +58,7 @@ class PubSub(base.PubSub):
     def psubscribe(self, pattern, *patterns):
         return self._subscribe('PSUBSCRIBE', pattern, *patterns)
 
-    def punsubscribe(self, *channels):
+    def punsubscribe(self, *patterns):
         if self._connection:
             self._connection.execute('PUNSUBSCRIBE', *patterns)
 

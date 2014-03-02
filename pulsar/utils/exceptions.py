@@ -129,6 +129,10 @@ class HttpRedirect(HttpException):
         return self.headers['location']
 
 
+class BadRequest(HttpException):
+    status = 400
+
+
 class PermissionDenied(HttpException):
     '''An :class:`HttpException` with default ``403`` status code.'''
     status = 403

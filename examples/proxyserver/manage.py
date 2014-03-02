@@ -38,7 +38,9 @@ Implemenation
 '''
 import io
 import sys
+import logging
 from functools import partial
+from asyncio import Queue, QueueEmpty
 
 try:
     import pulsar
@@ -46,7 +48,7 @@ except ImportError:
     sys.path.append('../../')
     import pulsar
 
-from pulsar import HttpException, Queue, Empty, async, coroutine_return
+from pulsar import HttpException, async, coroutine_return, add_errback
 from pulsar.apps import wsgi, http
 from pulsar.utils.httpurl import Headers
 from pulsar.utils.log import LocalMixin, local_property
@@ -55,6 +57,7 @@ from pulsar.utils.log import LocalMixin, local_property
 SERVER_SOFTWARE = 'Pulsar-proxy-server/%s' % pulsar.version
 ENVIRON_HEADERS = ('content-type', 'content-length')
 USER_AGENT = SERVER_SOFTWARE
+logger = logging.getLogger('pulsar.proxyserver')
 
 
 def x_forwarded_for(environ, headers):
@@ -95,7 +98,7 @@ class ProxyServerWsgiHandler(LocalMixin):
 
     def _call(self, environ, start_response, loop):
         uri = environ['RAW_URI']
-        loop.logger.debug('new request for %r' % uri)
+        logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
         if environ.get('HTTP_EXPECT') != '100-continue':
@@ -114,7 +117,7 @@ class ProxyServerWsgiHandler(LocalMixin):
             method, uri, data=data, headers=request_headers,
             version=environ['SERVER_PROTOCOL'],
             pre_request=response.pre_request), loop)
-        request.add_errback(response.error)
+        add_errback(request, response.error)
         coroutine_return(response)
 
     def request_headers(self, environ):
@@ -152,24 +155,27 @@ class ProxyResponse(object):
 
     def __iter__(self):
         while True:
-            try:
-                yield self.queue.get(wait=not self._done)
-            except Empty:
-                break
+            if self._done:
+                try:
+                    yield self.queue.get_nowait()
+                except QueueEmpty:
+                    break
+            else:
+                yield self.queue.get
 
     def pre_request(self, response):
         self._started = True
         response.bind_event('data_processed', self.data_processed)
         return response
 
-    def error(self, failure):
+    def error(self, exc):
         if not self._started:
             request = wsgi.WsgiRequest(self.environ)
             content_type = request.content_types.best_match(
                 ('text/html', 'text/plain'))
             uri = self.environ['RAW_URI']
             msg = 'Could not find %s' % uri
-            failure.log(msg=msg, level='info')
+            logger.info(msg=msg)
             if content_type == 'text/html':
                 html = wsgi.HtmlDocument(title=msg)
                 html.body.append('<h1>%s</h1>' % msg)

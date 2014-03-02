@@ -73,7 +73,7 @@ class Test(tasks.Job):
         else:
             for test in all_tests:
                 runner.startTest(test)
-                self.add_failure(test, runner, error[0], error[1])
+                self.add_failure(test, runner, error)
                 runner.stopTest(test)
         if not skip_tests:
             yield self._run(runner, testcls, 'tearDownClass', timeout,

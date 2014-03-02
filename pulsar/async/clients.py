@@ -1,10 +1,10 @@
 from functools import reduce
+from asyncio import Queue, QueueFull
 
 from pulsar.utils.internet import is_socket_closed
 
-from .futures import coroutine_return, AsyncObject
+from .futures import coroutine_return, AsyncObject, future_timeout
 from .protocols import Producer
-from .queues import Queue, Full
 
 
 __all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
@@ -14,8 +14,7 @@ class Pool(AsyncObject):
     '''An asynchronous pool of open connections.
 
     Open connections are either :attr:`in_use` or :attr:`available`
-    to be used. Available connection are placed in an
-    asynchronous  :class:`.Queue`.
+    to be used. Available connection are placed in an :class:`asyncio.Queue`.
 
     This class is not thread safe.
     '''
@@ -23,7 +22,7 @@ class Pool(AsyncObject):
         self._creator = creator
         self._closed = False
         self._timeout = timeout
-        self._queue = Queue(loop=loop, maxsize=pool_size)
+        self._queue = Queue(maxsize=pool_size, loop=loop)
         self._connecting = 0
         self._loop = self._queue._loop
         self._in_use_connections = set()
@@ -85,7 +84,10 @@ class Pool(AsyncObject):
     def _get(self):
         queue = self._queue
         if self.in_use + self._connecting >= queue._maxsize or queue.qsize():
-            connection = yield queue.get(timeout=self._timeout)
+            if self._timeout:
+                connection = yield future_timeout(queue.get(), self._timeout)
+            else:
+                connection = yield queue.get()
             # None signal that a connection was removed form the queue
             # Go again
             if connection is None:

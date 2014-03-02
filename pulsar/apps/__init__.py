@@ -117,7 +117,6 @@ def monitor_start(self, exc=None):
         self.bind_event('on_params', monitor_params)
         self.bind_event('on_info', monitor_info)
         self.bind_event('stopping', monitor_stopping)
-        self.bind_event('stop', monitor_stop)
         for callback in when_monitor_start:
             yield callback(self)
         self.monitor_task = lambda: app.monitor_task(self)
@@ -135,13 +134,6 @@ def monitor_stopping(self, exc=None):
     if not self.cfg.workers:
         yield self.app.worker_stopping(self)
     yield self.app.monitor_stopping(self)
-    coroutine_return(self)
-
-
-def monitor_stop(self, exc=None):
-    if not self.cfg.workers:
-        yield self.app.worker_stop(self)
-    yield self.app.monitor_stop(self)
     coroutine_return(self)
 
 
@@ -167,7 +159,6 @@ def worker_start(self, exc=None):
         self.app = app = cfg.application.from_config(cfg, logger=self.logger)
     self.bind_event('on_info', app.worker_info)
     self.bind_event('stopping', app.worker_stopping)
-    self.bind_event('stop', app.worker_stop)
     return app.worker_start(self, exc=exc)
 
 
@@ -483,10 +474,6 @@ class Application(Configurator):
         '''Added to the ``stopping`` :ref:`worker hook <actor-hooks>`.'''
         pass
 
-    def worker_stop(self, worker, exc=None):
-        '''Added to the ``stop`` :ref:`worker hook <actor-hooks>`.'''
-        pass
-
     # MONITOR CALLBACKS
     def actorparams(self, monitor, params=None):
         '''Hook to add additional entries when the monitor spawn new actors.
@@ -505,11 +492,6 @@ class Application(Configurator):
 
     def monitor_stopping(self, monitor):
         '''Callback by the monitor before stopping.
-        '''
-        pass
-
-    def monitor_stop(self, monitor):
-        '''Callback by the monitor on stop.
         '''
         pass
 

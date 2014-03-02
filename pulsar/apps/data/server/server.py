@@ -1844,8 +1844,7 @@ class Storage(object):
 
     @command('Pub/Sub', script=0)
     def punsubscribe(self, client, request, N):
-        check_input(request, not N)
-        patterns = list(self._patterns) if N == 1 else request[1:]
+        patterns = request[1:] if N else list(self._patterns)
         for pattern in patterns:
             if pattern in self._patterns:
                 p = self._patterns[pattern]
@@ -1869,8 +1868,7 @@ class Storage(object):
 
     @command('Pub/Sub', script=0)
     def unsubscribe(self, client, request, N):
-        check_input(request, not N)
-        channels = list(self._channels) if N == 1 else request[1:]
+        channels = request[1:] if N else list(self._channels)
         for channel in channels:
             if channel in self._channels:
                 clients = self._channels[channel]

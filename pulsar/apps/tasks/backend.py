@@ -296,6 +296,10 @@ class TaskBackend(EventHandler):
                  poll_timeout=None):
         self.store = store
         self._logger = logger
+        super(TaskBackend, self).__init__(self._loop,
+                                          many_times_events=('task_queued',
+                                                             'task_started',
+                                                             'task_done'))
         self.name = name
         self.task_paths = task_paths
         self.backlog = backlog
@@ -308,10 +312,7 @@ class TaskBackend(EventHandler):
         self.callbacks = {}
         self.models = odm.Mapper(self.store)
         self.models.register(Task)
-        super(TaskBackend, self).__init__(self._loop,
-                                          many_times_events=('task_queued',
-                                                             'task_started',
-                                                             'task_done'))
+        self._pubsub = self.get_pubsub()
 
     def __repr__(self):
         if self.schedule_periodic:
@@ -372,7 +373,7 @@ class TaskBackend(EventHandler):
             in the task callable.
         :return: a :class:`.Future` resulting in a task id on success.
         '''
-        pubsub = self.pubsub()
+        pubsub = self._pubsub
         if jobname in self.registry:
             job = self.registry[jobname]
             task_id, lock_id = self.generate_task_ids(job, kwargs)
@@ -405,9 +406,6 @@ class TaskBackend(EventHandler):
         '''Asynchronously wait for a task with ``task_id`` to have finished
         its execution.
         '''
-        # make sure pubsub is implemented
-        self.pubsub()
-
         def _():
             task = yield self.get_task(task_id)
             if task:
@@ -433,6 +431,17 @@ class TaskBackend(EventHandler):
     def get_tasks(self, ids):
         return self.models.task.filter(id=ids).all()
 
+    def get_pubsub(self):
+        '''Create a publish/subscribe handler from the backend :attr:`store`.
+        '''
+        pubsub = self.store.pubsub()
+        pubsub.add_client(TaskClient(self))
+        # pubsub channels names from event names
+        channels = tuple((self.channel(name) for name in self.events))
+        pubsub.subscribe(*channels)
+        self.bind_event('task_done', self.task_done_callback)
+        return pubsub
+
     ########################################################################
     ##    ABSTRACT METHODS
     ########################################################################
@@ -454,11 +463,6 @@ class TaskBackend(EventHandler):
     def finish_task(self, task_id, lock_id):
         raise NotImplementedError
 
-    def pubsub(self):
-        '''The publish/subscribe handler.
-        '''
-        raise NotImplementedError
-
     def flush(self):
         '''Remove all queued :class:`.Task`
         '''
@@ -478,7 +482,7 @@ class TaskBackend(EventHandler):
         self.logger.debug('started polling tasks')
         store = self.store
 
-    def close(self, worker):
+    def close(self):
         '''Close this :class:`TaskBackend`.
 
         Invoked by the :class:`.Actor` when stopping.
@@ -487,7 +491,7 @@ class TaskBackend(EventHandler):
             self.task_poller.cancel()
             self.task_poller = None
             self.logger.debug('stopped polling tasks')
-            #self.pubsub.close()
+        self._pubsub.close()
             #self.store.close()
 
     def generate_task_ids(self, job, kwargs):
@@ -618,7 +622,7 @@ class TaskBackend(EventHandler):
         # Asynchronous execution of a Task. This method is called
         # on a separate thread of execution from the worker event loop thread.
         logger = get_logger(worker.logger)
-        pubsub = self.pubsub()
+        pubsub = self._pubsub
         task_id = task['id']
         lock_id = task.get('lock_id')
         time_ended = time.time()
@@ -782,16 +786,6 @@ class PulsarTaskBackend(TaskBackend):
     @lazyproperty
     def store_client(self):
         return self.store.client()
-
-    @lazymethod
-    def pubsub(self):
-        pubsub = self.store.pubsub()
-        pubsub.add_client(TaskClient(self))
-        # pubsub channels names from event names
-        channels = tuple((self.channel(name) for name in self.events))
-        pubsub.subscribe(*channels)
-        self.bind_event('task_done', self.task_done_callback)
-        return pubsub
 
     def maybe_queue_task(self, task):
         free = True

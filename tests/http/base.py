@@ -301,7 +301,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = yield client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
         exc = response.event('on_headers').exception()
-        self.assertTruee(exc)
+        self.assertTrue(exc)
 
     def test_redirect_1(self):
         http = self.client()
@@ -347,8 +347,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         try:
             response = yield http.get(self.httpbin('redirect', '5'),
-                                      max_redirects=2
-                                      ).add_errback(lambda f: f.mute())
+                                      max_redirects=2)
         except TooManyRedirects as e:
             response = e.response
         else:
@@ -570,12 +569,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_http_get_timeit(self):
         N = 10
         client = self._client
-        response = client.timeit(N, client.get, self.httpbin('get'),
-                                 data={'bla': 'foo'})
-        results = yield response
-        self.assertTrue(response.total_time)
-        self.assertEqual(len(results), N)
-        for r in results:
+        bench = yield client.timeit('get', N, self.httpbin('get'),
+                                    data={'bla': 'foo'})
+        self.assertTrue(bench.taken)
+        self.assertEqual(len(bench.result), N)
+        for r in bench.result:
             self.assertEqual(r.status_code, 200)
 
     def test_send_files(self):
@@ -633,9 +631,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_pool_200(self):
         N = 6
         http = self.client(pool_size=2)
-        results = yield http.timeit(N, http.get, self.httpbin())
-        self.assertEqual(len(results), N)
-        for response in results:
+        bench = yield http.timeit('get', N, self.httpbin())
+        self.assertEqual(len(bench.result), N)
+        for response in bench.result:
             self.assertEqual(str(response), '200')
             self.assertTrue('content-length' in response.headers)
         self.assertEqual(len(http.connection_pools), 1)
@@ -647,9 +645,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_pool_400(self):
         N = 6
         http = self.client(pool_size=2)
-        results = yield http.timeit(N, http.get, self.httpbin('status', '400'))
-        self.assertEqual(len(results), N)
-        for response in results:
+        bench = yield http.timeit('get', N, self.httpbin('status', '400'))
+        self.assertEqual(len(bench.result), N)
+        for response in bench.result:
             self.assertEqual(str(response), '400')
             self.assertTrue('content-length' in response.headers)
         self.assertEqual(len(http.connection_pools), 1)
