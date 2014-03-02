@@ -252,6 +252,10 @@ class WsgiResponse(object):
     def __len__(self):
         return len(self.content)
 
+    def close(self):
+        if self.is_streamed:
+            self.content.close()
+
     def set_cookie(self, key, **kwargs):
         """
         Sets a cookie.

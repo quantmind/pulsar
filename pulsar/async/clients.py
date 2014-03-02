@@ -111,7 +111,7 @@ class Pool(AsyncObject):
         if not self._closed:
             try:
                 self._queue.put_nowait(None if discard else conn)
-            except Full:
+            except QueueFull:
                 conn.close()
         self._in_use_connections.discard(conn)
 

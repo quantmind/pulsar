@@ -13,7 +13,7 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
                               HTTPError)
 
 
-def dodgyhook(response):
+def dodgyhook(response, exc=None):
     raise ValueError('Dodgy header hook')
 
 
@@ -300,8 +300,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         client = self._client
         response = yield client.get(self.httpbin(), on_headers=dodgyhook)
         self.assertTrue(response.headers)
-        exc = response.event('on_headers').exception()
-        self.assertTrue(exc)
+        self.assertEqual(response.status_code, 200)
 
     def test_redirect_1(self):
         http = self.client()
@@ -489,7 +488,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_missing_host_400(self):
         http = self._client
 
-        def remove_host(response):
+        def remove_host(response, exc=None):
             r = response.request
             self.assertTrue(r.has_header('host'))
             response.request.remove_header('host')
@@ -508,7 +507,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')
 
-        def remove_host(response):
+        def remove_host(response, exc=None):
             r = response.request
             self.assertTrue(r.has_header('host'))
             r.remove_header('host')

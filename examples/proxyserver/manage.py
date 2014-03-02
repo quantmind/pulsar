@@ -113,10 +113,10 @@ class ProxyServerWsgiHandler(LocalMixin):
             response = ProxyTunnel(environ, start_response)
         else:
             response = ProxyResponse(environ, start_response)
-        request = async(self.http_client._request(
-            method, uri, data=data, headers=request_headers,
-            version=environ['SERVER_PROTOCOL'],
-            pre_request=response.pre_request), loop)
+        request = self.http_client.request(method, uri, data=data,
+                                           headers=request_headers,
+                                           version=environ['SERVER_PROTOCOL'],
+                                           pre_request=response.pre_request)
         add_errback(request, response.error)
         coroutine_return(response)
 
@@ -149,6 +149,7 @@ class ProxyResponse(object):
     _done = False
 
     def __init__(self, environ, start_response):
+        self._loop = environ['pulsar.connection']._loop
         self.environ = environ
         self.start_response = start_response
         self.queue = Queue()
@@ -161,9 +162,9 @@ class ProxyResponse(object):
                 except QueueEmpty:
                     break
             else:
-                yield self.queue.get
+                yield async(self.queue.get(), loop=self._loop)
 
-    def pre_request(self, response):
+    def pre_request(self, response, exc=None):
         self._started = True
         response.bind_event('data_processed', self.data_processed)
         return response
@@ -190,7 +191,7 @@ class ProxyResponse(object):
             self._done = True
             self.queue.put(resp.content[0])
 
-    def data_processed(self, response, **kw):
+    def data_processed(self, response, exc=None, **kw):
         '''Receive data from the requesting HTTP client.'''
         status = response.get_status()
         if status == '100 Continue':
@@ -206,7 +207,7 @@ class ProxyResponse(object):
             body = response.recv_body()
             if response.parser.is_message_complete():
                 self._done = True
-            self.queue.put(body)
+            self.queue.put_nowait(body)
 
     def remove_hop_headers(self, headers):
         for header, value in headers:
@@ -216,7 +217,7 @@ class ProxyResponse(object):
 
 class ProxyTunnel(ProxyResponse):
 
-    def pre_request(self, response):
+    def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
         This is a callback fired once a connection with upstream server is
@@ -263,8 +264,7 @@ class StreamTunnel(pulsar.ProtocolConsumer):
         self.tunnel = tunnel
 
     def connection_made(self, connection):
-        connection.bind_event('connection_lost', self._close_tunnel,
-                              self._close_tunnel)
+        connection.bind_event('connection_lost', self._close_tunnel)
 
     def data_received(self, data):
         try:
@@ -273,10 +273,9 @@ class StreamTunnel(pulsar.ProtocolConsumer):
             if not self.tunnel.closed:
                 raise
 
-    def _close_tunnel(self, arg):
+    def _close_tunnel(self, arg, exc=None):
         if not self.tunnel.closed:
             self.tunnel._loop.call_soon(self.tunnel.close)
-        return arg
 
 
 def server(name='proxy-server', headers_middleware=None,

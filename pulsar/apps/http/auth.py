@@ -125,9 +125,9 @@ class HTTPDigestAuth(Auth):
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % (base)
 
-    def handle_401(self, response):
+    def handle_401(self, response, exc=None):
         """Takes the given response and tries digest-auth, if needed."""
-        if response.status_code == 401:
+        if not exc and response.status_code == 401:
             request = response.request
             response._handle_401 = getattr(response, '_handle_401', 0) + 1
             s_auth = response.headers.get('www-authenticate', '')
@@ -139,8 +139,9 @@ class HTTPDigestAuth(Auth):
                 headers.append(('authorization', self.encode(
                     request.method, request.full_url)))
                 params['headers'] = headers
-                return request_again(request.method, request.full_url, params)
-        return response
+                response.request_again = request_again(request.method,
+                                                       request.full_url,
+                                                       params)
 
     def hex(self, x):
         if self.algorithm == 'MD5':

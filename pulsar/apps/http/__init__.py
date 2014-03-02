@@ -215,7 +215,7 @@ from pulsar.utils.httpurl import (urlparse, parse_qsl, responses,
                                   JSON_CONTENT_TYPES)
 
 from .plugins import (handle_cookies, handle_100, handle_101, handle_redirect,
-                      Tunneling, TooManyRedirects, request_again)
+                      Tunneling, TooManyRedirects)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 
@@ -638,6 +638,7 @@ class HttpResponse(ProtocolConsumer):
     _data_sent = None
     _status_code = None
     _cookies = None
+    request_again = None
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     @property
@@ -1010,18 +1011,18 @@ class HttpClient(AbstractClient):
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            response = yield consumer.event(wait or 'post_request')
-            if isinstance(response, ProtocolConsumer):
-                consumer = response
+            yield consumer.event(wait or 'post_request')
             headers = consumer.headers
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
                 conn.detach()
-        if isinstance(response, request_again):
-            method, url, params = response
-            response = yield self.request(method, url, **params)
-        coroutine_return(response)
+        if consumer.request_again:
+            if isinstance(consumer.request_again, Exception):
+                raise consumer.request_again
+            method, url, params = consumer.request_again
+            consumer = yield self.request(method, url, **params)
+        coroutine_return(consumer)
 
     def close(self, async=True, timeout=5):
         '''Close all connections.

@@ -19,7 +19,7 @@ import socket
 from wsgiref.handlers import format_date_time
 
 import pulsar
-from pulsar import HttpException, ProtocolError, Future, in_loop
+from pulsar import HttpException, ProtocolError, Future, in_loop, chain_future
 from pulsar.utils.pep import is_string, native_str, raise_error_trace
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
@@ -110,7 +110,7 @@ class StreamReader:
     def read(self, maxbuf=None):
         '''Return bytes in the buffer.
 
-        If the stream is not yet ready, return a :class:`.Future`
+        If the stream is not yet ready, return a :class:`asyncio.Future`
         which results in the bytes read.
         '''
         if not self._waiting:
@@ -118,9 +118,10 @@ class StreamReader:
             if self.done():
                 return self._getvalue(body, maxbuf)
             else:
-                self._waiting = self.on_message_complete.then()
-                return self._waiting.add_callback(
+                self._waiting = chain_future(
+                    self.on_message_complete,
                     lambda r: self._getvalue(body, maxbuf))
+                return self._waiting
         else:
             return self._waiting
 
@@ -461,7 +462,7 @@ class HttpServerResponse(ProtocolConsumer):
                     self.connection.close()
                 self.finished()
             finally:
-                if response and hasattr(response, 'close'):
+                if hasattr(response, 'close'):
                     try:
                         response.close()
                     except Exception:

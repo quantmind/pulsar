@@ -20,6 +20,10 @@ documentation purposes.
    :members:
    :member-order: bysource
 
+.. autoclass:: Bench
+   :members:
+   :member-order: bysource
+
 
 .. _async-discovery:
 
@@ -40,6 +44,11 @@ Maybe Async
 ~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: maybe_async
+
+
+Chain Future
+~~~~~~~~~~~~~~~~~~
+.. autofunction:: chain_future
 
 
 Coroutine return

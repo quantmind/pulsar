@@ -76,18 +76,18 @@ def _do_redirect(response, exc=None):
                       requote_uri(url))
     history = request.history
     if history and len(history) >= request.max_redirects:
-        raise TooManyRedirects(response)
-    #
-    params = request.inp_params.copy()
-    params['history'] = copy(history) if history else []
-    params['history'].append(response)
-    if response.status_code == 303:
-        method = 'GET'
-        params.pop('data', None)
-        params.pop('files', None)
+        response.request_again = TooManyRedirects(response)
     else:
-        method = request.method
-    return request_again(method, url, params)
+        params = request.inp_params.copy()
+        params['history'] = copy(history) if history else []
+        params['history'].append(response)
+        if response.status_code == 303:
+            method = 'GET'
+            params.pop('data', None)
+            params.pop('files', None)
+        else:
+            method = request.method
+        response.request_again = request_again(method, url, params)
 
 
 def handle_cookies(response, exc=None):
@@ -104,7 +104,6 @@ def handle_cookies(response, exc=None):
                 c.load(cookie)
         if client.store_cookies:
             client.cookies.extract_cookies(response, request)
-    return response
 
 
 def handle_100(response, exc=None):
