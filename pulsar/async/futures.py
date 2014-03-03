@@ -399,9 +399,14 @@ def async_while(timeout, while_clause, *args):
 
 
 class Bench:
+    '''Execute a given number of asynchronous requests and wait for results.
+    '''
     start = None
+    '''The :meth:`~asyncio.BaseEventLoop.time` when the execution starts'''
     finish = None
+    '''The :meth:`~asyncio.BaseEventLoop.time` when the execution finishes'''
     result = ()
+    '''Tuple of results'''
 
     def __init__(self, times, loop=None):
         self._loop = loop or get_event_loop()
@@ -409,6 +414,8 @@ class Bench:
 
     @property
     def taken(self):
+        '''The total time taken for execution
+        '''
         if self.finish:
             return self.finish - self.start
 
@@ -420,7 +427,7 @@ class Bench:
 
     def _done(self, result):
         self.finish = self._loop.time()
-        self.result = result
+        self.result = tuple(result)
         return self
 
 
@@ -447,8 +454,8 @@ class AsyncObject(object):
 
             >>> self.timeit('asyncmethod', 100)
 
-        Returns a :class:`.Future` which results in a :class:`Bench`
-        object is successful
+        Returns a :class:`~asyncio.Future` which results in a :class:`Bench`
+        object if successful
         '''
         bench = Bench(times, loop=self._loop)
         return bench(getattr(self, method), *args, **kwargs)
@@ -462,7 +469,7 @@ class MultiFuture(Future):
     '''
     def __init__(self, loop, data, type=None, raise_on_error=True, **kwargs):
         super(MultiFuture, self).__init__(loop=loop)
-        self._deferred = {}
+        self._futures = {}
         self._failures = []
         self._raise_on_error = raise_on_error
         if not type:
@@ -477,7 +484,7 @@ class MultiFuture(Future):
             if self._state == _PENDING:
                 value = self._get_set_item(key, maybe_async(value, self._loop))
                 if isinstance(value, Future):
-                    self._deferred[key] = value
+                    self._futures[key] = value
                     value.add_done_callback(partial(self._future_done, key))
         self._check()
 
@@ -487,11 +494,11 @@ class MultiFuture(Future):
 
     ###    INTERNALS
     def _check(self):
-        if not self._deferred and self._state == _PENDING:
+        if not self._futures and self._state == _PENDING:
             self.set_result(self._stream)
 
     def _future_done(self, key, future):
-        self._deferred.pop(key, None)
+        self._futures.pop(key, None)
         self._get_set_item(key, future)
         self._check()
 
@@ -501,7 +508,7 @@ class MultiFuture(Future):
                 exc = as_exception(value)
                 if exc:
                     if self._raise_on_error:
-                        self._deferred.clear()
+                        self._futures.clear()
                         self.set_exception(exc)
                         return
                     else:

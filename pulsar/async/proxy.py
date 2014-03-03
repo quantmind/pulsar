@@ -65,7 +65,7 @@ class ActorIdentity(object):
         return self.aid
 
 
-def actor_proxy_deferred(aid, future=None):
+def actor_proxy_future(aid, future=None):
     self = ActorProxyFuture()
     if isinstance(aid, ActorProxyMonitor):
         assert future is None
@@ -80,12 +80,12 @@ def actor_proxy_deferred(aid, future=None):
 class ActorProxyFuture(Future, ActorIdentity):
     '''A :class:`.Future` for an :class:`.ActorProxy`.
 
-    The callback will be an :class:`ActorProxy` which will be received once
+    The callback will be an :class:`.ActorProxy` which will be received once
     the remote :class:`.Actor` is fully functional.
 
     .. attribute:: aid
 
-        The the remote :attr:`Actor` id
+        The the remote :attr:`.Actor` id
 
     '''
     def __repr__(self):
@@ -97,7 +97,7 @@ class ActorProxyFuture(Future, ActorIdentity):
 
 
 class ActorProxy(ActorIdentity):
-    '''A proxy for a remote :class:`Actor`.
+    '''A proxy for a remote :class:`.Actor`.
 
     This is a lightweight class which delegates function calls to the
     underlying remote object.
@@ -116,11 +116,11 @@ class ActorProxy(ActorIdentity):
 
     .. attribute:: aid
 
-        Unique ID for the remote :class:`Actor`
+        Unique ID for the remote :class:`.Actor`
 
     .. attribute:: address
 
-        the socket address of the underlying :attr:`Actor.mailbox`.
+        the socket address of the underlying :attr:`.Actor.mailbox`.
 
     '''
     def __init__(self, impl):
@@ -146,25 +146,25 @@ class ActorProxy(ActorIdentity):
 
 
 class ActorProxyMonitor(ActorProxy):
-    '''A specialised :class:`ActorProxy` class.
+    '''A specialised :class:`.ActorProxy` class.
 
     It contains additional information about the remote underlying
-    :class:`pulsar.Actor`. Instances of this class serialise into
-    :class:`ActorProxy`.
+    :class:`.Actor`. Instances of this class serialise into
+    :class:`.ActorProxy`.
 
-    The :class:`ActorProxyMonitor` is special since it lives in the
-    :class:`Arbiter` domain and it is used by the :class:`Arbiter`
-    (or a :class:`Monitor`) to monitor the state of the spawned actor.
+    The :class:`.ActorProxyMonitor` is special since it lives in the
+    :class:`.Arbiter` domain and it is used by the :class:`.Arbiter`
+    (or a :class:`.Monitor`) to monitor the state of the spawned actor.
 
     .. attribute:: impl
 
-        The :class:`Concurrency` instance for the remote :class:`Actor`. This
+        The :class:`.Concurrency` instance for the remote :class:`.Actor`. This
         dictionary is constantly updated by the remote actor by sending the
         :ref:`info message <actor_info_command>`.
 
     .. attribute:: info
 
-        Dictionary of information regarding the remote :class:`Actor`
+        Dictionary of information regarding the remote :class:`.Actor`
 
     .. attribute:: mailbox
 
@@ -172,7 +172,7 @@ class ActorProxyMonitor(ActorProxy):
         :ref:`actor handshake <handshake>` between the actor and the monitor
         has completed. The :attr:`mailbox` is a server-side
         :class:`.MailboxProtocol` instance and it is used
-        by the :func:`send` function to send messages to the remote actor.
+        by the :func:`.send` function to send messages to the remote actor.
     '''
     monitor = None
 
@@ -187,7 +187,7 @@ class ActorProxyMonitor(ActorProxy):
 
     @property
     def notified(self):
-        '''Last time this :class:`ActorProxyMonitor` was notified by the
+        '''Last time this :class:`.ActorProxyMonitor` was notified by the
         remote actor.'''
         return self.info.get('last_notified')
 
@@ -197,7 +197,7 @@ class ActorProxyMonitor(ActorProxy):
 
     @property
     def proxy(self):
-        '''The :class:`ActorProxy` for this monitor.'''
+        '''The :class:`.ActorProxy` for this monitor.'''
         return ActorProxy(self)
 
     def __reduce__(self):

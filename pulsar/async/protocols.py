@@ -354,7 +354,8 @@ class PulsarProtocol(EventHandler):
 
 
 class Protocol(PulsarProtocol, asyncio.Protocol):
-    '''An ``asyncio.Protocol`` with events'''
+    '''An :class:`asyncio.Protocol` with :ref:`events <event-handling>`
+    '''
 
 
 class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
@@ -365,7 +366,7 @@ class Connection(Protocol):
     '''A :class:`Protocol` to handle multiple request/response.
 
     It is a class which acts as bridge between a
-    :class:`.SocketStreamTransport`
+    :class:`~asyncio.SocketStreamTransport`
     and a :class:`ProtocolConsumer`. It routes data arriving from the
     :class:`.SocketStreamTransport` to the :meth:`current_consumer`.
 
@@ -713,8 +714,9 @@ class DatagramServer(EventHandler):
     def create_endpoint(self, **kw):
         '''create the server endpoint.
 
-        :return: a :class:`.Deferred` called back when the server is
-            serving the socket.'''
+        :return: a :class:`~asyncio.Future` called back when the server is
+            serving the socket.
+        '''
         if hasattr(self, '_params'):
             address = self._params['address']
             sockets = self._params['sockets']

@@ -29,6 +29,7 @@ You can now execute synchronous requests::
     >>> response = client.get('https://pypi.python.org/pypi/pulsar/json')
 
 Under the hood, pulsar treats a synchronous request exactly in the same way as
-an asynchronous one with the only difference that the :class:`.EventLoop`
-is always used via the :meth:`~.EventLoop.run_until_complete`
+an asynchronous one with the only difference that the
+:ref:`event loop <asyncio-event-loop>`
+is always used via the :meth:`~.asyncio.BaseEventLoop.run_until_complete`
 method to wait for the response to be available.

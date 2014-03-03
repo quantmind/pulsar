@@ -1,4 +1,3 @@
-'''Deferred and asynchronous tools.'''
 import unittest
 
 from pulsar import (Future, maybe_async, coroutine_return, chain_future,

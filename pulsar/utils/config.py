@@ -438,7 +438,7 @@ class SettingMeta(type):
 
 # This works for Python 2 and Python 3
 class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
-    '''Class for creating :ref:`pulsar settings <pulsar.utils.config>`.
+    '''Class for creating :ref:`pulsar settings <settings>`.
 
     Most parameters can be specified on the command line,
     all of them on a ``config`` file.

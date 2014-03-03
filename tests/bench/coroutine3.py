@@ -44,10 +44,10 @@ class TestCoroutine33(unittest.TestCase):
         self.loop = new_event_loop()
 
     def test_coroutine(self):
-        deferred = Future(self.loop)
-        self.loop.call_soon(main, deferred, self.loop, 1)
-        self.loop.run_until_complete(deferred)
-        self.assertEqual(deferred.result(), 9)
+        future = Future(self.loop)
+        self.loop.call_soon(main, future, self.loop, 1)
+        self.loop.run_until_complete(future)
+        self.assertEqual(future.result(), 9)
 
     def getTime(self, dt):
         return dt - 9*DELAY

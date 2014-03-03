@@ -32,7 +32,7 @@ An :class:`AsyncString` can only be rendered once, and it accepts
     >>> value.done()
     False
 
-Once the deferred is done, we have the concatenated string::
+Once the future is done, we have the concatenated string::
 
     >>> a.set_result('World!')
     'World!'

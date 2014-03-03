@@ -5,7 +5,7 @@ from pulsar import Config
 from pulsar.utils.pep import iteritems, itervalues, range
 from pulsar.utils.security import gen_unique_id
 
-from .proxy import actor_proxy_deferred
+from .proxy import actor_proxy_future
 from .actor import Actor
 from .futures import async_while
 from .concurrency import concurrency
@@ -68,9 +68,9 @@ def _spawn_actor(cls, monitor, cfg=None, name=None, aid=None, **kw):
     else:
         actor_proxy.monitor = monitor
         monitor.managed_actors[actor_proxy.aid] = actor_proxy
-        deferred = actor_proxy_deferred(actor_proxy)
+        future = actor_proxy_future(actor_proxy)
         actor_proxy.start()
-        return deferred
+        return future
 
 
 class PoolMixin(Actor):

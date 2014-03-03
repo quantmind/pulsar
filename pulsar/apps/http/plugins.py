@@ -139,6 +139,7 @@ def handle_101(response, exc=None):
             handler = WS()
         connection.upgrade(partial(WebSocketClient, response, handler, parser))
         response.finished()
+        response.request_again = connection.current_consumer()
 
 
 class Tunneling:

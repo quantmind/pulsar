@@ -22,7 +22,7 @@ class TestApi(unittest.TestCase):
         d = multi_async(lock=False)
         self.assertFalse(d.done())
         self.assertFalse(d._locked)
-        self.assertFalse(d._deferred)
+        self.assertFalse(d._futures)
         self.assertFalse(d._stream)
         d.lock()
         self.assertTrue(d.done())

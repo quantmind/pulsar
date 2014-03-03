@@ -5,13 +5,16 @@ Ver. 0.8.0
 * **Asyncio Integration**
 
   * asyncio_ integration with several changes in internals. The integration
-    works with all supported python versions, 2.7, 3.3 and 3.4
-  * Asyncio event loop functions :func:`.get_event_loop`, :func:`.new_event_loop`,
+    works with all supported python versions: 2.7, 3.3 and 3.4
+  * Asyncio event loop functions :func:`~asyncio.get_event_loop`,
+    :func:`~asyncio.new_event_loop`,
     are available from pulsar top level module as well as asyncio.
     In other words ``from pulsar import get_event_loop`` and
     ``from asyncio import get_event_loop`` are equivalent (provided pulsar is
     imported first).
   * Replaced the ``Deferred`` class with :class:`asyncio.Future`.
+  * Replaced the ``EventLoop`` class with
+    :ref:`asyncio event loop <asyncio-event-loop>`.
 
 * **Core library**
 
@@ -20,7 +23,7 @@ Ver. 0.8.0
     :func:`.coroutine_return` function.
   * Added :func:`.run_in_loop` high level function. This utility
     runs a callable in the event loop thread and returns a
-    :class:`asyncio.Future` called back once the callable has
+    :class:`~asyncio.Future` called back once the callable has
     a result/exception.
   * Added :func:`.in_loop` and :func:`.task` decorators for
     member functions of :ref:`async objects <async-object>`.
@@ -134,7 +137,6 @@ Ver. 0.7.0 - 2013-Oct-13
 * WSGI responses 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
-* A new asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
 * Removed the specialised application worker and monitor classes.
   Use standard actor and monitor with specialised
   :ref:`start hooks <actor-hooks>` instead.
@@ -191,8 +193,8 @@ Ver. 0.6.0 - 2013-Sep-05
   * Better handling of :ref:`non-overlapping jobs <job-non-overlap>`
     in a task queue.
   * Added :ref:`when_exit <setting-when_exit>` application hook.
-  * Added :ref:`--io option <setting-poller>` for controlling the default
-    :class:`.Poller`.
+  * Added :ref:`--io option <setting-selector>` for controlling the default
+    selector from python :mod:`selectors` module.
   * Critical bug fix in python 3 WSGI server.
   * Added ``full_route`` and ``rule`` attributes to wsgi Router.
   * Added :ref:`--show_leaks option <setting-show_leaks>`
@@ -291,7 +293,7 @@ Ver. 0.5.0 - 2013-May-22
     and :func:`.maybe_failure`. The function is used in the
     implementation of :ref:`twisted integration <tutorials-twisted>` and could
     be used in conjunction with other asynchronous libraries as well.
-  * New :ref:`Webmail example application <tutorials-webmail>` using twisted
+  * New :ref:`Webmail example application <tutorials-twisted>` using twisted
     IMAP4 protocol implementation.
 
 * Added :class:`.FrozenDict`.

@@ -2,7 +2,7 @@
 import os
 import unittest
 from threading import current_thread
-from asyncio import sleep
+from asyncio import sleep, Future
 
 import pulsar
 from pulsar import send, multi_async, get_event_loop, coroutine_return
@@ -93,19 +93,19 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(loop.num_loops, count+2)
 
     def test_yield(self):
-        '''Yielding a deferred calling back on separate thread'''
+        '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(loop.tid, current_thread().ident)
         yield None
         self.assertEqual(loop.tid, current_thread().ident)
-        d = pulsar.Deferred()
-        # We are calling back the deferred in the event_loop which is on
+        d = Future()
+        # We are calling back the future in the event_loop which is on
         # a separate thread
 
         def _callback():
-            d.callback(current_thread().ident)
+            d.set_result(current_thread().ident)
         worker._loop.call_later(0.2, _callback)
         result = yield d
         self.assertEqual(worker.tid, result)

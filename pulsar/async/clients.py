@@ -54,7 +54,7 @@ class Pool(AsyncObject):
 
     def __contains__(self, connection):
         if connection not in self._in_use_connections:
-            return connection in self._queue
+            return connection in self._queue._queue
         return True
 
     def connect(self):

@@ -1020,8 +1020,11 @@ class HttpClient(AbstractClient):
         if consumer.request_again:
             if isinstance(consumer.request_again, Exception):
                 raise consumer.request_again
-            method, url, params = consumer.request_again
-            consumer = yield self.request(method, url, **params)
+            elif isinstance(consumer.request_again, ProtocolConsumer):
+                consumer = consumer.request_again
+            else:
+                method, url, params = consumer.request_again
+                consumer = yield self.request(method, url, **params)
         coroutine_return(consumer)
 
     def close(self, async=True, timeout=5):

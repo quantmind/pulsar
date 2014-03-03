@@ -7,7 +7,7 @@ Protocols/Transports API
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
 implementing the Protocol/Transport paradigm. They are based on
-``asyncio.Protocol`` and ``asyncio.DatagramProtocol``
+:class:`asyncio.Protocol` and :class:`asyncio.DatagramProtocol` classes.
 
 
 .. module:: pulsar.async.protocols

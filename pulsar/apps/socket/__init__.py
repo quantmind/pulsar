@@ -306,9 +306,9 @@ class SocketServer(pulsar.Application):
 
 
 class UdpSocketServer(SocketServer):
-    '''A :class:`.SocketServer` which serve application on a UDP sockets.
+    '''A :class:`.SocketServer` which serves application on a UDP sockets.
 
-    It bind a socket to a given address and listen for requests. The request
+    It binds a socket to a given address and listen for requests. The request
     handler is constructed from the callable passed during initialisation.
 
     .. attribute:: address
@@ -349,7 +349,7 @@ class UdpSocketServer(SocketServer):
         params.update({'sockets': monitor.sockets})
 
     def server_factory(self, *args, **kw):
-        '''Create a :class:`.UdpServer`.
+        '''By default returns a new :class:`.DatagramServer`.
         '''
         return DatagramServer(*args, **kw)
 
@@ -357,7 +357,7 @@ class UdpSocketServer(SocketServer):
     def create_server(self, worker):
         '''Create the Server which will listen for requests.
 
-        :return: a :class:`.UdpServer`.
+        :return: the server obtained from :meth:`server_factory`.
         '''
         cfg = self.cfg
         max_requests = cfg.max_requests

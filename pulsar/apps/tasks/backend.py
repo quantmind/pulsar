@@ -418,7 +418,7 @@ class TaskBackend(EventHandler):
                 else:
                     when_done = callbacks.get(task_id)
                     if not when_done:
-                        # No deferred, create one
+                        # No future, create one
                         callbacks[task_id] = when_done = Future()
                     task = yield when_done
                 coroutine_return(task)

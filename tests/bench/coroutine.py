@@ -1,14 +1,14 @@
 import unittest
 
-from pulsar import new_event_loop, coroutine_return
+from pulsar import new_event_loop, coroutine_return, Future
 
 
 DELAY = 0
 
 
 def async_func(loop, value):
-    p = Deferred(loop)
-    loop.call_later(DELAY, p.callback, value)
+    p = Future(loop)
+    loop.call_later(DELAY, p.set_result, value)
     return p
 
 
@@ -30,7 +30,7 @@ def main(d, loop, num):
     a = yield async_func(loop, num)
     b = yield sub(loop, num)
     c = yield sub(loop, num)
-    d.callback(a+b+c)
+    d.set_result(a+b+c)
 
 
 class TestCoroutine(unittest.TestCase):
@@ -41,10 +41,10 @@ class TestCoroutine(unittest.TestCase):
         self.loop = new_event_loop()
 
     def test_coroutine(self):
-        deferred = Deferred(self.loop)
-        self.loop.call_soon(main, deferred, self.loop, 1)
-        self.loop.run_until_complete(deferred)
-        self.assertEqual(deferred.result(), 9)
+        future = Future(self.loop)
+        self.loop.call_soon(main, future, self.loop, 1)
+        self.loop.run_until_complete(future)
+        self.assertEqual(future.result(), 9)
 
     def getTime(self, dt):
         return dt - 9*DELAY
