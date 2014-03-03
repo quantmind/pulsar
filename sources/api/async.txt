@@ -98,21 +98,3 @@ task
 In loop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: in_loop
-
-
-
-.. module:: pulsar.async.queues
-
-Queues
-=============
-
-Queue
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Queue
-   :members:
-   :member-order: bysource
-
-
-.. _pep-3156: http://www.python.org/dev/peps/pep-3156/
-.. _twisted: http://twistedmatrix.com/trac/

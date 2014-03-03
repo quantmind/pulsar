@@ -256,7 +256,7 @@ attribute.</p>
 <p>The valued returned by <a class="reference internal" href="api/actor.html#pulsar.async.arbiter.spawn" title="pulsar.async.arbiter.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> is an <tt class="xref py py-class docutils literal"><span class="pre">ActorProxyDeferred</span></tt> instance,
 a specialised <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt>, which has the spawned actor id <tt class="docutils literal"><span class="pre">aid</span></tt> and
 it is called back once the remote actor has started.
-The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.actor.ActorProxy" title="pulsar.async.actor.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>, a lightweight proxy
+The callback will be an <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>, a lightweight proxy
 for the remote actor.</p>
 <p>When spawning from an actor other than the <a class="reference internal" href="#design-arbiter"><em>arbiter</em></a>,
 the workflow of the <a class="reference internal" href="api/actor.html#pulsar.async.arbiter.spawn" title="pulsar.async.arbiter.spawn"><tt class="xref py py-func docutils literal"><span class="pre">spawn()</span></tt></a> function is as follow:</p>
@@ -264,7 +264,7 @@ the workflow of the <a class="reference internal" href="api/actor.html#pulsar.as
 <li><a class="reference internal" href="api/actor.html#pulsar.async.actor.send" title="pulsar.async.actor.send"><tt class="xref py py-func docutils literal"><span class="pre">send()</span></tt></a> a message to the <a class="reference internal" href="#design-arbiter"><em>arbiter</em></a> to spawn
 a new actor.</li>
 <li>The arbiter spawn the actor and wait for the actor&#8217;s <strong>hand shake</strong>. Once the
-hand shake is done, it sends the response (the <a class="reference internal" href="api/actor.html#pulsar.async.actor.ActorProxy" title="pulsar.async.actor.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> of the
+hand shake is done, it sends the response (the <a class="reference internal" href="api/actor.html#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> of the
 spawned actor) to the original actor.</li>
 </ul>
 </div>

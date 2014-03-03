@@ -84,8 +84,7 @@ response to an <a class="reference internal" href="wrappers.html#app-wsgi-reques
 <p>A string can be <tt class="docutils literal"><span class="pre">html</span></tt>, <tt class="docutils literal"><span class="pre">json</span></tt>, <tt class="docutils literal"><span class="pre">plain</span> <span class="pre">text</span></tt> or any other valid HTTP
 content type.</p>
 <p>The main class of this module is the <a class="reference internal" href="#pulsar.apps.wsgi.content.AsyncString" title="pulsar.apps.wsgi.content.AsyncString"><tt class="xref py py-class docutils literal"><span class="pre">AsyncString</span></tt></a>, which can be
-considered as the atomic component of an asynchronous web framework.
-It is a smart way for concatenating asynchronous strings:</p>
+considered as the atomic component of an asynchronous web framework:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pulsar.apps.wsgi</span> <span class="kn">import</span> <span class="n">AsyncString</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span> <span class="o">=</span> <span class="n">AsyncString</span><span class="p">(</span><span class="s">&#39;Hello&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">string</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
@@ -537,9 +536,6 @@ this attribute. You can add relative paths:</p>
 </dd></dl>
 
 </div>
-<div class="section" id="body">
-<h3>Body<a class="headerlink" href="#body" title="Permalink to this headline">¶</a></h3>
-</div>
 <div class="section" id="media">
 <h3>Media<a class="headerlink" href="#media" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
@@ -726,7 +722,6 @@ dictionary of <tt class="docutils literal"><span class="pre">defaults</span></tt
 <li><a class="reference internal" href="#html-document">Html Document</a><ul>
 <li><a class="reference internal" href="#document">Document</a></li>
 <li><a class="reference internal" href="#head">Head</a></li>
-<li><a class="reference internal" href="#body">Body</a></li>
 <li><a class="reference internal" href="#media">Media</a></li>
 <li><a class="reference internal" href="#scripts">Scripts</a></li>
 <li><a class="reference internal" href="#css">Css</a></li>
