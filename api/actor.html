@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="../static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="../static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -648,12 +649,12 @@ parameter <tt class="docutils literal"><span class="pre">&quot;hello</span> <spa
 <dt id="pulsar.async.proxy.ActorProxyFuture">
 <em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyFuture</tt><big>(</big><em>loop</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyFuture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyFuture" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt> for an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>.</p>
-<p>The callback will be an <tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt> which will be received once
+<p>The callback will be an <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> which will be received once
 the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a> is fully functional.</p>
 <dl class="attribute">
 <dt id="pulsar.async.actor.ActorProxyFuture.aid">
 <tt class="descname">aid</tt><a class="headerlink" href="#pulsar.async.actor.ActorProxyFuture.aid" title="Permalink to this definition">¶</a></dt>
-<dd><p>The the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-attr docutils literal"><span class="pre">Actor</span></tt></a> id</p>
+<dd><p>The the remote <tt class="xref py py-attr docutils literal"><span class="pre">Actor</span></tt> id</p>
 </dd></dl>
 
 </dd></dl>
@@ -664,17 +665,17 @@ the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title=
 <dl class="class">
 <dt id="pulsar.async.proxy.ActorProxyMonitor">
 <em class="property">class </em><tt class="descclassname">pulsar.async.proxy.</tt><tt class="descname">ActorProxyMonitor</tt><big>(</big><em>impl</em><big>)</big><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyMonitor" title="Permalink to this definition">¶</a></dt>
-<dd><p>A specialised <tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt> class.</p>
+<dd><p>A specialised <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> class.</p>
 <p>It contains additional information about the remote underlying
-<tt class="xref py py-class docutils literal"><span class="pre">pulsar.Actor</span></tt>. Instances of this class serialise into
-<tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt>.</p>
-<p>The <tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt> is special since it lives in the
-<tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt> domain and it is used by the <tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt>
-(or a <tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt>) to monitor the state of the spawned actor.</p>
+<a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>. Instances of this class serialise into
+<a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a>.</p>
+<p>The <a class="reference internal" href="#pulsar.async.proxy.ActorProxyMonitor" title="pulsar.async.proxy.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> is special since it lives in the
+<a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a> domain and it is used by the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pulsar.async.arbiter.Arbiter"><tt class="xref py py-class docutils literal"><span class="pre">Arbiter</span></tt></a>
+(or a <a class="reference internal" href="#pulsar.async.monitor.Monitor" title="pulsar.async.monitor.Monitor"><tt class="xref py py-class docutils literal"><span class="pre">Monitor</span></tt></a>) to monitor the state of the spawned actor.</p>
 <dl class="attribute">
 <dt id="pulsar.async.actor.ActorProxyMonitor.impl">
 <tt class="descname">impl</tt><a class="headerlink" href="#pulsar.async.actor.ActorProxyMonitor.impl" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <tt class="xref py py-class docutils literal"><span class="pre">Concurrency</span></tt> instance for the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>. This
+<dd><p>The <a class="reference internal" href="#pulsar.async.concurrency.Concurrency" title="pulsar.async.concurrency.Concurrency"><tt class="xref py py-class docutils literal"><span class="pre">Concurrency</span></tt></a> instance for the remote <a class="reference internal" href="#pulsar.async.actor.Actor" title="pulsar.async.actor.Actor"><tt class="xref py py-class docutils literal"><span class="pre">Actor</span></tt></a>. This
 dictionary is constantly updated by the remote actor by sending the
 <a class="reference internal" href="../design.html#actor-info-command"><em>info message</em></a>.</p>
 </dd></dl>
@@ -698,14 +699,14 @@ by the <a class="reference internal" href="#pulsar.async.actor.send" title="puls
 <dl class="attribute">
 <dt id="pulsar.async.proxy.ActorProxyMonitor.notified">
 <tt class="descname">notified</tt><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyMonitor.notified"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyMonitor.notified" title="Permalink to this definition">¶</a></dt>
-<dd><p>Last time this <tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt> was notified by the
+<dd><p>Last time this <a class="reference internal" href="#pulsar.async.proxy.ActorProxyMonitor" title="pulsar.async.proxy.ActorProxyMonitor"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxyMonitor</span></tt></a> was notified by the
 remote actor.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pulsar.async.proxy.ActorProxyMonitor.proxy">
 <tt class="descname">proxy</tt><a class="reference internal" href="../modules/pulsar/async/proxy.html#ActorProxyMonitor.proxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.async.proxy.ActorProxyMonitor.proxy" title="Permalink to this definition">¶</a></dt>
-<dd><p>The <tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt> for this monitor.</p>
+<dd><p>The <a class="reference internal" href="#pulsar.async.proxy.ActorProxy" title="pulsar.async.proxy.ActorProxy"><tt class="xref py py-class docutils literal"><span class="pre">ActorProxy</span></tt></a> for this monitor.</p>
 </dd></dl>
 
 <dl class="method">
@@ -922,7 +923,7 @@ the <a class="reference internal" href="#pulsar.async.arbiter.Arbiter" title="pu
 <p>Constants used throughout pulsar.</p>
 <dl class="data">
 <dt id="pulsar.async.consts.ACTOR_STATES">
-<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'STARTING': 2, 'TERMINATE': 6, 'STOPPING': 4, 'CLOSE': 5, 'RUN': 3, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'INACTIVE': 1, 'INITIAL': 0}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pulsar.async.consts.</tt><tt class="descname">ACTOR_STATES</tt><em class="property"> = {'STARTING': 2, 'INACTIVE': 1, 'INITIAL': 0, 'TERMINATE': 6, 'CLOSE': 5, 'STOPPING': 4, 'DESCRIPTION': {0: 'initial', 1: 'inactive', 2: 'starting', 3: 'running', 4: 'stopping', 5: 'closed', 6: 'terminated'}, 'RUN': 3}</em><a class="headerlink" href="#pulsar.async.consts.ACTOR_STATES" title="Permalink to this definition">¶</a></dt>
 <dd><p id="actor-states">Actor state constants are access via:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar</span> <span class="kn">import</span> <span class="n">ACTOR_STATES</span>
 </pre></div>

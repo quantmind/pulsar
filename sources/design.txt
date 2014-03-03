@@ -6,18 +6,14 @@
 Design
 =====================
 
-Pulsar implements three layers of components for building a vast array
-of parallel and asynchronous applications. Each layer depends on the
-previous ones but it is independent on the layers above it. The three layers
-are:
+Pulsar implements two layers of components on top the python :mod:`asyncio`
+module, for building a vast array
+of parallel and asynchronous applications.:
 
-* :ref:`The asynchronous layer <async-layer>` forms the building blocks
-  of asynchronous execution. The main classes here are the :class:`.Deferred`
-  and the :class:`.EventLoop`.
 * :ref:`The actor layer <design-actor>` provides parallel execution in
-  processes and threads and uses the :ref:`the asynchronous layer <async-layer>`
+  processes and threads and uses the :mod:`asyncio` module
   as building block.
-* The last layer, built on top of the first two, is based on the higher level
+* The second layer, built on top of the first one, is based on the higher level
   :class:`.Application` class.
 
 .. _async-object:
@@ -25,7 +21,8 @@ are:
 Async Objects
 ~~~~~~~~~~~~~~~~~
 Introduced in pulsar 0.8, an asynchronous object is any instance which expose
-the ``_loop`` attribute. This attribute is the :class:`.EventLoop` where
+the :attr:`~.AsyncObject._loop` attribute.
+This attribute is the :ref:`event loop <asyncio-event-loop>` where
 the instance performs its asynchronous operations, whatever they may be.
 
 For example this is a class for valid async objects::
@@ -40,11 +37,11 @@ For example this is a class for valid async objects::
 
 
 Asynchronous objects can use the :func:`.in_loop` and
-:func:`.in_loop_thread` decorators for their methods.
+:func:`.task` decorators for their methods.
 
 .. note::
 
-    An asynch object can also run its asynchronous methods in a synchronous
+    An async object can also run its asynchronous methods in a synchronous
     fashion. To do that, one should pass a bright new event loop during
     initialisation. Check :ref:`synchronous components <tutorials-synchronous>`
     for further details.
@@ -99,7 +96,8 @@ The Arbiter
 ~~~~~~~~~~~~~~~~~
 When using pulsar actor layer, you need to use pulsar in **server state**,
 that is to say, there will be a centralised :class:`.Arbiter` controlling the main
-:class:`.EventLoop` in the **main thread** of the **master process**.
+:ref:`event loop <asyncio-event-loop>` in the **main thread** of the
+**master process**.
 The arbiter is a specialised :class:`.Actor`
 which control the life of all :class:`.Actor` and :class:`.Monitor`.
 
@@ -117,7 +115,7 @@ To access the :class:`.Arbiter`, from the main process, one can use the
 Implementation
 ~~~~~~~~~~~~~~~~~~
 An actor can be **processed based** (default) or **thread based** and control
-at least one running :class:`.EventLoop`.
+at least one running :ref:`event loop <asyncio-event-loop>`.
 To obtain the actor controlling the current thread::
 
     actor = pulsar.get_actor()
@@ -130,9 +128,10 @@ as the arbiter) and control threads other than the main thread.
 An :class:`.Actor` can control more than one thread if it needs to, via the
 :attr:`~.Actor.thread_pool` as explained in the :ref:`CPU bound <cpubound>`
 paragraph.
-The actor :ref:`event loop <eventloop>` is installed in all threads controlled
-by the actor so that when the ``get_event_loop`` function is invoked on
-these threads it returns the event loop of the controlling actor.
+The actor :ref:`event loop <asyncio-event-loop>` is installed in all threads
+controlled by the actor so that when the :func:`~asyncio.get_event_loop`
+function is invoked on these threads it returns the event loop of
+the controlling actor.
 
 .. _actor-io-thread:
 
@@ -174,8 +173,9 @@ CPU-bound :class:`.Actor` have the following properties:
   as usual and it is running (and installed) in the
   :ref:`actor io thread <actor-io-thread>` as usual.
 * The threads in the :meth:`~.Actor.executor` install an additional
-  :class:`EventLoop` which listen for events on a message queue.
-  Pulsar refers to this specialised event loop as the **request loop**.
+  event loop which listen for events on a message queue.
+  Pulsar refers to this specialised event loop as the **request loop** and
+  it is an instance of :class:`.QueueEventLoop`.
 
 .. note::
 
@@ -221,9 +221,9 @@ Spawning a new actor is achieved via the :func:`.spawn` function::
 
     ap = spawn(start=PeriodicTask())
 
-The valued returned by :func:`.spawn` is an :class:`.ActorProxyDeferred` instance,
-a specialised :class:`.Deferred`, which has the spawned actor id ``aid`` and
-it is called back once the remote actor has started.
+The valued returned by :func:`.spawn` is an :class:`.ActorProxyFuture` instance,
+a specialised :class:`~asyncio.Future`, which has the spawned actor id ``aid``
+and it is called back once the remote actor has started.
 The callback will be an :class:`.ActorProxy`, a lightweight proxy
 for the remote actor.
 
@@ -250,7 +250,7 @@ The handshake occurs when the monitor receives, for the first time,
 the actor :ref:`notify message <actor_notify_command>`.
 
 For the curious, the handshake is responsible for setting the
-:class:`.ActorProxyMonitor.mailbox` attribute.
+:attr:`.ActorProxyMonitor.mailbox` attribute.
 
 If the hand-shake fails, the spawned actor will eventually stop.
 
@@ -383,7 +383,8 @@ and running so that the :ref:`handshake <handshake>` can occur.
 run
 ~~~~~~~~~~
 
-Run a function on a remote actor. The function must accept actor as its initial parameter::
+Run a function on a remote actor. The function must accept actor as its
+initial parameter::
 
     def dosomething(actor, *args, **kwargs):
         ...
@@ -414,7 +415,8 @@ Exceptions
 There are two categories of exceptions in Python: those that derive from the
 :class:`Exception` class and those that derive from :class:`BaseException`.
 Exceptions deriving from Exception will generally be caught and handled
-appropriately; for example, they will be passed through by :class:`.Deferred`,
+appropriately; for example, they will be passed through by a
+:class:`~asyncio.Future`,
 and they will be logged and ignored when they occur in a callback.
 
 However, exceptions deriving only from BaseException are never caught,

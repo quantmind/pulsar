@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="static/pulsar.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -79,8 +80,9 @@
 <li><strong>Backward incompatible version</strong></li>
 <li><strong>Asyncio Integration</strong><ul>
 <li><a class="reference external" href="http://www.python.org/dev/peps/pep-3156/">asyncio</a> integration with several changes in internals. The integration
-works with all supported python versions, 2.7, 3.3 and 3.4</li>
-<li>Asyncio event loop functions <tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt>, <tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt>,
+works with all supported python versions: 2.7, 3.3 and 3.4</li>
+<li>Asyncio event loop functions <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.get_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">get_event_loop()</span></tt></a>,
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.new_event_loop" title="(in Python v3.4)"><tt class="xref py py-func docutils literal"><span class="pre">new_event_loop()</span></tt></a>,
 are available from pulsar top level module as well as asyncio.
 In other words <tt class="docutils literal"><span class="pre">from</span> <span class="pre">pulsar</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> and
 <tt class="docutils literal"><span class="pre">from</span> <span class="pre">asyncio</span> <span class="pre">import</span> <span class="pre">get_event_loop</span></tt> are equivalent (provided pulsar is
@@ -94,7 +96,7 @@ imported first).</li>
 <a class="reference internal" href="api/async.html#pulsar.async.futures.coroutine_return" title="pulsar.async.futures.coroutine_return"><tt class="xref py py-func docutils literal"><span class="pre">coroutine_return()</span></tt></a> function.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.futures.run_in_loop" title="pulsar.async.futures.run_in_loop"><tt class="xref py py-func docutils literal"><span class="pre">run_in_loop()</span></tt></a> high level function. This utility
 runs a callable in the event loop thread and returns a
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">asyncio.Future</span></tt></a> called back once the callable has
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> called back once the callable has
 a result/exception.</li>
 <li>Added <a class="reference internal" href="api/async.html#pulsar.async.futures.in_loop" title="pulsar.async.futures.in_loop"><tt class="xref py py-func docutils literal"><span class="pre">in_loop()</span></tt></a> and <a class="reference internal" href="api/async.html#pulsar.async.futures.task" title="pulsar.async.futures.task"><tt class="xref py py-func docutils literal"><span class="pre">task()</span></tt></a> decorators for
 member functions of <a class="reference internal" href="design.html#async-object"><em>async objects</em></a>.</li>
@@ -162,6 +164,15 @@ arbiter domain.</li>
 <li><strong>1,166 regression tests</strong>, <strong>91% coverage</strong>.</li>
 </ul>
 </div>
+<div class="section" id="ver-0-7-4-2013-dec-22">
+<h2>Ver. 0.7.4 - 2013-Dec-22<a class="headerlink" href="#ver-0-7-4-2013-dec-22" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>A bug fix release.</li>
+<li>Fixes an issue with Cookie handling in the wsgi application.</li>
+<li>Don&#8217;t log errors when writing back to a stale client</li>
+<li><strong>822 regression tests</strong>, <strong>91% coverage</strong></li>
+</ul>
+</div>
 <div class="section" id="ver-0-7-3-2013-dec-12">
 <h2>Ver. 0.7.3 - 2013-Dec-12<a class="headerlink" href="#ver-0-7-3-2013-dec-12" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -209,7 +220,6 @@ published to coveralls.io.</li>
 <li>WSGI responses 400 Bad Request to request with no <tt class="docutils literal"><span class="pre">Host</span></tt> header if the
 request URI is not an absolute URI. Follows the <a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.2">rfc2616 sec 5.2</a>
 guidelines.</li>
-<li>A new asynchronous <em class="xref std std-ref">redis client</em>. Requires <a class="reference external" href="https://github.com/andymccurdy/redis-py">redis-py</a>.</li>
 <li>Removed the specialised application worker and monitor classes.
 Use standard actor and monitor with specialised
 <a class="reference internal" href="design.html#actor-hooks"><em>start hooks</em></a> instead.</li>
@@ -265,8 +275,8 @@ The metod can be used to remove all tasks and empty the task queue.</li>
 <li>Better handling of <a class="reference internal" href="apps/tasks.html#job-non-overlap"><em>non-overlapping jobs</em></a>
 in a task queue.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-when-exit"><em>when_exit</em></a> application hook.</li>
-<li>Added <em class="xref std std-ref">&#8211;io option</em> for controlling the default
-<tt class="xref py py-class docutils literal"><span class="pre">Poller</span></tt>.</li>
+<li>Added <a class="reference internal" href="settings.html#setting-selector"><em>&#8211;io option</em></a> for controlling the default
+selector from python <a class="reference external" href="http://python.readthedocs.org/en/latest/library/selectors.html#module-selectors" title="(in Python v3.4)"><tt class="xref py py-mod docutils literal"><span class="pre">selectors</span></tt></a> module.</li>
 <li>Critical bug fix in python 3 WSGI server.</li>
 <li>Added <tt class="docutils literal"><span class="pre">full_route</span></tt> and <tt class="docutils literal"><span class="pre">rule</span></tt> attributes to wsgi Router.</li>
 <li>Added <a class="reference internal" href="settings.html#setting-show-leaks"><em>&#8211;show_leaks option</em></a>
@@ -369,7 +379,7 @@ the asynchronous discovery functions <a class="reference internal" href="api/asy
 and <tt class="xref py py-func docutils literal"><span class="pre">maybe_failure()</span></tt>. The function is used in the
 implementation of <a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>twisted integration</em></a> and could
 be used in conjunction with other asynchronous libraries as well.</li>
-<li>New <em class="xref std std-ref">Webmail example application</em> using twisted
+<li>New <a class="reference internal" href="tutorials/webmail.html#tutorials-twisted"><em>Webmail example application</em></a> using twisted
 IMAP4 protocol implementation.</li>
 </ul>
 </li>
@@ -569,6 +579,7 @@ asynchronous test suite and asynchronous shell.</li>
   <ul>
 <li><a class="reference internal" href="#">Release Notes</a><ul>
 <li><a class="reference internal" href="#ver-0-8-0">Ver. 0.8.0</a></li>
+<li><a class="reference internal" href="#ver-0-7-4-2013-dec-22">Ver. 0.7.4 - 2013-Dec-22</a></li>
 <li><a class="reference internal" href="#ver-0-7-3-2013-dec-12">Ver. 0.7.3 - 2013-Dec-12</a></li>
 <li><a class="reference internal" href="#ver-0-7-2-2013-oct-16">Ver. 0.7.2 - 2013-Oct-16</a></li>
 <li><a class="reference internal" href="#ver-0-7-1-2013-oct-14">Ver. 0.7.1 - 2013-Oct-14</a></li>
