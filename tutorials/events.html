@@ -108,8 +108,8 @@ referred to this type of event as a <strong>may times event</strong>.</p>
 <p>As the name says, the <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> is a special event which
 can be fired once only. Firing a <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> event multiple
 times will result in a <tt class="xref py py-class docutils literal"><span class="pre">InavlidStateError</span></tt> raised.</p>
-<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> event is a specialised <tt class="xref py py-class docutils literal"><span class="pre">Deferred</span></tt> and therefore
-you can yield it in a coroutine to wait until it get fired.</p>
+<p>A <a class="reference internal" href="../api/events.html#pulsar.async.events.OneTime" title="pulsar.async.events.OneTime"><tt class="xref py py-class docutils literal"><span class="pre">OneTime</span></tt></a> event is a specialised <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a> and
+therefore you can yield it in a coroutine to wait until it get fired.</p>
 </div>
 <div class="section" id="event-handler">
 <h2>Event handler<a class="headerlink" href="#event-handler" title="Permalink to this headline">¶</a></h2>

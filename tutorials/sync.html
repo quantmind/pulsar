@@ -99,8 +99,9 @@ For example, this statement creates a synchronous <a class="reference internal" 
 </pre></div>
 </div>
 <p>Under the hood, pulsar treats a synchronous request exactly in the same way as
-an asynchronous one with the only difference that the <tt class="xref py py-class docutils literal"><span class="pre">EventLoop</span></tt>
-is always used via the <tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt>
+an asynchronous one with the only difference that the
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio-event-loop" title="(in Python v3.4)"><em class="xref std std-ref">event loop</em></a>
+is always used via the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-eventloop.html#asyncio.BaseEventLoop.run_until_complete" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">run_until_complete()</span></tt></a>
 method to wait for the response to be available.</p>
 </div>
 

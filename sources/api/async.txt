@@ -64,7 +64,7 @@ Add async binding
     Add a third-party asynchronous ``binding`` to pulsar asynchronous engine.
 
     ``binding`` is a function which accept one parameter only and must return
-    ``None`` or a :class:`.Deferred`.
+    ``None`` or a :class:`~asyncio.Future`.
 
 
 Multi Async
