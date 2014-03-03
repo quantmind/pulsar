@@ -94,6 +94,12 @@ function.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.data</span> <span class="kn">import</span> <span class="n">data_stores</span>
 </pre></div>
 </div>
+<p>Pulsar provides two implementations, the redis client and the pulsards client.</p>
+</div>
+<div class="section" id="publish-subscribe">
+<span id="apps-pubsub"></span><h2>Publish/Subscribe<a class="headerlink" href="#publish-subscribe" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store" title="pulsar.apps.data.stores.pulsards.base.Store"><tt class="xref py py-class docutils literal"><span class="pre">Store</span></tt></a> can implement the <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.Store.pubsub" title="pulsar.apps.data.stores.pulsards.base.Store.pubsub"><tt class="xref py py-meth docutils literal"><span class="pre">pubsub()</span></tt></a> method to return
+a valid <a class="reference internal" href="#pulsar.apps.data.stores.pulsards.base.PubSub" title="pulsar.apps.data.stores.pulsards.base.PubSub"><tt class="xref py py-class docutils literal"><span class="pre">PubSub</span></tt></a> handler.</p>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
@@ -259,11 +265,11 @@ By default it does nothing.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_type</strong> &#8211; a string indicating the query type to check</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query_type</strong> &#8211; a string indicating the query type to check
+(<tt class="docutils literal"><span class="pre">filter</span></tt>, <tt class="docutils literal"><span class="pre">exclude</span></tt>, <tt class="docutils literal"><span class="pre">search</span></tt>).</td>
 </tr>
 </tbody>
 </table>
-<p>(<tt class="docutils literal"><span class="pre">filter</span></tt>, <tt class="docutils literal"><span class="pre">exclude</span></tt>, <tt class="docutils literal"><span class="pre">search</span></tt>).</p>
 <p>This method is used by the <a class="reference internal" href="odm.html#odm"><em>object data mapper</em></a>.</p>
 </dd></dl>
 
@@ -415,6 +421,7 @@ from the publisher, the <tt class="xref py py-meth docutils literal"><span class
   <ul>
 <li><a class="reference internal" href="#">Datastore Clients</a><ul>
 <li><a class="reference internal" href="#implement-a-store">Implement a Store</a></li>
+<li><a class="reference internal" href="#publish-subscribe">Publish/Subscribe</a></li>
 <li><a class="reference internal" href="#api">API</a><ul>
 <li><a class="reference internal" href="#create-store">Create store</a></li>
 <li><a class="reference internal" href="#start-store">Start store</a></li>
