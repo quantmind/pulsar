@@ -33,7 +33,7 @@ def arbiter(**params):
 
 
 def spawn(**kwargs):
-    '''Spawn a new :class:`Actor` and return an :class:`.ActorProxyFuture`.
+    '''Spawn a new :class:`.Actor` and return an :class:`.ActorProxyFuture`.
 
     This method can be used from any :class:`.Actor`.
     If not in the :class:`.Arbiter` domain, the method sends a request
@@ -49,7 +49,7 @@ def spawn(**kwargs):
     * ``name`` the actor name
     * :ref:`actor hooks <actor-hooks>` such as ``start``, ``stopping``
       and ``stop``
-    * ``actor_class`` a custom :class:`Actor` subclass (never used)
+    * ``actor_class`` a custom :class:`.Actor` subclass (never used)
 
     :return: an :class:`.ActorProxyFuture`.
 
@@ -139,12 +139,11 @@ def info_arbiter(self, info=None):
 class Arbiter(PoolMixin):
     '''The Arbiter drives pulsar servers.
 
-    It is the most important a :class:`Actor` and :class:`PoolMixin` in
+    It is the most important a :class:`.Actor` and :class:`.PoolMixin` in
     pulsar concurrent framework. It is used as singleton
-    in the main process and it manages one or more :class:`Monitor`.
-    It runs the main :class:`EventLoop` of your concurrent application.
-    It is the equivalent of the gunicorn_ arbiter, the twisted_ reactor
-    and the tornado_ eventloop.
+    in the main process and it manages one or more :class:`.Monitor`.
+    It runs the main :ref:`event loop <asyncio-event-loop>` of your
+    concurrent application.
 
     Users access the arbiter (in the arbiter process domain) by the
     high level api::
@@ -152,10 +151,6 @@ class Arbiter(PoolMixin):
         import pulsar
 
         arbiter = pulsar.arbiter()
-
-    .. _gunicorn: http://gunicorn.org/
-    .. _twisted: http://twistedmatrix.com/trac/
-    .. _tornado: http://www.tornadoweb.org/
     '''
     pidfile = None
 
@@ -171,12 +166,12 @@ class Arbiter(PoolMixin):
     # ARBITER HIGH LEVEL API
     ########################################################################
     def add_monitor(self, monitor_name, monitor_class=None, **params):
-        '''Add a new :class:`Monitor` to the :class:`Arbiter`.
+        '''Add a new :class:`.Monitor` to the :class:`Arbiter`.
 
-        :param monitor_class: a :class:`pulsar.Monitor` class.
+        :param monitor_class: a :class:`.Monitor` class.
         :param monitor_name: a unique name for the monitor.
         :param kwargs: dictionary of key-valued parameters for the monitor.
-        :return: the :class:`pulsar.Monitor` added.
+        :return: the :class:`.Monitor` added.
         '''
         if monitor_name in self.registered:
             raise KeyError('Monitor "%s" already available' % monitor_name)
@@ -189,7 +184,7 @@ class Arbiter(PoolMixin):
         return m
 
     def close_monitors(self):
-        '''Close all :class:`Monitor` at once.
+        '''Close all :class:`.Monitor` at once.
         '''
         return multi_async((m.stop() for m in list(itervalues(self.monitors))))
 

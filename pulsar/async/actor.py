@@ -36,7 +36,7 @@ def send(target, action, *args, **params):
     The message is to perform a given ``action``. The actor sending the
     message is obtained via the :func:`get_actor` function.
 
-    :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or
+    :parameter target: the :class:`Actor` id or an :class:`.ActorProxy` or
         name of the target actor which will receive the message.
     :parameter action: the :ref:`remote command <api-remote_commands>`
         to perform in the ``target`` :class:`Actor`.
@@ -44,8 +44,8 @@ def send(target, action, *args, **params):
         :ref:`remote command <api-remote_commands>` ``action``.
     :parameter params: dictionary of parameters to pass to
         :ref:`remote command <api-remote_commands>` ``action``.
-    :return: a :class:`.Future` if the action acknowledge the caller or
-        `None`.
+    :return: an :class:`asyncio.Future` if the action acknowledge the
+        caller or `None`.
 
     Typical example::
 
@@ -78,7 +78,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         True
 
     Here ``a`` is actually a reference to the remote actor, it is
-    an :class:`ActorProxy`.
+    an :class:`.ActorProxy`.
 
     **ATTRIBUTES**
 
@@ -92,13 +92,14 @@ class Actor(EventHandler, ActorIdentity, Coverage):
 
     .. attribute:: impl
 
-        The :class:`Concurrency` implementation for this :class:`Actor`.
+        The :class:`.Concurrency` implementation for this :class:`Actor`.
 
     .. attribute:: _loop
 
-        An :class:`.EventLoop` which listen for input/output events
-        on sockets or socket-like objects. It is the driver of the
-        :class:`Actor`. If the :attr:`_loop` stops, the :class:`Actor` stops
+        An :ref:`event loop <asyncio-event-loop>` which listen
+        for input/output events on sockets or socket-like objects.
+        It is the driver of the :class:`Actor`.
+        If the :attr:`_loop` stops, the :class:`Actor` stops
         running and goes out of scope.
 
     .. attribute:: mailbox
@@ -111,7 +112,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
 
     .. attribute:: proxy
 
-        Instance of a :class:`ActorProxy` holding a reference
+        Instance of a :class:`.ActorProxy` holding a reference
         to this :class:`Actor`. The proxy is a lightweight representation
         of the actor which can be shared across different processes
         (i.e. it is picklable).
@@ -135,13 +136,13 @@ class Actor(EventHandler, ActorIdentity, Coverage):
 
     .. attribute:: next_periodic_task
 
-        The :class:`TimedCall` for the next
+        The :class:`asyncio.Handle` for the next
         :ref:`actor periodic task <actor-periodic-task>`.
 
     .. attribute:: stream
 
         A ``stream`` handler to write information messages without using
-        the :attr:`logger`.
+        the :attr:`~.AsyncObject.logger`.
     '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
     MANY_TIMES_EVENTS = ('on_info', 'on_params')
@@ -235,7 +236,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
         positional ``args`` and key-valued ``kwargs``.
-        Always return a :class:`.Future`.'''
+        Always return a :class:`asyncio.Future`.'''
         target = self.monitor if target == 'monitor' else target
         mailbox = self.mailbox
         if isinstance(target, ActorProxyMonitor):
@@ -261,7 +262,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     def stop(self, exc=None):
         '''Gracefully stop the :class:`Actor`.
 
-        Implemented by the :meth:`Concurrency.stop` method of the :attr:`impl`
+        Implemented by the :meth:`.Concurrency.stop` method of the :attr:`impl`
         attribute.'''
         return self.__impl.stop(self, exc)
 
@@ -276,8 +277,8 @@ class Actor(EventHandler, ActorIdentity, Coverage):
     ###############################################################  STATES
     def is_running(self):
         '''``True`` if actor is running, that is when the :attr:`state`
-is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
-running.'''
+        is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the loop is
+        running.'''
         return self.state == ACTOR_STATES.RUN and self._loop.is_running()
 
     def started(self):
@@ -304,11 +305,11 @@ running.'''
         return self.state >= ACTOR_STATES.CLOSE
 
     def is_arbiter(self):
-        '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
+        '''Return ``True`` if ``self`` is the :class:`.Arbiter`.'''
         return self.__impl.is_arbiter()
 
     def is_monitor(self):
-        '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
+        '''Return ``True`` if ``self`` is a :class:`.Monitor`.'''
         return False
 
     def is_process(self):
@@ -335,8 +336,8 @@ running.'''
 
         * ``actor`` a dictionary containing information regarding the type of
           actor and its status.
-        * ``events`` a dictionary of information about the event loop running
-          the actor.
+        * ``events`` a dictionary of information about the
+          :ref:`event loop <asyncio-event-loop>` running the actor.
         * ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
         * ``system`` system info.
 

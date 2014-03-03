@@ -83,12 +83,12 @@ class PoolMixin(Actor):
     .. attribute:: managed_actors
 
         dictionary with keys given by actor's ids and values by
-        :class:`ActorProxyMonitor` instances. These are the actors
+        :class:`.ActorProxyMonitor` instances. These are the actors
         managed by the pool.
 
     .. attribute:: terminated_actors
 
-        list of :class:`ActorProxyMonitor` which have been terminated
+        list of :class:`.ActorProxyMonitor` which have been terminated
         (the remote actor did not have a cleaned shutdown).
     '''
     CLOSE_TIMEOUT = 30000000000000
@@ -153,12 +153,12 @@ class PoolMixin(Actor):
 
     def manage_actor(self, actor, stop=False):
         '''If an actor failed to notify itself to the arbiter for more than
-the timeout, stop the actor.
+        the timeout, stop the actor.
 
-:param actor: the :class:`Actor` to manage.
-:param stop: if ``True``, stop the actor.
-:return: if the actor is alive 0 if it is not.
-'''
+        :param actor: the :class:`Actor` to manage.
+        :param stop: if ``True``, stop the actor.
+        :return: if the actor is alive 0 if it is not.
+        '''
         if not self.is_running():
             stop = True
         if not actor.is_alive():
@@ -204,8 +204,8 @@ do nothing.'''
                 self.spawn()
 
     def stop_actors(self):
-        """Maintain the number of workers by spawning or killing
-as required."""
+        """Maintain the number of workers by spawning or killing as required
+        """
         if self.cfg.workers:
             num_to_kill = len(self.managed_actors) - self.cfg.workers
             for i in range(num_to_kill, 0, -1):
@@ -222,21 +222,21 @@ as required."""
 
 
 class Monitor(PoolMixin):
-    '''A monitor is a **very** special :class:`Actor`.
+    '''A monitor is a **very** special :class:`.Actor`.
 
-    it is a :class:`PoolMixin` which shares the same :class:`EventLoop`
-    with the :class:`Arbiter` and therefore lives in the main thread
+    it is a :class:`.PoolMixin` which shares the same event loop
+    with the :class:`.Arbiter` and therefore lives in the main thread
     of the master process domain.
 
-    The Arbiter manages monitors which in turn manage a set of :class:`Actor`
+    The Arbiter manages monitors which in turn manage a set of :class:`.Actor`
     performing similar tasks.
 
     In other words, you may have a monitor managing actors for serving HTTP
     requests on a given port, another monitor managing actors consuming tasks
-    from a task queue and so forth. You can think of :class:`Monitor` as
-    managers of pools of :class:`Actor`.
+    from a task queue and so forth. You can think of :class:`.Monitor` as
+    managers of pools of :class:`.Actor`.
 
-    Monitors are created by invoking the :meth:`Arbiter.add_monitor`
+    Monitors are created by invoking the :meth:`.Arbiter.add_monitor`
     functions and not by directly invoking the constructor. Therefore
     adding a new monitor to the arbiter follows the pattern::
 
@@ -252,8 +252,9 @@ class Monitor(PoolMixin):
         return True
 
     def monitor_task(self):
-        '''Monitor specific task called by the :meth:`Monitor.periodic_task`.
+        '''Monitor specific task.
 
+        Called by the :meth:`.MonitorConcurrency.periodic_task` method.
         By default it does nothing. Override if you need to.
         '''
         pass

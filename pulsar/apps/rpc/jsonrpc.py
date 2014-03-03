@@ -185,7 +185,7 @@ class JsonProxy(AsyncObject):
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         body = json.dumps(data).encode('utf-8')
-        resp = yield self._http._request('POST', self._url, data=body)
+        resp = yield self._http.post(self._url, data=body)
         if self._full_response:
             coroutine_return(resp)
         else:

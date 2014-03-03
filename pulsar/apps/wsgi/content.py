@@ -11,8 +11,7 @@ A string can be ``html``, ``json``, ``plain text`` or any other valid HTTP
 content type.
 
 The main class of this module is the :class:`AsyncString`, which can be
-considered as the atomic component of an asynchronous web framework.
-It is a smart way for concatenating asynchronous strings::
+considered as the atomic component of an asynchronous web framework::
 
     >>> from pulsar.apps.wsgi import AsyncString
     >>> string = AsyncString('Hello')
@@ -96,13 +95,6 @@ Head
 ~~~~~~~~~~
 
 .. autoclass:: Head
-   :members:
-   :member-order: bysource
-
-Body
-~~~~~~~~~~
-
-.. autoclass:: Body
    :members:
    :member-order: bysource
 

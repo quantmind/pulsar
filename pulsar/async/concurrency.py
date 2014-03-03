@@ -26,13 +26,13 @@ __all__ = ['Concurrency', 'concurrency']
 
 
 def concurrency(kind, actor_class, monitor, cfg, **params):
-    '''Function invoked by the :class:`Arbiter` or a :class:`Monitor` when
-spawning a new :class:`Actor`. It created a :class:`Concurrency` instance
-which handle the initialisation and the life of an :class:`Actor`.
+    '''Function invoked by the :class:`.Arbiter` or a :class:`.Monitor` when
+spawning a new :class:`.Actor`. It created a :class:`.Concurrency` instance
+which handle the initialisation and the life of an :class:`.Actor`.
 
 :parameter kind: Type of concurrency.
-:parameter monitor: The monitor (or arbiter) managing the :class:`Actor`.
-:return: a :class:`Councurrency` instance.
+:parameter monitor: The monitor (or arbiter) managing the :class:`.Actor`.
+:return: a :class:`.Councurrency` instance.
 '''
     maker = concurrency_models.get(kind)
     if maker:
@@ -43,18 +43,18 @@ which handle the initialisation and the life of an :class:`Actor`.
 
 
 class Concurrency(object):
-    '''Actor :class:`Concurrency`.
+    '''Actor :class:`.Concurrency`.
 
     Responsible for the actual spawning of actors according to a
     concurrency implementation. Instances are picklable
-    and are shared between the :class:`Actor` and its
-    :class:`ActorProxyMonitor`.
+    and are shared between the :class:`.Actor` and its
+    :class:`.ActorProxyMonitor`.
     This is an abstract class, derived classes must implement the
     ``start`` method.
 
     :param concurrency: string indicating the concurrency implementation.
         Valid choices are ``monitor``, ``process``, ``thread``.
-    :param actor_class: :class:`Actor` or one of its subclasses.
+    :param actor_class: :class:`.Actor` or one of its subclasses.
     :param timeout: timeout in seconds for the actor.
     :param kwargs: additional key-valued arguments to be passed to the actor
         constructor.
@@ -117,14 +117,13 @@ class Concurrency(object):
         '''Perform the hand shake for ``actor``
 
         The hand shake occurs when the ``actor`` is in starting state.
+        It performs the following actions:
 
-        It performs the following actions
+        * set the ``actor`` as the actor of the current thread
+        * bind two additional callbacks to the ``start`` event
+        * fire the ``start`` event
 
-        * Set the ``actor`` as the actor of the current thread
-        * Bind two additional callbacks to the ``start` event
-        * Fire the ``start`` event
-
-        If the hand shake is succesful, the actor will eventually
+        If the hand shake is successful, the actor will eventually
         results in a running state.
         '''
         try:
@@ -173,8 +172,8 @@ class Concurrency(object):
         '''Implement the :ref:`actor period task <actor-periodic-task>`.
 
         This is an internal method called periodically by the
-        :attr:`Actor._loop` to ping the actor monitor.
-        If successful return a :class:`.Future` called
+        :attr:`.Actor._loop` to ping the actor monitor.
+        If successful return a :class:`asyncio.Future` called
         back with the acknowledgement from the monitor.
         '''
         actor.next_periodic_task = None
@@ -193,7 +192,8 @@ class Concurrency(object):
         return ack
 
     def stop(self, actor, exc):
-        '''Gracefully stop the ``actor``.'''
+        '''Gracefully stop the ``actor``.
+        '''
         if actor.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
             actor.state = ACTOR_STATES.STOPPING
@@ -222,7 +222,7 @@ class Concurrency(object):
         return actor.event('stop')
 
     def _stop_actor(self, actor):
-        '''Exit from the :class:`Actor` domain.'''
+        '''Exit from the :class:`.Actor` domain.'''
         actor.state = ACTOR_STATES.CLOSE
         if actor._loop.is_running():
             actor.logger.debug('Closing mailbox')
@@ -280,9 +280,9 @@ class MonitorMixin(object):
 ############################################################################
 ##    CONCURRENCY IMPLEMENTATIONS
 class MonitorConcurrency(MonitorMixin, Concurrency):
-    ''':class:`Concurrency` class for a :class:`Monitor`.
+    ''':class:`.Concurrency` class for a :class:`.Monitor`.
 
-    Monitors live in the **mainthread** of the master process and
+    Monitors live in the **main thread** of the master process and
     therefore do not require to be spawned.
     '''
     def setup_event_loop(self, actor):
@@ -298,8 +298,8 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
         raise NotImplementedError
 
     def periodic_task(self, actor, **kw):
-        '''Override the :meth:`Concurrency.periodic_task` to implement
-        the :class:`Monitor` :ref:`periodic task <actor-periodic-task>`.'''
+        '''Override the :meth:`.Concurrency.periodic_task` to implement
+        the :class:`.Monitor` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
         if actor.is_running():
@@ -336,7 +336,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         self._install_signals(actor)
 
     def create_mailbox(self, actor, loop):
-        '''Override :meth:`Concurrency.create_mailbox` to create the
+        '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
         '''
         mailbox = TcpServer(MailboxProtocol, loop, ('127.0.0.1', 0),
@@ -349,8 +349,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         return mailbox
 
     def periodic_task(self, actor, **kw):
-        '''Override the :meth:`Concurrency.periodic_task` to implement
-        the :class:`Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
+        '''Override the :meth:`.Concurrency.periodic_task` to implement
+        the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
         interval = 0
         actor.next_periodic_task = None
         if actor.is_running():

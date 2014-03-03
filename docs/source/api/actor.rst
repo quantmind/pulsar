@@ -83,15 +83,15 @@ PoolMixin
 ActorProxy
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ActorProxy
+.. autoclass:: pulsar.async.proxy.ActorProxy
    :members:
    :member-order: bysource
 
 
-ActorProxyDeferred
+ActorProxyFuture
 ~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: pulsar.async.proxy.ActorProxyDeferred
+.. autoclass:: pulsar.async.proxy.ActorProxyFuture
    :members:
    :member-order: bysource
 
@@ -99,15 +99,7 @@ ActorProxyDeferred
 ActorProxyMonitor
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: ActorProxyMonitor
-   :members:
-   :member-order: bysource
-
-
-ThreadPool
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: ThreadPool
+.. autoclass:: pulsar.async.proxy.ActorProxyMonitor
    :members:
    :member-order: bysource
 

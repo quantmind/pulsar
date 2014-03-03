@@ -4,68 +4,6 @@ class which encapsulates the essential API for communicating and executing
 commands on remote servers.
 A :class:`.Store` can also implement several methods for managing
 the higher level :ref:`object data mapper <odm>`.
-
-Implement a Store
-==================
-
-When implementing a new :class:`.Store` there are several methods which need
-to be covered:
-
-* :meth:`Store.connect` to create a new connection
-* :meth:`Store.execute` to execute a command on the store server
-
-A new store needs to be registered via the :func:`register_store`
-function.
-
-All registered data stores are stored in the ``data_stores`` dictionary::
-
-    from pulsar.apps.data import data_stores
-
-
-API
-============
-
-Create store
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: create_store
-
-
-Start store
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: start_store
-
-
-Register a new store
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: register_store
-
-
-Store
-~~~~~~~~~~~~~~~
-
-.. autoclass:: Store
-   :members:
-   :member-order: bysource
-
-
-Command
-~~~~~~~~~~~~~~~
-
-.. autoclass:: Command
-   :members:
-   :member-order: bysource
-
-
-PubSub
-~~~~~~~~~~~~~~~
-
-.. autoclass:: PubSub
-   :members:
-   :member-order: bysource
-
 '''
 import logging
 import socket
@@ -236,7 +174,7 @@ class Store(Producer):
         '''Check if this :class:`.Store` supports ``query_type``.
 
         :param query_type: a string indicating the query type to check
-        (``filter``, ``exclude``, ``search``).
+            (``filter``, ``exclude``, ``search``).
 
         This method is used by the :ref:`object data mapper <odm>`.
         '''

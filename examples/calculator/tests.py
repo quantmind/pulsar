@@ -1,7 +1,7 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 
-from pulsar import send, new_event_loop
+from pulsar import send, new_event_loop, coroutine_return
 from pulsar.apps import rpc
 from pulsar.apps.test import dont_run_with_thread
 
@@ -112,9 +112,11 @@ class TestRpcOnThread(unittest.TestCase):
 
     def _check_tcpserver(self, server):
         sockets = server['sockets']
-        self.assertEqual(len(sockets), 1)
-        sock = sockets[0]
-        self.assertEqual(sock['address'], '%s:%s' % self.app_cfg.addresses[0])
+        if sockets:
+            self.assertEqual(len(sockets), 1)
+            sock = sockets[0]
+            self.assertEqual(sock['address'],
+                             '%s:%s' % self.app_cfg.addresses[0])
 
     def test_invalid_params(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)

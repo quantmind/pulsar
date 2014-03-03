@@ -40,6 +40,7 @@ These sections cover **pulsar internals** for the curious reader.
 .. toctree::
    :maxdepth: 1
 
+   actors
    coroutine
    messages
    events
