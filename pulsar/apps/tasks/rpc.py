@@ -1,5 +1,4 @@
-import pulsar
-from pulsar import coroutine_return
+from pulsar import send, coroutine_return, get_application
 from pulsar.apps import rpc
 
 from .backend import Task, TaskNotAvailable
@@ -10,11 +9,6 @@ __all__ = ['TaskQueueRpcMixin']
 
 def task_to_json(task):
     if task:
-        if pulsar.is_failure(task):
-            err = task.trace[1]
-            if isinstance(err, TaskNotAvailable):
-                raise rpc.InvalidParams(
-                    'Job "%s" is not available.' % err.task_name)
         if isinstance(task, (list, tuple)):
             task = [task_to_json(t) for t in task]
         elif isinstance(task, Task):
@@ -103,7 +97,7 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
     ##    INTERNALS
     def task_backend(self):
         if not self._task_backend:
-            app = yield pulsar.get_application(self.taskqueue)
+            app = yield get_application(self.taskqueue)
             self._task_backend = app.get_backend()
         coroutine_return(self._task_backend)
 
@@ -127,4 +121,4 @@ class TaskQueueRpcMixin(rpc.JSONRPC):
         return {}
 
     def _rq(self, request, action, *args, **kw):
-        return pulsar.send(self.taskqueue, action, *args, **kw)
+        return send(self.taskqueue, action, *args, **kw)

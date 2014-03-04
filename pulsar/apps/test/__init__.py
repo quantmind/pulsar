@@ -48,14 +48,16 @@ The next step is to actually write the tests.
 
 Writing a Test Case
 ===========================
-Only subclasses of  ``unittest.TestCase`` are collected by this application.
+Only subclasses of  :class:`~unittest.TestCase` are collected by this
+application.
 When running a test, pulsar looks for two extra method: ``_pre_setup`` and
 ``_post_teardown``. If the former is available, it is run just before the
-``setUp`` method while if the latter is available, it is run
-just after the ``tearDown`` method. In addition, if the ``setUpClass``
+:meth:`~unittest.TestCase.setUp` method while if the latter is available,
+it is run just after the :meth:`~unittest.TestCase.tearDown` method.
+In addition, if the :meth:`~unittest.TestCase.setUpClass`
 class methods is available, it is run just before
-all tests functions are run and the ``tearDownClass``, if available, is run
-just after all tests functions are run.
+all tests functions are run and the :meth:`~unittest.TestCase.tearDownClass`,
+if available, is run just after all tests functions are run.
 
 An example test case::
 
@@ -77,7 +79,7 @@ An example test case::
 .. note::
 
     Test functions are asynchronous, when they return a generator or a
-    :class:`.Future`, synchronous, when they return anything else.
+    :class:`~asyncio.Future`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 
@@ -93,7 +95,7 @@ initialising the :class:`TestSuite`::
         TestSuite(modules=('tests',
                           ('examples','tests'))).start()
 
-The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.
+The :class:`TestSuite` loads tests via the :class:`~loader.TestLoader` class.
 
 In the context of explaining the rules for loading tests, we refer to
 an ``object`` as
@@ -105,7 +107,7 @@ with this in mind:
 
 * Directories that aren't packages are not inspected. This means that if a
   directory does not have a ``__init__.py`` file, it won't be inspected.
-* Any class that is a ``unittest.TestCase`` subclass is collected.
+* Any class that is a :class:`~unittest.TestCase` subclass is collected.
 * If an ``object`` starts with ``_`` or ``.`` it won't be collected,
   nor will any ``objects`` it contains.
 * If an ``object`` defines a ``__test__`` attribute that does not evaluate to
@@ -167,7 +169,7 @@ In addition, the following options are
 
 sequential
 ~~~~~~~~~~~~~~~~~~~
-By default, test functions within a :class:`unittest.TestCase`
+By default, test functions within a :class:`~unittest.TestCase`
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
 By specifying the :ref:`--sequential <setting-sequential>` command line option,
@@ -177,7 +179,7 @@ forces tests to be run in a sequential model, one after the other::
     python runtests.py --sequential
 
 Alternatively, if you need to specify a Testcase which always runs its test
-functions in a sequential way, you can use the :func:`sequential` decorator::
+functions in a sequential way, you can use the :func:`.sequential` decorator::
 
     from pulsar.apps.test import unittest, sequential
 

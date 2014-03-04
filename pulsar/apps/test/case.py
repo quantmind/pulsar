@@ -7,7 +7,7 @@ from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
-from .utils import TestFunction
+from .utils import TestFunction, TestFailure
 
 if ispy3k:
     from unittest import mock
@@ -139,7 +139,7 @@ class Test(tasks.Job):
                 previous = self.add_failure(test, runner, exc, add_err)
         coroutine_return(previous)
 
-    def add_failure(self, test, runner, error, add_err=True):
+    def add_failure(self, test, runner, failure, add_err=True):
         '''Add ``error`` to the list of errors.
 
         :param test: the test function object where the error occurs
@@ -149,12 +149,14 @@ class Test(tasks.Job):
         :return: a tuple containing the ``error`` and the ``exc_info``
         '''
         if add_err:
-            if isinstance(error, test.failureException):
-                runner.addFailure(test, error)
-            elif isinstance(error, ExpectedFailure):
-                runner.addExpectedFailure(test, error)
+            if not isinstance(failure, TestFailure):
+                failure = TestFailure(failure)
+            if isinstance(failure.exc, test.failureException):
+                runner.addFailure(test, failure)
+            elif isinstance(failure.exc, ExpectedFailure):
+                runner.addExpectedFailure(test, failure)
             else:
-                runner.addError(test, error)
+                runner.addError(test, failure)
         else:
             LOGGER.exception('exception')
-        return error
+        return failure

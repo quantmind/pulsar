@@ -352,11 +352,19 @@ class Task(asyncio.Task):
             self.__class__._current_tasks.pop(self._loop)
         self = None
 
-    def _wakeup(self, fut, inthread=False):
-        if inthread or fut._loop is self._loop:
-            super(Task, self)._wakeup(fut)
+    def _wakeup(self, future, inthread=False):
+        if inthread or future._loop is self._loop:
+            try:
+                exc = future.exception()
+            except CancelledError as e:
+                exc = e
+            if exc:
+                self._step(exc=exc)
+            else:
+                self._step(future.result())
         else:
-            self._loop.call_soon_threadsafe(self._wakeup, fut, True)
+            self._loop.call_soon_threadsafe(self._wakeup, future, True)
+        self = None
 
 
 def multi_async(iterable=None, loop=None, lock=True, **kwargs):

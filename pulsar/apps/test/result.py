@@ -1,9 +1,12 @@
+import unittest
 from copy import deepcopy
 
 from pulsar import format_traceback
 from pulsar.utils.structures import AttributeDictionary
 
-from .case import unittest, LOGGER
+from .case import LOGGER
+from .utils import TestFailure
+
 
 __all__ = ['Plugin',
            'TestStream',
@@ -17,8 +20,7 @@ STDERR_LINE = '\nStderr:\n%s'
 
 
 class Plugin(object):
-    '''The interface for all classes which are part of of the
-    :class:`.TestRunner`.
+    '''Interface for all classes which are part of the :class:`.TestRunner`.
 
     Most classes used by the test application are plugins, for
     example the :class:`.TestRunner` itself,
@@ -104,8 +106,8 @@ class Plugin(object):
         pass
 
     def before_test_function_run(self, test, local):
-        '''This function can be used by plugins to manipulate the ``test``
-behaviour in the process domain where the test run.'''
+        '''Can be used by plugins to manipulate the ``test``
+        behaviour in the process domain where the test run.'''
         return test
 
     def after_test_function_run(self, test, local):
@@ -279,7 +281,7 @@ class TestStream(Plugin):  # pragma    nocover
 
 
 class TestResult(Plugin):
-    '''A :class:`Plugin` for collecting results/failures for test runs.
+    '''A :class:`.Plugin` for collecting results/failures for test runs.
 
     Each :class:`.Plugin` can access the :class:`.TestRunner` ``result``
     object via the :attr:`~Plugin.result` attribute.
@@ -338,8 +340,10 @@ class TestResult(Plugin):
         self.unexpectedSuccesses.append(self.getDescription(test))
 
     def _add_error(self, test, exc, container):
+        if not isinstance(exc, TestFailure):
+            exc = TestFailure(exc)
         test = self.getDescription(test)
-        container.append((test, '\n'.join(format_traceback(exc))))
+        container.append((test, str(exc)))
 
     def add(self, result):
         self._count += 1
@@ -371,7 +375,7 @@ def testsafe(name, return_val=None):
 
 
 class TestRunner(Plugin):
-    '''A :class:`Plugin` for asynchronously running tests.
+    '''A :class:`.Plugin` for asynchronously running tests.
     '''
     def __init__(self, plugins, stream, writercls=None, descriptions=True,
                  logger=None):
@@ -408,7 +412,8 @@ class TestRunner(Plugin):
     printSummary = testsafe('printSummary')
 
     def loadTestsFromTestCase(self, test_cls):
-        '''Load all *test* functions for the test class *cls*.'''
+        '''Load all ``test`` functions for the ``test_cls``
+        '''
         c = testsafe('loadTestsFromTestCase', lambda v: v)(self, test_cls)
         if c is None:
             return self.loader.loadTestsFromTestCase(test_cls)
@@ -416,6 +421,8 @@ class TestRunner(Plugin):
             return c
 
     def add(self, result):
+        '''Add a new result to the :attr:`~.Plugin.result` container
+        '''
         self.result.add(result)
 
     def import_module(self, mod, parent=None):

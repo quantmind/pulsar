@@ -684,8 +684,6 @@ class HttpResponse(ProtocolConsumer):
     def is_error(self):
         if self.status_code:
             return not is_succesful(self.status_code)
-        elif self.on_finished.done():
-            return is_failure(self.on_finished.result)
         else:
             return False
 

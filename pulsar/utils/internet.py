@@ -225,7 +225,8 @@ class WrapSocket:   # pragma    nocover
 
 
 class SSLContext:
-
+    '''A picklable SSLContext class
+    '''
     def __init__(self, keyfile=None, certfile=None, cert_reqs=CERT_NONE,
                  ca_certs=None, server_hostname=None,
                  protocol=PROTOCOL_SSLv23):
@@ -235,6 +236,10 @@ class SSLContext:
         self.ca_certs = ca_certs
         self.server_hostname = server_hostname
         self.protocol = protocol
+
+    @property
+    def verify_mode(self):
+        return self.cert_reqs
 
     def wrap_socket(self, sock, server_side=False,
                     do_handshake_on_connect=True,

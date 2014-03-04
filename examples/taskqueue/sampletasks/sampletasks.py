@@ -3,8 +3,9 @@ import math
 from datetime import timedelta
 from random import random
 from functools import reduce
+from asyncio import sleep
 
-from pulsar import get_request_loop, async_sleep, coroutine_return
+from pulsar import get_request_loop, coroutine_return
 from pulsar.apps import tasks
 
 
@@ -31,12 +32,9 @@ class Addition(tasks.Job):
 class Asynchronous(tasks.Job):
 
     def __call__(self, consumer, lag=1):
-        rl = get_request_loop()
         start = time.time()
-        loop = rl.num_loops
-        yield async_sleep(lag)
-        coroutine_return({'time': time.time() - start,
-                          'loops': rl.num_loops - loop})
+        yield sleep(lag)
+        coroutine_return(time.time() - start)
 
 
 class NotOverLap(tasks.Job):
@@ -44,7 +42,7 @@ class NotOverLap(tasks.Job):
 
     def __call__(self, consumer, lag=1):
         start = time.time()
-        yield async_sleep(lag)
+        yield sleep(lag)
         coroutine_return(time.time() - start)
 
 

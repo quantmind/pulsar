@@ -126,10 +126,12 @@ class TestTestWorker(unittest.TestCase):
 
     def test_unknown_send_target(self):
         # The target does not exists
-        future = pulsar.send('vcghdvchdgcvshcd',
-                             'ping').add_both(lambda r: [r])
-        result = yield future
-        self.assertTrue(is_failure(result[0]))
+        try:
+            yield pulsar.send('vcghdvchdgcvshcd', 'ping')
+        except Exception:
+            pass
+        else:
+            assert False, 'error not raised'
 
     def test_multiple_execute(self):
         m = yield multi_async((send('arbiter', 'run', wait, 1.2),

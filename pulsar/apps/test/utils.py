@@ -45,7 +45,8 @@ from asyncio import Future
 
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
-                    TcpServer, coroutine_return, new_event_loop)
+                    TcpServer, coroutine_return, new_event_loop,
+                    format_traceback)
 from pulsar.async.proxy import ActorProxyFuture
 from pulsar.utils.importer import module_attribute
 from pulsar.apps.data import create_store
@@ -66,8 +67,19 @@ NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass', 'run_test_server')
 
 
-class TestCallable(object):
+class TestFailure:
 
+    def __init__(self, exc):
+        self.exc = exc
+        self.trace = format_traceback(exc)
+
+    def __str__(self):
+        return '\n'.join(self.trace)
+
+
+class TestCallable(object):
+    '''Responsible for actually running a test function.
+    '''
     def __init__(self, test, method_name, istest, timeout):
         self.test = test
         self.method_name = method_name
@@ -93,13 +105,14 @@ class TestCallable(object):
             test = actor.app.runner.before_test_function_run(test)
         inject_async_assert(test)
         test_function = getattr(test, self.method_name)
+        failure = None
         try:
             yield test_function()
         except Exception as exc:
-            coroutine_return(exc)
-        finally:
-            if self.istest:
-                actor.app.runner.after_test_function_run(self.test)
+            failure = TestFailure(exc)
+        if self.istest:
+            actor.app.runner.after_test_function_run(self.test)
+        coroutine_return(failure)
 
 
 class SafeTest(object):
@@ -169,9 +182,22 @@ def run_on_arbiter(f):
 
 
 def sequential(cls):
-    '''Decorator for a :class:`unittest.TestCase` which cause
+    '''Decorator for a :class:`~unittest.TestCase` which cause
     its test functions to run sequentially rather than in an
     asynchronous fashion.
+
+    Typical usage::
+
+        import unittest
+
+        from pulsar.apps.test import sequential
+
+        @sequenatial
+        class MyTests(unittest.TestCase):
+            ...
+
+    You can also run test functions sequentially when using the
+    :ref:`sequential <apps-test-sequential>` flag in the command line.
     '''
     cls._sequential_execution = True
     return cls
@@ -179,10 +205,10 @@ def sequential(cls):
 
 class AsyncAssert(object):
     '''A `descriptor`_ added by the :ref:`test-suite` to all python
-    :class:`unittest.TestCase` loaded.
+    :class:`~unittest.TestCase` loaded.
 
     It can be used to invoke the same ``assertXXX`` methods available in
-    the :class:`unittest.TestCase` in an asynchronous fashion.
+    the :class:`~unittest.TestCase` in an asynchronous fashion.
 
     The descriptor is available via the ``async`` attribute.
     For example::
@@ -224,11 +250,11 @@ class AsyncAssert(object):
 
 
 class ActorTestMixin(object):
-    '''A mixin for :class:`unittest.TestCase`.
+    '''A mixin for :class:`~unittest.TestCase`.
 
     Useful for classes testing spawning of actors.
     Make sure this is the first class you derive from, before the
-    unittest.TestCase, so that the tearDown method is overwritten.
+    :class:`~unittest.TestCase`, so that the tearDown method is overwritten.
 
     .. attribute:: concurrency
 

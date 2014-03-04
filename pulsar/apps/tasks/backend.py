@@ -406,24 +406,24 @@ class TaskBackend(EventHandler):
         '''Asynchronously wait for a task with ``task_id`` to have finished
         its execution.
         '''
-        def _():
+        def _(task_id):
             task = yield self.get_task(task_id)
             if task:
                 task_id = task['id']
                 callbacks = self.callbacks
                 if task.done():  # task done, simply return it
-                    when_done = callbacks.pop(task_id, None)
-                    if when_done:
-                        when_done.callback(task)
+                    done = callbacks.pop(task_id, None)
+                    if done:
+                        done.set_result(task)
                 else:
-                    when_done = callbacks.get(task_id)
-                    if not when_done:
+                    done = callbacks.get(task_id)
+                    if not done:
                         # No future, create one
-                        callbacks[task_id] = when_done = Future()
-                    task = yield when_done
+                        callbacks[task_id] = done = Future(loop=self._loop)
+                    task = yield done
                 coroutine_return(task)
 
-        fut = async(_(), self._loop)
+        fut = async(_(task_id), self._loop)
         if timeout:
             future_timeout(fut, timeout)
         return fut
@@ -450,12 +450,10 @@ class TaskBackend(EventHandler):
         '''
         raise NotImplementedError
 
-    def get_task(self, task_id=None, when_done=False):
+    def get_task(self, task_id=None):
         '''Asynchronously retrieve a :class:`Task` from a ``task_id``.
 
         :param task_id: the ``id`` of the task to retrieve.
-        :param when_done: if ``True`` return only when the task is in a
-            ready state.
         :return: a :class:`Task` or ``None``.
         '''
         raise NotImplementedError
@@ -694,9 +692,9 @@ class TaskBackend(EventHandler):
         # If a callback is not available, it must have been fired already
         task = yield self.get_task(task_id)
         if task:
-            when_done = self.callbacks.pop(task['id'], None)
-            if when_done:
-                when_done.callback(task)
+            done = self.callbacks.pop(task['id'], None)
+            if done:
+                done.set_result(task)
 
 
 class SchedulerEntry(object):
@@ -803,7 +801,7 @@ class PulsarTaskBackend(TaskBackend):
         else:
             coroutine_return()
 
-    def get_task(self, task_id=None, when_done=False):
+    def get_task(self, task_id=None):
         store = self.store
         if not task_id:
             inq = self.channel('inqueue')
