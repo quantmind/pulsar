@@ -282,7 +282,9 @@ class SSLContext:
 
 
 def is_tls(sock):
-    return hasattr(sock, 'keyfile')
+    '''Check if ``sock`` is a socket over transport layer security
+    '''
+    return ssl and isinstance(sock, ssl.SSLSocket)
 
 
 def ssl_context(context, server_side=False):

@@ -189,7 +189,7 @@ class ProxyResponse(object):
             self.start_response(resp.status, resp.get_headers(),
                                 failure.exc_info)
             self._done = True
-            self.queue.put(resp.content[0])
+            self.queue.put_nowait(resp.content[0])
 
     def data_processed(self, response, exc=None, **kw):
         '''Receive data from the requesting HTTP client.'''
@@ -240,7 +240,7 @@ class ProxyTunnel(ProxyResponse):
         response.finished()
         self.start_response('200 Connection established', [])
         # send empty byte so that headers are sent
-        self.queue.put(b'')
+        self.queue.put_nowait(b'')
         self._done = True
         return response
 

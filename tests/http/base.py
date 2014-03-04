@@ -164,7 +164,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def test_200_get(self):
         http = self.client()
         response = yield http.get(self.httpbin())
-        self._check_pool(http, response)
         self.assertEqual(str(response), '200')
         self.assertEqual(repr(response), 'HttpResponse(200)')
         self.assertEqual(response.status_code, 200)

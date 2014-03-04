@@ -35,15 +35,16 @@ class ProtocolConsumer(EventHandler):
         to implement.
         For client consumers, :meth:`start_request` should also be implemented.
 
-    A :class:`ProtocolConsumer` is a subclass of :class:`EventHandler` and it
+    A :class:`ProtocolConsumer` is a subclass of :class:`.EventHandler` and it
     has two default :ref:`one time events <one-time-event>`:
 
     * ``pre_request`` fired when the request is received (for servers) or
       just before is sent (for clients).
       This occurs just before the :meth:`start_request` method.
     * ``post_request`` fired when the request is done. The
-      :attr:`on_finished` attribute is the
-      :class:`.Future` called back once this event occurs.
+      :attr:`on_finished` attribute is a shortcut for the ``post_request``
+      :class:`.OneTime` event and therefore can be used to wait for
+      the request to have received a full response (clients).
 
     In addition, it has two :ref:`many times events <many-times-event>`:
 
@@ -202,7 +203,8 @@ class ProtocolConsumer(EventHandler):
 
 
 class PulsarProtocol(EventHandler):
-    '''Base class for both :class:`Protocol` and :class:`.DatagramProtocol`.
+    '''A mixin class for both :class:`.Protocol` and
+    :class:`.DatagramProtocol`.
 
     A :class:`PulsarProtocol` is an :class:`.EventHandler` which has
     two :ref:`one time events <one-time-event>`:
@@ -246,7 +248,7 @@ class PulsarProtocol(EventHandler):
 
     @property
     def transport(self):
-        '''The :class:`.SocketStreamTransport` for this connection.
+        '''The :ref:`transport <asyncio-transport>` for this protocol.
 
         Available once the :meth:`connection_made` is called.'''
         return self._transport
@@ -273,7 +275,8 @@ class PulsarProtocol(EventHandler):
 
     @property
     def _loop(self):
-        '''The :attr:`transport` event loop.'''
+        '''The :attr:`transport` event loop.
+        '''
         if self._transport:
             return self._transport._loop
 
@@ -299,8 +302,8 @@ class PulsarProtocol(EventHandler):
             self._transport.abort()
 
     def connection_made(self, transport):
-        '''Sets the transport, fire the ``connection_made`` event and adds
-        a :attr:`timeout` for idle connections.
+        '''Sets the :attr:`transport`, fire the ``connection_made`` event
+        and adds a :attr:`timeout` for idle connections.
         '''
         if self._transport is not None:
             self._cancel_timeout()
@@ -366,9 +369,9 @@ class Connection(Protocol):
     '''A :class:`Protocol` to handle multiple request/response.
 
     It is a class which acts as bridge between a
-    :class:`~asyncio.SocketStreamTransport`
-    and a :class:`ProtocolConsumer`. It routes data arriving from the
-    :class:`.SocketStreamTransport` to the :meth:`current_consumer`.
+    :ref:`transport <asyncio-transport>` and a :class:`.ProtocolConsumer`.
+    It routes data arriving from the transport to the
+    :meth:`current_consumer`.
 
     .. attribute:: _consumer_factory
 

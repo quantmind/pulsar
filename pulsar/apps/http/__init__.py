@@ -1088,5 +1088,6 @@ class HttpClient(AbstractClient):
     def _connect(self, host, port, ssl):
         _, connection = yield self._loop.create_connection(
             self.create_protocol, host, port, ssl=ssl)
+        # Wait for the connection made event
         yield connection.event('connection_made')
         coroutine_return(connection)

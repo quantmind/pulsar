@@ -3,7 +3,7 @@ from functools import partial
 from collections import namedtuple
 from copy import copy
 
-from pulsar import Future
+from pulsar import OneTime, async, Future
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.websocket import frame_parser
 from pulsar.utils.internet import is_tls
@@ -170,35 +170,33 @@ class Tunneling:
         if not exc and response.status_code == 200:
             connection = response._connection
             response.bind_event('post_request', self._tunnel_consumer)
-            return response.finished()
+            response.finished()
 
     def _tunnel_consumer(self, response, exc=None):
-        request = response._request.request
-        connection = response._connection
-        loop = connection._loop
-        d = Future(loop)
-        loop.remove_reader(connection.transport.sock.fileno())
-        # Wraps the socket at the next iteration loop. Important!
-        loop.call_later(1, self.switch_to_ssl, connection, request, d)
-        return d
+        if not exc:
+            response.transport.pause_reading()
+            # Return a coroutine which wraps the socket
+            # at the next iteration loop. Important!
+            return self.switch_to_ssl(response)
 
-    def switch_to_ssl(self, connection, request, d):
+    def switch_to_ssl(self, prev_response):
         '''Wrap the transport for SSL communication.'''
-        try:
-            loop = connection._loop
-            transport = connection.transport
-            sock = transport.sock
-            sslt = SocketStreamSslTransport(loop, sock, transport.protocol,
-                                            request._ssl, server_side=False,
-                                            server_hostname=request._netloc)
-            connection._transport = sslt
-            # silence connection made since it will be called again when the
-            # ssl handshake occurs. This is just to avoid unwanted logging.
-            connection.silence_event('connection_made')
-            connection._processed -= 1
-            connection.producer._requests_processed -= 1
-            response = connection._build_consumer()
-            response.start(request)
-            response.on_finished.chain(d)
-        except Exception:
-            d.callback(sys.exc_info())
+        request = prev_response._request.request
+        connection = prev_response._connection
+        loop = connection._loop
+        sock = connection._transport._sock
+        # set a new connection_made event
+        connection.events['connection_made'] = OneTime()
+        connection._processed -= 1
+        connection.producer._requests_processed -= 1
+        waiter = Future(loop=loop)
+        sslt = loop._make_ssl_transport(sock, connection, request._ssl,
+                                        waiter, server_side=False,
+                                        server_hostname=request._netloc)
+        yield waiter
+        response = connection.current_consumer()
+        response.start(request)
+        yield response.on_finished
+        if response.request_again:
+            response = response.request_again
+        prev_response.request_again = response
