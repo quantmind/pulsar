@@ -1,11 +1,12 @@
 import sys
+import os
 from time import time
 import pickle
+from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 
-from .eventloop import setid
 from .futures import in_loop, add_errback
 from .events import EventHandler
 from .threads import get_executor
@@ -165,7 +166,8 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         self.extra = {}
         self.stream = get_stream(self.cfg)
         del impl.params
-        setid(self)
+        self.tid = current_thread().ident
+        self.pid = os.getpid()
         try:
             self.cfg.post_fork(self)
         except Exception:
@@ -228,7 +230,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         '''
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
-            self._started = time()
+            self._started = self._loop.time()
             self.state = ACTOR_STATES.STARTING
             self._run()
 

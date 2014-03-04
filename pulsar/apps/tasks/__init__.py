@@ -1,13 +1,11 @@
-'''To get started, follow the these simple guidelines:
+'''To get started, follow these guidelines:
 
-* Create the script which runs your application, in the
+* Create a script which runs your application, in the
   :ref:`taskqueue tutorial <tutorials-taskqueue>` the script is called
   ``manage.py``.
 * Create the modules where :ref:`jobs <app-taskqueue-job>` are implemented. It
   can be a directory containing several submodules as explained in the
   :ref:`task paths parameter <app-tasks_path>`.
-* Write a simple :class:`.PeriodicJob` class with a
-  :ref:`callable method <job-callable>`
 * Run your script, sit back and relax.
 
 .. _app-taskqueue-config:

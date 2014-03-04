@@ -176,11 +176,12 @@ class TaskConsumer(object):
         tasks from within a :ref:`job callable <job-callable>`.
     '''
     def __init__(self, backend, worker, task_id, job):
+        self._loop = get_request_loop()
+        self.logger = self._loop.logger
         self.backend = backend
         self.worker = worker
         self.job = job
         self.task_id = task_id
-        self.logger = get_request_loop().logger
 
 
 class Task(odm.Model):
@@ -470,10 +471,10 @@ class TaskBackend(EventHandler):
     ##    START/CLOSE METHODS FOR TASK WORKERS
     ########################################################################
     def start(self, worker):
-        '''invoked by the task queue ``worker`` when it starts.
+        '''Invoked by the task queue ``worker`` when it starts.
 
-        The ``worker`` registers the
-        :meth:`may_pool_task` callback in its event loop.
+        The ``worker`` registers the :meth:`may_pool_task` callback
+        in its event loop.
         '''
         assert self.task_poller is None
         self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
@@ -640,7 +641,7 @@ class TaskBackend(EventHandler):
                     task.clear_update(id=task_id, status=states.STARTED,
                                       time_started=time_ended,
                                       worker=worker.aid)
-                    yield self.models.task.update(task)
+                    self.models.task.update(task)
                     pubsub.publish(self.channel('task_started'), task_id)
                     # This may block for a while
                     result = yield job(consumer, **kwargs)
@@ -661,10 +662,10 @@ class TaskBackend(EventHandler):
         task.clear_update(id=task_id, time_ended=time.time(),
                           status=status, result=result)
         try:
-            yield self.models.task.update(task)
+            self.models.task.update(task)
         finally:
             self.concurrent_tasks.discard(task_id)
-            yield self.finish_task(task_id, lock_id)
+            self.finish_task(task_id, lock_id)
         #
         logger.info('finished %s', task_info)
         # publish into the task_done channel

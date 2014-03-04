@@ -26,10 +26,3 @@ class TestCoroFuture(unittest.TestCase):
         loop.call_later(0.2, future.set_result, 1)
         result = yield next
         self.assertEqual(result, 3)
-
-    def __test_fail_coroutine1(self):
-        d1 = Future()
-        a = c_summation(d1)
-        d1.set_result('bla')
-        self.assertEqual(d1.result(), 'bla')
-        self.async.assertRaises(TypeError, c_summation, d1)

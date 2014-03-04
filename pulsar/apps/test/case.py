@@ -33,7 +33,7 @@ class Test(tasks.Job):
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
-            return self.run(runner, testcls, all_tests, consumer.worker.cfg)
+            return self.run(consumer, runner, testcls, all_tests)
         else:
             return runner.result
 
@@ -42,7 +42,7 @@ class Test(tasks.Job):
         testcls = kwargs.get('testcls')
         return '%s_%s' % (testcls.__name__, tid) if testcls else tid
 
-    def run(self, runner, testcls, all_tests, cfg):
+    def run(self, consumer, runner, testcls, all_tests):
         '''Run all test functions from the :attr:`testcls`.
 
         It uses the following algorithm:
@@ -53,35 +53,35 @@ class Test(tasks.Job):
         * Run the class method ``tearDownClass`` of :attr:`testcls` if defined,
           unless the test class should be skipped.
         '''
+        cfg = testcls.cfg
+        loop = consumer._loop
         runner.startTestClass(testcls)
         error = None
-        timeout = cfg.test_timeout
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
         skip_tests = getattr(testcls, '__unittest_skip__', False)
         if not skip_tests:
-            error = yield self._run(runner, testcls, 'setUpClass', timeout,
+            error = yield self._run(runner, testcls, 'setUpClass',
                                     add_err=False)
         # run the tests
         if not error:
             if sequential:
                 # Loop over all test cases in class
                 for test in all_tests:
-                    yield self.run_test(test, runner, cfg)
+                    yield self.run_test(test, runner)
             else:
-                all = (self.run_test(test, runner, cfg) for test in all_tests)
-                yield multi_async(all)
+                all = (self.run_test(test, runner) for test in all_tests)
+                yield multi_async(all, loop=loop)
         else:
             for test in all_tests:
                 runner.startTest(test)
                 self.add_failure(test, runner, error)
                 runner.stopTest(test)
         if not skip_tests:
-            yield self._run(runner, testcls, 'tearDownClass', timeout,
-                            add_err=False)
+            yield self._run(runner, testcls, 'tearDownClass', add_err=False)
         runner.stopTestClass(testcls)
         coroutine_return(runner.result)
 
-    def run_test(self, test, runner, cfg):
+    def run_test(self, test, runner):
         '''Run a ``test`` function using the following algorithm
 
         * Run :meth:`_pre_setup` method if available in :attr:`testcls`.
@@ -90,7 +90,6 @@ class Test(tasks.Job):
         * Run :meth:`tearDown` method in :attr:`testcls`.
         * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
         '''
-        timeout = cfg.test_timeout
         err = None
         try:
             runner.startTest(test)
@@ -104,16 +103,14 @@ class Test(tasks.Job):
                 runner.addSkip(test, reason)
                 err = True
             else:
-                err = yield self._run(runner, test, '_pre_setup', timeout)
+                err = yield self._run(runner, test, '_pre_setup')
                 if not err:
-                    err = yield self._run(runner, test, 'setUp', timeout)
+                    err = yield self._run(runner, test, 'setUp')
                     if not err:
                         err = yield self._run(runner, test,
-                                              test._testMethodName, timeout)
-                    err = yield self._run(runner, test, 'tearDown',
-                                          timeout, err)
-                err = yield self._run(runner, test, '_post_teardown',
-                                      timeout, err)
+                                              test._testMethodName)
+                    err = yield self._run(runner, test, 'tearDown', err)
+                err = yield self._run(runner, test, '_post_teardown', err)
                 runner.stopTest(test)
         except Exception as error:
             self.add_failure(test, runner, error, err)
@@ -121,7 +118,7 @@ class Test(tasks.Job):
             if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, timeout, previous=None, add_err=True):
+    def _run(self, runner, test, method, previous=None, add_err=True):
         __skip_traceback__ = True
         method = getattr(test, method, None)
         if method:
@@ -131,7 +128,7 @@ class Test(tasks.Job):
             if tfunc is None:
                 tfunc = TestFunction(method.__name__)
             try:
-                exc = yield tfunc(test, timeout)
+                exc = yield tfunc(test, test.cfg.test_timeout)
             except Exception as e:
                 exc = e
             if exc:

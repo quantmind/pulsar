@@ -7,14 +7,7 @@ from .futures import Future, maybe_async, async, Task
 from .threads import run_in_executor, QueueEventLoop, set_as_loop
 
 
-__all__ = ['EventLoop', 'call_repeatedly']
-
-
-def setid(self):
-    ct = current_thread()
-    self.tid = ct.ident
-    self.pid = os.getpid()
-    return ct
+__all__ = ['EventLoop', 'call_repeatedly', 'loop_thread_id']
 
 
 class EventLoopPolicy(asyncio.AbstractEventLoopPolicy):
@@ -102,24 +95,6 @@ class LoopingCall(object):
 
 
 class EventLoop(asyncio.SelectorEventLoop):
-    """A pluggable event loop which conforms with the pep-3156_ API.
-
-    The event loop is the place where most asynchronous operations
-    are carried out.
-
-    .. attribute:: poll_timeout
-
-        The timeout in seconds when polling with ``epolL``, ``kqueue``,
-        ``select`` and so forth.
-
-        Default: ``0.5``
-
-    .. attribute:: tid
-
-        The thread id where this event loop is running. If the
-        event loop is not running this attribute is ``None``.
-
-    """
     task_factory = Task
 
     def __init__(self, selector=None, iothreadloop=False, logger=None):
@@ -159,3 +134,11 @@ def call_repeatedly(loop, interval, callback, *args):
     the chain is broken and the ``callback`` won't be called anymore.
     """
     return LoopingCall(loop, callback, args, interval)
+
+
+def loop_thread_id(loop):
+    '''Thread ID of the running ``loop``.
+    '''
+    waiter = asyncio.Future(loop=loop)
+    loop.call_soon(lambda: waiter.set_result(current_thread().ident))
+    return waiter
