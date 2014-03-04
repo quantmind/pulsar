@@ -293,7 +293,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">fromfd</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">SSLContext</span><span class="p">:</span>
+<div class="viewcode-block" id="SSLContext"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.SSLContext">[docs]</a><span class="k">class</span> <span class="nc">SSLContext</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">certfile</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cert_reqs</span><span class="o">=</span><span class="n">CERT_NONE</span><span class="p">,</span>
                  <span class="n">ca_certs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">server_hostname</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -344,11 +344,11 @@
         <span class="k">else</span><span class="p">:</span>   <span class="c"># pragma    nocover</span>
             <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">,</span> <span class="n">sock</span><span class="p">)</span>
 
-
-<span class="k">def</span> <span class="nf">is_tls</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="is_tls"><a class="viewcode-back" href="../../../api/utilities.html#pulsar.utils.internet.is_tls">[docs]</a><span class="k">def</span> <span class="nf">is_tls</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
     <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="s">&#39;keyfile&#39;</span><span class="p">)</span>
 
-
+</div>
 <span class="k">def</span> <span class="nf">ssl_context</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">server_side</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ssl</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>

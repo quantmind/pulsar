@@ -115,14 +115,16 @@ not possible add fire power with more test workers.</p>
 </div>
 <div class="section" id="writing-a-test-case">
 <h2>Writing a Test Case<a class="headerlink" href="#writing-a-test-case" title="Permalink to this headline">¶</a></h2>
-<p>Only subclasses of  <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> are collected by this application.
+<p>Only subclasses of  <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> are collected by this
+application.
 When running a test, pulsar looks for two extra method: <tt class="docutils literal"><span class="pre">_pre_setup</span></tt> and
 <tt class="docutils literal"><span class="pre">_post_teardown</span></tt>. If the former is available, it is run just before the
-<tt class="docutils literal"><span class="pre">setUp</span></tt> method while if the latter is available, it is run
-just after the <tt class="docutils literal"><span class="pre">tearDown</span></tt> method. In addition, if the <tt class="docutils literal"><span class="pre">setUpClass</span></tt>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase.setUp" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">setUp()</span></tt></a> method while if the latter is available,
+it is run just after the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase.tearDown" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">tearDown()</span></tt></a> method.
+In addition, if the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase.setUpClass" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">setUpClass()</span></tt></a>
 class methods is available, it is run just before
-all tests functions are run and the <tt class="docutils literal"><span class="pre">tearDownClass</span></tt>, if available, is run
-just after all tests functions are run.</p>
+all tests functions are run and the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase.tearDownClass" title="(in Python v3.4)"><tt class="xref py py-meth docutils literal"><span class="pre">tearDownClass()</span></tt></a>,
+if available, is run just after all tests functions are run.</p>
 <p>An example test case:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># This import is equivalent in python2.6 to</span>
 <span class="c">#     import unittest2 as unittest</span>
@@ -143,7 +145,7 @@ just after all tests functions are run.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Test functions are asynchronous, when they return a generator or a
-<tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt>, synchronous, when they return anything else.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/asyncio-task.html#asyncio.Future" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">Future</span></tt></a>, synchronous, when they return anything else.</p>
 </div>
 </div>
 <div class="section" id="loading-tests">
@@ -157,7 +159,7 @@ initialising the <a class="reference internal" href="#pulsar.apps.test.TestSuite
                       <span class="p">(</span><span class="s">&#39;examples&#39;</span><span class="p">,</span><span class="s">&#39;tests&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> loads tests via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">loader.TestLoader</span></tt></a> class.</p>
+<p>The <a class="reference internal" href="#pulsar.apps.test.TestSuite" title="pulsar.apps.test.TestSuite"><tt class="xref py py-class docutils literal"><span class="pre">TestSuite</span></tt></a> loads tests via the <a class="reference internal" href="#pulsar.apps.test.loader.TestLoader" title="pulsar.apps.test.loader.TestLoader"><tt class="xref py py-class docutils literal"><span class="pre">TestLoader</span></tt></a> class.</p>
 <p>In the context of explaining the rules for loading tests, we refer to
 an <tt class="docutils literal"><span class="pre">object</span></tt> as</p>
 <ul class="simple">
@@ -168,7 +170,7 @@ an <tt class="docutils literal"><span class="pre">object</span></tt> as</p>
 <ul class="simple">
 <li>Directories that aren&#8217;t packages are not inspected. This means that if a
 directory does not have a <tt class="docutils literal"><span class="pre">__init__.py</span></tt> file, it won&#8217;t be inspected.</li>
-<li>Any class that is a <tt class="docutils literal"><span class="pre">unittest.TestCase</span></tt> subclass is collected.</li>
+<li>Any class that is a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> subclass is collected.</li>
 <li>If an <tt class="docutils literal"><span class="pre">object</span></tt> starts with <tt class="docutils literal"><span class="pre">_</span></tt> or <tt class="docutils literal"><span class="pre">.</span></tt> it won&#8217;t be collected,
 nor will any <tt class="docutils literal"><span class="pre">objects</span></tt> it contains.</li>
 <li>If an <tt class="docutils literal"><span class="pre">object</span></tt> defines a <tt class="docutils literal"><span class="pre">__test__</span></tt> attribute that does not evaluate to
@@ -226,7 +228,7 @@ In addition, the following options are
 <a class="reference internal" href="../settings.html#setting-section-test"><em>test-suite specific</em></a>:</p>
 <div class="section" id="sequential">
 <span id="apps-test-sequential"></span><h3>sequential<a class="headerlink" href="#sequential" title="Permalink to this headline">¶</a></h3>
-<p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a>
+<p>By default, test functions within a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a>
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
 By specifying the <a class="reference internal" href="../settings.html#setting-sequential"><em>&#8211;sequential</em></a> command line option,
@@ -235,7 +237,7 @@ forces tests to be run in a sequential model, one after the other:</p>
 <div class="highlight-python"><pre>python runtests.py --sequential</pre>
 </div>
 <p>Alternatively, if you need to specify a Testcase which always runs its test
-functions in a sequential way, you can use the <tt class="xref py py-func docutils literal"><span class="pre">sequential()</span></tt> decorator:</p>
+functions in a sequential way, you can use the <a class="reference internal" href="#pulsar.apps.test.utils.sequential" title="pulsar.apps.test.utils.sequential"><tt class="xref py py-func docutils literal"><span class="pre">sequential()</span></tt></a> decorator:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">unittest</span><span class="p">,</span> <span class="n">sequential</span>
 
 <span class="nd">@sequential</span>
@@ -481,8 +483,7 @@ is passed by this function recursively.</li>
 <dl class="class">
 <dt id="pulsar.apps.test.result.Plugin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">Plugin</tt><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin" title="Permalink to this definition">¶</a></dt>
-<dd><p>The interface for all classes which are part of of the
-<a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a>.</p>
+<dd><p>Interface for all classes which are part of the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a>.</p>
 <p>Most classes used by the test application are plugins, for
 example the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> itself,
 the <a class="reference internal" href="#pulsar.apps.test.result.TestResult" title="pulsar.apps.test.result.TestResult"><tt class="xref py py-class docutils literal"><span class="pre">TestResult</span></tt></a> and the <a class="reference internal" href="#pulsar.apps.test.plugins.base.TestPlugin" title="pulsar.apps.test.plugins.base.TestPlugin"><tt class="xref py py-class docutils literal"><span class="pre">TestPlugin</span></tt></a>.</p>
@@ -573,7 +574,7 @@ the test suite starts running them.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.Plugin.before_test_function_run">
 <tt class="descname">before_test_function_run</tt><big>(</big><em>test</em>, <em>local</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#Plugin.before_test_function_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.Plugin.before_test_function_run" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function can be used by plugins to manipulate the <tt class="docutils literal"><span class="pre">test</span></tt>
+<dd><p>Can be used by plugins to manipulate the <tt class="docutils literal"><span class="pre">test</span></tt>
 behaviour in the process domain where the test run.</p>
 </dd></dl>
 
@@ -610,11 +611,17 @@ finished.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestRunner">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">TestRunner</tt><big>(</big><em>plugins</em>, <em>stream</em>, <em>writercls=None</em>, <em>descriptions=True</em>, <em>logger=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt> for asynchronously running tests.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> for asynchronously running tests.</p>
 <dl class="method">
 <dt id="pulsar.apps.test.result.TestRunner.loadTestsFromTestCase">
 <tt class="descname">loadTestsFromTestCase</tt><big>(</big><em>test_cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.loadTestsFromTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.loadTestsFromTestCase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load all <em>test</em> functions for the test class <em>cls</em>.</p>
+<dd><p>Load all <tt class="docutils literal"><span class="pre">test</span></tt> functions for the <tt class="docutils literal"><span class="pre">test_cls</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pulsar.apps.test.result.TestRunner.add">
+<tt class="descname">add</tt><big>(</big><em>result</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestRunner.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestRunner.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new result to the <a class="reference internal" href="#pulsar.apps.test.result.Plugin.result" title="pulsar.apps.test.result.Plugin.result"><tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt></a> container</p>
 </dd></dl>
 
 <dl class="method">
@@ -639,7 +646,7 @@ in the test process domain.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.result.TestResult">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.result.</tt><tt class="descname">TestResult</tt><big>(</big><em>descriptions=True</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/result.html#TestResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.result.TestResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>A <tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt> for collecting results/failures for test runs.</p>
+<dd><p>A <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> for collecting results/failures for test runs.</p>
 <p>Each <a class="reference internal" href="#pulsar.apps.test.result.Plugin" title="pulsar.apps.test.result.Plugin"><tt class="xref py py-class docutils literal"><span class="pre">Plugin</span></tt></a> can access the <a class="reference internal" href="#pulsar.apps.test.result.TestRunner" title="pulsar.apps.test.result.TestRunner"><tt class="xref py py-class docutils literal"><span class="pre">TestRunner</span></tt></a> <tt class="docutils literal"><span class="pre">result</span></tt>
 object via the <tt class="xref py py-attr docutils literal"><span class="pre">result</span></tt> attribute.</p>
 <dl class="method">
@@ -765,9 +772,21 @@ context domain.</p>
 <dl class="function">
 <dt id="pulsar.apps.test.utils.sequential">
 <tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">sequential</tt><big>(</big><em>cls</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#sequential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.sequential" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decorator for a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> which cause
+<dd><p>Decorator for a <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> which cause
 its test functions to run sequentially rather than in an
 asynchronous fashion.</p>
+<p>Typical usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">pulsar.apps.test</span> <span class="kn">import</span> <span class="n">sequential</span>
+
+<span class="nd">@sequenatial</span>
+<span class="k">class</span> <span class="nc">MyTests</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>You can also run test functions sequentially when using the
+<a class="reference internal" href="#apps-test-sequential"><em>sequential</em></a> flag in the command line.</p>
 </dd></dl>
 
 </div>
@@ -776,10 +795,10 @@ asynchronous fashion.</p>
 <dl class="class">
 <dt id="pulsar.apps.test.utils.ActorTestMixin">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">ActorTestMixin</tt><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#ActorTestMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>A mixin for <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a>.</p>
+<dd><p>A mixin for <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a>.</p>
 <p>Useful for classes testing spawning of actors.
 Make sure this is the first class you derive from, before the
-unittest.TestCase, so that the tearDown method is overwritten.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a>, so that the tearDown method is overwritten.</p>
 <dl class="attribute">
 <dt id="pulsar.apps.test.utils.ActorTestMixin.concurrency">
 <tt class="descname">concurrency</tt><a class="headerlink" href="#pulsar.apps.test.utils.ActorTestMixin.concurrency" title="Permalink to this definition">¶</a></dt>
@@ -802,9 +821,9 @@ method.</p>
 <dt id="pulsar.apps.test.utils.AsyncAssert">
 <em class="property">class </em><tt class="descclassname">pulsar.apps.test.utils.</tt><tt class="descname">AsyncAssert</tt><big>(</big><em>test=None</em><big>)</big><a class="reference internal" href="../modules/pulsar/apps/test/utils.html#AsyncAssert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.apps.test.utils.AsyncAssert" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <a class="reference external" href="http://users.rcn.com/python/download/Descriptor.htm">descriptor</a> added by the <em class="xref std std-ref">test-suite</em> to all python
-<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> loaded.</p>
+<a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> loaded.</p>
 <p>It can be used to invoke the same <tt class="docutils literal"><span class="pre">assertXXX</span></tt> methods available in
-the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">unittest.TestCase</span></tt></a> in an asynchronous fashion.</p>
+the <a class="reference external" href="http://python.readthedocs.org/en/latest/library/unittest.html#unittest.TestCase" title="(in Python v3.4)"><tt class="xref py py-class docutils literal"><span class="pre">TestCase</span></tt></a> in an asynchronous fashion.</p>
 <p>The descriptor is available via the <tt class="docutils literal"><span class="pre">async</span></tt> attribute.
 For example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>

@@ -724,6 +724,12 @@ the name for the argument in usage message.</p>
 </div>
 <div class="section" id="module-pulsar.utils.internet">
 <span id="socket-and-addresses"></span><span id="socket-address"></span><h2>Socket and addresses<a class="headerlink" href="#module-pulsar.utils.internet" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pulsar.utils.internet.SSLContext">
+<em class="property">class </em><tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">SSLContext</tt><big>(</big><em>keyfile=None</em>, <em>certfile=None</em>, <em>cert_reqs=0</em>, <em>ca_certs=None</em>, <em>server_hostname=None</em>, <em>protocol=2</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#SSLContext"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.SSLContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>A picklable SSLContext class</p>
+</dd></dl>
+
 <dl class="function">
 <dt id="pulsar.utils.internet.close_socket">
 <tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">close_socket</tt><big>(</big><em>sock</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#close_socket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.close_socket" title="Permalink to this definition">¶</a></dt>
@@ -734,6 +740,12 @@ the name for the argument in usage message.</p>
 <dt id="pulsar.utils.internet.is_socket_closed">
 <tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">is_socket_closed</tt><big>(</big><em>sock</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#is_socket_closed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.is_socket_closed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if socket <tt class="docutils literal"><span class="pre">sock</span></tt> is closed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pulsar.utils.internet.is_tls">
+<tt class="descclassname">pulsar.utils.internet.</tt><tt class="descname">is_tls</tt><big>(</big><em>sock</em><big>)</big><a class="reference internal" href="../modules/pulsar/utils/internet.html#is_tls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pulsar.utils.internet.is_tls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <tt class="docutils literal"><span class="pre">sock</span></tt> is a socket over transport layer security</p>
 </dd></dl>
 
 <dl class="function">

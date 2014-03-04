@@ -13,40 +13,52 @@ The obtain the arbiter::
     >>> a.is_running()
     False
 
-Note that the arbiter is a singleton, therefore calling :ref:`.arbiter`
+Note that the arbiter is a singleton, therefore calling :func:`.arbiter`
 multiple times always return the same object.
 
 To run the arbiter::
 
     >>> a.start()
 
-This command will start the arbiter event loop, and therefore no more inputs
-are read from the command line, not that useful!
+This command will start the arbiter :ref:`event loop <asyncio-event-loop>`,
+and therefore no more inputs are read from the command line!
 
 
 Using command
 ~~~~~~~~~~~~~~~
-We take a look on how to spawn an actor which echos us when we send it a message.
+We take a look on how to spawn an actor which echos us when
+we send it a message.
 The first method for achieving this is to write an
 :ref:`actor command <actor_commands>`::
 
-    from pulsar import command
+    from pulsar import arbiter, task, command, spawn, send
+
+    names = ['john', 'luca', 'carl', 'jo', 'alex']
 
     @command()
     def greetme(request, message):
         echo = 'Hello {}!'.format(message['name'])
-        print(echo)
+        request.actor.logger.info(echo)
         return echo
 
-    def on_start(actor):
-        a = yield spawn(name='greeter')
-        msg = yield send(a, 'greetme', {'name': 'John'})
-        actor.stop()
+    class Greeter:
 
+        def __init__(self):
+            a = arbiter()
+            self._loop = a._loop
+            self._loop.call_later(1, self)
+            a.start()
 
+        @task
+        def __call__(self, a=None):
+            if a is None:
+                a = yield spawn(name='greeter')
+            if names:
+                name = names.pop()
+                send(a, 'greetme', {'name': name})
+                self._loop.call_later(1, self, a)
+            else:
+                arbiter().stop()
 
-There are several way to achieve this simple outcome using pulsar, however they all
-use the ref:`start hook <actor-hooks>`.
-
-    def on_start(actor):
-
+    if __name__ == '__main__':
+        Greeter()
