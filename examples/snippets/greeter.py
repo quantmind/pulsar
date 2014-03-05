@@ -1,13 +1,6 @@
-try:
-    from pulsar import arbiter, command
-except ImportError:     # pragma nocover
-    import sys
-    sys.path.append('../../')
-    from pulsar import arbiter, command
+from pulsar import arbiter, task, command, spawn, send
 
-
-names = ['john', 'luca', 'carl', 'jo', 'alex']
-
+names = ['john', 'luca', 'jo', 'alex']
 
 @command()
 def greetme(request, message):
@@ -16,21 +9,25 @@ def greetme(request, message):
     return echo
 
 
-def interact(actor, a=None):
-    if a is None:
-        a = yield actor.spawn(name='greeter')
-    if names:
-        name = names.pop()
-        yield actor.send(a, 'greetme', {'name': name})
-        actor._loop.call_later(1, interact, actor, a)
-    else:
-        actor.stop()
+class Greeter:
 
+    def __init__(self):
+        a = arbiter()
+        self._loop = a._loop
+        self._loop.call_later(1, self)
+        a.start()
 
-def onstart(actor):
-    actor._loop.call_soon(interact, actor)
-    return actor
+    @task
+    def __call__(self, a=None):
+        if a is None:
+            a = yield spawn(name='greeter')
+        if names:
+            name = names.pop()
+            send(a, 'greetme', {'name': name})
+            self._loop.call_later(1, self, a)
+        else:
+            arbiter().stop()
 
 
 if __name__ == '__main__':
-    arbiter(start=onstart).start()
+    Greeter()

@@ -1,19 +1,11 @@
 '''Write Hello there! every second
 '''
-try:
-    import pulsar
-except ImportError:     # pragma nocover
-    import sys
-    sys.path.append('../../')
-    import pulsar
-
 from pulsar import arbiter
 
 
-def hello(actor):
+def hello(actor, **kw):
     print('Hello there!')
     actor._loop.call_later(1, hello, actor)
-    return actor
 
 
 if __name__ == '__main__':

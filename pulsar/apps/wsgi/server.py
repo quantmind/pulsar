@@ -430,7 +430,7 @@ class HttpServerResponse(ProtocolConsumer):
                         raise HttpException(status=400)
                     response = self.wsgi_callable(environ, self.start_response)
                 else:
-                    response = handle_wsgi_error(environ, exc_info[1])
+                    response = handle_wsgi_error(environ, exc_info)
                 #
                 if isinstance(response, Future):
                     response = yield response

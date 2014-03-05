@@ -210,6 +210,11 @@ def handle_wsgi_error(environ, exc):
     :param exc: the exception
     :return: a :class:`.WsgiResponse`
     '''
+    if isinstance(exc, tuple):
+        exc_info = exc
+        exc = exc[1]
+    else:
+        exc_info = True
     request = wsgi_request(environ)
     request.cache.handle_wsgi_error = True
     response = request.response
@@ -222,7 +227,7 @@ def handle_wsgi_error(environ, exc):
     status = response.status_code
     if status == 500:
         logger.critical('Unhandled exception during HTTP response %s.%s',
-                        path, dump_environ(environ), exc_info=True)
+                        path, dump_environ(environ), exc_info=exc_info)
     else:
         logger.warning('HTTP %s %s', response.status, path)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:

@@ -197,6 +197,7 @@ class Concurrency(object):
         if actor.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
             actor.state = ACTOR_STATES.STOPPING
+            actor.event('start').clear()
             if exc:
                 actor.exit_code = getattr(exc, 'exit_code', 1)
                 if actor.exit_code == 1:
@@ -233,9 +234,9 @@ class Concurrency(object):
             self.stop(actor, 0)
 
     def _switch_to_run(self, actor, exc=None):
-        if exc is None:
+        if exc is None and actor.state < ACTOR_STATES.RUN:
             actor.state = ACTOR_STATES.RUN
-        else:
+        elif exc:
             actor.stop(exc)
 
     def _acknowledge_start(self, actor, exc=None):

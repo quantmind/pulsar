@@ -51,14 +51,35 @@ Implementation
 .. _philosophers: http://en.wikipedia.org/wiki/Dining_philosophers_problem
 
 '''
+import os
 import random
+import json
 try:
     import pulsar
 except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar import command
+from pulsar import command, async
+from pulsar.apps import wsgi, ws, data
+
+############################# WEB INTERFACE
+media_libraries = {
+    "d3": "//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3",
+    "jquery": "//code.jquery.com/jquery-1.11.0",
+    "require": "//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require"
+    }
+ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
+
+
+class WsProtocol:
+
+    def encode(self, message):
+        return json.dumps(message)
+
+    def decode(self, message):
+        return json.loads(message)
 
 
 ###########################################################################
@@ -113,6 +134,7 @@ class DiningPhilosophers(pulsar.Application):
         self.not_available_forks = set()
 
     def worker_start(self, philosopher, exc=None):
+        self._loop = philosopher._loop
         self.eaten = 0
         self.thinking = 0
         self.started_waiting = 0
@@ -162,7 +184,7 @@ class DiningPhilosophers(pulsar.Application):
             if not self.thinking:
                 philosopher.logger.warning('%s thinking...', philosopher.name)
             self.thinking += 1
-        loop.call_soon(self.pickup_fork, philosopher)
+        async(self.pickup_fork(philosopher), loop=loop)
 
     def pickup_fork(self, philosopher):
         '''The philosopher has less than two forks.
@@ -210,5 +232,80 @@ class DiningPhilosophers(pulsar.Application):
         params.update({'name': 'Philosopher %s' % number, 'number': number})
 
 
+class PhilosophersWsgi(wsgi.LazyWsgi):
+    '''This is the :ref:`wsgi application <wsgi-handlers>` for this
+    web-chat example.'''
+    def __init__(self, server_name):
+        self.name = server_name
+
+    def setup(self, environ):
+        '''Called once only to setup the WSGI application handler.
+
+        Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
+        section for further information.
+        '''
+        cfg = environ['pulsar.cfg']
+        loop = environ['pulsar.connection']._loop
+        self.store = data.create_store(cfg.data_store, loop=loop)
+        pubsub = self.store.pubsub(protocol=WsProtocol())
+        channel = '%s_messages' % self.name
+        pubsub.subscribe(channel)
+        middleware = [wsgi.Router('/', get=self.home_page),
+                      ws.WebSocket('/message', PhilosopherWs(pubsub, channel)),
+                      wsgi.FileRouter('/favicon.ico', FAVICON),
+                      wsgi.MediaRouter('media', ASSET_DIR)]
+        return wsgi.WsgiHandler(middleware)
+
+    def home_page(self, request):
+        doc = wsgi.HtmlDocument(media_path='/media/',
+                                known_libraries=media_libraries)
+        doc.head.scripts.append('require')
+        doc.head.scripts.require('jquery', 'd3', 'philosophers.js')
+        doc.head.links.append('bootstrap')
+        doc.body.append(wsgi.Html('div', cn='philosophers'))
+        return doc.http_response(request)
+
+
+class PhilosopherWs(ws.WS):
+
+    def __init__(self, pubsub, channel):
+        self.pubsub = pubsub
+        self.channel = channel
+
+    def on_open(self, websocket):
+        '''When a new websocket connection is established it creates a
+        new :class:`ChatClient` and adds it to the set of clients of the
+        :attr:`pubsub` handler.'''
+        self.pubsub.add_client(WsClient(websocket, self.channel))
+
+
+class WsClient(data.PubSubClient):
+
+    def __init__(self, connection, channel):
+        self.connection = connection
+        self.channel = channel
+
+    def __call__(self, channel, message):
+        self.connection.write(message)
+
+
+class server(pulsar.MultiApp):
+    '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
+
+    This class shows how to use the :class:`.MultiApp` utility for
+    starting several :ref:`pulsar applications <apps-framework>` at once.
+    '''
+    cfg = pulsar.Config('Dining philosophers sit at a table around a bowl of '
+                        'spaghetti and waits for available forks.',
+                        data_store=data.pulsards_url())
+
+    def build(self):
+        #yield self.new_app(DiningPhilosophers)
+        #yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
+        #                   callable=PhilosophersWsgi(self.name))
+        yield self.new_app(wsgi.WSGIServer,
+                           callable=PhilosophersWsgi(self.name))
+
+
 if __name__ == '__main__':
-    DiningPhilosophers().start()
+    server('philosophers').start()

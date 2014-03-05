@@ -2,12 +2,13 @@ import sys
 import os
 from time import time
 import pickle
+from inspect import isgenerator
 from threading import current_thread
 
 from pulsar import HaltServer, CommandError, MonitorStarted, system
 from pulsar.utils.log import WritelnDecorator
 
-from .futures import in_loop, add_errback
+from .futures import in_loop, async, add_errback
 from .events import EventHandler
 from .threads import get_executor
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity

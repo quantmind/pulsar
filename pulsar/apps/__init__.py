@@ -124,7 +124,8 @@ def monitor_start(self, exc=None):
             yield app.worker_start(self)
         result = self.cfg
     except Exception as exc:
-        start_event.set_exception(exc)
+        yield self.stop(exc)
+        start_event.set_result(None)
     else:
         start_event.set_result(result)
 
@@ -552,10 +553,9 @@ class MultiApp(Configurator):
         The list is lazily loaded from the :meth:`build` method.
         '''
         if self._apps is None:
-            # Add non-default settings values to the list of cfg params
+            # Add modified settings values to the list of cfg params
             self.cfg.params.update(((s.name, s.value) for s in
-                                    self.cfg.settings.values() if
-                                    s.value != s.default))
+                                    self.cfg.settings.values() if s.modified))
             self.cfg.settings = {}
             self._apps = []
             apps = OrderedDict(self.build())

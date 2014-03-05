@@ -506,7 +506,6 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         self.nargs = nargs or self.nargs
         self.short = self.short or self.desc
         self.desc = self.desc or self.short
-        self.modified = False
         if self.default is not None:
             self.set(self.default)
         if self.app and not self.section:
@@ -516,6 +515,7 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         self.__class__.creation_count += 1
         if not hasattr(self, 'order'):
             self.order = 1000 + self.__class__.creation_count
+        self.modified = False
 
     def __getstate__(self):
         return self.__dict__.copy()
@@ -581,7 +581,8 @@ class Setting(SettingMeta('BaseSettings', (object,), {'virtual': True})):
         '''Copy this :class:`SettingBase`'''
         setting = self.__class__.__new__(self.__class__)
         setting.__dict__.update(self.__dict__)
-        setting.modified = False
+        # Keep the modified flag?
+        # setting.modified = False
         if prefix and not setting.is_global:
             flags = setting.flags
             if flags and flags[-1].startswith('--'):

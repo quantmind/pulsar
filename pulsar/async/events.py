@@ -43,6 +43,10 @@ class AbstractEvent(AsyncObject):
         '''Fire this event.'''
         raise NotImplementedError
 
+    def clear(self):
+        if self._handlers:
+            self._handlers[:] = []
+
     def silence(self):
         '''Silence this event.
 
@@ -108,6 +112,10 @@ class OneTime(Future, AbstractEvent):
             self._fired = 1
             self._process(arg, exc, kwargs)
         return self
+
+    def clear(self):
+        if self._handlers:
+            self._handlers.clear()
 
     def _process(self, arg, exc, kwargs, future=None):
         while self._handlers:
@@ -202,14 +210,7 @@ class EventHandler(AsyncObject):
         for name in self._events:
             if name in events:
                 callbacks = events[name]
-                if not isinstance(callbacks, (list, tuple)):
-                    self.bind_event(name, callbacks)
-                else:
-                    for callable in callbacks:
-                        if isinstance(callable, tuple):
-                            self.bind_event(name, *callable)
-                        else:
-                            self.bind_event(name, callable)
+                self.bind_event(name, events[name])
 
     def fire_event(self, name, arg=None, **kwargs):
         """Dispatches ``arg`` or ``self`` to event ``name`` listeners.
