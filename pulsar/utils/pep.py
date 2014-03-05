@@ -4,6 +4,16 @@ import string
 import threading
 from inspect import istraceback
 
+try:    # pragma    nocover
+    from asyncio.py33_exceptions import reraise
+except ImportError:
+
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        raise value
+
+
 ispy3k = sys.version_info >= (3, 0)
 
 if ispy3k:
@@ -59,12 +69,6 @@ if ispy3k:  # Python 3
             return str(s)
         else:
             return s
-
-    def raise_error_trace(err, traceback):
-        if istraceback(traceback):
-            raise err.with_traceback(traceback)
-        else:
-            raise err
 
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map

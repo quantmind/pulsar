@@ -20,7 +20,7 @@ from wsgiref.handlers import format_date_time
 
 import pulsar
 from pulsar import HttpException, ProtocolError, Future, in_loop, chain_future
-from pulsar.utils.pep import is_string, native_str, raise_error_trace
+from pulsar.utils.pep import is_string, native_str, reraise
 from pulsar.utils.httpurl import (Headers, unquote, has_empty_content,
                                   host_and_port_default, http_parser,
                                   urlparse, iri_to_uri, DEFAULT_CHARSET)
@@ -366,7 +366,7 @@ class HttpServerResponse(ProtocolConsumer):
                     # if exc_info is provided, and the HTTP headers have
                     # already been sent, start_response must raise an error,
                     # and should re-raise using the exc_info tuple
-                    raise_error_trace(exc_info[1], exc_info[2])
+                    reraise(exc_info[1], exc_info[2])
             finally:
                 # Avoid circular reference
                 exc_info = None
