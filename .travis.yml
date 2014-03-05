@@ -9,7 +9,9 @@ services:
   - redis-server
 
 install:
-  - pip install -r requirements_dev.txt --use-mirrors
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements_dev_27.txt --use-mirrors; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install -r requirements_dev_27.txt --use-mirrors; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install -r requirements_dev.txt --use-mirrors; fi
   - python setup.py install
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
