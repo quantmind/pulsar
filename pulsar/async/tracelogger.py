@@ -59,7 +59,6 @@ if sys.version_info >= (3, 0):
     def format_traceback(exc):
         return _tarceback_list(exc.__class__, exc, exc.__traceback__)
 
-
     class _TracebackLogger:
         __slots__ = ['exc', 'tb']
 
@@ -83,11 +82,10 @@ if sys.version_info >= (3, 0):
                 logger.error('Future/Task exception was never retrieved:\n%s',
                              ''.join(self.tb))
 
-else:
+else:  # pragma    nocover
 
     def format_traceback(exc):
         return getattr(exc, '__traceback__', [])
-
 
     class _TracebackLogger:
         __slots__ = ['exc', 'tb']

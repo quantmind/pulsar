@@ -204,9 +204,8 @@ class MailboxProtocol(Protocol):
             try:
                 target = actor.get_actor(message['target'])
                 if target is None:
-                    raise CommandError('Cannot execute "%s" in %s. Unknown '
-                                       'actor %s' % (command, actor,
-                                                     message['target']))
+                    raise CommandError('cannot execute "%s", unknown actor '
+                                       '"%s"' % (command, message['target']))
                 # Get the caller proxy without throwing
                 caller = get_proxy(actor.get_actor(message['sender']),
                                    safe=True)
@@ -225,6 +224,9 @@ class MailboxProtocol(Protocol):
                     req = CommandRequest(target, caller, self)
                     result = yield command(req, message['args'],
                                            message['kwargs'])
+            except CommandError as exc:
+                self.logger.warning('Command error: %s' % exc)
+                result = None
             except Exception as exc:
                 self.logger.exception('Unhandled exception')
                 result = None

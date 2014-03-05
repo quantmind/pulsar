@@ -186,8 +186,7 @@ class ProxyResponse(object):
                 resp = wsgi.WsgiResponse(504, msg, content_type='text/html')
             else:
                 resp = wsgi.WsgiResponse(504, '')
-            self.start_response(resp.status, resp.get_headers(),
-                                failure.exc_info)
+            self.start_response(resp.status, resp.get_headers())
             self._done = True
             self.queue.put_nowait(resp.content[0])
 

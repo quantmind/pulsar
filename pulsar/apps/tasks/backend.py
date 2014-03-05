@@ -49,15 +49,12 @@ Task states
 
 A :class:`Task` can have one of the following :attr:`~.Task.status` string:
 
-* ``PENDING`` A task waiting to be queued for execution.
-* ``QUEUED`` A task queued but not yet executed.
-* ``RETRY`` A task is retrying calculation.
-* ``STARTED`` task where execution has started.
-* ``REVOKED`` the task execution has been revoked. One possible reason could be
-  the task has timed out.
-* ``UNKNOWN`` task execution is unknown.
-* ``FAILURE`` task execution has finished with failure.
-* ``SUCCESS`` task execution has finished with success.
+* ``QUEUED = 6`` A task queued but not yet executed.
+* ``STARTED = 5`` task where execution has started.
+* ``RETRY = 4`` A task is retrying calculation.
+* ``REVOKED = 3`` the task execution has been revoked (or timed-out).
+* ``FAILURE = 2`` task execution has finished with failure.
+* ``SUCCESS = 1`` task execution has finished with success.
 
 .. _task-run-state:
 
@@ -79,7 +76,7 @@ Task status broadcasting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
-channels via the :attr:`~TaskBackend.pubsub` handler.
+channels via the a :meth:`~.Store.pubsub` handler.
 
 
 .. _redis: http://redis.io/
@@ -662,7 +659,7 @@ class TaskBackend(EventHandler):
         task.clear_update(id=task_id, time_ended=time.time(),
                           status=status, result=result)
         try:
-            self.models.task.update(task)
+            yield self.models.task.update(task)
         finally:
             self.concurrent_tasks.discard(task_id)
             self.finish_task(task_id, lock_id)

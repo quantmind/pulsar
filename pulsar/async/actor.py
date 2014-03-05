@@ -341,7 +341,7 @@ class Actor(EventHandler, ActorIdentity, Coverage):
           actor and its status.
         * ``events`` a dictionary of information about the
           :ref:`event loop <asyncio-event-loop>` running the actor.
-        * ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
+        * ``extra`` the :attr:`extra` attribute (you can use it to add stuff).
         * ``system`` system info.
 
         This method is invoked when you run the

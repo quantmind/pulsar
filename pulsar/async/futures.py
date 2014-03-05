@@ -286,90 +286,18 @@ def in_loop(method):
     return _
 
 
-class Task(asyncio.Task):
-    '''A modified ``asyncio`` :class:`.Task`.
+def multi_async(iterable=None, loop=None, **kwargs):
+    '''Utility to convert an ``iterable`` over possible asynchronous
+    components into a :class:`~asyncio.Future` which results in an iterable
+    of results.
 
-    It has the following features:
+    The ``iterable`` can be:
 
-    * handles both ``yield`` and ``yield from``
-    * tolerant of synchronous values
+    * a ``list``, ``tuple`` or a ``generator``: in this case
+      the returned future will result in a ``list``
+    * a :class:`~collections.abc.Mapping` instance: in this case
+      the returned future will result in a ``dict``
     '''
-    _current_tasks = {}
-
-    def _step(self, value=None, exc=None):
-        __skip_traceback__ = True
-        assert not self.done(), \
-            '_step(): already done: {!r}, {!r}, {!r}'.format(self, value, exc)
-        if self._must_cancel:
-            if not isinstance(exc, CancelledError):
-                exc = CancelledError()
-            self._must_cancel = False
-        coro = self._coro
-        self._fut_waiter = None
-        sync = True
-        self.__class__._current_tasks[self._loop] = self
-        #
-        try:
-            while sync:
-                sync = False
-                try:
-                    if exc:
-                        result = coro.throw(exc)
-                    elif value is not None:
-                        result = coro.send(value)
-                    else:
-                        result = next(coro)
-                    # handle possibly asynchronous results
-                    try:
-                        result = async(result, self._loop)
-                    except FutureTypeError:
-                        pass
-                except Return as exc:
-                    exc.raised = True
-                    self.set_result(exc.value)
-                except StopIteration as e:
-                    self.set_result(getattr(e, 'value', None))
-                except Exception as exc:
-                    self.set_exception(exc)
-                except BaseException as exc:
-                    self.set_exception(exc)
-                    raise
-                else:
-                    if isinstance(result, Future):
-                        result._blocking = False
-                        result.add_done_callback(self._wakeup)
-                        self._fut_waiter = result
-                        if self._must_cancel:
-                            if self._fut_waiter.cancel():
-                                self._must_cancel = False
-                    elif result == None:
-                        # transfer control to the event loop
-                        self._loop.call_soon(self._step)
-                    else:
-                        # Go again
-                        value, exc, sync = result, None, True
-        finally:
-            self.__class__._current_tasks.pop(self._loop)
-        self = None
-
-    def _wakeup(self, future, inthread=False):
-        if inthread or future._loop is self._loop:
-            try:
-                exc = future.exception()
-            except CancelledError as e:
-                exc = e
-            if exc:
-                self._step(exc=exc)
-            else:
-                self._step(future.result())
-        else:
-            self._loop.call_soon_threadsafe(self._wakeup, future, True)
-        self = None
-
-
-def multi_async(iterable=None, loop=None, lock=True, **kwargs):
-    '''This is an utility function to convert an ``iterable`` into a
-    :class:`MultiFuture` element.'''
     return MultiFuture(loop, iterable, **kwargs)
 
 
@@ -469,13 +397,90 @@ class AsyncObject(object):
         return bench(getattr(self, method), *args, **kwargs)
 
 
+class Task(asyncio.Task):
+    '''A modified ``asyncio`` :class:`.Task`.
+
+    It has the following features:
+
+    * handles both ``yield`` and ``yield from``
+    * tolerant of synchronous values
+    '''
+    _current_tasks = {}
+
+    def _step(self, value=None, exc=None):
+        __skip_traceback__ = True
+        assert not self.done(), \
+            '_step(): already done: {!r}, {!r}, {!r}'.format(self, value, exc)
+        if self._must_cancel:
+            if not isinstance(exc, CancelledError):
+                exc = CancelledError()
+            self._must_cancel = False
+        coro = self._coro
+        self._fut_waiter = None
+        sync = True
+        self.__class__._current_tasks[self._loop] = self
+        #
+        try:
+            while sync:
+                sync = False
+                try:
+                    if exc:
+                        result = coro.throw(exc)
+                    elif value is not None:
+                        result = coro.send(value)
+                    else:
+                        result = next(coro)
+                    # handle possibly asynchronous results
+                    try:
+                        result = async(result, self._loop)
+                    except FutureTypeError:
+                        pass
+                except Return as exc:
+                    exc.raised = True
+                    self.set_result(exc.value)
+                except StopIteration as e:
+                    self.set_result(getattr(e, 'value', None))
+                except Exception as exc:
+                    self.set_exception(exc)
+                except BaseException as exc:
+                    self.set_exception(exc)
+                    raise
+                else:
+                    if isinstance(result, Future):
+                        result._blocking = False
+                        result.add_done_callback(self._wakeup)
+                        self._fut_waiter = result
+                        if self._must_cancel:
+                            if self._fut_waiter.cancel():
+                                self._must_cancel = False
+                    elif result is None:
+                        # transfer control to the event loop
+                        self._loop.call_soon(self._step)
+                    else:
+                        # Go again
+                        value, exc, sync = result, None, True
+        finally:
+            self.__class__._current_tasks.pop(self._loop)
+        self = None
+
+    def _wakeup(self, future, inthread=False):
+        if inthread or future._loop is self._loop:
+            try:
+                exc = future.exception()
+            except CancelledError as e:
+                exc = e
+            if exc:
+                self._step(exc=exc)
+            else:
+                self._step(future.result())
+        else:
+            self._loop.call_soon_threadsafe(self._wakeup, future, True)
+        self = None
+
+
 ############################################################### MultiFuture
 class MultiFuture(Future):
-    '''A :class:`.Future` for a ``collection`` of asynchronous objects.
-
-    The ``collection`` can be either a ``list`` or a ``dict``.
-    '''
-    def __init__(self, loop, data, type=None, raise_on_error=True, **kwargs):
+    def __init__(self, loop, data, type=None, raise_on_error=True):
         super(MultiFuture, self).__init__(loop=loop)
         self._futures = {}
         self._failures = []

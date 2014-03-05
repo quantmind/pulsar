@@ -80,7 +80,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertFalse(arbiter.get_actor('pluto'))
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
         # create the application
-        app.start()
+        yield app.start()
         monitor1 = arbiter.get_actor('pluto')
         self.assertTrue(monitor1)
         self.assertTrue(monitor1.is_monitor())

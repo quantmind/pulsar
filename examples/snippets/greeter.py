@@ -2,6 +2,7 @@ from pulsar import arbiter, task, command, spawn, send
 
 names = ['john', 'luca', 'jo', 'alex']
 
+
 @command()
 def greetme(request, message):
     echo = 'Hello {}!'.format(message['name'])

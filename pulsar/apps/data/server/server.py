@@ -67,6 +67,7 @@ from .client import (command, PulsarStoreClient, LuaClient, Blocked,
 
 DEFAULT_PULSAR_STORE_ADDRESS = '127.0.0.1:6410'
 
+
 def pulsards_url(address=None, db=3):
     address = address or DEFAULT_PULSAR_STORE_ADDRESS
     return 'pulsar://%s/%s' % (address, db)

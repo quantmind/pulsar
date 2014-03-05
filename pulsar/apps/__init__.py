@@ -348,12 +348,16 @@ class Configurator(object):
     def start(self):
         '''Invoked the application callable method and start
         the :class:`.Arbiter` if it wasn't already started.
+
+        It returns a :class:`~asyncio.Future` called back once the
+        application/applications are running. It returns ``None`` if
+        called more than once.
         '''
         on_start = self()
         arbiter = pulsar.arbiter()
         if arbiter and on_start:
             arbiter.start()
-        return self
+        return on_start
 
     @classmethod
     def create_config(cls, params, prefix=None, name=None):

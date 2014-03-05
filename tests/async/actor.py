@@ -108,6 +108,7 @@ class TestActorThread(ActorTestMixin, unittest.TestCase):
         is_alive = yield async_while(3, proxy_monitor.is_alive)
         self.assertFalse(is_alive)
 
+
 class d:
     def test_start_hook(self):
         proxy = yield self.spawn_actor(

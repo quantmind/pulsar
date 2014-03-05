@@ -11,10 +11,7 @@ class Context(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        if type:
-            self._result = Failure((type, value, traceback))
-        else:
-            self._result = None
+        self._result = value
         return True
 
 

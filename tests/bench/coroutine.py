@@ -1,13 +1,13 @@
 import unittest
 
-from pulsar import new_event_loop, coroutine_return, Future
+from pulsar import async, new_event_loop, coroutine_return, Future
 
 
 DELAY = 0
 
 
 def async_func(loop, value):
-    p = Future(loop)
+    p = Future(loop=loop)
     loop.call_later(DELAY, p.set_result, value)
     return p
 
@@ -15,7 +15,6 @@ def async_func(loop, value):
 def sub_sub(loop, num):
     a = yield async_func(loop, num)
     b = yield async_func(loop, num)
-    yield 0
     coroutine_return(a+b)
 
 
@@ -26,11 +25,11 @@ def sub(loop, num):
     coroutine_return(a+b+c)
 
 
-def main(d, loop, num):
+def main(loop, num):
     a = yield async_func(loop, num)
     b = yield sub(loop, num)
     c = yield sub(loop, num)
-    d.set_result(a+b+c)
+    coroutine_return(a+b+c)
 
 
 class TestCoroutine(unittest.TestCase):
@@ -41,8 +40,7 @@ class TestCoroutine(unittest.TestCase):
         self.loop = new_event_loop()
 
     def test_coroutine(self):
-        future = Future(self.loop)
-        self.loop.call_soon(main, future, self.loop, 1)
+        future = async(main(self.loop, 1), loop=self.loop)
         self.loop.run_until_complete(future)
         self.assertEqual(future.result(), 9)
 

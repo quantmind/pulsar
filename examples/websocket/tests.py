@@ -19,17 +19,17 @@ class Echo(WS):
         return self.queue.get()
 
     def on_message(self, ws, message):
-        return self.queue.put(message)
+        self.queue.put_nowait(message)
 
     def on_ping(self, ws, body):
         ws.pong(body)
-        return self.queue.put('PING: %s' % body.decode('utf-8'))
+        self.queue.put_nowait('PING: %s' % body.decode('utf-8'))
 
     def on_pong(self, ws, body):
-        return self.queue.put('PONG: %s' % body.decode('utf-8'))
+        self.queue.put_nowait('PONG: %s' % body.decode('utf-8'))
 
     def on_close(self, ws):
-        return self.queue.put('CLOSE')
+        self.queue.put_nowait('CLOSE')
 
 
 class TestWebSocketThread(unittest.TestCase):

@@ -146,7 +146,6 @@ __all__ = ['AsyncString', 'Html',
            'html_factory', 'Media', 'Scripts', 'Css']
 
 
-
 if ispy3k:
 
     def stream_to_string(stream):
@@ -951,7 +950,8 @@ class Head(Html):
 
     .. attribute:: meta
 
-        A container of :class:`Html` ``meta`` tags. To add new meta tags use the
+        A container of :class:`Html` ``meta`` tags.
+        To add new meta tags use the
         :meth:`add_meta` method rather than accessing the :attr:`meta`
         attribute directly.
 
@@ -975,7 +975,7 @@ class Head(Html):
         as well as absolute paths::
 
             html.head.scripts.append(
-                'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+                'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js')
 
     '''
     def __init__(self, media_path=None, title=None, meta=None, minified=False,

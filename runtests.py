@@ -43,7 +43,8 @@ def runtests(**params):
                       plugins=(bench.BenchMark(),
                                profile.Profile()),
                       pidfile='test.pid',
-                      **params).start()
+                      **params)
+    suite.start()
     #
     if suite.cfg.coveralls:
         from pulsar.apps.test.cov import coveralls

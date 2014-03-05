@@ -86,6 +86,8 @@ Ver. 0.8.0
     :func:`.run_on_arbiter` decorator.
   * The :ref:`shell application <apps-shell>` runs on a worker thread in the
     arbiter domain.
+  * The :meth:`.Configurator.start` method returns a :class:`~asyncio.Future`
+    called back once the applications in the configurator are running.
 
 * **1,166 regression tests**, **91% coverage**.
 

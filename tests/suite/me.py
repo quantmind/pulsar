@@ -64,9 +64,8 @@ class TestTestWorker(unittest.TestCase):
         self.assertTrue(mailbox)
         self.assertTrue(hasattr(mailbox, 'request'))
         self.assertTrue(mailbox._loop)
-        self.assertTrue(mailbox._loop.running)
+        self.assertTrue(mailbox._loop.is_running())
         self.assertEqual(worker._loop, mailbox._loop)
-        self.assertEqual(worker.tid, mailbox._loop.tid)
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
 
@@ -75,31 +74,20 @@ class TestTestWorker(unittest.TestCase):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         event_loop = get_event_loop()
-        self.assertTrue(loop.running)
-        self.assertTrue(event_loop.running)
+        self.assertTrue(loop.is_running())
+        self.assertTrue(event_loop.is_running())
         self.assertNotEqual(loop, event_loop)
         self.assertEqual(worker._loop, event_loop)
-        self.assertEqual(worker.tid, worker._loop.tid)
-        self.assertNotEqual(worker.tid, loop.tid)
-        self.assertTrue(str(event_loop))
-
-    def test_NOT_DONE(self):
-        worker = pulsar.get_actor()
-        loop = pulsar.get_request_loop()
-        count = loop.num_loops
-        yield None
-        self.assertEqual(loop.num_loops, count+1)
-        yield None
-        self.assertEqual(loop.num_loops, count+2)
 
     def test_yield(self):
         '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
+        loop_tid = yield pulsar.loop_thread_id(loop)
         self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop.tid, current_thread().ident)
+        self.assertEqual(loop_tid, current_thread().ident)
         yield None
-        self.assertEqual(loop.tid, current_thread().ident)
+        self.assertEqual(loop_tid, current_thread().ident)
         d = Future()
         # We are calling back the future in the event_loop which is on
         # a separate thread
@@ -109,9 +97,8 @@ class TestTestWorker(unittest.TestCase):
         worker._loop.call_later(0.2, _callback)
         result = yield d
         self.assertEqual(worker.tid, result)
-        self.assertEqual(worker._loop.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop.tid, current_thread().ident)
+        self.assertEqual(loop_tid, current_thread().ident)
 
     def testInline(self):
         val = yield 3
@@ -126,12 +113,8 @@ class TestTestWorker(unittest.TestCase):
 
     def test_unknown_send_target(self):
         # The target does not exists
-        try:
-            yield pulsar.send('vcghdvchdgcvshcd', 'ping')
-        except Exception:
-            pass
-        else:
-            assert False, 'error not raised'
+        result = yield pulsar.send('vcghdvchdgcvshcd', 'ping')
+        self.assertEqual(result, None)
 
     def test_multiple_execute(self):
         m = yield multi_async((send('arbiter', 'run', wait, 1.2),

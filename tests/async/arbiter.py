@@ -143,7 +143,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @run_on_arbiter
-    def test_actor_termination(self):
+    def __test_actor_termination(self):
         '''Terminate the remote actor via the concurreny terminate method.'''
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())

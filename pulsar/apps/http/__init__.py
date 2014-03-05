@@ -976,7 +976,7 @@ class HttpClient(AbstractClient):
         return self.request('DELETE', url, **kwargs)
 
     @task
-    def request(self, method, url, wait=None, **params):
+    def request(self, method, url, **params):
         '''Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
@@ -1009,20 +1009,20 @@ class HttpClient(AbstractClient):
             # bind request-specific events
             consumer.bind_events(**request.inp_params)
             consumer.start(request)
-            yield consumer.event(wait or 'post_request')
+            consumer = yield consumer.on_finished
+            if consumer.request_again:
+                if isinstance(consumer.request_again, Exception):
+                    raise consumer.request_again
+                elif isinstance(consumer.request_again, ProtocolConsumer):
+                    consumer = consumer.request_again
             headers = consumer.headers
             if (not headers or
                     not headers.has('connection', 'keep-alive') or
                     consumer.status_code == 101):
                 conn.detach()
-        if consumer.request_again:
-            if isinstance(consumer.request_again, Exception):
-                raise consumer.request_again
-            elif isinstance(consumer.request_again, ProtocolConsumer):
-                consumer = consumer.request_again
-            else:
-                method, url, params = consumer.request_again
-                consumer = yield self.request(method, url, **params)
+        if isinstance(consumer.request_again, tuple):
+            method, url, params = consumer.request_again
+            consumer = yield self.request(method, url, **params)
         coroutine_return(consumer)
 
     def close(self, async=True, timeout=5):

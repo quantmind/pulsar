@@ -52,13 +52,8 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testTimeIt(self):
         c = self.client
-        response = c.timeit(5, c.get, self.uri)
-        #cc = list(c.connection_pools.values())[0]._concurrent_connections
-        #self.assertTrue(cc)
-        yield response
-        self.assertTrue(response.locked_time >= 0)
-        self.assertTrue(response.total_time >= response.locked_time)
-        self.assertEqual(response.num_failures, 0)
+        b = yield c.timeit('get', 5, self.uri)
+        self.assertTrue(b.taken >= 0)
 
 
 @dont_run_with_thread
