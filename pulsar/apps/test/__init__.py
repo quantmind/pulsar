@@ -432,15 +432,6 @@ class TestLogFailures(TestOption):
     To see the exception the log level must be at least error."""
 
 
-class TestCoveralls(TestOption):
-    name = 'coveralls'
-    flags = ['--coveralls']
-    action = 'store_true'
-    default = False
-    validator = pulsar.validate_bool
-    desc = """Send coverage report to coveralls.io."""
-
-
 class RedisServer(TestOption):
     name = 'redis_server'
     flags = ['--redis-server']

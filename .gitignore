@@ -10,6 +10,7 @@ dist
 htmlcov
 htmlprof
 .coverage
+.coveralls-repo-token
 .project
 .pydevproject
 cfg.py

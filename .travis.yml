@@ -23,6 +23,7 @@ script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar
   - python -m covrun -w 2 -e taskqueue pshell philosophers async webmail djangoapp
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then python -m runtests --coveralls; fi
 
 notifications:
   email: false

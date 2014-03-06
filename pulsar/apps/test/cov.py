@@ -71,23 +71,24 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
     coverage.load()
     if http is None:
         http = HttpClient(loop=new_event_loop())
-    if not service_job_id:
-        service_job_id = os.environ.get('TRAVIS_JOB_ID', '')
-        if service_job_id:
-            service_name = 'travis-ci'
-    data = {
-        'service_job_id': service_job_id,
-        'service_name': service_name or 'pulsar',
-        'git': git,
-        'source_files': coverage.coveralls(strip_dirs, ignore_errors),
-    }
+
     if not git:
         try:
             git = gitrepo()
         except Exception:   # pragma    nocover
             pass
+
+    data = {'source_files': coverage.coveralls(strip_dirs, ignore_errors)}
+
     if git:
         data['git'] = git
+
+    if os.environ.get('TRAVIS'):
+        data['service_name'] = service_name or 'travis-ci'
+        data['service_job_id'] = os.environ.get('TRAVIS_JOB_ID')
+    else:
+        assert repo_token, 'Requires repo_token if not submitting from travis'
+
     if repo_token:
         data['repo_token'] = repo_token
     url = url or COVERALLS_URL
@@ -95,7 +96,10 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
     response = http.post(url, files={'json_file': json.dumps(data)})
     stream.write('Response code: %s\n' % response.status_code)
     info = response.json()
+    code = 0
     if 'error' in info:
         stream.write('An error occured while sending coverage'
                      ' report to coverall.io')
-    stream.write('\n%s' % info['message'])
+        code = 1
+    stream.write('\n%s\n' % info['message'])
+    return code

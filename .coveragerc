@@ -1,17 +1,14 @@
 [run]
 source = pulsar,examples
 omit =
-    *pulsar/utils/_py2.py
-    *pulsar/utils/fallbacks/*
     *pulsar/utils/system/winservice.py
     *pulsar/utils/system/windowssystem.py
     *pulsar/utils/system/winprocess.py
-    *pulsar/utils/cov.py
     *pulsar/async/cov.py
     *pulsar/async/fallbacks/asyncio.py
     *pulsar/apps/test/plugins/bench.py
+    *pulsar/apps/test/cov.py
     *pulsar/apps/test/plugins/profile.py
-    *pulsar/async/udp.py
     examples/httpbin/config.py
     examples/philosophers/config.py
     examples/webmail/*
