@@ -11,37 +11,6 @@ as soon as it starts. It is then passed to all task queue workers
 which, in turns, invoke the :class:`TaskBackend.start` method
 to start pulling tasks form the distributed task queue.
 
-Implementation
-~~~~~~~~~~~~~~~~~
-When creating a new :class:`TaskBackend` there are six methods which must
-be implemented:
-
-* The :meth:`~TaskBackend.get_task` method, invoked when retrieving
-  a :class:`Task` from the backend server.
-* The :meth:`~TaskBackend.get_tasks` method, invoked when retrieving
-  a group of :class:`Task` from the backend server.
-* The :meth:`~TaskBackend.save_task` method, invoked when creating
-  or updating a :class:`Task`.
-* The :meth:`~TaskBackend.delete_tasks` method, invoked when deleting
-  a bunch of :class:`Task`.
-* The :meth:`~TaskBackend.flush` method, invoked flushing a backend (remove
-  all tasks and clear the task queue).
-
-For example::
-
-    from pulsar.apps import tasks
-
-    class TaskBackend(tasks.TaskBackend):
-        ...
-
-Once the custom task backend is implemented it must be registered::
-
-    tasks.task_backends['mybackend'] = TaskBackend
-
-And the backend will be selected via::
-
-    --task-backend mybackend://host:port
-
 .. _task-state:
 
 Task states
@@ -78,6 +47,33 @@ Task status broadcasting
 A :class:`TaskBackend` broadcast :class:`Task` state into three different
 channels via the a :meth:`~.Store.pubsub` handler.
 
+
+Implementation
+~~~~~~~~~~~~~~~~~~~
+When creating a new :class:`TaskBackend` there are three methods which must
+be implemented:
+
+* The :meth:`~TaskBackend.get_task` method, invoked when retrieving
+  a :class:`Task` from the backend server.
+* The :meth:`~TaskBackend.maybe_queue_task` method, invoked when a new
+  class:`.Task` is created and ready to be queued.
+* The :meth:`~TaskBackend.finish_task` method, invoked when a
+  :class:`.Task` reaches a :ref:`ready state <task-ready-state>`.
+
+For example::
+
+    from pulsar.apps import tasks
+
+    class TaskBackend(tasks.TaskBackend):
+        ...
+
+Once the custom task backend is implemented it must be registered::
+
+    tasks.task_backends['mybackend'] = TaskBackend
+
+And the backend will be selected via::
+
+    --task-backend mybackend://host:port
 
 .. _redis: http://redis.io/
 '''
@@ -155,21 +151,26 @@ class TaskConsumer(object):
     Instances of this consumer are created by the :class:`TaskBackend` when
     a task is executed.
 
+    .. attribute:: _loop
+
+        the :ref:`queue-based loop <queue-based-loop>` of the thread
+        executing the task.
+
     .. attribute:: task_id
 
         the :attr:`Task.id` being consumed.
 
     .. attribute:: job
 
-        the :ref:`Job <apps-taskqueue-job>` which generated the :attr:`task`.
+        the :class:`.Job` which generated the task.
 
     .. attribute:: worker
 
-        the :class:`.Actor` running the task worker.
+        the :class:`.Actor` executing the task.
 
     .. attribute:: backend
 
-        Access to the :class:`TaskBackend`. This is useful when creating
+        The :class:`.TaskBackend`. This is useful when creating
         tasks from within a :ref:`job callable <job-callable>`.
     '''
     def __init__(self, backend, worker, task_id, job):
@@ -444,7 +445,7 @@ class TaskBackend(EventHandler):
     ##    ABSTRACT METHODS
     ########################################################################
     def maybe_queue_task(self, task):
-        '''Actually queue a ``task`` if possible.
+        '''Actually queue a :class:`.Task` if possible.
         '''
         raise NotImplementedError
 
@@ -457,6 +458,14 @@ class TaskBackend(EventHandler):
         raise NotImplementedError
 
     def finish_task(self, task_id, lock_id):
+        '''Invoked at the end of task execution.
+
+        The :class:`.Task` with ``task_id`` has been executed (either
+        successfully or not) or has been revoked. This method perform
+        backend specific operations.
+
+        Must be implemented by subclasses.
+        '''
         raise NotImplementedError
 
     def flush(self):
@@ -469,9 +478,6 @@ class TaskBackend(EventHandler):
     ########################################################################
     def start(self, worker):
         '''Invoked by the task queue ``worker`` when it starts.
-
-        The ``worker`` registers the :meth:`may_pool_task` callback
-        in its event loop.
         '''
         assert self.task_poller is None
         self.task_poller = worker._loop.call_soon(self.may_pool_task, worker)
@@ -497,7 +503,7 @@ class TaskBackend(EventHandler):
         :parameter kwargs: dictionary of key-valued parameters passed to the
             :ref:`job callable <job-callable>` method.
         :return: a two-elements tuple containing the unique id and an
-            identifier for overlapping tasks if the :attr:`can_overlap`
+            identifier for overlapping tasks if the :attr:`.Job.can_overlap`
             results in ``False``.
 
         Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when
@@ -600,7 +606,7 @@ class TaskBackend(EventHandler):
                     if not self.num_concurrent_tasks:
                         self.logger.warning('Processed %s tasks. Restarting.',
                                             self.processed)
-                        worker.stop()
+                        worker._loop.stop()
                         coroutine_return()
                 else:
                     task = yield self.get_task()

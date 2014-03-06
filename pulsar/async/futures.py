@@ -384,14 +384,18 @@ class AsyncObject(object):
         return self._logger or getattr(self._loop, 'logger', LOGGER)
 
     def timeit(self, method, times, *args, **kwargs):
-        '''Useful utility for timing and asynchronous ``method``.
+        '''Useful utility for benchmarking an asynchronous ``method``.
+
+        :param method: the name of the ``method`` to execute
+        :param times: number of times to execute the ``method``
+        :param args: positional arguments to pass to the ``method``
+        :param kwargs: key-valued arguments to pass to the ``method``
+        :return: a :class:`~asyncio.Future` which results in a :class:`Bench`
+            object if successful
 
         The usage is simple::
 
-            >>> self.timeit('asyncmethod', 100)
-
-        Returns a :class:`~asyncio.Future` which results in a :class:`Bench`
-        object if successful
+            >>> b = self.timeit('asyncmethod', 100)
         '''
         bench = Bench(times, loop=self._loop)
         return bench(getattr(self, method), *args, **kwargs)

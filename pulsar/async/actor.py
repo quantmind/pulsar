@@ -46,7 +46,7 @@ def send(target, action, *args, **params):
         :ref:`remote command <api-remote_commands>` ``action``.
     :parameter params: dictionary of parameters to pass to
         :ref:`remote command <api-remote_commands>` ``action``.
-    :return: an :class:`asyncio.Future` if the action acknowledge the
+    :return: an :class:`~asyncio.Future` if the action acknowledge the
         caller or `None`.
 
     Typical example::
@@ -216,6 +216,8 @@ class Actor(EventHandler, ActorIdentity, Coverage):
 
     def executor(self):
         '''An executor for this actor
+
+        Obtained from the :attr:`_loop` attribute
         '''
         return get_executor(self._loop)
 
@@ -270,10 +272,10 @@ class Actor(EventHandler, ActorIdentity, Coverage):
         return self.__impl.stop(self, exc)
 
     def close_executor(self):
-        '''Close the :attr:`thread_pool`.'''
+        '''Close the :meth:`executor`'''
         executor = self._loop._default_executor
         if executor:
-            self.logger.debug('Waiting for thread pool to exit')
+            self.logger.debug('Waiting for executor shutdown')
             executor.shutdown()
             self._loop._default_executor = None
 

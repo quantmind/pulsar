@@ -500,7 +500,8 @@ class Application(Configurator):
         pass
 
     def monitor_task(self, monitor):
-        '''Callback by the monitor at each event loop.'''
+        '''Executed by the :class:`.Monitor` serving this application
+        at each event loop.'''
         pass
 
     def arbiter_params(self):

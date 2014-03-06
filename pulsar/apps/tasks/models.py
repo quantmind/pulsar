@@ -5,12 +5,15 @@ Each :class:`Job` class is a :class:`.Task` factory, therefore,
 a :class:`.Task` is always associated
 with one :class:`Job`, which can be of two types:
 
-* standard (:class:`Job`)
-* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.
+* standard (:class:`.Job`)
+* periodic (:class:`.PeriodicJob`), a generator of scheduled tasks.
 
 .. _job-callable:
 
-To define a job is simple, subclass from :class:`Job` and implement the
+Job callable method
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To define a job is simple, subclass from :class:`.Job` and implement the
 **job callable method**::
 
     from pulsar.apps import tasks
@@ -46,7 +49,7 @@ Non overlapping Jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :attr:`~.Job.can_overlap` attribute controls the way tasks are generated
-by a specific :class:`Job`. By default, a :class:`.Job` creates a new task
+by a specific :class:`.Job`. By default, a :class:`.Job` creates a new task
 every time the :class:`.TaskBackend` requests it.
 
 However, when setting the :attr:`~.Job.can_overlap` attribute to ``False``,
@@ -125,8 +128,8 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
 
 .. attribute:: abstract
 
-    If set to ``True`` (default is ``False``), the :class:`Job` won't be
-    registered with the :class:`JobRegistry`. Useful when creating a new
+    If set to ``True`` (default is ``False``), the :class:`.Job` won't be
+    registered with the :class:`.JobRegistry`. Useful when creating a new
     base class for several other jobs.
 
 .. attribute:: type
@@ -182,13 +185,13 @@ implemented by subclasses.'''
         as tasks factories.
 
         :parameter consumer: the :class:`.TaskConsumer`
-            handling the :ref:`Task <apps-taskqueue-task>`.
+            handling the :class:`.Task`.
             Must be the same instance as the one passed to the
             :ref:`job callable <job-callable>` method.
-        :parameter jobname: The name of the :class:`Job` to run.
+        :parameter jobname: The name of the :class:`.Job` to run.
         :parameter kwargs: key-valued parameters for the
             :ref:`job callable <job-callable>`.
-        :return: a :class:`.Future` called back with the task id.
+        :return: a :class:`~asyncio.Future` called back with the task id.
 
         This method invokes the :meth:`.TaskBackend.queue_task`
         method with the additional ``from_task`` argument equal to the
@@ -205,20 +208,21 @@ implemented by subclasses.'''
         Called by the :class:`.TaskBackend` when a new task is about to be
         queued.
 
-        :parameter kwargs: dictionary of parameters passed to the callable
-            method.
+        :parameter kwargs: dictionary of parameters passed to the
+            :ref:`job callable method <job-callable>`.
         '''
         return gen_unique_id()[:8]
 
 
 class PeriodicJob(Job):
-    '''A periodic :class:`Job` implementation.'''
+    '''A periodic :class:`.Job` implementation.'''
     abstract = True
     anchor = None
-    '''If specified it must be a :class:`datetime.datetime` instance.
-It controls when the periodic Job is run.'''
+    '''If specified it must be a :class:`~datetime.datetime` instance.
+    It controls when the periodic Job is run.
+    '''
     run_every = None
-    '''Periodicity as a :class:`datetime.timedelta` instance.'''
+    '''Periodicity as a :class:`~datetime.timedelta` instance.'''
 
     def __init__(self, run_every=None):
         self.run_every = run_every or self.run_every
@@ -232,14 +236,14 @@ It controls when the periodic Job is run.'''
 
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
-where next time to run is in seconds. e.g.
+        where next time to run is in seconds. For example:
 
-* ``(True, 20)``, means the Job should be run now, and the next
-    time to run is in 20 seconds.
+        * ``(True, 20)``, means the job should be run now, and the next
+          time to run is in 20 seconds.
 
-* ``(False, 12)``, means the Job should be run in 12 seconds.
+        * ``(False, 12)``, means the job should be run in 12 seconds.
 
-You can override this to decide the interval at runtime.
+        You can override this to decide the interval at runtime.
         """
         return self.run_every.is_due(last_run_at)
 

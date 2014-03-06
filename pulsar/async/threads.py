@@ -220,7 +220,8 @@ class ThreadPool(AsyncObject):
 
         This method create a new task for function ``func`` and adds it to
         the queue.
-        Return a :class:`.Future` called back once the task has finished.
+        Return a :class:`~asyncio.Future` called back once the task
+        has finished.
         '''
         with self._shutdown_lock:
             if self._shutdown:

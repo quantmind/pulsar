@@ -106,3 +106,18 @@ task
 In loop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: in_loop
+
+
+.. module:: pulsar.async.threads
+
+Executor
+================
+
+Classes used by pulsar to create event loop executors.
+
+Thread pool
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: ThreadPool
+   :members:
+   :member-order: bysource

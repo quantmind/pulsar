@@ -55,16 +55,6 @@ standard :ref:`application settings <settings>`:
 
   Default: ``5``.
 
-.. _app-taskqueue-app:
-
-Task queue application
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: TaskQueue
-   :members:
-   :member-order: bysource
-
-
 .. _celery: http://celeryproject.org/
 '''
 import time
@@ -152,7 +142,7 @@ class SchedulePeriodic(TaskSetting):
 
 
 class TaskQueue(pulsar.Application):
-    '''A :class:`.Application` for consuming task.Tasks.
+    '''A pulsar :class:`.Application` for consuming :class:`.Task`.
 
     This application can also schedule periodic tasks when the
     :ref:`schedule_periodic <setting-schedule_periodic>` flag is ``True``.
@@ -160,9 +150,7 @@ class TaskQueue(pulsar.Application):
     backend = None
     '''The :class:`.TaskBackend` for this task queue.
 
-    Available once the :class:`TaskQueue` has
-    started (when the :meth:`monitor_start` method is invoked by the
-    :class:`.Monitor` running it).
+    Available once the :class:`.TaskQueue` has started.
     '''
     name = 'tasks'
     cfg = pulsar.Config(apps=('tasks',), timeout=600)
@@ -170,8 +158,8 @@ class TaskQueue(pulsar.Application):
     def monitor_start(self, monitor):
         '''Starts running the task queue in ``monitor``.
 
-        It calles the :attr:`.Application.callable` (if available)
-        and create the :attr:`backend`.
+        It calls the :attr:`.Application.callable` (if available)
+        and create the :attr:`~.TaskQueue.backend`.
         '''
         if self.cfg.callable:
             self.cfg.callable()
@@ -183,7 +171,7 @@ class TaskQueue(pulsar.Application):
     def monitor_task(self, monitor):
         '''Override the :meth:`~.Application.monitor_task` callback.
 
-        Check if the :attr:`backend` needs to schedule new tasks.
+        Check if the :attr:`~.TaskQueue.backend` needs to schedule new tasks.
         '''
         if self.backend and monitor.is_running():
             if self.backend.next_run <= time.time():

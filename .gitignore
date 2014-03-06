@@ -15,6 +15,7 @@ htmlprof
 cfg.py
 MANIFEST
 .settings
+.python-version
 examples/webmail/config.py
 *~
 .htmlprof

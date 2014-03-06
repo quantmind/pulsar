@@ -61,11 +61,7 @@ if available, is run just after all tests functions are run.
 
 An example test case::
 
-    # This import is equivalent in python2.6 to
-    #     import unittest2 as unittest
-    # Otherwise it is the same as
-    #     import unittest
-    from pulsar.apps.test import unittest
+    import unittest
 
     class MyTest(unittest.TestCase):
 
@@ -491,12 +487,9 @@ class TestSuite(tasks.TaskQueue):
     def new_runner(self):
         '''The :class:`.TestRunner` driving test cases.
         '''
-        if unittest is None:    # pragma    nocover
-            raise ImportError('python %s requires unittest2 library for '
-                              'pulsar test suite application' % pyver)
         if mock is None:    # pragma    nocover
-            raise ImportError('python %s requires mock library for pulsar '
-                              'test suite application' % pyver)
+            raise ExitTest('python %s requires mock library for pulsar '
+                           'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
         stream = pulsar.get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
@@ -520,7 +513,12 @@ class TestSuite(tasks.TaskQueue):
         return TestLoader(self.root_dir, modules, runner, logger=self.logger)
 
     def on_config(self, arbiter):
-        loader = self.loader
+        stream = arbiter.stream
+        try:
+            loader = self.loader
+        except ExitTest as e:
+            stream.writeln(str(e))
+            return False
         stream = arbiter.stream
         stream.writeln(sys.version)
         redis_server = 'redis://%s' % self.cfg.redis_server
