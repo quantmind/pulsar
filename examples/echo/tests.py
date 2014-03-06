@@ -79,9 +79,9 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(response.buffer, b'test connection')
         connection = response.connection
         self.assertTrue(str(connection))
-        self.assertEqual(str(connection.transport)[:4], 'TCP ')
 
     def test_connection_pool(self):
+        '''Test the connection pool. A very important test!'''
         client = Echo(self.server_cfg.addresses[0], pool_size=2)
         self.assertEqual(client.pool.pool_size, 2)
         self.assertEqual(client.pool.in_use, 0)

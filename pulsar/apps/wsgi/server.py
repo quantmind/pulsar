@@ -366,7 +366,7 @@ class HttpServerResponse(ProtocolConsumer):
                     # if exc_info is provided, and the HTTP headers have
                     # already been sent, start_response must raise an error,
                     # and should re-raise using the exc_info tuple
-                    reraise(exc_info[1], exc_info[2])
+                    reraise(*exc_info)
             finally:
                 # Avoid circular reference
                 exc_info = None

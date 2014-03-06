@@ -83,28 +83,31 @@ class Pool(AsyncObject):
 
     def _get(self):
         queue = self._queue
-        if self.in_use + self._connecting >= queue._maxsize or queue.qsize():
+        # grab the connection without waiting, important!
+        if queue.qsize():
+            connection = queue.get_nowait()
+        # wait for one to be available
+        elif self.in_use + self._connecting >= queue._maxsize:
             if self._timeout:
                 connection = yield future_timeout(queue.get(), self._timeout)
             else:
                 connection = yield queue.get()
-            # None signal that a connection was removed form the queue
-            # Go again
-            if connection is None:
-                connection = yield self._get()
-            else:
-                if is_socket_closed(connection.sock):
-                    connection.close()
-                    connection = yield self._get()
-                else:
-                    self._in_use_connections.add(connection)
-        else:
+        else:   # must create a new connection
             self._connecting += 1
             try:
                 connection = yield self._creator()
-                self._in_use_connections.add(connection)
             finally:
                 self._connecting -= 1
+        # None signal that a connection was removed form the queue
+        # Go again
+        if connection is None:
+            connection = yield self._get()
+        else:
+            if is_socket_closed(connection.sock):
+                connection.close()
+                connection = yield self._get()
+            else:
+                self._in_use_connections.add(connection)
         coroutine_return(connection)
 
     def _put(self, conn, discard=False):

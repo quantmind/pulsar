@@ -1068,7 +1068,7 @@ class RedisCommands(StoreMixin):
         channel, message = yield listener.get()
         self.assertEqual(channel, 'foo')
         self.assertEqual(message, 'hello foo')
-        self.assertEqual(pubsub.punsubscribe(), None)
+        yield eq(pubsub.punsubscribe(), None)
         #yield listener.get()
 
     ###########################################################################

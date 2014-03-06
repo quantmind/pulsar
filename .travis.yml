@@ -3,7 +3,6 @@ language: python
 python:
   - "2.7"
   - "3.3"
-  - "3.4"
   - "pypy"
 
 services:
@@ -23,7 +22,7 @@ services:
 script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar
-  - python -m covrun -w 2 -e taskqueue shell philosophers echo chat
+  - python -m covrun -w 2 -e taskqueue shell philosophers
 
 notifications:
   email: false
