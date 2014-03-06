@@ -1,7 +1,10 @@
 import sys
 import unittest
 import logging
-from unittest.case import _ExpectedFailure as ExpectedFailure
+try:
+    from unittest.case import _ExpectedFailure as ExpectedFailure
+except ImportError:
+    ExpectedFailure = None
 
 from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy3k

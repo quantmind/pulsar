@@ -241,11 +241,11 @@ def configured_logger(logger, config=None, level=None, handlers=None):
         else:
             try:
                 level = int(level)
-            except (ValueError):
+            except ValueError:
                 lv = str(level).upper()
-                if lv in logging._levelNames:
-                    level = logging._levelNames[lv]
-                else:
+                try:
+                    level = logging._checkLevel(lv)
+                except ValueError:
                     level = logging.NOTSET
         # No loggers configured. This means no logconfig setting
         # parameter was used. Set up the root logger with default
