@@ -12,9 +12,11 @@ def rmgeneric(path, __func__):
         return 0
 
 
-def rmfiles(path, ext=None, rmcache=True):
+def rmfiles(path=None, ext='pyc', rmcache=True):
+    path = path or os.curdir
     if not os.path.isdir(path):
         return 0
+    assert ext
     trem = 0
     tall = 0
     files = os.listdir(path)

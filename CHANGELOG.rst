@@ -1,4 +1,4 @@
-Ver. 0.8.0
+Ver. 0.8.0 - 2014-Mar-06
 ===========================
 * **Backward incompatible version**
 

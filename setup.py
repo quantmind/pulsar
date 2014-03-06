@@ -96,11 +96,6 @@ def run_setup(params=None):
     else:
         params['cmdclass']['install_data'] = install_data
     argv = sys.argv
-    if len(argv) > 1 and argv[1] != 'sdist' and sys.version_info >= (3, 0):
-        try:
-            packages.remove('pulsar.utils.fallbacks.py2')
-        except ValueError:
-            pass
     params.update({'name': package_fullname,
                    'version': mod.__version__,
                    'author': mod.__author__,
