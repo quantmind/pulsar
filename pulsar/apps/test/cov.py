@@ -95,11 +95,15 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
     stream.write('Submitting coverage report to %s\n' % url)
     response = http.post(url, files={'json_file': json.dumps(data)})
     stream.write('Response code: %s\n' % response.status_code)
-    info = response.json()
-    code = 0
-    if 'error' in info:
-        stream.write('An error occured while sending coverage'
-                     ' report to coverall.io')
+    try:
+        info = response.json()
+        code = 0
+        if 'error' in info:
+            stream.write('An error occured while sending coverage'
+                         ' report to coverall.io')
+            code = 1
+        stream.write('\n%s\n' % info['message'])
+    except Exception:
         code = 1
-    stream.write('\n%s\n' % info['message'])
+        stream.write('Critical error %s' % response.status_code)
     return code
