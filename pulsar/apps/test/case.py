@@ -1,16 +1,12 @@
 import sys
 import unittest
 import logging
-try:
-    from unittest.case import _ExpectedFailure as ExpectedFailure
-except ImportError:
-    ExpectedFailure = None
 
 from pulsar import multi_async, coroutine_return
 from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
-from .utils import TestFunction, TestFailure
+from .utils import TestFunction, TestFailure, is_expected_failure, LOGGER
 
 if ispy3k:
     from unittest import mock
@@ -19,9 +15,6 @@ else:  # pragma nocover
         import mock
     except ImportError:
         mock = None
-
-
-LOGGER = logging.getLogger('pulsar.test')
 
 
 class Test(tasks.Job):
@@ -121,13 +114,16 @@ class Test(tasks.Job):
             if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, previous=None, add_err=True):
+    def _run(self, runner, test, methodName, previous=None, add_err=True):
         __skip_traceback__ = True
-        method = getattr(test, method, None)
+        method = getattr(test, methodName, None)
         if method:
             # Check if a testfunction object is already available
             # Check the run_on_arbiter decorator for information
             tfunc = getattr(method, 'testfunction', None)
+            # python 3.4
+            expecting_failure = getattr(
+                method, '__unittest_expecting_failure__', False)
             if tfunc is None:
                 tfunc = TestFunction(method.__name__)
             try:
@@ -136,10 +132,12 @@ class Test(tasks.Job):
                 exc = e
             if exc:
                 add_err = False if previous else add_err
-                previous = self.add_failure(test, runner, exc, add_err)
+                previous = self.add_failure(test, runner, exc, add_err,
+                                            expecting_failure)
         coroutine_return(previous)
 
-    def add_failure(self, test, runner, failure, add_err=True):
+    def add_failure(self, test, runner, failure, add_err=True,
+                    expecting_failure=False):
         '''Add ``error`` to the list of errors.
 
         :param test: the test function object where the error occurs
@@ -151,10 +149,10 @@ class Test(tasks.Job):
         if add_err:
             if not isinstance(failure, TestFailure):
                 failure = TestFailure(failure)
-            if isinstance(failure.exc, test.failureException):
-                runner.addFailure(test, failure)
-            elif isinstance(failure.exc, ExpectedFailure):
+            if is_expected_failure(failure.exc, expecting_failure):
                 runner.addExpectedFailure(test, failure)
+            elif isinstance(failure.exc, test.failureException):
+                runner.addFailure(test, failure)
             else:
                 runner.addError(test, failure)
         else:

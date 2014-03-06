@@ -62,7 +62,7 @@ from pulsar.utils.websocket import frame_parser
 from pulsar.utils.security import gen_unique_id
 
 from .access import get_actor
-from .futures import Future, coroutine_return, in_loop
+from .futures import Future, coroutine_return, task
 from .proxy import actorid, get_proxy, get_command, ActorProxy
 from .protocols import Protocol
 from .clients import AbstractClient
@@ -187,7 +187,7 @@ class MailboxProtocol(Protocol):
             if actor.is_running():
                 actor.logger.warning('Connection lost with actor.')
 
-    @in_loop
+    @task
     def _on_message(self, message):
         actor = get_actor()
         command = message.get('command')
@@ -270,7 +270,7 @@ class MailboxClient(AbstractClient):
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))
 
-    @in_loop
+    @task
     def request(self, command, sender, target, args, kwargs):
         # the request method
         if self._connection is None:

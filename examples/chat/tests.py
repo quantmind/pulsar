@@ -20,7 +20,7 @@ class Message(ws.WS):
         return self.queue.get()
 
     def on_message(self, websocket, message):
-        return self.queue.put(message)
+        self.queue.put_nowait(message)
 
 
 class TestWebChat(unittest.TestCase):

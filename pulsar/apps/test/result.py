@@ -4,8 +4,7 @@ from copy import deepcopy
 from pulsar import format_traceback
 from pulsar.utils.structures import AttributeDictionary
 
-from .case import LOGGER
-from .utils import TestFailure
+from .utils import TestFailure, LOGGER
 
 
 __all__ = ['Plugin',

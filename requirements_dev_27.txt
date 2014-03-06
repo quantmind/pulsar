@@ -1,5 +1,4 @@
 coverage
-http-parser
 cython
 django
 pep8

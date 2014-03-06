@@ -1,5 +1,8 @@
-import socket
 from asyncio import Lock
+try:
+    from asyncio import ConnectionRefusedError
+except (ImportError, NameError):
+    pass
 
 from pulsar import when_monitor_start, coroutine_return, get_application, send
 
@@ -7,7 +10,7 @@ from .base import create_store
 from ...server import PulsarDS
 
 
-def start_pulsar_ds(arbiter, host):
+def start_pulsar_ds(arbiter, host, workers=0):
     lock = getattr(arbiter, 'lock', None)
     if lock is None:
         arbiter.lock = lock = Lock()
@@ -15,7 +18,7 @@ def start_pulsar_ds(arbiter, host):
     try:
         app = yield get_application('pulsards')
         if not app:
-            app = PulsarDS(bind=host)
+            app = PulsarDS(bind=host, workers=workers)
             cfg = yield app(arbiter)
         else:
             cfg = app.cfg
@@ -24,7 +27,7 @@ def start_pulsar_ds(arbiter, host):
         lock.release()
 
 
-def start_store(url, **kw):
+def start_store(url, workers=0, **kw):
     '''Equivalent to :func:`create_store` for most cases excepts when the
     ``url`` is for a pulsar store not yet started.
 
@@ -35,11 +38,11 @@ def start_store(url, **kw):
         client = store.client()
         try:
             yield client.ping()
-        except socket.error:
+        except ConnectionRefusedError:
             host = localhost(store._host)
             if not host:
                 raise
-            cfg = yield send('arbiter', 'run', start_pulsar_ds, host)
+            cfg = yield send('arbiter', 'run', start_pulsar_ds, host, workers)
             store._host = cfg.addresses[0]
             dns = store._buildurl()
             store = create_store(dns, **kw)

@@ -66,15 +66,15 @@ class ClientMixin(object):
             info = COMMANDS_INFO.get(command)
             if info:
                 handle = getattr(self.store, info.method_name)
-        #
-        if self.channels or self.patterns:
-            if command not in self.store.SUBSCRIBE_COMMANDS:
-                return self.reply_error(self.store.PUBSUB_ONLY)
-        if self.blocked:
-            return self.reply_error('Blocked client cannot request')
-        if self.transaction is not None and command not in 'exec':
-            self.transaction.append((handle, request))
-            return self._transport.write(self.store.QUEUED)
+            #
+            if self.channels or self.patterns:
+                if command not in self.store.SUBSCRIBE_COMMANDS:
+                    return self.reply_error(self.store.PUBSUB_ONLY)
+            if self.blocked:
+                return self.reply_error('Blocked client cannot request')
+            if self.transaction is not None and command not in 'exec':
+                self.transaction.append((handle, request))
+                return self._transport.write(self.store.QUEUED)
         self._execute_command(handle, request)
 
     def _execute_command(self, handle, request):

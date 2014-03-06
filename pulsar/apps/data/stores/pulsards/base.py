@@ -220,7 +220,7 @@ class PubSubClient(object):
 
 
 class PubSub(EventHandler):
-    '''Asynchronous Publish/Subscriber handler interface.
+    '''A Publish/Subscriber interface.
 
     A :class:`PubSub` handler is never initialised directly, instead,
     the :meth:`~Store.pubsub` method of a data :class:`.Store`

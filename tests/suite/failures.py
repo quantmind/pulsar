@@ -40,14 +40,3 @@ class TestTearDownFailure(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         assert cls.processed == 2, "Should have processed 2"
-
-
-class TestSetupClassnFailure(unittest.TestCase):
-
-    @classmethod
-    @unittest.expectedFailure
-    def setUpClass(cls):
-        raise Exception
-
-    def test_ok(self):
-        pass

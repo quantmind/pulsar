@@ -38,10 +38,16 @@ check redis
 
 '''
 import gc
+import logging
 from inspect import isclass
 from functools import partial
 from contextlib import contextmanager
 from asyncio import Future
+
+try:
+    from unittest.case import _ExpectedFailure as ExpectedFailure
+except ImportError:
+    ExpectedFailure = None
 
 import pulsar
 from pulsar import (get_actor, send, multi_async, async, future_timeout,
@@ -63,6 +69,7 @@ __all__ = ['run_on_arbiter',
            'check_redis']
 
 
+LOGGER = logging.getLogger('pulsar.test')
 NOT_TEST_METHODS = ('setUp', 'tearDown', '_pre_setup', '_post_teardown',
                     'setUpClass', 'tearDownClass', 'run_test_server')
 
@@ -355,3 +362,10 @@ def check_redis():
         return True
     except Exception:
         return False
+
+
+def is_expected_failure(exc, default=False):
+    if ExpectedFailure:
+        return isinstance(exc, ExpectedFailure)
+    else:
+        return default

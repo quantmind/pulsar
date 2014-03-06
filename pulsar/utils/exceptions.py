@@ -51,6 +51,7 @@ class EventAlreadyRegistered(PulsarException):
 
 
 class InvalidOperation(PulsarException):
+    '''An invalid operation in pulsar'''
     pass
 
 

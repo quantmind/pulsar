@@ -1,4 +1,5 @@
-from pulsar import EventHandler, coroutine_return, task, InvalidOperation
+from pulsar import (EventHandler, coroutine_return, InvalidOperation,
+                    chain_future, multi_async)
 from pulsar.utils.pep import iteritems
 from pulsar.utils.structures import OrderedDict
 
@@ -178,8 +179,17 @@ class Transaction(EventHandler):
         return ts.model(manager)
 
     def commit(self):
+        '''Commit the transaction.
+
+        This method can be invoked once only otherwise an
+        :class:`.InvalidOperation` occurs.
+
+        :return: a :class:`~asyncio.Future` which results in this transaction
+        '''
         if self._executed is None:
-            self._executed = self._commit()
+            fut = multi_async((store.execute_transaction(commands) for
+                               store, commands in iteritems(self._commands)))
+            self._executed = fut
             return self._executed
         else:
             raise InvalidOperation('Transaction already executed.')
@@ -190,19 +200,11 @@ class Transaction(EventHandler):
         :param callback: optional function called back once the transaction
             has finished. The function receives one parameter only, the
             transaction.
-        :return: a :class:`.Future`
+        :return: a :class:`~asyncio.Future`
         '''
         if self._executed is None:
             self.commit()
         if callback:
-            return self._executed.then().add_callback(lambda r: callback(self))
+            return chain_future(self._executed, callback)
         else:
             return self._executed
-
-    @task
-    def _commit(self):
-        results = []
-        for store, commands in iteritems(self._commands):
-            result = yield store.execute_transaction(commands)
-            results.append(result)
-        coroutine_return(results)

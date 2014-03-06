@@ -405,6 +405,7 @@ class TaskBackend(EventHandler):
         '''Asynchronously wait for a task with ``task_id`` to have finished
         its execution.
         '''
+        # This coroutine is run on the worker event loop
         def _(task_id):
             task = yield self.get_task(task_id)
             if task:
@@ -423,9 +424,7 @@ class TaskBackend(EventHandler):
                 coroutine_return(task)
 
         fut = async(_(task_id), self._loop)
-        if timeout:
-            future_timeout(fut, timeout)
-        return fut
+        return future_timeout(fut, timeout) if timeout else fut
 
     def get_tasks(self, ids):
         return self.models.task.filter(id=ids).all()
@@ -665,7 +664,7 @@ class TaskBackend(EventHandler):
         task.clear_update(id=task_id, time_ended=time.time(),
                           status=status, result=result)
         try:
-            yield self.models.task.update(task)
+            self.models.task.update(task)
         finally:
             self.concurrent_tasks.discard(task_id)
             self.finish_task(task_id, lock_id)
@@ -694,11 +693,7 @@ class TaskBackend(EventHandler):
         # dictionary. If so fire the callback with the ``task`` instance
         # corresponsding to the input ``task_id``.
         # If a callback is not available, it must have been fired already
-        task = yield self.get_task(task_id)
-        if task:
-            done = self.callbacks.pop(task['id'], None)
-            if done:
-                done.set_result(task)
+        self.wait_for_task(task_id)
 
 
 class SchedulerEntry(object):

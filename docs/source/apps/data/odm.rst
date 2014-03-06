@@ -11,10 +11,10 @@ Features
 * Built on top of pulsar :ref:`data store client api <data-stores>`
 * Presents a method of associating user-defined Python classes with data-stores
   **collections**/**tables**
-* An instance of a :class:`.Model` is mapped into an **item**/**rows**
+* An instance of a :class:`.Model` is mapped into an **item**/**row**
   in its corresponding collection/table.
-* Allows the use different stores for different models
-* Design to be fast and lightweight
+* Allows the use of different stores for different models
+* Design to be fast, lightweight and non-intrusive
 
 Getting Started
 =========================

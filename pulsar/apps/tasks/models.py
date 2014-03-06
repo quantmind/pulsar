@@ -168,9 +168,7 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
     can_overlap = True
 
     def __call__(self, consumer, *args, **kwargs):
-        '''The Jobs' task executed by the consumer. This function needs to be
-implemented by subclasses.'''
-        raise NotImplementedError("Jobs must define the run method.")
+        raise NotImplementedError("Jobs must implement the __call__ method.")
 
     @property
     def type(self):
@@ -227,8 +225,9 @@ class PeriodicJob(Job):
     def __init__(self, run_every=None):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
-            raise NotImplementedError('Periodic Jobs must have\
- a run_every attribute set, "{0}" does not have one'.format(self.name))
+            raise NotImplementedError('Periodic Jobs must have a run_every '
+                                      'attribute set, "{0}" does not have one'
+                                      .format(self.name))
 
     @property
     def type(self):
