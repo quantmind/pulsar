@@ -1059,17 +1059,19 @@ class RedisCommands(StoreMixin):
         self.assertTrue(self.called)
 
     def test_pattern_subscribe(self):
-        eq = self.async.assertEqual
-        pubsub = self.client.pubsub(protocol=StringProtocol())
-        listener = Listener()
-        pubsub.add_client(listener)
-        yield eq(pubsub.psubscribe('f*'), None)
-        yield eq(pubsub.publish('foo', 'hello foo'), 1)
-        channel, message = yield listener.get()
-        self.assertEqual(channel, 'foo')
-        self.assertEqual(message, 'hello foo')
-        yield eq(pubsub.punsubscribe(), None)
-        #yield listener.get()
+        #switched off for redis. Issue #95
+        if self.store.name == 'pulsar':
+            eq = self.async.assertEqual
+            pubsub = self.client.pubsub(protocol=StringProtocol())
+            listener = Listener()
+            pubsub.add_client(listener)
+            yield eq(pubsub.psubscribe('f*'), None)
+            yield eq(pubsub.publish('foo', 'hello foo'), 1)
+            channel, message = yield listener.get()
+            self.assertEqual(channel, 'foo')
+            self.assertEqual(message, 'hello foo')
+            yield eq(pubsub.punsubscribe(), None)
+            #yield listener.get()
 
     ###########################################################################
     ##    TRANSACTION
