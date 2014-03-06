@@ -28,7 +28,7 @@ def run(**params):
                 repo_token = f.read().strip()
         code = coveralls(strip_dirs=strip_dirs,
                          repo_token=repo_token)
-        sys.exit(code)
+        sys.exit(0)
     # Run the test suite
     if '--coverage' in args or params.get('coverage'):
         import coverage

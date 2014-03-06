@@ -88,6 +88,7 @@ Ver. 0.8.0 - 2014-Mar-06
     arbiter domain.
   * The :meth:`.Configurator.start` method returns a :class:`~asyncio.Future`
     called back once the applications in the configurator are running.
+  * Added a new script for building releases for pypi (``buildrelease.py``)
 
 * **1,166 regression tests**, **91% coverage**.
 

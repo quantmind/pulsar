@@ -105,5 +105,5 @@ def coveralls(http=None, url=None, data_file=None, repo_token=None, git=None,
         stream.write('\n%s\n' % info['message'])
     except Exception:
         code = 1
-        stream.write('Critical error %s' % response.status_code)
+        stream.write('Critical error %s\n' % response.status_code)
     return code
