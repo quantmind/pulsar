@@ -24,31 +24,28 @@
                 }
             }),
             next_call = function() {
-	            if (current_freq > 0) {
-	                next = setTimeout(function () {
-	                    ws.send('more data');
-	                }, 1000*current_freq);
-	            } else {
-	                ws.send('more data');
-	            }
+              if (current_freq > 0) {
+                  next = setTimeout(function () {
+                      ws.send('more data');
+                  }, 1000*current_freq);
+              } else {
+                  ws.send('more data');
+              }
             };
         //
         ws.onmessage = function (e) {
           //alert('got ' + e.data);
           try {
-	          var data = $.parseJSON(e.data);
-	          $.plot('#holder', [data],
-	                  {
-	                    series: {
-	                      lines: { show: true, fill: true },
-	                    },
-	                    yaxis: { min: 0 },
-	                  } );
+            var data = $.parseJSON(e.data);
+            $.plot('#holder', [data],
+                    {
+                      series: {
+                        lines: { show: true, fill: true },
+                      },
+                      yaxis: { min: 0 },
+                    } );
           } catch(e){}
           next_call();
-        };
-        ws.onopen = function() {
-            ws.send('hi there');
         };
     });
 }(jQuery));

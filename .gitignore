@@ -1,6 +1,8 @@
 *.pyc
 *.pyd
 *.so
+*.o
+*.def
 __pycache__
 build
 docs/build
@@ -13,11 +15,14 @@ htmlprof
 cfg.py
 MANIFEST
 .settings
+.python-version
 examples/webmail/config.py
 *~
 .htmlprof
 examples/djangoapp/test.db
 test.pid
 pulsar.egg-info
-extensions/src/cparser.cpp
+extensions/lua/lua.c
+extensions/lib/lib.c
 .coveralls.yml
+*.rdb

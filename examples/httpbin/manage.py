@@ -20,16 +20,18 @@ except ImportError:     # pragma    nocover
     sys.path.append('../../')
     from pulsar.utils.pep import ispy3k, range
 
-from pulsar import HttpRedirect, HttpException, version, async, JAPANESE
+from pulsar import (HttpRedirect, HttpException, version, JAPANESE,
+                    coroutine_return)
 from pulsar.utils.httpurl import Headers, ENCODE_URL_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import route, Html, Json, HtmlDocument
+from pulsar.apps.wsgi import route, Html, Json, HtmlDocument, GZipMiddleware
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.system import json
 
 pyversion = '.'.join(map(str, sys.version_info[:3]))
 ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
 
 if ispy3k:  # pragma nocover
     characters = string.ascii_letters + string.digits
@@ -46,8 +48,8 @@ def template():
 class HttpBin(wsgi.Router):
 
     def bind_server_event(self, request, event, handler):
-        server = request.environ['pulsar.connection'].current_consumer
-        server.bind_event(event, handler)
+        consumer = request.environ['pulsar.connection'].current_consumer()
+        consumer.bind_event(event, handler)
 
     def get(self, request):
         '''The home page of this router'''
@@ -108,12 +110,13 @@ class HttpBin(wsgi.Router):
     @route('gzip', title='Returns gzip encoded data')
     def gzip(self, request):
         response = yield self.info_data_response(request, gzipped=True)
-        yield wsgi.middleware.GZipMiddleware(10)(request.environ, response)
+        coroutine_return(GZipMiddleware(10)(request.environ, response))
 
     @route('cookies', title='Returns cookie data')
     def cookies(self, request):
-        cookies = {'cookies': request.get('http.cookie')}
-        return Json(cookies).http_response(request)
+        response = request.response
+        cookies = dict(((c.key, c.value) for c in response.cookies.values()))
+        return Json({'cookies': cookies}).http_response(request)
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',
            defaults={'name': 'package', 'value': 'pulsar'})
@@ -137,15 +140,14 @@ class HttpBin(wsgi.Router):
         class Gen:
             headers = None
 
-            def __call__(self, server):
+            def __call__(self, server, **kw):
                 self.headers = server.headers
 
             def generate(self):
                 #yield a byte so that headers are sent
-                yield '{'
+                yield b''
                 # we must have the headers now
-                headers = json.dumps(dict(self.headers))
-                yield headers[1:]
+                yield json.dumps(dict(self.headers))
         gen = Gen()
         self.bind_server_event(request, 'on_headers', gen)
         request.response.content = gen.generate()
@@ -205,12 +207,11 @@ class HttpBin(wsgi.Router):
 
         Try sending lots of requests
         '''
-        scheme = 'wss' if request.is_secure else 'ws'
-        host = request.get('HTTP_HOST')
-        address = '%s://%s/stats' % (scheme, host)
-        docs = HtmlDocument(title='Live server stats',
-                            media_path='/assets/')
-        docs.head.scripts
+        #scheme = 'wss' if request.is_secure else 'ws'
+        #host = request.get('HTTP_HOST')
+        #address = '%s://%s/stats' % (scheme, host)
+        doc = HtmlDocument(title='Live server stats', media_path='/assets/')
+        #docs.head.scripts
         return doc.http_response(request)
 
     @route('expect', method='post', title='Expectation Failed')
@@ -238,11 +239,11 @@ class HttpBin(wsgi.Router):
         data = self.info_data(request, **params)
         return Json(data).http_response(request)
 
-    @async()
     def info_data(self, request, **params):
         headers = self.getheaders(request)
         data = {'method': request.method,
-                'headers': headers}
+                'headers': headers,
+                'pulsar': self.pulsar_info(request)}
         if request.method in ENCODE_URL_METHODS:
             data['args'] = dict(request.url_data)
         else:
@@ -258,7 +259,7 @@ class HttpBin(wsgi.Router):
             data.update((('args', dict(args)),
                          ('files', dict(jfiles))))
         data.update(params)
-        yield data
+        coroutine_return(data)
 
     def getheaders(self, request):
         headers = Headers(kind='client')
@@ -266,6 +267,9 @@ class HttpBin(wsgi.Router):
             if k.startswith('HTTP_'):
                 headers[k[5:].replace('_', '-')] = request.environ[k]
         return dict(headers)
+
+    def pulsar_info(self, request):
+        return request.get('pulsar.connection').info()
 
 
 class Graph(ws.WS):
@@ -276,11 +280,11 @@ class Graph(ws.WS):
 
 class Site(wsgi.LazyWsgi):
 
-    def setup(self):
+    def setup(self, environ):
         router = HttpBin('/')
         return wsgi.WsgiHandler([wsgi.clean_path_middleware,
-                                 wsgi.cookies_middleware,
                                  wsgi.authorization_middleware,
+                                 wsgi.FileRouter('/favicon.ico', FAVICON),
                                  wsgi.MediaRouter('media', ASSET_DIR),
                                  ws.WebSocket('/graph-data', Graph()),
                                  router])

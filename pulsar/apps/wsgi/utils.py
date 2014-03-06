@@ -1,3 +1,7 @@
+'''
+The :mod:`pulsar.apps.wsgi.utils` module include several utilities used
+by various components in the :ref:`wsgi application <apps-wsgi>`
+'''
 import time
 import re
 import textwrap
@@ -6,6 +10,7 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 
 
+from pulsar import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
@@ -18,7 +23,6 @@ from .structures import Accept, RequestCacheControl
 from .content import Html
 
 __all__ = ['handle_wsgi_error',
-           'wsgi_error_msg',
            'render_error_debug',
            'wsgi_request',
            'set_wsgi_request_class',
@@ -37,7 +41,8 @@ HOP_HEADERS = frozenset(('connection',
                          'server',
                          'date')
                         )
-LOGGER = logging.getLogger('pulsar.wsgi')
+
+logger = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
     width: 500px;
@@ -181,14 +186,6 @@ error_messages = {
 }
 
 
-def wsgi_error_msg(response, msg):
-    if response.content_type == 'application/json':
-        return json.dumps({'status': response.status_code,
-                           'message': msg})
-    else:
-        return msg
-
-
 class dump_environ(object):
     __slots__ = ('environ',)
 
@@ -196,48 +193,60 @@ class dump_environ(object):
         self.environ = environ
 
     def __str__(self):
-        env = iteritems(self.environ)
-        return '\n%s\n' % '\n'.join(('%s = %s' % (k, v) for k, v in env))
+        def _():
+            for k, v in iteritems(self.environ):
+                try:
+                    v = str(v)
+                except Exception as e:
+                    v = str(e)
+                yield '%s=%s' % (k, v)
+        return '\n%s\n' % '\n'.join(_())
 
 
-def handle_wsgi_error(environ, failure):
-    '''The default handler for errors while serving an Http requests.
+def handle_wsgi_error(environ, exc):
+    '''The default error handler while serving a WSGI request.
 
-:parameter environ: The WSGI environment.
-:parameter failure: a :class:`Failure`.
-:return: a :class:`WsgiResponse`
-'''
-    request = wsgi_request(environ)
-    response = request.response
-    error = failure.error
-    if isinstance(error, HTTPError):
-        response.status_code = error.code or 500
+    :param environ: The WSGI environment.
+    :param exc: the exception
+    :return: a :class:`.WsgiResponse`
+    '''
+    if isinstance(exc, tuple):
+        exc_info = exc
+        exc = exc[1]
     else:
-        response.status_code = getattr(error, 'status', 500)
-        response.headers.update(getattr(error, 'headers', None) or ())
-    path = '@ path "%s"' % environ.get('PATH_INFO', '/')
+        exc_info = True
+    request = wsgi_request(environ)
+    request.cache.handle_wsgi_error = True
+    response = request.response
+    if isinstance(exc, HTTPError):
+        response.status_code = exc.code or 500
+    else:
+        response.status_code = getattr(exc, 'status', 500)
+        response.headers.update(getattr(exc, 'headers', None) or ())
+    path = '@ %s "%s"' % (request.method, request.path)
     status = response.status_code
     if status == 500:
-        failure.log(msg='Unhandled exception during WSGI response %s.%s' %
-                    (path, dump_environ(environ)), level='critical')
+        logger.critical('Unhandled exception during HTTP response %s.%s',
+                        path, dump_environ(environ), exc_info=exc_info)
     else:
-        failure.log(msg='WSGI %s status code %s' % (status, path),
-                    level='warning')
+        logger.warning('HTTP %s %s', response.status, path)
     if has_empty_content(status, request.method) or status in REDIRECT_CODES:
-        content = None
+        response.content_type = None
+        response.content = None
     else:
         request.cache.pop('html_document', None)
         renderer = environ.get('error.handler') or render_error
         try:
-            content = renderer(request, failure)
+            content = renderer(request, exc)
         except Exception:
-            LOGGER.critical('Error while rendering error')
-            content = None
-    response.content = content
+            logger.critical('Error while rendering error', exc_info=True)
+            response.content_type = 'text/plain'
+            content = 'Critical server error'
+        response.content = content
     return response
 
 
-def render_error(request, failure):
+def render_error(request, exc):
     '''Default renderer for errors.'''
     cfg = request.get('pulsar.cfg')
     debug = cfg.debug if cfg else False
@@ -245,13 +254,18 @@ def render_error(request, failure):
     if not response.content_type:
         response.content_type = request.content_types.best_match(
             DEFAULT_RESPONSE_CONTENT_TYPES)
-    if response.content_type == 'text/html':
+    content_type = None
+    if response.content_type:
+        content_type = response.content_type.split(';')[0]
+
+    if content_type == 'text/html':
         request.html_document.head.title = response.status
+
     if debug:
-        msg = render_error_debug(request, failure)
+        msg = render_error_debug(request, exc, content_type)
     else:
         msg = error_messages.get(response.status_code) or ''
-        if response.content_type == 'text/html':
+        if content_type == 'text/html':
             msg = textwrap.dedent("""
                 <h1>{0[reason]}</h1>
                 {0[msg]}
@@ -259,32 +273,34 @@ def render_error(request, failure):
             """).format({"reason": response.status, "msg": msg,
                          "version": request.environ['SERVER_SOFTWARE']})
     #
-    if response.content_type == 'text/html':
+    if content_type == 'text/html':
         doc = request.html_document
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
         return doc.render(request)
+    elif content_type in JSON_CONTENT_TYPES:
+        return json.dumps({'status': response.status_code,
+                           'message': msg})
     else:
-        return wsgi_error_msg(response, msg)
+        return '\n'.join(msg) if isinstance(msg, (list, tuple)) else msg
 
 
-def render_error_debug(request, failure):
+def render_error_debug(request, exc, content_type):
     '''Render the traceback into the content type in *response*.'''
     response = request.response
-    is_html = response.content_type == 'text/html'
+    is_html = content_type == 'text/html'
     error = Html('div', cn='section traceback error') if is_html else []
-    for traces in failure.exc_info[2]:
+    trace = format_traceback(exc)
+    for trace in format_traceback(exc):
         counter = 0
-        for trace in traces.split('\n'):
-            if trace.startswith('  '):
+        for line in trace.split('\n'):
+            if line.startswith('  '):
                 counter += 1
-                trace = trace[2:]
-            if trace:
+                line = line[2:]
+            if line:
                 if is_html:
-                    trace = Html('p', escape(trace))
+                    line = Html('p', escape(line))
                     if counter:
-                        trace.css({'margin-left': '%spx' % (20*counter)})
-                error.append(trace)
-    if not is_html:
-        error = '\n'.join(error)
+                        line.css({'margin-left': '%spx' % (20*counter)})
+                error.append(line)
     return error

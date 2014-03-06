@@ -21,9 +21,13 @@ And type::
 
 Open a web browser at http://localhost:8060 and you should see the web app.
 
-For information on twised IMAP4 client library check this example:
+For information on twisted IMAP4 client library check this example:
 
 http://twistedmatrix.com/documents/current/mail/examples/imap4client.py
+
+Other python examples of webmail:
+
+* https://github.com/khamidou/kite
 
 Implementation
 ==================
@@ -40,10 +44,11 @@ try:
 except ImportError:  # pragma nocover
     sys.path.append('../../')
     import pulsar
+
 from pulsar.apps import ws, wsgi
 from pulsar.utils.system import json
 try:
-    from pulsar.apps.tx import twisted
+    from .tx import twisted
     from twisted.internet import protocol, endpoints, reactor
     from twisted.mail import imap4
 except ImportError:  # pragma    nocover

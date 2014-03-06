@@ -1,16 +1,15 @@
-'''Tests the "helloworld" example.
-'''
+'''Tests the "helloworld" example.'''
+import unittest
+
 from pulsar import send, SERVER_SOFTWARE, get_application, get_actor
-from pulsar import MultiDeferred
-from pulsar.utils.pep import range
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import unittest, run_on_arbiter, dont_run_with_thread
+from pulsar.apps.test import run_on_arbiter, dont_run_with_thread
 
 from .manage import server
 
 
 class TestHelloWorldThread(unittest.TestCase):
-    app = None
+    app_cfg = None
     concurrency = 'thread'
 
     @classmethod
@@ -21,14 +20,14 @@ class TestHelloWorldThread(unittest.TestCase):
     def setUpClass(cls):
         s = server(name=cls.name(), concurrency=cls.concurrency,
                    bind='127.0.0.1:0')
-        cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.client = HttpClient()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app is not None:
-            yield send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg is not None:
+            yield send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     @run_on_arbiter
     def testMeta(self):
@@ -42,7 +41,7 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testResponse(self):
         c = self.client
-        response = yield c.get(self.uri).on_finished
+        response = yield c.get(self.uri)
         self.assertEqual(response.status_code, 200)
         content = response.get_content()
         self.assertEqual(content, b'Hello World!\n')
@@ -53,18 +52,8 @@ class TestHelloWorldThread(unittest.TestCase):
 
     def testTimeIt(self):
         c = self.client
-        response = c.timeit(5, 'get', self.uri)
-        #cc = list(c.connection_pools.values())[0]._concurrent_connections
-        #self.assertTrue(cc)
-        yield response
-        self.assertTrue(response.locked_time >= 0)
-        self.assertTrue(response.total_time >= response.locked_time)
-        self.assertEqual(response.num_failures, 0)
-
-    def test_getbench(self):
-        c = self.client
-        yield MultiDeferred((c.get(self.uri) for _ in range(1))).lock()
-    test_getbench.__benchmark__ = True
+        b = yield c.timeit('get', 5, self.uri)
+        self.assertTrue(b.taken >= 0)
 
 
 @dont_run_with_thread

@@ -8,9 +8,9 @@ activities in different threads and/or processes.
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Mailing list: `google user group`_
-:Platforms: Linux, OS X, Windows. Python 2.6, 2.7, 3.2, 3.3, pypy_
-:Keywords: server, asynchronous, concurrency, actor, thread, process, socket,
-    task queue, wsgi, websocket, redis, json-rpc
+:Platforms: Linux, OSX, Windows. Python 2.7, 3.3, 3.4 and pypy_
+:Keywords: client, server, asynchronous, concurrency, actor, thread, process,
+    socket, task queue, wsgi, websocket, redis, json-rpc
 
 
 .. |master-build| image:: https://api.travis-ci.org/quantmind/pulsar.png?branch=master
@@ -23,21 +23,19 @@ activities in different threads and/or processes.
   :target: https://coveralls.io/r/quantmind/pulsar?branch=dev
 
 
-An example of a web server written with ``pulsar`` application
-framework which responds with "Hello World!" for every request::
+An example of a web server written with ``pulsar`` which responds with
+"Hello World!" for every request::
 
 
     from pulsar.apps import wsgi
 
     def hello(environ, start_response):
-        '''Pulsar HTTP "Hello World!" application'''
         data = b'Hello World!\n'
-        status = '200 OK'
         response_headers = [
             ('Content-type','text/plain'),
             ('Content-Length', str(len(data)))
         ]
-        start_response(status, response_headers)
+        start_response('200 OK', response_headers)
         return [data]
 
 
@@ -46,7 +44,7 @@ framework which responds with "Hello World!" for every request::
 
 
 Pulsar's goal is to provide an easy way to build scalable network programs.
-In the "Hello world!" web server example above, many client
+In the ``Hello world!`` web server example above, many client
 connections can be handled concurrently.
 Pulsar tells the operating system (through epoll or select) that it should be
 notified when a new connection is made, and then it goes to sleep.
@@ -58,47 +56,51 @@ a combination of the two.
 Installing
 ============
 
-Pulsar is a stand alone python library and it can be installed via `pip`::
+Pulsar is a stand-alone library for python 3.4 and up.
+
+* For python 3.3 it requires asyncio_.
+* For python 2.7 it requires trollius_.
+
+Pulsar can be installed via `pip`::
 
     pip install pulsar
 
-`easy_install` or downloading the tarball from pypi_.
+or downloading the tarball from pypi_.
 
 If cython_ is available, c extensions will be compiled and installed.
 
 
 Applications
 ==============
-Pulsar design allows for a host of different applications to be implemented
-in an elegant and efficient way. Out of the box it is shipped with the
-the following:
+Pulsar design allows for a host of different asynchronous applications
+to be implemented in an elegant and efficient way.
+Out of the box it is shipped with the the following:
 
-* Socket servers.
-* WSGI server.
-* JSON-RPC WSGI middleware.
-* Web Sockets WSGI middleware.
-* Publish/Subscribe middleware.
-* Distributed task queue.
-* Shell for asynchronous scripting.
-* Asynchronous test suite.
-* Application to run a django_ site with pulsar.
-* twisted_ integration (python 2 only).
+* Socket servers
+* WSGI server
+* JSON-RPC
+* Web Sockets
+* Task queue
+* Shell
+* Test suite
+* Data stores
+* django_ integration
 
 .. _examples:
 
 Examples
 =============
-Check out the ``examples`` directory for various working applications created
-using pulsar alone. It includes:
+Check out the ``examples`` directory for various working applications.
+It includes:
 
-* Hello world! wsgi example.
-* An Httpbin wsgi application (similar to http://httpbin.org/).
-* An HTTP Proxy server with headers middleware.
-* A simple JSON-RPC Calculator server.
-* A taskqueue application with a JSON-RPC interface.
-* Websocket graph.
-* Websocket Web Chat.
-* django_ web site with a websocket middleware to handle a web chat.
+* Hello world! wsgi example
+* An Httpbin wsgi application
+* An HTTP Proxy server
+* A JSON-RPC Calculator server
+* A taskqueue application with a JSON-RPC interface
+* Websocket random graph.
+* Websocket chat room.
+* django_ web site with a websocket based chat room.
 * A web mail application which uses twisted_ IMAP4 API.
 * The `dining philosophers problem <http://en.wikipedia.org/wiki/Dining_philosophers_problem>`_.
 * Asynchronous shell.
@@ -125,14 +127,11 @@ Add-ons
 Pulsar checks if some additional libraries are available at runtime, and
 uses them to add additional functionalities or improve performance:
 
-* http-parser_: upgrade the HTTP parser to a faster C version.
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application.
 * psutil_: if installed, a ``system`` key is available in the dictionary
   returned by Actor info method.
 * ujson_: if installed it is used instead of the native ``json`` module.
-* twisted_: required by the ``pulsar.apps.tx`` application when using pulsar
-  with twisted protocols.
 * django_: required by the ``pulsar.apps.pulse`` application.
 
 
@@ -189,8 +188,8 @@ License
 This software is licensed under the New BSD_ License. See the LICENSE
 file in the top distribution directory for the full license text.
 
+.. _asyncio: https://pypi.python.org/pypi/asyncio
 .. _gunicorn: http://gunicorn.org/
-.. _http-parser: https://github.com/benoitc/http-parser
 .. _nodejs: http://nodejs.org/
 .. _twisted: http://twistedmatrix.com/trac/
 .. _tornado: http://www.tornadoweb.org/
@@ -215,3 +214,4 @@ file in the top distribution directory for the full license text.
 .. _`google user group`: https://groups.google.com/forum/?fromgroups#!forum/python-pulsar
 .. _pep8: http://www.python.org/dev/peps/pep-0008/
 .. _ujson: https://pypi.python.org/pypi/ujson
+.. _trollius: https://pypi.python.org/pypi/trollius

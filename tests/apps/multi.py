@@ -1,15 +1,18 @@
 '''Tests the rpc middleware and utilities. It uses the calculator example.'''
+import unittest
+
 import pulsar
 from pulsar import Config, get_actor
 from pulsar.apps import MultiApp
 from pulsar.apps.wsgi import WSGIServer
 from pulsar.apps.tasks import TaskQueue
-from pulsar.apps.test import unittest, run_on_arbiter
+from pulsar.apps.test import run_on_arbiter
 
 
 def dummy(environ, start_response):
     start_response('200 OK', [])
     yield [b'dummy']
+
 
 class MultiWsgi(MultiApp):
     cfg = Config(bind=':0', rpc_bind=':0', bla='foo')
@@ -77,7 +80,7 @@ class TestMultiApp(unittest.TestCase):
         self.assertFalse(arbiter.get_actor('pluto'))
         self.assertFalse(arbiter.get_actor('rpc_pluto'))
         # create the application
-        app.start()
+        yield app.start()
         monitor1 = arbiter.get_actor('pluto')
         self.assertTrue(monitor1)
         self.assertTrue(monitor1.is_monitor())

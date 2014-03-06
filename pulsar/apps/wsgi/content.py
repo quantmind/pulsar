@@ -1,17 +1,19 @@
-'''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes
-handling asynchronous content on a WSGI server.
+'''The :mod:`pulsar.apps.wsgi.content` introduces several utility classes for
+handling asynchronous content within a :ref:`WSGI handler <wsgi-async> or
+:ref:`middleware <wsgi-middleware>`.
 
-This module is used by pulsar instead of a template engine, its main
-purpose is to do what a web framework does, to provide a set of tools working
-together to concatenate ``strings`` to return as a response to and HTTP client.
+These classes can operate instead or in conjunction with a template engine,
+their main purpose is to do what a web framework does: to provide a set of
+tools working together to concatenate ``strings`` to return as a
+response to an :ref:`HTTP client request <app-wsgi-request>`.
 
-A string can be Html, Json, plain text, XML or any other valid HTTP
+A string can be ``html``, ``json``, ``plain text`` or any other valid HTTP
 content type.
 
 The main class of this module is the :class:`AsyncString`, which can be
-considered as the atomic component of an asynchronous web framework.
-It is a smart way for concatenating asynchronous strings::
+considered as the atomic component of an asynchronous web framework::
 
+    >>> from pulsar.apps.wsgi import AsyncString
     >>> string = AsyncString('Hello')
     >>> string.render()
     'Hello'
@@ -22,33 +24,35 @@ It is a smart way for concatenating asynchronous strings::
 An :class:`AsyncString` can only be rendered once, and it accepts
 :ref:`asynchronous components  <tutorials-coroutine>`::
 
-    >>> a = Deferred()
+    >>> a = Future()
     >>> string = AsyncString('Hello, ', a)
     >>> value = string.render()
     >>> value
-    MultiDeferred (pending)
+    MultiFuture (pending)
     >>> value.done()
     False
-    >>>
 
-Once the deferred is done, we have the concatenated string::
+Once the future is done, we have the concatenated string::
 
-    >>> a.callback('World!')
+    >>> a.set_result('World!')
     'World!'
     >>> value.done()
     True
-    >>> value.result
+    >>> value.result()
     'Hello, World!'
 
-.. note::
+Design
+===============
 
-    The :meth:`AsyncString.do_stream` method is responsible for the streaming
-    of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
-    It can be overwritten by subclasses to customise the way an
-    :class:`AsyncString` streams its :attr:`AsyncString.children`.
+The :meth:`~AsyncString.do_stream` method is responsible for the streaming
+of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
+It can be overwritten by subclasses to customise the way an
+:class:`AsyncString` streams its :attr:`~AsyncString.children`.
 
-    The :meth:`AsyncString.to_string` method is responsible for the
-    concatenation of ``strings``. it can be customised by subclasses.
+On the other hand, the :meth:`~AsyncString.to_string` method is responsible
+for the concatenation of ``strings`` and, like :meth:`~AsyncString.do_stream`,
+it can be customised by subclasses.
+
 
 Asynchronous String
 =====================
@@ -94,13 +98,6 @@ Head
    :members:
    :member-order: bysource
 
-Body
-~~~~~~~~~~
-
-.. autoclass:: Body
-   :members:
-   :member-order: bysource
-
 Media
 ~~~~~~~~~~
 
@@ -129,13 +126,14 @@ Html Factory
 
 
 '''
-from collections import Mapping
-from functools import partial
+import json as pyjson
 
-from pulsar import (multi_async, maybe_async, is_failure, safe_async, async,
-                    Deferred)
-from pulsar.utils.pep import iteritems, is_string, ispy3k
-from pulsar.utils.structures import AttributeDictionary, OrderedDict
+from collections import Mapping, OrderedDict
+from functools import partial
+from inspect import isgenerator
+
+from pulsar import multi_async, Future, async, coroutine_return, chain_future
+from pulsar.utils.pep import iteritems, is_string, to_string, ispy3k
 from pulsar.utils.html import (slugify, INLINE_TAGS, tag_attributes, attr_iter,
                                csslink, dump_data_value, child_tag)
 from pulsar.utils.httpurl import remove_double_slash
@@ -178,42 +176,59 @@ def stream_mapping(value, request=None):
     async = False
     for key, value in iteritems(value):
         if isinstance(value, AsyncString):
-            value = value.content(request)
-        value = maybe_async(value)
-        async = async or isinstance(value, Deferred)
+            value = value.render(request)
         result[key] = value
-    return multi_async(result) if async else result
+    return multi_async(result)
 
 
 class AsyncString(object):
-    '''Class for asynchronous strings which can be used with
-pulsar WSGI servers.
-'''
-    content_type = None
+    '''An asynchronous string which can be used with pulsar WSGI servers.
+    '''
+    _default_content_type = 'text/plain'
+    _content_type = None
     '''Content type for this :class:`AsyncString`'''
     _streamed = False
     _children = None
     _parent = None
+    charset = None
 
-    def __init__(self, *children):
+    def __init__(self, *children, **params):
         for child in children:
             self.append(child)
+        self._setup(**params)
+
+    def _setup(self, content_type=None, charset=None, **kw):
+        self._content_type = content_type or self._default_content_type
+        self.charset = charset or 'utf-8'
+
+    @property
+    def content_type(self):
+        return '%s; charset=%s' % (self._content_type, self.charset)
 
     @property
     def parent(self):
         '''The :class:`AsyncString` element which contains this
-:class:`AsyncString`.'''
+        :class:`AsyncString`.'''
         return self._parent
 
     @property
     def children(self):
-        '''A copy of all children of this :class:`AsyncString`. Children can
-be other :class:`AsyncString` or string or bytes, depending on implementation.
-:attr:`children` are added and removed via the :meth:`append` and
-:meth:`remove` methods.'''
+        '''A copy of all children of this :class:`AsyncString`.
+
+        Children can be other :class:`AsyncString` or string or bytes,
+        depending on implementation.
+        :attr:`children` are added and removed via the :meth:`append` and
+        :meth:`remove` methods.
+        '''
         if self._children is None:
             self._children = []
         return self._children
+
+    @property
+    def has_default_content_type(self):
+        '''``True`` if this is as the default content type.
+        '''
+        return self._content_type == self._default_content_type
 
     def __repr__(self):
         return self.__class__.__name__
@@ -245,12 +260,12 @@ This is a shortcut for the :meth:`insert` method at index 0.
     def insert(self, index, child):
         '''Insert ``child`` into the list of :attr:`children` at ``index``.
 
-:param index: The index (positive integer) where to insert ``child``.
-:param child: String, bytes or another :class:`AsyncString`. If it is an
-    :class:`AsyncString`, this instance will be set as its :attr:`parent`.
-    If ``child`` is ``None``, this method does nothing.
-
-'''
+        :param index: The index (positive integer) where to insert ``child``.
+        :param child: String, bytes or another :class:`AsyncString`.
+            If it is an :class:`.AsyncString`, this instance will be set as
+            its :attr:`parent`.
+            If ``child`` is ``None``, this method does nothing.
+        '''
         # make sure that child is not in child
         if child not in (None, self):
             if isinstance(child, AsyncString):
@@ -293,28 +308,21 @@ This is a shortcut for the :meth:`insert` method at index 0.
         parent.append(self)
         return self
 
-    def content(self, request=None):
-        '''Return a :class:`pulsar.Deferred` called once the string is ready.
-
-        This method can be called once only since it invokes the :meth:`stream`
-        method.
-        '''
-        stream = self.stream(request)
-        return multi_async(stream).add_callback(self.to_string)
-
     def stream(self, request):
         '''An iterable over strings or asynchronous elements.
 
-This is the most important method of an :class:`AsyncString`.
-It is called by :meth:`content` or by the :attr:`parent` of this
-:class:`AsyncString`. It returns an iterable (list, tuple or a generator) over
-strings (``unicode/str`` for python 2, ``str`` only for python 3) or
-:ref:`asynchronous elements <tutorials-coroutine>` which result in
-strings. This method can be called **once only**, otherwise a
-:class:`RuntimeError` occurs.
+        This is the most important method of an :class:`AsyncString`.
+        It is called by :meth:`http_response` or by the :attr:`parent`
+        of this :class:`AsyncString`.
+        It returns an iterable (list, tuple or a generator) over
+        strings (``unicode/str`` for python 2, ``str`` only for python 3) or
+        :ref:`asynchronous elements <tutorials-coroutine>` which result in
+        strings. This method can be called **once only**, otherwise a
+        :class:`RuntimeError` occurs.
 
-This method should not be overwritten, instead one should use the
-:meth:`do_stream` to customise behaviour.'''
+        This method should not be overwritten, instead one should use the
+        :meth:`do_stream` to customise behaviour.
+        '''
         if self._streamed:
             raise RuntimeError('%s already streamed' % self)
         self._streamed = True
@@ -339,19 +347,20 @@ This method should not be overwritten, instead one should use the
                 else:
                     yield child
 
-    @async()
     def http_response(self, request):
-        '''Return a, possibly, :ref:`asynchronous WSGI iterable <wsgi-async>`.
-This method asynchronously wait for :meth:`content` and subsequently
-starts the wsgi response.'''
+        '''Return a coroutine which results in a :class:`.WsgiResponse`.
+
+        This method asynchronously wait for :meth:`stream` and subsequently
+        returns a :class:`.WsgiResponse`.
+        '''
         response = request.response
         response.content_type = self.content_type
-        body = yield self.content(request)
-        response.content = body
-        yield response
+        body = yield multi_async(self.stream(request))
+        response.content = self.to_string(body)
+        coroutine_return(response)
 
     def to_string(self, stream):
-        '''Once the :class:`pulsar.Deferred`, returned by :meth:`content`
+        '''Once the :class:`.Future`, returned by :meth:`content`
         method, is ready, this method get called to transform the stream into
         the content string. This method can be overwritten by derived classes.
 
@@ -359,16 +368,19 @@ starts the wsgi response.'''
             build the final ``string/bytes``.
         :return: a string or bytes
         '''
-        return ''.join(stream_to_string(stream))
+        return to_string(''.join(stream_to_string(stream)))
 
     def render(self, request=None):
-        '''A shortcut function for synchronously rendering a Content.
-This is useful during testing. It is the synchronous equivalent of
-:meth:`content`.'''
-        value = maybe_async(self.content(request))
-        if is_failure(value):
-            value.throw()
-        return value
+        '''Render this string.
+
+        This method returns a string or a :class:`.Future` which results
+        in a string.
+        '''
+        stream = multi_async(self.stream(request))
+        if stream.done():
+            return self.to_string(stream.result())
+        else:
+            return chain_future(stream, callback=self.to_string)
 
 
 class Json(AsyncString):
@@ -386,16 +398,11 @@ class Json(AsyncString):
 
         Additional dictionary of parameters passed during initialisation.
     '''
-    def __init__(self, *children, **params):
-        self.as_list = params.pop('as_list', False)
-        self.parameters = AttributeDictionary(params)
-        for child in children:
-            self.append(child)
+    _default_content_type = 'application/json'
 
-    @property
-    def content_type(self):
-        charset = self.parameters.charset or 'utf-8'
-        return 'application/json; charset=%s' % charset
+    def _setup(self, as_list=False, **params):
+        self.as_list = as_list
+        super(Json, self)._setup(**params)
 
     def do_stream(self, request):
         if self._children:
@@ -417,7 +424,7 @@ class Json(AsyncString):
 
 def html_factory(tag, **defaults):
     '''Returns an :class:`Html` factory function for ``tag`` and a given
-dictionary of ``defaults`` parameters. For example::
+    dictionary of ``defaults`` parameters. For example::
 
     >>> input_factory = html_factory('input', type='text')
     >>> html = input_factory(value='bla')
@@ -431,36 +438,34 @@ dictionary of ``defaults`` parameters. For example::
 
 
 class Html(AsyncString):
-    '''An :class:`AsyncString` for html content.
+    '''An :class:`AsyncString` for ``html`` content.
 
-The :attr:`AsyncString.content_type` attribute is set to ``text/html``.
+    The :attr:`~AsyncString.content_type` attribute is set to ``text/html``.
 
-:param tag: Set the :attr:`tag` attribute. Must be given and can be ``None``.
-:param children: Optional children which will be added via the
-    :meth:`AsyncString.append` method.
-:param params: Optional keyed-value parameters.
+    :param tag: Set the :attr:`tag` attribute. Must be given and can be
+        ``None``.
+    :param children: Optional children which will be added via the
+        :meth:`~AsyncString.append` method.
+    :param params: Optional keyed-value parameters
+        including:
 
-Special (optional) parameters:
+        * ``cn`` class name or list of class names.
+        * ``attr`` dictionary of attributes to add.
+        * ``data`` dictionary of data to add (rendered as HTML data attribute).
+        * ``type`` type of element, only supported for tags which accept the
+          ``type`` attribute (for example the ``input`` tag).
 
-* ``cn`` class name or list of class names.
-* ``attr`` dictionary of attributes to add.
-* ``data`` dictionary of data to add (rendered as HTML data).
-* ``type`` type of element, only supported for tags which accept the ``type``
-  attribute (for example the ``input`` tag).
+    Any other keyed-value parameter will be added as attribute,
+    if in the set of:attr:`available_attributes` or as :meth:`data`.
+    '''
+    _default_content_type = 'text/html'
 
-Any other keyed-value parameter will be added as attribute, if in the set of
-:attr:`available_attributes` or as :meth:`data`.
-'''
     def __init__(self, tag, *children, **params):
         self._tag = tag
         self._extra = {}
         self._setup(**params)
         for child in children:
             self.append(child)
-
-    @property
-    def content_type(self):
-        return 'text/html; charset=%s' % self.charset
 
     @property
     def tag(self):
@@ -503,7 +508,10 @@ Any other keyed-value parameter will be added as attribute, if in the set of
 
     def get_form_value(self):
         '''Return the value of this :class:`Html` element when it is contained
-in a Html form element. For most element it gets the ``value`` attribute.'''
+        in a Html form element.
+
+        For most element it gets the ``value`` attribute.
+        '''
         return self._visitor.get_form_value(self)
 
     def set_form_value(self, value):
@@ -531,8 +539,9 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
         super(Html, self).append(child)
 
     def _setup(self, cn=None, attr=None, css=None, data=None, type=None,
-               **params):
+               content_type=None, **params):
         self.charset = params.get('charset') or 'utf-8'
+        self._content_type = content_type or self._default_content_type
         self._visitor = html_visitor(self._tag)
         self.addClass(cn)
         self.data(data)
@@ -550,7 +559,7 @@ in a Html form element. For most element it sets the ``value`` attribute.'''
 
     def attr(self, *args):
         '''Add the specific attribute to the attribute dictionary
-with key ``name`` and value ``value`` and return ``self``.'''
+        with key ``name`` and value ``value`` and return ``self``.'''
         attr = self._attr
         if not args:
             return attr or {}
@@ -665,7 +674,17 @@ with key ``name`` and value ``value`` and return ``self``.'''
             css.pop('display', None)
         return self
 
+    def add_media(self, request):
+        '''Invoked just before streaming this content.
+
+        It can be used to add media entries to the document.
+
+        TODO: more docs
+        '''
+        pass
+
     def do_stream(self, request):
+        self.add_media(request)
         if self._tag and self._tag in INLINE_TAGS:
             yield '<%s%s>' % (self._tag, self.flatatt())
         else:
@@ -676,6 +695,8 @@ with key ``name`` and value ``value`` and return ``self``.'''
                     if isinstance(child, AsyncString):
                         for bit in child.stream(request):
                             yield bit
+                    elif isgenerator(child):
+                        yield async(child, getattr(request, '_loop', None))
                     else:
                         yield child
             if self._tag:
@@ -700,32 +721,32 @@ with key ``name`` and value ``value`` and return ``self``.'''
 
 
 class Media(AsyncString):
-    '''A useful :class:`AsyncString` which is a container of media links
-or scripts.
+    '''A useful container of media links or scripts.
 
-.. attribute:: media_path
+    .. attribute:: media_path
 
-    The base url path to the local media files, for example ``/media/``. Must
-    include both slashes.
+        The base url path to the local media files, for example
+        ``/media/``. Must include both slashes.
 
-.. attribute:: minified
+    .. attribute:: minified
 
-    Optional flag indicating if relative media files should be modified to
-    end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
-    rispectively.
+        Optional flag indicating if relative media files should be modified to
+        end with ``.min.js`` or ``.min.css`` rather than ``.js`` or ``.css``
+        rispectively.
 
-    Default: ``False``
+        Default: ``False``
 
-.. attribute:: known_libraries
+    .. attribute:: known_libraries
 
-    Optional dictionary of known media libraries, mapping a name to a
-    valid absolute or local url. For example::
+        Optional dictionary of known media libraries, mapping a name to a
+        valid absolute or local url. For example::
 
-        known_libraries = {'jquery': '//code.jquery.com/jquery-1.9.1.min.js'}
+            known_libraries = {'jquery':
+                               '//code.jquery.com/jquery-1.9.1.min.js'}
 
-    Default: ``None``
-'''
-    mediatype = ('js', 'css')
+        Default: ``None``
+    '''
+    mediatype = None
 
     def __init__(self, media_path, minified=False, known_libraries=None):
         super(Media, self).__init__()
@@ -749,13 +770,10 @@ or scripts.
         A path is local relative when it does not start with a slash
         ``/`` nor ``http://`` nor ``https://``.
         '''
-        if path.startswith('http://') or path.startswith('https://')\
-                or path.startswith('/'):
-            return False
-        else:
-            return True
+        return not (path.startswith('http://') or path.startswith('https://')
+                    or path.startswith('/'))
 
-    def absolute_path(self, path):
+    def absolute_path(self, path, with_media_ending=True):
         '''Return a suitable absolute url for ``path``.
 
         The url is calculated in the following way:
@@ -768,29 +786,48 @@ or scripts.
 
         :return: A url path to insert in a HTML ``link`` or ``script``.
         '''
+        urlparams = ''
+        ending = '.%s' % self.mediatype
         if path in self.known_libraries:
-            path = self.known_libraries[path]
+            lib = self.known_libraries[path]
+            if isinstance(lib, dict):
+                urlparams = lib.get('urlparams', '')
+                lib = lib['url']
+            path = '%s%s' % (lib, ending)
+        if self.minified:
+            if path.endswith(ending):
+                path = self._minify(path, ending)
+        if not with_media_ending:
+            path = path[:-len(ending)]
+        if urlparams:
+            path = '%s?%s' % (path, urlparams)
         if self.is_relative(path):
-            if self.minified:
-                for media in self.mediatype:
-                    media = '.%s' % media
-                    if path.endswith(media):
-                        path = self._minify(path, media)
-                        break
             return remove_double_slash('/%s/%s' % (self.media_path, path))
         else:
             return path
 
     def _minify(self, path, postfix):
-        new_postfix = '.min%s' % postfix
+        new_postfix = 'min%s' % postfix
         if not path.endswith(new_postfix):
-            path = '%s%s' % (path[:-len(postfix)], new_postfix)
+            path = '%s.%s' % (path[:-len(postfix)], new_postfix)
         return path
 
 
 class Css(Media):
+    '''A :class:`Media` container for style sheet links.
+    '''
+    mediatype = 'css'
 
     def append(self, value):
+        '''Append a style sheet to this media container.
+
+        ``value`` can be a string or a dictionary with keys given by
+        of the media and values, lists of style sheet paths.
+        For example::
+
+            {'all': [path1, ...],
+             'print': [path2, ...]}
+        '''
         if value:
             if isinstance(value, str):
                 value = {'all': [value]}
@@ -821,7 +858,33 @@ class Css(Media):
 
 class Scripts(Media):
     '''A :class:`Media` container for javascript links.
+
+    Supports javascript Asynchronous Module Definition
     '''
+    mediatype = 'js'
+
+    def __init__(self, *args, **kwargs):
+        self.dependencies = kwargs.pop('dependencies', {})
+        self.require_callback = kwargs.pop('require_callback', None)
+        self.wait = kwargs.pop('wait', 200)
+        self.required = []
+        super(Scripts, self).__init__(*args, **kwargs)
+
+    def require(self, *scripts):
+        '''Add a ``script`` to the list of :attr:`required` scripts.
+
+        The ``script`` can be a name in the :attr:`~Media.known_libraries`,
+        an absolute uri or a relative url.
+
+        The script will be loaded using the ``require`` javascript package.
+        '''
+        for script in scripts:
+            if script not in self.known_libraries:
+                script = self.absolute_path(script)
+            required = self.required
+            if script not in required:
+                required.append(script)
+
     def append(self, child):
         '''add a new link to the javascript links.
 
@@ -839,7 +902,27 @@ class Scripts(Media):
             elif isinstance(child, Html) and child.tag == 'script':
                 self.children[child] = child
 
+    def require_script(self):
+        '''Can be used for requirejs'''
+        libs = dict(((key, self.absolute_path(key, False))
+                     for key in self.known_libraries))
+        return OrderedDict((('deps', self.required),
+                            ('paths', libs),
+                            ('shim', self.dependencies),
+                            ('waitSeconds', self.wait)))
+
     def do_stream(self, request):
+        if self.required:
+            require = self.require_script()
+            callback = self.require_callback or ''
+            if callback:
+                callback = ('\nrequire.callback = function () {%s();}'
+                            % callback)
+            yield '''\
+<script type="text/javascript">
+var require = %s,
+    media_path = "%s";%s
+</script>\n''' % (pyjson.dumps(require), self.media_path, callback)
         for child in self.children.values():
             for bit in child.stream(request):
                 yield bit
@@ -857,45 +940,57 @@ class EmbeddedCss(Html):
 class Head(Html):
     ''':class:`HtmlDocument` ``head`` tag element.
 
-Contains :class:`Html` attributes for the various part of an HTML Head element.
-The head element is accessed via the :attr:`HtmlDocument.head` attribute.
+    Contains :class:`Html` attributes for the various part of an HTML
+    Head element. The head element is accessed via the
+    :attr:`HtmlDocument.head` attribute.
 
-.. attribute:: title
+    .. attribute:: title
 
-    Text in the ``title`` tag.
+        Text in the ``title`` tag.
 
-.. attribute:: meta
+    .. attribute:: meta
 
-    A container of :class:`Html` ``meta`` tags. To add new meta tags use the
-    :meth:`add_meta` method rather than accessing the :attr:`meta`
-    attribute directly.
+        A container of :class:`Html` ``meta`` tags.
+        To add new meta tags use the
+        :meth:`add_meta` method rather than accessing the :attr:`meta`
+        attribute directly.
 
-.. attribute:: links
+    .. attribute:: links
 
-    A container of ``css`` links. Rendered just after the :attr:`meta`
-    container.
+        A container of ``css`` links. Rendered just after the :attr:`meta`
+        container.
 
-.. attribute:: scripts
+    .. attribute:: embedded_css
 
-    A container of Javascript files to render at the end of the body tag.
-    To add new javascript files simply use the append method on
-    this attribute. You can add relative paths::
+        Css embedded in the html page
 
-        html.head.scripts.append('/media/js/scripts.js')
+    .. attribute:: scripts
 
-    as well as absolute paths::
+        A container of Javascript files to render at the end of the body tag.
+        To add new javascript files simply use the append method on
+        this attribute. You can add relative paths::
 
-        html.head.scripts.append(
-            'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js')
+            html.head.scripts.append('/media/js/scripts.js')
 
-'''
-    def __init__(self, media_path=None, title=None, meta=None, **params):
+        as well as absolute paths::
+
+            html.head.scripts.append(
+                'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js')
+
+    '''
+    def __init__(self, media_path=None, title=None, meta=None, minified=False,
+                 known_libraries=None, scripts_dependencies=None,
+                 require_callback=None, **params):
         super(Head, self).__init__('head', **params)
         self.title = title
         self.append(Html(None, meta))
-        self.append(Css(media_path))
+        self.append(Css(media_path, minified=minified,
+                        known_libraries=known_libraries))
         self.append(EmbeddedCss(None))
-        self.append(Scripts(media_path))
+        self.append(Scripts(media_path, minified=minified,
+                            known_libraries=known_libraries,
+                            dependencies=scripts_dependencies,
+                            require_callback=require_callback))
         self.add_meta(charset=self.charset)
 
     @property
@@ -928,21 +1023,10 @@ The head element is accessed via the :attr:`HtmlDocument.head` attribute.
             self._children.insert(0, '<title>%s</title>' % self.title)
         return super(Head, self).do_stream(request)
 
-    def body(self, request):
-        return self.js_body.content(request)
-
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
         meta = Html('meta', **kwargs)
         self.meta.append(meta)
-
-    def add(self, other):
-        if isinstance(other, Head):
-            self.style.append(other.style)
-            self.meta.append(other.meta)
-            self.js_head.append(other.js_head)
-            self.js_body.append(other.js_body)
-        return self
 
     def __add__(self, other):
         if isinstance(other, Media):
@@ -951,48 +1035,37 @@ The head element is accessed via the :attr:`HtmlDocument.head` attribute.
             return self
 
 
-class Body(Html):
-    ''':class:`Html` body tag.
-
-.. attribute:: scripts
-
-    A container of Javascript files to render at the end of the body tag.
-    The usage is the same as :attr:`Head.scripts`.
-'''
-    def __init__(self, media_path=None):
-        super(Body, self).__init__('body')
-        self.scripts = Scripts(media_path)
-
-    def do_stream(self, request):
-        '''Render the widget. It accept two optional parameters, a http
-request object and a dictionary for rendering children with a key.
-
-:parameter request: Optional request object.
-'''
-        self.append(self.scripts)
-        return super(Body, self).do_stream(request)
-
-
 class HtmlDocument(Html):
-    '''HTML5 asynchronous document.
+    '''An :class:`.Html` component rendered as an HTML5_ document.
 
     An instance of this class can be obtained via the
-    :attr:`pulsar.apps.wsgi.wrappers.WsgiRequest.html_document` attribute.
+    :attr:`.WsgiRequest.html_document` attribute.
 
-.. attribute:: head
+    .. attribute:: head
 
-    The :class:`Head` part of this :class:`HtmlDocument`
+        The :class:`Head` part of this :class:`HtmlDocument`
 
-.. attribute:: body
+    .. attribute:: body
 
-    The :class:`Body` part of this :class:`HtmlDocument`
+        The :class:`Body` part of this :class:`HtmlDocument`
 
-'''
+    .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
+    '''
+    _template = ('<!DOCTYPE html>\n'
+                 '<html%s>\n'
+                 '%s\n%s'
+                 '\n</html>')
+
     def __init__(self, title=None, media_path='/media/', charset=None,
-                 **params):
+                 minified=False, known_libraries=None, require_callback=None,
+                 scripts_dependencies=None, **params):
         super(HtmlDocument, self).__init__(None, **params)
-        self.head = Head(title=title, media_path=media_path, charset=charset)
-        self.body = Body(media_path=media_path)
+        self.head = Head(title=title, media_path=media_path, minified=minified,
+                         known_libraries=known_libraries,
+                         require_callback=require_callback,
+                         scripts_dependencies=scripts_dependencies,
+                         charset=charset)
+        self.body = Html('body')
 
     def __call__(self, title=None, body=None, media_path=None):
         if title:
@@ -1000,17 +1073,33 @@ class HtmlDocument(Html):
         if media_path:
             self.head.scripts.media_path = media_path
             self.head.links.media_path = media_path
-            self.body.scripts.media_path = media_path
         self.body.append(body)
         return self
 
     def do_stream(self, request):
-        body = safe_async(self.body.content, request)
-        yield '<!DOCTYPE html>\n'
-        yield '<html%s>\n' % self.flatatt()
-        yield body.add_callback(partial(self._head, request))
-        yield '\n</html>'
+        # stream the body
+        body = multi_async(self.body.stream(request))
+        # the body has asynchronous components
+        # delay the header untl later
+        if not body.done():
+            yield self._html(request, body)
+        else:
+            head = multi_async(self.head.stream(request))
+            #
+            # header not ready (this should never occur really)
+            if not head.done():
+                yield self._html(request, body, head)
+            else:
+                yield self._template % (self.flatatt(),
+                                        self.head.to_string(head.result()),
+                                        self.body.to_string(body.result()))
 
-    def _head(self, request, body):
-        head = yield self.head.content(request)
-        yield '%s\n%s' % (head, body)
+    def _html(self, request, body, head=None):
+        if head is None:
+            body = yield body
+            head = multi_async(self.head.stream(request))
+        head = yield head
+        result = self._template % (self.flatatt(),
+                                   self.head.to_string(head),
+                                   self.body.to_string(body))
+        coroutine_return(result)

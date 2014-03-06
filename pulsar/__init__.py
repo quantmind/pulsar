@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -
 '''Event driven concurrent framework for Python'''
-VERSION = (0, 7, 4, 'alpha', 1)
+VERSION = (0, 8, 0, 'beta', 6)
 
 import os
 
@@ -19,11 +19,10 @@ CLASSIFIERS = ['Development Status :: 4 - Beta',
                'Operating System :: OS Independent',
                'Programming Language :: Python',
                'Programming Language :: Python :: 2',
-               'Programming Language :: Python :: 2.6',
                'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3',
-               'Programming Language :: Python :: 3.2',
                'Programming Language :: Python :: 3.3',
+               'Programming Language :: Python :: 3.4',
                'Programming Language :: Python :: Implementation :: PyPy',
                'Topic :: Internet',
                'Topic :: Utilities',
@@ -43,17 +42,22 @@ CHINESE = b'\xe8\x84\x89\xe5\x86\xb2\xe6\x98\x9f'.decode('utf-8')
 SERVER_SOFTWARE = "{0}/{1}".format(SERVER_NAME, version)
 
 if os.environ.get('pulsar_setup_running') != 'yes':
+    if os.environ.get('pulsar_speedup') == 'no':
+        HAS_C_EXTENSIONS = False
+    else:
+        HAS_C_EXTENSIONS = True
+        try:
+            from .utils import lib
+        except ImportError:
+            HAS_C_EXTENSIONS = False
+
     from .utils.exceptions import *
     from .utils import system
     platform = system.platform
     from .utils.config import *
     from .async import *
     from .apps import *
-    #
-    # Import pubsub local backend for commands
-    from .apps.pubsub import local
-    del local
-    # Import tasks local backend for commands
-    from .apps.tasks.backends import local
-    del local
+
     del get_version
+    # Import data stores
+    from .apps.data import data_stores

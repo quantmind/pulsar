@@ -56,13 +56,14 @@ def exception(code, msg):
 def rpc_method(func, doc=None, format='json', request_handler=None):
     '''A decorator which exposes a function ``func`` as an rpc function.
 
-:parameter func: The function to expose.
-:parameter doc: Optional doc string. If not provided the doc string of
-    ``func`` will be used.
-:parameter format: Optional output format.
-:parameter request_handler: function which takes ``request``, ``format`` and
-    ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.
-    It can be used to add additional parameters based on request and format.
+    :param func: The function to expose.
+    :param doc: Optional doc string. If not provided the doc string of
+        ``func`` will be used.
+    :param format: Optional output format.
+    :param request_handler: function which takes ``request``, ``format``
+        and ``kwargs`` and return a new ``kwargs`` to be passed to ``func``.
+        It can be used to add additional parameters based on request and
+        format.
     '''
     def _(self, *args, **kwargs):
         request = args[0]
@@ -86,7 +87,9 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
 
 class MetaRpcHandler(type):
     '''A metaclass for rpc handlers.
-Add a limited ammount of magic to RPC handlers.'''
+
+    Add a limited ammount of magic to RPC handlers.
+    '''
     def __new__(cls, name, bases, attrs):
         make = super(MetaRpcHandler, cls).__new__
         if attrs.pop('virtual', None):
@@ -114,6 +117,8 @@ Add a limited ammount of magic to RPC handlers.'''
 
 
 class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
+    '''Base class for classes to handle remote procedure calls.
+    '''
     serve_as = 'rpc'
     '''Prefix for class methods providing remote services. Default: ``rpc``.'''
     separator = '.'
@@ -134,13 +139,13 @@ class RpcHandler(MetaRpcHandler('_RpcHandler', (object,), {'virtual': True})):
     @property
     def parent(self):
         '''The parent :class:`RpcHandler` or ``None`` if this
-is the root handler.'''
+        is the root handler.'''
         return self._parent
 
     @property
     def root(self):
         '''The root :class:`RpcHandler` or ``self`` if this
-is the root handler.'''
+        is the root handler.'''
         return self._parent.root if self._parent is not None else self
 
     def isroot(self):
@@ -150,8 +155,8 @@ is the root handler.'''
     def putSubHandler(self, prefix, handler):
         '''Add a sub :class:`RpcHandler` with prefix ``prefix``.
 
-:keyword prefix: a string defining the prefix of the subhandler
-:keyword handler: the sub-handler.
+        :keyword prefix: a string defining the prefix of the subhandler
+        :keyword handler: the sub-handler.
         '''
         self.subHandlers[prefix] = handler
         handler._parent = self

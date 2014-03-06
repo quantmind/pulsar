@@ -26,11 +26,14 @@ sub-routers for handling additional urls::
 Router
 =====================
 
-The ``middleware`` constructed can be used to serve ``get`` and ``post``
-methods at ``/bla`` url.
+The :ref:`middleware <wsgi-middleware>` constructed in the snippet above
+handles ``get`` and ``post`` methods at the ``/bla`` url.
 The :class:`Router` introduces a new element into pulsar WSGI handlers, the
 :ref:`wsgi request <app-wsgi-request>`, a light-weight wrapper of the
 WSGI environ.
+
+For an exaustive example on how to use the :class:`Router` middleware make sure
+you check out the :ref:`HttpBin example <tutorials-httpbin>`.
 
 .. autoclass:: Router
    :members:
@@ -68,7 +71,7 @@ from email.utils import parsedate_tz, mktime_tz
 from pulsar.utils.httpurl import http_date, CacheControl
 from pulsar.utils.structures import AttributeDictionary, OrderedDict
 from pulsar import (Http404, PermissionDenied, HttpException, HttpRedirect,
-                    async, Failure, multi_async)
+                    multi_async)
 
 from .route import Route
 from .utils import wsgi_request
@@ -88,6 +91,13 @@ def get_roule_methods(attrs):
         if isinstance(rule_method, tuple):
             rule_methods.append((code, rule_method))
     return sorted(rule_methods, key=lambda x: x[1].order)
+
+
+def update_args(urlargs, args):
+    if urlargs:
+        urlargs.update(args)
+        return urlargs
+    return args
 
 
 class RouterParam(object):
@@ -147,51 +157,64 @@ class RouterType(type):
 
 class Router(RouterType('RouterBase', (object,), {})):
     '''A :ref:`WSGI middleware <wsgi-middleware>` to handle client requests
-on multiple :ref:`routes <apps-wsgi-route>`.
+    on multiple :ref:`routes <apps-wsgi-route>`.
 
-The user must implement the HTTP methods
-required by the application. For example if the route needs to serve a ``GET``
-request, the ``get(self, request)`` method must be implemented.
+    The user must implement the HTTP methods
+    required by the application. For example if the route needs to
+    serve a ``GET`` request, the ``get(self, request)`` method must
+    be implemented.
 
-:param rule: String used for creating the :attr:`route` of this
-    :class:`Router`.
-:param routes: Optional :class:`Router` instances which are added to the
-    children :attr:`routes` of this router.
-:param parameters: Optional parameters for this router. They are stored in the
-    :attr:`parameters` attribute. If a ``response_content_types`` value is
-    passed, it overrides the :attr:`response_content_types` attribute.
+    :param rule: String used for creating the :attr:`route` of this
+        :class:`Router`.
+    :param routes: Optional :class:`Router` instances which are added to the
+        children :attr:`routes` of this router.
+    :param parameters: Optional parameters for this router.
+        They are stored in the :attr:`parameters` attribute.
+        If a ``response_content_types`` value is
+        passed, it overrides the :attr:`response_content_types` attribute.
 
-.. attribute:: route
+    .. attribute:: route
 
-    The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
+        The :ref:`Route <apps-wsgi-route>` served by this :class:`Router`.
 
-.. attribute:: routes
+    .. attribute:: routes
 
-    List of children :class:`Router` of this :class:`Router`.
+        List of children :class:`Router` of this :class:`Router`.
 
-.. attribute:: parent
+    .. attribute:: parent
 
-    The parent :class:`Router` of this :class:`Router`.
+        The parent :class:`Router` of this :class:`Router`.
 
-.. attribute:: response_content_types
+    .. attribute:: response_content_types
 
-    a list/tuple of possible content types of a response to a client request.
+        a list/tuple of possible content types of a response to a
+        client request.
 
-    The client request must accept at least one of the response content
-    types, otherwise an HTTP ``415`` exception occurs.
+        The client request must accept at least one of the response content
+        types, otherwise an HTTP ``415`` exception occurs.
 
-.. attribute:: parameters
+    .. attribute:: allows_redirects
 
-    A :class:`.AttributeDictionary` of parameters for
-    this :class:`Router`. Parameters are created at initialisation from
-    the ``parameters`` class attribute and the key-valued parameters
-    passed to the ``__init__`` method for which the value is not callable.
-'''
+        boolean indicating if this router can redirect requests to valid urls
+        within this router and its children. For example, if a router serves
+        the '/echo' url but not the ``/echo/`` one, a request on ``/echo/``
+        will be redirected to ``/echo``.
+
+        Default: ``False``
+
+    .. attribute:: parameters
+
+        A :class:`.AttributeDictionary` of parameters for
+        this :class:`Router`. Parameters are created at initialisation from
+        the ``parameters`` class attribute and the key-valued parameters
+        passed to the ``__init__`` method for which the value is not callable.
+    '''
     _creation_count = 0
     _parent = None
     _name = None
 
     response_content_types = RouterParam(None)
+    allows_redirects = RouterParam(False)
 
     def __init__(self, rule, *routes, **parameters):
         Router._creation_count += 1
@@ -201,6 +224,7 @@ request, the ``get(self, request)`` method must be implemented.
         self.route = rule
         self._name = parameters.pop('name', rule.rule)
         self.routes = []
+        # add routes specified via the initialiser
         for router in routes:
             self.add_child(router)
         # copy parameters
@@ -209,9 +233,6 @@ request, the ``get(self, request)`` method must be implemented.
             rule, method, params, _, _ = rule_method
             rparameters = params.copy()
             handler = getattr(self, name)
-            if rparameters.pop('async', False):  # asynchronous method
-                handler = async()(handler)
-                handler.rule_method = rule_method
             router = self.add_child(Router(rule, **rparameters))
             setattr(router, method, handler)
         for name, value in parameters.items():
@@ -244,8 +265,10 @@ request, the ``get(self, request)`` method must be implemented.
 
     @property
     def default_content_type(self):
-        '''The default content type for responses. This is the first element
-in the :attr:`response_content_types` list.'''
+        '''The default content type for responses.
+
+        This is the first element in the :attr:`response_content_types` list.
+        '''
         ct = self.response_content_types
         return ct[0] if ct else None
 
@@ -258,22 +281,37 @@ in the :attr:`response_content_types` list.'''
 
     @property
     def full_route(self):
-        '''The full :attr:`route` for this :class:`Router`. It includes the
-:attr:`parent` portion of the route if a parent router is available.'''
+        '''The full :attr:`route` for this :class:`Router`.
+
+        It includes the :attr:`parent` portion of the route if a parent
+        router is available.
+        '''
         route = self.route
-        if self._parent:
-            route = self._parent.route + route
+        parent = self._parent
+        while parent:
+            if parent.route.is_leaf:
+                parent = parent._parent
+            else:
+                break
+        if parent:
+            route = parent.route + route
         return route
 
     @property
     def rule(self):
-        '''The full ``rule`` string for this :class:`Router`. It includes the
-:attr:`parent` portion of rule if a parent router is available.'''
+        '''The full ``rule`` string for this :class:`Router`.
+
+        It includes the :attr:`parent` portion of rule if a parent
+        router is available.
+        '''
         return self.full_route.rule
 
     def path(self, **urlargs):
-        '''The full path of this :class:`Router`. It includes the
-:attr:`parent` portion of url if a parent router is available.'''
+        '''The full path of this :class:`Router`.
+
+        It includes the :attr:`parent` portion of url if a parent router
+        is available.
+        '''
         route = self.route
         if self._parent:
             route = self._parent.route + route
@@ -312,9 +350,7 @@ in the :attr:`response_content_types` list.'''
         accepted content types and the content types accepted by the client
         and figure out the best match.
         '''
-        response_content_types = self.response_content_types
-        if response_content_types:
-            return request.content_types.best_match(response_content_types)
+        return request.content_types.best_match(self.response_content_types)
 
     def accept_content_type(self, content_type):
         '''Check if ``content_type`` is accepted by this :class:`Router`.
@@ -335,7 +371,7 @@ in the :attr:`response_content_types` list.'''
         if router_args:
             router, args = router_args
             return router.response(environ, args)
-        else:
+        elif self.allows_redirects:
             if self.route.is_leaf:
                 if path.endswith('/'):
                     router_args = self.resolve(path[:-1])
@@ -349,28 +385,29 @@ in the :attr:`response_content_types` list.'''
 
     def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
-``None`` if the path could not be resolved.'''
-        urlargs = urlargs if urlargs is not None else {}
+        ``None`` if the path could not be resolved.
+        '''
         match = self.route.match(path)
         if match is None:
-            return
-        if '__remaining__' in match:
-            remaining_path = match['__remaining__']
-            for handler in self.routes:
-                view_args = handler.resolve(remaining_path, urlargs)
-                if view_args is None:
-                    continue
-                #remaining_path = match.pop('__remaining__','')
-                #urlargs.update(match)
-                return view_args
+            if not self.route.is_leaf:  # no match
+                return
+        elif '__remaining__' in match:
+            path = match.pop('__remaining__')
+            urlargs = update_args(urlargs, match)
         else:
-            return self, match
+            return self, update_args(urlargs, match)
+        #
+        for handler in self.routes:
+            view_args = handler.resolve(path, urlargs)
+            if view_args is None:
+                continue
+            return view_args
 
-    @async(get_result=True)
     def response(self, environ, args):
         '''Once the :meth:`resolve` method has matched the correct
-:class:`Router` for serving the request, this matched router invokes
-this method to produce the WSGI response.'''
+        :class:`Router` for serving the request, this matched router invokes
+        this method to produce the WSGI response.
+        '''
         request = wsgi_request(environ, self, args)
         # Set the response content type
         request.response.content_type = self.content_type(request)
@@ -379,32 +416,26 @@ this method to produce the WSGI response.'''
         if callable is None:
             raise HttpException(status=405,
                                 msg='Method "%s" not allowed' % method)
-        # make sure cache does not contain asynchronous data
-        async_cache = multi_async(request.cache, raise_on_error=False)
-        cache = yield async_cache
-        if async_cache.num_failures:
-            for key, value in list(cache.items()):
-                if isinstance(value, Failure):
-                    cache.pop(key)
-            environ['pulsar.cache'] = cache
-            yield async_cache.failures
-        else:
-            environ['pulsar.cache'] = cache
-            yield callable(request)
+        return callable(request)
 
-    @async(get_result=True)
     def redirect(self, environ, path):
-        request = wsgi_request(environ, self)
-        environ['pulsar.cache'] = yield multi_async(request.cache)
         raise HttpRedirect(path)
 
     def add_child(self, router):
-        '''Add a new :class:`Router` to the :attr:`routes` list. If this
-:class:`Router` is a leaf route, add a slash to the url.'''
+        '''Add a new :class:`Router` to the :attr:`routes` list.
+        '''
         assert isinstance(router, Router), 'Not a valid Router'
         assert router is not self, 'cannot add self to children'
+        # Loop over available routers to check it the router
+        # is already available
         if self.route.is_leaf:
-            self.route = Route('%s/' % self.route.rule)
+            # if this router is a leaf router, prepend this router path
+            # to the child
+            if not router.route.path.startswith('/'):
+                route = '%s/%s' % (self.route, router.route)
+            else:
+                route = '%s%s' % (self.route, router.route)
+            router.route = Route(route)
         for r in self.routes:
             if r.route == router.route:
                 r.parameters.update(router.parameters)
@@ -429,7 +460,7 @@ this method to produce the WSGI response.'''
 
     def link(self, *args, **urlargs):
         '''Return an anchor :class:`Html` element with the `href` attribute
-set to the url of this :class:`Router`.'''
+        set to the url of this :class:`Router`.'''
         if len(args) > 1:
             raise ValueError
         url = self.route.url(**urlargs)
@@ -441,15 +472,16 @@ set to the url of this :class:`Router`.'''
 
     def sitemap(self, root=None):
         '''This utility method returns a sitemap starting at root.
-If *root* is ``None`` it starts from this :class:`Router`.
 
-:param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
-:param root: Optional url path where to start the sitemap.
-    By default it starts from this :class:`Router`. Pass `"/"` to
-    start from the root :class:`Router`.
-:param levels: Number of nested levels to include.
-:return: A list of children
-'''
+        If *root* is ``None`` it starts from this :class:`Router`.
+
+        :param request: a :ref:`wsgi request wrapper <app-wsgi-request>`
+        :param root: Optional url path where to start the sitemap.
+            By default it starts from this :class:`Router`. Pass `"/"` to
+            start from the root :class:`Router`.
+        :param levels: Number of nested levels to include.
+        :return: A list of children
+        '''
         if not root:
             root = self
         else:
@@ -461,14 +493,17 @@ If *root* is ``None`` it starts from this :class:`Router`.
         return list(self.routes)
 
     def encoding(self, request):
-        '''The encoding to use for the response. By default it
-returns ``utf-8``.'''
+        '''The encoding to use for the response.
+
+        By default it returns ``utf-8``.'''
         return 'utf-8'
 
 
 class MediaMixin(Router):
     response_content_types = RouterParam(('application/octet-stream',
-                                          'text/css'))
+                                          'text/css',
+                                          'application/javascript',
+                                          'text/html'))
     cache_control = CacheControl(maxage=86400)
     _file_path = ''
 
@@ -494,11 +529,11 @@ class MediaMixin(Router):
     def was_modified_since(self, header=None, mtime=0, size=0):
         '''Check if an item was modified since the user last downloaded it
 
-:param header: the value of the ``If-Modified-Since`` header. If this is None,
-    simply return ``True``.
-:param mtime: the modification time of the item in question.
-:param size: the size of the item.
-'''
+        :param header: the value of the ``If-Modified-Since`` header.
+            If this is ``None``, simply return ``True``
+        :param mtime: the modification time of the item in question.
+        :param size: the size of the item.
+        '''
         try:
             if header is None:
                 raise ValueError
@@ -530,31 +565,32 @@ class MediaMixin(Router):
         return 'Index of %s' % request.path
 
     def static_index(self, request, links):
-        title = Html('h2', self.html_title(request))
+        doc = request.html_document
+        doc.title = 'Index of %s' % request.path
+        title = Html('h2', doc.title)
         list = Html('ul', *[Html('li', a) for a in links])
-        body = Html('div', title, list)
-        doc = request.html_document(title=title, body=body)
+        doc.body.append(Html('div', title, list))
         return doc.http_response(request)
 
 
 class MediaRouter(MediaMixin):
     '''A :class:`Router` for serving static media files from a given
-directory.
+    directory.
 
-:param rute: The top-level url for this router. For example ``/media``
-    will serve the ``/media/<path:path>`` :class:`Route`.
-:param path: Check the :attr:`path` attribute.
-:param show_indexes: Check the :attr:`show_indexes` attribute.
+    :param rute: The top-level url for this router. For example ``/media``
+        will serve the ``/media/<path:path>`` :class:`Route`.
+    :param path: Check the :attr:`path` attribute.
+    :param show_indexes: Check the :attr:`show_indexes` attribute.
 
-.. attribute::    path
+    .. attribute::    path
 
-    The file-system path of the media files to serve.
+        The file-system path of the media files to serve.
 
-.. attribute::    show_indexes
+    .. attribute::    show_indexes
 
-    If ``True`` (default), the router will serve media file directories as
-    well as media files.
-'''
+        If ``True`` (default), the router will serve media file directories as
+        well as media files.
+    '''
     def __init__(self, rute, path, show_indexes=True):
         super(MediaRouter, self).__init__('%s/<path:path>' % rute)
         self._show_indexes = show_indexes

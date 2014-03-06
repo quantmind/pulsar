@@ -1,11 +1,10 @@
 from pulsar import CommandNotFound
 from pulsar.utils.pep import default_timer
 
-from .defer import Deferred
+from .futures import Future, chain_future
 from .consts import *
 
-__all__ = ['ActorProxyDeferred',
-           'ActorProxy',
+__all__ = ['ActorProxy',
            'ActorProxyMonitor',
            'get_proxy',
            'command',
@@ -66,34 +65,39 @@ class ActorIdentity(object):
         return self.aid
 
 
-class ActorProxyDeferred(Deferred, ActorIdentity):
-    '''A :class:`Deferred` for an :class:`ActorProxy`.
+def actor_proxy_future(aid, future=None):
+    self = ActorProxyFuture()
+    if isinstance(aid, ActorProxyMonitor):
+        assert future is None
+        aid.callback = self
+        self.aid = aid.aid
+    else:
+        self.aid = aid
+        chain_future(future, next=self)
+    return self
 
-    The callback will be an :class:`ActorProxy` which will be received once
-    the remote :class:`Actor` is fully functional.
+
+class ActorProxyFuture(Future, ActorIdentity):
+    '''A :class:`.Future` for an :class:`.ActorProxy`.
+
+    The callback will be an :class:`.ActorProxy` which will be received once
+    the remote :class:`.Actor` is fully functional.
 
     .. attribute:: aid
 
-        The the remote :attr:`Actor` id
+        The the remote :attr:`.Actor` id
 
     '''
-    def __init__(self, aid, msg=None):
-        super(ActorProxyDeferred, self).__init__()
-        if isinstance(aid, ActorProxyMonitor):
-            aid.callback = self
-            self.aid = aid.aid
-        else:
-            self.aid = aid
-            # Listen for the callbacks and errorbacks
-            msg.add_both(self.callback)
-
     def __repr__(self):
-        return '%s(%s)' % (self.__class__, self.aid)
+        if self.done():
+            return '%s(%s)' % (self.__class__.__name__, self.aid)
+        else:
+            return '%s(%s) PENDING' % (self.__class__.__name__, self.aid)
     __str__ = __repr__
 
 
 class ActorProxy(ActorIdentity):
-    '''A proxy for a remote :class:`Actor`.
+    '''A proxy for a remote :class:`.Actor`.
 
     This is a lightweight class which delegates function calls to the
     underlying remote object.
@@ -112,19 +116,18 @@ class ActorProxy(ActorIdentity):
 
     .. attribute:: aid
 
-        Unique ID for the remote :class:`Actor`
+        Unique ID for the remote :class:`.Actor`
 
     .. attribute:: address
 
-        the socket address of the underlying :attr:`Actor.mailbox`.
+        the socket address of the underlying :attr:`.Actor.mailbox`.
 
     '''
     def __init__(self, impl):
         self.aid = impl.aid
         self.name = impl.name
         self.cfg = impl.cfg
-        if hasattr(impl, 'address'):
-            self.address = impl.address
+        self.address = getattr(impl, 'address', None)
 
     def __repr__(self):
         return '%s(%s)' % (self.name, self.aid)
@@ -143,33 +146,33 @@ class ActorProxy(ActorIdentity):
 
 
 class ActorProxyMonitor(ActorProxy):
-    '''A specialised :class:`ActorProxy` class.
+    '''A specialised :class:`.ActorProxy` class.
 
     It contains additional information about the remote underlying
-    :class:`pulsar.Actor`. Instances of this class serialise into
-    :class:`ActorProxy`.
+    :class:`.Actor`. Instances of this class serialise into
+    :class:`.ActorProxy`.
 
-    The :class:`ActorProxyMonitor` is special since it lives in the
-    :class:`Arbiter` domain and it is used by the :class:`Arbiter`
-    (or a :class:`Monitor`) to monitor the state of the spawned actor.
+    The :class:`.ActorProxyMonitor` is special since it lives in the
+    :class:`.Arbiter` domain and it is used by the :class:`.Arbiter`
+    (or a :class:`.Monitor`) to monitor the state of the spawned actor.
 
     .. attribute:: impl
 
-        The :class:`Concurrency` instance for the remote :class:`Actor`. This
+        The :class:`.Concurrency` instance for the remote :class:`.Actor`. This
         dictionary is constantly updated by the remote actor by sending the
         :ref:`info message <actor_info_command>`.
 
     .. attribute:: info
 
-        Dictionary of information regarding the remote :class:`Actor`
+        Dictionary of information regarding the remote :class:`.Actor`
 
     .. attribute:: mailbox
 
         This is the connection with the remote actor. It is available once the
         :ref:`actor handshake <handshake>` between the actor and the monitor
         has completed. The :attr:`mailbox` is a server-side
-        :class:`pulsar.async.mailbox.MailboxConsumer` instance and it is used
-        by the :func:`send` function to send messages to the remote actor.
+        :class:`.MailboxProtocol` instance and it is used
+        by the :func:`.send` function to send messages to the remote actor.
     '''
     monitor = None
 
@@ -184,7 +187,7 @@ class ActorProxyMonitor(ActorProxy):
 
     @property
     def notified(self):
-        '''Last time this :class:`ActorProxyMonitor` was notified by the
+        '''Last time this :class:`.ActorProxyMonitor` was notified by the
         remote actor.'''
         return self.info.get('last_notified')
 
@@ -194,7 +197,7 @@ class ActorProxyMonitor(ActorProxy):
 
     @property
     def proxy(self):
-        '''The :class:`ActorProxy` for this monitor.'''
+        '''The :class:`.ActorProxy` for this monitor.'''
         return ActorProxy(self)
 
     def __reduce__(self):

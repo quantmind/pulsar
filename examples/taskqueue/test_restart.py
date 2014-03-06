@@ -1,8 +1,9 @@
 import time
-from pulsar.apps import tasks
-from pulsar.apps.test import unittest
+import unittest
 
-from .test_local import TaskQueueBase
+from pulsar.apps import tasks
+
+from .test_pulsards import TaskQueueBase
 
 
 class a:    # pragma    nocover

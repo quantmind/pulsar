@@ -31,10 +31,6 @@ HTTP Parser
    :members:
    :member-order: bysource
 
-parse cookie
-~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: parse_cookie
 
 .. _http-parser: https://github.com/benoitc/http-parser
 .. _urllib3: https://github.com/shazow/urllib3
@@ -50,7 +46,6 @@ import time
 import mimetypes
 import platform
 import socket
-import logging
 from hashlib import sha1, md5
 from uuid import uuid4
 from email.utils import formatdate
@@ -60,14 +55,19 @@ from collections import deque
 
 from .structures import mapping_iterator, OrderedDict
 from .pep import ispy3k, iteritems, itervalues, to_bytes, native_str
+from .html import capfirst
 
-try:
-    from http_parser.parser import HttpParser as CHttpParser
-    hasextensions = True
-    _Http_Parser = CHttpParser
-except ImportError:  # pragma    nocover
-    hasextensions = False
-    _Http_Parser = None
+#try:
+#    from http_parser.parser import HttpParser as CHttpParser
+#    hasextensions = True
+#    _Http_Parser = CHttpParser
+#except ImportError:  # pragma    nocover
+#    hasextensions = False
+#    _Http_Parser = None
+#
+#The http_parser has several bus, therefore it is switched off
+hasextensions = False
+_Http_Parser = None
 
 try:
     from select import poll, POLLIN
@@ -90,7 +90,6 @@ def http_parser(**kwargs):
 
 
 create_connection = socket.create_connection
-LOGGER = logging.getLogger('httpurl')
 
 try:    # Compiled with SSL?
     BaseSSLError = None
@@ -108,7 +107,7 @@ if ispy3k:  # Python 3
                               urljoin)
     from http.client import responses
     from http.cookiejar import CookieJar, Cookie
-    from http.cookies import SimpleCookie, BaseCookie, CookieError
+    from http.cookies import SimpleCookie
 
     string_type = str
     getproxies_environment = urllibr.getproxies_environment
@@ -133,7 +132,7 @@ else:   # pragma : no cover
                           parse_qsl)
     from httplib import responses
     from cookielib import CookieJar, Cookie
-    from Cookie import SimpleCookie, BaseCookie, CookieError
+    from Cookie import SimpleCookie
 
     string_type = unicode
     ascii_letters = string.letters
@@ -207,7 +206,7 @@ urlquote = lambda iri: quote(iri, safe=URI_RESERVED_CHARS)
 
 def _gen_unquote(uri):
     unreserved_set = URI_UNRESERVED_SET
-    for n, part in enumerate(force_native_str(uri).split('%')):
+    for n, part in enumerate(force_native_str(uri, 'latin1').split('%')):
         if not n:
             yield part
         else:
@@ -241,16 +240,16 @@ def requote_uri(uri):
 
 
 def iri_to_uri(iri, kwargs=None):
-    '''Convert an Internationalized Resource Identifier (IRI) portion to a URI
-portion that is suitable for inclusion in a URL.
-This is the algorithm from section 3.1 of RFC 3987.
-Returns an ASCII native string containing the encoded result.'''
+    '''Convert an Internationalised Resource Identifier (IRI) portion
+    to a URI portion that is suitable for inclusion in a URL.
+    This is the algorithm from section 3.1 of RFC 3987.
+    Returns an ASCII native string containing the encoded result.
+    '''
     if iri is None:
         return iri
-    iri = force_native_str(iri)
     if kwargs:
-        iri = '%s?%s' % (iri, '&'.join(('%s=%s' % kv for kv in
-                                        iteritems(kwargs))))
+        iri = '%s?%s' % (force_native_str(iri, 'latin1'),
+                         '&'.join(('%s=%s' % kv for kv in iteritems(kwargs))))
     return urlquote(unquote_unreserved(iri))
 
 
@@ -389,8 +388,8 @@ SERVER_HEADER_FIELDS = HEADER_FIELDS['general'].union(
     HEADER_FIELDS['entity'], HEADER_FIELDS['response'])
 ALL_HEADER_FIELDS = CLIENT_HEADER_FIELDS.union(SERVER_HEADER_FIELDS)
 ALL_HEADER_FIELDS_DICT = dict(((k.lower(), k) for k in ALL_HEADER_FIELDS))
-HEADER_FIELDS_JOINER = {'Set-Cookie': None,
-                        'Set-Cookie2': None}
+CRLF = '\r\n'
+LWS = '\r\n '
 TYPE_HEADER_FIELDS = {'client': CLIENT_HEADER_FIELDS,
                       'server': SERVER_HEADER_FIELDS,
                       'both': ALL_HEADER_FIELDS}
@@ -399,19 +398,20 @@ header_type = {0: 'client', 1: 'server', 2: 'both'}
 header_type_to_int = dict(((v, k) for k, v in header_type.items()))
 
 
-def capfirst(x):
-    x = x.strip()
-    if x:
-        return x[0].upper() + x[1:].lower()
-    else:
-        return x
-
-
 def capheader(name):
     return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
 
 
 def header_field(name, HEADERS_SET=None, strict=False):
+    '''Return a header `name` in Camel case.
+
+    For example::
+
+        header_field('connection') == 'Connection'
+        header_field('accept-charset') == 'Accept-Charset'
+
+    If ``header_set`` is given, only return headers included in the set.
+    '''
     name = name.lower()
     if name.startswith('x-'):
         return capheader(name)
@@ -425,13 +425,40 @@ def header_field(name, HEADERS_SET=None, strict=False):
             return capheader(name)
 
 
+####    HEADERS UTILITIES
+HEADER_FIELDS_JOINER = {'Cookie': '; ',
+                        'Set-Cookie': None,
+                        'Set-Cookie2': None}
+
+
+def split_comma(value):
+    return [v for v in (v.strip() for v in value.split(',')) if v]
+
+
+def parse_cookies(value):
+    return [c.OutputString() for c in SimpleCookie(value).values()]
+
+
+header_parsers = {'Connection': split_comma,
+                  'Cookie': parse_cookies}
+
+
+def header_values(header, value):
+    assert isinstance(value, str)
+    if header in header_parsers:
+        return header_parsers[header](value)
+    else:
+        return [value]
+
+
 def quote_header_value(value, extra_chars='', allow_token=True):
     """Quote a header value if necessary.
 
-:param value: the value to quote.
-:param extra_chars: a list of extra characters to skip quoting.
-:param allow_token: if this is enabled token values are returned
-                    unchanged."""
+    :param value: the value to quote.
+    :param extra_chars: a list of extra characters to skip quoting.
+    :param allow_token: if this is enabled token values are returned
+        unchanged.
+    """
     value = force_native_str(value)
     if allow_token:
         token_chars = HEADER_TOKEN_CHARS | set(extra_chars)
@@ -441,10 +468,13 @@ def quote_header_value(value, extra_chars='', allow_token=True):
 
 
 def unquote_header_value(value, is_filename=False):
-    """Unquotes a header value. Reversal of :func:`quote_header_value`.
-This does not use the real unquoting but what browsers are actually
-using for quoting.
-:param value: the header value to unquote."""
+    """Unquotes a header value.
+
+    Reversal of :func:`quote_header_value`. This does not use the real
+    un-quoting but what browsers are actually using for quoting.
+
+    :param value: the header value to unquote.
+    """
     if value and value[0] == value[-1] == '"':
         # this is not the real unquoting, but fixing this so that the
         # RFC is met will result in bugs with internet explorer and
@@ -497,36 +527,37 @@ def parse_dict_header(value):
 class Headers(object):
     '''Utility for managing HTTP headers for both clients and servers.
 
-It has a dictionary like interface with few extra functions to facilitate
-the insertion of multiple header values. Header fields are
-**case insensitive**, therefore doing::
+    It has a dictionary like interface with few extra functions to facilitate
+    the insertion of multiple header values. Header fields are
+    **case insensitive**, therefore doing::
 
-    >>> h = Headers()
-    >>> h['Content-Length'] = '1050'
+        >>> h = Headers()
+        >>> h['Content-Length'] = '1050'
 
-is equivalent to
+    is equivalent to
 
-    >>> h['content-length'] = '1050'
+        >>> h['content-length'] = '1050'
 
-:param headers: optional iterable over header field/value pairs.
-:param kind: optional headers type, one of ``server``, ``client`` or ``both``.
-:param strict: if ``True`` only valid headers field will be included.
+    :param headers: optional iterable over header field/value pairs.
+    :param kind: optional headers type, one of ``server``, ``client`` or
+        ``both``.
+    :param strict: if ``True`` only valid headers field will be included.
 
-This :class:`Headers` container maintains an ordering as suggested by
-http://www.w3.org/Protocols/rfc2616/rfc2616.html:
+    This :class:`Headers` container maintains an ordering as suggested by
+    http://www.w3.org/Protocols/rfc2616/rfc2616.html:
 
-.. epigraph::
+    .. epigraph::
 
-    The order in which header fields with differing field names are received
-    is not significant. However, it is "good practice" to send general-header
-    fields first, followed by request-header or response-header fields, and
-    ending with the entity-header fields.
+        The order in which header fields with differing field names are
+        received is not significant. However, it is "good practice" to send
+        general-header fields first, followed by request-header or
+        response-header fields, and ending with the entity-header fields.
 
-    -- rfc2616 section 4.2
+        -- rfc2616 section 4.2
 
-The strict parameter is rarely used and it forces the omission on non-standard
-header fields.
-'''
+    The strict parameter is rarely used and it forces the omission on
+    non-standard header fields.
+    '''
     def __init__(self, headers=None, kind='server', strict=False):
         if isinstance(kind, int):
             kind = header_type.get(kind, 'both')
@@ -551,10 +582,6 @@ header fields.
     def __bytes__(self):
         return str(self).encode(DEFAULT_CHARSET)
 
-    def __iter__(self):
-        for k, values in iteritems(self._headers):
-            yield k, ', '.join(values)
-
     def __len__(self):
         return len(self._headers)
 
@@ -563,7 +590,7 @@ header fields.
         return header_type_to_int.get(self.kind)
 
     def update(self, iterable):
-        """Extend the headers.
+        """Extend the headers with an ``iterable``.
 
         :param iterable: a dictionary or an iterable over keys, vaues tuples.
         """
@@ -591,16 +618,21 @@ header fields.
         return header_field(key) in self._headers
 
     def __getitem__(self, key):
-        return ', '.join(self._headers[header_field(key)])
+        key = header_field(key)
+        values = self._headers[key]
+        joiner = HEADER_FIELDS_JOINER.get(key, ', ')
+        if joiner is None:
+            joiner = '; '
+        return joiner.join(values)
 
     def __delitem__(self, key):
         self._headers.__delitem__(header_field(key))
 
     def __setitem__(self, key, value):
         key = header_field(key, self.all_headers, self.strict)
-        if key and value is not None:
+        if key and value:
             if not isinstance(value, list):
-                value = [value]
+                value = header_values(key, value)
             self._headers[key] = value
 
     def get(self, key, default=None):
@@ -623,20 +655,20 @@ header fields.
             return default
 
     def get_all(self, key, default=None):
-        '''Get the values at header field ``key`` as a list rather than a
-string separated by comma (which is returned by the :meth:`get` method).
-For example::
+        '''Get the values at header ``key`` as a list rather than a
+        string separated by comma (which is returned by the
+        :meth:`get` method). For example::
 
-    >>> from pulsar.utils.httpurl import Headers
-    >>> h = Headers(kind='client')
-    >>> h.add_header('accept-encoding', 'gzip')
-    >>> h.add_header('accept-encoding', 'deflate')
-    >>> h.get_all('accept-encoding')
+            >>> from pulsar.utils.httpurl import Headers
+            >>> h = Headers(kind='client')
+            >>> h.add_header('accept-encoding', 'gzip')
+            >>> h.add_header('accept-encoding', 'deflate')
+            >>> h.get_all('accept-encoding')
 
-results in::
+        results in::
 
-    ['gzip', 'deflate']
-'''
+            ['gzip', 'deflate']
+        '''
         return self._headers.get(header_field(key), default)
 
     def has(self, field, value):
@@ -662,21 +694,22 @@ results in::
         '''
         return self._headers.get(header_field(key), [])
 
-    def add_header(self, key, value, **params):
-        '''Add ``value`` to ``key`` header.
+    def add_header(self, key, values):
+        '''Add ``values`` to ``key`` header.
 
         If the header is already available, append the value to the list.
+        :param values: a string value or a list/tuple of strings values
+            for header ``key``
         '''
         key = header_field(key, self.all_headers, self.strict)
-        if key and value:
-            values = self._headers.get(key, [])
-            value = value.strip()
-            if params:
-                value = '%s; %s' % (value, '; '.join(('%s=%s' % kv for kv
-                                                      in params.items())))
-            if value not in values:
-                    values.append(value)
-            self._headers[key] = values
+        if key and values:
+            if not isinstance(values, (tuple, list)):
+                values = header_values(key, values)
+            current = self._headers.get(key, [])
+            for value in values:
+                if value and not value in current:
+                    current.append(value)
+            self._headers[key] = current
 
     def remove_header(self, key, value=None):
         '''Remove the header at ``key``.
@@ -702,6 +735,16 @@ results in::
         '''Full headers bytes representation'''
         vs = version + (status, self)
         return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
+
+    def __iter__(self):
+        dj = ', '
+        for k, values in iteritems(self._headers):
+            joiner = HEADER_FIELDS_JOINER.get(k, dj)
+            if joiner:
+                yield k, joiner.join(values)
+            else:
+                for value in values:
+                    yield k, value
 
     def _ordered(self):
         hf = HEADER_FIELDS
@@ -758,30 +801,10 @@ class InvalidChunkSize(Exception):
 class HttpParser(object):
     '''A python HTTP parser.
 
-Original code from https://github.com/benoitc/http-parser
+    Original code from https://github.com/benoitc/http-parser
 
-2011 (c) Benoit Chesneau <benoitc@e-engura.org>
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.'''
+    2011 (c) Benoit Chesneau <benoitc@e-engura.org>
+    '''
     def __init__(self, kind=2, decompress=False):
         self.decompress = decompress
         # errors vars
@@ -1006,20 +1029,22 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             name = name.rstrip(" \t").upper()
             if HEADER_RE.search(name):
                 raise InvalidHeader("invalid header name %s" % name)
-            name, value = name.strip().lower(), [value.lstrip()]
+            name, value = header_field(name.strip()), [value.lstrip()]
             # Consume value continuation lines
             while len(lines) and lines[0].startswith((" ", "\t")):
                 value.append(lines.popleft())
             value = ''.join(value).rstrip()
-            # multiple headers
             if name in self._headers:
-                value = "%s, %s" % (self._headers[name], value)
-            # store new header value
-            self._headers[name] = value
+                self._headers[name].append(value)
+            else:
+                self._headers[name] = [value]
         # detect now if body is sent by chunks.
-        clen = self._headers.get('content-length')
-        te = self._headers.get('transfer-encoding', '').lower()
-        self._chunked = (te == 'chunked')
+        clen = self._headers.get('Content-Length')
+        if 'Transfer-Encoding' in self._headers:
+            te = self._headers['Transfer-Encoding'][0].lower()
+            self._chunked = (te == 'chunked')
+        else:
+            self._chunked = False
         #
         status = self._status_code
         if status and (status == httpclient.NO_CONTENT or
@@ -1029,7 +1054,7 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             clen = 0
         elif clen is not None:
             try:
-                clen = int(clen)
+                clen = int(clen[0])
             except ValueError:
                 clen = None
             else:
@@ -1042,8 +1067,8 @@ OTHER DEALINGS IN THE SOFTWARE.'''
             self._clen_rest = self._clen = clen
         #
         # detect encoding and set decompress object
-        if self.decompress:
-            encoding = self._headers.get('content-encoding')
+        if self.decompress and 'Content-Encoding' in self._headers:
+            encoding = self._headers['Content-Encoding'][0]
             if encoding == "gzip":
                 self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
             elif encoding == "deflate":
@@ -1134,6 +1159,8 @@ def get_environ_proxies():
         'https',
         'ftp',
         'socks',
+        'ws',
+        'wss',
         'no'
     ]
 
@@ -1269,28 +1296,6 @@ def cookiejar_from_dict(cookie_dict, cookiejar=None):
         return cookie_dict
 
 
-def parse_cookie(cookie):
-    '''Parse an `HTTP cookie`_ string.
-
-    Return a dictionary of cookie name/values.
-    '''
-    if not cookie:
-        return {}
-    if not isinstance(cookie, BaseCookie):
-        try:
-            c = SimpleCookie()
-            c.load(cookie)
-        except CookieError:     # pragma    nocover
-            # Invalid cookie
-            return {}
-    else:
-        c = cookie
-    cookiedict = {}
-    for key in c.keys():
-        cookiedict[key] = c.get(key).value
-    return cookiedict
-
-
 cc_delim_re = re.compile(r'\s*,\s*')
 
 
@@ -1387,7 +1392,8 @@ class CacheControl(object):
 
     def __call__(self, headers):
         if self.nostore:
-            headers['cache-control'] = 'no-store'
+            headers['cache-control'] = ('no-store, no-cache, must-revalidate,'
+                                        ' max-age=0')
         elif self.maxage:
             headers['cache-control'] = 'max-age=%s' % self.maxage
             if self.private:

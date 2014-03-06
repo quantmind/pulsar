@@ -1,26 +1,14 @@
 import sys
+import unittest
 import logging
 
-from pulsar import multi_async, Failure
-from pulsar.utils.pep import ispy26, ispy33
+from pulsar import multi_async, coroutine_return
+from pulsar.utils.pep import ispy3k
 from pulsar.apps import tasks
 
+from .utils import TestFunction, TestFailure, is_expected_failure, LOGGER
 
-LOGGER = logging.getLogger('pulsar.apps.test')
-
-
-if ispy26:  # pragma nocover
-    try:
-        import unittest2 as unittest
-        from unittest2.case import _ExpectedFailure as ExpectedFailure
-    except ImportError:
-        unittest = None
-        ExpectedFailure = None
-else:
-    import unittest
-    from unittest.case import _ExpectedFailure as ExpectedFailure
-
-if ispy33:
+if ispy3k:
     from unittest import mock
 else:  # pragma nocover
     try:
@@ -29,37 +17,28 @@ else:  # pragma nocover
         mock = None
 
 
-__all__ = ['sequential', 'unittest', 'mock']
-
-
-def sequential(cls):
-    '''Decorator for a :class:`TestCase` which cause its test functions to run
-sequentially rather than in an asynchronous fashion.'''
-    cls._sequential_execution = True
-    return cls
-
-
 class Test(tasks.Job):
-    '''A :ref:`Job <job-callable>` for running tests on a task queue.
+    '''A :class:`.Job` for running tests on a task queue.
     '''
-    def __call__(self, consumer, testcls, tag):
-        # The callable method. Return a coroutine.
-        suite = consumer.worker.app
-        suite.local.pop('runner')
-        runner = suite.runner
+    def __call__(self, consumer, testcls=None, tag=None):
+        runner = consumer.worker.app.new_runner()
         if not isinstance(testcls, type):
             testcls = testcls()
         testcls.tag = tag
         testcls.cfg = consumer.worker.cfg
-        suite.logger.debug('Testing %s', testcls.__name__)
         all_tests = runner.loadTestsFromTestCase(testcls)
         num = all_tests.countTestCases()
         if num:
-            return self.run(runner, testcls, all_tests, consumer.worker.cfg)
+            return self.run(consumer, runner, testcls, all_tests)
         else:
             return runner.result
 
-    def run(self, runner, testcls, all_tests, cfg):
+    def create_id(self, kwargs):
+        tid = super(Test, self).create_id(kwargs)
+        testcls = kwargs.get('testcls')
+        return '%s_%s' % (testcls.__name__, tid) if testcls else tid
+
+    def run(self, consumer, runner, testcls, all_tests):
         '''Run all test functions from the :attr:`testcls`.
 
         It uses the following algorithm:
@@ -70,35 +49,35 @@ class Test(tasks.Job):
         * Run the class method ``tearDownClass`` of :attr:`testcls` if defined,
           unless the test class should be skipped.
         '''
+        cfg = testcls.cfg
+        loop = consumer._loop
         runner.startTestClass(testcls)
         error = None
-        timeout = cfg.test_timeout
         sequential = getattr(testcls, '_sequential_execution', cfg.sequential)
         skip_tests = getattr(testcls, '__unittest_skip__', False)
         if not skip_tests:
-            error = yield self._run(runner, testcls, 'setUpClass', timeout,
+            error = yield self._run(runner, testcls, 'setUpClass',
                                     add_err=False)
         # run the tests
         if not error:
             if sequential:
                 # Loop over all test cases in class
                 for test in all_tests:
-                    yield self.run_test(test, runner, cfg)
+                    yield self.run_test(test, runner)
             else:
-                all = (self.run_test(test, runner, cfg) for test in all_tests)
-                yield multi_async(all)
+                all = (self.run_test(test, runner) for test in all_tests)
+                yield multi_async(all, loop=loop)
         else:
             for test in all_tests:
                 runner.startTest(test)
-                self.add_failure(test, runner, error[0], error[1])
+                self.add_failure(test, runner, error)
                 runner.stopTest(test)
         if not skip_tests:
-            yield self._run(runner, testcls, 'tearDownClass', timeout,
-                            add_err=False)
-        yield runner.result
+            yield self._run(runner, testcls, 'tearDownClass', add_err=False)
         runner.stopTestClass(testcls)
+        coroutine_return(runner.result)
 
-    def run_test(self, test, runner, cfg):
+    def run_test(self, test, runner):
         '''Run a ``test`` function using the following algorithm
 
         * Run :meth:`_pre_setup` method if available in :attr:`testcls`.
@@ -107,7 +86,6 @@ class Test(tasks.Job):
         * Run :meth:`tearDown` method in :attr:`testcls`.
         * Run :meth:`_post_teardown` method if available in :attr:`testcls`.
         '''
-        timeout = cfg.test_timeout
         err = None
         try:
             runner.startTest(test)
@@ -121,16 +99,14 @@ class Test(tasks.Job):
                 runner.addSkip(test, reason)
                 err = True
             else:
-                err = yield self._run(runner, test, '_pre_setup', timeout)
+                err = yield self._run(runner, test, '_pre_setup')
                 if not err:
-                    err = yield self._run(runner, test, 'setUp', timeout)
+                    err = yield self._run(runner, test, 'setUp')
                     if not err:
                         err = yield self._run(runner, test,
-                                              test._testMethodName, timeout)
-                    err = yield self._run(runner, test, 'tearDown',
-                                          timeout, err)
-                err = yield self._run(runner, test, '_post_teardown',
-                                      timeout, err)
+                                              test._testMethodName)
+                    err = yield self._run(runner, test, 'tearDown', err)
+                err = yield self._run(runner, test, '_post_teardown', err)
                 runner.stopTest(test)
         except Exception as error:
             self.add_failure(test, runner, error, err)
@@ -138,38 +114,47 @@ class Test(tasks.Job):
             if not err:
                 runner.addSuccess(test)
 
-    def _run(self, runner, test, method, timeout, previous=None, add_err=True):
+    def _run(self, runner, test, methodName, previous=None, add_err=True):
         __skip_traceback__ = True
-        method = getattr(test, method, None)
+        method = getattr(test, methodName, None)
         if method:
+            # Check if a testfunction object is already available
+            # Check the run_on_arbiter decorator for information
+            tfunc = getattr(method, 'testfunction', None)
+            # python 3.4
+            expecting_failure = getattr(
+                method, '__unittest_expecting_failure__', False)
+            if tfunc is None:
+                tfunc = TestFunction(method.__name__)
             try:
-                yield runner.run_test_function(test, method, timeout)
-                yield previous
-            except Exception as error:
+                exc = yield tfunc(test, test.cfg.test_timeout)
+            except Exception as e:
+                exc = e
+            if exc:
                 add_err = False if previous else add_err
-                yield self.add_failure(test, runner, error, add_err=add_err)
-        else:
-            yield previous
+                previous = self.add_failure(test, runner, exc, add_err,
+                                            expecting_failure)
+        coroutine_return(previous)
 
-    def add_failure(self, test, runner, error, exc_info=None, add_err=True):
+    def add_failure(self, test, runner, failure, add_err=True,
+                    expecting_failure=False):
         '''Add ``error`` to the list of errors.
 
         :param test: the test function object where the error occurs
         :param runner: the test runner
         :param error: the python exception for the error
-        :param exc_info: optional system exc info
         :param add_err: if ``True`` the error is added to the list of errors
         :return: a tuple containing the ``error`` and the ``exc_info``
         '''
-        if not exc_info:
-            exc_info = sys.exc_info()
         if add_err:
-            if isinstance(error, test.failureException):
-                runner.addFailure(test, exc_info)
-            elif isinstance(error, ExpectedFailure):
-                runner.addExpectedFailure(test, exc_info)
+            if not isinstance(failure, TestFailure):
+                failure = TestFailure(failure)
+            if is_expected_failure(failure.exc, expecting_failure):
+                runner.addExpectedFailure(test, failure)
+            elif isinstance(failure.exc, test.failureException):
+                runner.addFailure(test, failure)
             else:
-                runner.addError(test, exc_info)
+                runner.addError(test, failure)
         else:
-            Failure(exc_info).log()
-        return (error, exc_info)
+            LOGGER.exception('exception')
+        return failure

@@ -6,7 +6,7 @@ from pulsar.apps.test import unittest
 
 
 class TestOneAsync(unittest.TestCase):
-    
+
     def test_ping_monitor(self):
         worker = get_actor()
         future = yield send('monitor', 'ping')

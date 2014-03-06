@@ -2,7 +2,7 @@ from time import time
 
 from pulsar import CommandError
 
-from .defer import async_while
+from .futures import async_while, coroutine_return
 from .proxy import command, ActorProxyMonitor
 
 
@@ -47,16 +47,18 @@ def stop(request):
 @command()
 def notify(request, info):
     '''The actor notify itself with a dictionary of information.
-The command perform the following actions:
 
-* Update the mailbox to the current consumer of the actor connection
-* Update the info dictionary
-* Returns the time of the update
-'''
+    The command perform the following actions:
+
+    * Update the mailbox to the current consumer of the actor connection
+    * Update the info dictionary
+    * Returns the time of the update
+    '''
     t = time()
+    actor = request.actor
     remote_actor = request.caller
     if isinstance(remote_actor, ActorProxyMonitor):
-        remote_actor.mailbox = request.connection.current_consumer
+        remote_actor.mailbox = request.connection
         info['last_notified'] = t
         remote_actor.info = info
         callback = remote_actor.callback
@@ -64,7 +66,14 @@ The command perform the following actions:
         # time we got notified
         if callback:
             remote_actor.callback = None
-            callback.callback(remote_actor)
+            callback.set_result(remote_actor)
+            if actor.cfg.debug:
+                actor.logger.debug('Got first notification from %s',
+                                   remote_actor)
+        elif actor.cfg.debug:
+            actor.logger.debug('Got notification from %s', remote_actor)
+    else:
+        actor._logger.warning('notify got a bad actor')
     return t
 
 
@@ -95,6 +104,5 @@ Return 'killed abc` if successful, otherwise it returns ``None``.
         proxy = yield async_while(timeout, arb.get_actor, aid)
         if proxy:
             arb.logger.warning('Could not kill actor %s', aid)
-            yield None
         else:
-            yield 'killed %s' % aid
+            coroutine_return('killed %s' % aid)

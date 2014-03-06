@@ -6,7 +6,10 @@ from copy import deepcopy, copy
 from time import time
 import logging
 from threading import Lock
+from functools import wraps
 from multiprocessing import current_process
+
+from .pep import force_native_str
 
 win32 = sys.platform == "win32"
 
@@ -39,6 +42,11 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
+            'format': ('%(asctime)s [p=%(process)s, t=%(thread)s,'
+                       ' %(levelname)s, %(name)s] %(message)s'),
+            'datefmt': '%H:%M:%S'
+        },
+        'very_verbose': {
             'format': '%(asctime)s [p=%(process)s,t=%(thread)s]'
                       ' [%(levelname)s] [%(name)s] %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
@@ -80,10 +88,10 @@ def local_method(f):
     '''
     name = f.__name__
 
-    def _(self):
+    def _(self, *args):
         local = self.local
         if name not in local:
-            setattr(local, name, f(self))
+            setattr(local, name, f(self, *args))
         return getattr(local, name)
     return _
 
@@ -91,7 +99,37 @@ def local_method(f):
 def local_property(f):
     '''Decorator to be used in conjunction with :class:`LocalMixin` methods.
     '''
-    return property(local_method(f), doc=f.__doc__)
+    name = f.__name__
+
+    def _(self):
+        local = self.local
+        if name not in local:
+            setattr(local, name, f(self))
+        return getattr(local, name)
+
+    return property(_, doc=f.__doc__)
+
+
+def lazy_string(f):
+    def _(*args, **kwargs):
+        return LazyString(f, *args, **kwargs)
+    return _
+
+
+class LazyString:
+    __slots__ = ('value', 'f', 'args', 'kwargs')
+
+    def __init__(self, f, *args, **kwargs):
+        self.value = None
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        if self.value is None:
+            self.value = force_native_str(self.f(*self.args, **self.kwargs))
+        return self.value
+    __repr__ = __str__
 
 
 class WritelnDecorator(object):
@@ -151,11 +189,12 @@ class LocalMixin(object):
 def lazymethod(f):
     name = '_lazy_%s' % f.__name__
 
+    @wraps(f)
     def _(self):
         if not hasattr(self, name):
             setattr(self, name, f(self))
         return getattr(self, name)
-    _.__doc__ = f.__doc__
+
     return _
 
 
@@ -179,78 +218,55 @@ class Silence(logging.Handler):
         pass
 
 
-class LogginMixin(LocalMixin):
-    '''A :class:`LocalMixin` used throughout the library.
-
-    It provides built in logging object and utilities for pickle.
+def configured_logger(logger, config=None, level=None, handlers=None):
+    '''Configured logger.
     '''
-    @property
-    def logger(self):
-        '''A python logger for this instance.'''
-        return self.local.logger
+    with process_global('lock'):
+        logconfig = original = process_global('_config_logging')
+        # if the logger was not configured, do so.
+        if not logconfig:
+            logconfig = deepcopy(LOGGING_CONFIG)
+            if config:
+                update_config(logconfig, config)
+            original = logconfig
+            process_global('_config_logging', logconfig, True)
+        else:
+            logconfig = deepcopy(logconfig)
+            logconfig['disable_existing_loggers'] = False
+            logconfig.pop('loggers', None)
+            logconfig.pop('root', None)
 
-    def __setstate__(self, state):
-        self.__dict__ = state
-        info = getattr(self, '_log_info', {})
-        self.configure_logging(**info)
-
-    def configure_logging(self, logger=None, config=None, level=None,
-                          handlers=None):
-        '''Configure logging.
-
-        This function is invoked every time an instance of this class is
-        un-serialised (possibly in a different process domain).
-        '''
-        with self.process_lock:
-            logconfig = original = process_global('_config_logging')
-            # if the logger was not configured, do so.
-            if not logconfig:
-                logconfig = deepcopy(LOGGING_CONFIG)
-                if config:
-                    update_config(logconfig, config)
-                original = logconfig
-                process_global('_config_logging', logconfig, True)
-            else:
-                logconfig = deepcopy(logconfig)
-                logconfig['disable_existing_loggers'] = False
-                logconfig.pop('loggers', None)
-                logconfig.pop('root', None)
-            if level is None:
-                level = logging.NOTSET
-            else:
+        if level is None:
+            level = logging.NOTSET
+        else:
+            try:
+                level = int(level)
+            except ValueError:
+                lv = str(level).upper()
                 try:
-                    level = int(level)
-                except (ValueError):
-                    lv = str(level).upper()
-                    if lv in logging._levelNames:
-                        level = logging._levelNames[lv]
-                    else:
-                        level = logging.NOTSET
-            # No loggers configured. This means no logconfig setting
-            # parameter was used. Set up the root logger with default
-            # loggers
-            if level == logging.NOTSET:
-                handlers = ['silent']
-            else:
-                handlers = handlers or ['console']
-            level = logging.getLevelName(level)
-            logger = logger or self.__class__.__name__.lower()
-            if logger not in original['loggers']:
-                if 'loggers' not in logconfig:
-                    logconfig['loggers'] = {}
-                l = {'level': level, 'handlers': handlers, 'propagate': False}
-                original['loggers'][logger] = l
-                logconfig['loggers'][logger] = l
-            if not original.get('root'):
-                logconfig['root'] = {'handlers': handlers,
-                                     'level': level}
-            if logconfig:
-                dictConfig(logconfig)
-            self._log_info = {'logger': logger,
-                              'level': level,
-                              'handlers': handlers,
-                              'config': config}
-            self.local.logger = logging.getLogger(logger)
+                    level = logging._checkLevel(lv)
+                except ValueError:
+                    level = logging.NOTSET
+        # No loggers configured. This means no logconfig setting
+        # parameter was used. Set up the root logger with default
+        # loggers
+        if level == logging.NOTSET:
+            handlers = ['silent']
+        else:
+            handlers = handlers or ['console']
+        level = logging.getLevelName(level)
+        if logger not in original['loggers']:
+            if 'loggers' not in logconfig:
+                logconfig['loggers'] = {}
+            l = {'level': level, 'handlers': handlers, 'propagate': False}
+            original['loggers'][logger] = l
+            logconfig['loggers'][logger] = l
+        if not original.get('root'):
+            logconfig['root'] = {'handlers': handlers,
+                                 'level': level}
+        if logconfig:
+            dictConfig(logconfig)
+        return logging.getLogger(logger)
 
 
 WHITE = 37

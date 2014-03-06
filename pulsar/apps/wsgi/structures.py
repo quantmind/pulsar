@@ -131,16 +131,19 @@ class Accept(tuple):
         :param matches: a list of matches to check for
         :param default: the value that is returned if none match
         """
-        best_quality = -1
-        result = default
-        for server_item in matches:
-            for client_item, quality in self:
-                if quality <= best_quality:
-                    break
-                if self._value_matches(server_item, client_item):
-                    best_quality = quality
-                    result = server_item
-        return result
+        if matches:
+            best_quality = -1
+            result = default
+            for server_item in matches:
+                for client_item, quality in self:
+                    if quality <= best_quality:
+                        break
+                    if self._value_matches(server_item, client_item):
+                        best_quality = quality
+                        result = server_item
+            return result
+        else:
+            return self.best
 
     @property
     def best(self):

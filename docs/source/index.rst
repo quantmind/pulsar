@@ -2,8 +2,8 @@
 Pulsar
 ================
 
-Concurrent framework for Python.
 
+Concurrent framework for Python.
 
 .. toctree::
    :maxdepth: 1
@@ -31,14 +31,11 @@ located in the :mod:`pulsar.apps` module.
 
    apps/socket
    apps/wsgi/index
-   apps/tasks/index
+   apps/tasks
    apps/test
+   apps/data/index
    apps/shell
    apps/rpc
    apps/websockets
    apps/http
-   apps/redis
-   apps/pubsub
-   apps/twisted
    apps/pulse
-

@@ -56,11 +56,14 @@ if platform.is_windows:    # pragma    nocover
     # Nor ENOMEM
     ENOMEM = object()
     EAGAIN = EWOULDBLOCK
+    SOCKET_WRITE_ERRORS = (EINTR, ECONNRESET)
 else:
     from errno import (EPERM, EINVAL, EWOULDBLOCK, EINPROGRESS, EALREADY,
                        ECONNRESET, EISCONN, ENOTCONN, EINTR, ENOBUFS, EMFILE,
                        ENFILE, ENOMEM, EAGAIN, ECONNABORTED, EADDRINUSE,
-                       EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN)
+                       EMSGSIZE, ENETRESET, ETIMEDOUT, ECONNREFUSED, ESHUTDOWN,
+                       EPIPE)
+    SOCKET_WRITE_ERRORS = (EPIPE, EINTR, ECONNRESET)
 
 ACCEPT_ERRORS = (EMFILE, ENOBUFS, ENFILE, ENOMEM, ECONNABORTED)
 TRY_WRITE_AGAIN = (EWOULDBLOCK, ENOBUFS, EINPROGRESS)
@@ -222,7 +225,8 @@ class WrapSocket:   # pragma    nocover
 
 
 class SSLContext:
-
+    '''A picklable SSLContext class
+    '''
     def __init__(self, keyfile=None, certfile=None, cert_reqs=CERT_NONE,
                  ca_certs=None, server_hostname=None,
                  protocol=PROTOCOL_SSLv23):
@@ -232,6 +236,10 @@ class SSLContext:
         self.ca_certs = ca_certs
         self.server_hostname = server_hostname
         self.protocol = protocol
+
+    @property
+    def verify_mode(self):
+        return self.cert_reqs
 
     def wrap_socket(self, sock, server_side=False,
                     do_handshake_on_connect=True,
@@ -274,7 +282,9 @@ class SSLContext:
 
 
 def is_tls(sock):
-    return hasattr(sock, 'keyfile')
+    '''Check if ``sock`` is a socket over transport layer security
+    '''
+    return ssl and isinstance(sock, ssl.SSLSocket)
 
 
 def ssl_context(context, server_side=False):

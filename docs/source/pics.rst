@@ -22,9 +22,28 @@ Pulsar loves python as much as the minion in the image!
    :width: 500
 
 
-Logo
+Logos
 =======
 
 Pulsar needs a logo, can you design one for us?
 
+Logo 1
+~~~~~~~~~~
+
 .. image:: _static/pulsar.png
+   :width: 300 px
+
+
+Logo 2
+~~~~~~~~~~
+
+.. image:: _static/pulsar2.png
+   :width: 300 px
+
+Logo 3
+~~~~~~~~~~
+
+Inspired from one of the pulsar oscillator images
+
+.. image:: _static/pulsar3.png
+   :width: 300 px

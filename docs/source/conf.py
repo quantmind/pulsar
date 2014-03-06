@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-import sys, os
+import sys
+import os
+from datetime import date
 os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
 p = lambda x : os.path.split(x)[0]
 source_dir = p(os.path.abspath(__file__))
 ext_dir = os.path.join(source_dir,'_ext')
-docs_dir   = p(source_dir)
-base_dir   = p(docs_dir)
+docs_dir = p(source_dir)
+base_dir = p(docs_dir)
 #sys.path.append(os.path.join(source_dir, "_ext"))
 sys.path.insert(0, base_dir)
 sys.path.insert(0, ext_dir)
 import pulsar
 import runtests # so that it import stdnet if available
 
+year = date.today().year
 version = pulsar.__version__
 release = version
 
@@ -24,10 +27,12 @@ release = version
 # -- General configuration -----------------------------------------------------
 
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.todo',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.coverage',
+              'sphinx.ext.extlinks',
+              'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
-              'pulsarext']
+              'pulsarext',
+              'redisext']
 
 # Beta version is published in github pages
 if pulsar.VERSION[3] == 'beta':
@@ -44,7 +49,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pulsar'
-copyright = '2011-2013, Luca Sbardella'
+copyright = '2011-%s, %s' % (year, pulsar.__author__)
 
 html_theme = 'pulsar'
 pygments_style = 'sphinx'
@@ -59,6 +64,9 @@ html_sidebars = {
            'sourcelink.html', 'searchbox.html'],
 }
 exclude_trees = []
+html_additional_pages = {
+#    'index': 'index.html',
+}
 
 # -- Options for HTML output ---------------------------------------------------
 
@@ -94,10 +102,6 @@ html_favicon = 'favicon.ico'
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
 #html_use_smartypants = True
-
-# Additional templates that should be rendered to pages, maps page names to
-# template names.
-#html_additional_pages = {}
 
 # If false, no module index is generated.
 #html_domain_indices = True
@@ -140,39 +144,10 @@ htmlhelp_basename = 'pulsardoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pulsar.tex', 'pulsar Documentation',
+  ('index', 'pulsar.tex', 'Pulsar Documentation',
    'Luca Sbardella', 'manual'),
 ]
 
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-#latex_logo = None
-
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# If true, show page references after internal links.
-#latex_show_pagerefs = False
-
-# If true, show URL addresses after external links.
-#latex_show_urls = False
-
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
-
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
-
-# If false, no module index is generated.
-#latex_domain_indices = True
-
-
-# -- Options for manual page output --------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'pulsar', 'pulsar Documentation',
-     ['Luca Sbardella'], 1)
-]
+intersphinx_mapping = {
+    'python': ('http://python.readthedocs.org/en/latest/', None),
+}

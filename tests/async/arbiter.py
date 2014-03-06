@@ -1,11 +1,12 @@
 '''Tests for arbiter and monitors.'''
 import os
+import unittest
 
 import pulsar
 from pulsar import (send, spawn, system, platform, ACTOR_ACTION_TIMEOUT,
-                    MONITOR_TASK_PERIOD, multi_async, Deferred)
+                    MONITOR_TASK_PERIOD, multi_async)
 from pulsar.utils.pep import default_timer
-from pulsar.apps.test import (unittest, run_on_arbiter, ActorTestMixin,
+from pulsar.apps.test import (run_on_arbiter, ActorTestMixin,
                               dont_run_with_thread)
 
 
@@ -18,6 +19,7 @@ def cause_timeout(actor):
         actor.next_periodic_task.cancel()
     else:
         actor.event_loop.call_soon(cause_timeout, actor)
+
 
 def cause_terminate(actor):
     if actor.next_periodic_task:
@@ -83,8 +85,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         name = 'testSpawning-%s' % self.concurrency
         future = spawn(name=name, concurrency=self.concurrency)
         self.assertTrue(future.aid in arbiter.managed_actors)
-        yield future
-        proxy = future.result
+        proxy = yield future
         self.assertEqual(future.aid, proxy.aid)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
@@ -103,7 +104,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-timeout-%s' % self.concurrency
-        proxy = yield self.spawn(name=name, timeout=1)
+        proxy = yield self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
@@ -123,7 +124,7 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'bogus-term-%s' % self.concurrency
-        proxy = yield self.spawn(name=name, timeout=1)
+        proxy = yield self.spawn_actor(name=name, timeout=1)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]
@@ -142,12 +143,12 @@ class TestArbiterThread(ActorTestMixin, unittest.TestCase):
         self.assertFalse(proxy.aid in arbiter.managed_actors)
 
     @run_on_arbiter
-    def test_actor_termination(self):
+    def __test_actor_termination(self):
         '''Terminate the remote actor via the concurreny terminate method.'''
         arbiter = pulsar.get_actor()
         self.assertTrue(arbiter.is_arbiter())
         name = 'actor-term-%s' % self.concurrency
-        proxy = yield self.spawn(name=name)
+        proxy = yield self.spawn_actor(name=name)
         self.assertEqual(proxy.name, name)
         self.assertTrue(proxy.aid in arbiter.managed_actors)
         proxy = arbiter.managed_actors[proxy.aid]

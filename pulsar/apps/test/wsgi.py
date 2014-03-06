@@ -1,14 +1,14 @@
 '''Classes for testing WSGI servers using the HttpClient'''
 from functools import partial
 
-import pulsar
+from pulsar import asyncio
 from pulsar.apps import http
 from pulsar.apps.wsgi import HttpServerResponse
 
 __all__ = ['HttpTestClient']
 
 
-class DummyTransport(pulsar.Transport):
+class DummyTransport(asyncio.Transport):
     '''A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
 .. attribute:: client
@@ -33,7 +33,7 @@ server :attr:`connection`.'''
         return self.connection.address
 
 
-class DummyConnectionPool(pulsar.ConnectionPool):
+class DummyConnectionPool:
     '''A class for simulating a client connection with a server'''
     def get_or_create_connection(self, producer):
         client = self.connection_factory(self.address, 1, 0,

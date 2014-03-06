@@ -1,5 +1,7 @@
-from pulsar.apps.test import unittest
-from pulsar.utils.httpurl import Headers, accept_content_type, DEFAULT_CHARSET
+import unittest
+
+from pulsar.utils.httpurl import (Headers, accept_content_type,
+                                  DEFAULT_CHARSET, SimpleCookie)
 
 
 class TestHeaders(unittest.TestCase):
@@ -49,7 +51,7 @@ class TestHeaders(unittest.TestCase):
                      ('Accept-Encoding', 'deflate'),
                      ('Accept-Encoding', 'compress'),
                      ('Accept-Encoding', 'gzip')],
-                     kind='client')
+                    kind='client')
         accept = h['accept-encoding']
         self.assertEqual(accept, 'identity, deflate, compress, gzip')
 
@@ -57,7 +59,7 @@ class TestHeaders(unittest.TestCase):
         accept = accept_content_type()
         self.assertTrue('text/html' in accept)
         accept = accept_content_type(
-                        'text/*, text/html, text/html;level=1, */*')
+            'text/*, text/html, text/html;level=1, */*')
         self.assertTrue('text/html' in accept)
         self.assertTrue('text/plain' in accept)
 
@@ -71,11 +73,6 @@ class TestHeaders(unittest.TestCase):
         h = Headers(kind=56)
         self.assertEqual(h.kind, 'both')
         self.assertEqual(h.kind_number, 2)
-
-    def test_add_header_with_params(self):
-        h = Headers()
-        h.add_header('content-type', 'text/html', charset=DEFAULT_CHARSET)
-        self.assertEqual(h['content-type'], 'text/html; charset=ISO-8859-1')
 
     def test_remove_header(self):
         h = Headers([('Content-type', 'text/html')])
@@ -109,3 +106,15 @@ class TestHeaders(unittest.TestCase):
         self.assertEqual(len(h), 2)
         self.assertEqual(h['accept-encoding'], 'gzip2, deflate2')
         self.assertEqual(h['accept'], 'text/html, */*; q=0.8')
+
+    def test_cookies(self):
+        h = Headers()
+        cookies = SimpleCookie({'bla': 'foo', 'pippo': 'pluto'})
+        self.assertEqual(len(cookies), 2)
+        for c in cookies.values():
+            v = c.OutputString()
+            h.add_header('Set-Cookie', v)
+        h = str(h)
+        self.assertTrue(
+            h in ('Set-Cookie: bla=foo\r\nSet-Cookie: pippo=pluto\r\n\r\n',
+                  'Set-Cookie: pippo=pluto\r\nSet-Cookie: bla=foo\r\n\r\n'))

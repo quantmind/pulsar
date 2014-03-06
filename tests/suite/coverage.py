@@ -3,12 +3,13 @@ import os
 import tempfile
 import uuid
 import shutil
+import unittest
 
 import pulsar
-from pulsar.apps.test import unittest, mock
+
 
 class PulsarCoverage(unittest.TestCase):
-    
+
     def test_profile_plugin(self):
         from pulsar.apps.test.plugins import profile
         p = profile.Profile()
@@ -20,5 +21,3 @@ class PulsarCoverage(unittest.TestCase):
         #
         lines = list(profile.data_stream(['', 'a b c d e f']))
         self.assertEqual(lines, [])
-        
-        

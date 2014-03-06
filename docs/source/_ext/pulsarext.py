@@ -33,7 +33,7 @@ class PulsarSettings(Directive):
                 sec[s].append(sett)
         for s in sections:
             yield s, sec[s]
-            
+
     def text(self):
         for section, settings in self.sections():
             if section is None:
@@ -46,25 +46,26 @@ class PulsarSettings(Directive):
                 yield section_doc
                 yield '\n'
             for sett in settings:
-                desc = sett.desc.strip() 
+                desc = sett.desc.strip()
                 yield '.. _setting-{0}:\n\n\
 {0}\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n'.format(sett.name)
                 if sett.app:
                     yield '*Application namespace*: ``%s``\n' % sett.app
+                yield '*Config name*: ``%s``\n' % sett.name
                 if sett.flags:
                     yield '*Command line*: %s\n' %\
                                 ', '.join('``%s``' % f for f in sett.flags)
                 if isfunction(sett.default):
                     default = ':func:`%s`' % sett.default.__name__
                 else:
-                    default = '``%s``' % sett.default
+                    default = '``%r``' % sett.default
                 yield '*Default*: %s\n' % default
                 yield desc + '\n'
-            
+
     def run(self):
-        env = self.state.document.settings.env            
+        env = self.state.document.settings.env
         rawdocs = '\n'.join(self.text())
-    
+
         source = self.state_machine.input_lines.source(
             self.lineno - self.state_machine.input_offset - 1)
 
@@ -72,7 +73,7 @@ class PulsarSettings(Directive):
             'encoding', self.state.document.settings.input_encoding)
         tab_width = self.options.get(
             'tab-width', self.state.document.settings.tab_width)
-    
+
 
         if 'literal' in self.options:
             # Convert tabs to spaces, if `tab_width` is positive.
@@ -90,8 +91,5 @@ class PulsarSettings(Directive):
             return []
 
 
-
 def setup(app):
     app.add_directive(targetid, PulsarSettings)
-
-    

@@ -4,11 +4,19 @@ import string
 import threading
 from inspect import istraceback
 
-ispy3k = sys.version_info >= (3, 0)
-ispy26 = sys.version_info < (2, 7)
-ispy33 = sys.version_info >= (3, 3)
+try:    # pragma    nocover
+    from asyncio.py33_exceptions import reraise
+except ImportError:
 
-if ispy33:
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb:
+            raise value.with_traceback(tb)
+        raise value
+
+
+ispy3k = sys.version_info >= (3, 0)
+
+if ispy3k:
     default_timer = time.monotonic
 else:   # pragma    nocover
     default_timer = time.time
@@ -62,16 +70,9 @@ if ispy3k:  # Python 3
         else:
             return s
 
-    def raise_error_trace(err, traceback):
-        if istraceback(traceback):
-            raise err.with_traceback(traceback)
-        else:
-            raise err
-
 else:   # pragma : no cover
     from itertools import izip as zip, imap as map
     import cPickle as pickle
-    from .fallbacks.py2 import *
     string_type = unicode
     ascii_letters = string.letters
     range = xrange
@@ -110,64 +111,3 @@ else:   # pragma : no cover
             return str(s)
         else:
             return s
-
-
-############################################################################
-###    PEP 3156
-###    These classes will be eventually replaced by the standard lib
-
-class EventLoop(object):
-    '''This is just a signature'''
-    def run_in_executor(self, executor, callback, *args):
-        raise NotImplementedError
-
-
-class EventLoopPolicy:
-    """Abstract policy for accessing the event loop."""
-
-    def get_event_loop(self):
-        """XXX"""
-        raise NotImplementedError
-
-    def set_event_loop(self, event_loop):
-        """XXX"""
-        raise NotImplementedError
-
-    def new_event_loop(self, **kwargs):
-        """XXX"""
-        raise NotImplementedError
-
-
-# Event loop policy.  The policy itself is always global, even if the
-# policy's rules say that there is an event loop per thread (or other
-# notion of context).  The default policy is installed by the first
-# call to get_event_loop_policy().
-_event_loop_policy = None
-
-
-def get_event_loop_policy():
-    """XXX"""
-    global _event_loop_policy
-    return _event_loop_policy
-
-
-def set_event_loop_policy(policy):
-    """XXX"""
-    global _event_loop_policy
-    assert policy is None or isinstance(policy, EventLoopPolicy)
-    _event_loop_policy = policy
-
-
-def get_event_loop():
-    """XXX"""
-    return get_event_loop_policy().get_event_loop()
-
-
-def set_event_loop(event_loop):
-    """XXX"""
-    get_event_loop_policy().set_event_loop(event_loop)
-
-
-def new_event_loop(**kwargs):
-    """XXX"""
-    return get_event_loop_policy().new_event_loop(**kwargs)

@@ -1,4 +1,3 @@
-.. module:: pulsar
 
 .. _protocol-api:
 
@@ -7,76 +6,47 @@ Protocols/Transports API
 ================================
 
 This part of the :ref:`pulsar API <api>` is about classes responsible for
-implementing the Protocol/Transport paradigm as well as :class:`Server` and
-:class:`Client` base classes. :class:`Transport`
-and :class:`Protocol` are designed to
-comply with pep-3156_ specification
+implementing the Protocol/Transport paradigm. They are based on
+:class:`asyncio.Protocol` and :class:`asyncio.DatagramProtocol` classes.
 
-Transports
-==========================
 
-Transport
-~~~~~~~~~~~~~~~~~~
+.. module:: pulsar.async.protocols
 
-.. autoclass:: Transport
-   :members:
-   :member-order: bysource
-   
-   
-SocketTransport
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: SocketTransport
-   :members:
-   :member-order: bysource
-   
-  
 Protocols
-==========================
+=================
 
-BaseProtocol
-~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: BaseProtocol
+PulsarProtocol
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: PulsarProtocol
    :members:
    :member-order: bysource
-
 
 Protocol
-~~~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~~~~~~~
 .. autoclass:: Protocol
    :members:
    :member-order: bysource
-   
-   
-DatagramProtocol
-~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: DatagramProtocol
-   :members:
-   :member-order: bysource
-
 
 Connection
 ~~~~~~~~~~~~~~
 .. autoclass:: Connection
    :members:
    :member-order: bysource
-   
-   
+
+
 Protocol Consumer
 ~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProtocolConsumer
    :members:
-   :member-order: bysource      
+   :member-order: bysource
 
 
 Producers
-==========================
+=================
 
-Producers are factory of connections with end-points. They are used by
-both servers and clients classes.
+Producers are factory of :class:`.Protocol` with end-points.
+They are used by both servers and clients classes.
 
 Producer
 ~~~~~~~~~~~~~~~~~
@@ -84,46 +54,77 @@ Producer
    :members:
    :member-order: bysource
 
-Connection Producer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionProducer
+
+TCP Server
+~~~~~~~~~~~~~~~~~
+
+.. autoclass:: TcpServer
    :members:
    :member-order: bysource
 
-Server
-~~~~~~~~~~~~~~~~
-.. autoclass:: Server
+
+UDP
+=====
+
+Classes for the (user) datagram protocol. UDP uses a simple transmission
+model with a minimum of protocol mechanism.
+
+
+Datagram Protocol
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: DatagramProtocol
    :members:
    :member-order: bysource
+
+Datagram Server
+~~~~~~~~~~~~~~~~~~
+.. autoclass:: DatagramServer
+   :members:
+   :member-order: bysource
+
+
+.. module:: pulsar.async.clients
 
 .. _clients-api:
 
 Clients
 =================
 
+
 This section introduces classes implementing the transport/protocol paradigm
-for clients with several connections to a remote :class:`Server`.
-:class:`Client` is the main class here, and :class:`Client.request`
-is the single most important method a subclass must implement.
+for clients with several connections to a remote :class:`.TcpServer`.
 
-Client
+
+Abstract Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Client
+
+.. autoclass:: AbstractClient
    :members:
    :member-order: bysource
 
 
-Client Connection Pool
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConnectionPool
+Abstract UDP Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: AbstractUdpClient
    :members:
    :member-order: bysource
 
-Request
+Pool
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Request
+
+.. autoclass:: Pool
    :members:
    :member-order: bysource
-   
+
+
+Pool Connection
+~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PoolConnection
+   :members:
+   :member-order: bysource
+
+
 .. _pep-3153: http://www.python.org/dev/peps/pep-3153/
 .. _pep-3156: http://www.python.org/dev/peps/pep-3156/

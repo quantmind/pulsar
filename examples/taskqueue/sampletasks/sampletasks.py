@@ -3,8 +3,9 @@ import math
 from datetime import timedelta
 from random import random
 from functools import reduce
+from asyncio import sleep
 
-from pulsar import get_request_loop, async_sleep
+from pulsar import get_request_loop, coroutine_return
 from pulsar.apps import tasks
 
 
@@ -24,28 +25,25 @@ function defined which accept key-valued parameters only.'''
 class Addition(tasks.Job):
     timeout = timedelta(seconds=60)
 
-    def __call__(self, consumer, a, b):
+    def __call__(self, consumer, a=0, b=0):
         return a + b
 
 
 class Asynchronous(tasks.Job):
 
     def __call__(self, consumer, lag=1):
-        rl = get_request_loop()
         start = time.time()
-        loop = rl.num_loops
-        yield async_sleep(lag)
-        yield {'time': time.time() - start,
-               'loops': rl.num_loops - loop}
+        yield sleep(lag)
+        coroutine_return(time.time() - start)
 
 
 class NotOverLap(tasks.Job):
     can_overlap = False
 
-    def __call__(self, consumer, lag):
+    def __call__(self, consumer, lag=1):
         start = time.time()
-        yield async_sleep(lag)
-        yield time.time() - start
+        yield sleep(lag)
+        coroutine_return(time.time() - start)
 
 
 class CheckWorker(tasks.Job):
@@ -65,7 +63,7 @@ class StandardDeviation(tasks.Job):
         if inputs is None:
             for n in range(sample):
                 inputs = [random() for i in range(size)]
-                self.run_job(consumer, self.name, inputs=inputs)
+                self.queue_task(consumer, self.name, inputs=inputs)
             return 'produced %s new tasks' % sample
         else:
             time.sleep(0.1)

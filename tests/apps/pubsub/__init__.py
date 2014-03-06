@@ -1,1 +1,0 @@
-'''Tests the pubsub middleware and utilities.'''

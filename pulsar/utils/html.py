@@ -21,10 +21,13 @@ HTML_CHILDREN_TAG = {}
 
 # Extend GLOBAL ATTRIBUTES (which can be used in any HTML element).
 e = lambda *t: GLOBAL_HTML_ATTRIBUTES + t
+
+# Input atg attributes
+# http://www.w3schools.com/tags/tag_input.asp
 input_attr = lambda *t: e('type', 'autocomplete', 'autofocus', 'disabled',
                           'form', 'formnovalidate', 'list', 'max', 'maxlength',
                           'min', 'multiple', 'name', 'pattern', 'placeholder',
-                          'required', 'size', 'step', 'value', *t)
+                          'readonly', 'required', 'size', 'step', 'value', *t)
 
 ## HTML TAG ATTRIBUTES
 ############################################################################
@@ -110,6 +113,10 @@ def mark_safe(v):
     return SafeString(v)
 
 
+def is_safe(v):
+    return getattr(v, '__html__', False)
+
+
 def escape(html, force=False):
     """Returns the given HTML with ampersands,
 quotes and angle brackets encoded."""
@@ -145,10 +152,11 @@ def lazy_string(f):
 
 
 def capfirst(x):
-    '''Capitalise the first letter of ``x``.'''
+    '''Capitalise the first letter of ``x``.
+    '''
     x = to_string(x).strip()
     if x:
-        return x[0].upper() + x[1:]
+        return x[0].upper() + x[1:].lower()
     else:
         return x
 

@@ -1,11 +1,10 @@
-import sys
+import os
 import signal
 import ctypes
 import ctypes.wintypes
 import socket
 import getpass
 
-from .winprocess import WINEXE
 from .base import *
 
 __all__ = ['close_on_exec',

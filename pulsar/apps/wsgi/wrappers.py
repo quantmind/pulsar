@@ -44,7 +44,7 @@ import re
 from functools import reduce
 from io import BytesIO
 
-from pulsar import async, coroutine_return
+from pulsar import Future, coroutine_return
 from pulsar.utils.system import json
 from pulsar.utils.multipart import parse_form_data, parse_options_header
 from pulsar.utils.structures import AttributeDictionary
@@ -119,20 +119,30 @@ class WsgiResponse(object):
 
         The dictionary of WSGI environment if passed to the constructor.
 
+    .. attribute:: cookies
+
+        A python :class:`SimpleCookie` container of cookies included in the
+        request as well as cookies set during the response.
     '''
     _started = False
     DEFAULT_STATUS_CODE = 200
 
     def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None):
+                 content_type=None, encoding=None, environ=None,
+                 can_store_cookies=True):
         self.environ = environ
         self.status_code = status or self.DEFAULT_STATUS_CODE
         self.encoding = encoding
         self.cookies = SimpleCookie()
         self.headers = Headers(response_headers, kind='server')
         self.content = content
+        self._can_store_cookies = can_store_cookies
         if content_type is not None:
             self.content_type = content_type
+        if environ:
+            cookie = environ.get('HTTP_COOKIE')
+            if cookie:
+                self.cookies.load(cookie)
 
     @property
     def started(self):
@@ -153,6 +163,11 @@ class WsgiResponse(object):
         if self.environ:
             return self.environ.get('pulsar.connection')
 
+    @property
+    def environ_cache(self):
+        if self.environ:
+            return self.environ.get('pulsar.cache')
+
     def _get_content(self):
         return self._content
 
@@ -162,12 +177,12 @@ class WsgiResponse(object):
                 content = ()
             elif ispy3k:
                 if isinstance(content, str):
-                    if not self.encoding:
+                    if not self.encoding:   # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
             else:   # pragma    nocover
                 if isinstance(content, unicode):
-                    if not self.encoding:
+                    if not self.encoding:  # use utf-8 if not set
                         self.encoding = 'utf-8'
                     content = content.encode(self.encoding)
             if isinstance(content, bytes):
@@ -217,6 +232,10 @@ class WsgiResponse(object):
             return True
         return False
 
+    def can_set_cookies(self):
+        if self.status_code < 400:
+            return self._can_store_cookies
+
     def length(self):
         if not self.is_streamed:
             return reduce(lambda x, y: x+len(y), self.content, 0)
@@ -233,6 +252,10 @@ class WsgiResponse(object):
     def __len__(self):
         return len(self.content)
 
+    def close(self):
+        if self.is_streamed:
+            self.content.close()
+
     def set_cookie(self, key, **kwargs):
         """
         Sets a cookie.
@@ -248,6 +271,8 @@ class WsgiResponse(object):
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
 
     def get_headers(self):
+        '''The list of headers for this response
+        '''
         headers = self.headers
         if has_empty_content(self.status_code, self.method):
             headers.pop('content-type', None)
@@ -262,11 +287,17 @@ class WsgiResponse(object):
                     self._content = (b'{}',)
                     cl = len(self._content[0])
                 headers['Content-Length'] = str(cl)
-            if not self.content_type and self.encoding:
-                headers['Content-Type'] = ('text/plain; charset=%s' %
-                                           self.encoding)
-        for c in self.cookies.values():
-            headers['Set-Cookie'] = c.OutputString()
+            ct = self.content_type
+            # content type encoding available
+            if self.encoding:
+                ct = ct or 'text/plain'
+                if 'charset=' not in ct:
+                    ct = '%s; charset=%s' % (ct, self.encoding)
+            if ct:
+                headers['Content-Type'] = ct
+        if self.can_set_cookies():
+            for c in self.cookies.values():
+                headers.add_header('Set-Cookie', c.OutputString())
         return list(headers)
 
     def has_header(self, header):
@@ -281,16 +312,17 @@ class WsgiResponse(object):
 
 
 class EnvironMixin(object):
-    '''A wrapper around a WSGI_ environ. Instances of this class
-have the :attr:`environ` attribute as their only private data. Every
-other attribute is stored in the :attr:`environ` itself at the
-``pulsar.cache`` wsgi-extension key.
+    '''A wrapper around a WSGI_ environ.
 
-.. attribute:: environ
+    Instances of this class have the :attr:`environ` attribute as their
+    only private data. Every other attribute is stored in the :attr:`environ`
+    itself at the ``pulsar.cache`` wsgi-extension key.
 
-    WSGI_ environ dictionary
-'''
-    slots = ('environ',)
+    .. attribute:: environ
+
+        WSGI_ environ dictionary
+    '''
+    __slots__ = ('environ',)
 
     def __init__(self, environ, name=None):
         self.environ = environ
@@ -306,6 +338,20 @@ other attribute is stored in the :attr:`environ` itself at the
 pulsar-specific data stored in the :attr:`environ` at the wsgi-extension
 key ``pulsar.cache``.'''
         return self.environ['pulsar.cache']
+
+    @property
+    def connection(self):
+        '''The :class:`.Connection` handling the request
+        '''
+        return self.environ.get('pulsar.connection')
+
+    @property
+    def _loop(self):
+        '''Event loop if :attr:`connection` is available.
+        '''
+        c = self.connection
+        if c:
+            return c._loop
 
     def __getattr__(self, name):
         mixin = self.cache.mixins.get(name)
@@ -386,6 +432,18 @@ class WsgiRequest(EnvironMixin):
 :ref:`router <wsgi-router>` with this request :attr:`path`.'''
         return self.cache.urlargs
 
+    @property
+    def cfg(self):
+        '''The :ref:`config container <settings>` of the server
+        '''
+        return self.cache.cfg
+
+    @property
+    def ipaddress(self):
+        '''internet protocol address of the client
+        '''
+        return self.environ.get('REMOTE_ADDR')
+
     @cached_property
     def response(self):
         '''The :class:`WsgiResponse` for this client request.
@@ -429,37 +487,44 @@ class WsgiRequest(EnvironMixin):
         else:
             return None, {}
 
-    def data_and_files(self):
+    def data_and_files(self, data=True, files=True):
         '''Retrieve body data.
 
         Returns a two-elements tuple of a
         :class:`~.MultiValueDict` containing data from
         the request body, and data from uploaded files.
 
-        If the body data is not ready, return a :class:`.Deferred`
+        If the body data is not ready, return a :class:`.Future`
         which results in the tuple.
 
         The result is cached.
         '''
-        if not hasattr(self, '_cached_data_and_files'):
-            return self._data_and_files()
+        value = self.cache.data_and_files
+        if not value:
+            return self._data_and_files(data, files)
+        elif data and files:
+            return value
+        elif data:
+            return value[0]
+        elif files:
+            return value[1]
         else:
-            return self._cached_data_and_files
+            return None
 
-    @async()
     def body_data(self):
         '''A :class:`~.MultiValueDict` containing data from the request body.
         '''
-        data, _ = yield self.data_and_files()
-        yield data
+        return self.data_and_files(files=False)
 
-    @async()
-    def _data_and_files(self):
+    def _data_and_files(self, data=True, files=True):
         result = {}, None
         stream = self.environ.get('wsgi.input')
+        chunk = None
         try:
             if self.method not in ENCODE_URL_METHODS and stream:
-                chunk = yield stream.read()
+                chunk = stream.read()
+                if isinstance(chunk, Future):
+                    chunk = yield chunk
                 content_type, options = self.content_type_options
                 charset = options.get('charset', 'utf-8')
                 if content_type in JSON_CONTENT_TYPES:
@@ -467,12 +532,11 @@ class WsgiRequest(EnvironMixin):
                 else:
                     self.environ['wsgi.input'] = BytesIO(chunk)
                     result = parse_form_data(self.environ, charset)
-                # set the wsgi.input to a readable file-like object for
-                # third-parties application (django or any other web-framework)
-                self.environ['wsgi.input'] = BytesIO(chunk)
         finally:
-            self._cached_data_and_files = result
-        coroutine_return(result)
+            self.cache.data_and_files = result
+            if chunk is not None:
+                self.environ['wsgi.input'] = BytesIO(chunk)
+        coroutine_return(self.data_and_files(data, files))
 
     @cached_property
     def url_data(self):
@@ -516,12 +580,15 @@ class WsgiRequest(EnvironMixin):
                 query = self.url_data
         elif not path.startswith('/'):
             path = remove_double_slash('%s/%s' % (self.path, path))
-        return iri_to_uri(path, **query)
+        return iri_to_uri(path, query)
 
     def absolute_uri(self, location=None, scheme=None):
-        '''Builds an absolute URI from the ``location`` and the variables
-available in this request. If no location is specified, the relative URI
-is built from :meth:`full_path`.'''
+        '''Builds an absolute URI from ``location`` and variables
+        available in this request.
+
+        If no ``location`` is specified, the relative URI is built from
+        :meth:`full_path`.
+        '''
         if not location or not absolute_http_url_re.match(location):
             location = self.full_path(location)
             if not scheme:

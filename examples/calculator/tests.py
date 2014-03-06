@@ -1,13 +1,15 @@
 '''Tests the RPC "calculator" example.'''
-from pulsar import send
+import unittest
+
+from pulsar import send, new_event_loop, coroutine_return
 from pulsar.apps import rpc
-from pulsar.apps.test import unittest, dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread
 
 from .manage import server, Root, Calculator
 
 
 class TestRpcOnThread(unittest.TestCase):
-    app = None
+    app_cfg = None
     concurrency = 'thread'
     # used for both keep-alive and timeout in JsonProxy
     # long enough to allow to wait for tasks
@@ -17,15 +19,15 @@ class TestRpcOnThread(unittest.TestCase):
     def setUpClass(cls):
         name = 'calc_' + cls.concurrency
         s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
-        cls.app = yield send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app.address)
+        cls.app_cfg = yield send('arbiter', 'run', s)
+        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
-        cls.sync = rpc.JsonProxy(cls.uri, force_sync=True)
+        cls.sync = rpc.JsonProxy(cls.uri, loop=new_event_loop())
 
     @classmethod
     def tearDownClass(cls):
-        if cls.app:
-            return send('arbiter', 'kill_actor', cls.app.name)
+        if cls.app_cfg:
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def setUp(self):
         self.assertEqual(self.p.url, self.uri)
@@ -36,10 +38,10 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertEqual(proxy._client, self.p)
         self.assertEqual(str(proxy), 'bla')
 
-    def test_handler(self):
-        s = self.app
-        self.assertTrue(s.callable)
-        wsgi_handler = s.callable.handler
+    def test_wsgi_handler(self):
+        cfg = self.app_cfg
+        self.assertTrue(cfg.callable)
+        wsgi_handler = cfg.callable.handler({})
         self.assertEqual(len(wsgi_handler.middleware), 1)
         router = wsgi_handler.middleware[0]
         self.assertEqual(router.route.path, '/')
@@ -66,53 +68,60 @@ class TestRpcOnThread(unittest.TestCase):
 
     def test_time_it(self):
         '''Ping server 5 times'''
-        response = self.p.timeit('ping', 5)
-        yield response
-        self.assertTrue(response.locked_time > 0)
-        self.assertTrue(response.total_time >= response.locked_time)
-        self.assertEqual(response.num_failures, 0)
+        bench = yield self.p.timeit('ping', 5)
+        self.assertTrue(len(bench.result), 5)
+        self.assertTrue(bench.taken)
 
     # Test Object method
     def test_check_request(self):
         result = yield self.p.check_request('check_request')
         self.assertTrue(result)
 
-    def testAdd(self):
+    def test_add(self):
         response = yield self.p.calc.add(3, 7)
         self.assertEqual(response, 10)
 
-    def testSubtract(self):
+    def test_subtract(self):
         response = yield self.p.calc.subtract(546, 46)
         self.assertEqual(response, 500)
 
-    def testMultiply(self):
+    def test_multiply(self):
         response = yield self.p.calc.multiply(3, 9)
         self.assertEqual(response, 27)
 
-    def testDivide(self):
+    def test_divide(self):
         response = yield self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
-    def testInfo(self):
+    def test_info(self):
         response = yield self.p.server_info()
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
-        monitor = response['monitors'][self.app.name]
-        if 'sockets' in monitor:
-            self.assertEqual(self.concurrency, 'thread')
-            sockets = monitor['sockets']
-            socket = sockets[0]
-            self.assertEqual(socket['address'], '%s:%s' % self.app.address)
+        app = response['monitors'][self.app_cfg.name]
+        if self.concurrency == 'thread':
+            self.assertFalse(app['workers'])
+            worker = app
         else:
-            self.assertEqual(self.concurrency, 'process')
-            workers = monitor['workers']
+            workers = app['workers']
             self.assertEqual(len(workers), 1)
+            worker = workers[0]
+        name = '%sserver' % self.app_cfg.name
+        if name in worker:
+            self._check_tcpserver(worker[name]['server'])
 
-    def testInvalidParams(self):
+    def _check_tcpserver(self, server):
+        sockets = server['sockets']
+        if sockets:
+            self.assertEqual(len(sockets), 1)
+            sock = sockets[0]
+            self.assertEqual(sock['address'],
+                             '%s:%s' % self.app_cfg.addresses[0])
+
+    def test_invalid_params(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.add, 50, 25, 67)
 
-    def testInvalidParamsFromApi(self):
+    def test_invalid_params_fromApi(self):
         self.async.assertRaises(rpc.InvalidParams, self.p.calc.divide,
                                 50, 25, 67)
 

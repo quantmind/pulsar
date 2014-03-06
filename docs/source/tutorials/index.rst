@@ -28,6 +28,8 @@ Most of the material presented in the these tutorials is based on the
    taskqueue
    django
    philosophers
+   pulsards
+   udp
 
 
 Topics
@@ -38,11 +40,13 @@ These sections cover **pulsar internals** for the curious reader.
 .. toctree::
    :maxdepth: 1
 
+   actors
    coroutine
    messages
    events
    signal
    sync
    benchmarking
+   cextensions
 
 

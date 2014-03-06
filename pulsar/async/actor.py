@@ -1,14 +1,16 @@
 import sys
+import os
 from time import time
+import pickle
+from inspect import isgenerator
+from threading import current_thread
 
-from pulsar import HaltServer, CommandError, system
-from pulsar.utils.pep import pickle
-from pulsar.utils.log import LogginMixin, WritelnDecorator
+from pulsar import HaltServer, CommandError, MonitorStarted, system
+from pulsar.utils.log import WritelnDecorator
 
-from .eventloop import setid
-from .defer import Failure
+from .futures import in_loop, async, add_errback
 from .events import EventHandler
-from .threads import ThreadPool
+from .threads import get_executor
 from .proxy import ActorProxy, ActorProxyMonitor, ActorIdentity
 from .mailbox import command_in_context
 from .access import get_actor
@@ -16,7 +18,7 @@ from .cov import Coverage
 from .consts import *
 
 
-__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'Pulsar', 'get_stream']
+__all__ = ['is_actor', 'send', 'Actor', 'ACTOR_STATES', 'get_stream']
 
 
 def is_actor(obj):
@@ -36,7 +38,7 @@ def send(target, action, *args, **params):
     The message is to perform a given ``action``. The actor sending the
     message is obtained via the :func:`get_actor` function.
 
-    :parameter target: the :class:`Actor` id or an :class:`ActorProxy` or
+    :parameter target: the :class:`Actor` id or an :class:`.ActorProxy` or
         name of the target actor which will receive the message.
     :parameter action: the :ref:`remote command <api-remote_commands>`
         to perform in the ``target`` :class:`Actor`.
@@ -44,34 +46,19 @@ def send(target, action, *args, **params):
         :ref:`remote command <api-remote_commands>` ``action``.
     :parameter params: dictionary of parameters to pass to
         :ref:`remote command <api-remote_commands>` ``action``.
-    :return: a :class:`Deferred` if the action acknowledge the caller or
-        `None`.
+    :return: an :class:`~asyncio.Future` if the action acknowledge the
+        caller or `None`.
 
     Typical example::
 
-        >>> a = spawn()
-        >>> r = a.add_callback(lambda p: send(p,'ping'))
-        >>> r.result
+        >>> r = send(p,'ping')
+        >>> r.result()
         'pong'
     '''
     return get_actor().send(target, action, *args, **params)
 
 
-class Pulsar(LogginMixin):
-
-    def configure_logging(self, **kwargs):
-        configure_logging = super(Pulsar, self).configure_logging
-        configure_logging(logger='pulsar',
-                          config=self.cfg.logconfig,
-                          level=self.cfg.loglevel,
-                          handlers=self.cfg.loghandlers)
-        configure_logging(logger='pulsar.%s' % self.name,
-                          config=self.cfg.logconfig,
-                          level=self.cfg.loglevel,
-                          handlers=self.cfg.loghandlers)
-
-
-class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
+class Actor(EventHandler, ActorIdentity, Coverage):
     '''The base class for parallel execution in pulsar.
 
     In computer science, the **Actor model** is a mathematical model
@@ -93,7 +80,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         True
 
     Here ``a`` is actually a reference to the remote actor, it is
-    an :class:`ActorProxy`.
+    an :class:`.ActorProxy`.
 
     **ATTRIBUTES**
 
@@ -107,13 +94,14 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: impl
 
-        The :class:`Concurrency` implementation for this :class:`Actor`.
+        The :class:`.Concurrency` implementation for this :class:`Actor`.
 
-    .. attribute:: event_loop
+    .. attribute:: _loop
 
-        An instance of :class:`EventLoop` which listen for input/output events
-        on sockets or socket-like :class:`Transport`. It is the driver of the
-        :class:`Actor`. If the :attr:event_loop` stps, the :class:`Actor` stop
+        An :ref:`event loop <asyncio-event-loop>` which listen
+        for input/output events on sockets or socket-like objects.
+        It is the driver of the :class:`Actor`.
+        If the :attr:`_loop` stops, the :class:`Actor` stops
         running and goes out of scope.
 
     .. attribute:: mailbox
@@ -126,7 +114,7 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: proxy
 
-        Instance of a :class:`ActorProxy` holding a reference
+        Instance of a :class:`.ActorProxy` holding a reference
         to this :class:`Actor`. The proxy is a lightweight representation
         of the actor which can be shared across different processes
         (i.e. it is picklable).
@@ -134,17 +122,6 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     .. attribute:: state
 
         The actor :ref:`numeric state <actor-states>`.
-
-    .. attribute:: thread_pool
-
-        A :class:`ThreadPool` associated with this :class:`Actor`.
-        This attribute is ``None`` unless one is created via the
-        :meth:`create_thread_pool` method.
-
-    .. attribute:: params
-
-        A :class:`pulsar.utils.structures.AttributeDictionary` which contains
-        parameters which are passed to actors spawned by this actor.
 
     .. attribute:: extra
 
@@ -161,41 +138,42 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
 
     .. attribute:: next_periodic_task
 
-        The :class:`TimedCall` for the next
+        The :class:`asyncio.Handle` for the next
         :ref:`actor periodic task <actor-periodic-task>`.
 
     .. attribute:: stream
 
         A ``stream`` handler to write information messages without using
-        the :attr:`logger`.
+        the :attr:`~.AsyncObject.logger`.
     '''
     ONE_TIME_EVENTS = ('start', 'stopping', 'stop')
     MANY_TIMES_EVENTS = ('on_info', 'on_params')
     exit_code = None
     mailbox = None
-    signal_queue = None
+    monitor = None
     next_periodic_task = None
 
     def __init__(self, impl):
-        super(Actor, self).__init__()
+        EventHandler.__init__(self)
         self.state = ACTOR_STATES.INITIAL
-        self._thread_pool = None
         self.__impl = impl
         for name in self.events:
             hook = impl.params.pop(name, None)
             if hook:
                 self.bind_event(name, hook)
-        self.monitor = impl.params.pop('monitor', None)
-        self.params = AttributeDictionary(**impl.params)
+        for name, value in impl.params.items():
+            setattr(self, name, value)
         self.servers = {}
         self.extra = {}
         self.stream = get_stream(self.cfg)
         del impl.params
-        setid(self)
+        self.tid = current_thread().ident
+        self.pid = os.getpid()
         try:
             self.cfg.post_fork(self)
         except Exception:
             pass
+        impl.setup_event_loop(self)
 
     def __repr__(self):
         return self.impl.unique_name
@@ -229,16 +207,19 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
         return self.mailbox.address
 
     @property
-    def event_loop(self):
-        return self.mailbox.event_loop
-
-    @property
-    def thread_pool(self):
-        return self._thread_pool
+    def _loop(self):
+        return self.mailbox._loop
 
     @property
     def info_state(self):
         return ACTOR_STATES.DESCRIPTION[self.state]
+
+    def executor(self):
+        '''An executor for this actor
+
+        Obtained from the :attr:`_loop` attribute
+        '''
+        return get_executor(self._loop)
 
     #######################################################################
     ##    HIGH LEVEL API METHODS
@@ -246,23 +227,39 @@ class Actor(EventHandler, Pulsar, ActorIdentity, Coverage):
     def start(self):
         '''Called after forking to start the actor's life.
 
-        This is where logging is configured, the :attr:`Actor.mailbox` is
-        registered and the :attr:`Actor.event_loop` is initialised and
+        This is where logging is configured, the :attr:`mailbox` is
+        registered and the :attr:`_loop` is initialised and
         started. Calling this method more than once does nothing.
         '''
         if self.state == ACTOR_STATES.INITIAL:
             self.__impl.before_start(self)
-            self._started = time()
-            self.configure_logging()
-            self.__impl.setup_event_loop(self)
+            self._started = self._loop.time()
             self.state = ACTOR_STATES.STARTING
             self._run()
 
-    def send(self, target, action, *args, **kw):
+    @in_loop
+    def send(self, target, action, *args, **kwargs):
         '''Send a message to ``target`` to perform ``action`` with given
-positional ``args`` and key-valued ``kwargs``.
-Always return a :class:`Deferred`.'''
-        return self.event_loop.async(self._send(target, action, *args, **kw))
+        positional ``args`` and key-valued ``kwargs``.
+        Always return a :class:`asyncio.Future`.'''
+        target = self.monitor if target == 'monitor' else target
+        mailbox = self.mailbox
+        if isinstance(target, ActorProxyMonitor):
+            mailbox = target.mailbox
+        else:
+            actor = self.get_actor(target)
+            if isinstance(actor, Actor):
+                # this occur when sending a message from arbiter to monitors or
+                # viceversa.
+                return command_in_context(action, self, actor, args, kwargs)
+            elif isinstance(actor, ActorProxyMonitor):
+                mailbox = actor.mailbox
+        if hasattr(mailbox, 'request'):
+            #if not mailbox.closed:
+            return mailbox.request(action, self, target, args, kwargs)
+        else:
+            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
+                               % (action, self, target))
 
     def spawn(self, **params):
         raise RuntimeError('Cannot spawn an actor from an actor.')
@@ -270,46 +267,31 @@ Always return a :class:`Deferred`.'''
     def stop(self, exc=None):
         '''Gracefully stop the :class:`Actor`.
 
-        Implemented by the :meth:`Concurrency.stop` method of the :attr:`impl`
+        Implemented by the :meth:`.Concurrency.stop` method of the :attr:`impl`
         attribute.'''
         return self.__impl.stop(self, exc)
 
-    def create_thread_pool(self, workers=None):
-        '''Create a :class:`ThreadPool` for this :class:`Actor`
-        if not already present.
-
-        :param workers: number of threads to use in the :class:`ThreadPool`.
-            If not supplied, the value in the :ref:`setting-thread_workers`
-            setting is used.
-        :return: a :class:`ThreadPool`.
-        '''
-        if self._thread_pool is None:
-            workers = workers or self.cfg.thread_workers
-            self._thread_pool = ThreadPool(self, threads=workers)
-        return self._thread_pool
-
-    def close_thread_pool(self):
-        '''Close the :attr:`thread_pool`.'''
-        if self._thread_pool:
-            timeout = 0.5*ACTOR_ACTION_TIMEOUT
-            d = self._thread_pool.close(timeout)
-            self.logger.debug('Waiting for thread pool to exit')
-            d.add_errback(lambda r: self._thread_pool.terminate(timeout))
-            self._thread_pool.join()
-            self.logger.debug('Thread pool %s' % self._thread_pool.status)
-            self._thread_pool = None
+    def close_executor(self):
+        '''Close the :meth:`executor`'''
+        executor = self._loop._default_executor
+        if executor:
+            self.logger.debug('Waiting for executor shutdown')
+            executor.shutdown()
+            self._loop._default_executor = None
 
     ###############################################################  STATES
     def is_running(self):
         '''``True`` if actor is running, that is when the :attr:`state`
-is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the event loop is
-running.'''
-        return self.state == ACTOR_STATES.RUN and self.event_loop.is_running()
+        is equal to :ref:`ACTOR_STATES.RUN <actor-states>` and the loop is
+        running.'''
+        return self.state == ACTOR_STATES.RUN and self._loop.is_running()
 
     def started(self):
-        '''``True`` if actor has started. It does not necessarily
-mean it is running. Its state is greater or equal
-:ref:`ACTOR_STATES.RUN <actor-states>`.'''
+        '''``True`` if actor has started.
+
+        It does not necessarily mean it is running.
+        Its state is greater or equal :ref:`ACTOR_STATES.RUN <actor-states>`.
+        '''
         return self.state >= ACTOR_STATES.RUN
 
     def closed(self):
@@ -328,11 +310,11 @@ mean it is running. Its state is greater or equal
         return self.state >= ACTOR_STATES.CLOSE
 
     def is_arbiter(self):
-        '''Return ``True`` if ``self`` is the :class:`Arbiter`.'''
+        '''Return ``True`` if ``self`` is the :class:`.Arbiter`.'''
         return self.__impl.is_arbiter()
 
     def is_monitor(self):
-        '''Return ``True`` if ``self`` is a :class:`Monitor`.'''
+        '''Return ``True`` if ``self`` is a :class:`.Monitor`.'''
         return False
 
     def is_process(self):
@@ -355,18 +337,18 @@ mean it is running. Its state is greater or equal
 
     def info(self):
         '''Return a nested dictionary of information related to the actor
-status and performance. The dictionary contains the following entries:
+        status and performance. The dictionary contains the following entries:
 
-* ``actor`` a dictionary containing information regarding the type of actor
-  and its status.
-* ``events`` a dictionary of information about the event loop running the
-  actor.
-* ``extra`` the :attr:`extra` attribute (which you can use to add stuff).
-* ``system`` system info.
+        * ``actor`` a dictionary containing information regarding the type of
+          actor and its status.
+        * ``events`` a dictionary of information about the
+          :ref:`event loop <asyncio-event-loop>` running the actor.
+        * ``extra`` the :attr:`extra` attribute (you can use it to add stuff).
+        * ``system`` system info.
 
-This method is invoked when you run the
-:ref:`info command <actor_info_command>` from another actor.
-'''
+        This method is invoked when you run the
+        :ref:`info command <actor_info_command>` from another actor.
+        '''
         if not self.started():
             return
         isp = self.is_process()
@@ -378,13 +360,13 @@ This method is invoked when you run the
                  'process_id': self.pid,
                  'is_process': isp,
                  'age': self.impl.age}
-        events = {'callbacks': len(self.event_loop._callbacks),
-                  'io_loops': self.event_loop.num_loops}
+        events = {'callbacks': len(self._loop._ready),
+                  'scheduled': len(self._loop._scheduled)}
         data = {'actor': actor,
                 'events': events,
                 'extra': self.extra}
         if isp:
-            data['system'] = system.system_info(self.pid)
+            data['system'] = system.process_info(self.pid)
         self.fire_event('on_info', info=data)
         return data
 
@@ -397,32 +379,10 @@ This method is invoked when you run the
                 self.logger.exception('Unhandled exception in when_ready hook')
         try:
             exc = self.__impl.run_actor(self)
-        except (Exception, HaltServer):
-            exc = Failure(sys.exc_info())
-        except:
-            exc = Failure(sys.exc_info())
-            exc.mute()
-            raise
-        finally:
-            if exc != -1:
-                self.stop(exc)
-
-    def _send(self, target, action, *args, **kwargs):
-        target = self.monitor if target == 'monitor' else target
-        mailbox = self.mailbox
-        if isinstance(target, ActorProxyMonitor):
-            mailbox = target.mailbox
-        else:
-            actor = self.get_actor(target)
-            if isinstance(actor, Actor):
-                # this occur when sending a message from arbiter to monitors or
-                # viceversa.
-                return command_in_context(action, self, actor, args, kwargs)
-            elif isinstance(actor, ActorProxyMonitor):
-                mailbox = actor.mailbox
-        if hasattr(mailbox, 'request'):
-            #if not mailbox.closed:
-            return mailbox.request(action, self, target, args, kwargs)
-        else:
-            raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
-                               % (action, self, target))
+        except MonitorStarted:
+            return
+        except (Exception, HaltServer) as exc:
+            return self.stop(exc)
+        except BaseException:
+            pass
+        self.stop()

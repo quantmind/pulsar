@@ -1,4 +1,4 @@
-{% extends "!layout.html" %}
+{% extends "base.html" %}
 
 {% block relbar1 %}
 {{ super() }}
@@ -11,7 +11,7 @@
         </p>
     {% else %}
         <p class="developmentversion">
-        Documentation for pulsar's DEVELOPMENT version. Get the 
+        Documentation for pulsar's DEVELOPMENT version. Get the
         <a href="http://pythonhosted.org/pulsar/{{ pagename }}{{ file_suffix }}">release docs here</a>.
         </p>
     {% endif %}
@@ -19,24 +19,3 @@
 </div>
 {% endblock %}
 {% block relbar2 %}{% endblock %}
-
-{% block footer %}
-{{ super() }}
-<script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  {% if release_version %}
-  _gaq.push(['_setAccount', 'UA-3900561-7']);
-  {% else %}
-  _gaq.push(['_setAccount', 'UA-3900561-8']);
-  {% endif %}
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
-{% endblock %}

@@ -16,21 +16,6 @@ Websocket
 
 .. automodule:: pulsar.utils.websocket
 
-Frame
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Frame
-   :members:
-   :member-order: bysource
-
-
-Frame Parser
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: FrameParser
-   :members:
-   :member-order: bysource
-
 
 .. _api-config:
 
@@ -56,7 +41,7 @@ Internals
 System info
 ~~~~~~~~~~~~~~~~~
 
-.. autofunction:: system_info
+.. autofunction:: process_info
 
 
 .. module:: pulsar.utils.tools
@@ -89,6 +74,7 @@ Logging
 Path
 ==================
 
-.. automodule:: pulsar.utils.html
+.. automodule:: pulsar.utils.path
    :members:
+
 '''

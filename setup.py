@@ -88,16 +88,14 @@ if len(sys.argv) > 1 and sys.argv[1] == 'bdist_wininst':
         file_info[0] = '\\PURELIB\\%s' % file_info[0]
 
 
-def run_setup(with_cext=False, argv=None):
-    if with_cext:
-        params = libparams
-    else:
+def run_setup(params=None):
+    if not params:
         params = {'cmdclass': {}}
     if sys.platform == "darwin":
         params['cmdclass']['install_data'] = osx_install_data
     else:
         params['cmdclass']['install_data'] = install_data
-    argv = argv if argv is not None else sys.argv
+    argv = sys.argv
     if len(argv) > 1 and argv[1] != 'sdist' and sys.version_info >= (3, 0):
         try:
             packages.remove('pulsar.utils.fallbacks.py2')
@@ -124,20 +122,27 @@ def status_msgs(*msgs):
     print('*' * 75)
 
 
-if libparams is None:
-    status_msgs('WARNING: C extensions could not be compiled, '
-                'Cython is not installed.')
-    run_setup()
-    status_msgs("Plain-Python build succeeded.")
-else:
-    try:
-        run_setup(libparams)
-    except BuildFailed as exc:
-        status_msgs(
-            exc.msg,
-            "WARNING: C extensions could not be compiled, "
-            "speedups are not enabled.",
-            "Failure information, if any, is above.",
-            "Retrying the build without C extensions now.")
+def run(argv=None):
+    if argv:
+        sys.argv = list(argv)
+    if libparams is None:
+        status_msgs('WARNING: C extensions could not be compiled, '
+                    'Maybe Cython is not installed.')
         run_setup()
         status_msgs("Plain-Python build succeeded.")
+    else:
+        try:
+            run_setup(libparams)
+        except BuildFailed as exc:
+            status_msgs(
+                exc.msg,
+                "WARNING: C extensions could not be compiled, "
+                "speedups are not enabled.",
+                "Failure information, if any, is above.",
+                "Retrying the build without C extensions now.")
+            run_setup()
+            status_msgs("Plain-Python build succeeded.")
+
+
+if __name__ == '__main__':
+    run()

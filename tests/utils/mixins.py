@@ -1,8 +1,8 @@
-from pulsar.apps.test import unittest
+import unittest
 
 
 class TestMixins(unittest.TestCase):
-    
+
     def testLocal(self):
         from pulsar.utils.structures import AttributeDictionary
         from pulsar.utils.log import LocalMixin

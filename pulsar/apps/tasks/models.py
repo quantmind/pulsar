@@ -1,33 +1,33 @@
 '''
-An application implements several :class:`Job`
-classes which specify the way each :ref:`task <apps-taskqueue-task>` is run.
-Each :class:`Job` class is a task-factory, therefore,
+A :ref:`task queue <apps-taskqueue>` application implements several
+:class:`Job` classes which specify the way a :class:`.Task` is run.
+Each :class:`Job` class is a :class:`.Task` factory, therefore,
 a :class:`.Task` is always associated
 with one :class:`Job`, which can be of two types:
 
-* standard (:class:`Job`)
-* periodic (:class:`PeriodicJob`), a generator of scheduled tasks.
+* standard (:class:`.Job`)
+* periodic (:class:`.PeriodicJob`), a generator of scheduled tasks.
 
 .. _job-callable:
 
-Implementing jobs
-========================
+Job callable method
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To define a job is simple, subclass from :class:`Job` and implement the
+To define a job is simple, subclass from :class:`.Job` and implement the
 **job callable method**::
 
     from pulsar.apps import tasks
 
     class Addition(tasks.Job):
 
-        def __call__(self, consumer, a, b):
+        def __call__(self, consumer, a=0, b=0):
             "Add two numbers"
             return a+b
 
 The ``consumer``, instance of :class:`.TaskConsumer`,
 is passed by the :ref:`Task backend <apps-taskqueue-backend>` and should
 always be the first positional parameter in the callable method.
-The remaining (optional) positional and key-valued parameters are needed by
+The remaining (optional key-valued only!) parameters are needed by
 your job implementation.
 
 A :ref:`job callable <job-callable>` can also return a
@@ -36,51 +36,28 @@ execution::
 
     class Crawler(tasks.Job):
 
-        def __call__(self, consumer, sample, size=10):
+        def __call__(self, consumer, sample=100, size=10):
             response = yield http.request(...)
             content = response.content
             ...
 
-This allows for cooperative task execution on each task thread workers.
+This allows for cooperative task execution.
 
 .. _job-non-overlap:
 
 Non overlapping Jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :attr:`Job.can_overlap` attribute controls the way tasks are generated
-by a specific :class:`Job`. By default, a :class:`Job` creates a new task
-every time the :ref:`task backend <apps-taskqueue-backend>` requests it.
+The :attr:`~.Job.can_overlap` attribute controls the way tasks are generated
+by a specific :class:`.Job`. By default, a :class:`.Job` creates a new task
+every time the :class:`.TaskBackend` requests it.
 
-However, when setting the :attr:`Job.can_overlap` attribute to ``False``,
+However, when setting the :attr:`~.Job.can_overlap` attribute to ``False``,
 a new task cannot be started unless a previous task of the same job
 is done.
 
-
-Job class
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Job
-   :members:
-   :member-order: bysource
-
-Periodic job
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: PeriodicJob
-   :members:
-   :member-order: bysource
-
-Job registry
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: JobRegistry
-   :members:
-   :member-order: bysource
-
 '''
 from datetime import datetime, date
-from hashlib import sha1
 import logging
 
 from pulsar.utils.pep import iteritems
@@ -89,11 +66,7 @@ from pulsar.utils.security import gen_unique_id
 
 
 __all__ = ['JobMetaClass', 'Job', 'PeriodicJob',
-           'anchorDate', 'JobRegistry', 'create_task_id']
-
-
-def create_task_id():
-    return gen_unique_id()[:8]
+           'anchorDate', 'JobRegistry']
 
 
 class JobRegistry(dict):
@@ -155,8 +128,8 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
 
 .. attribute:: abstract
 
-    If set to ``True`` (default is ``False``), the :class:`Job` won't be
-    registered with the :class:`JobRegistry`. Useful when creating a new
+    If set to ``True`` (default is ``False``), the :class:`.Job` won't be
+    registered with the :class:`.JobRegistry`. Useful when creating a new
     base class for several other jobs.
 
 .. attribute:: type
@@ -195,85 +168,66 @@ class Job(JobMetaClass('JobBase', (object,), {'abstract': True})):
     can_overlap = True
 
     def __call__(self, consumer, *args, **kwargs):
-        '''The Jobs' task executed by the consumer. This function needs to be
-implemented by subclasses.'''
-        raise NotImplementedError("Jobs must define the run method.")
+        raise NotImplementedError("Jobs must implement the __call__ method.")
 
     @property
     def type(self):
         '''Type of Job, one of ``regular`` and ``periodic``.'''
         return 'regular'
 
-    def run_job(self, consumer, jobname, *args, **kwargs):
-        '''Run a new task in the task queue.
+    def queue_task(self, consumer, jobname, meta_params=None, **kwargs):
+        '''Queue a new task in the task queue.
 
-This utility method can be used from within the
-:ref:`job callable <job-callable>` method and it allows tasks to act
-as tasks factories.
+        This utility method can be used from within the
+        :ref:`job callable <job-callable>` method and it allows tasks to act
+        as tasks factories.
 
-:parameter consumer: the :class:`.TaskConsumer`
-    handling the :ref:`Task <apps-taskqueue-task>`. Must be the same instance
-    as the one passed to the :ref:`job callable <job-callable>` method.
-:parameter jobname: The name of the :class:`Job` to run.
-:parameter args: positional argument for the
-    :ref:`job callable <job-callable>`.
-:parameter kwargs: key-valued parameters for the
-    :ref:`job callable <job-callable>`.
-:return: a :class:`pulsar.Deferred` called back with the task id of the
-    new job.
+        :parameter consumer: the :class:`.TaskConsumer`
+            handling the :class:`.Task`.
+            Must be the same instance as the one passed to the
+            :ref:`job callable <job-callable>` method.
+        :parameter jobname: The name of the :class:`.Job` to run.
+        :parameter kwargs: key-valued parameters for the
+            :ref:`job callable <job-callable>`.
+        :return: a :class:`~asyncio.Future` called back with the task id.
 
-This method invokes the :meth:`.TaskBackend.run_job`
-method with the additional ``from_task`` argument equal to the
-id of the task invoking the method.
-'''
-        return consumer.backend.run_job(jobname, args, kwargs,
-                                        from_task=consumer.task_id)
+        This method invokes the :meth:`.TaskBackend.queue_task`
+        method with the additional ``from_task`` argument equal to the
+        id of the task invoking the method.
+        '''
+        if meta_params is None:
+            meta_params = {}
+        meta_params['from_task'] = consumer.task_id
+        return consumer.backend.queue_task(jobname, meta_params, **kwargs)
 
-    def generate_task_ids(self, args, kwargs):
-        '''Generate a task unique identifiers.
+    def create_id(self, kwargs):
+        '''Create a unique id for a task.
 
-:parameter args: tuple of positional arguments passed to the
-    :ref:`job callable <job-callable>` method.
-:parameter kwargs: dictionary of key-valued parameters passed to the
-    :ref:`job callable <job-callable>` method.
-:return: a two-elements tuple containing the unique id and an
-    identifier for overlapping tasks if the :attr:`can_overlap` results
-    in ``False``.
+        Called by the :class:`.TaskBackend` when a new task is about to be
+        queued.
 
-Called by the :ref:`TaskBackend <apps-taskqueue-backend>` when creating
-a new task.
-'''
-        can_overlap = self.can_overlap
-        if hasattr(can_overlap, '__call__'):
-            can_overlap = can_overlap(*args, **kwargs)
-        id = create_task_id()
-        if can_overlap:
-            return id, None
-        else:
-            suffix = ''
-            if args:
-                suffix = ' args(%s)' % ', '.join((str(a) for a in args))
-            if kwargs:
-                suffix += ' kwargs(%s)' % ', '.join(
-                    ('%s=%s' % (k, kwargs[k]) for k in sorted(kwargs)))
-            name = '%s%s' % (self.name, suffix)
-            return id, sha1(name.encode('utf-8')).hexdigest()[:8]
+        :parameter kwargs: dictionary of parameters passed to the
+            :ref:`job callable method <job-callable>`.
+        '''
+        return gen_unique_id()[:8]
 
 
 class PeriodicJob(Job):
-    '''A periodic :class:`Job` implementation.'''
+    '''A periodic :class:`.Job` implementation.'''
     abstract = True
     anchor = None
-    '''If specified it must be a :class:`datetime.datetime` instance.
-It controls when the periodic Job is run.'''
+    '''If specified it must be a :class:`~datetime.datetime` instance.
+    It controls when the periodic Job is run.
+    '''
     run_every = None
-    '''Periodicity as a :class:`datetime.timedelta` instance.'''
+    '''Periodicity as a :class:`~datetime.timedelta` instance.'''
 
     def __init__(self, run_every=None):
         self.run_every = run_every or self.run_every
         if self.run_every is None:
-            raise NotImplementedError('Periodic Jobs must have\
- a run_every attribute set, "{0}" does not have one'.format(self.name))
+            raise NotImplementedError('Periodic Jobs must have a run_every '
+                                      'attribute set, "{0}" does not have one'
+                                      .format(self.name))
 
     @property
     def type(self):
@@ -281,14 +235,14 @@ It controls when the periodic Job is run.'''
 
     def is_due(self, last_run_at):
         """Returns tuple of two items ``(is_due, next_time_to_run)``,
-where next time to run is in seconds. e.g.
+        where next time to run is in seconds. For example:
 
-* ``(True, 20)``, means the Job should be run now, and the next
-    time to run is in 20 seconds.
+        * ``(True, 20)``, means the job should be run now, and the next
+          time to run is in 20 seconds.
 
-* ``(False, 12)``, means the Job should be run in 12 seconds.
+        * ``(False, 12)``, means the job should be run in 12 seconds.
 
-You can override this to decide the interval at runtime.
+        You can override this to decide the interval at runtime.
         """
         return self.run_every.is_due(last_run_at)
 

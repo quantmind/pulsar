@@ -1,12 +1,14 @@
 '''Tests the test suite and pulsar distribution.'''
 import os
+import unittest
 from threading import current_thread
+from asyncio import sleep, Future
 
 import pulsar
-from pulsar import send, multi_async, is_failure
-from pulsar.apps.test import unittest, run_on_arbiter, TestSuite, sequential
+from pulsar import send, multi_async, get_event_loop, coroutine_return
+from pulsar.async.eventloop import QueueEventLoop
+from pulsar.apps.test import run_on_arbiter, TestSuite, sequential
 from pulsar.apps.test.plugins import bench, profile
-from pulsar.utils.pep import get_event_loop, default_timer
 from pulsar.utils.version import get_version
 
 
@@ -15,9 +17,9 @@ def simple_function(actor):
 
 
 def wait(actor, period=0.5):
-    start = default_timer()
-    yield pulsar.async_sleep(period)
-    yield default_timer() - start
+    start = actor._loop.time()
+    yield sleep(period)
+    coroutine_return(actor._loop.time() - start)
 
 
 class TestTestWorker(unittest.TestCase):
@@ -32,22 +34,21 @@ class TestTestWorker(unittest.TestCase):
         self.assertEqual(worker.info_state, 'running')
         self.assertNotEqual(worker.tid, current_thread().ident)
         self.assertEqual(worker.pid, os.getpid())
-        self.assertTrue(worker.impl.daemon)
+        self.assertFalse(worker.impl.daemon)
         self.assertFalse(worker.is_monitor())
         self.assertEqual(str(worker.impl), worker.impl.unique_name)
 
     def testCPUbound(self):
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
-        self.assertTrue(loop.cpubound)
-        self.assertFalse(worker.event_loop.cpubound)
+        self.assertIsInstance(loop, QueueEventLoop)
+        self.assertNotIsInstance(worker._loop, QueueEventLoop)
 
     def testWorkerMonitor(self):
         worker = pulsar.get_actor()
         mailbox = worker.mailbox
         monitor = worker.monitor
         self.assertEqual(mailbox.address, monitor.address)
-        self.assertEqual(mailbox.timeout, 0)
 
     @run_on_arbiter
     def test_TestSuiteMonitor(self):
@@ -62,55 +63,42 @@ class TestTestWorker(unittest.TestCase):
         mailbox = worker.mailbox
         self.assertTrue(mailbox)
         self.assertTrue(hasattr(mailbox, 'request'))
-        self.assertTrue(mailbox.event_loop)
-        self.assertTrue(mailbox.event_loop.running)
-        self.assertEqual(worker.event_loop, mailbox.event_loop)
-        self.assertEqual(worker.tid, mailbox.event_loop.tid)
+        self.assertTrue(mailbox._loop)
+        self.assertTrue(mailbox._loop.is_running())
+        self.assertEqual(worker._loop, mailbox._loop)
         self.assertTrue(mailbox.address)
         self.assertTrue(mailbox.name)
-        self.assertEqual(mailbox.concurrent_connections, 1)
 
     def test_event_loop(self):
         '''Test event loop in test worker'''
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
         event_loop = get_event_loop()
-        self.assertTrue(loop.running)
-        self.assertTrue(event_loop.running)
+        self.assertTrue(loop.is_running())
+        self.assertTrue(event_loop.is_running())
         self.assertNotEqual(loop, event_loop)
-        self.assertEqual(worker.event_loop, event_loop)
-        self.assertEqual(worker.tid, worker.event_loop.tid)
-        self.assertNotEqual(worker.tid, loop.tid)
-        self.assertTrue(str(event_loop))
-
-    def test_NOT_DONE(self):
-        worker = pulsar.get_actor()
-        loop = pulsar.get_request_loop()
-        count = loop.num_loops
-        yield pulsar.NOT_DONE
-        self.assertEqual(loop.num_loops, count+1)
-        yield pulsar.NOT_DONE
-        self.assertEqual(loop.num_loops, count+2)
+        self.assertEqual(worker._loop, event_loop)
 
     def test_yield(self):
-        '''Yielding a deferred calling back on separate thread'''
+        '''Yielding a future calling back on separate thread'''
         worker = pulsar.get_actor()
         loop = pulsar.get_request_loop()
+        loop_tid = yield pulsar.loop_thread_id(loop)
         self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop.tid, current_thread().ident)
-        yield pulsar.NOT_DONE
-        self.assertEqual(loop.tid, current_thread().ident)
-        d = pulsar.Deferred()
-        # We are calling back the deferred in the event_loop which is on
+        self.assertEqual(loop_tid, current_thread().ident)
+        yield None
+        self.assertEqual(loop_tid, current_thread().ident)
+        d = Future()
+        # We are calling back the future in the event_loop which is on
         # a separate thread
+
         def _callback():
-            d.callback(current_thread().ident)
-        worker.event_loop.call_later(0.2, _callback)
-        yield d
-        self.assertEqual(worker.tid, d.result)
-        self.assertEqual(worker.event_loop.tid, d.result)
+            d.set_result(current_thread().ident)
+        worker._loop.call_later(0.2, _callback)
+        result = yield d
+        self.assertEqual(worker.tid, result)
         self.assertNotEqual(worker.tid, current_thread().ident)
-        self.assertEqual(loop.tid, current_thread().ident)
+        self.assertEqual(loop_tid, current_thread().ident)
 
     def testInline(self):
         val = yield 3
@@ -125,10 +113,8 @@ class TestTestWorker(unittest.TestCase):
 
     def test_unknown_send_target(self):
         # The target does not exists
-        future = pulsar.send('vcghdvchdgcvshcd',
-                             'ping').add_both(lambda r: [r])
-        yield future
-        self.assertTrue(is_failure(future.result[0]))
+        result = yield pulsar.send('vcghdvchdgcvshcd', 'ping')
+        self.assertEqual(result, None)
 
     def test_multiple_execute(self):
         m = yield multi_async((send('arbiter', 'run', wait, 1.2),
@@ -136,10 +122,10 @@ class TestTestWorker(unittest.TestCase):
                                send('arbiter', 'echo', 'ciao!'),
                                send('arbiter', 'run', wait, 2.1),
                                send('arbiter', 'echo', 'ciao again!')))
-        self.assertTrue(m[0] >= 1.2)
+        self.assertTrue(m[0] >= 1.1)
         self.assertEqual(m[1], 'pong')
         self.assertEqual(m[2], 'ciao!')
-        self.assertTrue(m[3] >= 2.1)
+        self.assertTrue(m[3] >= 2.0)
         self.assertEqual(m[4], 'ciao again!')
 
     def test_tasks(self):

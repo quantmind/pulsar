@@ -1,5 +1,5 @@
 '''
-The dining `philosophers`_ problem is an example problem often used in
+The dining philosophers_ problem is an example problem often used in
 concurrent algorithm design to illustrate synchronisation issues and
 techniques for resolving them.
 
@@ -47,18 +47,39 @@ Implementation
    :members:
    :member-order: bysource
 
-.. _`philosophers`: http://en.wikipedia.org/wiki/Dining_philosophers_problem
+
+.. _philosophers: http://en.wikipedia.org/wiki/Dining_philosophers_problem
+
 '''
+import os
 import random
-import time
-from functools import partial
+import json
 try:
     import pulsar
 except ImportError:
     import sys
     sys.path.append('../../')
     import pulsar
-from pulsar import command
+from pulsar import command, async
+from pulsar.apps import wsgi, ws, data
+
+############################# WEB INTERFACE
+media_libraries = {
+    "d3": "//cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3",
+    "jquery": "//code.jquery.com/jquery-1.11.0",
+    "require": "//cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require"
+    }
+ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
+FAVICON = os.path.join(ASSET_DIR, 'favicon.ico')
+
+
+class WsProtocol:
+
+    def encode(self, message):
+        return json.dumps(message)
+
+    def decode(self, message):
+        return json.loads(message)
 
 
 ###########################################################################
@@ -112,95 +133,91 @@ class DiningPhilosophers(pulsar.Application):
     def monitor_start(self, monitor):
         self.not_available_forks = set()
 
-    def worker_start(self, philosopher):
-        self.take_action(philosopher)
+    def worker_start(self, philosopher, exc=None):
+        self._loop = philosopher._loop
+        self.eaten = 0
+        self.thinking = 0
+        self.started_waiting = 0
+        self.forks = []
+        philosopher._loop.call_soon(self.take_action, philosopher)
 
     def worker_info(self, philosopher, info=None):
-        '''Override :meth:`pulsar.Application.worker_info` to provide
-information about the philosopher.'''
-        params = philosopher.params
-        info['philosopher'] = {'number': params.number,
-                               'eaten': params.eaten}
+        '''Override :meth:`~.Application.worker_info` to provide
+        information about the philosopher.'''
+        info['philosopher'] = {'number': philosopher.number,
+                               'eaten': self.eaten}
 
     def take_action(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
 
-* eat, if it has both forks and than :meth:`release_forks`.
-* try to :meth:`pickup_fork`, if he has less than 2 forks.
-'''
-        params = philosopher.params
-        eaten = params.eaten or 0
-        forks = params.forks
-        started_waiting = params.started_waiting or 0
-        pick_up_fork = True
+        * eat, if it has both forks and than :meth:`release_forks`.
+        * try to :meth:`pickup_fork`, if he has less than 2 forks.
+        '''
+        loop = philosopher._loop
+        forks = self.forks
         if forks:
-            max_eat_period = 2*self.cfg.eating_period
+            #
             # Two forks. Eat!
             if len(forks) == 2:
-                params.thinking = 0
-                eaten += 1
-                philosopher.logger.info("%s eating... So far %s times",
-                                        philosopher.name, eaten)
-                try:
-                    time.sleep(max_eat_period*random.random())
-                except IOError:
-                    pass
-                params.eaten = eaten
-                pick_up_fork = False
-            # One fork only! release fork or try to pick up one
+                self.thinking = 0
+                self.eaten += 1
+                philosopher.logger.info("eating... So far %s times",
+                                        self.eaten)
+                eat_time = 2*self.cfg.eating_period*random.random()
+                return loop.call_later(eat_time, self.release_forks,
+                                       philosopher)
+            #
+            # One fork only! release fork or try to pick one up one
             elif len(forks) == 1:
                 waiting_period = 2*self.cfg.waiting_period*random.random()
-                if started_waiting == 0:
-                    params.started_waiting = time.time()
-                elif time.time() - started_waiting > waiting_period:
-                    pick_up_fork = False
-            elif len(forks) > 2:
-                philosopher.logger.critical('%s has more than 2 forks!!!',
-                                            philosopher.name)
-                pick_up_fork = False
+                if self.started_waiting == 0:
+                    self.started_waiting = loop.time()
+                elif loop.time() - self.started_waiting > waiting_period:
+                    philosopher.logger.debug("tired of waiting")
+                    return self.release_forks(philosopher)
+            #
+            # this should never happen
+            elif len(forks) > 2:    # pragma    nocover
+                philosopher.logger.critical('more than 2 forks!!!')
+                return self.release_forks(philosopher)
         else:
-            thinking = params.thinking or 0
-            if not thinking:
+            if not self.thinking:
                 philosopher.logger.warning('%s thinking...', philosopher.name)
-            params.thinking = thinking + 1
-        # Take action
-        if pick_up_fork:
-            self.pickup_fork(philosopher)
-        else:
-            self.release_forks(philosopher)
+            self.thinking += 1
+        async(self.pickup_fork(philosopher), loop=loop)
 
     def pickup_fork(self, philosopher):
-        '''The philosopher has less than two forks. Check if forks are
-available.'''
-        right_fork = philosopher.params.number
-        return philosopher.send(philosopher.monitor, 'pickup_fork', right_fork
-                                ).add_callback(partial(self._continue,
-                                                       philosopher))
+        '''The philosopher has less than two forks.
 
-    def release_forks(self, philosopher):
-        '''The ``philosopher`` has just eaten and is ready to release both
-forks. This method release them, one by one, by sending the ``put_down``
-action to the monitor.'''
-        forks = philosopher.params.forks
-        philosopher.params.forks = []
-        philosopher.params.started_waiting = 0
-        for fork in forks:
-            philosopher.logger.debug('Putting down fork %s', fork)
-            philosopher.send('monitor', 'putdown_fork', fork)
-        # once released all the forks wait for a moment
-        time.sleep(self.cfg.waiting_period)
-        self._continue(None, philosopher)
-
-    def _continue(self, philosopher, fork):
+        Check if forks are available.
+        '''
+        fork = yield philosopher.send(philosopher.monitor, 'pickup_fork',
+                                      philosopher.number)
         if fork:
-            forks = philosopher.params.forks
+            forks = self.forks
             if fork in forks:
                 philosopher.logger.error('Got fork %s. I already have it',
                                          fork)
             else:
                 philosopher.logger.debug('Got fork %s.', fork)
                 forks.append(fork)
-        self.take_action(philosopher)
+        philosopher._loop.call_soon(self.take_action, philosopher)
+
+    def release_forks(self, philosopher):
+        '''The ``philosopher`` has just eaten and is ready to release both
+        forks.
+
+        This method release them, one by one, by sending the ``put_down``
+        action to the monitor.
+        '''
+        forks = self.forks
+        self.forks = []
+        self.started_waiting = 0
+        for fork in forks:
+            philosopher.logger.debug('Putting down fork %s', fork)
+            philosopher.send('monitor', 'putdown_fork', fork)
+        philosopher._loop.call_later(self.cfg.waiting_period, self.take_action,
+                                     philosopher)
 
     def actorparams(self, monitor, params):
         avail = set(range(1, monitor.cfg.workers+1))
@@ -212,11 +229,83 @@ action to the monitor.'''
                 avail = None
                 break
         number = min(avail) if avail else len(monitor.managed_actors) + 1
-        name = 'Philosopher %s' % number
-        params.update({'name': name,
-                       'number': number,
-                       'forks': []})
+        params.update({'name': 'Philosopher %s' % number, 'number': number})
+
+
+class PhilosophersWsgi(wsgi.LazyWsgi):
+    '''This is the :ref:`wsgi application <wsgi-handlers>` for this
+    web-chat example.'''
+    def __init__(self, server_name):
+        self.name = server_name
+
+    def setup(self, environ):
+        '''Called once only to setup the WSGI application handler.
+
+        Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
+        section for further information.
+        '''
+        cfg = environ['pulsar.cfg']
+        loop = environ['pulsar.connection']._loop
+        self.store = data.create_store(cfg.data_store, loop=loop)
+        pubsub = self.store.pubsub(protocol=WsProtocol())
+        channel = '%s_messages' % self.name
+        pubsub.subscribe(channel)
+        middleware = [wsgi.Router('/', get=self.home_page),
+                      ws.WebSocket('/message', PhilosopherWs(pubsub, channel)),
+                      wsgi.FileRouter('/favicon.ico', FAVICON),
+                      wsgi.MediaRouter('media', ASSET_DIR)]
+        return wsgi.WsgiHandler(middleware)
+
+    def home_page(self, request):
+        doc = wsgi.HtmlDocument(media_path='/media/',
+                                known_libraries=media_libraries)
+        doc.head.scripts.append('require')
+        doc.head.scripts.require('jquery', 'd3', 'philosophers.js')
+        doc.head.links.append('bootstrap')
+        doc.body.append(wsgi.Html('div', cn='philosophers'))
+        return doc.http_response(request)
+
+
+class PhilosopherWs(ws.WS):
+
+    def __init__(self, pubsub, channel):
+        self.pubsub = pubsub
+        self.channel = channel
+
+    def on_open(self, websocket):
+        '''When a new websocket connection is established it creates a
+        new :class:`ChatClient` and adds it to the set of clients of the
+        :attr:`pubsub` handler.'''
+        self.pubsub.add_client(WsClient(websocket, self.channel))
+
+
+class WsClient(data.PubSubClient):
+
+    def __init__(self, connection, channel):
+        self.connection = connection
+        self.channel = channel
+
+    def __call__(self, channel, message):
+        self.connection.write(message)
+
+
+class server(pulsar.MultiApp):
+    '''Build a multi-app consisting on a taskqueue and a JSON-RPC server.
+
+    This class shows how to use the :class:`.MultiApp` utility for
+    starting several :ref:`pulsar applications <apps-framework>` at once.
+    '''
+    cfg = pulsar.Config('Dining philosophers sit at a table around a bowl of '
+                        'spaghetti and waits for available forks.',
+                        data_store=data.pulsards_url())
+
+    def build(self):
+        #yield self.new_app(DiningPhilosophers)
+        #yield self.new_app(wsgi.WSGIServer, prefix='wsgi',
+        #                   callable=PhilosophersWsgi(self.name))
+        yield self.new_app(wsgi.WSGIServer,
+                           callable=PhilosophersWsgi(self.name))
 
 
 if __name__ == '__main__':
-    DiningPhilosophers().start()
+    server('philosophers').start()

@@ -1,3 +1,96 @@
+Ver. 0.8.0
+===========================
+* **Backward incompatible version**
+
+* **Asyncio Integration**
+
+  * asyncio_ integration with several changes in internals. The integration
+    works with all supported python versions: 2.7, 3.3 and 3.4
+  * Asyncio event loop functions :func:`~asyncio.get_event_loop`,
+    :func:`~asyncio.new_event_loop`,
+    are available from pulsar top level module as well as asyncio.
+    In other words ``from pulsar import get_event_loop`` and
+    ``from asyncio import get_event_loop`` are equivalent (provided pulsar is
+    imported first).
+  * Replaced the ``Deferred`` class with :class:`asyncio.Future`.
+  * Replaced the ``EventLoop`` class with
+    :ref:`asyncio event loop <asyncio-event-loop>`.
+
+* **Core library**
+
+  * Removed support for python 2.6 and python 3.2.
+  * :ref:`Coroutines <coroutine>` can return a value via the
+    :func:`.coroutine_return` function.
+  * Added :func:`.run_in_loop` high level function. This utility
+    runs a callable in the event loop thread and returns a
+    :class:`~asyncio.Future` called back once the callable has
+    a result/exception.
+  * Added :func:`.in_loop` and :func:`.task` decorators for
+    member functions of :ref:`async objects <async-object>`.
+  * :func:`.async` is now a function, not a decorator.
+  * Added the new :class:`.Pool` class for managing a pool of asynchronous
+    connection with a server.
+  * Embedding third-party asynchronous frameworks can be achieved via the
+    new :func:`.add_async_binding` function.
+  * Removed ``Client`` class and replaced by :class:`.AbstractClient` which
+    in turns is a subclass of connections :class:`.Producer`.
+  * Removed ``force_sync`` parameter when creating synchronous components.
+    Synchronous objects are now created by explicitly passing a new event
+    loop during initialisation.
+    Check the the :ref:`synchronous components tutorial <tutorials-synchronous>`
+    for details.
+  * Added the :ref:`data-store <setting-data_store>` setting for specifying
+    the default data store of a running application.
+  * Added the :ref:`exc-id <setting-exc_id>` setting which uniquely specify
+    the identity of a running application. This is useful during testing.
+  * Unified the handshake across all actors
+
+* **New data store module**
+
+  * New :mod:`pulsar.apps.data` module for managing asynchronous data stores.
+  * Two stores available: redis_ and :ref:`pulsar-ds <pulsar-data-store>`.
+  * Additional stores can be created by subclassing the :class:`.Store`
+    abstract class and registering it via the :func:`.register_store` function.
+  * The :ref:`pulsar-ds <pulsar-data-store>` is a python implementation of
+    the popular redis server. It implements most redis commands including
+    scripting.
+
+* **Websockets**
+
+  * The web socket :meth:`~pulsar.apps.ws.WS.on_open` method is invoked soon
+    after upgrade headers are sent. No need to send a message from the client
+    to kick start the bidirectional communication.
+  * Websocket C extensions for faster parsing/masking.
+  * Added support for sending :meth:`~pulsar.utils.websocket.FrameParser.close`
+    frames with an optional status code, and for parsing close frames
+    with a body via the :func:`.parse_close` function (for websocket clients).
+
+* **WSGI**
+
+  * Better handling of cookies in :class:`.WsgiResponse`
+  * :class:`.Router` can have children even if it is a leaf node
+  * Dropped support for http-parser_, only HTTP python parser used
+
+* **Miscellaneous**
+
+  * The :mod:`pulsar.apps.pubsub` has been removed. Publish/subscribe
+    implementations are now available in the new :mod:`pulsar.apps.data` module.
+  * The ``Backend`` class has been removed.
+  * Improved :ref:`django example <tutorials-django>` with possibility to
+    choose different data stores for messages.
+  * Removed the twisted integration module and moved it to the example directory.
+    The integration is not tested enough and therefore cannot be part of the
+    main distribution.
+  * :class:`.Application` does not require to create picklable objects.
+  * More robust serialisation of ``TestCase`` methods when used with the
+    :func:`.run_on_arbiter` decorator.
+  * The :ref:`shell application <apps-shell>` runs on a worker thread in the
+    arbiter domain.
+  * The :meth:`.Configurator.start` method returns a :class:`~asyncio.Future`
+    called back once the applications in the configurator are running.
+
+* **1,166 regression tests**, **91% coverage**.
+
 Ver. 0.7.4 - 2013-Dec-22
 ===========================
 * A bug fix release.
@@ -35,10 +128,10 @@ Ver. 0.7.0 - 2013-Oct-13
 ===========================
 * Several improvements and bug fixes in the :ref:`Http Client <apps-http>`
   including:
-    * SSL support
-    * Proxy and Tunneling
-    * Cookie support
-    * File upload
+  * SSL support
+  * Proxy and Tunnelling
+  * Cookie support
+  * File upload
 
 * Code coverage can be turned on by using the ``--coverage`` option. By
   passing in the command line ``--coveralls`` when testing, coverage is
@@ -46,7 +139,6 @@ Ver. 0.7.0 - 2013-Oct-13
 * WSGI responses 400 Bad Request to request with no ``Host`` header if the
   request URI is not an absolute URI. Follows the `rfc2616 sec 5.2`_
   guidelines.
-* A new asynchronous :ref:`redis client <redis-client>`. Requires redis-py_.
 * Removed the specialised application worker and monitor classes.
   Use standard actor and monitor with specialised
   :ref:`start hooks <actor-hooks>` instead.
@@ -58,7 +150,7 @@ Ver. 0.7.0 - 2013-Oct-13
 * Added ``accept_content_type`` method to :ref:`WSGI Router <wsgi-router>`.
 * Ability to add embedded css rules into the :ref:`head <wsgi-html-head>`
   element of an :ref:`Html document <wsgi-html-document>`.
-* Added :class:`pulsar.Actor.stream` attribute to write messages without using
+* Added :class:`.Actor.stream` attribute to write messages without using
   the logger.
 * Pass pep8 test.
 * **807 regression tests**, **90% coverage**.
@@ -68,57 +160,59 @@ Ver. 0.7.0 - 2013-Oct-13
 Ver. 0.6.0 - 2013-Sep-05
 ===========================
 * Several new features, critical bug fixes and increased tests coverage.
-* Asynchronous framework:
-    * Removed ``is_async`` function. Not used.
-    * The :class:`pulsar.async` decorator always return a
-      :class:`pulsar.Deferred`, it never throws.
-    * Created the :class:`pulsar.Poller` base class for implementing different
-      types of event loop pollers. Implementation available for ``epoll``,
-      ``kqueue`` and ``select``.
-    * Modified :class:`pulsar.Failure` implementation to handle one ``exc_info``
-      only and better handling of unlogged failures.
-    * Added an asynchronous FIFO :class:`pulsar.Queue`.
-    * Added :func:`pulsar.async_while` utility function.
-    * Socket servers handle IPV6 addresses.
-    * Added :ref:`SSL support <socket-server-ssl>` for socket servers.
-    * Tasks throw errors back to the coroutine via the generator ``throw``
-      method.
-    * 50% Faster :class:`pulsar.Deferred` initialisation.
-    * Added :meth:`pulsar.Deferred.then` method for adding a deferred to a
-      deferred's callbacks without affecting the result.
+* **Core library**:
 
-* Actors:
-    * Added :ref:`--thread_workers <setting-thread_workers>` config option
-      for controlling the default number of workers in actor thread pools.
-    * New asynchronous :class:`pulsar.ThreadPool` for CPU bound operations.
-    * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
+  * Removed ``is_async`` function. Not used.
+  * The :class:`.async` decorator always return a
+    :class:`.Deferred`, it never throws.
+  * Created the :class:`.Poller` base class for implementing different
+    types of event loop pollers. Implementation available for ``epoll``,
+    ``kqueue`` and ``select``.
+  * Modified :class:`.Failure` implementation to handle one ``exc_info``
+    only and better handling of unlogged failures.
+  * Added an asynchronous FIFO :class:`.Queue`.
+  * Added :func:`.async_while` utility function.
+  * Socket servers handle IPV6 addresses.
+  * Added :ref:`SSL support <socket-server-ssl>` for socket servers.
+  * Tasks throw errors back to the coroutine via the generator ``throw``
+    method.
+  * 50% Faster :class:`.Deferred` initialisation.
+  * Added :meth:`.Deferred.then` method for adding a deferred to a
+    deferred's callbacks without affecting the result.
 
-* Applications:
-    * Added ``flush`` method to the
-      :ref:`task queue backend <apps-taskqueue-backend>`.
-      The metod can be used to remove all tasks and empty the task queue.
-    * Better handling of :ref:`non-overlapping jobs <job-non-overlap>`
-      in a task queue.
-    * Added :ref:`when_exit <setting-when_exit>` application hook.
-    * Added :ref:`--io option <setting-poller>` for controlling the default
-      :class:`pulsar.Poller`.
-    * Critical bug fix in python 3 WSGI server.
-    * Added ``full_route`` and ``rule`` attributes to wsgi Router.
-    * Added :ref:`--show_leaks option <setting-show_leaks>`
-      for showing a memory leak report after a test run.
-    * Added :ref:`-e, --exclude-labels option <setting-exclude_labels>`
-      for excluding labels in a test run.
-    * Several fixes in the test application.
-    * Critical bug fix in python Http parser (4bd8a54_).
-    * Bug fix and enhancement of :ref:`Router <wsgi-router>` metaclass. It
-      is now possible to overwrite the relative ``position`` of children routes
-      via the :ref:`route decorator <wsgi-route-decorator>`.
+* **Actors**:
 
-* Examples:
-    * Proxy server example uses the new :class:`pulsar.Queue`.
+  * Added :ref:`--thread_workers <setting-thread_workers>` config option
+    for controlling the default number of workers in actor thread pools.
+  * New asynchronous :class:`.ThreadPool` for CPU bound operations.
+  * :ref:`Actor's hooks can be asynchronous <actor-hooks>`.
 
-* Miscellaneous:
-    * Added :mod:`pulsar.utils.exceptions` documentation.
+* **Applications**:
+
+  * Added ``flush`` method to the
+    :ref:`task queue backend <apps-taskqueue-backend>`.
+    The metod can be used to remove all tasks and empty the task queue.
+  * Better handling of :ref:`non-overlapping jobs <job-non-overlap>`
+    in a task queue.
+  * Added :ref:`when_exit <setting-when_exit>` application hook.
+  * Added :ref:`--io option <setting-selector>` for controlling the default
+    selector from python :mod:`selectors` module.
+  * Critical bug fix in python 3 WSGI server.
+  * Added ``full_route`` and ``rule`` attributes to wsgi Router.
+  * Added :ref:`--show_leaks option <setting-show_leaks>`
+    for showing a memory leak report after a test run.
+  * Added :ref:`-e, --exclude-labels option <setting-exclude_labels>`
+    for excluding labels in a test run.
+  * Several fixes in the test application.
+  * Critical bug fix in python Http parser (4bd8a54_).
+  * Bug fix and enhancement of :ref:`Router <wsgi-router>` metaclass. It
+    is now possible to overwrite the relative ``position`` of children routes
+    via the :ref:`route decorator <wsgi-route-decorator>`.
+
+* **Miscellaneous**:
+
+  * Proxy server example uses the new :class:`.Queue`.
+  * Added :mod:`~pulsar.utils.exceptions` documentation.
 
 * **558 regression tests**, **88% coverage**.
 
@@ -139,9 +233,9 @@ Ver. 0.5.1 - 2013-June-03
 ==============================
 * Several bug fixes and more docs.
 * Fixed ``ThreadPool`` for for python 2.6.
-* Added the :func:`pulsar.safe_async` function for safely executing synchronous
+* Added the :func:`.safe_async` function for safely executing synchronous
   and asynchronous callables.
-* The :meth:`pulsar.utils.config.Config.get` method never fails. It return the
+* The :meth:`.Config.get` method never fails. It return the
   ``default`` value if the setting key is not available.
 * Improved ``setup.py`` so that it does not log a python 2 module syntax error
   when installing for python 3.
@@ -153,53 +247,58 @@ Ver. 0.5.1 - 2013-June-03
 Ver. 0.5.0 - 2013-May-22
 ==============================
 * This is a major release with considerable amount of internal refactoring.
-* Asynchronous framework:
-   * pep-3156_ implementation.
-   * New pep-3156_ compatible :class:`pulsar.EventLoop`.
-   * Added the :meth:`pulsar.Deferred.cancel` method to cancel asynchronous
-     callbacks.
-   * :class:`pulsar.Deferred` accepts a *timeout* as initialisation parameter.
-     If a value greater than 0 is given, the deferred will add a timeout to the
-     event loop to cancel itself in *timeout* seconds.
-   * :class:`pulsar.Task` stops after the first error by default.
-     This class replace the old DeferredGenerator and provides a cleaner
-     API with inline syntax. Check the
-     :ref:`asynchronous components <tutorials-coroutine>` tutorial for
-     further information.
-   * Added :func:`pulsar.async_sleep` function.
+* **Core library**
 
-* Actors:
-   * :class:`pulsar.Actor` internal message passing uses the (unmasked)
-     websocket protocol in a bidirectional communication between the
-     :class:`pulsar.Arbiter` and actors.
-   * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
-   * Added :mod:`pulsar.async.consts` module for low level pulsar constants.
-   * Removed the requestloop attribute, the actor event loop is now accessed
-     via the :attr:`pulsar.Actor.event_loop` attribute or via the pep-3156_
-     function ``get_event_loop``.
+  * pep-3156_ implementation.
+  * New pep-3156_ compatible :class:`.EventLoop`.
+  * Added the :meth:`.Deferred.cancel` method to cancel asynchronous
+    callbacks.
+  * :class:`.Deferred` accepts a *timeout* as initialisation parameter.
+    If a value greater than 0 is given, the deferred will add a timeout to the
+    event loop to cancel itself in *timeout* seconds.
+  * :class:`.DeferredTask` stops after the first error by default.
+    This class replace the old DeferredGenerator and provides a cleaner
+    API with inline syntax. Check the
+    :ref:`asynchronous components <tutorials-coroutine>` tutorial for
+    further information.
+  * Added :func:`.async_sleep` function.
 
-* Applications:
-    * Added ability to add Websocket sub-protocols and extensions.
-    * New asynchronous :class:`pulsar.apps.http.HttpClient` with websocket
-      support.
-    * Support http-parser_ for faster http protocol parsing.
-    * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
-    * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
-      is used in the :ref:`web chat <tutorials-chat>` example.
-    * Added :ref:`django application <apps-pulse>` for running a django_
-      site using pulsar.
-    * :func:`pulsar.apps.get_application` returns a :ref:`coroutine <coroutine>`
-      so that it can be used in any process domain.
+* **Actors**
 
-* Initial :ref:`twisted integration <tutorials-twisted>`.
-   * Added :func:`pulsar.set_async` function which can be used to change
-     the asynchronous discovery functions :func:`pulsar.maybe_async`
-     and :func:`pulsar.maybe_failure`. The function is used in the
-     implementation of :ref:`twisted integration <tutorials-twisted>` and could
-     be used in conjunction with other asynchronous libraries as well.
-   * New :ref:`Webmail example application <tutorials-webmail>` using twisted
-     IMAP4 protocol implementation.
-* Added :mod:`pulsar.utils.structures.FrozenDict`.
+  * :class:`.Actor` internal message passing uses the (unmasked)
+    websocket protocol in a bidirectional communication between the
+    :class:`.Arbiter` and actors.
+  * Spawning and stopping actors is monitored using a timeout set at 5 seconds.
+  * Added :mod:`pulsar.async.consts` module for low level pulsar constants.
+  * Removed the requestloop attribute, the actor event loop is now accessed
+    via the :attr:`.Actor._loop` attribute or via the pep-3156_
+    function ``get_event_loop``.
+
+* **Applications**
+
+  * Added ability to add Websocket sub-protocols and extensions.
+  * New asynchronous :class:`.HttpClient` with websocket support.
+  * Support http-parser_ for faster http protocol parsing.
+  * Refactoring of asynchronous :mod:`pulsar.apps.test` application.
+  * Added :ref:`Publish/Subscribe application <apps-pubsub>`. The application
+    is used in the :ref:`web chat <tutorials-chat>` example.
+  * Added :ref:`django application <apps-pulse>` for running a django_
+    site using pulsar.
+  * :func:`~pulsar.apps.get_application` returns a :ref:`coroutine <coroutine>`
+    so that it can be used in any process domain.
+
+* **Initial twisted integration**
+
+  * Introduced in :ref:`this application <tutorials-twisted>`.
+  * Added :func:`~.set_async` function which can be used to change
+    the asynchronous discovery functions :func:`.maybe_async`
+    and :func:`.maybe_failure`. The function is used in the
+    implementation of :ref:`twisted integration <tutorials-twisted>` and could
+    be used in conjunction with other asynchronous libraries as well.
+  * New :ref:`Webmail example application <tutorials-twisted>` using twisted
+    IMAP4 protocol implementation.
+
+* Added :class:`.FrozenDict`.
 * **444 regression tests**, **87% coverage**.
 
 Ver. 0.4.6 - 2013-Feb-8
@@ -219,12 +318,12 @@ Ver. 0.4.5 - 2013-Jan-27
 Ver. 0.4.4 - 2013-Jan-13
 ==============================
 * Documentation for development version hosted on github.
-* Modified :meth:`pulsar.Actor.exit` so that it shuts down :attr:`pulsar.Actor.mailbox`
-  after closing the :attr:`pulsar.Actor.requestloop`.
+* Modified :meth:`.Actor.exit` so that it shuts down :attr:`.Actor.mailbox`
+  after closing the :attr:`.Actor.requestloop`.
 * Fixed bug which prevented :ref:`daemonisation <setting-daemon>` in posix systems.
-* Changed the :meth:`pulsar.Deferred.result_or_self` method to return the
+* Changed the :meth:`.Deferred.result_or_self` method to return the
   *result* when the it is called and no callbacks are available.
-  It avoids several unnecessary calls on deeply nested :class:`pulsar.Deferred`
+  It avoids several unnecessary calls on deeply nested :class:`.Deferred`
   (which sometimes caused maximum recursion depth exceeded).
 * Fixed calculator example script.
 * **374 regression tests**, **87% coverage**.
@@ -233,7 +332,7 @@ Ver. 0.4.3 - 2012-Dec-28
 ==============================
 * Removed the tasks in event loop. A task can only be added by appending
   callbacks or timeouts.
-* Fixed critical bug in :class:`pulsar.MultiDeferred`.
+* Fixed critical bug in :class:`.MultiDeferred`.
 * Test suite works with multiple test workers.
 * Fixed issue #17 on asynchronous shell application.
 * Dining philosophers example works on events only.
@@ -243,17 +342,17 @@ Ver. 0.4.3 - 2012-Dec-28
 Ver. 0.4.2 - 2012-Dec-12
 ==============================
 * Fixed bug in boolean validation.
-* Refactored :class:`pulsar.apps.test.TestPlugin` to handle multi-parameters.
+* Refactored :class:`.TestPlugin` to handle multi-parameters.
 * Removed unused code and increased test coverage.
 * **338 regression tests**, **86% coverage**.
 
 Ver. 0.4.1 - 2012-Dec-04
 ==============================
 * Test suite can load test from single files as well as directories.
-* :func:`pulsar.apps.wsgi.handle_wsgi_error` accepts optional ``content_type``
+* :func:`.handle_wsgi_error` accepts optional ``content_type``
   and ``encoding`` parameters.
 * Fix issue #20, test plugins not included are not available in the command line.
-* :class:`pulsar.Application` call :meth:`pulsar.Config.on_start` before starting.
+* :class:`.Application` call :meth:`.Config.on_start` before starting.
 * **304 regression tests**, **83% coverage**.
 
 Ver. 0.4 - 2012-Nov-19
@@ -263,16 +362,16 @@ Ver. 0.4 - 2012-Nov-19
 * Support pypy_ and python 3.3.
 * Added the new :mod:`pulsar.utils.httpurl` module for HTTP tools and HTTP
   synchronous and asynchronous clients.
-* Refactored :class:`pulsar.Deferred` to be more compatible with twisted. You
+* Refactored :class:`.Deferred` to be more compatible with twisted. You
   can add separate callbacks for handling errors.
-* Added :class:`pulsar.MultiDeferred` for handling a group of asynchronous
+* Added :class:`.MultiDeferred` for handling a group of asynchronous
   elements independent from each other.
 * The :class:`pulsar.Mailbox` does not derive from :class:`threading.Thread` so
   that the eventloop can be restarted.
-* Removed the :class:`ActorMetaClass`. Remote functions are specified using
+* Removed the ``ActorMetaClass``. Remote functions are specified using
   a dictionary.
-* Socket and WSGI :class:`pulsar.Application` are built on top of the new
-  :class:`pulsar.AsyncSocketServer` framework class.
+* Socket and WSGI :class:`.Application` are built on top of the new
+  ``AsyncSocketServer`` framework class.
 * **303 regression tests**, **83% coverage**.
 
 Ver. 0.3 - 2012-May-03
@@ -280,22 +379,22 @@ Ver. 0.3 - 2012-May-03
 * Development status set to ``Alpha``.
 * This version brings several bug fixes, more tests, more docs, and improvements
   in the :mod:`pulsar.apps.tasks` application.
-* Added :meth:`pulsar.apps.tasks.Job.send_to_queue` method for allowing
-  :meth:`pulsar.apps.tasks.Task` to create new tasks.
-* The current :class:`pulsar.Actor` is always available on the current thread
+* Added :meth:`.Job.send_to_queue` method for allowing
+  :class:`.Task` to create new tasks.
+* The current :class:`.Actor` is always available on the current thread
   ``actor`` attribute.
 * Trap errors in :meth:`pulsar.IOLoop.do_loop_tasks` to avoid having monitors
   crashing the arbiter.
 * Added :func:`pulsar.system.system_info` function which returns system information
   regarding a running process. It requires psutil_.
-* Added global :func:`pulsar.spawn` and :func:`pulsar.send` functions for
-  creating and communicating between :class:`pulsar.Actor`.
+* Added global :func:`.spawn` and :func:`.send` functions for
+  creating and communicating between :class:`.Actor`.
 * Fixed critical bug in :meth:`pulsar.net.HttpResponse.default_headers`.
 * Added :meth:`pulsar.utils.http.Headers.pop` method.
 * Allow :attr:`pulsar.apps.tasks.Job.can_overlap` to be a callable.
 * Added :attr:`pulsar.apps.tasks.Job.doc_syntax` attribute which defaults to
   ``"markdown"``.
-* :class:`pulsar.Application` can specify a version which overrides
+* :class:`.Application` can specify a version which overrides
   :attr:`pulsar.__version__`.
 * Added Profile test plugin to :ref:`test application <apps-test>`.
 * Task scheduler check for expired tasks via the
@@ -309,7 +408,7 @@ Ver. 0.2.1 - 2011-Dec-18
 * Catch errors in :func:`pulsar.apps.test.run_on_arbiter`.
 * Added new setting for configuring http responses when an unhandled error
   occurs (Issue #7).
-* It is possible to access the actor :attr:`pulsar.Actor.ioloop` form the
+* It is possible to access the actor :attr:`.Actor.ioloop` form the
   current thread ``ioloop`` attribute.
 * Removed outbox and replaced inbox with :attr:`Actor.mailbox`.
 * windowsservice wrapper handle pulsar command lines options.
@@ -326,7 +425,7 @@ Ver. 0.2.0 - 2011-Nov-05
   more documentation.
 * Fully asynchronous applications.
 * Complete re-design of :mod:`pulsar.apps.test` application.
-* Added :class:`pulsar.Mailbox` classes for handling message passing between actors.
+* Added :class:`.Mailbox` classes for handling message passing between actors.
 * Added :mod:`pulsar.apps.ws`, an asynchronous websocket application for pulsar.
 * Created the :mod:`pulsar.net` module for internet primitive.
 * Added a wrapper class for using pulsar with windows services.
@@ -352,3 +451,4 @@ Ver. 0.1.0 - 2011-Aug-24
 .. _redis: http://redis.io/
 .. _redis-py: https://github.com/andymccurdy/redis-py
 .. _ujson: https://pypi.python.org/pypi/ujson
+.. _asyncio: http://www.python.org/dev/peps/pep-3156/

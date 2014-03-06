@@ -1,15 +1,18 @@
 language: python
 
 python:
-  - "2.6"
   - "2.7"
-  - "3.2"
   - "3.3"
   - "pypy"
 
+services:
+  - redis-server
+
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors argparse unittest2; fi
-  - pip install -r requirements_dev.txt --use-mirrors
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -r requirements_dev_27.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install -r requirements_dev_27.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -r requirements_dev_33.txt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then pip install -r requirements_dev.txt; fi
   - python setup.py install
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
@@ -19,7 +22,7 @@ services:
 script:
   - python -m covrun --pep8
   - sudo rm -rf pulsar
-  - python -m covrun -w 4 --test-timeout 60
+  - python -m covrun -w 2 -e taskqueue pshell philosophers async webmail djangoapp
 
 notifications:
   email: false

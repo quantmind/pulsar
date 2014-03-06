@@ -4,11 +4,6 @@ on multiple threads or processes.
 It is used for testing pulsar but it can be used
 as a test suite for any other library.
 
-Requirements
-====================
-* unittest2_ for python 2.6
-* mock_ for python < 3.3
-
 .. _apps-test-intro:
 
 Introduction
@@ -23,7 +18,7 @@ let's call it ``runtests.py``::
     if __name__ == '__main__':
         TestSuite(description='Test suite for my library',
                   modules=('regression',
-                           ('examples','tests'))).start()
+                           ('examples', 'tests'))).start()
 
 where ``modules`` is a tuple/list which specifies where to
 :ref:`search for test cases <apps-test-loading>` to run.
@@ -53,22 +48,20 @@ The next step is to actually write the tests.
 
 Writing a Test Case
 ===========================
-Only subclasses of  ``unittest.TestCase`` are collected by this application.
+Only subclasses of  :class:`~unittest.TestCase` are collected by this
+application.
 When running a test, pulsar looks for two extra method: ``_pre_setup`` and
 ``_post_teardown``. If the former is available, it is run just before the
-``setUp`` method while if the latter is available, it is run
-just after the ``tearDown`` method. In addition, if the ``setUpClass``
+:meth:`~unittest.TestCase.setUp` method while if the latter is available,
+it is run just after the :meth:`~unittest.TestCase.tearDown` method.
+In addition, if the :meth:`~unittest.TestCase.setUpClass`
 class methods is available, it is run just before
-all tests functions are run and the ``tearDownClass``, if available, is run
-just after all tests functions are run.
+all tests functions are run and the :meth:`~unittest.TestCase.tearDownClass`,
+if available, is run just after all tests functions are run.
 
 An example test case::
 
-    # This import is equivalent in python2.6 to
-    #     import unittest2 as unittest
-    # Otherwise it is the same as
-    #     import unittest
-    from pulsar.apps.test import unittest
+    import unittest
 
     class MyTest(unittest.TestCase):
 
@@ -82,7 +75,7 @@ An example test case::
 .. note::
 
     Test functions are asynchronous, when they return a generator or a
-    :class:`pulsar.Deferred`, synchronous, when they return anything else.
+    :class:`~asyncio.Future`, synchronous, when they return anything else.
 
 .. _apps-test-loading:
 
@@ -98,7 +91,7 @@ initialising the :class:`TestSuite`::
         TestSuite(modules=('tests',
                           ('examples','tests'))).start()
 
-The :class:`TestSuite` loads tests via the :class:`loader.TestLoader` class.
+The :class:`TestSuite` loads tests via the :class:`~loader.TestLoader` class.
 
 In the context of explaining the rules for loading tests, we refer to
 an ``object`` as
@@ -110,7 +103,7 @@ with this in mind:
 
 * Directories that aren't packages are not inspected. This means that if a
   directory does not have a ``__init__.py`` file, it won't be inspected.
-* Any class that is a ``unittest.TestCase`` subclass is collected.
+* Any class that is a :class:`~unittest.TestCase` subclass is collected.
 * If an ``object`` starts with ``_`` or ``.`` it won't be collected,
   nor will any ``objects`` it contains.
 * If an ``object`` defines a ``__test__`` attribute that does not evaluate to
@@ -172,7 +165,7 @@ In addition, the following options are
 
 sequential
 ~~~~~~~~~~~~~~~~~~~
-By default, test functions within a :class:`unittest.TestCase`
+By default, test functions within a :class:`~unittest.TestCase`
 are run in asynchronous fashion. This means that several test functions
 may be executed at once depending on their return values.
 By specifying the :ref:`--sequential <setting-sequential>` command line option,
@@ -182,7 +175,7 @@ forces tests to be run in a sequential model, one after the other::
     python runtests.py --sequential
 
 Alternatively, if you need to specify a Testcase which always runs its test
-functions in a sequential way, you can use the :func:`sequential` decorator::
+functions in a sequential way, you can use the :func:`.sequential` decorator::
 
     from pulsar.apps.test import unittest, sequential
 
@@ -210,18 +203,18 @@ long a test function can wait for results. This is what the
 Set the test timeout to 10 seconds.
 
 
-Plugins
+Test Plugins
 ==================
-A :class:`TestPlugin` is a way to extend the test suite with additional
+A :class:`.TestPlugin` is a way to extend the test suite with additional
 :ref:`options <test-suite-options>` and behaviours implemented in
 the various plugin's callbacks.
 There are two basic rules for plugins:
 
-* Plugin classes should subclass :class:`TestPlugin`.
-* Plugins may implement any of the methods described in the class
-  :class:`result.Plugin` interface.
+* Test plugin classes should subclass :class:`.TestPlugin`.
+* Test plugins may implement any of the methods described in the class
+  :class:`.Plugin` interface.
 
-Pulsar ships with two plugins:
+Pulsar ships with two battery-included plugins:
 
 .. _bench-plugin:
 
@@ -239,17 +232,13 @@ Profile
 .. automodule:: pulsar.apps.test.plugins.profile
 
 
-.. module:: pulsar.apps.test
-
 API
 =========
-
-.. _test-suite:
 
 Test Suite
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestSuite
+.. autoclass:: pulsar.apps.test.TestSuite
    :members:
    :member-order: bysource
 
@@ -260,46 +249,64 @@ Test Loader
 .. automodule:: pulsar.apps.test.loader
 
 
-Plugins
-~~~~~~~~~~~~~~~~~~~~~~~
+Plugin
+~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: pulsar.apps.test.result
+.. autoclass:: pulsar.apps.test.result.Plugin
+   :members:
+   :member-order: bysource
 
 
-.. module:: pulsar.apps.test
+Test Runner
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestRunner
+   :members:
+   :member-order: bysource
+
+
+Test Result
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pulsar.apps.test.result.TestResult
+   :members:
+   :member-order: bysource
 
 
 Test Plugin
 ~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: TestPlugin
+.. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
    :members:
    :member-order: bysource
 
-.. _unittest2: http://pypi.python.org/pypi/unittest2
-.. _mock: http://pypi.python.org/pypi/mock
-
 Utilities
-~~~~~~~~~~~~~~~
+================
 
 .. automodule:: pulsar.apps.test.utils
-    :members:
+
 '''
 import sys
+import unittest
+from functools import partial
 
 import pulsar
-from pulsar import EventHandler, maybe_failure
+from pulsar import multi_async
 from pulsar.apps import tasks
-from pulsar.utils.log import local_property
+from pulsar.apps.data import PulsarDS, create_store
+from pulsar.utils.log import lazyproperty
 from pulsar.utils.config import section_docs
-from pulsar.utils.pep import default_timer
+from pulsar.utils.pep import default_timer, to_string
 
-from .case import *
+from .case import mock
+from .populate import populate
 from .result import *
 from .plugins.base import *
 from .loader import *
 from .utils import *
 from .wsgi import *
+from .pep import pep8_run
+
 
 section_docs['Test'] = '''
 This section covers configuration parameters used by the
@@ -370,7 +377,7 @@ class TestExcludeLabels(TestOption):
 class TestSize(TestOption):
     name = 'size'
     flags = ['--size']
-    #choices = ('tiny','small','normal','big','huge')
+    choices = ('tiny', 'small', 'normal', 'big', 'huge')
     default = 'normal'
     desc = """Optional test size."""
 
@@ -406,8 +413,9 @@ class TestShowLeaks(TestOption):
     default = 0
     desc = """Shows memory leaks.
 
-    Run the garbadge collector before a process-based actor dies and shows
-    the memory leak report."""
+    Run the garbage collector before a process-based actor dies and shows
+    the memory leak report.
+    """
 
 
 class TestLogFailures(TestOption):
@@ -433,6 +441,14 @@ class TestCoveralls(TestOption):
     desc = """Send coverage report to coveralls.io."""
 
 
+class RedisServer(TestOption):
+    name = 'redis_server'
+    flags = ['--redis-server']
+    meta = "CONNECTION_STRING"
+    default = '127.0.0.1:6379/9'
+    desc = 'Connection string for the redis server used in during testing'
+
+
 pyver = '%s.%s' % (sys.version_info[:2])
 
 
@@ -456,11 +472,11 @@ class TestSuite(tasks.TaskQueue):
 
         If not provided it is set as default to ``["tests"]`` which loads all
         python module from the tests module in a recursive fashion.
-        Check the the :class:`TestLoader` for detailed information.
+        Check the the :class:`.TestLoader` for detailed information.
 
     :parameter result_class: Optional class for collecting test results.
-        By default it used the standard ``unittest.TextTestResult``.
-    :parameter plugins: Optional list of :class:`TestPlugin` instances.
+        By default it used the standard :class:`.TestResult`.
+    :parameter plugins: Optional list of :class:`.TestPlugin` instances.
     '''
     name = 'test'
     cfg = pulsar.Config(apps=('tasks', 'test'),
@@ -468,30 +484,28 @@ class TestSuite(tasks.TaskQueue):
                         task_paths=['pulsar.apps.test.case'],
                         plugins=())
 
-    @local_property
-    def runner(self):
-        '''The :class:`TestRunner` driving the test case.'''
-        if unittest is None:    # pragma    nocover
-            raise ImportError('python %s requires unittest2 library for '
-                              'pulsar test suite application' % pyver)
+    def new_runner(self):
+        '''The :class:`.TestRunner` driving test cases.
+        '''
         if mock is None:    # pragma    nocover
-            raise ImportError('python %s requires mock library for pulsar '
-                              'test suite application' % pyver)
+            raise ExitTest('python %s requires mock library for pulsar '
+                           'test suite application' % pyver)
         result_class = getattr(self, 'result_class', None)
         stream = pulsar.get_stream(self.cfg)
         runner = TestRunner(self.cfg.plugins, stream, result_class)
         abort_message = runner.configure(self.cfg)
         if abort_message:    # pragma    nocover
             raise ExitTest(str(abort_message))
+        self.runner = runner
         return runner
 
-    @local_property
+    @lazyproperty
     def loader(self):
         #When config is available load the tests and check what type of
         #action is required.
         modules = self.cfg.get('modules')
         # Create a runner and configure it
-        runner = self.runner
+        runner = self.new_runner()
         if not modules:
             modules = ['tests']
         if hasattr(modules, '__call__'):
@@ -499,9 +513,16 @@ class TestSuite(tasks.TaskQueue):
         return TestLoader(self.root_dir, modules, runner, logger=self.logger)
 
     def on_config(self, arbiter):
-        loader = self.loader
+        stream = arbiter.stream
+        try:
+            loader = self.loader
+        except ExitTest as e:
+            stream.writeln(str(e))
+            return False
         stream = arbiter.stream
         stream.writeln(sys.version)
+        redis_server = 'redis://%s' % self.cfg.redis_server
+        arbiter.cfg.params['redis_server'] = redis_server
         if self.cfg.list_labels:    # pragma    nocover
             tags = self.cfg.labels
             if tags:
@@ -525,8 +546,15 @@ class TestSuite(tasks.TaskQueue):
 
     def monitor_start(self, monitor):
         '''When the monitor starts load all test classes into the queue'''
-        super(TestSuite, self).monitor_start(monitor)
-        loader = self.local.loader
+        # Create a datastore for this test suite
+        server = PulsarDS(bind='127.0.0.1:0', workers=0,
+                          key_value_save=[],
+                          name='%s_store' % self.name)
+        yield server()
+        store = create_store('pulsar://%s:%s' % (server.cfg.addresses[0]),
+                             pool_size=2)
+        self.get_backend(store)
+        loader = self.loader
         tags = self.cfg.labels
         exclude_tags = self.cfg.exclude_labels
         if self.cfg.show_leaks:
@@ -535,36 +563,41 @@ class TestSuite(tasks.TaskQueue):
             arbiter = pulsar.arbiter()
             arbiter.cfg.set('when_exit', show)
         try:
-            self.local.tests = tests = []
-            self.runner.on_start()
+            tests = []
+            loader.runner.on_start()
             for tag, testcls in loader.testclasses(tags, exclude_tags):
-                suite = self.runner.loadTestsFromTestCase(testcls)
+                suite = loader.runner.loadTestsFromTestCase(testcls)
                 if suite and suite._tests:
                     tests.append((tag, testcls))
             self._time_start = None
             if tests:
-                self.logger.info('loaded %s test classes', len(tests))
-                self.fire_event('tests', tests=tests)
+                self.logger.info('loading %s test classes', len(tests))
                 monitor.cfg.set('workers', min(self.cfg.workers, len(tests)))
                 self._time_start = default_timer()
-                for tag, testcls in self.local.tests:
-                    self.backend.run('test', testcls, tag)
-                monitor.event_loop.call_repeatedly(1, self._check_queue)
+                queued = []
+                self._tests_done = set()
+                self._tests_queued = None
+                #
+                # Bind to the task_done event
+                self.backend.bind_event('task_done',
+                                        partial(self._test_done, monitor))
+                for tag, testcls in tests:
+                    r = self.backend.queue_task('test', testcls=testcls,
+                                                tag=tag)
+                    queued.append(r)
+                queued = yield multi_async(queued)
+                self.logger.debug('loaded %s test classes', len(tests))
+                self._tests_queued = set(queued)
+                yield self._test_done(monitor)
             else:   # pragma    nocover
                 raise ExitTest('Could not find any tests.')
         except ExitTest as e:   # pragma    nocover
             monitor.stream.writeln(str(e))
             monitor.arbiter.stop()
         except Exception:   # pragma    nocover
-            self.logger.critical('Error occurred before starting tests',
-                                 exc_info=True)
-            monitor.arbiter.stop()
-
-    @local_property
-    def events(self):
-        '''Events for the application: ``ready```, ``start``, ``stop``.'''
-        return EventHandler(one_time_events=('ready', 'start', 'stop'),
-                            many_times_events=('tests',))
+            monitor.logger.critical('Error occurred while starting tests',
+                                    exc_info=True)
+            monitor._loop.call_soon(self._exit, 3)
 
     @classmethod
     def create_config(cls, *args, **kwargs):
@@ -575,19 +608,31 @@ class TestSuite(tasks.TaskQueue):
             cfg.settings.update(plugin.config.settings)
         return cfg
 
-    def _check_queue(self):
+    def arbiter_params(self):
+        params = super(TestSuite, self).arbiter_params()
+        params['concurrency'] = self.cfg.concurrency
+        return params
+
+    def _test_done(self, monitor, task_id=None, exc=None):
         runner = self.runner
-        tests = yield self.backend.get_tasks(status=tasks.READY_STATES)
-        if len(tests) == len(self.local.tests):
-            self.logger.info('All tests have finished.')
-            time_taken = default_timer() - self._time_start
-            for task in tests:
-                runner.add(task.result)
-            runner.on_end()
-            runner.printSummary(time_taken)
-            # Shut down the arbiter
-            if runner.result.errors or runner.result.failures:
-                exit_code = 2
-            else:
-                exit_code = 0
-            raise pulsar.HaltServer(exit_code=exit_code)
+        if task_id:
+            self._tests_done.add(to_string(task_id))
+        if self._tests_queued is not None:
+            left = self._tests_queued.difference(self._tests_done)
+            if not left:
+                tests = yield self.backend.get_tasks(self._tests_done)
+                self.logger.info('All tests have finished.')
+                time_taken = default_timer() - self._time_start
+                for task in tests:
+                    runner.add(task['result'])
+                runner.on_end()
+                runner.printSummary(time_taken)
+                # Shut down the arbiter
+                if runner.result.errors or runner.result.failures:
+                    exit_code = 2
+                else:
+                    exit_code = 0
+                monitor._loop.call_soon(self._exit, exit_code)
+
+    def _exit(self, exit_code):
+        raise pulsar.HaltServer(exit_code=exit_code)

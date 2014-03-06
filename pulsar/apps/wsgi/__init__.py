@@ -17,8 +17,8 @@ the :ref:`websocket middleware <apps-ws>`.
     capabilities allow to handle the `c10k problem`_ with ease.
 
 
-An example of a web server written with :mod:`pulsar.apps.wsgi` which responds
-with ``Hello World!`` for every request::
+An example of a web server written with the :mod:`~pulsar.apps.wsgi`
+module which responds with ``Hello World!`` for every request::
 
     from pulsar.apps import wsgi
 
@@ -43,6 +43,7 @@ For available run options::
     python script.py --help
 
 
+
 WSGI Server
 ===================
 
@@ -57,12 +58,13 @@ WSGI Server
 from functools import partial
 
 import pulsar
-from pulsar.apps.socket import SocketServer
+from pulsar.apps.socket import SocketServer, Connection
 
 from .html import *
 from .content import *
 from .utils import *
 from .middleware import *
+from .response import *
 from .wrappers import *
 from .server import *
 from .route import *
@@ -75,14 +77,11 @@ class WSGIServer(SocketServer):
     '''A WSGI :class:`.SocketServer`.
     '''
     name = 'wsgi'
-    cfg = pulsar.Config(apps=['socket', 'wsgi'],
+    cfg = pulsar.Config(apps=['socket'],
                         server_software=pulsar.SERVER_SOFTWARE)
 
-    def protocol_consumer(self):
-        '''Build the :class:`.ProtocolConsumer` factory.
-
-        It uses the :class:`pulsar.apps.wsgi.server.HttpServerResponse`
-        protocol consumer and the wsgi callable provided as parameter during
-        initialisation.'''
-        c = self.cfg
-        return partial(HttpServerResponse, self.callable, c, c.server_software)
+    def protocol_factory(self):
+        cfg = self.cfg
+        consumer_factory = partial(HttpServerResponse, cfg.callable, cfg,
+                                   cfg.server_software)
+        return partial(Connection, consumer_factory)
